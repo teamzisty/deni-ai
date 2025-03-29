@@ -1,11 +1,13 @@
 import { Loading } from "@/components/loading";
 import "@/app/styles/globals.css";
-import { ViewTransitions } from "next-view-transitions";
 import { Suspense } from "react";
 import { ThemeProvider } from "@/components/ui/theme-provider";
-import { Toaster } from "@/components/ui/sonner";
 
 import type { Metadata } from "next";
+import { ChatSessionsProvider } from "@/hooks/use-chat-sessions";
+import { SidebarProvider } from "@/components/ui/sidebar";
+import { ChatSidebar } from "@/components/chat-sidebar";
+import { AuthProvider } from "@/context/AuthContext";
 
 export const metadata: Metadata = {
   title: "Deni AI",
@@ -35,21 +37,24 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <ViewTransitions>
-      <html lang="en">
-        <body className="theme-slate">
-          <ThemeProvider
-            attribute="class"
-            defaultTheme="system"
-            enableSystem
-            disableTransitionOnChange
-          >
-            <Suspense fallback={<Loading />}>{children}</Suspense>
-          </ThemeProvider>
-
-          <Toaster richColors position="bottom-right" />
-        </body>
-      </html>
-    </ViewTransitions>
+    <div className="w-full h-full">
+      <ThemeProvider
+        attribute="class"
+        defaultTheme="system"
+        enableSystem
+        disableTransitionOnChange
+      >
+        <SidebarProvider>
+          <AuthProvider>
+            <ChatSessionsProvider>
+              <div className="w-full flex">
+                <ChatSidebar />
+                <Suspense fallback={<Loading />}>{children}</Suspense>
+              </div>
+            </ChatSessionsProvider>
+          </AuthProvider>
+        </SidebarProvider>{" "}
+      </ThemeProvider>
+    </div>
   );
 }
