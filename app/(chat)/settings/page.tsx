@@ -13,7 +13,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useTheme } from "next-themes";
 import { useAuth } from "@/context/AuthContext";
-import { toast, Toaster } from "sonner";
+import { toast } from "sonner";
 import { useEffect } from "react";
 
 export default function SettingsPage() {
@@ -90,8 +90,8 @@ export default function SettingsPage() {
         };
         reader.readAsText(file);
       };
-    } catch (error: any) {
-      if (error.name === "AbortError") {
+    } catch (error: unknown) {
+      if (error instanceof Error && error.name === "AbortError") {
         return;
       }
       toast.error("エラーが発生しました", {

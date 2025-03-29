@@ -1,13 +1,11 @@
 import { FC, memo, useEffect, useMemo } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
-import { Clock, Copy, MousePointer, Search } from "lucide-react";
+import { Clock, Copy, MousePointer } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { EasyTip } from "@/components/easytip";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { Pre } from "@/components/markdown";
-import { modelDescriptions } from "@/lib/modelDescriptions";
-import { ModelSelector } from "./ModelSelector";
 import Image from "next/image";
 import { UIMessage } from "ai";
 import React from "react";
@@ -18,7 +16,6 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
-import { Link } from 'next-view-transitions';
 import { Link as MarkdownLink } from "@/components/markdown";
 import { SiBrave } from "@icons-pack/react-simple-icons";
 
@@ -69,69 +66,102 @@ interface MessageState {
   thinkingTime: number;
 }
 
-type MessageAction =
-  | { type: 'SET_MODEL'; payload: string }
-  | { type: 'SET_SEARCHED_WEBSITES'; payload: { title: string; description: string; url: string }[] }
-  | { type: 'SET_SEARCH_QUERY'; payload: string }
-  | { type: 'SET_VISITED_WEBSITES'; payload: string[] }
-  | { type: 'SET_THINKING_TIME'; payload: number }
-  | { type: 'UPDATE_FROM_ANNOTATIONS'; payload: any[] };
+interface messageAnnotation {
+  model?: string;
+  searchResults?: Array<{
+    title: string;
+    description: string;
+    url: string;
+  }>;
+  title?: string;
+  searchQuery?: string;
+  visitedWebsites?: string;
+  thinkingTime?: number;
+}
 
-function messageReducer(state: MessageState, action: MessageAction): MessageState {
+interface searchResult {
+  title: string;
+  description: string;
+  url: string;
+}
+
+type MessageAction =
+  | { type: "SET_MODEL"; payload: string }
+  | {
+      type: "SET_SEARCHED_WEBSITES";
+      payload: { title: string; description: string; url: string }[];
+    }
+  | { type: "SET_SEARCH_QUERY"; payload: string }
+  | { type: "SET_VISITED_WEBSITES"; payload: string[] }
+  | { type: "SET_THINKING_TIME"; payload: number }
+  | { type: "UPDATE_FROM_ANNOTATIONS"; payload: any[] };
+
+function messageReducer(
+  state: MessageState,
+  action: MessageAction
+): MessageState {
   switch (action.type) {
-    case 'SET_MODEL':
+    case "SET_MODEL":
       return { ...state, model: action.payload };
-    case 'SET_SEARCHED_WEBSITES':
+    case "SET_SEARCHED_WEBSITES":
       return { ...state, searchedWebsites: action.payload };
-    case 'SET_SEARCH_QUERY':
+    case "SET_SEARCH_QUERY":
       return { ...state, searchQuery: action.payload };
-    case 'SET_VISITED_WEBSITES':
+    case "SET_VISITED_WEBSITES":
       return { ...state, visitedWebsites: action.payload };
-    case 'SET_THINKING_TIME':
+    case "SET_THINKING_TIME":
       return { ...state, thinkingTime: action.payload };
-    case 'UPDATE_FROM_ANNOTATIONS':
+    case "UPDATE_FROM_ANNOTATIONS":
       const annotations = action.payload;
       const updates: Partial<MessageState> = {};
 
-      const modelAnnotation = annotations?.find((a) => (a as any).model);
+      const modelAnnotation = annotations?.find(
+        (a) => (a as messageAnnotation).model
+      );
       if (modelAnnotation) {
-        updates.model = (modelAnnotation as any).model || "gpt-4o-2024-08-06";
+        updates.model =
+          (modelAnnotation as messageAnnotation).model || "gpt-4o-2024-08-06";
       }
 
       const searchedAnnotations = annotations?.filter(
-        (a) => (a as any).searchResults
-      ) as Array<{
-        searchResults: Array<{
-          title: string;
-          description: string;
-          url: string;
-        }>;
-      }>;
+        (a) => (a as messageAnnotation).searchResults
+      );
       if (searchedAnnotations) {
-        updates.searchedWebsites = searchedAnnotations.flatMap((a) =>
-          a.searchResults.map((result) => ({
-            title: result.title,
-            description: result.description,
-            url: result.url,
-          }))
-        );
+        updates.searchedWebsites = searchedAnnotations.flatMap((a) => {
+          if (a.searchResults) {
+            return a.searchResults.map((result: searchResult) => ({
+              title: result.title,
+              description: result.description,
+              url: result.url,
+            }));
+          }
+          return [];
+        });
       }
 
-      const searchQueryAnnotation = annotations?.find((a) => (a as any).searchQuery);
+      const searchQueryAnnotation = annotations?.find(
+        (a) => (a as messageAnnotation).searchQuery
+      );
       if (searchQueryAnnotation) {
-        updates.searchQuery = (searchQueryAnnotation as any).searchQuery;
+        updates.searchQuery = (
+          searchQueryAnnotation as messageAnnotation
+        ).searchQuery;
       }
 
       const visitedWebsitesAnnotation = annotations?.find((a) =>
-        Array.isArray((a as { visitedWebsites?: string[] }).visitedWebsites)
+        Array.isArray((a as messageAnnotation).visitedWebsites)
       ) as { visitedWebsites: string[] } | undefined;
       if (visitedWebsitesAnnotation?.visitedWebsites) {
         updates.visitedWebsites = visitedWebsitesAnnotation.visitedWebsites;
       }
 
-      const timeAnnotation = annotations?.find((a) => (a as any).thinkingTime);
+      const timeAnnotation = annotations?.find(
+        (a) => (a as messageAnnotation).thinkingTime
+      );
       if (timeAnnotation) {
-        updates.thinkingTime = (timeAnnotation as any).thinkingTime;
+        updates.thinkingTime = (
+          timeAnnotation as messageAnnotation
+        ).thinkingTime;
       }
 
       return { ...state, ...updates };
@@ -147,37 +177,43 @@ export const MessageLog: FC<MessageLogProps> = memo(
       searchedWebsites: [],
       searchQuery: "",
       visitedWebsites: [],
-      thinkingTime: 0
+      thinkingTime: 0,
     });
 
     const { getSession, updateSession } = useChatSessions();
 
-    const handleCopy = React.useCallback((event: React.MouseEvent<HTMLButtonElement>) => {
-      navigator.clipboard.writeText(message.content);
-      const target = event.currentTarget;
-      target.querySelector("svg")!.outerHTML =
-        '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-check"><polyline points="20 6 9 17 4 12"/></svg>';
-      setTimeout(() => {
+    const handleCopy = React.useCallback(
+      (event: React.MouseEvent<HTMLButtonElement>) => {
+        navigator.clipboard.writeText(message.content);
+        const target = event.currentTarget;
         target.querySelector("svg")!.outerHTML =
-          '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-copy"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>';
-      }, 1000);
-    }, [message.content]);
+          '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-check"><polyline points="20 6 9 17 4 12"/></svg>';
+        setTimeout(() => {
+          target.querySelector("svg")!.outerHTML =
+            '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-copy"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>';
+        }, 1000);
+      },
+      [message.content]
+    );
 
     useEffect(() => {
       const annotations = message.annotations;
       if (!annotations) return;
 
-      dispatch({ type: 'UPDATE_FROM_ANNOTATIONS', payload: annotations });
+      dispatch({ type: "UPDATE_FROM_ANNOTATIONS", payload: annotations });
 
       const titleAnnotation = annotations?.find((a) => (a as any).title);
       if (titleAnnotation) {
         const session = getSession(sessionId);
         if (session && session.title !== (titleAnnotation as any).title) {
-          const updatedSession = { ...session, title: (titleAnnotation as any).title };
+          const updatedSession = {
+            ...session,
+            title: (titleAnnotation as any).title,
+          };
           updateSession(sessionId, updatedSession);
         }
       }
-    }, [message.annotations, sessionId]);
+    }, [getSession, message.annotations, sessionId, updateSession]);
 
     return (
       <TooltipProvider>
@@ -199,10 +235,10 @@ export const MessageLog: FC<MessageLogProps> = memo(
                         state.visitedWebsites?.length > 0
                           ? `ウェブサイトを検索し、閲覧済み`
                           : state.searchedWebsites?.length > 0
-                            ? `ウェブサイトを検索済み`
-                            : state.visitedWebsites?.length > 0
-                              ? "ウェブサイトを閲覧済み"
-                              : ""}
+                          ? `ウェブサイトを検索済み`
+                          : state.visitedWebsites?.length > 0
+                          ? "ウェブサイトを閲覧済み"
+                          : ""}
                       </p>
                     </CollapsibleTrigger>
                     <CollapsibleContent className="prose dark:prose-invert outline-none data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2">
@@ -210,34 +246,46 @@ export const MessageLog: FC<MessageLogProps> = memo(
                         {state.searchedWebsites.length > 0 && (
                           <div className="flex flex-col gap-1 bg-secondary rounded-xl mb-4 px-4 py-3">
                             <span className="inline-flex items-center gap-1 text-muted-foreground">
-                              <SiBrave className="text-orange-400" /> Brave Search
-                              を使用した検索
+                              <SiBrave className="text-orange-400" /> Brave
+                              Search を使用した検索
                             </span>
                             {state.searchQuery && (
                               <span className="text-muted-foreground">
                                 検索ワード: {state.searchQuery}
                               </span>
                             )}
-                            {state.searchedWebsites.map((site: { url: string; title: string; description: string }, index: number) => (
-                              <span key={index} className="flex flex-col gap-1">
-                                <a
-                                  href={site.url}
-                                  target="_blank"
-                                  rel="noreferrer"
-                                  className="text-white underline min-w-0 truncate"
+                            {state.searchedWebsites.map(
+                              (
+                                site: {
+                                  url: string;
+                                  title: string;
+                                  description: string;
+                                },
+                                index: number
+                              ) => (
+                                <span
+                                  key={index}
+                                  className="flex flex-col gap-1"
                                 >
-                                  {site.title || site.url}
-                                </a>{" "}
-                                {site.description && (
-                                  <span
-                                    className="text-muted-foreground text-sm"
-                                    dangerouslySetInnerHTML={{
-                                      __html: site.description,
-                                    }}
-                                  />
-                                )}
-                              </span>
-                            ))}
+                                  <a
+                                    href={site.url}
+                                    target="_blank"
+                                    rel="noreferrer"
+                                    className="text-white underline min-w-0 truncate"
+                                  >
+                                    {site.title || site.url}
+                                  </a>{" "}
+                                  {site.description && (
+                                    <span
+                                      className="text-muted-foreground text-sm"
+                                      dangerouslySetInnerHTML={{
+                                        __html: site.description,
+                                      }}
+                                    />
+                                  )}
+                                </span>
+                              )
+                            )}
                           </div>
                         )}
 
@@ -247,17 +295,19 @@ export const MessageLog: FC<MessageLogProps> = memo(
                               <MousePointer />
                               閲覧したウェブサイト
                             </span>
-                            {state.visitedWebsites.map((visitedWebsite: string, index: number) => (
-                              <a
-                                key={index}
-                                href={String(visitedWebsite)}
-                                target="_blank"
-                                rel="noreferrer"
-                                className="text-white underline truncate"
-                              >
-                                {String(visitedWebsite)}
-                              </a>
-                            ))}
+                            {state.visitedWebsites.map(
+                              (visitedWebsite: string, index: number) => (
+                                <a
+                                  key={index}
+                                  href={String(visitedWebsite)}
+                                  target="_blank"
+                                  rel="noreferrer"
+                                  className="text-white underline truncate"
+                                >
+                                  {String(visitedWebsite)}
+                                </a>
+                              )
+                            )}
                           </div>
                         )}
 
@@ -302,10 +352,22 @@ export const MessageLog: FC<MessageLogProps> = memo(
                           {state.thinkingTime < 0
                             ? "考え中..."
                             : state.thinkingTime > 3600000
-                              ? `${Math.floor(state.thinkingTime / 3600000)} 時間 ${Math.floor((state.thinkingTime % 3600000) / 60000)} 分 ${Math.floor((state.thinkingTime % 60000) / 1000)} 秒`
-                              : state.thinkingTime > 60000
-                                ? `${Math.floor(state.thinkingTime / 60000)} 分 ${Math.floor((state.thinkingTime % 60000) / 1000)} 秒`
-                                : `${Math.floor(state.thinkingTime / 1000)} 秒`}{" "}
+                            ? `${Math.floor(
+                                state.thinkingTime / 3600000
+                              )} 時間 ${Math.floor(
+                                (state.thinkingTime % 3600000) / 60000
+                              )} 分 ${Math.floor(
+                                (state.thinkingTime % 60000) / 1000
+                              )} 秒`
+                            : state.thinkingTime > 60000
+                            ? `${Math.floor(
+                                state.thinkingTime / 60000
+                              )} 分 ${Math.floor(
+                                (state.thinkingTime % 60000) / 1000
+                              )} 秒`
+                            : `${Math.floor(
+                                state.thinkingTime / 1000
+                              )} 秒`}{" "}
                         </span>
                       </Button>
                     </EasyTip>

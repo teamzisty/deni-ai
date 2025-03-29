@@ -8,6 +8,7 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 import React from "react";
+import Image from "next/image";
 
 const WhatsNewV2 = () => {
   return (
@@ -34,7 +35,7 @@ const WhatsNewV2 = () => {
                 </p>
               </div>
               <div className="md:w-1/2 px-6">
-                <img
+                <Image
                   src="/images/search-feature.png"
                   alt="検索機能"
                   className="rounded-lg shadow-md"
@@ -55,7 +56,7 @@ const WhatsNewV2 = () => {
                 </p>
               </div>
               <div className="md:w-1/2 px-6">
-                <img
+                <Image
                   src="/images/dynamic-island.png"
                   alt="ダイナミックアイランドインジケーター"
                   className="rounded-lg shadow-md"
@@ -74,7 +75,7 @@ const WhatsNewV2 = () => {
                 </p>
               </div>
               <div className="md:w-1/2 px-6">
-                <img
+                <Image
                   src="/images/session-grouping.png"
                   alt="セッショングループ化"
                   className="rounded-lg shadow-md"

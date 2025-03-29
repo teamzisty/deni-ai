@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
-import { CircleDollarSign, LockIcon, MessageSquare, Zap } from "lucide-react";
+import { CircleDollarSign, LockIcon, MessageSquare } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Header } from "@/components/header";
 import Image from "next/image";
@@ -31,7 +31,7 @@ const ChatApp: React.FC = () => {
     }, 2000);
 
     return () => clearInterval(interval);
-  }, []);
+  }, [models.length]);
 
   return (
     <main>

@@ -63,6 +63,7 @@
     "@types/react-syntax-highlighter": "^15.5.13",
     "eslint": "^9.23.0",
     "eslint-config-next": "15.2.4",
+    "eslint-plugin-unused-imports": "^4.1.4",
     "shadcn": "^2.4.0-canary.17",
     "tailwind-scrollbar": "^4.0.1",
     "tailwindcss": "^4.0.17",

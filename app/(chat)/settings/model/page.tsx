@@ -3,7 +3,6 @@
 import { Avatar } from "@/components/ui/avatar";
 import { AlertCircle, BrainCircuit, Eye, FlaskConical } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import { Toaster } from "sonner";
 import { useModelVisibility } from "@/hooks/use-model-settings";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { modelDescriptions } from "@/lib/modelDescriptions";

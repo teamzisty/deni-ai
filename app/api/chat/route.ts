@@ -7,6 +7,7 @@ import {
   createDataStreamResponse,
   smoothStream,
   streamText,
+  Tool,
   tool,
   UIMessage,
 } from "ai";
@@ -78,7 +79,7 @@ export async function POST(req: Request) {
 
     return createDataStreamResponse({
       execute: (dataStream) => {
-        let tools: any = undefined;
+        let tools: { [key: string]: Tool } | undefined = {};
         if (modelDescription?.toolDisabled) {
           tools = undefined;
         } else {
@@ -121,7 +122,7 @@ export async function POST(req: Request) {
 
                 const searchResults = results.web.results
                   .slice(0, 5)
-                  .map((result: any) => {
+                  .map((result: { title: string; url: string; description: string }) => {
                     const { title, url, description } = result;
                     return {
                       title,
@@ -206,7 +207,7 @@ export async function POST(req: Request) {
           },
           onError(error) {
             if (
-              (error.error as any).message ==
+              (error.error as { message?: string }).message ==
               "litellm.APIConnectionError: APIConnectionError: GroqException - list index out of range"
             ) {
               const thinkingTime = Date.now() - startTime;

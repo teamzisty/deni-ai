@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { SendHorizonal } from "lucide-react";
-import { memo, useRef, useEffect } from "react";
+import { memo } from "react";
 
 interface InputBoxProps {
   input: string;

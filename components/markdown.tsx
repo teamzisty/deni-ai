@@ -5,7 +5,6 @@ import {
   memo,
   useState,
   ReactNode,
-  useMemo,
 } from "react";
 import { ExtraProps } from "react-markdown";
 import SyntaxHighlighter from "react-syntax-highlighter";
@@ -87,13 +86,13 @@ export const Pre = memo(({ children, ...props }: PreProps) => {
   };
 
   // Get language from className prop if available
-  const language =
-    isObject(children) &&
-    "props" in children &&
-    isObject(children.props) &&
-    typeof children.props.className === "string"
-      ? children.props.className.replace("language-", "")
-      : "";
+  // const language =
+  //   isObject(children) &&
+  //   "props" in children &&
+  //   isObject(children.props) &&
+  //   typeof children.props.className === "string"
+  //     ? children.props.className.replace("language-", "")
+  //     : "";
 
   return (
     <div className="not-prose flex flex-col">

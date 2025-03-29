@@ -25,9 +25,10 @@ export default function AccountSettingsPage() {
     try {
       await syncSessions();
       toast.success("会話履歴を同期しました");
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : "不明なエラーが発生しました";
       toast.error("同期に失敗しました", {
-        description: error.message,
+        description: errorMessage,
       });
     } finally {
       setIsSyncing(false);
@@ -65,9 +66,10 @@ export default function AccountSettingsPage() {
       });
 
       toast.success("名前を変更しました");
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : "不明なエラーが発生しました";
       toast.error("名前の変更に失敗しました", {
-        description: error.message,
+        description: errorMessage,
       });
     }
   };

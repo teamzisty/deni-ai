@@ -50,7 +50,7 @@ const HeaderArea: React.FC<HeaderAreaProps> = memo(
               className="rounded-full"
               variant={"secondary"}
               onClick={() => {
-                theme === "light" ? setTheme("dark") : setTheme("light");
+                void (theme === "light" ? setTheme("dark") : setTheme("light"));
               }}
             >
               <motion.div

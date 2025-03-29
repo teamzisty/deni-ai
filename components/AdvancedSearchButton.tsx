@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button";
-import { NotebookPen, Search } from "lucide-react";
+import { NotebookPen } from "lucide-react";
 import { memo } from "react";
 
 interface AdvancedSearchButtonProps {

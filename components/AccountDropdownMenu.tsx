@@ -15,6 +15,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import Image from "next/image";
 import { memo, useEffect, useState } from "react";
 import { User } from "firebase/auth";
 import { Link } from "next-view-transitions";
@@ -70,10 +71,14 @@ export const AccountDropdownMenu = memo(
       try {
         await syncSessions();
         toast.success("会話履歴を同期しました");
-      } catch (error: any) {
-        toast.error("同期に失敗しました", {
-          description: error.message,
-        });
+      } catch (error: unknown) {
+        if (error instanceof Error) {
+          toast.error("同期に失敗しました", {
+            description: error.message,
+          });
+        } else {
+          toast.error("同期に失敗しました");
+        }
       } finally {
         setIsSyncing(false);
       }
@@ -92,12 +97,13 @@ export const AccountDropdownMenu = memo(
         <DropdownMenuTrigger asChild>
           <Button variant="ghost" className="h-16 p-2 ml-1 justify-start">
             {user.photoURL ? (
-              <img
+                <Image
                 src={user.photoURL}
                 alt={user.displayName || "User Avatar"}
                 width={40}
                 height={40}
-                className={`rounded-full ${privacyMode ? "blur-sm" : ""}`}
+                className={`rounded-full ${privacyMode && "blur-sm"}`}
+                priority
               />
             ) : (
               <User2 size="16" />
@@ -123,12 +129,13 @@ export const AccountDropdownMenu = memo(
           <DropdownMenuLabel>
             <div className="h-16 justify-start flex items-center gap-2 md:max-w-[210px]">
               {user.photoURL ? (
-                <img
+                <Image
                   src={user.photoURL}
                   alt={user.displayName || "User Avatar"}
                   width={40}
                   height={40}
                   className={`rounded-full ${privacyMode && "blur-sm"}`}
+                  priority
                 />
               ) : (
                 <User2 size="16" />

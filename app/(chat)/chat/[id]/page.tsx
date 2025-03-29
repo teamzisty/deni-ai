@@ -156,7 +156,7 @@ const ChatApp: React.FC = () => {
         });
       }
     }
-  }, [isLogged, currentSession, messages.length, setInput, params.id]); // handleSubmitを依存配列から削除
+  }, [isLogged, currentSession, messages.length, setInput, params.id, handleSubmit]); // handleSubmitを依存配列から削除
 
   useEffect(() => {
     if (
@@ -312,7 +312,7 @@ const ChatApp: React.FC = () => {
   };
 
   const uploadImage = (file?: File) => {
-    return new Promise<uploadResponse>((resolve, reject) => {
+    return new Promise<uploadResponse>((resolve) => {
       if (!file) {
         resolve({
           status: "error",

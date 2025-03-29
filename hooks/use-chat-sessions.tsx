@@ -15,7 +15,6 @@ import {
   getDocs,
   setDoc,
   deleteDoc,
-  Firestore,
   Timestamp,
 } from "firebase/firestore";
 import { firestore } from "@/lib/firebase/config";

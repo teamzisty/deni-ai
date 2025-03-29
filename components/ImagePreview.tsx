@@ -1,7 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Loader2, XIcon } from "lucide-react";
 import Image from "next/image";
-import { Loading } from "./loading";
 import { memo } from "react";
 
 interface ImagePreviewProps {
