@@ -97,7 +97,7 @@ export const AccountDropdownMenu = memo(
         <DropdownMenuTrigger asChild>
           <Button variant="ghost" className="h-16 p-2 ml-1 justify-start">
             {user.photoURL ? (
-                <Image
+              <Image
                 src={user.photoURL}
                 alt={user.displayName || "User Avatar"}
                 width={40}

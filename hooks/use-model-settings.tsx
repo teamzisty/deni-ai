@@ -6,7 +6,7 @@ export type ModelVisibility = {
 };
 
 const getInitialVisibility = (): ModelVisibility => {
-  // localStorageに保存された設定があれば利用、なければ全モデルを表示(true)とする
+  // localStorageに保存された設定があれば利用、なければdefaultVisibility: trueのモデルのみ表示する
   const stored = localStorage.getItem("modelVisibility");
   if (stored) {
     try {
@@ -17,7 +17,7 @@ const getInitialVisibility = (): ModelVisibility => {
   }
   const initial: ModelVisibility = {};
   Object.keys(modelDescriptions).forEach((id) => {
-    initial[id] = true;
+    initial[id] = modelDescriptions[id].defaultVisibility ?? false;
   });
   return initial;
 };

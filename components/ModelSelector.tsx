@@ -93,7 +93,7 @@ const ModelItem = memo(
 
             {modelDescription?.fast && (
               <EasyTip content="高速">
-                <Badge className="p-1">
+                <Badge className="p-1" variant="secondary">
                   <Zap size="16" />
                 </Badge>
               </EasyTip>
@@ -101,7 +101,7 @@ const ModelItem = memo(
 
             {modelDescription?.vision && (
               <EasyTip content="画像を認識可能">
-                <Badge className="p-1">
+                <Badge className="p-1" variant="secondary">
                   <Eye size="16" />
                 </Badge>
               </EasyTip>
@@ -109,7 +109,7 @@ const ModelItem = memo(
 
             {modelDescription?.reasoning && (
               <EasyTip content={`推論可能`}>
-                <Badge className="p-1">
+                <Badge className="p-1" variant="secondary">
                   <BrainCircuit size="16" />
                 </Badge>
               </EasyTip>

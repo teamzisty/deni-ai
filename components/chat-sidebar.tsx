@@ -12,11 +12,7 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
-import {
-  MessageCircleMore,
-  MoreHorizontal,
-  Plus,
-} from "lucide-react";
+import { MessageCircleMore, MoreHorizontal, Plus } from "lucide-react";
 import { Link } from "next-view-transitions";
 import { Badge } from "@/components/ui/badge";
 import { useParams } from "next/navigation";
@@ -33,6 +29,7 @@ import { auth } from "@/lib/firebase/config";
 import { useEffect, useState } from "react";
 import { AccountDropdownMenu } from "./AccountDropdownMenu";
 import { User } from "firebase/auth";
+import { ChatContextMenu } from "./context-menu";
 
 interface GroupedSessions {
   today: ChatSession[];
@@ -86,20 +83,25 @@ function SessionGroup({
       <SidebarGroupLabel>{label}</SidebarGroupLabel>
       <SidebarGroupContent>
         <SidebarMenu>
-          {sessions.slice().reverse().map((session) => (
-            <SidebarMenuItem key={session.id}>
-              <SidebarMenuButton
-                className="flex"
-                isActive={currentSessionId === session.id}
-                asChild
-              >
-                <Link href={`/chat/${session.id}`}>
-                  <MessageCircleMore className="mr-2" />
-                  <span className="truncate">{session.title}</span>
-                </Link>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-          ))}
+          {sessions
+            .slice()
+            .reverse()
+            .map((session) => (
+              <SidebarMenuItem key={session.id}>
+                <ChatContextMenu session={session}>
+                  <SidebarMenuButton
+                    className="flex"
+                    isActive={currentSessionId === session.id}
+                    asChild
+                  >
+                    <Link href={`/chat/${session.id}`}>
+                      <MessageCircleMore className="mr-2" />
+                      <span className="truncate">{session.title}</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </ChatContextMenu>
+              </SidebarMenuItem>
+            ))}
         </SidebarMenu>
       </SidebarGroupContent>
     </SidebarGroup>

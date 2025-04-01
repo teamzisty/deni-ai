@@ -108,7 +108,7 @@ export default function Error({
         <CardFooter className="gap-3">
           <Button onClick={reset}>もう一度試す</Button>
           <DropdownMenu>
-            <DropdownMenuTrigger>
+            <DropdownMenuTrigger asChild>
               <Button variant={"secondary"}>デバッグメニュー</Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent>
