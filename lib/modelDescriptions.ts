@@ -34,17 +34,18 @@ export const modelDescriptions: modelDescriptionType = {
     fast: true,
     type: "ChatGPT",
   },
-  "o3-mini": {
-    displayName: "o3-mini (beta)",
+  "o3-mini-2025-01-31": {
+    displayName: "o3-mini",
     knowledgeCutoff: "2023/10",
+    defaultVisibility: true,
     reasoning: true,
+    canary: true,
     type: "ChatGPT",
   },
-  o1: {
+  "o1-2024-12-17": {
     displayName: "o1",
     knowledgeCutoff: "2023/10",
     canary: true,
-    offline: true,
     reasoning: true,
     vision: true,
     type: "ChatGPT",
@@ -56,7 +57,16 @@ export const modelDescriptions: modelDescriptionType = {
     canary: true,
     type: "ChatGPT",
   },
-  "gemini-2.0-flash-exp": {
+  "gpt-4.5-preview-2025-02-27": {
+    displayName: "GPT-4.5 Preview",
+    knowledgeCutoff: "2023/10",
+    defaultVisibility: true,
+    canary: true,
+    reasoning: true,
+    vision: true,
+    type: "ChatGPT",
+  },
+  "gemini-2.0-flash-001": {
     displayName: "Gemini 2.0 Flash",
     knowledgeCutoff: "2024/06",
     defaultVisibility: true,
@@ -73,10 +83,24 @@ export const modelDescriptions: modelDescriptionType = {
     fast: true,
     type: "Gemini",
   },
+  "claude-3-7-sonnet-20250219": {
+    displayName: "Claude 3.7 Sonnet",
+    knowledgeCutoff: "2024/10",
+    defaultVisibility: true,
+    canary: true,
+    vision: true,
+    type: "Claude",
+  },
+  "claude-3.7-sonnet-thinking": {
+    displayName: "Claude 3.7 Sonnet (Reasoning)",
+    knowledgeCutoff: "2024/10",
+    canary: true,
+    vision: true,
+    type: "Claude",
+  },
   "anthropic.claude-3-5-sonnet-20241022-v2:0": {
     displayName: "Claude 3.5 Sonnet",
     knowledgeCutoff: "2024/04",
-    defaultVisibility: true,
     canary: true,
     vision: true,
     type: "Claude",
@@ -84,7 +108,6 @@ export const modelDescriptions: modelDescriptionType = {
   "DeepSeek-R1": {
     displayName: "DeepSeek R1",
     knowledgeCutoff: "2024/07",
-    defaultVisibility: true,
     offline: true,
     toolDisabled: true,
     reasoning: true,
@@ -94,26 +117,27 @@ export const modelDescriptions: modelDescriptionType = {
   "deepseek-r1-distill-llama-70b": {
     displayName: "DeepSeek R1 Distill",
     knowledgeCutoff: "2024/07",
+    defaultVisibility: true,
     reasoning: true,
     canary: true,
     toolDisabled: true,
     type: "DeepSeek",
   },
-  "DeepSeek-V3": {
-    displayName: "DeepSeek V3",
+  "DeepSeek-V3-0324": {
+    displayName: "DeepSeek V3 (03/24)",
     knowledgeCutoff: "2023/10",
+    fast: true,
     canary: true,
+    toolDisabled: true,
     type: "DeepSeek",
   },
   "grok-3": {
     displayName: "Grok 3",
     knowledgeCutoff: "-",
-    defaultVisibility: true,
     type: "Grok",
   },
   "grok-3-r1": {
     displayName: "Grok 3 (Think)",
-    defaultVisibility: true,
     knowledgeCutoff: "-",
     reasoning: true,
     type: "Grok",
