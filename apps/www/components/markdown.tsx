@@ -7,8 +7,6 @@ import {
   ReactNode,
 } from "react";
 import { ExtraProps } from "react-markdown";
-import SyntaxHighlighter from "react-syntax-highlighter";
-import { vs2015 } from "react-syntax-highlighter/dist/esm/styles/hljs";
 
 interface PreProps
   extends ClassAttributes<HTMLPreElement>,
@@ -48,25 +46,25 @@ export const Link = memo(({ href, children, ...props }: LinkProps) => {
 });
 Link.displayName = "Link";
 
-export const MemoizedHighlighter = memo(
-  ({ code, language }: { code: string; language: string }) => {
-    return (
-      <SyntaxHighlighter
-        language={language}
-        style={vs2015}
-        customStyle={{
-          padding: "1rem",
-          borderRadius: "0.75rem",
-          fontSize: "0.875rem",
-          lineHeight: "1.25rem",
-        }}
-      >
-        {code}
-      </SyntaxHighlighter>
-    );
-  }
-);
-MemoizedHighlighter.displayName = "MemoizedHighlighter";
+// export const MemoizedHighlighter = memo(
+//   ({ code, language }: { code: string; language: string }) => {
+//     return (
+//       <SyntaxHighlighter
+//         language={language}
+//         style={vs2015}
+//         customStyle={{
+//           padding: "1rem",
+//           borderRadius: "0.75rem",
+//           fontSize: "0.875rem",
+//           lineHeight: "1.25rem",
+//         }}
+//       >
+//         {code}
+//       </SyntaxHighlighter>
+//     );
+//   }
+// );
+// MemoizedHighlighter.displayName = "MemoizedHighlighter";
 
 export const Pre = memo(({ children, ...props }: PreProps) => {
   const [copied, setCopied] = useState(false);
