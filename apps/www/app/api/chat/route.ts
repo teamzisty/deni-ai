@@ -6,7 +6,6 @@ import { getSystemPrompt } from "@/lib/systemPrompt";
 import { authAdmin, notAvailable } from "@/lib/firebase/server";
 import { createVoidsOAI } from "@repo/voids-oai-provider/src/index";
 import { createVoidsAP } from "@repo/voids-ap-provider/src/index";
-import { AnthropicProviderOptions } from "@ai-sdk/anthropic";
 import {
   convertToCoreMessages,
   createDataStreamResponse,
@@ -248,7 +247,7 @@ export async function POST(req: Request) {
             ...(isReasoning && {
               anthropic: {
                 thinking: { type: "enabled", budgetTokens: 32000 },
-              } satisfies AnthropicProviderOptions,
+              },
             }),
           },
           onChunk() {
