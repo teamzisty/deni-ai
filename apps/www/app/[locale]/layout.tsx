@@ -1,10 +1,16 @@
+import React from "react";
 import { getTranslations } from "next-intl/server";
 import { AuthProvider } from "../../context/AuthContext";
 import { ChatSessionsProvider } from "../../hooks/use-chat-sessions";
 import { Toaster } from "@repo/ui/components/sonner";
-import { NextIntlClientProvider, hasLocale } from "next-intl";
+import { Locale, NextIntlClientProvider, hasLocale } from "next-intl";
 import { notFound } from "next/navigation";
 import { routing } from "@/i18n/routing";
+
+type Props = {
+  children: React.ReactNode;
+  params: Promise<{ locale: Locale }>;
+};
 
 export async function generateMetadata() {
   const t = await getTranslations();
@@ -36,15 +42,9 @@ export async function generateMetadata() {
   };
 }
 
-export default async function LocaleLayout({
-  children,
-  params,
-}: {
-  children: React.ReactNode;
-  params: { locale: string };
-}) {
+export default async function LocaleLayout({ children, params }: Props) {
   // Ensure that the incoming `locale` is valid
-  const { locale } = params;
+  const { locale } = await params;
   if (!hasLocale(routing.locales, locale)) {
     notFound();
   }
