@@ -7,7 +7,7 @@ import {
   TabsList,
   TabsTrigger,
 } from "@repo/ui/components/tabs";
-import { Link } from 'next-view-transitions';
+import { Link } from "@/i18n/navigation";
 import { useParams, usePathname } from "next/navigation";
 import { useTranslations } from "next-intl";
 

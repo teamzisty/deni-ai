@@ -7,7 +7,7 @@ import { CircleDollarSign, LockIcon, MessageSquare } from "lucide-react";
 import { Button } from "@repo/ui/components/button";
 import { Header } from "@/components/header";
 import Image from "next/image";
-import { Link } from 'next-view-transitions';
+import { Link } from "@/i18n/navigation";
 import {
   Card,
   CardContent,

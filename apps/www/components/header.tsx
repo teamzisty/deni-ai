@@ -1,6 +1,6 @@
 "use client";
 
-import { Link } from 'next-view-transitions';
+import { Link } from "@/i18n/navigation";
 // import LanguageSwitcher from './LanguageSwitcher';
 
 import {
