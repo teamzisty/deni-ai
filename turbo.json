@@ -3,6 +3,7 @@
   "ui": "tui",
   "globalEnv": [
     "NODE_ENV",
+    "BRAVE_SEARCH_API_KEY",
     "FIREBASE_SERVICE_ACCOUNT_KEY"
   ],
   "tasks": {

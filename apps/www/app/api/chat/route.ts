@@ -25,9 +25,11 @@ export async function POST(req: Request) {
   try {
     const authorization = req.headers.get("Authorization");
     let {
+      // eslint-disable-next-line prefer-const
       messages,
       model,
       toolList,
+      // eslint-disable-next-line prefer-const
       reasoningEffort,
     }: {
       messages: UIMessage[];

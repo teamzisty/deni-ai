@@ -17,7 +17,7 @@ const getInitialVisibility = (): ModelVisibility => {
   }
   const initial: ModelVisibility = {};
   Object.keys(modelDescriptions).forEach((id) => {
-    initial[id] = modelDescriptions[id].defaultVisibility ?? false;
+    initial[id] = modelDescriptions[id]?.defaultVisibility ?? false;
   });
   return initial;
 };
