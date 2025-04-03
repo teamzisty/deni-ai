@@ -17,7 +17,7 @@ import {
   deleteDoc,
   Timestamp,
 } from "firebase/firestore";
-import { firestore } from "@/lib/firebase/config";
+import { firestore } from "@repo/firebase-config/client";
 import { useAuth } from "@/context/AuthContext";
 import { toast } from "sonner";
 

@@ -7,7 +7,7 @@ import { Button } from "@repo/ui/components/button";
 import { useChatSessions } from "@/hooks/use-chat-sessions";
 import { useRouter } from "@/i18n/navigation";
 import { Footer } from "@/components/footer";
-import { auth } from "@/lib/firebase/config";
+import { auth } from "@repo/firebase-config/client";
 import { Loading } from "@/components/loading";
 import { useTranslations } from "next-intl";
 

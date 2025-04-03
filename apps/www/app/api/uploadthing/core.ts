@@ -1,6 +1,6 @@
 import { createUploadthing, type FileRouter } from "uploadthing/next";
 import { UploadThingError } from "uploadthing/server";
-import { authAdmin, notAvailable } from "@/lib/firebase/server";
+import { authAdmin, notAvailable } from "@repo/firebase-config/server";
 import { DecodedIdToken } from "firebase-admin/auth";
 
 const f = createUploadthing();

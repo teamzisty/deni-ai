@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useRef, useState } from "react";
-import { auth } from "@/lib/firebase/config";
+import { auth } from "@repo/firebase-config/client";
 import { useTranslations } from "next-intl";
 import {
   signInWithEmailAndPassword,

@@ -2,7 +2,7 @@
 "use client";
 
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import { auth } from '@/lib/firebase/config';
+import { auth } from '@repo/firebase-config/client';
 import { User } from 'firebase/auth';
 
 interface AuthContextType {
