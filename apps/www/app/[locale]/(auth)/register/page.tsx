@@ -12,13 +12,14 @@ import {
 import { Button } from "@repo/ui/components/button";
 import { Label } from "@repo/ui/components/label";
 import { Input } from "@repo/ui/components/input";
-import { Separator } from "@repo/ui/components/separator";
 import { Link } from "@/i18n/navigation";
 import { cn } from "@/lib/utils";
 import { SiGithub, SiGoogle } from "@icons-pack/react-simple-icons";
+import { useParams } from "next/navigation";
 
 const Register: React.FC = () => {
-  const { t, language } = useTranslation();
+  const t = useTranslations();
+  const params = useParams();
   const noticeRef = useRef<HTMLLabelElement | null>(null);
   const [accountEmail, setEmail] = useState("");
   const [accountPassword, setPassword] = useState("");
@@ -78,10 +79,9 @@ const Register: React.FC = () => {
         } else if (errorCode === "auth/weak-password") {
           notice.textContent = t("register.weakPassword");
         } else {
-          notice.textContent = t("register.errorOccurred.replace")(
-            "{errorContent}",
-            errorContent
-          );
+          notice.textContent = t("register.errorOccurred.replace", {
+            errorContent: errorContent,
+          });
         }
       });
   };
@@ -162,7 +162,7 @@ const Register: React.FC = () => {
               </Button>
             </div>
             <p className="px-2 text-center text-sm text-muted-foreground">
-              {language === "ja" ? (
+              {params.language === "ja" ? (
                 <>
                   このサイトにログインすると、
                   <Link
