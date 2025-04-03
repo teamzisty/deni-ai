@@ -1,15 +1,7 @@
-# voids-oai-provider
+# `@repo/voids-oai-provider`
 
-To install dependencies:
+Voids OAI Provider is a package that provides an interface for interacting with voids.top OpenAI models.
 
-```bash
-bun install
-```
+## Project Structure
 
-To run:
-
-```bash
-bun run index.ts
-```
-
-This project was created using `bun init` in bun v1.2.7. [Bun](https://bun.sh) is a fast all-in-one JavaScript runtime.
+> Please referer to [OpenAI Compatible Providers: Writing a Custom Provider](https://sdk.vercel.ai/providers/openai-compatible-providers/custom-providers) and [Community Providers: Writing a Custom Provider](https://sdk.vercel.ai/providers/community-providers/custom-providers)

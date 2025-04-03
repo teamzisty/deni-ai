@@ -15,7 +15,7 @@ import { toast } from "sonner";
 import { Loading } from "@/components/loading";
 import { useChat } from "@ai-sdk/react";
 import { uploadResponse, useUploadThing } from "@/utils/uploadthing";
-import { auth } from "@/lib/firebase/config";
+import { auth } from "@repo/firebase-config/client";
 import { useRef, useState, useEffect, Suspense, memo } from "react";
 import ChatInput from "@/components/ChatInput";
 import HeaderArea from "@/components/HeaderArea";

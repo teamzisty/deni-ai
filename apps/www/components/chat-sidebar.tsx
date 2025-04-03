@@ -26,7 +26,7 @@ import {
   DrawerTrigger,
 } from "@repo/ui/components/drawer";
 import { Button } from "@repo/ui/components/button";
-import { auth } from "@/lib/firebase/config";
+import { auth } from "@repo/firebase-config/client";
 import { useEffect, useState } from "react";
 import { AccountDropdownMenu } from "./AccountDropdownMenu";
 import { User } from "firebase/auth";

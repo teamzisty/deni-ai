@@ -3,7 +3,7 @@ import {
   reasoningEffortType,
 } from "@/lib/modelDescriptions";
 import { getSystemPrompt } from "@/lib/systemPrompt";
-import { authAdmin, notAvailable } from "@/lib/firebase/server";
+import { authAdmin, notAvailable } from "@repo/firebase-config/server";
 import { createVoidsOAI } from "@repo/voids-oai-provider/src/index";
 import { createVoidsAP } from "@repo/voids-ap-provider/src/index";
 import {
