@@ -26,7 +26,7 @@ You can enhance your instance's functionality by modifying environment variables
 | `NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET` | Firebase storage bucket. |
 | `NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID` | Firebase messaging sender ID. |
 | `FIREBASE_SERVICE_ACCOUNT_KEY` | Key for server-side Firebase usage. |
-| `BRAVE_SERACH_API_KEY` | Brave Search API key. |
+| `BRAVE_SEARCH_API_KEY` | Brave Search API key. |
 | `UPLOADTHING_TOKEN` | UploadThing token. |
 
 ## Changing the Brand Name
