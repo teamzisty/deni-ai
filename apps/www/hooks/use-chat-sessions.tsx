@@ -17,7 +17,7 @@ import {
   deleteDoc,
   Timestamp,
 } from "firebase/firestore";
-import { firestore } from "@repo/firebase-config/client";
+import { auth, firestore } from "@repo/firebase-config/client";
 import { useAuth } from "@/context/AuthContext";
 import { toast } from "sonner";
 
@@ -57,7 +57,9 @@ export function ChatSessionsProvider({ children }: { children: ReactNode }) {
   const router = useRouter();
   const { user } = useAuth();
   const [sessions, setSessions] = useState<ChatSession[]>([]);
-  const [currentSession, setCurrentSession] = useState<ChatSession | null>(null);
+  const [currentSession, setCurrentSession] = useState<ChatSession | null>(
+    null
+  );
 
   // クライアントサイドでのみlocalStorageからデータを読み込む
   useEffect(() => {
@@ -65,7 +67,7 @@ export function ChatSessionsProvider({ children }: { children: ReactNode }) {
       // 言語変更時に一時保存されたデータがあるか確認
       const tempSessions = sessionStorage.getItem("temp_chatSessions");
       const tempCurrentSession = sessionStorage.getItem("temp_currentSession");
-      
+
       // 一時保存データがある場合はそれを使用し、LocalStorageに保存
       if (tempSessions && tempSessions !== "[]") {
         const parsedSessions = JSON.parse(tempSessions);
@@ -86,7 +88,7 @@ export function ChatSessionsProvider({ children }: { children: ReactNode }) {
           }
         }
       }
-      
+
       // 現在のセッションも同様に処理
       if (tempCurrentSession && tempCurrentSession !== "null") {
         setCurrentSession(JSON.parse(tempCurrentSession));
@@ -130,13 +132,19 @@ export function ChatSessionsProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     try {
       if (currentSession) {
-        localStorage.setItem("currentChatSession", JSON.stringify(currentSession));
+        localStorage.setItem(
+          "currentChatSession",
+          JSON.stringify(currentSession)
+        );
       } else {
         // 現在のLocalStorageの値を確認
         const currentSessionValue = localStorage.getItem("currentChatSession");
         // 現在の値が存在し、nullでない場合は上書きしない
         if (!currentSessionValue || currentSessionValue === "null") {
-          localStorage.setItem("currentChatSession", JSON.stringify(currentSession));
+          localStorage.setItem(
+            "currentChatSession",
+            JSON.stringify(currentSession)
+          );
         }
       }
     } catch (error) {
@@ -172,7 +180,7 @@ export function ChatSessionsProvider({ children }: { children: ReactNode }) {
     sessions.find((session) => session.id === id);
 
   const deleteSession = async (id: string) => {
-    if (user) {
+    if (user && auth && firestore) {
       try {
         const sessionRef = doc(
           firestore,
@@ -204,6 +212,8 @@ export function ChatSessionsProvider({ children }: { children: ReactNode }) {
 
   const syncSessions = async () => {
     if (!user) return;
+    if (!firestore) return;
+    if (!auth) return;
 
     try {
       // Firestoreからセッションを取得
@@ -249,6 +259,10 @@ export function ChatSessionsProvider({ children }: { children: ReactNode }) {
 
       // マージされたセッションをFirestoreに保存
       const savePromises = mergedSessions.map(async (session) => {
+        if (!firestore) return;
+        if (!user) return;
+        if (!auth) return;
+
         const sessionRef = doc(
           firestore,
           `deni-ai-conversations/${user.uid}/sessions/${session.id}`
