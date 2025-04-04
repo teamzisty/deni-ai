@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { auth } from "@repo/firebase-config/client";
 import { useTranslations } from "next-intl";
 import {
@@ -30,27 +30,42 @@ import {
   InputOTPSeparator,
   InputOTPSlot,
 } from "@repo/ui/components/input-otp";
-import { Link } from "@/i18n/navigation";
+import { Link, useRouter } from "@/i18n/navigation";
 import { cn } from "@/lib/utils";
 import { SiGithub, SiGoogle } from "@icons-pack/react-simple-icons";
 import { useParams } from "next/navigation";
+import { toast } from "sonner";
+import { useAuth } from "@/context/AuthContext";
 
 const Login: React.FC = () => {
   const t = useTranslations();
   const noticeRef = useRef<HTMLLabelElement | null>(null);
+  const { user, isLoading } = useAuth();
   const dialogPromiseRef = useRef<{ resolve: (value: string) => void } | null>(
     null
   );
   const params = useParams();
+
+  const router = useRouter();
 
   const [twoFaCode, setTwoFaCode] = useState(""); // 2FAコードの状態
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [accountEmail, setEmail] = useState("");
   const [accountPassword, setPassword] = useState("");
 
-  auth.onAuthStateChanged((user) => {
-    if (user) window.location.pathname = "/home";
-  });
+  useEffect(() => {
+    if (!auth && !isLoading) {
+      toast.error(t("login.authError"), {
+        description: t("login.authErrorDescription"),
+      });
+      router.push("/home");
+    }
+
+    if (user && !isLoading) {
+      router.push("/home");
+    }
+  }, [user, isLoading, router, t]);
+
   const request2FaCode = () => {
     return new Promise<string>((resolve) => {
       // ダイアログを開く
@@ -71,10 +86,12 @@ const Login: React.FC = () => {
   };
 
   const signInWithGoogle = () => {
+    if (!auth) return;
+
     const provider = new GoogleAuthProvider();
     signInWithPopup(auth, provider)
       .then(() => {
-        window.location.pathname = "/home";
+        router.push("/home")
       })
       .catch((error) => {
         const errorCode = error.code;
@@ -87,10 +104,12 @@ const Login: React.FC = () => {
   };
 
   const signInWithGitHub = () => {
+    if (!auth) return;
+
     const provider = new GithubAuthProvider();
     signInWithPopup(auth, provider)
       .then(() => {
-        window.location.pathname = "/home";
+        router.push("/home")
       })
       .catch((error) => {
         const errorCode = error.code;
@@ -103,13 +122,17 @@ const Login: React.FC = () => {
   };
 
   const loginClicked = async () => {
+    if (!auth) return;
+
     if (!noticeRef.current) return;
     const notice = noticeRef.current;
     signInWithEmailAndPassword(auth, accountEmail, accountPassword)
       .then(() => {
-        window.location.pathname = "/home";
+        router.push("/home");
       })
       .catch(async (error) => {
+        if (!auth) return;
+
         const errorCode = error.code;
         const errorContent = error.message;
 
@@ -160,7 +183,9 @@ const Login: React.FC = () => {
         } else if (errorCode == "auth/user-disabled") {
           notice.textContent = t("login.accountDisabled");
         } else {
-          notice.textContent = t("login.otherError.replace", {errorContent: errorContent});
+          notice.textContent = t("login.otherError.replace", {
+            errorContent: errorContent,
+          });
         }
       });
   };
@@ -212,11 +237,7 @@ const Login: React.FC = () => {
               />
             </div>
             <Label ref={noticeRef} className="text-red-500"></Label>
-            <Button
-              type="submit"
-              className="w-full"
-              onClick={loginClicked}
-            >
+            <Button type="submit" className="w-full" onClick={loginClicked}>
               {t("login.loginButton")}
             </Button>
 

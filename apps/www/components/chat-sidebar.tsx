@@ -25,14 +25,15 @@ import {
   DrawerTitle,
   DrawerTrigger,
 } from "@repo/ui/components/drawer";
+import { useRouter } from "@/i18n/navigation";
 import { Button } from "@repo/ui/components/button";
-import { auth } from "@repo/firebase-config/client";
+import { toast } from "sonner";
 import { useEffect, useState } from "react";
 import { AccountDropdownMenu } from "./AccountDropdownMenu";
-import { User } from "firebase/auth";
 import { ChatContextMenu } from "./context-menu";
 import { buildInfo } from "@/lib/version";
 import { useTranslations } from "next-intl";
+import { useAuth } from "@/context/AuthContext";
 
 interface GroupedSessions {
   today: ChatSession[];
@@ -172,28 +173,46 @@ function ChatSidebarMenuSession() {
 }
 
 function ChatSidebarMenuFooter() {
-  const [user, setUser] = useState<User | null>(null);
+  const { user, isLoading, auth } = useAuth();
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [isDisabled, setIsDisabled] = useState(false);
+  const router = useRouter();
+  const t = useTranslations();
 
   useEffect(() => {
-    const unsubscribe = auth.onAuthStateChanged((user) => {
-      setUser(user);
+    if (!auth && !isLoading) {
+      setIsLoggedIn(false);
+      setIsDisabled(true);
+      return;
+    }
+
+    if (auth && !isLoading) {
       setIsLoggedIn(!!user);
-    });
-    return () => unsubscribe();
-  }, []);
+      setIsDisabled(false);
+    }
+  }, [isLoading, auth, user]);
 
   const handleAuth = async () => {
-    if (isLoggedIn) {
+    if (isLoggedIn && auth) {
       await auth.signOut();
     } else {
-      window.location.href = "/login";
+      if (isDisabled) {
+        toast.error(t("account.error"), {
+          description: t("account.authDisabled"),
+        });
+        return;
+      }
+      router.push("/login");
     }
   };
 
+  if (isLoading) {
+    return null;
+  }
+
   return (
     <SidebarMenu className="mt-auto mb-3 gap-3">
-      <AccountDropdownMenu user={user} handleAuth={handleAuth} />
+      <AccountDropdownMenu user={user} isDisabled={isDisabled} handleAuth={handleAuth} />
     </SidebarMenu>
   );
 }

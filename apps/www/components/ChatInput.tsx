@@ -16,6 +16,8 @@ interface ChatInputProps {
   image: string | null;
   model: string;
   isUploading: boolean;
+  stop: () => void;
+  generating: boolean;
   searchEnabled: boolean;
   advancedSearch: boolean;
   modelDescriptions: Record<string, ModelDescription>;
@@ -35,6 +37,8 @@ const ChatInput = memo(
     input,
     image,
     model,
+    stop,
+    generating,
     isUploading,
     searchEnabled,
     advancedSearch,
@@ -58,6 +62,8 @@ const ChatInput = memo(
         />
         <InputBox
           input={input}
+          stop={stop}
+          generating={generating}
           handleInputChange={handleInputChange}
           handleSendMessage={handleSendMessage}
           handleSendMessageKey={handleSendMessageKey}
@@ -99,6 +105,7 @@ const ChatInput = memo(
       prevProps.advancedSearch === nextProps.advancedSearch &&
       prevProps.isUploading === nextProps.isUploading &&
       prevProps.model === nextProps.model &&
+      prevProps.generating === nextProps.generating &&
       JSON.stringify(prevProps.modelDescriptions) ===
         JSON.stringify(nextProps.modelDescriptions)
     );

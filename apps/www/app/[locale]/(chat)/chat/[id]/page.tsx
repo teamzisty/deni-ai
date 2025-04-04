@@ -22,6 +22,7 @@ import HeaderArea from "@/components/HeaderArea";
 import { ChatRequestOptions, UIMessage } from "ai";
 import logger from "@/utils/logger";
 import { useAuth } from "@/context/AuthContext";
+import { useTranslations } from "next-intl";
 
 interface MessageListProps {
   messages: UIMessage[];
@@ -60,7 +61,9 @@ MemoizedMessageList.displayName = "MemoizedMessageList";
 
 const ChatApp: React.FC = () => {
   const { updateSession, getSession } = useChatSessions();
-  const { user, isLoading } = useAuth();
+  const { user, isLoading, auth } = useAuth();
+
+  const t = useTranslations();
 
   const params = useParams<{ id: string }>();
   const currentSession = getSession(params.id);
@@ -108,7 +111,7 @@ const ChatApp: React.FC = () => {
 
   const { isUploading, startUpload } = useUploadThing("imageUploader", {
     headers: {
-      Authorization: currentAuthToken || "",
+      Authorization: auth ? currentAuthToken || "" : "",
     },
     onClientUploadComplete: (res) => {
       setImage(res[0]?.ufsUrl || null);
@@ -255,6 +258,7 @@ const ChatApp: React.FC = () => {
       | React.KeyboardEvent<HTMLTextAreaElement>
   ) => {
     if (!currentSession || !input) return;
+    if (status === "streaming" || status === "submitted") return;
 
     let newAvailableTools = [];
 
@@ -276,16 +280,14 @@ const ChatApp: React.FC = () => {
           : undefined,
       };
 
-      if (auth.currentUser) {
-        const idToken = await auth.currentUser.getIdToken();
-        if (!idToken) {
-          throw new Error("IDトークンの取得に失敗しました。");
+      if (auth) {
+        if (user) {
+          const idToken = await user.getIdToken();
+          if (!idToken) {
+            throw new Error("IDトークンの取得に失敗しました。");
+          }
+          submitOptions.headers = { Authorization: idToken };
         }
-        submitOptions.headers = { Authorization: idToken };
-      } else if (modelDescriptions[model]?.canary) {
-        throw new Error(
-          "このモデルを使用するには、ログインする必要があります。"
-        );
       }
 
       handleSubmit(event, submitOptions);
@@ -328,7 +330,24 @@ const ChatApp: React.FC = () => {
         return;
       }
 
-      auth.currentUser?.getIdToken().then((idToken) => {
+      async function upload() {
+        if (!file) {
+          resolve({
+            status: "error",
+            error: {
+              message: "ファイルが設定されていません",
+              code: "file_not_selected",
+            },
+          });
+          return;
+        }
+
+        let idToken;
+
+        if (auth && user) {
+          idToken = await user.getIdToken();
+        }
+
         if (idToken) {
           setCurrentAuthToken(idToken);
         }
@@ -379,7 +398,8 @@ const ChatApp: React.FC = () => {
             });
           }
         }, 1000);
-      });
+      }
+      upload();
     });
   };
 
@@ -473,8 +493,8 @@ const ChatApp: React.FC = () => {
                     <div className="p-2 my-2 rounded-lg text-white w-full">
                       <div className="ml-3 animate-pulse">
                         {modelDescriptions[model]?.reasoning
-                          ? "推論中..."
-                          : "考え中..."}
+                          ? t("messageLog.reasoning")
+                          : t("messageLog.thinking")}
                       </div>
                     </div>
                   </div>
@@ -488,6 +508,8 @@ const ChatApp: React.FC = () => {
       <ChatInput
         input={input}
         image={image}
+        stop={stop}
+        generating={status == "submitted" || status == "streaming"}
         isUploading={isUploading}
         searchEnabled={searchEnabled}
         advancedSearch={advancedSearch}

@@ -19,6 +19,7 @@ import {
 import { JSDOM } from "jsdom";
 import { NextResponse } from "next/server";
 import { z } from "zod";
+import { auth } from "@repo/firebase-config/client";
 
 export async function POST(req: Request) {
   try {
@@ -41,21 +42,23 @@ export async function POST(req: Request) {
       return Response.json({ error: "Invalid request" });
     }
 
-    if (!authorization || notAvailable) {
+    if (auth && (!authorization || notAvailable)) {
       return Response.json({ error: "Authorization failed" });
     }
 
-    authAdmin
-      ?.verifyIdToken(authorization)
-      .then((decodedToken) => {
-        if (!decodedToken) {
+    if (auth && authorization) {
+      authAdmin
+        ?.verifyIdToken(authorization)
+        .then((decodedToken) => {
+          if (!decodedToken) {
+            return Response.json({ error: "Authorization failed" });
+          }
+        })
+        .catch((error) => {
+          console.error(error);
           return Response.json({ error: "Authorization failed" });
-        }
-      })
-      .catch((error) => {
-        console.error(error);
-        return Response.json({ error: "Authorization failed" });
-      });
+        });
+    }
 
     const modelDescription = modelDescriptions[model];
     const isReasoning = model.endsWith("-reasoning");
@@ -128,6 +131,9 @@ export async function POST(req: Request) {
                 query: z.string().describe("Query to search for."),
               }),
               execute: async ({ query }) => {
+                if (!process.env.BRAVE_SEARCH_API_KEY) {
+                  return "Search is temporarily disabled or not available in your instance.";
+                }
                 const results = await fetch(
                   `https://api.search.brave.com/res/v1/web/search?q=${query}`,
                   {

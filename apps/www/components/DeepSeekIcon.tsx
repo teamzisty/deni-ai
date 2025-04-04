@@ -12,7 +12,7 @@ export const DeepSeekIcon: React.FunctionComponent<DeepSeekIconProps> = ({
 }) => (
   <svg
     fill={color}
-    fill-rule="evenodd"
+    fillRule="evenodd"
     height={size}
     viewBox="0 0 24 24"
     width={size}

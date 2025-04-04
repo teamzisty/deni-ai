@@ -19,6 +19,7 @@ import { useTranslations } from "next-intl";
 import { useRouter } from "@/i18n/navigation";
 import { useRouter as nextRouter } from "next/navigation";
 import { useParams } from "next/navigation";
+import { auth } from "@repo/firebase-config/client";
 
 export default function SettingsPage() {
   const { sessions, deleteSession, addSession } = useChatSessions();
@@ -31,10 +32,10 @@ export default function SettingsPage() {
   const NextRouter = nextRouter();
 
   useEffect(() => {
-    if (!user && !isLoading) {
-      window.location.href = "/login";
+    if (auth && !user && !isLoading) {
+      router.push("/login");
     }
-  }, [user, isLoading]);
+  }, [user, isLoading, router]);
 
   const exportAllConversion = () => {
     const conversionsArray: ChatSession[] = [];
@@ -218,17 +219,25 @@ export default function SettingsPage() {
                   <DropdownMenuItem
                     onClick={() => {
                       // 言語変更前にLocalStorageのデータを確保
-                      const currentSessions = localStorage.getItem("chatSessions");
-                      const currentSession = localStorage.getItem("currentChatSession");
-                      
+                      const currentSessions =
+                        localStorage.getItem("chatSessions");
+                      const currentSession =
+                        localStorage.getItem("currentChatSession");
+
                       // 言語変更後に使用するためにセッションデータをsessionStorageに一時保存
                       if (currentSessions && currentSessions !== "[]") {
-                        sessionStorage.setItem("temp_chatSessions", currentSessions);
+                        sessionStorage.setItem(
+                          "temp_chatSessions",
+                          currentSessions
+                        );
                       }
                       if (currentSession && currentSession !== "null") {
-                        sessionStorage.setItem("temp_currentSession", currentSession);
+                        sessionStorage.setItem(
+                          "temp_currentSession",
+                          currentSession
+                        );
                       }
-                      
+
                       // 言語変更ページへ移動
                       NextRouter.push("/ja/settings");
                     }}
@@ -239,17 +248,25 @@ export default function SettingsPage() {
                   <DropdownMenuItem
                     onClick={() => {
                       // 言語変更前にLocalStorageのデータを確保
-                      const currentSessions = localStorage.getItem("chatSessions");
-                      const currentSession = localStorage.getItem("currentChatSession");
-                      
+                      const currentSessions =
+                        localStorage.getItem("chatSessions");
+                      const currentSession =
+                        localStorage.getItem("currentChatSession");
+
                       // 言語変更後に使用するためにセッションデータをsessionStorageに一時保存
                       if (currentSessions && currentSessions !== "[]") {
-                        sessionStorage.setItem("temp_chatSessions", currentSessions);
+                        sessionStorage.setItem(
+                          "temp_chatSessions",
+                          currentSessions
+                        );
                       }
                       if (currentSession && currentSession !== "null") {
-                        sessionStorage.setItem("temp_currentSession", currentSession);
+                        sessionStorage.setItem(
+                          "temp_currentSession",
+                          currentSession
+                        );
                       }
-                      
+
                       // 言語変更ページへ移動
                       NextRouter.push("/en/settings");
                     }}

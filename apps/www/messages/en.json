@@ -120,6 +120,7 @@
         "syncConversationsDescription": "Synchronize your conversations with the cloud.",
         "syncing": "Syncing...",
         "sync": "Sync",
+        "authDisabled": "Authentication is temporarily disabled or not available in your instance.",
         "enterName": "Please enter a name",
         "nameChanged": "Name changed",
         "nameChangeFailed": "Failed to change name",

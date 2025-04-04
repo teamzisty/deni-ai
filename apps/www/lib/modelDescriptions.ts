@@ -161,7 +161,7 @@ export const modelDescriptions: modelDescriptionType = {
     type: "Gemini",
   },
   "us.anthropic.claude-3-7-sonnet-20250219-v1:0": {
-    displayName: "Claude 3.7 Sonnet",
+    displayName: "Claude 3.7 Sonnet (AM)",
     knowledgeCutoff: "2024/10",
     defaultVisibility: true,
     pdfSupport: true,

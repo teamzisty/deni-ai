@@ -1,6 +1,6 @@
 {
   "name": "deni-ai",
-  "version": "2.2.0",
+  "version": "2.2.1",
   "private": true,
   "workspaces": [
     "apps/*",
@@ -16,7 +16,7 @@
     "@repo/eslint-config": "workspace:*",
     "@repo/typescript-config": "workspace:*",
     "prettier": "^3.5.3",
-    "turbo": "^2.4.4",
+    "turbo": "^2.5.0",
     "typescript": "5.8.2"
   },
   "packageManager": "bun@1.2.7",
