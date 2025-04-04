@@ -48,7 +48,7 @@ cp .env.example .env.local
 
 :::tip
 
-If you want to use authentication and conversation sync features, edit the `.env.local` file and enter the required information. See the [Firebase Configuration](#firebase-configuration) section for details. (Or implement your own authentication and conversation sync)
+If you want to use authentication and conversation sync features, edit the `.env.local` file and enter the required information. See the [Firebase Configuration](#firebase-configuration-optional) section for details. (Or implement your own authentication and conversation sync)
 
 :::
 
@@ -74,7 +74,7 @@ Follow these steps to deploy to Vercel.
 
 :::tip
 
-If you want to use authentication and conversation sync features, edit the environment variables file in Vercel and enter the required information. See the [Firebase Configuration](#firebase-configuration) section for details. (Or implement your own authentication and conversation sync)
+If you want to use authentication and conversation sync features, edit the environment variables file in Vercel and enter the required information. See the [Firebase Configuration](#firebase-configuration-optional) section for details. (Or implement your own authentication and conversation sync)
 
 :::
 

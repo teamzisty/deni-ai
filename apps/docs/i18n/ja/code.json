@@ -309,5 +309,29 @@
   "theme.tags.tagsPageTitle": {
     "message": "タグ",
     "description": "The title of the tag list page"
+  },
+  "homepage.description": {
+    "message": "Deni AIは日常のタスクをサポートする強力なAIアシスタントです。",
+    "description": "The description of the Deni AI homepage"
+  },
+  "homepage.official.title": {
+    "message": "公式インスタンス",
+    "description": "The title of the official instance section"
+  },
+  "homepage.official.description": {
+    "message": "公式Deni AIインスタンスをお試しください",
+    "description": "The description of the official instance section"
+  },
+  "homepage.source.title": {
+    "message": "ソースコード",
+    "description": "The title of the source code section"
+  },
+  "homepage.source.description": {
+    "message": "GitHubでソースコードをご覧ください",
+    "description": "The description of the source code section"
+  },
+  "homepage.start.button": {
+    "message": "Deni AI を始める",
+    "description": "The text of the start button"
   }
 }

@@ -23,4 +23,4 @@ Deni AI の公式インスタンスを使うか、自分でインスタンスを
 
 ## 自分でインスタンスを作成する
 
-自分でインスタンスを作成する場合は、[こちら](/setup-guide/create-a-instance)を参照してください。
+自分でインスタンスを作成する場合は、[こちら](/docs/setup-guide/create-a-instance)を参照してください。

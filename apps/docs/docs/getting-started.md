@@ -23,4 +23,4 @@ If you want to use instances provided by others, please contact the instance pro
 
 ## Creating Your Own Instance
 
-If you want to create your own instance, please refer to [this guide](/setup-guide/create-a-instance).
+If you want to create your own instance, please refer to [this guide](/docs/setup-guide/create-a-instance).
