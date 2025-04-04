@@ -31,6 +31,11 @@ const ChatApp: React.FC = () => {
   };
 
   useEffect(() => {
+    if (!auth) {
+      setIsLoading(false);
+      return;
+    };
+    
     const event = auth.onAuthStateChanged((user) => {
       if (!user) {
         router.push("/login");

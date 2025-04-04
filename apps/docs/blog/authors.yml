@@ -1,0 +1,9 @@
+rai:
+  name: Rai san
+  title: Full-Stack Developer
+  url: https://github.com/raicdev
+  image_url: https://github.com/raicdev.png
+  page: true
+  socials:
+    x: raic_dev
+    github: raicdev

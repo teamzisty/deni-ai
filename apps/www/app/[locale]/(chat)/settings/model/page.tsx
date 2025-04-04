@@ -48,7 +48,7 @@ import { DeepSeekIcon } from "@/components/DeepSeekIcon";
 
 export default function ModelSettingsPage() {
   const { visibility, toggleModelVisibility } = useModelVisibility();
-  const { user, isLoading } = useAuth();
+  const { auth, user, isLoading } = useAuth();
   const t = useTranslations();
   const router = useRouter();
 
@@ -71,6 +71,12 @@ export default function ModelSettingsPage() {
   const activeFilterCount =
     Object.values(filters.types).filter(Boolean).length +
     Object.values(filters.features).filter(Boolean).length;
+
+  useEffect(() => {
+    if (auth && !user && !isLoading) {
+      router.push("/login");
+    }
+  }, [user, isLoading, router, auth]);
 
   interface Filters {
     types: Record<string, boolean>;
@@ -231,7 +237,10 @@ export default function ModelSettingsPage() {
                       checked={filters.types.DeepSeek}
                       onCheckedChange={() => toggleFilter("types", "DeepSeek")}
                     />
-                    <label htmlFor="DeepSeek" className="text-sm flex items-center">
+                    <label
+                      htmlFor="DeepSeek"
+                      className="text-sm flex items-center"
+                    >
                       <DeepSeekIcon size={14} className="mr-1" />
                       DeepSeek
                     </label>
@@ -266,7 +275,8 @@ export default function ModelSettingsPage() {
                       htmlFor="vision"
                       className="text-sm flex items-center"
                     >
-                      <Eye size={14} className="mr-1" /> {t("modelSettings.image")}
+                      <Eye size={14} className="mr-1" />{" "}
+                      {t("modelSettings.image")}
                     </label>
                   </div>
                   <div className="flex items-center space-x-2">
@@ -295,7 +305,8 @@ export default function ModelSettingsPage() {
                       htmlFor="offline"
                       className="text-sm flex items-center"
                     >
-                      <Ban size={14} className="mr-1" /> {t("modelSelector.offline")}
+                      <Ban size={14} className="mr-1" />{" "}
+                      {t("modelSelector.offline")}
                     </label>
                   </div>
                 </div>

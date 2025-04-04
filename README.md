@@ -1,6 +1,24 @@
+<img alt="Deni AI" src="apps/www/public/assets/icon.svg" width="128">
+
 # Deni AI
 
+<a href="https://voids.top/"><img alt="Powered by Voids.top" src="https://img.shields.io/badge/Powered_by_Voids.top-000000.svg?style=for-the-badge&labelColor=000"></a>
+<a href="https://github.com/raicdev/deni-ai" ><img alt="Preview CI" src="https://img.shields.io/github/deployments/raicdev/deni-ai/preview?style=for-the-badge&label=Preview"></a>
+<a href="https://github.com/raicdev/deni-ai" ><img alt="Production CI" src="https://img.shields.io/github/deployments/raicdev/deni-ai/production?style=for-the-badge&label=Production"></a>
+
+
 Deni AI is a versatile chat application that allows interaction with multiple AI models. Built with Next.js and Firebase, it provides an intuitive user interface.
+
+## Table of Contents
+
+- [Create Your Instance](#creating-your-instance)
+- [Key Features](#key-features)
+- [Project Structure](#project-structure)
+- [Q&A](#qa)
+
+## Creating Your Instance
+
+To create your own instance, visit [Docs](https://deni-ai-docs.vercel.app/docs/).
 
 ## Key Features
 
@@ -27,93 +45,35 @@ This project uses a Turbo repository monorepo structure:
     └── voids-oai-provider  # OpenAI compatible provider integration package
 ```
 
+## Credit
+
+- [Next.js](https://nextjs.org/) - React framework for server-rendered applications
+- [Tailwind CSS](https://tailwindcss.com/) - Utility-first CSS framework
+- [Firebase](https://firebase.google.com/) - Backend-as-a-Service platform
+- [Uploadthing](https://uploadthing.com/) - Image upload service
+- [voids.top](https://voids.top/) - AI model provider
+
 ## Tech Stack
 
 - **Frontend**: Next.js, React, TypeScript
+- **AI SDK**: Vercel AI SDK
 - **Styling**: Tailwind CSS
 - **Backend**: Next.js API Routes
 - **Authentication**: Firebase Authentication
 - **Database**: Firebase Firestore
 - **Deployment**: Vercel (recommended)
 
-## Creating Your Instance
+## Q&A
 
-### Prerequisites
+### Q: What is the purpose of this project?
 
-- Node.js (v18.18.0) or later
-- Bun (v1.2.7) or later
-- Firebase Project Configuration (See "Firebase Configuration" below)
-- (Optional) Brave Search API Key (for search)
-- (Optional) Uploadthing Token (for image upload)s
+A: This project aims to provide a user-friendly chat interface for interacting with AI models and make AI models accessible to many people.
 
-#### Firebase Configuration
+### Q: How can I contribute to this project?
 
-1. Create a Firebase project.
-2. Enable Firebase Authentication and Firestore.
-3. Configure Firebase SDK in the `.env.local` file.
-4. (Optional) Create `deni-ai-conversation` collection in Firestore.
+A: Contributions are welcome! Please refer to the [Contributing Guidelines](CONTRIBUTING.md) for more details.
 
-### Setup (Common)
+### Q: How can I report a bug or suggest a feature?
 
-- Clone the repository:
+A: Please use the [Issue Tracker](https://github.com/raicdev/deni-ai/issues) to report bugs or suggest features.
 
-```bash
-# Clone the repository
-git clone https://github.com/raicdev/deni-ai.git
-cd deni-ai
-```
-
-- Install dependencies:
-
-```bash
-# Install dependencies
-bun install
-```
-
-### Setup (Locally)
-
-- Configure environment variables:
-
-```bash
-cd apps/www
-
-# Copy the .env.example file and rename it to .env.local
-cp .env.example .env.local
-```
-
-> ***Note***: You must to edit the .env.local file and fill in the necessary information. For more information, please refer to the [Firebase Configuration](#firebase-configuration) section.
-
-- Start development server:
-```bash
-# Start development server
-bun dev
-```
-
-Open [http://localhost:3000](http://localhost:3000) in your browser to check the application.
-
-### Setup (Deploy to Vercel)
-
-#### Prerequisites
-
-- Vercel account
-- New Vercel project
-- Vercel CLI installed
-
-#### Steps
-
-- Configure environment variables:
-> ***Note***: You must to edit the Vercel Environment variables and fill in the necessary information. For more information, please refer to the [Firebase Configuration](#firebase-configuration) section.
-
-- Deploy to Vercel:
-```bash
-# Deploy to Vercel
-vercel
-```
-
-### Setup (Other Platforms)
-
-- Configure environment variables:
-> ***Note***: You must to edit the Your platform variables and fill in the necessary information. For more information, please refer to the [Firebase Configuration](#firebase-configuration) section.
-
-- Deploy to Your platform:
-> Please referer to the documentation of Your platform.

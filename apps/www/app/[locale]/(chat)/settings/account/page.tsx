@@ -15,6 +15,7 @@ import { uploadResponse, useUploadThing } from "@/utils/uploadthing";
 import logger from "@/utils/logger";
 import React from "react";
 import { useTranslations } from "next-intl";
+import { auth } from "@repo/firebase-config/client";
 
 export default function AccountSettingsPage() {
   const { user, isLoading } = useAuth();
@@ -64,6 +65,15 @@ export default function AccountSettingsPage() {
     const privacyMode = window.localStorage.getItem("privacyMode");
     setPrivacyMode(privacyMode === "true");
 
+    if (!auth && !isLoading) {
+      toast.error(t("account.error"), {
+        description: t("account.authDisabled"),
+      });
+
+      router.push("/home");
+      return;
+    }
+
     if (!user && !isLoading) {
       router.push("/");
     }
@@ -72,7 +82,7 @@ export default function AccountSettingsPage() {
       setIsLogged(true);
       setName(privacyMode ? user.displayName || "" : "");
     }
-  }, [user, isLoading, router]);
+  }, [user, isLoading, router, t]);
 
   const uploadImage = (file?: File) => {
     return new Promise<uploadResponse>((resolve) => {
@@ -241,13 +251,17 @@ export default function AccountSettingsPage() {
                   placeholder={t("account.yourName")}
                   onChange={(e) => setName(e.target?.value)}
                 />
-                <Button onClick={handleChangeName}>{t("account.change")}</Button>
+                <Button onClick={handleChangeName}>
+                  {t("account.change")}
+                </Button>
               </div>
             </div>
             <Separator className="mx-3 !w-[96%]" />
             <div className="flex p-4 items-center gap-2">
               <div>
-                <h3 className="text-lg font-bold">{t("account.changeAvatar")}</h3>
+                <h3 className="text-lg font-bold">
+                  {t("account.changeAvatar")}
+                </h3>
                 <p className="text-sm text-muted-foreground">
                   {t("account.changeAvatarDescription")}
                 </p>
@@ -260,13 +274,20 @@ export default function AccountSettingsPage() {
                   onChange={handleAvatarChange}
                   className="hidden"
                 />
-                <Button disabled={isUploading} onClick={() => fileInputRef.current?.click()}>{t("account.change")}</Button>
+                <Button
+                  disabled={isUploading}
+                  onClick={() => fileInputRef.current?.click()}
+                >
+                  {t("account.change")}
+                </Button>
               </div>
             </div>
             <Separator className="mx-3 !w-[96%]" />
             <div className="flex p-4 items-center gap-2">
               <div>
-                <h3 className="text-lg font-bold">{t("account.privacyMode")}</h3>
+                <h3 className="text-lg font-bold">
+                  {t("account.privacyMode")}
+                </h3>
                 <p className="text-sm text-muted-foreground">
                   {t("account.privacyModeDescription")}
                 </p>
@@ -281,7 +302,9 @@ export default function AccountSettingsPage() {
             <Separator className="mx-3 !w-[96%]" />
             <div className="flex p-4 items-center gap-2">
               <div>
-                <h3 className="text-lg font-bold">{t("account.syncConversations")}</h3>
+                <h3 className="text-lg font-bold">
+                  {t("account.syncConversations")}
+                </h3>
                 <p className="text-sm text-muted-foreground">
                   {t("account.syncConversationsDescription")}
                 </p>

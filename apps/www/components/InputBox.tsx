@@ -1,10 +1,12 @@
 import { Button } from "@repo/ui/components/button";
-import { SendHorizonal } from "lucide-react";
+import { SendHorizonal, StopCircle } from "lucide-react";
 import { memo } from "react";
 import { useTranslations } from "next-intl";
 
 interface InputBoxProps {
   input: string;
+  stop: () => void;
+  generating: boolean;
   handleInputChange: (e: React.ChangeEvent<HTMLTextAreaElement>) => void;
   handleSendMessage: (e: React.MouseEvent<HTMLButtonElement>) => void;
   handleSendMessageKey: (e: React.KeyboardEvent<HTMLTextAreaElement>) => void;
@@ -14,13 +16,15 @@ interface InputBoxProps {
 const InputBox: React.FC<InputBoxProps> = memo(
   ({
     input,
+    stop,
+    generating,
     handleInputChange,
     handleSendMessage,
     handleSendMessageKey,
     handleImagePaste,
   }) => {
     const t = useTranslations();
-    
+
     return (
       <div className="flex items-center mb-2" onPaste={handleImagePaste}>
         <div className="flex items-center w-full mb-2">
@@ -39,9 +43,9 @@ const InputBox: React.FC<InputBoxProps> = memo(
             aria-label={t("inputBox.send")}
             className="mr-3"
             size="icon"
-            onClick={(e) => handleSendMessage(e)}
+            onClick={(e) => (generating ? stop() : handleSendMessage(e))}
           >
-            <SendHorizonal />
+            {generating ? <StopCircle /> : <SendHorizonal />}
           </Button>
         </div>
       </div>

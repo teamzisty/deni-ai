@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { auth } from "@repo/firebase-config/client";
 import { useTranslations } from "next-intl";
 import {
@@ -12,27 +12,42 @@ import {
 import { Button } from "@repo/ui/components/button";
 import { Label } from "@repo/ui/components/label";
 import { Input } from "@repo/ui/components/input";
-import { Link } from "@/i18n/navigation";
+import { Link, useRouter } from "@/i18n/navigation";
 import { cn } from "@/lib/utils";
+import { toast } from "sonner";
 import { SiGithub, SiGoogle } from "@icons-pack/react-simple-icons";
 import { useParams } from "next/navigation";
+import { useAuth } from "@/context/AuthContext";
 
 const Register: React.FC = () => {
   const t = useTranslations();
   const params = useParams();
+  const router = useRouter();
+  const { auth, user, isLoading } = useAuth();
   const noticeRef = useRef<HTMLLabelElement | null>(null);
   const [accountEmail, setEmail] = useState("");
   const [accountPassword, setPassword] = useState("");
 
-  auth.onAuthStateChanged((user) => {
-    if (user) window.location.pathname = "/home";
-  });
+  useEffect(() => {
+    if (!auth && !isLoading) {
+      toast.error(t("login.authError"), {
+        description: t("login.authErrorDescription"),
+      });
+      router.push("/home");
+    }
+
+    if (user && !isLoading) {
+      router.push("/home");
+    }
+  }, [user, isLoading, router, t, auth]);
 
   const registerWithGoogle = () => {
+    if (!auth) return;
+
     const provider = new GoogleAuthProvider();
     signInWithPopup(auth, provider)
       .then(() => {
-        window.location.pathname = "/account";
+        router.push("/home")
       })
       .catch((error) => {
         const errorCode = error.code;
@@ -45,10 +60,12 @@ const Register: React.FC = () => {
   };
 
   const registerWithGitHub = () => {
+    if (!auth) return;
+
     const provider = new GithubAuthProvider();
     signInWithPopup(auth, provider)
       .then(() => {
-        window.location.pathname = "/account";
+        router.push("/home")
       })
       .catch((error) => {
         const errorCode = error.code;
@@ -61,12 +78,14 @@ const Register: React.FC = () => {
   };
 
   const registerClicked = async () => {
+    if (!auth) return;
+
     if (!noticeRef.current) return;
     const notice = noticeRef.current;
 
     createUserWithEmailAndPassword(auth, accountEmail, accountPassword)
       .then(() => {
-        window.location.pathname = "/account";
+        router.push("/home")
       })
       .catch((error) => {
         const errorCode = error.code;
