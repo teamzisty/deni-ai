@@ -1,0 +1,9 @@
+{
+  "label": "Contribution",
+  "position": 3,
+  "link": {
+    "type": "generated-index",
+    "description": "This section contains the Contribution guides for the Deni AI.",
+    "slug": "/contribution"
+  }
+}

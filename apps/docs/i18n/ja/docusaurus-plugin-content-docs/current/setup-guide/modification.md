@@ -43,70 +43,7 @@ sidebar_position: 1
 
 ## 言語の作成
 
-このセクションでは、言語を作成する方法を説明します。
-
-- `apps/www/messages` ディレクトリにあなたの言語コードのjsonを作成します。 (例: `cn.json`, `en.json`)
-
-```json title="apps/www/messages/en.json"
-{
-  "layout": {
-    "title": "Deni AI",
-    "description": "Deni AI is a completely free chat app that uses AI models such as o1 and Claude 3.5 Sonnet.",
-    "locale": "en_US"
-  }
-  // .....
-}
-```
-
-- `apps/www/[locale]/layout.tsx` ファイルを編集して、言語を追加します。
-
-```tsx title="apps/www/en/layout.tsx"
-import React from "react";
-// ...
-
-export async function generateMetadata() {
-  const t = await getTranslations();
-
-  return {
-    // ...
-    alternates: {
-      canonical: "/",
-      languages: {
-        en: "/en", // ここに言語を追加
-        ja: "/ja",
-      },
-    },
-  };
-}
-```
-
-- `apps/www/[locale]/(chat)/settings/page.tsx` ファイルを編集して、言語を追加します。
-
-```tsx title="apps/www/[locale]/(chat)/settings/page.tsx"
-import React from "react";
-// ...
-// 210 lines ~
-<DropdownMenuContent align="end">
-  <DropdownMenuItem
-    onClick={() => {
-      // ...
-    }}
-  >
-    {t("settings.japanese")}{" "}
-    {language === "ja" && <Check className="ml-auto" />}
-  </DropdownMenuItem>
-
-  {/* ここに言語を追加 */}
-
-  <DropdownMenuItem
-    onClick={() => {
-      // ...
-    }}
-  >
-    {t("settings.english")} {language === "en" && <Check className="ml-auto" />}
-  </DropdownMenuItem>
-</DropdownMenuContent>;
-```
+貢献 -> 言語の追加と改善 を参照してください。
 
 ## API エンドポイントの変更
 

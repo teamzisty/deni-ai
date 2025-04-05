@@ -16,10 +16,6 @@ Deni AI is a versatile chat application that allows interaction with multiple AI
 - [Project Structure](#project-structure)
 - [Q&A](#qa)
 
-## Creating Your Instance
-
-To create your own instance, visit [Docs](https://deni-ai-docs.vercel.app/docs/).
-
 ## Key Features
 
 - 🤖 **Multiple AI Model Support**: Interact with various AI models
@@ -29,22 +25,6 @@ To create your own instance, visit [Docs](https://deni-ai-docs.vercel.app/docs/)
 - 🖼️ **Image Upload**: Share images during chat
 - 📱 **Responsive Design**: Optimized for mobile and desktop
 
-## Project Structure
-
-This project uses a Turbo repository monorepo structure:
-
-```
-├── apps
-│   └── www                 # Main Next.js web application
-└── packages
-    ├── eslint-config       # Shared ESLint Configuration
-    ├── firebase-config     # Firebase configuration
-    ├── typescript-config   # Shared TypeScript Configuration
-    ├── ui                  # Shared UI component library
-    ├── voids-ap-provider   # AI provider integration package
-    └── voids-oai-provider  # OpenAI compatible provider integration package
-```
-
 ## Credit
 
 - [Next.js](https://nextjs.org/) - React framework for server-rendered applications
@@ -52,6 +32,14 @@ This project uses a Turbo repository monorepo structure:
 - [Firebase](https://firebase.google.com/) - Backend-as-a-Service platform
 - [Uploadthing](https://uploadthing.com/) - Image upload service
 - [voids.top](https://voids.top/) - AI model provider
+
+## Creating Your Instance
+
+To create your own instance, visit [Docs](https://deni-ai-docs.vercel.app/docs/).
+
+## Contributing
+
+For more information on contributing to this project, please refer to the [Contribution Guide](https://deni-ai-docs.vercel.app/docs/contribution/setup-repository).
 
 ## Tech Stack
 

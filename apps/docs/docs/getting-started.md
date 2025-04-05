@@ -10,10 +10,10 @@ You have several options to use Deni AI: use the official instance, create your 
 
 You can access the official instance [here](https://deni-ai.vercel.app/).
 
-| Feature | Details |
-| -------------------- | ------------------------------ |
-| Login Required | ✅ |
-| Provider | [voids.top](https://voids.top) |
+| Feature        | Details                        |
+| -------------- | ------------------------------ |
+| Login Required | ✅                             |
+| Provider       | [voids.top](https://voids.top) |
 
 Currently, login is required for antibot measures, but it will eventually become optional.
 
