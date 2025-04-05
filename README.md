@@ -9,12 +9,9 @@
 
 Deni AI is a versatile chat application that allows interaction with multiple AI models. Built with Next.js and Firebase, it provides an intuitive user interface.
 
-## Table of Contents
+## Getting Started
 
-- [Create Your Instance](#creating-your-instance)
-- [Key Features](#key-features)
-- [Project Structure](#project-structure)
-- [Q&A](#qa)
+To getting started, visit [Docs](https://deni-ai-docs.vercel.app/docs/).
 
 ## Key Features
 
@@ -32,14 +29,6 @@ Deni AI is a versatile chat application that allows interaction with multiple AI
 - [Firebase](https://firebase.google.com/) - Backend-as-a-Service platform
 - [Uploadthing](https://uploadthing.com/) - Image upload service
 - [voids.top](https://voids.top/) - AI model provider
-
-## Creating Your Instance
-
-To create your own instance, visit [Docs](https://deni-ai-docs.vercel.app/docs/).
-
-## Contributing
-
-For more information on contributing to this project, please refer to the [Contribution Guide](https://deni-ai-docs.vercel.app/docs/contribution/setup-repository).
 
 ## Tech Stack
 
@@ -64,4 +53,8 @@ A: Contributions are welcome! Please refer to the [Contributing Guidelines](CONT
 ### Q: How can I report a bug or suggest a feature?
 
 A: Please use the [Issue Tracker](https://github.com/raicdev/deni-ai/issues) to report bugs or suggest features.
+
+## Contributing
+
+For more information on contributing to this project, please refer to the [Contribution Guide](https://deni-ai-docs.vercel.app/docs/contribution/setup-repository).
 
