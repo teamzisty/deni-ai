@@ -15,8 +15,7 @@ import { toast } from "sonner";
 import { Loading } from "@/components/loading";
 import { useChat } from "@ai-sdk/react";
 import { uploadResponse, useUploadThing } from "@/utils/uploadthing";
-import { auth } from "@repo/firebase-config/client";
-import { useRef, useState, useEffect, Suspense, memo } from "react";
+import { useRef, useState, useEffect, Suspense, memo, useCallback } from "react";
 import ChatInput from "@/components/ChatInput";
 import HeaderArea from "@/components/HeaderArea";
 import { ChatRequestOptions, UIMessage } from "ai";
@@ -49,10 +48,31 @@ const MemoizedMessageList = memo(
     );
   },
   (prevProps, nextProps) => {
+    // セッションIDとエラーの比較
+    if (
+      prevProps.sessionId !== nextProps.sessionId ||
+      prevProps.error !== nextProps.error
+    ) {
+      return false;
+    }
+
+    // メッセージ配列の長さが異なる場合は再レンダリング
+    if (prevProps.messages.length !== nextProps.messages.length) {
+      return false;
+    }
+
+    // 最後のメッセージだけを比較（チャットでは通常最後のメッセージだけが変更される）
+    const prevLastMsg = prevProps.messages[prevProps.messages.length - 1];
+    const nextLastMsg = nextProps.messages[nextProps.messages.length - 1];
+    
+    if (!prevLastMsg || !nextLastMsg) {
+      return prevProps.messages.length === nextProps.messages.length;
+    }
+
+    // 最後のメッセージのIDと内容を比較
     return (
-      prevProps.sessionId === nextProps.sessionId &&
-      prevProps.error === nextProps.error &&
-      JSON.stringify(prevProps.messages) === JSON.stringify(nextProps.messages)
+      prevLastMsg.id === nextLastMsg.id &&
+      prevLastMsg.content === nextLastMsg.content
     );
   }
 );
@@ -100,7 +120,7 @@ const ChatApp: React.FC = () => {
     handleSubmit,
   } = useChat({
     onError: (error) => {
-      toast.error(error.message);
+      toast.error(String(error));
     },
     body: {
       toolList: availableTools,
@@ -194,8 +214,21 @@ const ChatApp: React.FC = () => {
     const timeoutId = setTimeout(() => {
       // 前回のメッセージと比較して変更があった場合のみ更新
       const prevMessages = currentSession.messages;
-      const hasChanges =
-        JSON.stringify(prevMessages) !== JSON.stringify(messages);
+      
+      // 最適化: JSON.stringifyを使わずに比較
+      let hasChanges = prevMessages.length !== messages.length;
+      
+      if (!hasChanges && messages.length > 0) {
+        // 最後のメッセージだけを比較
+        const lastPrevMsg = prevMessages[prevMessages.length - 1];
+        const lastNewMsg = messages[messages.length - 1];
+        
+        if (lastPrevMsg && lastNewMsg) {
+          hasChanges =
+            lastPrevMsg.id !== lastNewMsg.id ||
+            lastPrevMsg.content !== lastNewMsg.content;
+        }
+      }
 
       if (hasChanges) {
         updateSession(params.id, {
@@ -220,7 +253,7 @@ const ChatApp: React.FC = () => {
     }
   }, [messages, visionRequired]);
 
-  const handleModelChange = (newModel: string) => {
+  const handleModelChange = useCallback((newModel: string) => {
     if (!modelDescriptions[newModel]?.vision) {
       logger.warn(
         "handleModelChange",
@@ -236,7 +269,7 @@ const ChatApp: React.FC = () => {
 
     logger.info("handleModelChange", "Model changed to" + newModel);
     setModel(newModel);
-  };
+  }, []);
 
   const searchToggle = () => {
     setSearchEnabled((prev) => !prev);

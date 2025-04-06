@@ -14,17 +14,20 @@ import {
 import { useTheme } from "next-themes";
 import { useAuth } from "@/context/AuthContext";
 import { toast } from "sonner";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
 import { useRouter } from "@/i18n/navigation";
 import { useRouter as nextRouter } from "next/navigation";
 import { useParams } from "next/navigation";
 import { auth } from "@repo/firebase-config/client";
+import { Switch } from "@repo/ui/components/switch";
+import { Loading } from "@/components/loading";
 
 export default function SettingsPage() {
   const { sessions, deleteSession, addSession } = useChatSessions();
   const { user, isLoading } = useAuth();
   const { setTheme, theme } = useTheme();
+  const [ defaultTheme, setDefaultTheme ] = useState(false)
   const t = useTranslations();
   const params = useParams();
   const language = params.locale === "ja" ? "ja" : "en";
@@ -36,6 +39,25 @@ export default function SettingsPage() {
       router.push("/login");
     }
   }, [user, isLoading, router]);
+
+  useEffect(() => {
+    const defaultTheme = localStorage.getItem("defaultTheme");
+    if (defaultTheme === "true") {
+      setDefaultTheme(true);
+    } else {
+      setDefaultTheme(false);
+    }
+  }, [])
+
+  useEffect(() => {
+    if (defaultTheme) {
+      localStorage.setItem("defaultTheme", "true");
+      document.documentElement.setAttribute('data-default-theme', 'true');
+    } else {
+      localStorage.setItem("defaultTheme", "false");
+      document.documentElement.setAttribute('data-default-theme', 'false');
+    }
+  }, [defaultTheme])
 
   const exportAllConversion = () => {
     const conversionsArray: ChatSession[] = [];
@@ -119,13 +141,17 @@ export default function SettingsPage() {
     });
   };
 
+  if (isLoading) {
+    return <Loading />;
+  }
+
   return (
     <div className="space-y-6">
       <div>
         <label className="block text-sm font-medium mb-2">
           {t("settings.conversation")}
         </label>
-        <div className="w-full bg-secondary rounded-sm shadow mb-6">
+        <div className="w-full bg-card rounded-sm shadow mb-6">
           <div className="flex p-4 items-center gap-2">
             <div>
               <h3 className="text-lg font-bold">
@@ -172,7 +198,7 @@ export default function SettingsPage() {
         <label className="block text-sm font-medium mb-2">
           {t("settings.settings")}
         </label>
-        <div className="w-full bg-secondary rounded-sm shadow mb-6">
+        <div className="w-full bg-card rounded-sm shadow mb-6">
           <div className="flex p-4 items-center gap-2">
             <div>
               <h3 className="text-lg font-bold">{t("settings.appearance")}</h3>
@@ -200,6 +226,18 @@ export default function SettingsPage() {
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
+            </div>
+          </div>
+          <Separator className="!w-[96%] mx-auto" />
+          <div className="flex p-4 items-center gap-2">
+            <div>
+              <h3 className="text-lg font-bold">{t("settings.defaultTheme")}</h3>
+              <p className="text-sm text-muted-foreground">
+                {t("settings.defaultThemeDescription")}
+              </p>
+            </div>
+            <div className="ml-auto">
+              <Switch name="defaultTheme" checked={defaultTheme} onCheckedChange={setDefaultTheme} />
             </div>
           </div>
           <Separator className="!w-[96%] mx-auto" />

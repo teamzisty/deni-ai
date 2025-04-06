@@ -7,6 +7,7 @@ import { SidebarProvider } from "@repo/ui/components/sidebar";
 import { ChatSidebar } from "@/components/chat-sidebar";
 import { AuthProvider } from "@/context/AuthContext";
 import { cookies } from "next/headers";
+import { TooltipProvider } from "@repo/ui/components/tooltip";
 
 export default async function Layout({
   children,
@@ -18,16 +19,18 @@ export default async function Layout({
 
   return (
     <div className="w-full h-full">
-      <SidebarProvider defaultOpen={defaultOpen}>
-        <AuthProvider>
-          <ChatSessionsProvider>
-            <div className="w-full flex">
-              <ChatSidebar />
-              <Suspense fallback={<Loading />}>{children}</Suspense>
-            </div>
-          </ChatSessionsProvider>
-        </AuthProvider>
-      </SidebarProvider>{" "}
+      <TooltipProvider>
+        <SidebarProvider defaultOpen={defaultOpen}>
+          <AuthProvider>
+            <ChatSessionsProvider>
+              <div className="w-full flex">
+                <ChatSidebar />
+                <Suspense fallback={<Loading />}>{children}</Suspense>
+              </div>
+            </ChatSessionsProvider>
+          </AuthProvider>
+        </SidebarProvider>{" "}
+      </TooltipProvider>
     </div>
   );
 }

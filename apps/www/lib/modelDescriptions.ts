@@ -48,7 +48,7 @@ export const modelDescriptions: modelDescriptionType = {
     type: "ChatGPT",
   },
   "chatgpt-4o-latest": {
-    displayName: "GPT-4o Latest",
+    displayName: "ChatGPT-4o Latest",
     knowledgeCutoff: "2023/10",
     toolDisabled: true,
     canary: true,
@@ -160,8 +160,8 @@ export const modelDescriptions: modelDescriptionType = {
     fast: true,
     type: "Gemini",
   },
-  "us.anthropic.claude-3-7-sonnet-20250219-v1:0": {
-    displayName: "Claude 3.7 Sonnet (AM)",
+  "claude-3-7-sonnet-20250219": {
+    displayName: "Claude 3.7 Sonnet",
     knowledgeCutoff: "2024/10",
     defaultVisibility: true,
     pdfSupport: true,
@@ -169,13 +169,14 @@ export const modelDescriptions: modelDescriptionType = {
     vision: true,
     type: "Claude",
   },
-  "us.anthropic.claude-3-7-sonnet-20250219-v1:0-reasoning": {
+  "claude-3-7-sonnet-20250219-reasoning": {
     displayName: "Claude 3.7 Sonnet (Extended Thinking)",
-    knowledgeCutoff: "2022/01",
-    canary: true,
-    reasoning: true,
-    vision: true,
+    knowledgeCutoff: "2024/10",
+    defaultVisibility: true,
+    pdfSupport: true,
     toolDisabled: true,
+    canary: true,
+    vision: true,
     type: "Claude",
   },
   "anthropic.claude-3-5-sonnet-20241022-v2:0": {

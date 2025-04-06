@@ -241,7 +241,7 @@ export async function POST(req: Request) {
           messages: coreMessage,
           tools: tools,
           maxSteps: 15,
-          maxTokens: modelDescription?.type === "Claude" ? 128000 : 4096,
+          maxTokens: model.includes("claude-3-7-sonnet-20250219") ? 64000 : 4096,
           temperature: 1,
 
           providerOptions: {
@@ -252,7 +252,7 @@ export async function POST(req: Request) {
             }),
             ...(isReasoning && {
               anthropic: {
-                thinking: { type: "enabled", budgetTokens: 32000 },
+                thinking: { type: "enabled", budgetTokens: 8192 },
               },
             }),
           },
