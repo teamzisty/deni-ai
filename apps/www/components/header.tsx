@@ -10,11 +10,11 @@ import {
   NavigationMenuList,
   navigationMenuTriggerStyle,
 } from "@repo/ui/components/navigation-menu";
-import { useTranslations } from 'next-intl';
+import { useTranslations } from "next-intl";
 
 export function Header() {
   const t = useTranslations();
-  
+
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="flex h-16 px-8 w-full items-center justify-between">
@@ -24,11 +24,14 @@ export function Header() {
           <NavigationMenu>
             <NavigationMenuList>
               <NavigationMenuItem className="ml-3">
-                <Link href="/" passHref legacyBehavior target="_blank">
-                  <NavigationMenuLink className={navigationMenuTriggerStyle()}>
+                <NavigationMenuLink
+                  asChild
+                  className={navigationMenuTriggerStyle()}
+                >
+                  <Link href="/" target="_blank">
                     {t("header.home")}
-                  </NavigationMenuLink>
-                </Link>
+                  </Link>
+                </NavigationMenuLink>
               </NavigationMenuItem>
             </NavigationMenuList>
             <NavigationMenuList>

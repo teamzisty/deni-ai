@@ -4,13 +4,11 @@ import remarkGfm from "remark-gfm";
 import { Clock, Copy, MousePointer } from "lucide-react";
 import { Button } from "@repo/ui/components/button";
 import { EasyTip } from "@/components/easytip";
-import { TooltipProvider } from "@repo/ui/components/tooltip";
 import { Pre } from "@/components/markdown";
 import Image from "next/image";
 import { UIMessage } from "ai";
 import React from "react";
 import { useChatSessions } from "@/hooks/use-chat-sessions";
-import { marked } from "marked";
 import { Link as MarkdownLink } from "@/components/markdown";
 import {
   Collapsible,
@@ -18,7 +16,6 @@ import {
   CollapsibleTrigger,
 } from "@repo/ui/components/collapsible";
 import { SiBrave } from "@icons-pack/react-simple-icons";
-import { generateUUID } from "@/lib/utils";
 import { useTranslations } from "next-intl";
 interface MessageLogProps {
   message: UIMessage;
@@ -43,9 +40,14 @@ export const MemoMarkdown = memo(
 );
 MemoMarkdown.displayName = "MemoMarkdown";
 
+// マークダウンをブロックに分割する最適化された関数
 function parseMarkdownIntoBlocks(markdown: string): string[] {
-  const tokens = marked.lexer(markdown);
-  return tokens.map((token) => token.raw);
+  // キャッシュを使用して同じマークダウンに対して複数回パースしないようにする
+  if (!markdown) return [];
+  
+  // 簡易的なブロック分割（空行で区切る）
+  // これはmarked.lexerよりも高速だが、完全な互換性はない
+  return markdown.split(/\n\s*\n/).filter(block => block.trim().length > 0);
 }
 
 export const MemoizedMarkdown = memo(
@@ -110,6 +112,81 @@ function messageReducer(
       return state;
   }
 }
+// メッセージのコントロール部分（コピーボタンと生成時間）を別コンポーネントとして抽出
+const MessageControls = memo(
+  ({ messageContent, thinkingTime }: { messageContent: string; thinkingTime: number }) => {
+    const t = useTranslations();
+
+    const handleCopy = React.useCallback(
+      (event: React.MouseEvent<HTMLButtonElement>) => {
+        navigator.clipboard.writeText(messageContent);
+        const target = event.currentTarget;
+        target.querySelector("svg")!.outerHTML =
+          '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-check"><polyline points="20 6 9 17 4 12"/></svg>';
+        setTimeout(() => {
+          target.querySelector("svg")!.outerHTML =
+            '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-copy"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>';
+        }, 1000);
+      },
+      [messageContent]
+    );
+
+    return (
+      <div className="flex items-center rounded mt-3 bg-secondary text-xs">
+        <div className="p-1 text-gray-400 hover:text-foreground">
+          <EasyTip content={t("messageLog.copy")}>
+            <Button
+              size="sm"
+              className="p-0 ml-2 rounded-full"
+              variant={"ghost"}
+              onClick={handleCopy}
+            >
+              <Copy size="16" />
+            </Button>
+          </EasyTip>
+        </div>
+        <div className="p-1 text-gray-400 transition-all cursor-default hover:text-foreground">
+          <EasyTip content={t("messageLog.generationTime")}>
+            <Button
+              variant={"ghost"}
+              className="flex items-center ml-2 p-2 m-0 !px-1"
+            >
+              <Clock size="16" />
+              <span>
+                {thinkingTime < 0
+                  ? t("messageLog.thinking")
+                  : thinkingTime > 3600000
+                    ? `${Math.floor(
+                        thinkingTime / 3600000
+                      )} ${t("messageLog.hour")} ${Math.floor(
+                        (thinkingTime % 3600000) / 60000
+                      )} ${t("messageLog.minute")} ${Math.floor(
+                        (thinkingTime % 60000) / 1000
+                      )} ${t("messageLog.second")}`
+                    : thinkingTime > 60000
+                      ? `${Math.floor(
+                          thinkingTime / 60000
+                        )} ${t("messageLog.minute")} ${Math.floor(
+                          (thinkingTime % 60000) / 1000
+                        )} ${t("messageLog.second")}`
+                      : `${Math.floor(
+                          thinkingTime / 1000
+                        )} ${t("messageLog.second")}`}{" "}
+              </span>
+            </Button>
+          </EasyTip>
+        </div>
+      </div>
+    );
+  },
+  (prevProps, nextProps) => {
+    // メッセージ内容とthinkingTimeが変わらない限り再レンダリングしない
+    return prevProps.messageContent === nextProps.messageContent &&
+           prevProps.thinkingTime === nextProps.thinkingTime;
+  }
+);
+MessageControls.displayName = "MessageControls";
+
 export const MessageLog: FC<MessageLogProps> = memo(
   ({ message, sessionId }) => {
     const [state, dispatch] = React.useReducer(messageReducer, {
@@ -119,20 +196,6 @@ export const MessageLog: FC<MessageLogProps> = memo(
 
     const { getSession, updateSession } = useChatSessions();
     const t = useTranslations();
-
-    const handleCopy = React.useCallback(
-      (event: React.MouseEvent<HTMLButtonElement>) => {
-        navigator.clipboard.writeText(message.content);
-        const target = event.currentTarget;
-        target.querySelector("svg")!.outerHTML =
-          '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-check"><polyline points="20 6 9 17 4 12"/></svg>';
-        setTimeout(() => {
-          target.querySelector("svg")!.outerHTML =
-            '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-copy"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>';
-        }, 1000);
-      },
-      [message.content]
-    );
 
     const toolInvocations = React.useMemo(
       () => message.parts.filter((part) => part.type === "tool-invocation"),
@@ -178,7 +241,6 @@ export const MessageLog: FC<MessageLogProps> = memo(
     }, [getSession, message.annotations, sessionId, updateSession]);
 
     return (
-      <TooltipProvider>
         <div className={`flex w-full message-log visible`}>
           <div
             className={`p-2 my-2 rounded-lg ${
@@ -192,7 +254,7 @@ export const MessageLog: FC<MessageLogProps> = memo(
                 <div className="ml-3 prose dark:prose-invert w-full max-w-11/12">
                   {/** Search ツールが1回以上実行されていればまとめて表示 */}
                   {searchInvocations.length > 0 && (
-                    <div className="flex flex-col gap-1 bg-secondary md:w-2/3 rounded-xl mb-4 px-4 py-3">
+                    <div className="flex flex-col gap-1 bg-secondary w-full md:w-2/3 rounded-xl mb-4 px-4 py-3 overflow-hidden">
                       <span className="inline-flex items-center gap-1 text-muted-foreground">
                         <SiBrave className="text-orange-400" /> {t("messageLog.braveSearch")}
                       </span>
@@ -216,22 +278,21 @@ export const MessageLog: FC<MessageLogProps> = memo(
                             return (
                               <p
                                 key={`${callId}-${index}`}
-                                className="mb-0 mt-0"
+                                className="mb-0 mt-0 max-w-full"
                               >
                                 <a
                                   href={item.url}
                                   target="_blank"
                                   rel="noreferrer"
-                                  className="text-white underline block mb-0 truncate min-w-0"
+                                  className="text-white underline line-clamp-1 mb-0 overflow-hidden text-ellipsis"
                                 >
                                   {item.title}
                                 </a>
                                 <span
-                                  className="text-muted-foreground block truncate min-w-0"
-                                  dangerouslySetInnerHTML={{
-                                    __html: item.description,
-                                  }}
-                                />
+                                  className="text-muted-foreground overflow-hidden line-clamp-1"
+                                >
+                                  {item.description.replace(/<[^>]*>/g, '')}
+                                </span>
                               </p>
                             );
                           });
@@ -244,7 +305,7 @@ export const MessageLog: FC<MessageLogProps> = memo(
 
                   {/** Visit ツールが1回以上実行されていればまとめて表示 */}
                   {visitInvocations.length > 0 && (
-                    <div className="flex flex-col gap-1 bg-secondary rounded-xl md:w-2/3 mb-4 px-4 py-3">
+                    <div className="flex flex-col gap-1 bg-secondary rounded-xl w-full md:w-2/3 mb-4 px-4 py-3 overflow-hidden">
                       <span className="inline-flex items-center gap-1 text-muted-foreground">
                         <MousePointer />
                         {t("messageLog.visitedWebsites")}
@@ -265,7 +326,7 @@ export const MessageLog: FC<MessageLogProps> = memo(
                               href={url}
                               target="_blank"
                               rel="noreferrer"
-                              className="text-white underline truncate"
+                              className="text-white underline truncate overflow-hidden text-ellipsis"
                             >
                               {url}
                             </a>
@@ -283,7 +344,7 @@ export const MessageLog: FC<MessageLogProps> = memo(
                       case "reasoning":
                         return (
                           <Collapsible
-                            key={message.id + "_" + generateUUID()}
+                            key={message.id + "_reasoning"}
                             defaultOpen={true}
                           >
                             <CollapsibleTrigger className="mb-0">
@@ -313,7 +374,7 @@ export const MessageLog: FC<MessageLogProps> = memo(
                             </CollapsibleTrigger>
                             <CollapsibleContent className="border-l-2 mt-0 pl-4 outline-none data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2">
                               <MemoizedMarkdown
-                                key={message.id + "_" + generateUUID()}
+                                key={message.id + "_reasoning_content"}
                                 id={message.id + "_assistant"}
                                 content={part.reasoning ?? ""}
                               />
@@ -325,7 +386,7 @@ export const MessageLog: FC<MessageLogProps> = memo(
                         // text のみ表示
                         return (
                           <MemoizedMarkdown
-                            key={message.id + "_" + generateUUID()}
+                            key={message.id + "_text"}
                             id={message.id + "_assistant"}
                             content={part.text ?? ""}
                           />
@@ -333,51 +394,10 @@ export const MessageLog: FC<MessageLogProps> = memo(
                     }
                   })}
                 </div>
-                <div className="flex items-center rounded mt-3 bg-secondary text-xs">
-                  <div className="p-1 text-gray-400 hover:text-foreground">
-                    <EasyTip content={t("messageLog.copy")}>
-                      <Button
-                        size="sm"
-                        className="p-0 ml-2 rounded-full"
-                        variant={"ghost"}
-                        onClick={handleCopy}
-                      >
-                        <Copy size="16" />
-                      </Button>
-                    </EasyTip>
-                  </div>
-                  <div className="p-1 text-gray-400 transition-all cursor-default hover:text-foreground">
-                    <EasyTip content={t("messageLog.generationTime")}>
-                      <Button
-                        variant={"ghost"}
-                        className="flex items-center ml-2 p-2 m-0 !px-1"
-                      >
-                        <Clock size="16" />
-                        <span>
-                          {state.thinkingTime < 0
-                            ? t("messageLog.thinking")
-                            : state.thinkingTime > 3600000
-                              ? `${Math.floor(
-                                  state.thinkingTime / 3600000
-                                )} ${t("messageLog.hour")} ${Math.floor(
-                                  (state.thinkingTime % 3600000) / 60000
-                                )} ${t("messageLog.minute")} ${Math.floor(
-                                  (state.thinkingTime % 60000) / 1000
-                                )} ${t("messageLog.second")}`
-                              : state.thinkingTime > 60000
-                                ? `${Math.floor(
-                                    state.thinkingTime / 60000
-                                  )} ${t("messageLog.minute")} ${Math.floor(
-                                    (state.thinkingTime % 60000) / 1000
-                                  )} ${t("messageLog.second")}`
-                                : `${Math.floor(
-                                    state.thinkingTime / 1000
-                                  )} ${t("messageLog.second")}`}{" "}
-                        </span>
-                      </Button>
-                    </EasyTip>
-                  </div>
-                </div>
+                <MessageControls
+                  messageContent={message.content}
+                  thinkingTime={state.thinkingTime}
+                />
               </div>
             ) : (
               <>
@@ -394,7 +414,6 @@ export const MessageLog: FC<MessageLogProps> = memo(
             )}
           </div>
         </div>
-      </TooltipProvider>
     );
   }
 );

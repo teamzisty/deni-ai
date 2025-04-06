@@ -354,14 +354,14 @@ export default function ModelSettingsPage() {
               ]) => (
                 <div
                   key={id}
-                  className="w-full flex items-center p-4 gap-3 bg-sidebar hover:bg-sidebar/80 cursor-pointer transition-colors rounded-sm shadow mb-6"
+                  className="w-full flex items-center p-4 gap-3 bg-card hover:bg-card/80 cursor-pointer transition-colors rounded-sm shadow mb-6"
                 >
                   <Avatar className="bg-secondary flex items-center justify-center">
                     {type === "ChatGPT" && <SiOpenai />}
                     {type === "Gemini" && <SiGooglegemini />}
                     {type === "Claude" && <SiClaude />}
-                    {type === "Grok" && <SiX />}
-                    {type === "DeepSeek" && <span>DeepSeek</span>}
+                    {type === "Grok" && <SiX size="16" />}
+                    {type === "DeepSeek" && <DeepSeekIcon />}
                   </Avatar>
                   <div className="flex items-center flex-wrap justify-between w-full">
                     <div className="w-[80%]">

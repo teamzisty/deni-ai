@@ -122,7 +122,7 @@ export const AccountDropdownMenu = memo(
                   {user?.displayName}
                 </span>
                 <span
-                  className={`text-muted-foreground ${
+                  className={`text-muted-foreground min-w-0 block truncate ${
                     privacyMode ? "blur-sm" : ""
                   }`}
                 >
@@ -162,7 +162,7 @@ export const AccountDropdownMenu = memo(
                       {user?.displayName}
                     </span>
                     <span
-                      className={`text-muted-foreground ${
+                      className={`text-muted-foreground min-w-0 block truncate ${
                         privacyMode && "blur-sm"
                       }`}
                     >

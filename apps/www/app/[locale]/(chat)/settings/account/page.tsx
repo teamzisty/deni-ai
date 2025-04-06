@@ -237,7 +237,7 @@ export default function AccountSettingsPage() {
         </p>
 
         {isLogged && (
-          <div className="w-full bg-secondary shadow rounded-sm pb-0 mb-3">
+          <div className="w-full bg-card shadow rounded-sm pb-0 mb-3">
             <div className="flex p-4 items-center gap-2">
               <div>
                 <h3 className="text-lg font-bold">{t("account.changeName")}</h3>
