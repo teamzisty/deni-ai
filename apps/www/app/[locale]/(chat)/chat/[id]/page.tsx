@@ -269,7 +269,7 @@ const ChatApp: React.FC = () => {
 
     logger.info("handleModelChange", "Model changed to" + newModel);
     setModel(newModel);
-  }, []);
+  }, [setModel]);
 
   const searchToggle = () => {
     setSearchEnabled((prev) => !prev);
