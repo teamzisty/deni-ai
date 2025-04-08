@@ -27,6 +27,7 @@ interface ChatSessionsContextValue {
   addSession: (session: ChatSession) => void;
   updateSession: (id: string, updatedSession: ChatSession) => void;
   deleteSession: (id: string) => void;
+  clearAllSessions: () => void;
   selectSession: (id: string) => void;
   getSession: (id: string) => ChatSession | undefined;
   syncSessions: () => Promise<void>;
@@ -45,6 +46,7 @@ interface ChatSessionsContextValue {
   addSession: (session: ChatSession) => void;
   updateSession: (id: string, updatedSession: ChatSession) => void;
   deleteSession: (id: string) => void;
+  clearAllSessions: () => void;
   selectSession: (id: string) => void;
   getSession: (id: string) => ChatSession | undefined;
 }
@@ -109,7 +111,30 @@ export function ChatSessionsProvider({ children }: { children: ReactNode }) {
     try {
       // セッションが空でない場合のみ保存する
       if (sessions.length > 0) {
-        localStorage.setItem("chatSessions", JSON.stringify(sessions));
+        try {
+          localStorage.setItem("chatSessions", JSON.stringify(sessions));
+        } catch (storageError) {
+          if (storageError instanceof Error && storageError.name === "QuotaExceededError") {
+            // ストレージがいっぱいの場合、古いセッションを自動的に削除
+            const sortedSessions = [...sessions].sort((a, b) =>
+              a.createdAt.getTime() - b.createdAt.getTime()
+            );
+            
+            // 最も古い25%のセッションを削除
+            const sessionsToRemove = Math.max(1, Math.floor(sortedSessions.length * 0.25));
+            const remainingSessions = sortedSessions.slice(sessionsToRemove);
+            
+            // 削除後のセッションを保存
+            setSessions(remainingSessions);
+            localStorage.setItem("chatSessions", JSON.stringify(remainingSessions));
+            
+            toast.success(
+              `チャットの履歴がいっぱいだったため、古い${sessionsToRemove}件のチャットを自動的に削除しました。`
+            );
+          } else {
+            throw storageError; // 他のエラーは外側のcatchで処理
+          }
+        }
       } else {
         // 現在のLocalStorageの値を確認
         const currentSessions = localStorage.getItem("chatSessions");
@@ -119,14 +144,7 @@ export function ChatSessionsProvider({ children }: { children: ReactNode }) {
         }
       }
     } catch (error) {
-      if (error instanceof Error && error.name === "QuotaExceededError") {
-        // If storage is full, remove oldest sessions until it fits
-        toast.error(
-          "チャットの履歴がいっぱいです。古いチャットを削除してください。"
-        );
-      } else {
-        console.error("Failed to save sessions to localStorage:", error);
-      }
+      console.error("Failed to save sessions to localStorage:", error);
     }
   }, [sessions]);
   useEffect(() => {
@@ -194,6 +212,33 @@ export function ChatSessionsProvider({ children }: { children: ReactNode }) {
     setSessions((prev) => prev.filter((session) => session.id !== id));
     if (currentSession?.id === id) {
       setCurrentSession(null);
+    }
+  };
+
+  const clearAllSessions = () => {
+    // localStorageからすべてのセッションを削除
+    localStorage.removeItem("chatSessions");
+    localStorage.removeItem("currentChatSession");
+    
+    // stateをクリア
+    setSessions([]);
+    setCurrentSession(null);
+    
+    // Firestoreからも削除（ログインしている場合）
+    if (user && auth && firestore) {
+      try {
+        const sessionsRef = collection(
+          firestore,
+          `deni-ai-conversations/${user.uid}/sessions`
+        );
+        getDocs(sessionsRef).then((snapshot) => {
+          snapshot.docs.forEach((doc) => {
+            deleteDoc(doc.ref);
+          });
+        });
+      } catch (error) {
+        console.error("Failed to delete sessions from Firestore:", error);
+      }
     }
   };
 
@@ -287,6 +332,7 @@ export function ChatSessionsProvider({ children }: { children: ReactNode }) {
     addSession,
     getSession,
     deleteSession,
+    clearAllSessions,
     selectSession,
     updateSession,
     syncSessions,

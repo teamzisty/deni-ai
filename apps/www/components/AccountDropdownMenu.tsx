@@ -24,6 +24,7 @@ import { useChatSessions } from "@/hooks/use-chat-sessions";
 import { toast } from "sonner";
 import { buildInfo } from "@/lib/version";
 import { useTranslations } from "next-intl";
+import { useSettingsDialog } from "@/context/SettingsDialogContext";
 
 interface AccountDropdownMenuProps {
   user: User | null;
@@ -37,6 +38,7 @@ export const AccountDropdownMenu = memo(
     const [isSyncing, setIsSyncing] = useState(false);
     const { syncSessions } = useChatSessions();
     const t = useTranslations();
+    const { openDialog } = useSettingsDialog();
 
     useEffect(() => {
       // 初期値の設定
@@ -174,18 +176,14 @@ export const AccountDropdownMenu = memo(
             )}
 
             {!isDisabled && (
-              <DropdownMenuItem asChild>
-                <Link href="/settings/account" className="w-full">
-                  <User2 />
-                  {t("accountMenu.account")}
-                </Link>
+              <DropdownMenuItem onClick={() => openDialog("account")}>
+                <User2 />
+                {t("accountMenu.account")}
               </DropdownMenuItem>
             )}
-            <DropdownMenuItem asChild>
-              <Link href="/settings" className="w-full">
-                <Settings />
-                {t("accountMenu.userSettings")}
-              </Link>
+            <DropdownMenuItem onClick={() => openDialog()}>
+              <Settings />
+              {t("accountMenu.userSettings")}
             </DropdownMenuItem>
           </DropdownMenuGroup>
           {!isDisabled && (

@@ -55,8 +55,8 @@ const Login: React.FC = () => {
 
   useEffect(() => {
     if (!auth && !isLoading) {
-      toast.error(t("login.authError"), {
-        description: t("login.authErrorDescription"),
+      toast.error(t("account.error"), {
+        description: t("account.authDisabled"),
       });
       router.push("/home");
     }

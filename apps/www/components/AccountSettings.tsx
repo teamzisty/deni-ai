@@ -1,6 +1,5 @@
 "use client";
 
-import { Separator } from "@repo/ui/components/separator";
 import { toast } from "sonner";
 import { Button } from "@repo/ui/components/button";
 import { useEffect, useState } from "react";
@@ -17,7 +16,7 @@ import React from "react";
 import { useTranslations } from "next-intl";
 import { auth } from "@repo/firebase-config/client";
 
-export default function AccountSettingsPage() {
+export default function AccountSettings() {
   const { user, isLoading } = useAuth();
   const { syncSessions } = useChatSessions();
   const [isLogged, setIsLogged] = useState(false);
@@ -46,10 +45,10 @@ export default function AccountSettingsPage() {
     setIsSyncing(true);
     try {
       await syncSessions();
-      toast.success(t("account.syncConversations"));
+      toast.success(t("account.syncedConversations"));
     } catch (error: unknown) {
       const errorMessage =
-        error instanceof Error ? error.message : t("account.unknownError");
+        error instanceof Error ? error.message : t("common.error.unknown");
       toast.error(t("account.error"), {
         description: errorMessage,
       });
@@ -114,7 +113,7 @@ export default function AccountSettingsPage() {
               resolve({
                 status: "error",
                 error: {
-                  message: t("account.unknownError"),
+                  message: t("common.error.unknown"),
                   code: "upload_failed",
                 },
               });
@@ -132,7 +131,7 @@ export default function AccountSettingsPage() {
               resolve({
                 status: "error",
                 error: {
-                  message: t("account.unknownError"),
+                  message: t("common.error.unknown"),
                   code: "upload_failed",
                 },
               });
@@ -142,7 +141,7 @@ export default function AccountSettingsPage() {
             resolve({
               status: "error",
               error: {
-                message: t("account.unknownError"),
+                message: t("common.error.unknown"),
                 code: "upload_failed",
               },
             });
@@ -156,7 +155,7 @@ export default function AccountSettingsPage() {
     if (!user) return;
 
     if (!name) {
-      toast.error(t("account.enterName"));
+      toast.error(t("settings.popupMessages.enterName"));
       return;
     }
 
@@ -165,10 +164,10 @@ export default function AccountSettingsPage() {
         displayName: name,
       });
 
-      toast.success(t("account.nameChanged"));
+      toast.success(t("settings.popupMessages.nameChanged"));
     } catch (error: unknown) {
       const errorMessage =
-        error instanceof Error ? error.message : t("account.unknownError");
+        error instanceof Error ? error.message : t("common.error.unknown");
       toast.error(t("account.nameChangeFailed"), {
         description: errorMessage,
       });
@@ -201,7 +200,7 @@ export default function AccountSettingsPage() {
           );
           return error instanceof Error
             ? error.message
-            : t("account.unknownError");
+            : t("common.error.unknown");
         }
       },
       error: (uploadResponse: uploadResponse) => {
@@ -209,7 +208,7 @@ export default function AccountSettingsPage() {
           "handleImagePaste",
           "Something went wrong, " + JSON.stringify(uploadResponse.error)
         );
-        return uploadResponse.error?.message || t("account.unknownError");
+        return uploadResponse.error?.message || t("common.error.unknown");
       },
     });
   };
@@ -229,95 +228,109 @@ export default function AccountSettingsPage() {
   }
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h2 className="text-2xl font-bold mb-1">{t("account.title")}</h2>
-        <p className="text-sm text-muted-foreground mb-2">
-          {t("account.description")}
-        </p>
-
-        {isLogged && (
-          <div className="w-full bg-card shadow rounded-sm pb-0 mb-3">
-            <div className="flex p-4 items-center gap-2">
-              <div>
-                <h3 className="text-lg font-bold">{t("account.changeName")}</h3>
-                <p className="text-sm text-muted-foreground">
-                  {t("account.changeNameDescription")}
-                </p>
-              </div>
-              <div className="ml-auto flex items-center gap-2">
-                <Input
-                  value={name}
-                  placeholder={t("account.yourName")}
-                  onChange={(e) => setName(e.target?.value)}
-                />
-                <Button onClick={handleChangeName}>
-                  {t("account.change")}
-                </Button>
-              </div>
+    isLogged && (
+      <div className="space-y-6">
+        <div className="bg-card/50 border border-border/30 rounded-md overflow-hidden">
+          <div className="p-5">
+            <div className="flex-grow mb-2">
+              <h3 className="text-lg font-bold">
+                {t("settings.account.name.title")}
+              </h3>
+              <p className="text-sm text-muted-foreground">
+                {t("settings.account.name.description")}
+              </p>
             </div>
-            <Separator className="mx-3 !w-[96%]" />
-            <div className="flex p-4 items-center gap-2">
-              <div>
-                <h3 className="text-lg font-bold">
-                  {t("account.changeAvatar")}
-                </h3>
-                <p className="text-sm text-muted-foreground">
-                  {t("account.changeAvatarDescription")}
-                </p>
-              </div>
-              <div className="ml-auto flex items-center gap-2">
-                <input
-                  type="file"
-                  accept="image/*"
-                  ref={fileInputRef}
-                  onChange={handleAvatarChange}
-                  className="hidden"
-                />
-                <Button
-                  disabled={isUploading}
-                  onClick={() => fileInputRef.current?.click()}
-                >
-                  {t("account.change")}
-                </Button>
-              </div>
-            </div>
-            <Separator className="mx-3 !w-[96%]" />
-            <div className="flex p-4 items-center gap-2">
-              <div>
-                <h3 className="text-lg font-bold">
-                  {t("account.privacyMode")}
-                </h3>
-                <p className="text-sm text-muted-foreground">
-                  {t("account.privacyModeDescription")}
-                </p>
-              </div>
-              <div className="ml-auto">
-                <Switch
-                  checked={privacyMode}
-                  onCheckedChange={togglePrivacyMode}
-                />
-              </div>
-            </div>
-            <Separator className="mx-3 !w-[96%]" />
-            <div className="flex p-4 items-center gap-2">
-              <div>
-                <h3 className="text-lg font-bold">
-                  {t("account.syncConversations")}
-                </h3>
-                <p className="text-sm text-muted-foreground">
-                  {t("account.syncConversationsDescription")}
-                </p>
-              </div>
-              <div className="ml-auto">
-                <Button onClick={handleSync} disabled={isSyncing}>
-                  {isSyncing ? t("account.syncing") : t("account.sync")}
-                </Button>
-              </div>
+            <div className="flex gap-2">
+              <Input
+                value={name}
+                placeholder={t("settings.account.name.placeholder")}
+                onChange={(e) => setName(e.target?.value)}
+                className="min-w-[180px]"
+              />
+              <Button
+                onClick={handleChangeName}
+                variant="outline"
+                className="w-fit ml-auto"
+              >
+                {t("settings.account.name.action")}
+              </Button>
             </div>
           </div>
-        )}
+        </div>
+
+        <div className="bg-card/50 border border-border/30 rounded-md overflow-hidden">
+          <div className="flex p-5 items-center gap-4">
+            <div className="flex-grow">
+              <h3 className="text-lg font-bold">
+                {t("settings.account.avatar.title")}
+              </h3>
+              <p className="text-sm text-muted-foreground">
+                {t("settings.account.avatar.description")}
+              </p>
+            </div>
+            <div className="flex items-center gap-2">
+              <input
+                type="file"
+                accept="image/*"
+                ref={fileInputRef}
+                onChange={handleAvatarChange}
+                className="hidden"
+              />
+              <Button
+                variant="outline"
+                disabled={isUploading}
+                onClick={() => fileInputRef.current?.click()}
+              >
+                {t("settings.account.avatar.action")}
+              </Button>
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-card/50 border border-border/30 rounded-md overflow-hidden">
+          <div className="flex p-5 items-center gap-4">
+            <div className="flex-grow">
+              <h3 className="text-lg font-bold">
+                {t("settings.account.privacyMode.title")}
+              </h3>
+              <p className="text-sm text-muted-foreground">
+                {t("settings.account.privacyMode.description")}
+              </p>
+            </div>
+            <div>
+              <Switch
+                className="scale-125"
+                checked={privacyMode}
+                onCheckedChange={togglePrivacyMode}
+              />
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-card/50 border border-border/30 rounded-md overflow-hidden">
+          <div className="flex p-5 items-center gap-4">
+            <div className="flex-grow">
+              <h3 className="text-lg font-bold">
+                {t("settings.account.sync.title")}
+              </h3>
+              <p className="text-sm text-muted-foreground">
+                {t("settings.account.sync.description")}
+              </p>
+            </div>
+            <div>
+              <Button
+                onClick={handleSync}
+                disabled={isSyncing}
+                variant="outline"
+              >
+                {isSyncing
+                  ? t("settings.account.sync.syncing")
+                  : t("settings.account.sync.action")}
+              </Button>
+            </div>
+          </div>
+        </div>
       </div>
-    </div>
+    )
   );
 }

@@ -8,6 +8,7 @@ import { Pre } from "@/components/markdown";
 import Image from "next/image";
 import { UIMessage } from "ai";
 import React from "react";
+import { marked } from "marked";
 import { useChatSessions } from "@/hooks/use-chat-sessions";
 import { Link as MarkdownLink } from "@/components/markdown";
 import {
@@ -40,14 +41,9 @@ export const MemoMarkdown = memo(
 );
 MemoMarkdown.displayName = "MemoMarkdown";
 
-// マークダウンをブロックに分割する最適化された関数
 function parseMarkdownIntoBlocks(markdown: string): string[] {
-  // キャッシュを使用して同じマークダウンに対して複数回パースしないようにする
-  if (!markdown) return [];
-  
-  // 簡易的なブロック分割（空行で区切る）
-  // これはmarked.lexerよりも高速だが、完全な互換性はない
-  return markdown.split(/\n\s*\n/).filter(block => block.trim().length > 0);
+  const tokens = marked.lexer(markdown);
+  return tokens.map((token) => token.raw);
 }
 
 export const MemoizedMarkdown = memo(
@@ -262,44 +258,48 @@ export const MessageLog: FC<MessageLogProps> = memo(
                         {t("messageLog.searchWord")}{" "}
                         {searchInvocations[0]?.toolInvocation.args?.query}
                       </span>
-                      {searchInvocations.map((invocation) => {
-                        const callId = invocation.toolInvocation.toolCallId;
-
-                        if (invocation.toolInvocation.state === "result") {
+                      {(() => {
+                        // 最初の成功した検索結果だけを表示
+                        const successfulInvocation = searchInvocations.find(
+                          inv => inv.toolInvocation.state === "result"
+                        );
+                        
+                        if (successfulInvocation && successfulInvocation.toolInvocation.state === "result") {
+                          const callId = successfulInvocation.toolInvocation.toolCallId;
                           const toolResult = JSON.parse(
-                            invocation.toolInvocation.result
+                            successfulInvocation.toolInvocation.result
                           );
                           const result = toolResult as {
                             title: string;
                             url: string;
                             description: string;
                           }[];
-                          return result.map((item, index) => {
-                            return (
-                              <p
-                                key={`${callId}-${index}`}
-                                className="mb-0 mt-0 max-w-full"
+                          
+                          return result.map((item, index) => (
+                            <p
+                              key={`${callId}-${index}`}
+                              className="mb-0 mt-0 max-w-full"
+                            >
+                              <a
+                                href={item.url}
+                                target="_blank"
+                                rel="noreferrer"
+                                className="text-white underline line-clamp-1 mb-0 overflow-hidden text-ellipsis"
                               >
-                                <a
-                                  href={item.url}
-                                  target="_blank"
-                                  rel="noreferrer"
-                                  className="text-white underline line-clamp-1 mb-0 overflow-hidden text-ellipsis"
-                                >
-                                  {item.title}
-                                </a>
-                                <span
-                                  className="text-muted-foreground overflow-hidden line-clamp-1"
-                                >
-                                  {item.description.replace(/<[^>]*>/g, '')}
-                                </span>
-                              </p>
-                            );
-                          });
+                                {item.title}
+                              </a>
+                              <span
+                                className="text-muted-foreground overflow-hidden line-clamp-1"
+                              >
+                                {item.description.replace(/<[^>]*>/g, '')}
+                              </span>
+                            </p>
+                          ));
                         }
-
-                        return t("messageLog.searching");
-                      })}
+                        
+                        // 成功した検索がなければ、検索中の表示
+                        return <span className="animate-pulse">{t("messageLog.searching")}</span>;
+                      })()}
                     </div>
                   )}
 
@@ -310,41 +310,60 @@ export const MessageLog: FC<MessageLogProps> = memo(
                         <MousePointer />
                         {t("messageLog.visitedWebsites")}
                       </span>
-                      {visitInvocations.map((invocation) => {
-                        const callId = invocation.toolInvocation.toolCallId;
-                        // args に url があると仮定した場合
-
-                        if (invocation.toolInvocation.state === "result") {
-                          if (!invocation.toolInvocation.args) {
-                            console.log(invocation.toolInvocation.args);
-                            return t("messageLog.urlNotFound");
-                          }
-                          const url = invocation.toolInvocation.args?.url;
-                          return (
-                            <a
-                              key={callId}
-                              href={url}
-                              target="_blank"
-                              rel="noreferrer"
-                              className="text-white underline truncate overflow-hidden text-ellipsis"
-                            >
-                              {url}
-                            </a>
-                          );
+                      {(() => {
+                        // 最初の成功した訪問結果だけを表示
+                        const successfulInvocations = visitInvocations.filter(
+                          inv => inv.toolInvocation.state === "result"
+                        );
+                        
+                        if (successfulInvocations.length > 0) {
+                          // URLの重複を排除
+                          const uniqueUrls = new Set<string>();
+                          
+                          return successfulInvocations.map(invocation => {
+                            if (invocation.toolInvocation.state === "result") {
+                              if (!invocation.toolInvocation.args) {
+                                return null;
+                              }
+                              
+                              const url = invocation.toolInvocation.args?.url;
+                              
+                              // 既に表示したURLはスキップ
+                              if (uniqueUrls.has(url)) {
+                                return null;
+                              }
+                              
+                              uniqueUrls.add(url);
+                              
+                              return (
+                                <a
+                                  key={invocation.toolInvocation.toolCallId}
+                                  href={url}
+                                  target="_blank"
+                                  rel="noreferrer"
+                                  className="text-white underline truncate overflow-hidden text-ellipsis"
+                                >
+                                  {url}
+                                </a>
+                              );
+                            }
+                            return null;
+                          }).filter(Boolean);
                         }
-
-                        return t("messageLog.searching");
-                      })}
+                        
+                        // 成功した訪問がなければ、検索中の表示
+                        return <span className="animate-pulse">{t("messageLog.searching")}</span>;
+                      })()}
                     </div>
                   )}
 
                   {/** ここで「tool-invocation」以外のパートを表示する、たとえば text のみなど */}
-                  {message.parts.map((part) => {
+                  {message.parts.map((part, index) => {
                     switch (part.type) {
                       case "reasoning":
                         return (
                           <Collapsible
-                            key={message.id + "_reasoning"}
+                            key={`${message.id}_reasoning_${index}`}
                             defaultOpen={true}
                           >
                             <CollapsibleTrigger className="mb-0">
@@ -374,8 +393,8 @@ export const MessageLog: FC<MessageLogProps> = memo(
                             </CollapsibleTrigger>
                             <CollapsibleContent className="border-l-2 mt-0 pl-4 outline-none data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2">
                               <MemoizedMarkdown
-                                key={message.id + "_reasoning_content"}
-                                id={message.id + "_assistant"}
+                                key={`${message.id}_reasoning_content_${index}`}
+                                id={`${message.id}_assistant_${index}`}
                                 content={part.reasoning ?? ""}
                               />
                             </CollapsibleContent>
@@ -386,8 +405,8 @@ export const MessageLog: FC<MessageLogProps> = memo(
                         // text のみ表示
                         return (
                           <MemoizedMarkdown
-                            key={message.id + "_text"}
-                            id={message.id + "_assistant"}
+                            key={`${message.id}_text_${index}`}
+                            id={`${message.id}_assistant_${index}`}
                             content={part.text ?? ""}
                           />
                         );

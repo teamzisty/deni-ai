@@ -100,6 +100,22 @@ export async function POST(req: Request) {
 
     const visitedWebsites = new Set<string>();
 
+    function errorHandler(error: unknown) {
+      if (error == null) {
+        return "unknown error";
+      }
+
+      if (typeof error === "string") {
+        return error;
+      }
+
+      if (error instanceof Error) {
+        return error.message;
+      }
+
+      return JSON.stringify(error);
+    }
+
     return createDataStreamResponse({
       execute: (dataStream) => {
         let tools: { [key: string]: Tool } | undefined = {};
@@ -146,22 +162,67 @@ export async function POST(req: Request) {
                   }
                 ).then((res) => res.json());
 
-                const searchResults = results.web.results
-                  .slice(0, 5)
-                  .map(
-                    (result: {
-                      title: string;
-                      url: string;
-                      description: string;
-                    }) => {
-                      const { title, url, description } = result;
-                      return {
-                        title,
-                        url,
-                        description,
-                      };
-                    }
-                  );
+                const searchResults = await Promise.all(
+                  results.web.results
+                    .slice(0, 5)
+                    .map(
+                      async (result: {
+                        title: string;
+                        url: string;
+                        description: string;
+                      }) => {
+                        const { title, url, description } = result;
+                        let content = description;
+
+                        try {
+                          const pageResponse = await fetch(url);
+                          const pageText = await pageResponse.text();
+                          const dom = new JSDOM(pageText);
+                          const doc = dom.window.document;
+
+                          // Remove script and style tags
+                          const scripts = doc.getElementsByTagName("script");
+                          const styles = doc.getElementsByTagName("style");
+                          while (scripts.length > 0) scripts[0]?.remove();
+                          while (styles.length > 0) styles[0]?.remove();
+
+                          // Extract main content
+                          const mainContent =
+                            doc.querySelector("main") ||
+                            doc.querySelector("article") ||
+                            doc.body;
+
+                          if (mainContent) {
+                            // メタディスクリプションを取得
+                            if (toolList.includes("advancedSearch")) {
+                              content =
+                                mainContent.textContent?.trim() || description;
+                            } else {
+                              const metaDesc = doc.querySelector(
+                                'meta[name="description"]'
+                              );
+                              if (metaDesc) {
+                                content =
+                                  metaDesc.getAttribute("content")?.trim() ||
+                                  description;
+                              } else {
+                                content = description;
+                              }
+                            }
+                          }
+                        } catch (error) {
+                          console.error(`Error fetching ${url}:`, error);
+                        }
+
+                        return {
+                          title,
+                          url,
+                          description,
+                          content,
+                        };
+                      }
+                    )
+                );
 
                 dataStream.writeMessageAnnotation({
                   searchResults,
@@ -172,59 +233,59 @@ export async function POST(req: Request) {
               },
             });
 
-            tools.visit = tool({
-              description: "visit a website and extract information from it.",
-              parameters: z.object({
-                url: z.string().describe("URL to visit."),
-              }),
-              execute: async ({ url }) => {
-                const results = await fetch(url, {
-                  headers: {
-                    "User-Agent":
-                      "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-                  },
-                }).then((res) => res.text());
+            // tools.visit = tool({
+            //   description: "visit a website and extract information from it.",
+            //   parameters: z.object({
+            //     url: z.string().describe("URL to visit."),
+            //   }),
+            //   execute: async ({ url }) => {
+            //     const results = await fetch(url, {
+            //       headers: {
+            //         "User-Agent":
+            //           "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+            //       },
+            //     }).then((res) => res.text());
 
-                visitedWebsites.add(url);
+            //     visitedWebsites.add(url);
 
-                const dom = new JSDOM(results, {
-                  url: url,
-                });
-                const doc = dom.window.document;
+            //     const dom = new JSDOM(results, {
+            //       url: url,
+            //     });
+            //     const doc = dom.window.document;
 
-                // Remove script and style tags
-                const scripts = doc.getElementsByTagName("script");
-                const styles = doc.getElementsByTagName("style");
-                while (scripts.length > 0) scripts[0]?.remove();
-                while (styles.length > 0) styles[0]?.remove();
+            //     // Remove script and style tags
+            //     const scripts = doc.getElementsByTagName("script");
+            //     const styles = doc.getElementsByTagName("style");
+            //     while (scripts.length > 0) scripts[0]?.remove();
+            //     while (styles.length > 0) styles[0]?.remove();
 
-                // Remove unnecessary sections
-                const headers = doc.getElementsByTagName("header");
-                const footers = doc.getElementsByTagName("footer");
-                const navs = doc.getElementsByTagName("nav");
-                const asides = doc.getElementsByTagName("aside");
-                while (headers.length > 0) headers[0]?.remove();
-                while (footers.length > 0) footers[0]?.remove();
-                while (navs.length > 0) navs[0]?.remove();
-                while (asides.length > 0) asides[0]?.remove();
+            //     // Remove unnecessary sections
+            //     const headers = doc.getElementsByTagName("header");
+            //     const footers = doc.getElementsByTagName("footer");
+            //     const navs = doc.getElementsByTagName("nav");
+            //     const asides = doc.getElementsByTagName("aside");
+            //     while (headers.length > 0) headers[0]?.remove();
+            //     while (footers.length > 0) footers[0]?.remove();
+            //     while (navs.length > 0) navs[0]?.remove();
+            //     while (asides.length > 0) asides[0]?.remove();
 
-                // Extract main content
-                const mainContent =
-                  doc.querySelector("main") ||
-                  doc.querySelector("article") ||
-                  doc.body;
+            //     // Extract main content
+            //     const mainContent =
+            //       doc.querySelector("main") ||
+            //       doc.querySelector("article") ||
+            //       doc.body;
 
-                // Extract text content
-                let extractedText = mainContent.textContent || "";
-                extractedText = extractedText.replace(/\s+/g, " ").trim();
-                extractedText = extractedText.replace(
-                  /(\r\n|\n|\r){2,}/gm,
-                  "\n\n"
-                );
+            //     // Extract text content
+            //     let extractedText = mainContent.textContent || "";
+            //     extractedText = extractedText.replace(/\s+/g, " ").trim();
+            //     extractedText = extractedText.replace(
+            //       /(\r\n|\n|\r){2,}/gm,
+            //       "\n\n"
+            //     );
 
-                return extractedText;
-              },
-            });
+            //     return extractedText;
+            //   },
+            // });
           }
         }
 
@@ -241,7 +302,9 @@ export async function POST(req: Request) {
           messages: coreMessage,
           tools: tools,
           maxSteps: 15,
-          maxTokens: model.includes("claude-3-7-sonnet-20250219") ? 64000 : 4096,
+          maxTokens: model.includes("claude-3-7-sonnet-20250219")
+            ? 64000
+            : 4096,
           temperature: 1,
 
           providerOptions: {
@@ -270,26 +333,13 @@ export async function POST(req: Request) {
               thinkingTime,
             });
           },
-          onError(error) {
-            if (
-              (error.error as { message?: string }).message ==
-              "litellm.APIConnectionError: APIConnectionError: GroqException - list index out of range"
-            ) {
-              const thinkingTime = Date.now() - startTime;
-              dataStream.writeMessageAnnotation({
-                thinkingTime,
-              });
-              return;
-            } else {
-              console.error(error);
-            }
-          },
         });
 
         response.mergeIntoDataStream(dataStream, {
           sendReasoning: true,
         });
       },
+      onError: errorHandler,
     });
   } catch (error) {
     console.error(error);

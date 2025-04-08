@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from "react";
 import { cn } from "@/lib/utils";
-import { Loader } from "lucide-react";
+import { Loader, Trash2 } from "lucide-react";
 import { Button } from "@repo/ui/components/button";
 import { useChatSessions } from "@/hooks/use-chat-sessions";
 import { useRouter } from "@/i18n/navigation";
@@ -10,10 +10,21 @@ import { Footer } from "@/components/footer";
 import { auth } from "@repo/firebase-config/client";
 import { Loading } from "@/components/loading";
 import { useTranslations } from "next-intl";
-
+import { toast } from "sonner";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@repo/ui/components/alert-dialog";
 const ChatApp: React.FC = () => {
   const t = useTranslations();
-  const { createSession } = useChatSessions();
+  const { createSession, clearAllSessions, sessions } = useChatSessions();
   const [creating, setCreating] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const router = useRouter();
@@ -74,15 +85,47 @@ const ChatApp: React.FC = () => {
             {t("home.subtitle")}
           </p>
 
-          <Button onClick={handleNewSession} size="lg">
-            {creating ? (
-              <>
-                <Loader className="animate-spin" /> {t("home.creating")}
-              </>
-            ) : (
-              t("home.newChat")
+          <div className="flex flex-col sm:flex-row gap-3 w-full justify-center">
+            <Button onClick={handleNewSession} size="lg">
+              {creating ? (
+                <>
+                  <Loader className="animate-spin mr-2" /> {t("home.creating")}
+                </>
+              ) : (
+                t("home.newChat")
+              )}
+            </Button>
+
+            {sessions.length > 0 && (
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button variant="outline" size="lg">
+                    <Trash2 className="mr-2 h-4 w-4" />
+                    {t("home.clearHistory")}
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>{t("home.clearHistoryConfirmTitle")}</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      {t("home.clearHistoryConfirmDescription")}
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>{t("common.cancel")}</AlertDialogCancel>
+                    <AlertDialogAction
+                      onClick={() => {
+                        clearAllSessions();
+                        toast.success(t("home.historyCleared"));
+                      }}
+                    >
+                      {t("home.clearHistoryConfirm")}
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
             )}
-          </Button>
+          </div>
         </div>
 
         <Footer />

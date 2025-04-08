@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useTranslations } from "next-intl";
 import { Button } from "@repo/ui/components/button";
 import {
   Accordion,
@@ -42,6 +43,7 @@ export default function Error({
   error: Error & { digest?: string };
   reset: () => void;
 }) {
+  const t = useTranslations();
   const [isErrorOpen, setIsErrorOpen] = useState(false);
 
   useEffect(() => {
@@ -52,77 +54,74 @@ export default function Error({
     <div className="flex h-[calc(100vh-4rem)] items-center justify-center">
       <Card className="w-[420px]">
         <CardHeader>
-          <CardTitle>何かしらの問題が発生しました</CardTitle>
+          <CardTitle>{t("error.title")}</CardTitle>
           <CardDescription>
-            Deni AI に予期しないエラーが発生しました。
+            {t("error.description")}
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <p className="leading-none font-bold">よくある原因</p>
+          <p className="leading-none font-bold">{t("error.commonCauses")}</p>
           <Accordion type="single" collapsible>
             <AccordionItem value="try-again">
-              <AccordionTrigger>もう一度試す</AccordionTrigger>
+              <AccordionTrigger>{t("error.tryAgain.title")}</AccordionTrigger>
               <AccordionContent>
-                まず、「もう一度試す」ボタンを押して、エラーが解決するかをご確認ください。
+                {t("error.tryAgain.content")}
               </AccordionContent>
             </AccordionItem>
             <AccordionItem value="chat-session-old">
-              <AccordionTrigger>チャットの保存方式が古い</AccordionTrigger>
+              <AccordionTrigger>{t("error.oldChatSession.title")}</AccordionTrigger>
               <AccordionContent>
-                AI Playground
-                のときなど古いときに利用している場合、このエラーが発生する可能性があります。これは、よく発生するエラーです。{" "}
+                {t("error.oldChatSession.content")}
                 <br /> <br />
-                下にあるデバッグメニューから、「セッションを削除」を選択して、チャットを削除することで解決する可能性があります。
+                {t("error.oldChatSession.solution")}
                 <br />
                 <span className="text-muted-foreground text-xs">
-                  ※チャットを削除すると、二度と元に戻すことはできません。
+                  {t("error.oldChatSession.warning")}
                 </span>
               </AccordionContent>
             </AccordionItem>
             <AccordionItem value="old-cache">
-              <AccordionTrigger>古いキャッシュの使用</AccordionTrigger>
+              <AccordionTrigger>{t("error.oldCache.title")}</AccordionTrigger>
               <AccordionContent>
-                ごく稀に、ブラウザに保存されているキャッシュ
-                (JavaScriptファイルなど)
-                が最新のものではない場合に、競合してエラーが発生する場合があります。
+                {t("error.oldCache.content")}
                 <br /> <br />
-                これは、ブラウザの設定からキャッシュをクリアすることで解決できます。
+                {t("error.oldCache.solution")}
               </AccordionContent>
             </AccordionItem>
             <AccordionItem value="other-errors">
-              <AccordionTrigger>その他のエラー</AccordionTrigger>
+              <AccordionTrigger>{t("error.otherErrors.title")}</AccordionTrigger>
               <AccordionContent>
-                これらに従っても、解決しない場合、これは開発者によるミスなどの可能性があります。{" "}
+                {t("error.otherErrors.content")}{" "}
                 <br /> <br />
                 <ol className="list-decimal list-inside">
-                  <li>デバッグメニューを開き、エラーの確認を選択</li>
-                  <li>エラーをコピーする</li>
-                  <li>X で @raic_dev か @OneConfig にフォローする</li>
-                  <li>DM を送信する</li>
+                  <li>{t("error.otherErrors.steps.step1")}</li>
+                  <li>{t("error.otherErrors.steps.step2")}</li>
+                  <li>{t("error.otherErrors.steps.step3")}</li>
+                  <li>{t("error.otherErrors.steps.step4")}</li>
                 </ol>
-                この方法を行うことで、開発者にエラーを報告することができます。
+                {t("error.otherErrors.conclusion")}
               </AccordionContent>
             </AccordionItem>
           </Accordion>
         </CardContent>
         <CardFooter className="gap-3">
-          <Button onClick={reset}>もう一度試す</Button>
+          <Button onClick={reset}>{t("error.tryAgainButton")}</Button>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant={"secondary"}>デバッグメニュー</Button>
+              <Button variant={"secondary"}>{t("error.debugMenu")}</Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent>
               <span className="ml-2 text-muted-foreground text-xs">
-                開発者へ報告
+                {t("error.reportToDeveloper")}
               </span>
               <DropdownMenuItem onClick={() => setIsErrorOpen(true)}>
-                エラーの確認
+                {t("error.checkError")}
               </DropdownMenuItem>
               <DropdownMenuSeparator />
               <span className="ml-2 text-muted-foreground text-xs">
-                危険なアクション
+                {t("error.dangerousActions")}
               </span>
-              <DropdownMenuItem onClick={() => window.localStorage.clear()}>セッションを削除 (確認なし)</DropdownMenuItem>
+              <DropdownMenuItem onClick={() => window.localStorage.clear()}>{t("error.deleteSession")}</DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         </CardFooter>
@@ -134,9 +133,9 @@ export default function Error({
       >
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>エラーの確認</AlertDialogTitle>
+            <AlertDialogTitle>{t("error.checkErrorTitle")}</AlertDialogTitle>
             <AlertDialogDescription>
-              これは、開発者のデバッグ目的か開発者に報告するための機能です。それ以外の場合は閉じることを推奨します。
+              {t("error.checkErrorDescription")}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <div className="flex flex-col gap-4">
@@ -148,12 +147,12 @@ export default function Error({
                 navigator.clipboard.writeText(
                   String(error) || "Failed to get error"
                 );
-                toast.success("コピーしました");
+                toast.success(t("error.copied"));
               }}
             />
           </div>{" "}
           <AlertDialogFooter>
-            <AlertDialogCancel>閉じる</AlertDialogCancel>
+            <AlertDialogCancel>{t("error.close")}</AlertDialogCancel>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>

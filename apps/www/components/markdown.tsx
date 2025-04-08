@@ -7,6 +7,8 @@ import {
   ReactNode,
 } from "react";
 import { ExtraProps } from "react-markdown";
+import SyntaxHighlighter from "react-syntax-highlighter";
+import { vs2015 } from "react-syntax-highlighter/dist/esm/styles/hljs";
 
 interface PreProps
   extends ClassAttributes<HTMLPreElement>,
@@ -46,25 +48,25 @@ export const Link = memo(({ href, children, ...props }: LinkProps) => {
 });
 Link.displayName = "Link";
 
-// export const MemoizedHighlighter = memo(
-//   ({ code, language }: { code: string; language: string }) => {
-//     return (
-//       <SyntaxHighlighter
-//         language={language}
-//         style={vs2015}
-//         customStyle={{
-//           padding: "1rem",
-//           borderRadius: "0.75rem",
-//           fontSize: "0.875rem",
-//           lineHeight: "1.25rem",
-//         }}
-//       >
-//         {code}
-//       </SyntaxHighlighter>
-//     );
-//   }
-// );
-// MemoizedHighlighter.displayName = "MemoizedHighlighter";
+export const MemoizedHighlighter = memo(
+  ({ code, language }: { code: string; language: string }) => {
+    return (
+      <SyntaxHighlighter
+        language={language}
+        style={vs2015}
+        customStyle={{
+          padding: "1rem",
+          borderRadius: "0.75rem",
+          fontSize: "0.875rem",
+          lineHeight: "1.25rem",
+        }}
+      >
+        {code}
+      </SyntaxHighlighter>
+    );
+  }
+);
+MemoizedHighlighter.displayName = "MemoizedHighlighter";
 
 export const Pre = memo(({ children, ...props }: PreProps) => {
   const [copied, setCopied] = useState(false);
@@ -84,13 +86,13 @@ export const Pre = memo(({ children, ...props }: PreProps) => {
   };
 
   // Get language from className prop if available
-  // const language =
-  //   isObject(children) &&
-  //   "props" in children &&
-  //   isObject(children.props) &&
-  //   typeof children.props.className === "string"
-  //     ? children.props.className.replace("language-", "")
-  //     : "";
+  const language =
+    isObject(children) &&
+    "props" in children &&
+    isObject(children.props) &&
+    typeof children.props.className === "string"
+      ? children.props.className.replace("language-", "")
+      : "";
 
   return (
     <div className="not-prose flex flex-col">
@@ -103,15 +105,15 @@ export const Pre = memo(({ children, ...props }: PreProps) => {
           {copied ? "Copied!" : "Copy"}
         </Button>
 
-        {/* <MemoizedHighlighter
+        <MemoizedHighlighter
           code={
             isObject(children) && "props" in children
               ? String((children.props as any)?.children || "")
               : String(children || "")
           }
           language={language}
-        /> */}
-        <div className="not-prose flex flex-col">
+        />
+        {/* <div className="not-prose flex flex-col">
           <pre
             {...props}
             className={`text-sm w-full overflow-x-auto dark:bg-zinc-900 p-4 border border-zinc-200 dark:border-zinc-700 rounded-xl dark:text-zinc-50 text-zinc-900`}
@@ -122,7 +124,7 @@ export const Pre = memo(({ children, ...props }: PreProps) => {
                 : String(children || "")}
             </code>
           </pre>
-        </div>
+        </div> */}
       </div>{" "}
     </div>
   );

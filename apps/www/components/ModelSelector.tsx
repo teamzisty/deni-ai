@@ -35,6 +35,7 @@ import { useModelVisibility } from "@/hooks/use-model-settings";
 import { memo, useCallback, useMemo } from "react";
 import { cn } from "@/lib/utils";
 import { DeepSeekIcon } from "./DeepSeekIcon";
+import { useSettingsDialog } from "@/context/SettingsDialogContext";
 
 const ModelItem = memo(
   ({
@@ -121,6 +122,7 @@ export const ModelSelector = memo(function ModelSelector({
 }) {
   const { visibility } = useModelVisibility();
   const t = useTranslations();
+  const { openDialog } = useSettingsDialog();
 
   const ModelIcon = useMemo(() => {
     if (refreshIcon) return <RefreshCw />;
@@ -193,13 +195,9 @@ export const ModelSelector = memo(function ModelSelector({
           {!refreshIcon && (
             <>
               <DropdownMenuSeparator />
-              <DropdownMenuItem asChild>
-                <div className="flex items-center justify-between w-full">
-                  <Link href={"/settings/model"}>
-                    {t("modelSelector.manageModels")}
-                  </Link>
-                  <ArrowRight />
-                </div>
+              <DropdownMenuItem onClick={() => openDialog("model")}>
+                {t("modelSelector.manageModels")}
+                <ArrowRight />
               </DropdownMenuItem>
             </>
           )}

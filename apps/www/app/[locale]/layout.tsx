@@ -2,6 +2,9 @@ import React from "react";
 import { getTranslations } from "next-intl/server";
 import { AuthProvider } from "../../context/AuthContext";
 import { ChatSessionsProvider } from "../../hooks/use-chat-sessions";
+import { SettingsDialogProvider } from "../../context/SettingsDialogContext";
+import { SettingsDialog } from "../../components/SettingsDialog";
+import { DevelopmentBanner } from "../../components/DevelopmentBanner";
 import { Toaster } from "@repo/ui/components/sonner";
 import { Locale, NextIntlClientProvider, hasLocale } from "next-intl";
 import { notFound } from "next/navigation";
@@ -61,10 +64,16 @@ export default async function LocaleLayout({ children, params }: Props) {
     <NextIntlClientProvider locale={locale} messages={messages}>
       <ChatSessionsProvider>
         <AuthProvider>
-          {children}
-          <Toaster richColors position="bottom-right" />
+          <SettingsDialogProvider>
+            <DevelopmentBanner>
+              {children}
+            </DevelopmentBanner>
+            <Toaster richColors position="bottom-right" />
+            <SettingsDialog />
+          </SettingsDialogProvider>
         </AuthProvider>
       </ChatSessionsProvider>
     </NextIntlClientProvider>
   );
 }
+

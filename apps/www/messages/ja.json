@@ -34,47 +34,103 @@
   "chatInput": {
     "imageAdd": "画像を追加",
     "search": "検索",
-    "advancedSearch": "詳細な検索"
+    "advancedSearch": "詳細なリサーチ"
   },
   "headerArea": {
     "ready": "準備完了",
-    "themeSwitch": "テーマ切り替え",
-    "dark": "ダーク",
-    "light": "ライト"
+    "themeSwitch": "テーマ切り替え"
   },
   "settings": {
-    "conversation": "会話",
-    "importExport": "会話のインポート / エクスポート",
-    "importExportDescription": "会話をインポートしたり、エクスポートします。",
-    "importWarning": "※注意: インポートすると、すべての会話が削除され、上書きされます。",
-    "import": "インポート",
-    "export": "エクスポート",
-    "deleteAll": "すべての会話を削除",
-    "destructive": "破壊的",
-    "deleteAllDescription": "すべての会話を削除します。このアクションは取り戻すことはできません。",
-    "delete": "削除",
-    "settings": "設定",
-    "appearance": "外観テーマ",
-    "appearanceDescription": "ライトテーマかダークテーマに変更します。",
-    "changeTheme": "テーマを変更",
-    "light": "ライト",
-    "dark": "ダーク",
-    "system": "システム",
-    "defaultTheme": "従来のテーマを使用",
-    "defaultThemeDescription": "新しいテーマを無効にして、従来のテーマを使用します。",
-    "language": "言語変更",
-    "languageDescription": "表示言語を変更します。",
-    "changeLanguage": "言語を変更",
-    "japanese": "日本語",
-    "english": "English",
-    "error": "エラーが発生しました",
-    "noConversations": "会話が1つも存在しないため、エクスポートできません。",
-    "exportSuccess": "会話をエクスポートしました",
-    "importSuccess": "会話をインポートしました",
-    "importAllSuccess": "ファイルにあるすべての会話をインポートしました",
-    "fileReadError": "ファイルの読み込み中にエラーが発生しました",
-    "deleteSuccess": "会話を削除しました",
-    "deleteAllSuccess": "すべての会話を削除しました"
+    "title": "設定",
+    "popupMessages": {
+      "fillField": "フィールドを埋めてください",
+      "nameChanged": "名前を変更しました",
+      "noConversations": "会話が1つも存在しないため、エクスポートできません。",
+      "exportSuccess": "会話をエクスポートしました",
+      "importSuccess": "会話をインポートしました",
+      "importAllSuccess": "ファイルにあるすべての会話をインポートしました",
+      "fileReadError": "ファイルの読み込み中にエラーが発生しました",
+      "deleteSuccess": "会話を削除しました",
+      "deleteAllSuccess": "すべての会話を削除しました",
+      "syncedConversations": "会話履歴をクラウドと同期しました。",
+      "nameChangeFailed": "名前の変更に失敗しました"
+    },
+    "appearance": {
+      "tab": "言語と外観",
+      "title": "言語と外観の設定",
+      "description": "言語と外観の設定を変更します。",
+      "theme": {
+        "title": "外観テーマ",
+        "description": "ライトテーマかダークテーマに変更します。",
+        "action": "テーマを変更",
+        "light": "ライト",
+        "dark": "ダーク",
+        "system": "システム"
+      },
+      "defaultTheme": {
+        "title": "従来のテーマを使用",
+        "description": "新しいテーマを無効にして、従来のテーマを使用します。"
+      },
+      "language": {
+        "title": "言語",
+        "description": "アプリの表示言語を変更します。",
+        "action": "言語を変更"
+      }
+    },
+    "account": {
+      "tab": "アカウント",
+      "title": "アカウントの管理",
+      "description": "あなたのアカウントを管理します。",
+      "name": {
+        "title": "名前",
+        "description": "あなたの名前を変更します。",
+        "action": "名前を変更",
+        "placeholder": "名前を入力してください"
+      },
+      "avatar": {
+        "title": "プロフィール画像",
+        "description": "あなたのプロフィール画像を変更します。",
+        "action": "プロフィール画像を変更"
+      },
+      "privacyMode": {
+        "title": "プライバシーモード",
+        "description": "あなたの名前、メールアドレス、プロフィール画像を非表示にします。"
+      },
+      "sync": {
+        "title": "会話履歴の同期",
+        "description": "会話履歴をクラウドと同期します。",
+        "action": "会話履歴を同期",
+        "syncing": "同期中..."
+      },
+      "authDisabled": "認証は一時的に無効になっているか、あなたのインスタンスでは利用できません。"
+    },
+    "dataControl": {
+      "tab": "データの管理",
+      "title": "データの管理",
+      "description": "Deni AI 及びローカルに保存されているデータを管理します。",
+      "conversation": "会話",
+      "importExport": "会話のインポート / エクスポート",
+      "importExportDescription": "会話をインポートしたり、エクスポートします。",
+      "importWarning": "※注意: インポートすると、すべての会話が削除され、上書きされます。",
+      "import": "インポート",
+      "export": "エクスポート",
+      "deleteAll": "すべての会話を削除",
+      "destructive": "破壊的",
+      "deleteAllDescription": "すべての会話を削除します。このアクションは取り戻すことはできません。",
+      "delete": "削除"
+    },
+    "model": {
+      "tab": "モデル",
+      "title": "モデルを管理",
+      "description": "チャットのモデルリストに表示するモデルの表示/非表示を切り替えます。",
+      "filter": "フィルター",
+      "modelTypes": "モデルタイプ",
+      "features": "機能",
+      "reset": "リセット",
+      "showing": "件表示",
+      "noModels": "条件に一致するモデルがありません。フィルター条件を変更してください。",
+      "knowledgeCutoff": "知識の範囲:"
+    }
   },
   "modelSelector": {
     "model": "モデル",
@@ -84,55 +140,6 @@
     "fast": "高速",
     "visionCapable": "画像を認識可能",
     "reasoning": "推論可能"
-  },
-  "settingsLayout": {
-    "title": "Deni AI の設定",
-    "general": "一般",
-    "account": "アカウント",
-    "model": "モデル"
-  },
-  "modelSettings": {
-    "title": "モデルを管理",
-    "description": "チャットのモデルリストに表示するモデルの表示/非表示を切り替えます。",
-    "filter": "フィルター",
-    "modelTypes": "モデルタイプ",
-    "features": "機能",
-    "reset": "リセット",
-    "showing": "件表示",
-    "noModels": "条件に一致するモデルがありません。フィルター条件を変更してください。",
-    "experimentalInfo": "試験的モデルについての情報",
-    "experimentalDescription": "試験的モデルは、試験的な API サーバーを使用しているためメンテナンスが不定期に行われます。使えない場合は、リリースモデルを使用してください",
-    "knowledgeCutoff": "ナレッジカットオフ (知識の範囲):",
-    "reasoning": "推論",
-    "experimental": "試験的",
-    "fast": "高速",
-    "image": "画像"
-  },
-  "account": {
-    "title": "アカウントの管理",
-    "description": "あなたのアカウントを管理します。",
-    "changeName": "名前を変更",
-    "changeNameDescription": "あなたの名前を変更します。",
-    "change": "変更",
-    "yourName": "あなたの名前",
-    "changeAvatar": "プロフィール画像を変更",
-    "changeAvatarDescription": "あなたのアバターを変更します。",
-    "privacyMode": "プライバシーモード",
-    "privacyModeDescription": "あなたの名前、メールアドレス、プロフィール画像を非表示にします。",
-    "syncConversations": "会話履歴の同期",
-    "syncConversationsDescription": "会話履歴をクラウドと同期します。",
-    "syncing": "同期中...",
-    "sync": "同期する",
-    "authDisabled": "認証は一時的に無効になっているか、あなたのインスタンスでは利用できません。",
-    "enterName": "名前を入力してください",
-    "nameChanged": "名前を変更しました",
-    "nameChangeFailed": "名前の変更に失敗しました",
-    "changingAvatar": "プロフィール画像を変更中...",
-    "avatarChanged": "プロフィール画像を変更しました",
-    "unknownError": "不明なエラーが発生しました",
-    "fileNotSelected": "ファイルが設定されていません",
-    "uploadFailed": "アップロードに失敗しました",
-    "error": "エラーが発生しました"
   },
   "sidebar": {
     "newChat": "新しい会話",
@@ -159,6 +166,31 @@
     "poweredBy": "Powered by voids.top",
     "and": "and"
   },
+  "common": {
+    "modelFeatures": {
+      "reasoning": "推論",
+      "experimental": "試験的",
+      "fast": "高速",
+      "vision": "画像",
+      "offline": "オフライン"
+    },
+    "themes": {
+      "dark": "ダーク",
+      "light": "ライト"
+    },
+    "error": {
+      "occurred": "エラーが発生しました",
+      "unknown": "不明なエラーが発生しました。",
+      "fileNotSelected": "ファイルが設定されていません",
+      "uploadFailed": "アップロードに失敗しました",
+      "unknownError": "不明なエラーが発生しました"
+    },
+    "upload": {
+      "uploading": "アップロードしています...",
+      "uploaded": "アップロードに成功しました！"
+    },
+    "cancel": "キャンセル"
+  },
   "landing": {
     "title": "あなたの20ドルを節約",
     "subtitle": "すべての人のために作られた、無制限・完全無料で安全な AI チャットサービス",
@@ -183,7 +215,12 @@
     "title": "お手伝いできることはありますか？",
     "subtitle": "新しいチャットを作成するか、左のサイドバーで会話を選択して、会話を始めましょう！",
     "newChat": "新しいチャットを作成",
-    "creating": "作成中..."
+    "creating": "新しいチャットを作成中...",
+    "clearHistory": "履歴を削除",
+    "clearHistoryConfirmTitle": "チャット履歴を削除しますか？",
+    "clearHistoryConfirmDescription": "この操作は取り消せません。すべてのチャット履歴が完全に削除されます。",
+    "clearHistoryConfirm": "削除する",
+    "historyCleared": "チャット履歴を削除しました"
   },
   "login": {
     "title": "ログイン",
@@ -228,5 +265,137 @@
     "invalidEmail": "メールアドレスの形式が正しくありません",
     "weakPassword": "パスワードが弱すぎます",
     "errorOccurred": "エラーが発生しました: {errorContent}"
+  },
+  "chat": {
+    "error": {
+      "occurred": "何かしらの問題が発生しました。キャッシュやCookieを削除しても治らない場合は、このモデルはオフラインである可能性があります。",
+      "imageUpload": "画像をアップロードできません",
+      "errorOccurred": "エラーが発生しました: {message}",
+      "idTokenFailed": "IDトークンの取得に失敗しました。",
+      "messageSendFailed": "メッセージの送信に失敗しました",
+      "shareNotLoggedIn": "会話を共有するにはログインが必要です",
+      "shareNoMessages": "共有するメッセージがありません",
+      "shareFailed": "会話の共有に失敗しました"
+    },
+    "advancedSearch": {
+      "info": "詳細なリサーチについて",
+      "description": "詳細なリサーチはベータ版です。「ウェブサイトを閲覧しました」等をクリックすると、検索結果が表示されます。"
+    },
+    "image": {
+      "uploading": "画像をアップロード中...",
+      "uploaded": "画像をアップロードしました"
+    },
+    "share": "共有",
+    "shareSuccess": "会話を共有しました",
+    "shareLinkCopied": "共有リンクをクリップボードにコピーしました"
+  },
+  "error": {
+    "title": "何かしらの問題が発生しました",
+    "description": "Deni AI に予期しないエラーが発生しました。",
+    "commonCauses": "よくある原因",
+    "tryAgain": {
+      "title": "もう一度試す",
+      "content": "まず、「もう一度試す」ボタンを押して、エラーが解決するかをご確認ください。"
+    },
+    "oldChatSession": {
+      "title": "チャットの保存方式が古い",
+      "content": "AI Playground のときなど古いときに利用している場合、このエラーが発生する可能性があります。これは、よく発生するエラーです。",
+      "solution": "下にあるデバッグメニューから、「セッションを削除」を選択して、チャットを削除することで解決する可能性があります。",
+      "warning": "※チャットを削除すると、二度と元に戻すことはできません。"
+    },
+    "oldCache": {
+      "title": "古いキャッシュの使用",
+      "content": "ごく稀に、ブラウザに保存されているキャッシュ (JavaScriptファイルなど) が最新のものではない場合に、競合してエラーが発生する場合があります。",
+      "solution": "これは、ブラウザの設定からキャッシュをクリアすることで解決できます。"
+    },
+    "otherErrors": {
+      "title": "その他のエラー",
+      "content": "これらに従っても、解決しない場合、これは開発者によるミスなどの可能性があります。",
+      "steps": {
+        "step1": "デバッグメニューを開き、エラーの確認を選択",
+        "step2": "エラーをコピーする",
+        "step3": "X で @raic_dev か @OneConfig にフォローする",
+        "step4": "DM を送信する"
+      },
+      "conclusion": "この方法を行うことで、開発者にエラーを報告することができます。"
+    },
+    "tryAgainButton": "もう一度試す",
+    "debugMenu": "デバッグメニュー",
+    "reportToDeveloper": "開発者へ報告",
+    "checkError": "エラーの確認",
+    "dangerousActions": "危険なアクション",
+    "deleteSession": "セッションを削除 (確認なし)",
+    "checkErrorTitle": "エラーの確認",
+    "checkErrorDescription": "これは、開発者のデバッグ目的か開発者に報告するための機能です。それ以外の場合は閉じることを推奨します。",
+    "copied": "コピーしました",
+    "close": "閉じる"
+  },
+  "notFound": {
+    "title": "ページが見つかりませんでした",
+    "description": "お探しのページは存在しないか、削除された可能性があります。",
+    "checkUrl": "URLが正しいかご確認ください。もしこれが間違いだと思われる場合は、お手数ですが管理者までご連絡ください。",
+    "chatButton": "チャット",
+    "backButton": "前のページに戻る"
+  },
+  "wizard": {
+    "title": "初期設定ウィザード",
+    "next": "次へ",
+    "back": "戻る",
+    "already": {
+      "title": "あなたはセットアップを完了しています",
+      "description": "あなたは既にセットアップを完了しているようです。もう一度セットアップを実行することも可能です。",
+      "button": "最後のステップへ進む"
+    },
+    "language": {
+      "title": "言語を選択",
+      "description": "アプリで使用する言語を選択してください。"
+    },
+    "profile": {
+      "title": "プロフィール設定",
+      "description": "あなたの名前とアバター画像を設定してください。",
+      "name": "表示名",
+      "namePlaceholder": "あなたの名前を入力",
+      "avatar": "アバター画像URL",
+      "avatarPlaceholder": "画像URLを入力（任意）",
+      "avatarHelp": "画像のURLを入力するか、空白のままにしてください。",
+      "updating": "更新中..."
+    },
+    "theme": {
+      "title": "テーマを選択",
+      "description": "お好みのテーマを選択してください。"
+    },
+    "start": {
+      "title": "準備完了！",
+      "description": "設定が完了しました。チャットを始めましょう！",
+      "button": "チャットを開始"
+    }
+  },
+  "profile": {
+    "updateSuccess": "プロフィールを更新しました",
+    "updateError": "プロフィールの更新に失敗しました",
+    "uploadError": "画像のアップロードに失敗しました"
+  },
+  "shared": {
+    "title": "共有された会話",
+    "description": "ユーザーが共有した会話を閲覧できます",
+    "viewCount": "{count}回の閲覧",
+    "backButton": "戻る",
+    "copyLink": "リンクをコピー",
+    "linkCopied": "リンクをクリップボードにコピーしました",
+    "error": {
+      "title": "エラー",
+      "notFound": "共有された会話が見つかりませんでした",
+      "fetchFailed": "共有された会話の取得に失敗しました",
+      "unknown": "不明なエラーが発生しました"
+    },
+    "noChats": "まだ共有された会話はありません",
+    "noChatsDescription": "最初に会話を共有しましょう！",
+    "startChat": "チャットを始める",
+    "login": "ログインして共有する",
+    "myChats": "自分のチャット",
+    "messages": "メッセージ",
+    "views": "閲覧数",
+    "view": "閲覧",
+    "untitledChat": "無題の会話"
   }
 }

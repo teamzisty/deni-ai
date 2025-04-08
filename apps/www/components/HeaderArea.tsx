@@ -2,13 +2,13 @@ import {
   modelDescriptions,
   reasoningEffortType,
 } from "@/lib/modelDescriptions";
-import { motion } from "framer-motion";
 import { memo } from "react";
 import { ModelSelector } from "./ModelSelector";
 import { ReasoningEffortSelector } from "./ReasoningEffortSelector";
 import { Button } from "@repo/ui/components/button";
-import { CircleCheck, Moon, StopCircle, Sun } from "lucide-react";
+import { Settings } from "lucide-react";
 import { EasyTip } from "@/components/easytip";
+import { useSettingsDialog } from "@/context/SettingsDialogContext";
 import { useTheme } from "next-themes";
 import { useTranslations } from "next-intl";
 
@@ -19,9 +19,8 @@ interface HeaderAreaProps {
   handleModelChange: (model: string) => void;
   reasoningEffort?: reasoningEffortType;
   handleReasoningEffortChange?: (effort: reasoningEffortType) => void;
+  rightContent?: React.ReactNode;
 }
-
-const MotionButton = motion(Button);
 
 const HeaderArea: React.FC<HeaderAreaProps> = memo(
   ({
@@ -31,12 +30,14 @@ const HeaderArea: React.FC<HeaderAreaProps> = memo(
     handleModelChange,
     reasoningEffort,
     handleReasoningEffortChange,
+    rightContent,
   }) => {
     const { theme, setTheme } = useTheme();
     const t = useTranslations();
+    const { openDialog } = useSettingsDialog();
 
     return (
-      <div className="shadow-xl bg-secondary/70 p-2 rounded-full flex items-center justify-center w-fit mx-auto">
+      <div className="shadow-xl bg-secondary/70 p-2 rounded-full flex items-center justify-between w-fit mx-auto">
         <div className="flex gap-1 items-center">
           <ModelSelector
             handleModelChange={handleModelChange}
@@ -53,41 +54,18 @@ const HeaderArea: React.FC<HeaderAreaProps> = memo(
                 availableEfforts={modelDescriptions[model]?.reasoningEffort}
               />
             )}
-          {!generating ? (
-            <EasyTip content={t("headerArea.ready")}>
-              <Button className="rounded-full">
-                <CircleCheck />
-              </Button>
-            </EasyTip>
-          ) : (
-            <MotionButton
-              className="rounded-full transition-opacity duration-200"
-              onClick={stop}
-              initial={{ opacity: 0, scale: 0.8 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ duration: 0.3, ease: "easeOut" }}
-            >
-              <StopCircle />
-            </MotionButton>
-          )}{" "}
-          <EasyTip content={t("headerArea.themeSwitch")}>
+          <EasyTip content={t("settings.title")}>
             <Button
               className="rounded-full"
               variant={"secondary"}
-              onClick={() => {
-                setTheme(theme === "light" ? "dark" : "light")
-              }}
+              onClick={() => openDialog()}
             >
-              <motion.div
-                animate={{ rotate: theme === "light" ? 0 : 180 }}
-                transition={{ duration: 0.3 }}
-              >
-                {theme === "light" ? <Moon /> : <Sun />}
-              </motion.div>
-              {theme === "light" ? t("headerArea.dark") : t("headerArea.light")}
+              <Settings />
+              設定
             </Button>
-          </EasyTip>{" "}
+          </EasyTip>
         </div>
+        {rightContent}
       </div>
     );
   },
