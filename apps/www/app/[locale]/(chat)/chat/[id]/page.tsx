@@ -116,12 +116,16 @@ const ChatApp: React.FC = () => {
 
   const chatLogRef = useRef<HTMLDivElement>(null);
 
+  const [retryCount, setRetryCount] = useState<number>(0);
+  const MAX_RETRIES = 3;
+
   const {
     messages,
     input,
     setInput,
-    setMessages,
     status,
+    setMessages,
+    reload,
     stop,
     error,
     handleSubmit,
@@ -341,12 +345,41 @@ const ChatApp: React.FC = () => {
 
       handleSubmit(event, submitOptions);
       setImage(null);
+      setRetryCount(0); // Reset retry count on successful send
     } catch (error) {
       toast.error(t("chat.error.messageSendFailed"), {
         description:
           error instanceof Error ? error.message : t("common.error.unknown"),
       });
     }
+  };
+
+  const authReload = async () => {
+    const submitOptions: ChatRequestOptions = {
+      experimental_attachments: image
+        ? [{ url: image, contentType: "image/png" }]
+        : undefined,
+    };
+
+    if (auth && user) {
+      const idToken = await user.getIdToken();
+      if (!idToken) {
+        throw new Error(t("chat.error.idTokenFailed"));
+      } 
+      submitOptions.headers = { Authorization: idToken };
+    }
+
+    reload(submitOptions);
+  };
+
+  const handleRetry = async () => {
+    if (retryCount >= MAX_RETRIES) {
+      toast.error(t("chat.error.maxRetriesReached"));
+      return;
+    }
+
+    setRetryCount(prev => prev + 1);
+    authReload();
   };
 
   const handleSendMessage = async (
@@ -601,6 +634,23 @@ const ChatApp: React.FC = () => {
                         {modelDescriptions[model]?.reasoning
                           ? t("messageLog.reasoning")
                           : t("messageLog.thinking")}
+                      </div>
+                    </div>
+                  </div>
+                )}
+                {error && (
+                  <div className="flex w-full message-log visible">
+                    <div className="p-2 my-2 rounded-lg text-muted-foreground w-full">
+                      <div className="ml-3 flex items-center gap-2">
+                        <span>{t("chat.error.retryMessage")}</span>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={handleRetry}
+                          disabled={retryCount >= MAX_RETRIES}
+                        >
+                          {t("chat.error.retry")} ({retryCount}/{MAX_RETRIES})
+                        </Button>
                       </div>
                     </div>
                   </div>

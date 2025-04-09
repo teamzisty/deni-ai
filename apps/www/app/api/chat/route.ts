@@ -162,9 +162,13 @@ export async function POST(req: Request) {
                   }
                 ).then((res) => res.json());
 
+                const totalCount = toolList?.includes("advancedSearch")
+                  ? 10
+                  : 5;
+
                 const searchResults = await Promise.all(
                   results.web.results
-                    .slice(0, 5)
+                    .slice(0, totalCount)
                     .map(
                       async (result: {
                         title: string;

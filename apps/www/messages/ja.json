@@ -25,7 +25,9 @@
     "copy": "コピー",
     "generationTime": "生成時間",
     "thinking": "考え中...",
-    "image": "画像"
+    "image": "画像",
+    "copied": "コピーしました",
+    "regenerate": "再生成"
   },
   "inputBox": {
     "placeholder": "AI にメッセージを送信する",
@@ -275,7 +277,10 @@
       "messageSendFailed": "メッセージの送信に失敗しました",
       "shareNotLoggedIn": "会話を共有するにはログインが必要です",
       "shareNoMessages": "共有するメッセージがありません",
-      "shareFailed": "会話の共有に失敗しました"
+      "shareFailed": "会話の共有に失敗しました",
+      "retryMessage": "メッセージの送信に失敗しました。再試行しますか？",
+      "retry": "再試行",
+      "maxRetriesReached": "最大再試行回数に達しました"
     },
     "advancedSearch": {
       "info": "詳細なリサーチについて",

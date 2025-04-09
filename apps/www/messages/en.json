@@ -20,12 +20,13 @@
     "reasoning": "Reasoning...",
     "reasonedFor": "reasoned for",
     "hour": "hour",
-    "minute": "minute",
-    "second": "second",
+    "minute": "min",
+    "second": "sec",
     "copy": "Copy",
-    "generationTime": "Generation time",
+    "generationTime": "Generation Time",
     "thinking": "Thinking...",
-    "image": "Image"
+    "image": "Image",
+    "regenerate": "Regenerate"
   },
   "inputBox": {
     "placeholder": "Send a message to AI",
@@ -281,7 +282,10 @@
       "messageSendFailed": "Failed to send message",
       "shareNotLoggedIn": "You need to be logged in to share a conversation",
       "shareNoMessages": "There are no messages to share",
-      "shareFailed": "Failed to share conversation"
+      "shareFailed": "Failed to share conversation",
+      "retryMessage": "Failed to send message. Would you like to retry?",
+      "retry": "Retry",
+      "maxRetriesReached": "Maximum retry attempts reached"
     },
     "advancedSearch": {
       "info": "About Deep Research",

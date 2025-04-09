@@ -1,7 +1,7 @@
 import { FC, memo, useEffect, useMemo } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
-import { Clock, Copy, MousePointer } from "lucide-react";
+import { Clock, Copy, MousePointer, RefreshCw } from "lucide-react";
 import { Button } from "@repo/ui/components/button";
 import { EasyTip } from "@/components/easytip";
 import { Pre } from "@/components/markdown";
@@ -18,6 +18,8 @@ import {
 } from "@repo/ui/components/collapsible";
 import { SiBrave } from "@icons-pack/react-simple-icons";
 import { useTranslations } from "next-intl";
+import { toast } from "sonner";
+
 interface MessageLogProps {
   message: UIMessage;
   sessionId: string;
@@ -110,22 +112,13 @@ function messageReducer(
 }
 // メッセージのコントロール部分（コピーボタンと生成時間）を別コンポーネントとして抽出
 const MessageControls = memo(
-  ({ messageContent, thinkingTime }: { messageContent: string; thinkingTime: number }) => {
+  ({ messageContent, thinkingTime, onRegenerate }: { messageContent: string; thinkingTime: number; onRegenerate?: () => void }) => {
     const t = useTranslations();
 
-    const handleCopy = React.useCallback(
-      (event: React.MouseEvent<HTMLButtonElement>) => {
-        navigator.clipboard.writeText(messageContent);
-        const target = event.currentTarget;
-        target.querySelector("svg")!.outerHTML =
-          '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-check"><polyline points="20 6 9 17 4 12"/></svg>';
-        setTimeout(() => {
-          target.querySelector("svg")!.outerHTML =
-            '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-copy"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>';
-        }, 1000);
-      },
-      [messageContent]
-    );
+    const handleCopy = () => {
+      navigator.clipboard.writeText(messageContent);
+      toast.success(t("messageLog.copied"));
+    };
 
     return (
       <div className="flex items-center rounded mt-3 bg-secondary text-xs">
@@ -141,6 +134,20 @@ const MessageControls = memo(
             </Button>
           </EasyTip>
         </div>
+        {onRegenerate && (
+          <div className="p-1 text-gray-400 hover:text-foreground">
+            <EasyTip content={t("messageLog.regenerate")}>
+              <Button
+                size="sm"
+                className="p-0 ml-2 rounded-full"
+                variant={"ghost"}
+                onClick={onRegenerate}
+              >
+                <RefreshCw size="16" />
+              </Button>
+            </EasyTip>
+          </div>
+        )}
         <div className="p-1 text-gray-400 transition-all cursor-default hover:text-foreground">
           <EasyTip content={t("messageLog.generationTime")}>
             <Button
@@ -192,6 +199,24 @@ export const MessageLog: FC<MessageLogProps> = memo(
 
     const { getSession, updateSession } = useChatSessions();
     const t = useTranslations();
+
+    const handleRegenerate = React.useCallback(() => {
+      const session = getSession(sessionId);
+      if (!session) return;
+
+      // Find the index of the current message
+      const messageIndex = session.messages.findIndex(m => m.id === message.id);
+      if (messageIndex === -1) return;
+
+      // Remove all messages after and including the current message
+      const updatedMessages = session.messages.slice(0, messageIndex);
+      
+      // Update the session with the truncated messages
+      updateSession(sessionId, {
+        ...session,
+        messages: updatedMessages,
+      });
+    }, [message.id, sessionId, getSession, updateSession]);
 
     const toolInvocations = React.useMemo(
       () => message.parts.filter((part) => part.type === "tool-invocation"),
@@ -416,6 +441,7 @@ export const MessageLog: FC<MessageLogProps> = memo(
                 <MessageControls
                   messageContent={message.content}
                   thinkingTime={state.thinkingTime}
+                  onRegenerate={handleRegenerate}
                 />
               </div>
             ) : (
