@@ -61,7 +61,7 @@ const HeaderArea: React.FC<HeaderAreaProps> = memo(
               onClick={() => openDialog()}
             >
               <Settings />
-              設定
+              {t("settings.title")}
             </Button>
           </EasyTip>
         </div>

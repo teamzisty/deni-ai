@@ -177,6 +177,13 @@
       "dark": "Dark",
       "light": "Light"
     },
+    "modelFeatures": {
+      "reasoning": "Reasoning",
+      "experimental": "Experimental",
+      "fast": "Fast",
+      "vision": "Vision",
+      "offline": "Offline"
+    },
     "error": {
       "occurred": "An error occurred",
       "unknown": "An unknown error occurred.",

@@ -11,7 +11,11 @@ import { Switch } from "@repo/ui/components/switch";
 import { Check } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useTheme } from "next-themes";
-import { useParams, useRouter as nextRouter } from "next/navigation";
+import {
+  useParams,
+  useRouter as nextRouter,
+  usePathname,
+} from "next/navigation";
 import { useState, useEffect } from "react";
 
 export default function AppearanceSettings() {
@@ -22,6 +26,7 @@ export default function AppearanceSettings() {
   const params = useParams();
   const language = params.locale === "ja" ? "ja" : "en";
   const NextRouter = nextRouter();
+  const pathname = usePathname();
 
   useEffect(() => {
     const defaultTheme = localStorage.getItem("defaultTheme");
@@ -226,7 +231,7 @@ export default function AppearanceSettings() {
                     }
 
                     // 言語変更ページへ移動
-                    NextRouter.push("/ja/settings");
+                    NextRouter.push(pathname.replace("/" + language, "/ja"));
                   }}
                 >
                   {"Japanese - 日本語"}{" "}
@@ -255,7 +260,7 @@ export default function AppearanceSettings() {
                     }
 
                     // 言語変更ページへ移動
-                    NextRouter.push("/en/settings");
+                    NextRouter.push(pathname.replace("/" + language, "/en"));
                   }}
                 >
                   {"English - 英語"}{" "}
