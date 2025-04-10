@@ -37,6 +37,8 @@ import {
   InputOTPSeparator,
   InputOTPSlot,
 } from "@repo/ui/components/input-otp";
+import { collection, getDocs, deleteDoc, doc } from "firebase/firestore";
+import { firestore } from "@repo/firebase-config/client";
 
 export default function DataControlsSettings() {
   const [dataCollection, setDataCollection] = useState(false);
@@ -254,6 +256,32 @@ export default function DataControlsSettings() {
 
     try {
       setIsDeleting(true);
+
+      // Delete the user's conversations data from Firestore
+      if (firestore) {
+        try {
+          // Delete all sessions in the user's collection
+          const sessionsRef = collection(firestore, `deni-ai-conversations/${user.uid}/sessions`);
+          const snapshot = await getDocs(sessionsRef);
+          
+          // Delete each session document
+          const deletePromises = snapshot.docs.map(doc => deleteDoc(doc.ref));
+          await Promise.all(deletePromises);
+          
+          // Delete the active session document if it exists
+          const activeSessionRef = doc(firestore, `deni-ai-conversations/${user.uid}/sessions/active`);
+          await deleteDoc(activeSessionRef);
+          
+          // Delete the user's main document
+          const userDocRef = doc(firestore, `deni-ai-conversations/${user.uid}`);
+          await deleteDoc(userDocRef);
+          
+          console.log("Successfully deleted user's conversations data from Firestore");
+        } catch (error) {
+          console.error("Error deleting user's conversations data:", error);
+          // Continue with account deletion even if Firestore deletion fails
+        }
+      }
 
       // Delete the user account
       await deleteUser(user);
