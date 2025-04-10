@@ -34,19 +34,44 @@ export default function RootLayout({
             __html: `
               (function() {
                 try {
-                  // クライアント側でのみ実行されるため、suppressHydrationWarningを使用
-                  document.documentElement.setAttribute('data-default-theme', 'loading');
+                  // Remove legacy theme handling
+                  // document.documentElement.setAttribute('data-default-theme', 'loading');
                   
-                  const applyDefaultTheme = () => {
-                    const isDefaultTheme = localStorage.getItem('defaultTheme') === 'true';
-                    document.documentElement.setAttribute('data-default-theme', isDefaultTheme ? 'true' : 'false');
-                  };
+                  // const applyDefaultTheme = () => {
+                  //   const isDefaultTheme = localStorage.getItem('defaultTheme') === 'true';
+                  //   const currentTheme = localStorage.getItem('theme') || 'system';
+                  //   document.documentElement.setAttribute('data-default-theme', isDefaultTheme ? 'true' : 'false');
+                    
+                  //   // Handle dark mode for legacy theme
+                  //   if (isDefaultTheme) {
+                  //     if (currentTheme === 'dark') {
+                  //       document.documentElement.classList.add('dark');
+                  //     } else {
+                  //       document.documentElement.classList.remove('dark');
+                  //     }
+                  //   } else {
+                  //     // For new theme, let next-themes handle it
+                  //     if (currentTheme === 'dark') {
+                  //       document.documentElement.classList.add('dark');
+                  //     } else if (currentTheme === 'light') {
+                  //       document.documentElement.classList.remove('dark');
+                  //     }
+                  //     // For system theme, we'll let next-themes handle it
+                  //   }
+                  // };
                   
-                  // DOMContentLoadedイベントで実行
-                  document.addEventListener('DOMContentLoaded', applyDefaultTheme);
+                  // // DOMContentLoadedイベントで実行
+                  // document.addEventListener('DOMContentLoaded', applyDefaultTheme);
                   
-                  // 即時実行も追加（DOMContentLoadedが発火しない場合のため）
-                  applyDefaultTheme();
+                  // // 即時実行も追加（DOMContentLoadedが発火しない場合のため）
+                  // applyDefaultTheme();
+                  
+                  // // Listen for theme changes
+                  // window.addEventListener('storage', (e) => {
+                  //   if (e.key === 'theme' || e.key === 'defaultTheme') {
+                  //     applyDefaultTheme();
+                  //   }
+                  // });
                 } catch (e) {
                   // localStorage might not be available
                   console.error('Error accessing localStorage:', e);
@@ -72,6 +97,12 @@ export default function RootLayout({
           defaultTheme="system"
           enableSystem
           disableTransitionOnChange
+          storageKey="theme"
+          value={{
+            light: "light",
+            dark: "dark",
+            system: "system"
+          }}
         >
           {children}
         </ThemeProvider>

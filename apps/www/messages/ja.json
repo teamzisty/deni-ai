@@ -66,19 +66,15 @@
       "description": "言語と外観の設定を変更します。",
       "theme": {
         "title": "外観テーマ",
-        "description": "ライトテーマかダークテーマに変更します。",
+        "description": "ライトテーマとダークテーマを切り替えます。",
         "action": "テーマを変更",
         "light": "ライト",
         "dark": "ダーク",
         "system": "システム"
       },
-      "defaultTheme": {
-        "title": "従来のテーマを使用",
-        "description": "新しいテーマを無効にして、従来のテーマを使用します。"
-      },
       "language": {
         "title": "言語",
-        "description": "アプリの表示言語を変更します。",
+        "description": "表示言語を変更します。",
         "action": "言語を変更"
       }
     },

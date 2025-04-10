@@ -71,10 +71,6 @@
         "dark": "Dark",
         "system": "System"
       },
-      "defaultTheme": {
-        "title": "Use legacy theme",
-        "description": "Disables new themes and uses legacy themes."
-      },
       "language": {
         "title": "Language",
         "description": "Change the display language.",
