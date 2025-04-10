@@ -21,12 +21,12 @@ import {
   TabsList,
   TabsTrigger,
 } from "@repo/ui/components/tabs";
-import { User, Paintbrush, X, Bot } from "lucide-react";
+import { User, Paintbrush, X, Bot, Database } from "lucide-react";
 import { Button } from "@repo/ui/components/button";
 import AppearanceSettings from "./ApperanceSettings";
 import AccountSettings from "./AccountSettings";
 import ModelSettings from "./ModelSettings";
-
+import DataControlsSettings from "./DataControlsSettings";
 export function SettingsDialog() {
   const { isOpen, closeDialog, dialogType } = useSettingsDialog();
   const t = useTranslations();
@@ -53,9 +53,9 @@ export function SettingsDialog() {
       </div>
       <Tabs defaultValue={initialTab} className="w-full">
         <div className="flex flex-col md:flex-row w-full h-full gap-4">
-          <TabsList className="flex md:flex-col md:items-start mt-10 gap-2 bg-transparent">
+          <TabsList className="flex md:flex-col md:items-start mt-15 gap-2 bg-transparent">
             <TabsTrigger
-              className="flex-1 justify-center p-4 data-[state=active]:bg-primary"
+              className="flex-1 justify-start w-full p-4 data-[state=active]:bg-primary"
               value="account"
             >
               <User className="md:mr-2" />
@@ -64,7 +64,7 @@ export function SettingsDialog() {
               </span>
             </TabsTrigger>
             <TabsTrigger
-              className="flex-1 justify-center p-4 data-[state=active]:bg-primary"
+              className="flex-1 justify-start w-full p-4 data-[state=active]:bg-primary"
               value="appearance"
             >
               <Paintbrush className="md:mr-2" />
@@ -81,6 +81,16 @@ export function SettingsDialog() {
                 {t("settings.model.tab")}
               </span>
             </TabsTrigger>
+            <TabsTrigger
+              className="flex-1 justify-start w-full p-4 data-[state=active]:bg-primary"
+              value="dataControls"
+            >
+              <Database className="md:mr-2" />
+              <span className="hidden md:inline">
+                {t("settings.dataControls.tab")}
+              </span>
+            </TabsTrigger>
+
           </TabsList>
 
           <div className="flex-1 overflow-y-auto h-[calc(80vh-120px)] md:h-[calc(70vh-120px)]">
@@ -92,6 +102,9 @@ export function SettingsDialog() {
             </TabsContent>
             <TabsContent value="model" className="h-full">
               <ModelSettings />
+            </TabsContent>
+            <TabsContent value="dataControls" className="h-full">
+              <DataControlsSettings />
             </TabsContent>
           </div>
         </div>

@@ -128,8 +128,8 @@ export default function ModelSettings() {
   );
 
   return (
-    <div className="space-y-6 h-full">
-      <div className="flex justify-between items-center mb-4">
+    <div className="space-y-6 h-full flex flex-col">
+      <div className="flex justify-between items-center mb-4 flex-shrink-0">
         <Popover>
           <PopoverTrigger asChild>
             <Button variant="outline" className="flex items-center gap-2">
@@ -274,13 +274,13 @@ export default function ModelSettings() {
         </Popover>
       </div>
 
-      <div className="h-full">
+      <div className="h-full overflow-hidden flex-1">
         {filteredModels.length === 0 ? (
           <div className="text-center py-8 text-muted-foreground">
             {t("settings.model.noModels")}
           </div>
         ) : (
-          <div className="w-full">
+          <div className="w-full h-full overflow-y-auto pr-2">
             {filteredModels.map(
               ([
                 id,

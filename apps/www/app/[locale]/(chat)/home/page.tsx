@@ -24,7 +24,7 @@ import {
 } from "@repo/ui/components/alert-dialog";
 const ChatApp: React.FC = () => {
   const t = useTranslations();
-  const { createSession, clearAllSessions, sessions } = useChatSessions();
+  const { createSession, clearAllSessions, sessions, isLoading: isSessionsLoading } = useChatSessions();
   const [creating, setCreating] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const router = useRouter();
@@ -60,7 +60,7 @@ const ChatApp: React.FC = () => {
     };
   }, [router]);
 
-  if (isLoading) {
+  if (isLoading || isSessionsLoading) {
     return (
       <Loading />
     );

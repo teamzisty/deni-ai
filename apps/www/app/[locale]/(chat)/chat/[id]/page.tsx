@@ -87,7 +87,7 @@ const MemoizedMessageList = memo(
 MemoizedMessageList.displayName = "MemoizedMessageList";
 
 const ChatApp: React.FC = () => {
-  const { updateSession, getSession } = useChatSessions();
+  const { updateSession, getSession, isLoading: isSessionsLoading } = useChatSessions();
   const { user, isLoading, auth } = useAuth();
 
   const t = useTranslations();
@@ -539,6 +539,12 @@ const ChatApp: React.FC = () => {
       },
     });
   };
+
+  if (isLoading || isSessionsLoading) {
+    return (
+      <Loading />
+    );
+  }
 
   return (
     <main

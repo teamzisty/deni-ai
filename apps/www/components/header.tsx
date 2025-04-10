@@ -36,25 +36,21 @@ export function Header() {
             </NavigationMenuList>
             <NavigationMenuList>
               <NavigationMenuItem className="ml-3">
-                <Link href="/home" passHref legacyBehavior target="_blank">
-                  <NavigationMenuLink className={navigationMenuTriggerStyle()}>
+                <NavigationMenuLink asChild className={navigationMenuTriggerStyle()}>
+                  <Link href="/home" target="_blank"> 
                     {t("header.app")}
-                  </NavigationMenuLink>
-                </Link>
+                  </Link>
+                </NavigationMenuLink>
               </NavigationMenuItem>
             </NavigationMenuList>
             <NavigationMenuList>
               <NavigationMenuItem className="ml-3">
-                <Link
-                  href="https://github.com/raicdev/upl-next"
-                  passHref
-                  legacyBehavior
-                  target="_blank"
-                >
-                  <NavigationMenuLink className={navigationMenuTriggerStyle()}>
+
+                <NavigationMenuLink asChild className={navigationMenuTriggerStyle()}>
+                  <Link href="https://github.com/raicdev/deni-ai" target="_blank">  
                     {t("header.sourceCode")}
-                  </NavigationMenuLink>
-                </Link>
+                  </Link>
+                </NavigationMenuLink>
               </NavigationMenuItem>
             </NavigationMenuList>
           </NavigationMenu>
