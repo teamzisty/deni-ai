@@ -30,6 +30,7 @@ import { ChatRequestOptions, UIMessage } from "ai";
 import logger from "@/utils/logger";
 import { useAuth } from "@/context/AuthContext";
 import { useTranslations } from "next-intl";
+import { Alert, AlertDescription, AlertTitle } from "@repo/ui/components/alert";
 
 interface MessageListProps {
   messages: UIMessage[];
@@ -365,7 +366,7 @@ const ChatApp: React.FC = () => {
       const idToken = await user.getIdToken();
       if (!idToken) {
         throw new Error(t("chat.error.idTokenFailed"));
-      } 
+      }
       submitOptions.headers = { Authorization: idToken };
     }
 
@@ -595,11 +596,11 @@ const ChatApp: React.FC = () => {
                 }
 
                 const data = await response.json();
-                
+
                 // クリップボードにURLをコピー
                 const shareUrl = `${window.location.origin}${data.shareUrl}`;
                 await navigator.clipboard.writeText(shareUrl);
-                
+
                 toast.success(t("chat.shareSuccess"), {
                   description: t("chat.shareLinkCopied"),
                 });
@@ -620,6 +621,12 @@ const ChatApp: React.FC = () => {
         }
       />
       {/* Chat Log */}
+      <Alert variant="destructive" className="my-2 w-full md:w-9/12 lg:w-7/12">
+        <AlertCircleIcon className="h-4 w-4" />
+        <AlertTitle>Some models not available</AlertTitle>
+        <AlertDescription>Sorry, some models are not available for now. We are working on it.</AlertDescription>
+      </Alert>
+
       <div
         className="flex w-full h-full md:w-9/12 lg:w-7/12 rounded overflow-y-auto scrollbar-thin scrollbar-thumb-primary scrollbar-track-secondary scrollbar-thumb-rounded-md scrollbar-track-rounded-md"
         ref={chatLogRef}
