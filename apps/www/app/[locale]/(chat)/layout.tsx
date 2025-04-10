@@ -2,7 +2,6 @@ import { Loading } from "@/components/loading";
 import { Suspense } from "react";
 import { ThemeProvider } from "@repo/ui/components/theme-provider";
 
-import { ChatSessionsProvider } from "@/hooks/use-chat-sessions";
 import { SidebarProvider } from "@repo/ui/components/sidebar";
 import { ChatSidebar } from "@/components/chat-sidebar";
 import { AuthProvider } from "@/context/AuthContext";
@@ -22,14 +21,12 @@ export default async function Layout({
       <TooltipProvider>
         <SidebarProvider defaultOpen={defaultOpen}>
           <AuthProvider>
-            <ChatSessionsProvider>
-              <div className="w-full flex">
-                <ChatSidebar />
-                <Suspense fallback={<Loading />}>{children}</Suspense>
-              </div>
-            </ChatSessionsProvider>
+            <div className="w-full flex">
+              <ChatSidebar />
+              <Suspense fallback={<Loading />}>{children}</Suspense>
+            </div>
           </AuthProvider>
-        </SidebarProvider>{" "}
+        </SidebarProvider>
       </TooltipProvider>
     </div>
   );

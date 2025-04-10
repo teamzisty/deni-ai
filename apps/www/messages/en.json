@@ -20,12 +20,13 @@
     "reasoning": "Reasoning...",
     "reasonedFor": "reasoned for",
     "hour": "hour",
-    "minute": "minute",
-    "second": "second",
+    "minute": "min",
+    "second": "sec",
     "copy": "Copy",
-    "generationTime": "Generation time",
+    "generationTime": "Generation Time",
     "thinking": "Thinking...",
-    "image": "Image"
+    "image": "Image",
+    "regenerate": "Regenerate"
   },
   "inputBox": {
     "placeholder": "Send a message to AI",
@@ -53,7 +54,10 @@
       "deleteSuccess": "Conversations deleted",
       "deleteAllSuccess": "All conversations have been deleted",
       "syncedConversations": "Conversations are synchronized with the cloud.",
-      "nameChangeFailed": "Failed to change name"
+      "nameChangeFailed": "Failed to change name",
+      "accountDeleted": "Account successfully deleted",
+      "accountDeletionError": "Failed to delete account",
+      "invalidFileFormat": "Invalid file format"
     },
     "appearance": {
       "tab": "Appearance",
@@ -66,10 +70,6 @@
         "light": "Light",
         "dark": "Dark",
         "system": "System"
-      },
-      "defaultTheme": {
-        "title": "Use legacy theme",
-        "description": "Disables new themes and uses legacy themes."
       },
       "language": {
         "title": "Language",
@@ -103,6 +103,45 @@
         "syncing": "Syncing..."
       },
       "authDisabled": "Authentication is temporarily disabled or not available in your instance."
+    },
+    "dataControls": {
+      "tab": "Data Controls",
+      "title": "Data Controls",
+      "description": "Manage your data and privacy settings",
+      "dataCollection": {
+        "title": "Data Collection",
+        "description": "Allow collection of usage data to improve the service"
+      },
+      "export": {
+        "title": "Export Data",
+        "description": "Export your conversations and settings",
+        "export": "Export",
+        "import": "Import"
+      },
+      "reauth": {
+        "title": "Reauthentication",
+        "description": "Enter your password to export or delete data",
+        "providerAuth": "Reauthenticate with Google or GitHub to continue deleting data."
+      },
+      "deleteData": {
+        "title": "Delete All Data",
+        "description": "Permanently delete all your conversations and settings",
+        "action": "Delete All Data",
+        "confirmTitle": "Are you sure?",
+        "confirmDescription": "This action cannot be undone. All your conversations and settings will be permanently deleted.",
+        "cancel": "Cancel",
+        "confirm": "Delete All"
+      },
+      "accountDeletion": {
+        "title": "Delete Account",
+        "description": "Permanently delete your account and all associated data",
+        "action": "Delete Account",
+        "confirmTitle": "Are you sure?",
+        "confirmDescription": "This action cannot be undone. Your account and all associated data will be permanently deleted.",
+        "cancel": "Cancel",
+        "confirm": "Delete Account",
+        "deleting": "Deleting..."
+      }
     },
     "dataControl": {
       "tab": "Data Management",
@@ -281,7 +320,10 @@
       "messageSendFailed": "Failed to send message",
       "shareNotLoggedIn": "You need to be logged in to share a conversation",
       "shareNoMessages": "There are no messages to share",
-      "shareFailed": "Failed to share conversation"
+      "shareFailed": "Failed to share conversation",
+      "retryMessage": "Failed to send message. Would you like to retry?",
+      "retry": "Retry",
+      "maxRetriesReached": "Maximum retry attempts reached"
     },
     "advancedSearch": {
       "info": "About Deep Research",

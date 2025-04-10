@@ -18,7 +18,7 @@ import { auth } from "@repo/firebase-config/client";
 
 export default function AccountSettings() {
   const { user, isLoading } = useAuth();
-  const { syncSessions } = useChatSessions();
+  const { syncSessions, isLoading: isSessionsLoading } = useChatSessions();
   const [isLogged, setIsLogged] = useState(false);
   const [name, setName] = useState("");
   const [privacyMode, setPrivacyMode] = useState(false);
@@ -223,7 +223,7 @@ export default function AccountSettings() {
     );
   }
 
-  if (isLoading) {
+  if (isLoading || isSessionsLoading) {
     return <Loading />;
   }
 

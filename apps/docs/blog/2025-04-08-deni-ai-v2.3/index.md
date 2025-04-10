@@ -59,8 +59,6 @@ In this version, one system change was made:
 
 - Integrated search tool and visit tool
 
-For all changes not included in the patch notes, please see [GitHub Pull requests](https://github.com/raicdev/deni-ai/pull/5).
-
 :::note
 
 The Deni AI repository has moved to https://github.com/raicdev/deni-ai. Future commits will be made to this repository.

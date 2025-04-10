@@ -30,6 +30,7 @@ import { ChatRequestOptions, UIMessage } from "ai";
 import logger from "@/utils/logger";
 import { useAuth } from "@/context/AuthContext";
 import { useTranslations } from "next-intl";
+import { Alert, AlertDescription, AlertTitle } from "@repo/ui/components/alert";
 
 interface MessageListProps {
   messages: UIMessage[];
@@ -87,7 +88,7 @@ const MemoizedMessageList = memo(
 MemoizedMessageList.displayName = "MemoizedMessageList";
 
 const ChatApp: React.FC = () => {
-  const { updateSession, getSession } = useChatSessions();
+  const { updateSession, getSession, isLoading: isSessionsLoading } = useChatSessions();
   const { user, isLoading, auth } = useAuth();
 
   const t = useTranslations();
@@ -116,12 +117,16 @@ const ChatApp: React.FC = () => {
 
   const chatLogRef = useRef<HTMLDivElement>(null);
 
+  const [retryCount, setRetryCount] = useState<number>(0);
+  const MAX_RETRIES = 3;
+
   const {
     messages,
     input,
     setInput,
-    setMessages,
     status,
+    setMessages,
+    reload,
     stop,
     error,
     handleSubmit,
@@ -341,12 +346,41 @@ const ChatApp: React.FC = () => {
 
       handleSubmit(event, submitOptions);
       setImage(null);
+      setRetryCount(0); // Reset retry count on successful send
     } catch (error) {
       toast.error(t("chat.error.messageSendFailed"), {
         description:
           error instanceof Error ? error.message : t("common.error.unknown"),
       });
     }
+  };
+
+  const authReload = async () => {
+    const submitOptions: ChatRequestOptions = {
+      experimental_attachments: image
+        ? [{ url: image, contentType: "image/png" }]
+        : undefined,
+    };
+
+    if (auth && user) {
+      const idToken = await user.getIdToken();
+      if (!idToken) {
+        throw new Error(t("chat.error.idTokenFailed"));
+      }
+      submitOptions.headers = { Authorization: idToken };
+    }
+
+    reload(submitOptions);
+  };
+
+  const handleRetry = async () => {
+    if (retryCount >= MAX_RETRIES) {
+      toast.error(t("chat.error.maxRetriesReached"));
+      return;
+    }
+
+    setRetryCount(prev => prev + 1);
+    authReload();
   };
 
   const handleSendMessage = async (
@@ -507,6 +541,12 @@ const ChatApp: React.FC = () => {
     });
   };
 
+  if (isLoading || isSessionsLoading) {
+    return (
+      <Loading />
+    );
+  }
+
   return (
     <main
       className={cn(
@@ -556,11 +596,11 @@ const ChatApp: React.FC = () => {
                 }
 
                 const data = await response.json();
-                
+
                 // クリップボードにURLをコピー
                 const shareUrl = `${window.location.origin}${data.shareUrl}`;
                 await navigator.clipboard.writeText(shareUrl);
-                
+
                 toast.success(t("chat.shareSuccess"), {
                   description: t("chat.shareLinkCopied"),
                 });
@@ -581,6 +621,12 @@ const ChatApp: React.FC = () => {
         }
       />
       {/* Chat Log */}
+      <Alert variant="destructive" className="my-2 w-full md:w-9/12 lg:w-7/12">
+        <AlertCircleIcon className="h-4 w-4" />
+        <AlertTitle>Some models not available</AlertTitle>
+        <AlertDescription>Sorry, some models are not available for now. We are working on it.</AlertDescription>
+      </Alert>
+
       <div
         className="flex w-full h-full md:w-9/12 lg:w-7/12 rounded overflow-y-auto scrollbar-thin scrollbar-thumb-primary scrollbar-track-secondary scrollbar-thumb-rounded-md scrollbar-track-rounded-md"
         ref={chatLogRef}
@@ -601,6 +647,23 @@ const ChatApp: React.FC = () => {
                         {modelDescriptions[model]?.reasoning
                           ? t("messageLog.reasoning")
                           : t("messageLog.thinking")}
+                      </div>
+                    </div>
+                  </div>
+                )}
+                {error && (
+                  <div className="flex w-full message-log visible">
+                    <div className="p-2 my-2 rounded-lg text-muted-foreground w-full">
+                      <div className="ml-3 flex items-center gap-2">
+                        <span>{t("chat.error.retryMessage")}</span>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={handleRetry}
+                          disabled={retryCount >= MAX_RETRIES}
+                        >
+                          {t("chat.error.retry")} ({retryCount}/{MAX_RETRIES})
+                        </Button>
                       </div>
                     </div>
                   </div>

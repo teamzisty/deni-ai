@@ -59,8 +59,6 @@ _設定ダイアログのプレビュー_
 
 - search ツールと visit ツールを統合
 
-パッチノートに含まれていないすべての変更点は、[GitHub の Pull requests](https://github.com/raicdev/deni-ai/pull/5) をご覧ください。
-
 :::note
 
 Deni AI のレポジトリは、https://github.com/raicdev/deni-ai に移動しました。今後はこちらのレポジトリでコミットされます。

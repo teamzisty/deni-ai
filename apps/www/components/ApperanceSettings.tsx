@@ -21,31 +21,11 @@ import { useState, useEffect } from "react";
 export default function AppearanceSettings() {
   // const { sessions, deleteSession, addSession } = useChatSessions();
   const { setTheme, theme } = useTheme();
-  const [defaultTheme, setDefaultTheme] = useState(false);
   const t = useTranslations();
   const params = useParams();
   const language = params.locale === "ja" ? "ja" : "en";
   const NextRouter = nextRouter();
   const pathname = usePathname();
-
-  useEffect(() => {
-    const defaultTheme = localStorage.getItem("defaultTheme");
-    if (defaultTheme === "true") {
-      setDefaultTheme(true);
-    } else {
-      setDefaultTheme(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    if (defaultTheme) {
-      localStorage.setItem("defaultTheme", "true");
-      document.documentElement.setAttribute("data-default-theme", "true");
-    } else {
-      localStorage.setItem("defaultTheme", "false");
-      document.documentElement.setAttribute("data-default-theme", "false");
-    }
-  }, [defaultTheme]);
 
   // const exportAllConversion = () => {
   //   const conversionsArray: ChatSession[] = [];
@@ -166,27 +146,6 @@ export default function AppearanceSettings() {
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
-        </div>
-      </div>
-
-      <div className="bg-card/50 border border-border/30 rounded-md overflow-hidden">
-        <div className="flex p-5 items-center gap-4">
-          <div className="flex-grow">
-            <h3 className="text-lg font-bold">
-              {t("settings.appearance.defaultTheme.title")}
-            </h3>
-            <p className="text-sm text-muted-foreground">
-              {t("settings.appearance.defaultTheme.description")}
-            </p>
-          </div>
-          <div>
-            <Switch
-              className="scale-125"
-              name="defaultTheme"
-              checked={defaultTheme}
-              onCheckedChange={setDefaultTheme}
-            />
-          </div>
         </div>
       </div>
 

@@ -25,7 +25,9 @@
     "copy": "コピー",
     "generationTime": "生成時間",
     "thinking": "考え中...",
-    "image": "画像"
+    "image": "画像",
+    "copied": "コピーしました",
+    "regenerate": "再生成"
   },
   "inputBox": {
     "placeholder": "AI にメッセージを送信する",
@@ -48,12 +50,15 @@
       "noConversations": "会話が1つも存在しないため、エクスポートできません。",
       "exportSuccess": "会話をエクスポートしました",
       "importSuccess": "会話をインポートしました",
-      "importAllSuccess": "ファイルにあるすべての会話をインポートしました",
+      "importAllSuccess": "ファイルからすべての会話をインポートしました",
       "fileReadError": "ファイルの読み込み中にエラーが発生しました",
       "deleteSuccess": "会話を削除しました",
       "deleteAllSuccess": "すべての会話を削除しました",
-      "syncedConversations": "会話履歴をクラウドと同期しました。",
-      "nameChangeFailed": "名前の変更に失敗しました"
+      "syncedConversations": "会話がクラウドと同期されました。",
+      "nameChangeFailed": "名前の変更に失敗しました",
+      "accountDeleted": "アカウントを正常に削除しました",
+      "accountDeletionError": "アカウントの削除に失敗しました",
+      "invalidFileFormat": "無効なファイル形式です"
     },
     "appearance": {
       "tab": "言語と外観",
@@ -61,19 +66,15 @@
       "description": "言語と外観の設定を変更します。",
       "theme": {
         "title": "外観テーマ",
-        "description": "ライトテーマかダークテーマに変更します。",
+        "description": "ライトテーマとダークテーマを切り替えます。",
         "action": "テーマを変更",
         "light": "ライト",
         "dark": "ダーク",
         "system": "システム"
       },
-      "defaultTheme": {
-        "title": "従来のテーマを使用",
-        "description": "新しいテーマを無効にして、従来のテーマを使用します。"
-      },
       "language": {
         "title": "言語",
-        "description": "アプリの表示言語を変更します。",
+        "description": "表示言語を変更します。",
         "action": "言語を変更"
       }
     },
@@ -104,20 +105,44 @@
       },
       "authDisabled": "認証は一時的に無効になっているか、あなたのインスタンスでは利用できません。"
     },
-    "dataControl": {
-      "tab": "データの管理",
-      "title": "データの管理",
-      "description": "Deni AI 及びローカルに保存されているデータを管理します。",
-      "conversation": "会話",
-      "importExport": "会話のインポート / エクスポート",
-      "importExportDescription": "会話をインポートしたり、エクスポートします。",
-      "importWarning": "※注意: インポートすると、すべての会話が削除され、上書きされます。",
-      "import": "インポート",
-      "export": "エクスポート",
-      "deleteAll": "すべての会話を削除",
-      "destructive": "破壊的",
-      "deleteAllDescription": "すべての会話を削除します。このアクションは取り戻すことはできません。",
-      "delete": "削除"
+    "dataControls": {
+      "tab": "データ管理",
+      "title": "データ管理",
+      "description": "データとプライバシー設定を管理する",
+      "dataCollection": {
+        "title": "データ収集",
+        "description": "サービスの改善のために使用データの収集を許可する"
+      },  
+      "reauth": {
+        "title": "再認証",
+        "description": "データのエクスポートや削除を行うために、パスワードを入力してください。",
+        "providerAuth": "Google または GitHub で再認証して、削除を続行します。"
+      },
+      "export": {
+        "title": "データのエクスポート",
+        "description": "会話と設定をエクスポートする",
+        "export": "エクスポート",
+        "import": "インポート"
+      },
+      "deleteData": {
+        "title": "すべてのデータを削除",
+        "description": "すべての会話と設定を完全に削除する",
+        "action": "すべてのデータを削除",
+        "confirmTitle": "本当に削除しますか？",
+        "confirmDescription": "この操作は元に戻せません。すべての会話と設定が完全に削除されます。",
+        "cancel": "キャンセル",
+        "confirm": "すべて削除"
+      },
+      "accountDeletion": {
+        "title": "アカウント削除",
+        "description": "アカウントと関連するすべてのデータを完全に削除する",
+        "action": "アカウント削除",
+        "confirmTitle": "本当に削除しますか？",
+        "confirmDescription": "この操作は元に戻せません。アカウントと関連するすべてのデータが完全に削除されます。",
+        "cancel": "キャンセル",
+        "confirm": "アカウント削除",
+        "deleting": "削除中..."
+      }
     },
     "model": {
       "tab": "モデル",
@@ -275,7 +300,10 @@
       "messageSendFailed": "メッセージの送信に失敗しました",
       "shareNotLoggedIn": "会話を共有するにはログインが必要です",
       "shareNoMessages": "共有するメッセージがありません",
-      "shareFailed": "会話の共有に失敗しました"
+      "shareFailed": "会話の共有に失敗しました",
+      "retryMessage": "メッセージの送信に失敗しました。再試行しますか？",
+      "retry": "再試行",
+      "maxRetriesReached": "最大再試行回数に達しました"
     },
     "advancedSearch": {
       "info": "詳細なリサーチについて",
