@@ -2,8 +2,8 @@
   "name": "@repo/firebase-config",
   "version": "2.3",
   "description": "Firebase configuration for the project.",
-  "type": "module",
   "private": true,
+  "type": "module",
   "devDependencies": {
     "@types/bun": "^1.2.9"
   },

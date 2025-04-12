@@ -1,3 +1,5 @@
+"use client";
+
 import { Button } from "@repo/ui/components/button";
 import {
   Earth,

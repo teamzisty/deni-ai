@@ -26,6 +26,7 @@
     "generationTime": "Generation Time",
     "thinking": "Thinking...",
     "image": "Image",
+    "copied": "Copied",
     "regenerate": "Regenerate"
   },
   "inputBox": {
@@ -35,7 +36,7 @@
   "chatInput": {
     "imageAdd": "Add Image",
     "search": "Search",
-    "advancedSearch": "Deep Research"
+    "deepResearch": "Deep Research"
   },
   "headerArea": {
     "ready": "Ready",
@@ -79,8 +80,8 @@
     },
     "account": {
       "tab": "Account",
-      "title": "Account Management",
-      "description": "Manage your account.",
+      "title": "Account Settings",
+      "description": "Manage your account settings and preferences.",
       "name": {
         "title": "Name",
         "description": "Change your display name.",
@@ -102,7 +103,123 @@
         "action": "Sync Conversations",
         "syncing": "Syncing..."
       },
-      "authDisabled": "Authentication is temporarily disabled or not available in your instance."
+      "authDisabled": "Authentication is temporarily disabled or not available in your instance.",
+      "profile": {
+        "title": "Profile",
+        "description": "This is how others will see you on the platform.",
+        "edit": "Edit Profile",
+        "confirmed": "Confirmed"
+      },
+      "data": {
+        "title": "Download Account Data",
+        "description": "You can download all data associated with your account below.",
+        "download": "Download Data",
+        "downloading": "Downloading...",
+        "downloadSuccess": "Data downloaded successfully",
+        "downloadError": "Failed to download data"
+      },
+      "delete": {
+        "title": "Delete Account",
+        "description": "Permanently delete your account and all associated data.",
+        "button": "Delete Account",
+        "deleting": "Deleting...",
+        "success": "Account deleted successfully",
+        "error": "Failed to delete account"
+      },
+      "password": {
+        "title": "Password",
+        "description": "Change your password to keep your account secure.",
+        "cardTitle": "Change Password",
+        "cardDescription": "Update your password to a new secure combination.",
+        "currentPassword": "Current Password",
+        "newPassword": "New Password",
+        "confirmPassword": "Confirm New Password",
+        "updateButton": "Update Password",
+        "updating": "Updating...",
+        "successTitle": "Password Updated",
+        "successDescription": "Your password has been successfully updated.",
+        "errorAllFields": "Please fill in all password fields.",
+        "errorPasswordMatch": "New passwords don't match.",
+        "errorPasswordLength": "Password must be at least 8 characters long.",
+        "errorNoUser": "You must be logged in to change your password.",
+        "errorWrongPassword": "Current password is incorrect.",
+        "errorWeakPassword": "New password is too weak. Use a stronger password.",
+        "errorRecentLogin": "For security reasons, you need to re-login before changing your password.",
+        "errorGeneric": "Failed to update password. Please try again.",
+        "notLoggedIn": "You must be logged in to change your password.",
+        "notPasswordProvider": "You cannot change your password because you signed in with a third-party provider."
+      },
+      "sessions": {
+        "title": "Sessions",
+        "description": "Manage your active sessions and devices.",
+        "activeSessions": "Active Sessions",
+        "activeSessionsDescription": "These are the devices where you're currently logged in.",
+        "current": "Current",
+        "nowActive": "Now active",
+        "lastActive": "Last active",
+        "terminate": "Log Out",
+        "terminateAll": "Log Out All Devices",
+        "terminating": "Logging out...",
+        "terminateSuccess": "Session terminated successfully",
+        "terminateError": "Failed to terminate session",
+        "terminateAllSuccess": "All other sessions terminated successfully",
+        "terminateAllError": "Failed to terminate all sessions",
+        "loading": "Loading sessions...",
+        "noSessions": "No active sessions found",
+        "justNow": "Just now",
+        "hoursAgo": "{hours} hours ago",
+        "fetchError": "Failed to fetch sessions"
+      },
+      "security": {
+        "title": "Security",
+        "description": "Manage your account security settings.",
+        "notLoggedIn": "You must be logged in to change security settings.",
+        "twoFactor": {
+          "title": "Two-factor Authentication",
+          "description": "Add an extra layer of security to your account.",
+          "label": "Two-factor Authentication",
+          "sublabel": "Add an extra layer of security to your account"
+        },
+        "sessions": {
+          "label": "Manage Active Sessions",
+          "sublabel": "See all devices where you're currently logged in",
+          "viewButton": "View Sessions"
+        },
+        "timeFormat": {
+          "today": "Today at {time}",
+          "yesterday": "Yesterday at {time}",
+          "daysAgo": "{days} days ago at {time}"
+        },
+        "reauth": {
+          "title": "Confirm Your Password",
+          "description": "For security reasons, please enter your password to continue.",
+          "providerMessage": "For security reasons, you'll need to reauthenticate with {provider} to continue."
+        },
+        "qrCode": {
+          "title": "Set Up Two-factor Authentication",
+          "description": "Scan this QR code with an authenticator app like Google Authenticator or Authy.",
+          "manualEntry": "Or enter this code manually if you can't scan the QR code:",
+          "next": "Next"
+        },
+        "verify": {
+          "title": "Verify Authentication Code",
+          "description": "Enter the 6-digit code from your authenticator app to confirm setup.",
+          "verifyButton": "Verify"
+        },
+        "enabled2FA": "Two-factor authentication has been enabled",
+        "disabled2FA": "Two-factor authentication has been disabled",
+        "invalidPassword": "Incorrect password. Please try again.",
+        "errorAuth": "Incorrect password. Please try again.",
+        "errorVerifying": "Invalid authentication code. Please try again.",
+        "cancel": "Cancel",
+        "continue": "Continue"
+      },
+      "sidebarNav": {
+        "account": "Account",
+        "sessions": "Sessions",
+        "password": "Password",
+        "security": "Security"
+      }
     },
     "dataControls": {
       "tab": "Data Controls",
@@ -325,7 +442,7 @@
       "retry": "Retry",
       "maxRetriesReached": "Maximum retry attempts reached"
     },
-    "advancedSearch": {
+    "deepResearch": {
       "info": "About Deep Research",
       "description": "Deep Research is in beta. Click on 'Visited websites' to see search results."
     },
@@ -445,5 +562,124 @@
     "views": "views",
     "view": "View",
     "untitledChat": "Untitled Conversation"
+  },
+  "account": {
+    "title": "Account",
+    "description": "Manage your account data below.",
+    "layout": {
+      "return": "Return to Deni AI"
+    },
+    "profile": {
+      "title": "Profile",
+      "description": "This is how others will see you on the platform.",
+      "edit": "Edit Profile",
+      "confirmed": "Confirmed"
+    },
+    "data": {
+      "title": "Download Account Data",
+      "description": "You can download all data associated with your account below.",
+      "download": "Download Data",
+      "downloading": "Downloading...",
+      "downloadSuccess": "Data downloaded successfully",
+      "downloadError": "Failed to download data"
+    },
+    "delete": {
+      "title": "Delete Account",
+      "description": "Permanently delete your account and all associated data.",
+      "button": "Delete Account",
+      "deleting": "Deleting...",
+      "success": "Account deleted successfully",
+      "error": "Failed to delete account"
+    },
+    "password": {
+      "title": "Password",
+      "description": "Change your password to keep your account secure.",
+      "cardTitle": "Change Password",
+      "cardDescription": "Update your password to a new secure combination.",
+      "currentPassword": "Current Password",
+      "newPassword": "New Password",
+      "confirmPassword": "Confirm New Password",
+      "updateButton": "Update Password",
+      "updating": "Updating...",
+      "successTitle": "Password Updated",
+      "successDescription": "Your password has been successfully updated.",
+      "errorAllFields": "Please fill in all password fields.",
+      "errorPasswordMatch": "New passwords don't match.",
+      "errorPasswordLength": "Password must be at least 8 characters long.",
+      "errorNoUser": "You must be logged in to change your password.",
+      "errorWrongPassword": "Current password is incorrect.",
+      "errorWeakPassword": "New password is too weak. Use a stronger password.",
+      "errorRecentLogin": "For security reasons, you need to re-login before changing your password.",
+      "errorGeneric": "Failed to update password. Please try again.",
+      "notLoggedIn": "You must be logged in to change your password.",
+      "notPasswordProvider": "You cannot change your password because you signed in with a third-party provider."
+    },
+    "sessions": {
+      "title": "Sessions",
+      "description": "Manage your active sessions and devices.",
+      "activeSessions": "Active Sessions",
+      "activeSessionsDescription": "These are the devices where you're currently logged in.",
+      "current": "Current",
+      "nowActive": "Now active",
+      "lastActive": "Last active",
+      "terminate": "Log Out",
+      "terminateAll": "Log Out All Devices",
+      "terminating": "Logging out...",
+      "terminateSuccess": "Session terminated successfully",
+      "terminateError": "Failed to terminate session",
+      "terminateAllSuccess": "All other sessions terminated successfully",
+      "terminateAllError": "Failed to terminate all sessions",
+      "loading": "Loading sessions...",
+      "noSessions": "No active sessions found",
+      "justNow": "Just now",
+      "hoursAgo": "{hours} hours ago",
+      "fetchError": "Failed to fetch sessions"
+    },
+    "security": {
+      "title": "Security",
+      "description": "Manage your account security settings.",
+      "notLoggedIn": "You must be logged in to change security settings.",
+      "setupError": "Failed to set up 2FA. Please try again.",
+      "twoFactor": {
+        "title": "Two-factor Authentication",
+        "description": "Add an extra layer of security to your account.",
+        "label": "Two-factor Authentication",
+        "sublabel": "Add an extra layer of security to your account"
+      },
+      "sessions": {
+        "label": "Manage Active Sessions",
+        "sublabel": "See all devices where you're currently logged in",
+        "viewButton": "View Sessions"
+      },
+      "reauth": {
+        "title": "Confirm Your Password",
+        "description": "For security reasons, please enter your password to continue.",
+        "providerMessage": "For security reasons, you'll need to reauthenticate with {provider} to continue."
+      },
+      "qrCode": {
+        "title": "Set Up Two-factor Authentication",
+        "description": "Scan this QR code with an authenticator app like Google Authenticator or Authy.",
+        "manualEntry": "Or enter this code manually if you can't scan the QR code:",
+        "next": "Next"
+      },
+      "verify": {
+        "title": "Verify Authentication Code",
+        "description": "Enter the 6-digit code from your authenticator app to confirm setup.",
+        "verifyButton": "Verify"
+      },
+      "enabled2FA": "Two-factor authentication has been enabled",
+      "disabled2FA": "Two-factor authentication has been disabled",
+      "invalidPassword": "Incorrect password. Please try again.",
+      "errorAuth": "Incorrect password. Please try again.",
+      "errorVerifying": "Invalid authentication code. Please try again.",
+      "cancel": "Cancel",
+      "continue": "Continue"
+    },
+    "sidebarNav": {
+      "account": "Account",
+      "sessions": "Sessions",
+      "password": "Password",
+      "security": "Security"
+    }
   }
 }

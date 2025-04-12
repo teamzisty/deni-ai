@@ -62,18 +62,15 @@ export default async function LocaleLayout({ children, params }: Props) {
 
   return (
     <NextIntlClientProvider locale={locale} messages={messages}>
-      <ChatSessionsProvider>
-        <AuthProvider>
+      <AuthProvider>
+        <ChatSessionsProvider>
           <SettingsDialogProvider>
-            <DevelopmentBanner>
-              {children}
-            </DevelopmentBanner>
+            <DevelopmentBanner>{children}</DevelopmentBanner>
             <Toaster richColors position="bottom-right" />
             <SettingsDialog />
           </SettingsDialogProvider>
-        </AuthProvider>
-      </ChatSessionsProvider>
+        </ChatSessionsProvider>
+      </AuthProvider>
     </NextIntlClientProvider>
   );
 }
-

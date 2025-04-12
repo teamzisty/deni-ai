@@ -14,7 +14,7 @@ import { uploadResponse, useUploadThing } from "@/utils/uploadthing";
 import logger from "@/utils/logger";
 import React from "react";
 import { useTranslations } from "next-intl";
-import { auth } from "@repo/firebase-config/client";
+import { auth, firestore } from "@repo/firebase-config/client";
 
 export default function AccountSettings() {
   const { user, isLoading } = useAuth();
@@ -41,12 +41,31 @@ export default function AccountSettings() {
   });
 
   const handleSync = async () => {
-    if (!user) return;
+    // Check if Firebase auth is initialized
+    if (!auth) {
+      toast.error(t("account.error"), {
+        description: t("account.authDisabled") || "Authentication service is not available. Please check your Firebase configuration."
+      });
+      return;
+    }
+
+    // 明示的なFirestoreの初期化とデバッグテスト
+    console.log("Firestore check in handleSync:", { firestore });
+    
+    // Check if user is logged in
+    if (!user) {
+      toast.error(t("account.error"), {
+        description: "You need to be logged in to sync sessions"
+      });
+      return;
+    }
+    
     setIsSyncing(true);
     try {
       await syncSessions();
       toast.success(t("account.syncedConversations"));
     } catch (error: unknown) {
+      console.error("Sync error:", error);
       const errorMessage =
         error instanceof Error ? error.message : t("common.error.unknown");
       toast.error(t("account.error"), {

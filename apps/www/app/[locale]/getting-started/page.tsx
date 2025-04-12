@@ -10,6 +10,8 @@ import {
   Plus,
   XIcon,
   CheckCircle2,
+  AlertTriangle,
+  Mail,
 } from "lucide-react";
 import { Button } from "@repo/ui/components/button";
 import { useChatSessions } from "@/hooks/use-chat-sessions";
@@ -26,18 +28,21 @@ import {
   AvatarFallback,
   AvatarImage,
 } from "@repo/ui/components/avatar";
-import { updateProfile } from "firebase/auth";
+import { updateProfile, sendEmailVerification } from "firebase/auth";
 import { useParams } from "next/navigation";
 import { toast } from "sonner";
 import { Alert, AlertDescription, AlertTitle } from "@repo/ui/components/alert";
 import { useUploadThing } from "@/utils/uploadthing";
+import { useAuth } from "@/context/AuthContext";
+import { StatusAlert } from "@/components/StatusAlert";
 
 // ウィザードのステップを定義
 enum WizardStep {
   Language = 0,
-  Profile = 1,
-  Theme = 2,
-  Start = 3,
+  VerifyEmail = 1,
+  Profile = 2,
+  Theme = 3,
+  Start = 4,
 }
 
 const GettingStartedWizard: React.FC = () => {
@@ -49,6 +54,7 @@ const GettingStartedWizard: React.FC = () => {
   const params = useParams();
   const { theme, setTheme } = useTheme();
   const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const { user, sendVerificationEmail } = useAuth();
 
   // ウィザードの状態管理
   const [currentStep, setCurrentStep] = useState<WizardStep>(
@@ -60,6 +66,9 @@ const GettingStartedWizard: React.FC = () => {
   const [displayName, setDisplayName] = useState<string>("");
   const [photoURL, setPhotoURL] = useState<string>("");
   const [currentAuthToken, setCurrentAuthToken] = useState<string | null>(null);
+  const [emailVerified, setEmailVerified] = useState<boolean>(false);
+  const [sendingVerification, setSendingVerification] = useState<boolean>(false);
+  const [lastSentTime, setLastSentTime] = useState<number | null>(null);
 
   // プロフィール更新中の状態
   const [isUpdatingProfile, setIsUpdatingProfile] = useState(false);
@@ -96,6 +105,61 @@ const GettingStartedWizard: React.FC = () => {
   const changeLanguage = (lang: string) => {
     setSelectedLanguage(lang);
     router.push("/getting-started", { locale: lang });
+  };
+
+  // メール検証のステップをスキップ（ユーザーがアプリを使いたい場合）
+  const skipEmailVerification = () => {
+    if (user && !displayName) {
+      setCurrentStep(WizardStep.Profile);
+    } else {
+      setCurrentStep(WizardStep.Start);
+    }
+  };
+
+  // 確認メールを送信する
+  const handleSendVerificationEmail = async () => {
+    // メール送信間隔制限（60秒）
+    if (lastSentTime && Date.now() - lastSentTime < 60000) {
+      const remainingSeconds = Math.ceil((60000 - (Date.now() - lastSentTime)) / 1000);
+      toast.error(t("common.error.tooManyRequests"), {
+        description: t("wizard.email.throttled", { seconds: remainingSeconds }),
+      });
+      return;
+    }
+
+    setSendingVerification(true);
+    try {
+      await sendVerificationEmail();
+      setLastSentTime(Date.now());
+      toast.success(t("wizard.email.sent"));
+    } catch (error) {
+      console.error("確認メール送信エラー:", error);
+      toast.error(t("wizard.email.error"));
+    } finally {
+      setSendingVerification(false);
+    }
+  };
+
+  // メール確認状態をチェックする
+  const checkEmailVerification = async () => {
+    if (!auth || !auth.currentUser) return;
+    
+    try {
+      // リロードしてユーザーの最新状態を取得
+      await auth.currentUser.reload();
+      setEmailVerified(auth.currentUser.emailVerified);
+      
+      if (auth.currentUser.emailVerified) {
+        // メール確認済みの場合、次のステップへ
+        toast.success(t("wizard.email.verified"));
+        goToNextStep();
+      } else {
+        toast.error(t("wizard.email.notVerified"));
+      }
+    } catch (error) {
+      console.error("メール確認状態チェックエラー:", error);
+      toast.error(t("common.error.generic"));
+    }
   };
 
   // 画像アップロード処理
@@ -187,12 +251,22 @@ const GettingStartedWizard: React.FC = () => {
         return;
       }
 
+      // メール確認状態を設定
+      setEmailVerified(user.emailVerified);
+
       // ユーザー情報を初期値として設定
       if (user.displayName) {
         setDisplayName(user.displayName);
       }
       if (user.photoURL) {
         setPhotoURL(user.photoURL);
+      }
+
+      // メール確認が必要なステップを決定
+      if (!user.emailVerified) {
+        setCurrentStep(WizardStep.Language);
+      } else if (!user.displayName) {
+        setCurrentStep(WizardStep.Profile);
       }
 
       setIsLoading(false);
@@ -242,31 +316,112 @@ const GettingStartedWizard: React.FC = () => {
             </div>
 
             {displayName && (
-              <Alert className="text-left mb-4">
-                <CheckCircle2 className="h-4 w-4" />
-                <AlertTitle>{t("wizard.already.title")}</AlertTitle>
-                <AlertDescription className="mb-2">
-                  {t("wizard.already.description")}
-                </AlertDescription>
-                <div className="flex">
-                  <Button>
-                    <Link href="/home">{t("wizard.start.button")}</Link>
-                  </Button>
-                  <Button
-                    variant="outline"
-                    className="ml-2"
-                    onClick={() => {
-                      setCurrentStep(WizardStep.Start);
-                    }}
-                  >
-                    {t("wizard.already.button")}
-                  </Button>
-                </div>
-              </Alert>
+              <StatusAlert
+                type="success"
+                title={t("wizard.already.title")}
+                description={
+                  <>
+                    {t("wizard.already.description")}
+                    <div className="flex mt-2">
+                      <Button>
+                        <Link href="/home">{t("wizard.start.button")}</Link>
+                      </Button>
+                      <Button
+                        variant="outline"
+                        className="ml-2"
+                        onClick={() => {
+                          setCurrentStep(WizardStep.Start);
+                        }}
+                      >
+                        {t("wizard.already.button")}
+                      </Button>
+                    </div>
+                  </>
+                }
+                show={!!displayName}
+                className="text-left mb-4"
+              />
             )}
 
-            <Button className="w-full" onClick={goToNextStep}>
+            <Button 
+              className="w-full" 
+              onClick={() => {
+                if (emailVerified) {
+                  if (displayName) {
+                    setCurrentStep(WizardStep.Start);
+                  } else {
+                    goToNextStep();
+                    goToNextStep(); // Skip email verification step
+                  }
+                } else {
+                  goToNextStep();
+                }
+              }}
+            >
               {t("wizard.next")} <ChevronRight className="ml-2 h-4 w-4" />
+            </Button>
+          </div>
+        );
+
+      case WizardStep.VerifyEmail:
+        return (
+          <div className="space-y-6">
+            <div className="text-center">
+              <h2 className="text-2xl font-bold mb-2">
+                {t("wizard.email.title")}
+              </h2>
+              <p className="text-muted-foreground">
+                {t("wizard.email.description")}
+              </p>
+            </div>
+
+            <StatusAlert
+              type="error"
+              title={t("wizard.email.alert.title")}
+              description={t("wizard.email.alert.description")}
+              show={true}
+              className="mb-4"
+            />
+
+            <div className="flex flex-col items-center gap-4 mt-6">
+              <Button
+                className="w-full"
+                onClick={handleSendVerificationEmail}
+                disabled={sendingVerification}
+              >
+                {sendingVerification ? (
+                  <>
+                    <Loader className="mr-2 h-4 w-4 animate-spin" />
+                    {t("wizard.email.sending")}
+                  </>
+                ) : (
+                  <>
+                    <Mail className="mr-2 h-4 w-4" />
+                    {t("wizard.email.sendButton")}
+                  </>
+                )}
+              </Button>
+
+              <Button
+                variant="outline"
+                className="w-full"
+                onClick={checkEmailVerification}
+              >
+                <Check className="mr-2 h-4 w-4" />
+                {t("wizard.email.checkButton")}
+              </Button>
+
+              <Button
+                variant="link"
+                className="text-muted-foreground"
+                onClick={skipEmailVerification}
+              >
+                {t("wizard.email.skipButton")}
+              </Button>
+            </div>
+
+            <Button variant="outline" onClick={goToPreviousStep} className="w-full">
+              {t("wizard.back")}
             </Button>
           </div>
         );
@@ -437,6 +592,34 @@ const GettingStartedWizard: React.FC = () => {
               </p>
             </div>
 
+            {!emailVerified && (
+              <StatusAlert
+                type="warning"
+                title={t("wizard.email.reminder.title")}
+                description={
+                  <>
+                    {t("wizard.email.reminder.description")}
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="mt-2"
+                      onClick={handleSendVerificationEmail}
+                      disabled={sendingVerification}
+                    >
+                      {sendingVerification ? (
+                        <Loader className="mr-2 h-3 w-3 animate-spin" />
+                      ) : (
+                        <Mail className="mr-2 h-3 w-3" />
+                      )}
+                      {t("wizard.email.sendButtonShort")}
+                    </Button>
+                  </>
+                }
+                show={!emailVerified}
+                className="mb-4"
+              />
+            )}
+
             <div className="flex items-center gap-4 mt-6">
               <Button variant="outline" onClick={goToPreviousStep}>
                 {t("wizard.back")}
@@ -476,7 +659,7 @@ const GettingStartedWizard: React.FC = () => {
 
           {/* ステップインジケーター */}
           <div className="flex justify-center gap-2 mb-6 mt-2">
-            {[...Array(4)].map((_, index) => (
+            {[...Array(5)].map((_, index) => (
               <div
                 key={index}
                 className={cn(

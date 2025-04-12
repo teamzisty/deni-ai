@@ -1,7 +1,7 @@
 "use client";
 
 import { cn } from "@/lib/utils";
-import { AlertCircleIcon, Share2 } from "lucide-react";
+import { AlertCircleIcon, CheckCircleIcon, Share2 } from "lucide-react";
 import { MessageLog } from "@/components/MessageLog";
 import { useChatSessions } from "@/hooks/use-chat-sessions";
 import { useParams } from "next/navigation";
@@ -31,20 +31,23 @@ import logger from "@/utils/logger";
 import { useAuth } from "@/context/AuthContext";
 import { useTranslations } from "next-intl";
 import { Alert, AlertDescription, AlertTitle } from "@repo/ui/components/alert";
+import { StatusAlert } from "@/components/StatusAlert";
+import React from "react";
 
 interface MessageListProps {
   messages: UIMessage[];
   sessionId: string;
   error?: Error;
+  onRegenerate?: () => void;
 }
 
 const MemoizedMessageList = memo(
-  ({ messages, sessionId, error }: MessageListProps) => {
+  ({ messages, sessionId, error, onRegenerate }: MessageListProps) => {
     const t = useTranslations();
     return (
       <>
         {messages.map((message, index) => (
-          <MessageLog sessionId={sessionId} key={index} message={message} />
+          <MessageLog sessionId={sessionId} key={index} message={message} onRegenerate={onRegenerate} />
         ))}
         {error && (
           <div className="p-2 my-2 flex gap-2 items-center rounded-lg border border-red-400 text-white w-full md:w-[70%] lg:w-[65%]">
@@ -88,7 +91,7 @@ const MemoizedMessageList = memo(
 MemoizedMessageList.displayName = "MemoizedMessageList";
 
 const ChatApp: React.FC = () => {
-  const { updateSession, getSession, isLoading: isSessionsLoading } = useChatSessions();
+  const { updateSession, getSession, isLoading: isSessionsLoading, syncSessions } = useChatSessions();
   const { user, isLoading, auth } = useAuth();
 
   const t = useTranslations();
@@ -102,7 +105,7 @@ const ChatApp: React.FC = () => {
   const router = useRouter();
 
   const [searchEnabled, setSearchEnabled] = useState(false);
-  const [advancedSearch, setAdvancedSearch] = useState(false);
+  const [deepResearch, setdeepResearch] = useState(false);
 
   const [currentAuthToken, setCurrentAuthToken] = useState<string | null>(null);
 
@@ -155,6 +158,7 @@ const ChatApp: React.FC = () => {
     },
   });
 
+  const [showSystemAlert, setShowSystemAlert] = useState(true);
 
   useEffect(() => {
     if (!currentSession) {
@@ -237,24 +241,28 @@ const ChatApp: React.FC = () => {
 
       // 最適化: JSON.stringifyを使わずに比較
       let hasChanges = prevMessages.length !== messages.length;
+      console.log(`Length check: ${prevMessages.length} vs ${messages.length}, hasChanges=${hasChanges}`);
 
       if (!hasChanges && messages.length > 0) {
-        // 最後のメッセージだけを比較
         const lastPrevMsg = prevMessages[prevMessages.length - 1];
         const lastNewMsg = messages[messages.length - 1];
-
-        if (lastPrevMsg && lastNewMsg) {
-          hasChanges =
-            lastPrevMsg.id !== lastNewMsg.id ||
-            lastPrevMsg.content !== lastNewMsg.content;
-        }
+        
+        // NULLチェックと厳密な比較
+        hasChanges = !lastPrevMsg || !lastNewMsg || 
+                      lastPrevMsg.id !== lastNewMsg.id || 
+                      lastPrevMsg.content !== lastNewMsg.content;
+        
+        console.log(`Content check: ID ${lastPrevMsg?.id} vs ${lastNewMsg?.id}, hasChanges=${hasChanges}`);
       }
 
       if (hasChanges) {
+        console.log(`Updating session ${params.id} (changes detected)`);
         updateSession(params.id, {
           ...currentSession,
           messages: messages,
         });
+      } else {
+        console.log(`Skipping session update (no changes detected)`);
       }
     }, 500); // 500ms遅延
 
@@ -298,13 +306,17 @@ const ChatApp: React.FC = () => {
     setSearchEnabled((prev) => !prev);
   };
 
-  const advancedSearchToggle = () => {
-    if (!advancedSearch) {
-      toast.info(t("chat.advancedSearch.info"), {
-        description: t("chat.advancedSearch.description"),
+  const deepResearchToggle = () => {
+    if (!deepResearch) {
+      toast.info(t("chat.deepResearch.info"), {
+        description: t("chat.deepResearch.description"),
       });
     }
-    setAdvancedSearch((prev) => !prev);
+    setdeepResearch((prev) => !prev);
+  };
+
+  const handleRegenerate = () => {
+    authReload();
   };
 
   const baseSendMessage = async (
@@ -321,8 +333,8 @@ const ChatApp: React.FC = () => {
       newAvailableTools.push("search");
     }
 
-    if (advancedSearch) {
-      newAvailableTools.push("advancedSearch");
+    if (deepResearch) {
+      newAvailableTools.push("deepResearch");
     }
 
     setAvailableTools(newAvailableTools);
@@ -561,71 +573,75 @@ const ChatApp: React.FC = () => {
         reasoningEffort={reasoningEffort}
         handleReasoningEffortChange={setReasoningEffort}
         rightContent={
-          <Button
-            variant="secondary"
-            className="ml-2 rounded-full"
-            onClick={async () => {
-              if (!currentSession || !user) {
-                toast.error(t("chat.error.shareNotLoggedIn"));
-                return;
-              }
-
-              if (messages.length === 0) {
-                toast.error(t("chat.error.shareNoMessages"));
-                return;
-              }
-
-              try {
-                const idToken = await user.getIdToken();
-                const response = await fetch("/api/share", {
-                  method: "POST",
-                  headers: {
-                    "Content-Type": "application/json",
-                    Authorization: idToken,
-                  },
-                  body: JSON.stringify({
-                    sessionId: params.id,
-                    title: currentSession.title,
-                    messages: messages,
-                  }),
-                });
-
-                if (!response.ok) {
-                  const errorData = await response.json();
-                  throw new Error(errorData.error || t("chat.error.shareFailed"));
+          <>
+            <Button
+              variant="secondary"
+              className="ml-2 rounded-full"
+              onClick={async () => {
+                if (!currentSession || !user) {
+                  toast.error(t("chat.error.shareNotLoggedIn"));
+                  return;
                 }
 
-                const data = await response.json();
+                if (messages.length === 0) {
+                  toast.error(t("chat.error.shareNoMessages"));
+                  return;
+                }
 
-                // クリップボードにURLをコピー
-                const shareUrl = `${window.location.origin}${data.shareUrl}`;
-                await navigator.clipboard.writeText(shareUrl);
+                try {
+                  const idToken = await user.getIdToken();
+                  const response = await fetch("/api/share", {
+                    method: "POST",
+                    headers: {
+                      "Content-Type": "application/json",
+                      Authorization: idToken,
+                    },
+                    body: JSON.stringify({
+                      sessionId: params.id,
+                      title: currentSession.title,
+                      messages: messages,
+                    }),
+                  });
 
-                toast.success(t("chat.shareSuccess"), {
-                  description: t("chat.shareLinkCopied"),
-                });
-              } catch (error) {
-                console.error(error);
-                toast.error(
-                  t("chat.error.shareFailed"),
-                  {
-                    description: error instanceof Error ? error.message : t("common.error.unknown"),
+                  if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.error || t("chat.error.shareFailed"));
                   }
-                );
-              }
-            }}
-          >
-            <Share2 className="mr-2 h-4 w-4" />
-            {t("chat.share")}
-          </Button>
+
+                  const data = await response.json();
+
+                  // クリップボードにURLをコピー
+                  const shareUrl = `${window.location.origin}${data.shareUrl}`;
+                  await navigator.clipboard.writeText(shareUrl);
+
+                  toast.success(t("chat.shareSuccess"), {
+                    description: t("chat.shareLinkCopied"),
+                  });
+                } catch (error) {
+                  console.error(error);
+                  toast.error(
+                    t("chat.error.shareFailed"),
+                    {
+                      description: error instanceof Error ? error.message : t("common.error.unknown"),
+                    }
+                  );
+                }
+              }}
+            >
+              <Share2 className="mr-2 h-4 w-4" />
+              {t("chat.share")}
+            </Button>
+          </>
         }
       />
       {/* Chat Log */}
-      <Alert variant="destructive" className="my-2 w-full md:w-9/12 lg:w-7/12">
-        <AlertCircleIcon className="h-4 w-4" />
-        <AlertTitle>Some models not available</AlertTitle>
-        <AlertDescription>Sorry, some models are not available for now. We are working on it.</AlertDescription>
-      </Alert>
+      <StatusAlert
+        type="success"
+        title="Issues are fixed!"
+        description="All models are available again. You can use them without any issues!"
+        show={showSystemAlert}
+        onClose={() => setShowSystemAlert(false)}
+      />
 
       <div
         className="flex w-full h-full md:w-9/12 lg:w-7/12 rounded overflow-y-auto scrollbar-thin scrollbar-thumb-primary scrollbar-track-secondary scrollbar-thumb-rounded-md scrollbar-track-rounded-md"
@@ -639,6 +655,7 @@ const ChatApp: React.FC = () => {
                   messages={messages}
                   sessionId={params.id}
                   error={error}
+                  onRegenerate={handleRegenerate}
                 />
                 {status === "submitted" && (
                   <div className="flex w-full message-log visible">
@@ -682,8 +699,8 @@ const ChatApp: React.FC = () => {
           generating={status == "submitted" || status == "streaming"}
           isUploading={isUploading}
           searchEnabled={searchEnabled}
-          advancedSearch={advancedSearch}
-          advancedSearchToggle={advancedSearchToggle}
+          deepResearch={deepResearch}
+          deepResearchToggle={deepResearchToggle}
           searchToggle={searchToggle}
           model={model}
           modelDescriptions={modelDescriptions}

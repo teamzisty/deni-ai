@@ -36,7 +36,7 @@
   "chatInput": {
     "imageAdd": "画像を追加",
     "search": "検索",
-    "advancedSearch": "詳細なリサーチ"
+    "deepResearch": "詳細なリサーチ"
   },
   "headerArea": {
     "ready": "準備完了",
@@ -305,7 +305,7 @@
       "retry": "再試行",
       "maxRetriesReached": "最大再試行回数に達しました"
     },
-    "advancedSearch": {
+    "deepResearch": {
       "info": "詳細なリサーチについて",
       "description": "詳細なリサーチはベータ版です。「ウェブサイトを閲覧しました」等をクリックすると、検索結果が表示されます。"
     },
@@ -425,5 +425,124 @@
     "views": "閲覧数",
     "view": "閲覧",
     "untitledChat": "無題の会話"
+  },
+  "account": {
+    "title": "アカウント",
+    "description": "以下であなたのアカウント情報を管理できます。",
+    "layout": {
+      "return": "Deni AI に戻る"
+    },
+    "profile": {
+      "title": "プロフィール",
+      "description": "プラットフォーム上であなたがどのように表示されるかを設定します。",
+      "edit": "プロフィール編集",
+      "confirmed": "確認済み"
+    },
+    "data": {
+      "title": "アカウントデータのダウンロード",
+      "description": "あなたのアカウントに関連するすべてのデータをダウンロードできます。",
+      "download": "データをダウンロード",
+      "downloading": "ダウンロード中...",
+      "downloadSuccess": "データのダウンロードに成功しました",
+      "downloadError": "データのダウンロードに失敗しました"
+    },
+    "delete": {
+      "title": "アカウント削除",
+      "description": "アカウントとそれに関連するすべてのデータを完全に削除します。",
+      "button": "アカウント削除",
+      "deleting": "削除中...",
+      "success": "アカウントの削除に成功しました",
+      "error": "アカウントの削除に失敗しました"
+    },
+    "password": {
+      "title": "パスワード",
+      "description": "アカウントのセキュリティを保つためにパスワードを変更してください。",
+      "cardTitle": "パスワード変更",
+      "cardDescription": "新しい安全な組み合わせにパスワードを更新します。",
+      "currentPassword": "現在のパスワード",
+      "newPassword": "新しいパスワード",
+      "confirmPassword": "新しいパスワード（確認）",
+      "updateButton": "パスワードを更新",
+      "updating": "更新中...",
+      "successTitle": "パスワード更新完了",
+      "successDescription": "パスワードが正常に更新されました。",
+      "errorAllFields": "すべてのパスワードフィールドに入力してください。",
+      "errorPasswordMatch": "新しいパスワードが一致しません。",
+      "errorPasswordLength": "パスワードは8文字以上である必要があります。",
+      "errorNoUser": "パスワードを変更するにはログインする必要があります。",
+      "errorWrongPassword": "現在のパスワードが正しくありません。",
+      "errorWeakPassword": "新しいパスワードが弱すぎます。より強力なパスワードを使用してください。",
+      "errorRecentLogin": "セキュリティ上の理由から、パスワードを変更する前に再ログインする必要があります。",
+      "errorGeneric": "パスワードの更新に失敗しました。もう一度お試しください。",
+      "notLoggedIn": "パスワードを変更するにはログインする必要があります。",
+      "notPasswordProvider": "サードパーティのプロバイダーでサインインしたため、パスワードを変更できません。"
+    },
+    "sessions": {
+      "title": "セッション",
+      "description": "アクティブなセッションとデバイスを管理します。",
+      "activeSessions": "アクティブなセッション",
+      "activeSessionsDescription": "これらは現在ログインしているデバイスです。",
+      "current": "現在のセッション",
+      "nowActive": "現在アクティブ",
+      "lastActive": "最終アクティブ",
+      "terminate": "ログアウト",
+      "terminateAll": "すべてのデバイスからログアウト",
+      "terminating": "ログアウト中...",
+      "terminateSuccess": "セッションを正常に終了しました",
+      "terminateError": "セッションの終了に失敗しました",
+      "terminateAllSuccess": "他のすべてのセッションを正常に終了しました",
+      "terminateAllError": "すべてのセッションの終了に失敗しました",
+      "loading": "セッションを読み込み中...",
+      "noSessions": "アクティブなセッションが見つかりません",
+      "justNow": "たった今",
+      "hoursAgo": "{hours}時間前",
+      "fetchError": "セッションの取得に失敗しました"
+    },
+    "security": {
+      "title": "セキュリティ",
+      "description": "アカウントのセキュリティ設定を管理します。",
+      "notLoggedIn": "セキュリティ設定を変更するにはログインする必要があります。",
+      "setupError": "二段階認証の設定に失敗しました。もう一度お試しください。",
+      "twoFactor": {
+        "title": "二段階認証",
+        "description": "アカウントにセキュリティの追加レイヤーを追加します。",
+        "label": "二段階認証",
+        "sublabel": "アカウントにセキュリティの追加レイヤーを追加"
+      },
+      "sessions": {
+        "label": "アクティブなセッションを管理",
+        "sublabel": "現在ログインしているすべてのデバイスを表示",
+        "viewButton": "セッションを表示"
+      },
+      "reauth": {
+        "title": "パスワードを確認",
+        "description": "セキュリティ上の理由から、続行するにはパスワードを入力してください。",
+        "providerMessage": "セキュリティ上の理由から、続行するには{provider}で再認証する必要があります。"
+      },
+      "qrCode": {
+        "title": "二段階認証の設定",
+        "description": "Google認証システムやAuthyなどの認証アプリでこのQRコードをスキャンしてください。",
+        "manualEntry": "QRコードをスキャンできない場合は、このコードを手動で入力してください:",
+        "next": "次へ"
+      },
+      "verify": {
+        "title": "認証コードを確認",
+        "description": "設定を確認するために、認証アプリから6桁のコードを入力してください。",
+        "verifyButton": "確認"
+      },
+      "enabled2FA": "二段階認証が有効になりました",
+      "disabled2FA": "二段階認証が無効になりました",
+      "invalidPassword": "パスワードが間違っています。もう一度お試しください。",
+      "errorAuth": "パスワードが間違っています。もう一度お試しください。",
+      "errorVerifying": "無効な認証コードです。もう一度お試しください。",
+      "cancel": "キャンセル",
+      "continue": "続行"
+    },
+    "sidebarNav": {
+      "account": "アカウント",
+      "sessions": "セッション",
+      "password": "パスワード",
+      "security": "セキュリティ"
+    }
   }
 }

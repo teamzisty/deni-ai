@@ -23,6 +23,7 @@ import { toast } from "sonner";
 interface MessageLogProps {
   message: UIMessage;
   sessionId: string;
+  onRegenerate?: () => void;
 }
 
 export const MemoMarkdown = memo(
@@ -191,7 +192,7 @@ const MessageControls = memo(
 MessageControls.displayName = "MessageControls";
 
 export const MessageLog: FC<MessageLogProps> = memo(
-  ({ message, sessionId }) => {
+  ({ message, sessionId, onRegenerate }) => {
     const [state, dispatch] = React.useReducer(messageReducer, {
       model: "gpt-4o-2024-08-06",
       thinkingTime: 0,
@@ -199,24 +200,6 @@ export const MessageLog: FC<MessageLogProps> = memo(
 
     const { getSession, updateSession } = useChatSessions();
     const t = useTranslations();
-
-    const handleRegenerate = React.useCallback(() => {
-      const session = getSession(sessionId);
-      if (!session) return;
-
-      // Find the index of the current message
-      const messageIndex = session.messages.findIndex(m => m.id === message.id);
-      if (messageIndex === -1) return;
-
-      // Remove all messages after and including the current message
-      const updatedMessages = session.messages.slice(0, messageIndex);
-      
-      // Update the session with the truncated messages
-      updateSession(sessionId, {
-        ...session,
-        messages: updatedMessages,
-      });
-    }, [message.id, sessionId, getSession, updateSession]);
 
     const toolInvocations = React.useMemo(
       () => message.parts.filter((part) => part.type === "tool-invocation"),
@@ -441,7 +424,7 @@ export const MessageLog: FC<MessageLogProps> = memo(
                 <MessageControls
                   messageContent={message.content}
                   thinkingTime={state.thinkingTime}
-                  onRegenerate={handleRegenerate}
+                  onRegenerate={onRegenerate}
                 />
               </div>
             ) : (

@@ -3,19 +3,41 @@
 
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { auth } from '@repo/firebase-config/client';
-import { User } from 'firebase/auth';
+import { User, sendEmailVerification } from 'firebase/auth';
+import { useRouter, usePathname } from 'next/navigation';
+import { toast } from 'sonner';
 
 interface AuthContextType {
   user: User | null;
   isLoading: boolean;
   auth: typeof auth;
+  sendVerificationEmail: () => Promise<void>;
 }
 
-const AuthContext = createContext<AuthContextType>({ user: null, isLoading: true, auth });
+const AuthContext = createContext<AuthContextType>({
+  user: null,
+  isLoading: true,
+  auth,
+  sendVerificationEmail: async () => {},
+});
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const router = useRouter();
+  const pathname = usePathname();
+
+  const sendVerificationEmail = async () => {
+    if (!auth || !auth.currentUser) return;
+    
+    try {
+      await sendEmailVerification(auth.currentUser);
+      toast.success('Verification email sent successfully');
+    } catch (error) {
+      console.error('Error sending verification email:', error);
+      toast.error('Failed to send verification email');
+    }
+  };
 
   useEffect(() => {
     if (!auth) {
@@ -26,13 +48,23 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const unsubscribe = auth.onAuthStateChanged((user) => {
       setUser(user);
       setIsLoading(false);
+
+      // Check email verification
+      if (user && !user.emailVerified) {
+        // Exempt getting-started page from verification requirement
+        const isGettingStartedPage = pathname?.includes('/getting-started');
+        
+        if (!isGettingStartedPage) {
+          router.push('/getting-started');
+        }
+      }
     });
 
     return () => unsubscribe();
-  }, []);
+  }, [router, pathname]);
 
   return (
-    <AuthContext.Provider value={{ user, isLoading, auth }}>
+    <AuthContext.Provider value={{ user, isLoading, auth, sendVerificationEmail }}>
       {children}
     </AuthContext.Provider>
   );

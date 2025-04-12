@@ -39,7 +39,7 @@ import {
 } from "@repo/ui/components/input-otp";
 import { collection, getDocs, deleteDoc, doc } from "firebase/firestore";
 import { firestore } from "@repo/firebase-config/client";
-
+import { useChatSessions } from "@/hooks/use-chat-sessions";
 export default function DataControlsSettings() {
   const [dataCollection, setDataCollection] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -51,6 +51,7 @@ export default function DataControlsSettings() {
   const { user, auth } = useAuth();
   const t = useTranslations();
   const NextRouter = nextRouter();
+  const { clearAllSessions } = useChatSessions();
   const dialogPromiseRef = useRef<{ resolve: (value: string) => void } | null>(null);
 
   useEffect(() => {
@@ -127,8 +128,7 @@ export default function DataControlsSettings() {
   };
 
   const deleteAllConversations = () => {
-    localStorage.setItem("chatSessions", "[]");
-    localStorage.removeItem("currentChatSession");
+    clearAllSessions();
     toast.success(t("settings.popupMessages.deleteSuccess"), {
       description: t("settings.popupMessages.deleteAllSuccess"),
     });
@@ -268,9 +268,16 @@ export default function DataControlsSettings() {
           const deletePromises = snapshot.docs.map(doc => deleteDoc(doc.ref));
           await Promise.all(deletePromises);
           
-          // Delete the active session document if it exists
-          const activeSessionRef = doc(firestore, `deni-ai-conversations/${user.uid}/sessions/active`);
-          await deleteDoc(activeSessionRef);
+          // Delete active sessions in the active collection
+          const activeCollectionRef = collection(firestore, `deni-ai-conversations/${user.uid}/active`);
+          const activeSnapshot = await getDocs(activeCollectionRef);
+          
+          // Delete each active session document
+          if (!activeSnapshot.empty) {
+            const activeDeletePromises = activeSnapshot.docs.map(doc => deleteDoc(doc.ref));
+            await Promise.all(activeDeletePromises);
+            console.log("Successfully deleted active sessions");
+          }
           
           // Delete the user's main document
           const userDocRef = doc(firestore, `deni-ai-conversations/${user.uid}`);
