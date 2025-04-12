@@ -40,12 +40,13 @@ We fixed three bugs in this version:
 
 ## Feature Changes
 
-We made eleven feature changes in this version:
+We made twelve feature changes in this version:
 
 - App: Changed email verification to mandatory (redirects to initial setup if not done)
 - App: Changed the design of notifications (alerts)
 - App: Added analytics
 - App: Updated GPT-4o version (`gpt-4o-2024-08-06` > `gpt-4o-2024-11-20`)
+- App: Added Advanced Search (Send full page results)
 - Account: Added a feature to manage two-factor authentication
 - Account: Added a feature to change passwords
 - Account: Added a feature to download all account data
