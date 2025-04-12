@@ -114,6 +114,7 @@ const ChatApp: React.FC = () => {
   const router = useRouter();
 
   const [searchEnabled, setSearchEnabled] = useState(false);
+  const [advancedSearch, setAdvancedSearch] = useState(false);
   const [deepResearch, setDeepResearch] = useState(false);
 
   const [currentAuthToken, setCurrentAuthToken] = useState<string | null>(null);
@@ -174,6 +175,8 @@ const ChatApp: React.FC = () => {
       router.push("/home");
       return;
     }
+
+    setAdvancedSearch(window.localStorage.getItem("advancedSearch") === "true");
 
     setMessages(currentSession.messages);
     logger.info("Init", "Loaded Messages");
@@ -348,7 +351,7 @@ const ChatApp: React.FC = () => {
       newAvailableTools.push("search");
     }
 
-    if (localStorage.getItem("advancedSearch")) {
+    if (advancedSearch) {
       newAvailableTools.push("advancedSearch");
     }
 
