@@ -64,7 +64,7 @@ export const SidebarNav = () => {
         </div>
       )}
       <Tabs defaultValue={pathname} className="w-full flex-grow" orientation="vertical">
-        <TabsList className="flex flex-col bg-transparent space-y-2 h-auto">
+        <TabsList className="flex flex-col bg-transparent space-y-2 w-full h-auto">
           {items.map((item) => (
             <TabsTrigger
               key={item.href}
@@ -81,7 +81,7 @@ export const SidebarNav = () => {
         </TabsList>
       </Tabs>
       <Tabs defaultValue={pathname} className="w-full flex-grow" orientation="vertical">
-        <TabsList className="flex flex-col bg-transparent space-y-2 h-auto mt-auto">
+        <TabsList className="flex flex-col bg-transparent space-y-2 w-full h-auto mt-auto">
           {bottomItems.map((item) => (
             <TabsTrigger
               key={item.href}

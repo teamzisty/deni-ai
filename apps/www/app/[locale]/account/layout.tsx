@@ -7,6 +7,8 @@ import { Button } from "@repo/ui/components/button";
 import { ArrowLeft } from "lucide-react";
 import { AccountManagement } from "@/components/account/AccountManagement";
 import { SidebarNav } from "@/components/account/SidebarNav";
+import Image from "next/image";
+import { SearchBox } from "@/components/account/SearchBox";
 
 export async function generateMetadata() {
   const t = await getTranslations("account");
@@ -28,7 +30,7 @@ export default async function AccountLayout({ children }: AccountLayoutProps) {
       <header className="w-screen h-16 bg-card/60">
         <div className="container mx-auto h-full flex items-center justify-between px-4">
           <div className="flex gap-2 items-center">
-            <img
+            <Image
               src="/assets/icon-black.png"
               alt="Deni AI"
               width={32}
@@ -37,12 +39,7 @@ export default async function AccountLayout({ children }: AccountLayoutProps) {
             <span className="text-md font-bold">{t("title")}</span>
           </div>
           <div className="flex gap-2 items-center">
-            <Button variant="outline" asChild>
-              <Link href="/home">
-                <ArrowLeft />
-                {t("layout.return")}
-              </Link>
-            </Button>
+            <SearchBox />
           </div>
           <div className="flex-shrink-0">
             <AccountManagement />

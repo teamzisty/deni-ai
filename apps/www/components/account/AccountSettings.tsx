@@ -47,6 +47,7 @@ import {
   InputOTPGroup,
   InputOTPSlot,
 } from "@repo/ui/components/input-otp";
+import { useChatSessions } from "@/hooks/use-chat-sessions";
 
 export function AccountSettings() {
   const t = useTranslations("account");
@@ -68,6 +69,8 @@ export function AccountSettings() {
   const [showVerify2FADialog, setShowVerify2FADialog] = useState(false);
   const [totpCode, setTotpCode] = useState("");
   const [dialogPromiseRef, setDialogPromiseRef] = useState<{ resolve: (value: string) => void } | null>(null);
+
+  const { exportAllSessions } = useChatSessions(); // Assuming this is a function to export all sessions
 
   const { isUploading, startUpload } = useUploadThing("imageUploader", {
     headers: {
@@ -240,13 +243,15 @@ export function AccountSettings() {
     try {
       setIsDownloading(true);
       // TODO: Implement data download logic
+      const sessions = await exportAllSessions()
+      const parsedSessions = JSON.parse(sessions);
       const userData = {
         profile: {
           name: user?.displayName,
           email: user?.email,
           photoURL: user?.photoURL,
         },
-        // Add other user data as needed
+        parsedSessions
       };
       const blob = new Blob([JSON.stringify(userData, null, 2)], {
         type: "application/json",

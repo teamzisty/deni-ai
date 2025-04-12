@@ -561,6 +561,13 @@
     "layout": {
       "return": "Deni AI に戻る"
     },
+    "searchBox": {
+      "dialogTitle": "アクションメニュー",
+      "dialogDescription": "アクションメニューを検索するには、以下のフィールドに入力してください。",
+      "returnToDeniAI": "Deni AI に戻る",
+      "logout": "ログアウト",
+      "triggerPlaceholder": "アクションメニュー"
+    },
     "profile": {
       "title": "プロフィール",
       "description": "プラットフォーム上で他のユーザーに表示される情報です。",
