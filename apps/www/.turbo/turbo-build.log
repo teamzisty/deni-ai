@@ -1,141 +1,0 @@
-[?9001h[?1004h[?25l[2J[m[35m[2m[H$[m[1m[2m[1Cnext build --turbopack
-]0;C:\Users\rai\.bun\bin\bun.exe[?25h[22m   [38;2;173;127;168m[1m▲ Next.js 15.3.0[m (Turbopack)
-[?25l   - Environments: .env[5;1H[?25h [37m[1m [m Creating an optimized production build ...
- [32m[1m✓[m Compiled successfully in 13.5s
- [37m[1m [m Linting and checking validity of types  [36m.[?25l[m[K[114C [37m[1m [m Linting and checking validity of types  [36m..[m]0;C:\Windows\System32\cmd.exe [K[114C [37m[1m [m Linting and checking validity of types  [36m...[m[K[114C [37m[1m [m Linting and checking validity of types  [36m.[m[K[114C [37m[1m [m Linting and checking validity of types  [36m..[m[K[114C [37m[1m [m Linting and checking validity of types  [36m...[m[K[114C [37m[1m [m Linting and checking validity of types  [36m.[m[K[114C [37m[1m [m Linting and checking validity of types  [36m..[m[K[114C [37m[1m [m Linting and checking validity of types  [36m...[m[K[114C [37m[1m [m Linting and checking validity of types  [36m.[m[K[114C [37m[1m [m Linting and checking validity of types  [36m..[m[K[114C [37m[1m [m Linting and checking validity of types  [36m...[m[K[114C [37m[1m [m Linting and checking validity of types  [36m.[m[K[114C [37m[1m [m Linting and checking validity of types  [36m..[m[K[114C [37m[1m [m Linting and checking validity of types  [36m...[m[K[114C [37m[1m [m Linting and checking validity of types  [36m.[m[K[114C [37m[1m [m Linting and checking validity of types  [36m..[m[K[114C [37m[1m [m Linting and checking validity of types  [36m...[m[K[114C [37m[1m [m Linting and checking validity of types  [36m.[m[K[114C [37m[1m [m Linting and checking validity of types  [36m..[m[K[114C [37m[1m [m Linting and checking validity of types  [36m...[m[K[114C [37m[1m [m Linting and checking validity of types  [36m.[m[K[114C
-./app/api/chat/route.ts
-101:11  Warning: 'visitedWebsites' is assigned a value but never used.  @typescript-eslint/no-unused-vars[?25h
-
-./app/api/share/list/route.ts
-1:10  Warning: 'authAdmin' is defined but never used.  @typescript-eslint/no-unused-vars
-1:21  Warning: 'notAvailable' is defined but never used.  @typescript-eslint/no-unused-vars
-4:27  Warning: 'req' is defined but never used.  @typescript-eslint/no-unused-vars
-
-./app/layout.tsx
-6:8  Warning: 'Script' is defined but never used.  @typescript-eslint/no-unused-vars
-
-./app/[locale]/(auth)/register/page.tsx
-4:10  Warning: 'auth' is defined but never used.  @typescript-eslint/no-unused-vars
-
-./app/[locale]/(chat)/chat/[id]/page.tsx
-318:9  Warning: 'newAvailableTools' is never reassigned. Use 'const' instead.  prefer-const
-
-./app/[locale]/(chat)/layout.tsx
-3:10  Warning: 'ThemeProvider' is defined but never used.  @typescript-eslint/no-unused-vars
-
-./app/[locale]/(chat)/shared/[id]/page.tsx
-8:10  Warning: 'Share2' is defined but never used.  @typescript-eslint/no-unused-vars
-
-./components/ApperanceSettings.tsx
-10:10  Warning: 'Switch' is defined but never used.  @typescript-eslint/no-unused-vars
-19:10  Warning: 'useState' is defined but never used.  @typescript-eslint/no-unused-vars
-19:20  Warning: 'useEffect' is defined but never used.  @typescript-eslint/no-unused-vars
-
-./components/DataControlsSettings.tsx
-109:20  Warning: 'error' is defined but never used.  @typescript-eslint/no-unused-vars
-157:21  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
-167:41  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
-189:21  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
-203:21  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
-268:21  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
-
-./components/DevelopmentBanner.tsx
-22:16  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
-40:25  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
-
-./components/HeaderArea.tsx
-28:5  Warning: 'generating' is defined but never used.  @typescript-eslint/no-unused-vars
-29:5  Warning: 'stop' is defined but never used.  @typescript-eslint/no-unused-vars
-35:13  Warning: 'theme' is assigned a value but never used.  @typescript-eslint/no-unused-vars
-35:20  Warning: 'setTheme' is assigned a value but never used.  @typescript-eslint/no-unused-vars
-
-./components/markdown.tsx
-71:41  Warning: 'props' is defined but never used.  @typescript-eslint/no-unused-vars
-111:43  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
-
-./components/MessageLog.tsx
-76:49  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
-88:7  Warning: Unexpected lexical declaration in case block.  no-case-declarations
-89:7  Warning: Unexpected lexical declaration in case block.  no-case-declarations
-91:7  Warning: Unexpected lexical declaration in case block.  no-case-declarations
-99:7  Warning: Unexpected lexical declaration in case block.  no-case-declarations
-251:62  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
-254:62  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
-257:40  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
-
-./components/ModelSelector.tsx
-33:10  Warning: 'Link' is defined but never used.  @typescript-eslint/no-unused-vars
-52:8  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
-154:37  Warning: React Hook useCallback received a function whose dependencies are unknown. Pass an inline functio
-[8;114Hon instead.  react-hooks/exhaustive-deps
-
-./components/ModelSettings.tsx
-95:20  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
-103:9  Warning: '_' is defined but never used.  @typescript-eslint/no-unused-vars
-106:9  Warning: '_' is defined but never used.  @typescript-eslint/no-unused-vars
-113:28  Warning: 'id' is defined but never used.  @typescript-eslint/no-unused-vars
-116:40  Warning: '_' is defined but never used.  @typescript-eslint/no-unused-vars
-119:47  Warning: '_' is defined but never used.  @typescript-eslint/no-unused-vars
-
-./components/ReasoningEffortSelector.tsx
-17:29  Warning: 'useMemo' is defined but never used.  @typescript-eslint/no-unused-vars
-122:38  Warning: React Hook useCallback received a function whose dependencies are unknown. Pass an inline functio
-[8;114Hon instead.  react-hooks/exhaustive-deps
-122:38  Warning: React Hook "useCallback" is called conditionally. React Hooks must be called in the exact same or
-[8;114Hrder in every component render. Did you accidentally call a React Hook after an early return?  react-hooks/rules-of
-[8;114Hf-hooks
-
-./components/SettingsDialog.tsx
-9:3  Warning: 'DialogHeader' is defined but never used.  @typescript-eslint/no-unused-vars
-
-info  - Need to disable some ESLint rules? Learn more here: https://nextjs.org/docs/app/api-reference/config/eslin
-[8;114Hnt#disabling-rules
- [36m.[K[?25l[112C[m[K[114C [36m.. [m[K[114C [36m... [m[K[114C [36m. [m[K[114C [36m.. [m[K[114C [36m... [m[K[114C [36m. [m[K[114C [36m.. [m[K[114C [36m... [m[K[114C [36m. [m[K[114C [36m.. [m[K[114C [36m... [m[K[114C [36m. [m[K[114C [36m.. [m[K[114C [36m... [m[K[114C [36m. [m[K[114C [36m.. [m[K[114C [36m... [m[K[114C [36m. [m[K[114C [36m.. [m[K[114C [36m... [m[K[114C [36m. [m[K[114C [36m.. [m[K[114C [36m... [m[K[114C [36m. [m[K[114C [36m.. [m[K[114C [36m... [m[K[114C [36m. [m[K[114C [36m.. [m[K[114C [36m... [m[K[114C [36m. [m[K[114C [36m.. [m[K[114C [36m... [m[K[114C [36m. [m[K[114C [36m.. [m[K[114C [32m[1m✓[m Linting and checking validity of types [?25h
- [37m[1m [m Collecting page data  [36m.[K[?25l[88C[m[K[114C [37m[1m [m Collecting page data  [36m..[m[K[114C [37m[1m [m Collecting page data  [36m...[m[K[114C [37m[1m [m Collecting page data  [36m.[m[K[114C [37m[1m [m Collecting page data  [36m..[m[K[114C [37m[1m [m Collecting page data  [36m...[m[K[114C [37m[1m [m Collecting page data  [36m.[m[K[114C [37m[1m [m Collecting page data  [36m..[m[K[114C [37m[1m [m Collecting page data  [36m...[m[K[114C [37m[1m [m Collecting page data  [36m.[m[K[114C [37m[1m [m Collecting page data  [36m..[m[K[114C [37m[1m [m Collecting page data  [36m...[m[K[114C [37m[1m [m Collecting page data  [36m.[m[K[114C [37m[1m [m Collecting page data  [36m..[m[K[114C [37m[1m [m Collecting page data  [36m...[m[K[114C [37m[1m [m Collecting page data  [36m.[m[K[114C [37m[1m [m Collecting page data  [36m..[m[K[114C [37m[1m [m Collecting page data  [36m...[m[K[114C [32m[1m✓[m Collecting page data    [?25h
-[?25l [37m[1m [m Generating static pages (0/8)  [36m[    ][m[K[114C [37m[1m [m Generating static pages (0/8)  [36m[=   ][m[K[114C [37m[1m [m Generating static pages (0/8)  [36m[==  ][m[K[114C [37m[1m [m Generating static pages (0/8)  [36m[=== ][m[K[114C [37m[1m [m Generating static pages (0/8)  [36m[ ===][m[K[114C [37m[1m [m Generating static pages (0/8)  [36m[  ==][m[K[114C [37m[1m [m Generating static pages (0/8)  [36m[   =][m[K[114C [37m[1m [m Generating static pages (0/8)  [36m[    ][m[K[114C [37m[1m [m Generating static pages (0/8)  [36m[   =][m[K[114C [37m[1m [m Generating static pages (2/8)  [36m[  ==][m[K[114C [37m[1m [m Generating static pages (2/8)  [36m[ ===][m[K[114C [37m[1m [m Generating static pages (2/8)  [36m[====][m[K[114C [32m[1m✓[m Generating static pages (8/8)[?25h
-[?25l [37m[1m [m Finalizing page optimization  [36m. [37m[1m [m Collecting build traces  [36m.[m[K[114C [37m[1m [m Collecting build traces  [36m..[K[84C[m[K[114C [37m[1m [m Collecting build traces  [36m...[K[83C[m[K[114C [37m[1m [m Collecting build traces  [36m.[K[85C[m[K[114C [37m[1m [m Collecting build traces  [36m..[K[84C[m[K[114C [37m[1m [m Collecting build traces  [36m...[K[83C[m[K[114C [37m[1m [m Collecting build traces  [36m.[K[85C[m[K[114C [37m[1m [m Collecting build traces  [36m..[K[84C[m[K[114C [37m[1m [m Collecting build traces  [36m...[K[83C[m[K[114C [37m[1m [m Collecting build traces  [36m.[K[85C[m[K[114C [37m[1m [m Collecting build traces  [36m..[K[84C[m[K[114C [37m[1m [m Collecting build traces  [36m...[K[83C[m[K[114C [37m[1m [m Collecting build traces  [36m.[K[85C[m[K[114C [37m[1m [m Collecting build traces  [36m..[K[84C[m[K[114C [37m[1m [m Collecting build traces  [36m...[K[83C[m[K[114C [37m[1m [m Collecting build traces  [36m.[K[85C[m[K[114C [32m[1m✓[m Collecting build traces[K[?25h
- [32m[1m✓[m Finalizing page optimization[K
-
-[4mRoute (app)[24m[26X[4m[26CSize[24m  [4mFirst Load JS[24m    
-┌ ○ /_not-found                       0 B[37m[1m[9C114 kB[m[K
-├ ƒ /[locale]                     63.1 kB[37m[1m[9C533 kB[m[K
-├ ƒ /[locale]/chat/[id]           50.6 kB[37m[1m[9C916 kB[m[K
-├ ƒ /[locale]/getting-started     3.71 kB[37m[1m[9C474 kB[m[K
-├ ƒ /[locale]/home                1.53 kB[37m[1m[9C508 kB[m[K
-├ ƒ /[locale]/login               3.31 kB[37m[1m[9C474 kB[m[K
-├ ƒ /[locale]/pages/whats-new-v2  15.2 kB[37m[1m[9C485 kB[m[K
-├ ƒ /[locale]/register            2.71 kB[37m[1m[9C473 kB[m[K
-├ ƒ /[locale]/shared              1.93 kB[37m[1m[9C508 kB[m[K
-├ ƒ /[locale]/shared/[id]         2.03 kB[37m[1m[9C868 kB[m[K
-├ ƒ /api/chat                         0 B[37m[1m[12C0 B[m[K
-├ ƒ /api/share                        0 B[37m[1m[12C0 B[m[K
-├ ƒ /api/share/list                   0 B[37m[1m[12C0 B[m[K
-├ ƒ /api/uploadthing                  0 B[37m[1m[12C0 B[m[K
-└ ƒ /api/uses                         0 B[37m[1m[12C0 B[m[K
-+ First Load JS shared by all      [37m[1m163 kB[m[K
-  ├ chunks/599b0350cd05a3ee.js    16.8 kB
-  └ chunks/e8fdca5d7ec56c8f.js    61.4 kB
-  ├ chunks/fa9626ebe9d18d51.js    19.1 kB
-  ├ chunks/7cc23b626d64381a.css     32 kB
-  ├ chunks/f9eeb4f8644b7185.css   16.1 kB
-  └ other shared chunks (total)   18.1 kB
-
-
-ƒ Middleware[37m[1m[22C66.2 kB[m[K
-
-○  (Static)   prerendered as static content
-ƒ  (Dynamic)  server-rendered on demand
-
- [33m[1m⚠[m Support for Turbopack builds is experimental. [1mWe don't recommend deploying mission-critical applications to pro[22m
-[1m[8;114Hoduction.[22m[K
-
-- [1mTurbopack currently always builds production sourcemaps for the browser. This will include project sourcecode if[22m
-[1m[8;114Hf deployed to production.[22m[K
-- It is expected that your bundle size might be different from `next build` with webpack. This will be improved as
-[8;114Hs we work towards stability.
-- This build is without disk caching; subsequent builds will become faster when disk caching becomes available.   
-- When comparing output to webpack builds, make sure to first clear the Next.js cache by deleting the `.next` dire
-[8;114Hectory.
-
-Provide feedback for Turbopack builds at https://github.com/vercel/next.js/discussions/77721
-[?9001l[?1004l
