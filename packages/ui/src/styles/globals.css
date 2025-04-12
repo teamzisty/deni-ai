@@ -9,8 +9,6 @@
 
 @custom-variant dark (&:is(.dark *));
 
-@import "./themes.css";
-
 :root {
   --background: oklch(0.97 0.01 286.15);
   --foreground: oklch(0.3 0.06 282.42);

@@ -1,4 +1,4 @@
-const version = "2.3";
+const version = "2.4";
 const codename = "Sheepdog"
 const date = "2025-04-05"
 

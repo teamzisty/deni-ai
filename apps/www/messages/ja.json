@@ -48,17 +48,18 @@
       "fillField": "フィールドを埋めてください",
       "nameChanged": "名前を変更しました",
       "noConversations": "会話が1つも存在しないため、エクスポートできません。",
-      "exportSuccess": "会話をエクスポートしました",
-      "importSuccess": "会話をインポートしました",
-      "importAllSuccess": "ファイルからすべての会話をインポートしました",
-      "fileReadError": "ファイルの読み込み中にエラーが発生しました",
-      "deleteSuccess": "会話を削除しました",
-      "deleteAllSuccess": "すべての会話を削除しました",
-      "syncedConversations": "会話がクラウドと同期されました。",
-      "nameChangeFailed": "名前の変更に失敗しました",
-      "accountDeleted": "アカウントを正常に削除しました",
-      "accountDeletionError": "アカウントの削除に失敗しました",
-      "invalidFileFormat": "無効なファイル形式です"
+      "exportSuccess": "会話が正常にエクスポートされました。",
+      "importSuccess": "会話が正常にインポートされました。",
+      "importAllSuccess": "インポートされた会話を表示するには、ページを更新してください。",
+      "deleteSuccess": "会話が正常に削除されました。",
+      "deleteAllSuccess": "すべての会話が削除されました。",
+      "noConversations": "エクスポートする会話が見つかりません。",
+      "invalidFileFormat": "無効なファイル形式です。有効なJSONファイルを選択してください。",
+      "fileReadError": "選択したファイルの読み取り中にエラーが発生しました。",
+      "accountDeleted": "アカウントが正常に削除されました。",
+      "accountDeletionError": "アカウントの削除に失敗しました。もう一度お試しください。",
+      "exportError": "会話のエクスポートに失敗しました。",
+      "deleteAllError": "会話の削除に失敗しました。"
     },
     "appearance": {
       "tab": "言語と外観",
@@ -82,16 +83,10 @@
       "tab": "アカウント",
       "title": "アカウントの管理",
       "description": "あなたのアカウントを管理します。",
-      "name": {
-        "title": "名前",
-        "description": "あなたの名前を変更します。",
-        "action": "名前を変更",
-        "placeholder": "名前を入力してください"
-      },
-      "avatar": {
-        "title": "プロフィール画像",
-        "description": "あなたのプロフィール画像を変更します。",
-        "action": "プロフィール画像を変更"
+      "profileSettings": {
+        "title": "アカウントの管理",
+        "description": "Deni AI のアカウントを管理します。",
+        "goToProfile": "アカウントマネージャーへ"
       },
       "privacyMode": {
         "title": "プライバシーモード",
@@ -103,7 +98,113 @@
         "action": "会話履歴を同期",
         "syncing": "同期中..."
       },
-      "authDisabled": "認証は一時的に無効になっているか、あなたのインスタンスでは利用できません。"
+      "authDisabled": "認証は一時的に無効になっているか、あなたのインスタンスでは利用できません。",
+      "data": {
+        "title": "アカウントデータのダウンロード",
+        "description": "あなたのアカウントに関連するすべてのデータをダウンロードできます。",
+        "download": "データをダウンロード",
+        "downloading": "ダウンロード中...",
+        "downloadSuccess": "データのダウンロードに成功しました",
+        "downloadError": "データのダウンロードに失敗しました"
+      },
+      "delete": {
+        "title": "アカウント削除",
+        "description": "アカウントとそれに関連するすべてのデータを完全に削除します。",
+        "button": "アカウント削除",
+        "deleting": "削除中...",
+        "success": "アカウントの削除に成功しました",
+        "error": "アカウントの削除に失敗しました"
+      },
+      "password": {
+        "title": "パスワード",
+        "description": "アカウントのセキュリティを保つためにパスワードを変更してください。",
+        "cardTitle": "パスワード変更",
+        "cardDescription": "新しい安全な組み合わせにパスワードを更新します。",
+        "currentPassword": "現在のパスワード",
+        "newPassword": "新しいパスワード",
+        "confirmPassword": "新しいパスワード（確認）",
+        "updateButton": "パスワードを更新",
+        "updating": "更新中...",
+        "successTitle": "パスワード更新完了",
+        "successDescription": "パスワードが正常に更新されました。",
+        "errorAllFields": "すべてのパスワードフィールドに入力してください。",
+        "errorPasswordMatch": "新しいパスワードが一致しません。",
+        "errorPasswordLength": "パスワードは8文字以上である必要があります。",
+        "errorNoUser": "パスワードを変更するにはログインする必要があります。",
+        "errorWrongPassword": "現在のパスワードが正しくありません。",
+        "errorWeakPassword": "新しいパスワードが弱すぎます。より強力なパスワードを使用してください。",
+        "errorRecentLogin": "セキュリティ上の理由から、パスワードを変更する前に再ログインする必要があります。",
+        "errorGeneric": "パスワードの更新に失敗しました。もう一度お試しください。",
+        "notLoggedIn": "パスワードを変更するにはログインする必要があります。",
+        "notPasswordProvider": "サードパーティのプロバイダーでサインインしたため、パスワードを変更できません。"
+      },
+      "sessions": {
+        "title": "セッション",
+        "description": "アクティブなセッションとデバイスを管理します。",
+        "activeSessions": "アクティブなセッション",
+        "activeSessionsDescription": "これらは現在ログインしているデバイスです。",
+        "current": "現在のセッション",
+        "nowActive": "現在アクティブ",
+        "lastActive": "最終アクティブ",
+        "terminate": "ログアウト",
+        "terminateAll": "すべてのデバイスからログアウト",
+        "terminating": "ログアウト中...",
+        "terminateSuccess": "セッションを正常に終了しました",
+        "terminateError": "セッションの終了に失敗しました",
+        "terminateAllSuccess": "他のすべてのセッションを正常に終了しました",
+        "terminateAllError": "すべてのセッションの終了に失敗しました",
+        "loading": "セッションを読み込み中...",
+        "noSessions": "アクティブなセッションが見つかりません",
+        "justNow": "たった今",
+        "hoursAgo": "{hours}時間前",
+        "fetchError": "セッションの取得に失敗しました"
+      },
+      "security": {
+        "title": "セキュリティ",
+        "description": "アカウントのセキュリティ設定を管理します。",
+        "notLoggedIn": "セキュリティ設定を変更するにはログインする必要があります。",
+        "setupError": "二段階認証の設定に失敗しました。もう一度お試しください。",
+        "twoFactor": {
+          "title": "二段階認証",
+          "description": "アカウントにセキュリティの追加レイヤーを追加します。",
+          "label": "二段階認証",
+          "sublabel": "アカウントにセキュリティの追加レイヤーを追加"
+        },
+        "sessions": {
+          "label": "アクティブなセッションを管理",
+          "sublabel": "現在ログインしているすべてのデバイスを表示",
+          "viewButton": "セッションを表示"
+        },
+        "reauth": {
+          "title": "パスワードを確認",
+          "description": "セキュリティ上の理由から、続行するにはパスワードを入力してください。",
+          "providerMessage": "セキュリティ上の理由から、続行するには{provider}で再認証する必要があります。"
+        },
+        "qrCode": {
+          "title": "二段階認証の設定",
+          "description": "Google認証システムやAuthyなどの認証アプリでこのQRコードをスキャンしてください。",
+          "manualEntry": "QRコードをスキャンできない場合は、このコードを手動で入力してください:",
+          "next": "次へ"
+        },
+        "verify": {
+          "title": "認証コードを確認",
+          "description": "設定を確認するために、認証アプリから6桁のコードを入力してください。",
+          "verifyButton": "確認"
+        },
+        "enabled2FA": "二段階認証が有効になりました",
+        "disabled2FA": "二段階認証が無効になりました",
+        "invalidPassword": "パスワードが間違っています。もう一度お試しください。",
+        "errorAuth": "パスワードが間違っています。もう一度お試しください。",
+        "errorVerifying": "無効な認証コードです。もう一度お試しください。",
+        "cancel": "キャンセル",
+        "continue": "続行"
+      },
+      "sidebarNav": {
+        "account": "アカウント",
+        "sessions": "セッション",
+        "password": "パスワード",
+        "security": "セキュリティ"
+      }
     },
     "dataControls": {
       "tab": "データ管理",
@@ -112,26 +213,26 @@
       "dataCollection": {
         "title": "データ収集",
         "description": "サービスの改善のために使用データの収集を許可する"
-      },  
+      },
       "reauth": {
         "title": "再認証",
         "description": "データのエクスポートや削除を行うために、パスワードを入力してください。",
         "providerAuth": "Google または GitHub で再認証して、削除を続行します。"
       },
       "export": {
-        "title": "データのエクスポート",
-        "description": "会話と設定をエクスポートする",
-        "export": "エクスポート",
-        "import": "インポート"
+        "title": "データのエクスポート/インポート",
+        "description": "すべての会話をJSONファイルにエクスポートするか、ファイルからインポートします。",
+        "export": "すべてエクスポート",
+        "import": "すべてインポート"
       },
       "deleteData": {
-        "title": "すべてのデータを削除",
-        "description": "すべての会話と設定を完全に削除する",
-        "action": "すべてのデータを削除",
-        "confirmTitle": "本当に削除しますか？",
-        "confirmDescription": "この操作は元に戻せません。すべての会話と設定が完全に削除されます。",
+        "title": "すべての会話を削除",
+        "description": "すべての会話履歴を完全に削除します。この操作は元に戻せません。",
+        "action": "すべて削除",
+        "confirmTitle": "本当によろしいですか？",
+        "confirmDescription": "これにより、アカウント（ログインしている場合）およびローカルストレージからすべての会話データが完全に削除されます。",
         "cancel": "キャンセル",
-        "confirm": "すべて削除"
+        "confirm": "はい、すべて削除します"
       },
       "accountDeletion": {
         "title": "アカウント削除",
@@ -154,7 +255,13 @@
       "reset": "リセット",
       "showing": "件表示",
       "noModels": "条件に一致するモデルがありません。フィルター条件を変更してください。",
-      "knowledgeCutoff": "知識の範囲:"
+      "experimentalInfo": "試験的モデルについて",
+      "experimentalDescription": "試験的モデルは、不定期にメンテナンスが行われる試験的なAPIサーバーを使用します。利用できない場合は、リリースモデルを使用してください。",
+      "knowledgeCutoff": "知識の範囲:",
+      "reasoning": "推論",
+      "experimental": "試験的",
+      "fast": "高速",
+      "image": "画像"
     }
   },
   "modelSelector": {
@@ -388,6 +495,28 @@
       "avatarHelp": "画像のURLを入力するか、空白のままにしてください。",
       "updating": "更新中..."
     },
+    "email": {
+      "title": "メール認証",
+      "description": "認証のため、メールアドレスを入力してください。",
+      "emailPlaceholder": "メールアドレスを入力",
+      "sendButton": "認証メールを送信",
+      "sending": "送信中...",
+      "sent": "認証メールを送信しました。受信トレイを確認してください。",
+      "error": "認証メールの送信に失敗しました。",
+      "notVerified": "メールアドレスが認証されていません。",
+      "sendButtonShort": "メールを認証",
+      "verified": "メールアドレスが認証されました",
+      "alert": {
+        "title": "メール認証が必要です",
+        "description": "このアプリを使用するには、メールアドレスを認証する必要があります。"
+      },
+      "reminder": {
+        "title": "メール認証のリマインダー",
+        "description": "メールアドレスは後で設定から認証できます。"
+      },
+      "checkButton": "認証状況を確認",
+      "skipButton": "認証をスキップ"
+    },
     "theme": {
       "title": "テーマを選択",
       "description": "お好みのテーマを選択してください。"
@@ -434,9 +563,18 @@
     },
     "profile": {
       "title": "プロフィール",
-      "description": "プラットフォーム上であなたがどのように表示されるかを設定します。",
-      "edit": "プロフィール編集",
-      "confirmed": "確認済み"
+      "description": "プラットフォーム上で他のユーザーに表示される情報です。",
+      "edit": "プロフィールを編集",
+      "editDescription": "プロフィールを編集して、他のユーザーに表示される情報を変更します。",
+      "confirmed": "確認済み",
+      "avatar": "プロフィール画像",
+      "changeAvatar": "プロフィール画像を変更",
+      "displayName": "表示名",
+      "namePlaceholder": "名前を入力してください",
+      "save": "保存",
+      "cancel": "キャンセル",
+      "email": "メールアドレス",
+      "noName": "名前が設定されていません"
     },
     "data": {
       "title": "アカウントデータのダウンロード",
@@ -452,7 +590,12 @@
       "button": "アカウント削除",
       "deleting": "削除中...",
       "success": "アカウントの削除に成功しました",
-      "error": "アカウントの削除に失敗しました"
+      "error": "アカウントの削除に失敗しました",
+      "reauth": {
+        "title": "パスワードを確認",
+        "description": "セキュリティ上の理由から、続行するにはパスワードを入力してください。",
+        "providerMessage": "セキュリティ上の理由から、続行するには{provider}で再認証する必要があります。"
+      }
     },
     "password": {
       "title": "パスワード",
@@ -544,5 +687,89 @@
       "password": "パスワード",
       "security": "セキュリティ"
     }
+  },
+  "dataControls": {
+    "tab": "データ管理",
+    "title": "データ管理",
+    "description": "データとプライバシー設定を管理する",
+    "dataCollection": {
+      "title": "データ収集",
+      "description": "サービスの改善のために使用データの収集を許可する"
+    },
+    "reauth": {
+      "title": "再認証",
+      "description": "データのエクスポートや削除を行うために、パスワードを入力してください。",
+      "providerAuth": "Google または GitHub で再認証して、削除を続行します。"
+    },
+    "export": {
+      "title": "データのエクスポート/インポート",
+      "description": "すべての会話をJSONファイルにエクスポートするか、ファイルからインポートします。",
+      "export": "すべてエクスポート",
+      "import": "すべてインポート"
+    },
+    "deleteData": {
+      "title": "すべての会話を削除",
+      "description": "すべての会話履歴を完全に削除します。この操作は元に戻せません。",
+      "action": "すべて削除",
+      "confirmTitle": "本当によろしいですか？",
+      "confirmDescription": "これにより、アカウント（ログインしている場合）およびローカルストレージからすべての会話データが完全に削除されます。",
+      "cancel": "キャンセル",
+      "confirm": "はい、すべて削除します"
+    },
+    "accountDeletion": {
+      "title": "アカウント削除",
+      "description": "アカウントと関連するすべてのデータを完全に削除する",
+      "action": "アカウント削除",
+      "confirmTitle": "本当に削除しますか？",
+      "confirmDescription": "この操作は元に戻せません。アカウントと関連するすべてのデータが完全に削除されます。",
+      "cancel": "キャンセル",
+      "confirm": "アカウント削除",
+      "deleting": "削除中..."
+    }
+  },
+  "model": {
+    "tab": "モデル",
+    "title": "モデルを管理",
+    "description": "チャットのモデルリストに表示するモデルの表示/非表示を切り替えます。",
+    "filter": "フィルター",
+    "modelTypes": "モデルタイプ",
+    "features": "機能",
+    "reset": "リセット",
+    "showing": "件表示",
+    "noModels": "条件に一致するモデルがありません。フィルター条件を変更してください。",
+    "experimentalInfo": "試験的モデルについて",
+    "experimentalDescription": "試験的モデルは、不定期にメンテナンスが行われる試験的なAPIサーバーを使用します。利用できない場合は、リリースモデルを使用してください。",
+    "knowledgeCutoff": "知識の範囲:",
+    "reasoning": "推論",
+    "experimental": "試験的",
+    "fast": "高速",
+    "image": "画像"
+  },
+  "chatSessions": {
+    "newChat": "新規チャット",
+    "loadFailed": "チャットセッションの読み込みに失敗しました。",
+    "saveFailed": "チャットセッションの保存に失敗しました。",
+    "saveCurrentFailed": "現在のチャットセッションの保存に失敗しました。",
+    "deleteFailed": "チャットセッションの削除に失敗しました。",
+    "deleteAllFailed": "すべてのチャットセッションの削除に失敗しました。",
+    "syncSuccess": "チャットセッションが正常に同期されました。",
+    "syncFailed": "チャットセッションの同期に失敗しました。",
+    "firebaseUnavailable": "Firebaseサービスが利用できません。",
+    "checkFirebaseConfig": "Firebaseの設定を確認してください。",
+    "loginRequired": "セッションを同期するにはログインが必要です。",
+    "reauthRequired": "セッションを同期するために再度ログインしてください。",
+    "localSyncSuccess": "ローカルセッションがアカウントに同期されました。",
+    "localSyncFailed": "ローカルセッションのアカウントへの同期に失敗しました。",
+    "exportFirestoreFailed": "クラウドストレージからのセッションのエクスポートに失敗しました。",
+    "exportLocalFailed": "ローカルストレージからのセッションのエクスポートに失敗しました。",
+    "importParseFailed": "インポートファイルの解析に失敗しました。",
+    "importFirestoreSuccess": "セッションがアカウントに正常にインポートされました。",
+    "importFirestoreFailed": "クラウドストレージへのセッションのインポートに失敗しました。",
+    "importLocalSuccess": "セッションがローカルストレージに正常にインポートされました。",
+    "importLocalFailed": "ローカルストレージへのセッションのインポートに失敗しました。"
+  },
+  "auth": {
+    "verificationEmailSent": "確認メールが正常に送信されました",
+    "verificationEmailFailed": "確認メールの送信に失敗しました"
   }
 }

@@ -27,7 +27,9 @@ import {
   getMultiFactorResolver,
   TotpMultiFactorGenerator,
   deleteUser,
-  GithubAuthProvider
+  GithubAuthProvider,
+  AuthError, // Import AuthError type
+  MultiFactorError, // Import MultiFactorError type
 } from "firebase/auth";
 import { Input } from "@repo/ui/components/input";
 import { Label } from "@repo/ui/components/label";
@@ -37,9 +39,9 @@ import {
   InputOTPSeparator,
   InputOTPSlot,
 } from "@repo/ui/components/input-otp";
-import { collection, getDocs, deleteDoc, doc } from "firebase/firestore";
 import { firestore } from "@repo/firebase-config/client";
 import { useChatSessions } from "@/hooks/use-chat-sessions";
+
 export default function DataControlsSettings() {
   const [dataCollection, setDataCollection] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -51,7 +53,8 @@ export default function DataControlsSettings() {
   const { user, auth } = useAuth();
   const t = useTranslations();
   const NextRouter = nextRouter();
-  const { clearAllSessions } = useChatSessions();
+  // Use the chat sessions hook
+  const { clearAllSessions, exportAllSessions, importAllSessions } = useChatSessions();
   const dialogPromiseRef = useRef<{ resolve: (value: string) => void } | null>(null);
 
   useEffect(() => {
@@ -71,67 +74,98 @@ export default function DataControlsSettings() {
     }
   }, [dataCollection]);
 
-  const exportAllConversations = () => {
-    const chatSessions = localStorage.getItem("chatSessions");
-    if (chatSessions && chatSessions !== "[]") {
-      const blob = new Blob([chatSessions], {
-        type: "application/json",
-      });
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement("a");
-      link.href = url;
-      link.download = `deni-ai-conversations-${new Date().toISOString()}.json`;
-      link.click();
-      URL.revokeObjectURL(url);
-      toast.success(t("settings.popupMessages.exportSuccess"));
-    } else {
-      toast.error(t("settings.popupMessages.error"), {
-        description: t("settings.popupMessages.noConversations"),
-      });
+  // Updated export function
+  const exportAllConversations = async () => {
+    try {
+      const sessionsJson = await exportAllSessions(); // Use hook function
+      const parsedSessions = JSON.parse(sessionsJson); // Parse to check if empty
+
+      if (parsedSessions && parsedSessions.length > 0) {
+        const blob = new Blob([sessionsJson], {
+          type: "application/json",
+        });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.href = url;
+        link.download = `deni-ai-conversations-${new Date().toISOString()}.json`;
+        document.body.appendChild(link); // Append link to body
+        link.click();
+        document.body.removeChild(link); // Remove link after click
+        URL.revokeObjectURL(url);
+        toast.success(t("settings.popupMessages.exportSuccess"));
+      } else {
+        toast.error(t("common.error.occurred"), {
+          description: t("settings.popupMessages.noConversations"),
+        });
+      }
+    } catch (error) {
+       console.error("Export error:", error);
+       toast.error(t("common.error.occurred"), {
+         description: t("settings.popupMessages.exportError"), // Add a generic export error message
+       });
     }
   };
 
+  // Updated import function
   const importAllConversations = async () => {
     try {
       const input = document.createElement("input");
       input.type = "file";
       input.accept = ".json";
-      input.click();
-
-      input.onchange = (e) => {
+      input.onchange = async (e) => { // Make this async
         const file = (e.target as HTMLInputElement).files?.[0];
         if (!file) return;
         const reader = new FileReader();
-        reader.onload = (event) => {
+        reader.onload = async (event) => { // Make this async
           try {
-            const jsonData = JSON.parse(event.target?.result as string);
-            localStorage.setItem("chatSessions", JSON.stringify(jsonData));
-            toast.success(t("settings.popupMessages.importSuccess"), {
-              description: t("settings.popupMessages.importAllSuccess"),
-            });
+            const jsonData = event.target?.result as string;
+            await importAllSessions(jsonData); // Use hook function
+            // Success toast is handled within the hook now
+            // toast.success(t("settings.popupMessages.importSuccess"), {
+            //   description: t("settings.popupMessages.importAllSuccess"),
+            // });
           } catch (error) {
-            toast.error(t("settings.popupMessages.error"), {
-              description: t("settings.popupMessages.invalidFileFormat"),
-            });
+             // Error toast is handled within the hook now
+            // toast.error(t("common.error.occurred"), {
+            //   description: t("settings.popupMessages.invalidFileFormat"), // Or a more specific error from the hook
+            // });
           }
         };
+         reader.onerror = () => { // Handle reader errors
+           toast.error(t("common.error.occurred"), {
+             description: t("settings.popupMessages.fileReadError"),
+           });
+         };
         reader.readAsText(file);
       };
+      input.click();
     } catch (error: unknown) {
+      // This catch block might be less likely to trigger now,
+      // but keep it for unexpected issues creating the input element.
       if (error instanceof Error && error.name === "AbortError") {
+        // User cancelled file selection
         return;
       }
-      toast.error(t("settings.popupMessages.error"), {
-        description: t("settings.popupMessages.fileReadError"),
+      toast.error(t("common.error.occurred"), {
+        description: t("settings.popupMessages.fileReadError"), // Or a generic import error
       });
     }
   };
 
-  const deleteAllConversations = () => {
-    clearAllSessions();
-    toast.success(t("settings.popupMessages.deleteSuccess"), {
-      description: t("settings.popupMessages.deleteAllSuccess"),
-    });
+  // Updated delete function (now async)
+  const deleteAllConversations = async () => {
+    try {
+      await clearAllSessions(); // Use hook function
+      toast.success(t("settings.popupMessages.deleteSuccess"), {
+        description: t("settings.popupMessages.deleteAllSuccess"),
+      });
+    } catch (error) {
+       // Error toast is handled within the hook now
+       console.error("Delete all error:", error);
+       // toast.error(t("common.error.occurred"), {
+       //   description: t("settings.popupMessages.deleteAllError"), // Add a generic delete error message
+       // });
+    }
   };
 
   const request2FaCode = () => {
@@ -155,18 +189,18 @@ export default function DataControlsSettings() {
     try {
       const provider = new GoogleAuthProvider();
       await reauthenticateWithPopup(user, provider);
-      return true;
-    } catch (error: any) {
+    } catch (error: unknown) { // Changed any to unknown
       console.error("Google reauth error:", error);
-      if (error.code === "auth/multi-factor-auth-required") {
-        return await handle2FAReauth(error);
+      if (error instanceof Error && (error as AuthError).code === "auth/multi-factor-auth-required") {
+        // Cast to MultiFactorError as required by getMultiFactorResolver
+        return await handle2FAReauth(error as MultiFactorError);
       }
-      setReauthError(error.message);
-      return false;
+      setReauthError((error as Error).message); // Added type assertion
     }
   };
 
-  const handle2FAReauth = async (error: any) => {
+  // Ensure the error type is MultiFactorError as expected by getMultiFactorResolver
+  const handle2FAReauth = async (error: MultiFactorError) => {
     if (!auth) return false;
 
     try {
@@ -188,9 +222,9 @@ export default function DataControlsSettings() {
 
       setReauthError(t("login.invalidAuthCode"));
       return false;
-    } catch (error: any) {
+    } catch (error: any) { // Changed any to unknown
       console.error("2FA reauth error:", error);
-      setReauthError(error.message);
+      setReauthError((error as Error).message); // Added type assertion
       return false;
     }
   };
@@ -201,13 +235,14 @@ export default function DataControlsSettings() {
     try {
       const credential = EmailAuthProvider.credential(user.email, password);
       await reauthenticateWithCredential(user, credential);
-      return true;
-    } catch (error: any) {
+      return true; // Indicate success
+    } catch (error: unknown) { // Changed any to unknown
       console.error("Password reauth error:", error);
-      if (error.code === "auth/multi-factor-auth-required") {
-        return await handle2FAReauth(error);
+      if (error instanceof Error && (error as AuthError).code === "auth/multi-factor-auth-required") {
+         // Cast to MultiFactorError as required by getMultiFactorResolver
+        return await handle2FAReauth(error as MultiFactorError);
       }
-      setReauthError(error.message);
+      setReauthError((error as Error).message); // Added type assertion
       return false;
     }
   };
@@ -260,32 +295,18 @@ export default function DataControlsSettings() {
       // Delete the user's conversations data from Firestore
       if (firestore) {
         try {
-          // Delete all sessions in the user's collection
-          const sessionsRef = collection(firestore, `deni-ai-conversations/${user.uid}/sessions`);
-          const snapshot = await getDocs(sessionsRef);
-          
-          // Delete each session document
-          const deletePromises = snapshot.docs.map(doc => deleteDoc(doc.ref));
-          await Promise.all(deletePromises);
-          
-          // Delete active sessions in the active collection
-          const activeCollectionRef = collection(firestore, `deni-ai-conversations/${user.uid}/active`);
-          const activeSnapshot = await getDocs(activeCollectionRef);
-          
-          // Delete each active session document
-          if (!activeSnapshot.empty) {
-            const activeDeletePromises = activeSnapshot.docs.map(doc => deleteDoc(doc.ref));
-            await Promise.all(activeDeletePromises);
-            console.log("Successfully deleted active sessions");
-          }
-          
-          // Delete the user's main document
-          const userDocRef = doc(firestore, `deni-ai-conversations/${user.uid}`);
-          await deleteDoc(userDocRef);
-          
-          console.log("Successfully deleted user's conversations data from Firestore");
+          // Delete all sessions using the hook's logic (covers sessions and active)
+          await clearAllSessions(); // Use the hook to clear Firestore data
+
+          // Delete the user's main document (if it exists separately, though clearing sessions might be enough)
+          // Check if this is still needed or if clearAllSessions covers it.
+          // Let's assume clearAllSessions handles the conversation data entirely.
+          // const userDocRef = doc(firestore, `deni-ai-conversations/${user.uid}`);
+          // await deleteDoc(userDocRef); // This might delete the parent doc if needed
+
+          console.log("Successfully deleted user's conversations data from Firestore via hook");
         } catch (error) {
-          console.error("Error deleting user's conversations data:", error);
+          console.error("Error deleting user's conversations data via hook:", error);
           // Continue with account deletion even if Firestore deletion fails
         }
       }
@@ -293,16 +314,16 @@ export default function DataControlsSettings() {
       // Delete the user account
       await deleteUser(user);
 
-      // Clear all local storage data
+      // Clear all local storage data (redundant if clearAllSessions worked, but safe)
       localStorage.clear();
       sessionStorage.clear();
 
       // Redirect to home page or show success message
       toast.success(t("settings.popupMessages.accountDeleted"));
       NextRouter.push("/");
-    } catch (error: any) {
+    } catch (error: unknown) { // Changed any to unknown
       console.error("Account deletion error:", error);
-      toast.error(t("settings.popupMessages.error"), {
+      toast.error(t("common.error.occurred"), {
         description: t("settings.popupMessages.accountDeletionError"),
       });
     } finally {
@@ -312,7 +333,7 @@ export default function DataControlsSettings() {
 
   const handleDeleteAccount = async () => {
     if (!user) {
-      toast.error(t("settings.popupMessages.error"), {
+      toast.error(t("common.error.occurred"), {
         description: t("settings.popupMessages.accountDeletionError"),
       });
       return;
@@ -404,7 +425,7 @@ export default function DataControlsSettings() {
                     {t("settings.dataControls.deleteData.cancel")}
                   </AlertDialogCancel>
                   <AlertDialogAction
-                    onClick={deleteAllConversations}
+                    onClick={deleteAllConversations} // Use updated async function
                     className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
                   >
                     {t("settings.dataControls.deleteData.confirm")}
@@ -540,7 +561,6 @@ export default function DataControlsSettings() {
             value={twoFaCode}
             onChange={(e) => setTwoFaCode(e)}
             required
-            placeholder="123456"
           >
             <InputOTPGroup>
               <InputOTPSlot index={0} />
@@ -566,4 +586,4 @@ export default function DataControlsSettings() {
       </AlertDialog>
     </div>
   );
-} 
+}

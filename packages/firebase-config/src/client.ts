@@ -46,13 +46,6 @@ if (env.NEXT_PUBLIC_FIREBASE_API_KEY) {
     });
     
     db = getDatabase(app)
-
-    console.log("Firebase initialized successfully:", {
-      app: !!app,
-      auth: !!auth,
-      firestore: !!firestore,
-      db: !!db
-    });
   } catch (error) {
     console.error("Firebase initialization error:", error);
   }

@@ -7,12 +7,10 @@ import {
   CardDescription,
   CardHeader,
   CardTitle,
-  CardFooter,
 } from "@repo/ui/components/card";
-import { Button } from "@repo/ui/components/button";
 import { Switch } from "@repo/ui/components/switch";
 import { Label } from "@repo/ui/components/label";
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { useRouter } from "@/i18n/navigation";
 import {
@@ -30,7 +28,6 @@ import { toast } from "sonner";
 import {
   InputOTP,
   InputOTPGroup,
-  InputOTPSeparator,
   InputOTPSlot,
 } from "@repo/ui/components/input-otp";
 import {
@@ -43,7 +40,6 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@repo/ui/components/alert-dialog";
-import Link from "next/link";
 import { QRCodeSVG } from "qrcode.react";
 import { Loading } from "@/components/loading";
 

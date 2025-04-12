@@ -54,7 +54,7 @@ export default async function AccountLayout({ children }: AccountLayoutProps) {
           <aside className="flex flex-col space-y-1">
             <SidebarNav />
           </aside>
-          <main>{children}</main>
+          <main className="overflow-y-scroll">{children}</main>
         </div>
       </main>
     </div>

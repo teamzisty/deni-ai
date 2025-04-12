@@ -60,7 +60,7 @@ export function StatusAlert({
   };
   
   return (
-    <Alert className={cn("my-2 w-full md:w-9/12 lg:w-7/12 relative", getTypeStyles(), className)}>
+    <Alert className={cn("my-2 w-full", getTypeStyles(), className)}>
       {getIcon()}
       <AlertTitle>{title}</AlertTitle>
       {description && <AlertDescription>{description}</AlertDescription>}

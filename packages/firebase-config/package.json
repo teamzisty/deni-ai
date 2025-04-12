@@ -1,6 +1,6 @@
 {
   "name": "@repo/firebase-config",
-  "version": "2.3",
+  "version": "2.4",
   "description": "Firebase configuration for the project.",
   "private": true,
   "type": "module",

@@ -6,6 +6,7 @@ import { auth } from '@repo/firebase-config/client';
 import { User, sendEmailVerification } from 'firebase/auth';
 import { useRouter, usePathname } from 'next/navigation';
 import { toast } from 'sonner';
+import { useTranslations } from 'next-intl';
 
 interface AuthContextType {
   user: User | null;
@@ -26,16 +27,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [isLoading, setIsLoading] = useState(true);
   const router = useRouter();
   const pathname = usePathname();
+  const t = useTranslations('auth');
 
   const sendVerificationEmail = async () => {
     if (!auth || !auth.currentUser) return;
     
     try {
       await sendEmailVerification(auth.currentUser);
-      toast.success('Verification email sent successfully');
+      toast.success(t('verificationEmailSent'));
     } catch (error) {
       console.error('Error sending verification email:', error);
-      toast.error('Failed to send verification email');
+      toast.error(t('verificationEmailFailed'));
     }
   };
 

@@ -48,17 +48,19 @@
       "fillField": "Please fill in the field",
       "nameChanged": "Name changed",
       "noConversations": "Cannot export because no conversations exist.",
-      "exportSuccess": "Conversations exported",
-      "importSuccess": "Conversations imported",
-      "importAllSuccess": "All conversations from the file have been imported",
-      "fileReadError": "An error occurred while reading the file",
-      "deleteSuccess": "Conversations deleted",
-      "deleteAllSuccess": "All conversations have been deleted",
+      "exportSuccess": "Conversations exported successfully.",
+      "importSuccess": "Conversations imported successfully.",
+      "importAllSuccess": "Refresh the page to see imported conversations.",
+      "fileReadError": "Error reading the selected file.",
+      "deleteSuccess": "Conversations deleted successfully.",
+      "deleteAllSuccess": "All conversations have been deleted.",
       "syncedConversations": "Conversations are synchronized with the cloud.",
       "nameChangeFailed": "Failed to change name",
-      "accountDeleted": "Account successfully deleted",
-      "accountDeletionError": "Failed to delete account",
-      "invalidFileFormat": "Invalid file format"
+      "accountDeleted": "Account deleted successfully.",
+      "accountDeletionError": "Failed to delete account. Please try again.",
+      "invalidFileFormat": "Invalid file format. Please select a valid JSON file.",
+      "exportError": "Failed to export conversations.",
+      "deleteAllError": "Failed to delete conversations."
     },
     "appearance": {
       "tab": "Appearance",
@@ -82,16 +84,10 @@
       "tab": "Account",
       "title": "Account Settings",
       "description": "Manage your account settings and preferences.",
-      "name": {
-        "title": "Name",
-        "description": "Change your display name.",
-        "action": "Change Name",
-        "placeholder": "Enter your name"
-      },
-      "avatar": {
-        "title": "Profile Image",
-        "description": "Change your profile image.",
-        "action": "Change Profile Image"
+      "profileSettings": {
+        "title": "Account Manager",
+        "description": "Manage your Deni AI account.",
+        "goToProfile": "Go to Account Manager"
       },
       "privacyMode": {
         "title": "Privacy Mode",
@@ -104,12 +100,6 @@
         "syncing": "Syncing..."
       },
       "authDisabled": "Authentication is temporarily disabled or not available in your instance.",
-      "profile": {
-        "title": "Profile",
-        "description": "This is how others will see you on the platform.",
-        "edit": "Edit Profile",
-        "confirmed": "Confirmed"
-      },
       "data": {
         "title": "Download Account Data",
         "description": "You can download all data associated with your account below.",
@@ -124,7 +114,12 @@
         "button": "Delete Account",
         "deleting": "Deleting...",
         "success": "Account deleted successfully",
-        "error": "Failed to delete account"
+        "error": "Failed to delete account",
+        "reauth": {
+          "title": "Confirm Your Password",
+          "description": "For security reasons, please enter your password to continue.",
+          "providerMessage": "For security reasons, you'll need to reauthenticate with {provider} to continue."
+        }
       },
       "password": {
         "title": "Password",
@@ -174,6 +169,7 @@
         "title": "Security",
         "description": "Manage your account security settings.",
         "notLoggedIn": "You must be logged in to change security settings.",
+        "setupError": "Failed to set up 2FA. Please try again.",
         "twoFactor": {
           "title": "Two-factor Authentication",
           "description": "Add an extra layer of security to your account.",
@@ -184,11 +180,6 @@
           "label": "Manage Active Sessions",
           "sublabel": "See all devices where you're currently logged in",
           "viewButton": "View Sessions"
-        },
-        "timeFormat": {
-          "today": "Today at {time}",
-          "yesterday": "Yesterday at {time}",
-          "daysAgo": "{days} days ago at {time}"
         },
         "reauth": {
           "title": "Confirm Your Password",
@@ -230,10 +221,10 @@
         "description": "Allow collection of usage data to improve the service"
       },
       "export": {
-        "title": "Export Data",
-        "description": "Export your conversations and settings",
-        "export": "Export",
-        "import": "Import"
+        "title": "Export/Import Data",
+        "description": "Export all your conversations to a JSON file or import them from a file.",
+        "export": "Export All",
+        "import": "Import All"
       },
       "reauth": {
         "title": "Reauthentication",
@@ -241,13 +232,13 @@
         "providerAuth": "Reauthenticate with Google or GitHub to continue deleting data."
       },
       "deleteData": {
-        "title": "Delete All Data",
-        "description": "Permanently delete all your conversations and settings",
-        "action": "Delete All Data",
-        "confirmTitle": "Are you sure?",
-        "confirmDescription": "This action cannot be undone. All your conversations and settings will be permanently deleted.",
+        "title": "Delete All Conversations",
+        "description": "Permanently delete all your conversation history. This action cannot be undone.",
+        "action": "Delete All",
+        "confirmTitle": "Are you absolutely sure?",
+        "confirmDescription": "This will permanently delete all your conversation data from your account (if logged in) and local storage.",
         "cancel": "Cancel",
-        "confirm": "Delete All"
+        "confirm": "Yes, delete all"
       },
       "accountDeletion": {
         "title": "Delete Account",
@@ -460,12 +451,12 @@
     "commonCauses": "Common causes",
     "tryAgain": {
       "title": "Try again",
-      "content": "First, try clicking the \"Try again\" button to see if the error resolves."
+      "content": "First, try clicking the 'Try again' button to see if the error resolves."
     },
     "oldChatSession": {
       "title": "Old chat storage format",
       "content": "This error may occur if you're using an old version from the AI Playground era. This is a common error.",
-      "solution": "You can try resolving this by selecting \"Delete session\" from the debug menu below to delete the chat.",
+      "solution": "You can try resolving this by selecting 'Delete session' from the debug menu below to delete the chat.",
       "warning": "※Note: Once you delete the chat, it cannot be recovered."
     },
     "oldCache": {
@@ -477,9 +468,9 @@
       "title": "Other errors",
       "content": "If following these steps doesn't resolve the issue, it might be due to a developer error.",
       "steps": {
-        "step1": "Open the debug menu and select \"Check error\"",
+        "step1": "Open the debug menu and select 'Check error'",
         "step2": "Copy the error",
-        "step3": "Follow @raic_dev or @OneConfig on X",
+        "step3": "Follow @raic_dev on X",
         "step4": "Send a DM"
       },
       "conclusion": "By following this method, you can report the error to the developers."
@@ -507,7 +498,7 @@
     "next": "Next",
     "back": "Back",
     "already": {
-      "title": "You have completed the setup",
+      "title": "You have already completed the setup",
       "description": "It seems you have already completed the setup. You can run the setup again if you wish.",
       "button": "Jump to Last Step"
     },
@@ -516,22 +507,43 @@
       "description": "Choose the language you want to use in the app."
     },
     "profile": {
-      "title": "Profile Setup",
-      "description": "Set up your name and avatar image.",
+      "title": "Profile Settings",
+      "description": "Set your display name and avatar image.",
       "name": "Display Name",
       "namePlaceholder": "Enter your name",
       "avatar": "Avatar Image URL",
       "avatarPlaceholder": "Enter image URL (optional)",
-      "avatarHelp": "Enter an image URL or leave blank.",
+      "avatarHelp": "Enter the URL of the image or leave it blank.",
       "updating": "Updating..."
     },
+    "email": {
+      "title": "Email Verification",
+      "description": "Please enter your email address for verification.",
+      "emailPlaceholder": "Enter your email",
+      "sendButton": "Send Verification Email",
+      "sending": "Sending...",
+      "sent": "Verification email sent. Please check your inbox.",
+      "error": "Failed to send verification email.",
+      "notVerified": "Your email address is not verified.",
+      "sendButtonShort": "Verify Email",
+      "alert": {
+        "title": "Email Verification Required",
+        "description": "To use this app, please verify your email address."
+      },
+      "reminder": {
+        "title": "Email Verification Reminder",
+        "description": "You can verify your email address later in the settings."
+      },
+      "checkButton": "Check Verification Status",
+      "skipButton": "Skip Verification"
+    },
     "theme": {
-      "title": "Choose Theme",
+      "title": "Select Theme",
       "description": "Select your preferred theme."
     },
     "start": {
-      "title": "All Set!",
-      "description": "Your setup is complete. Let's start chatting!",
+      "title": "Ready to Go!",
+      "description": "Setup is complete. Let's start chatting!",
       "button": "Start Chatting"
     }
   },
@@ -569,11 +581,22 @@
     "layout": {
       "return": "Return to Deni AI"
     },
+    "profileUpdateSuccess": "Profile updated successfully",
+    "profileUpdateError": "Failed to update profile",
     "profile": {
       "title": "Profile",
       "description": "This is how others will see you on the platform.",
       "edit": "Edit Profile",
-      "confirmed": "Confirmed"
+      "editDescription": "Change your profile image and display name.",
+      "confirmed": "Confirmed",
+      "avatar": "Profile Image",
+      "changeAvatar": "Change Avatar",
+      "displayName": "Display Name",
+      "namePlaceholder": "Enter your name",
+      "save": "Save",
+      "cancel": "Cancel",
+      "email": "Email Address",
+      "noName": "No name set"
     },
     "data": {
       "title": "Download Account Data",
@@ -589,7 +612,12 @@
       "button": "Delete Account",
       "deleting": "Deleting...",
       "success": "Account deleted successfully",
-      "error": "Failed to delete account"
+      "error": "Failed to delete account",
+      "reauth": {
+        "title": "Confirm Your Password",
+        "description": "For security reasons, please enter your password to continue.",
+        "providerMessage": "For security reasons, you'll need to reauthenticate with {provider} to continue."
+      }
     },
     "password": {
       "title": "Password",
@@ -681,5 +709,104 @@
       "password": "Password",
       "security": "Security"
     }
+  },
+  "dataControls": {
+    "tab": "Data Controls",
+    "title": "Data Controls",
+    "description": "Manage your data and privacy settings",
+    "dataCollection": {
+      "title": "Data Collection",
+      "description": "Allow collection of usage data to improve the service"
+    },
+    "export": {
+      "title": "Export/Import Data",
+      "description": "Export all your conversations to a JSON file or import them from a file.",
+      "export": "Export All",
+      "import": "Import All"
+    },
+    "reauth": {
+      "title": "Reauthentication",
+      "description": "Enter your password to export or delete data",
+      "providerAuth": "Reauthenticate with Google or GitHub to continue deleting data."
+    },
+    "deleteData": {
+      "title": "Delete All Conversations",
+      "description": "Permanently delete all your conversation history. This action cannot be undone.",
+      "action": "Delete All",
+      "confirmTitle": "Are you absolutely sure?",
+      "confirmDescription": "This will permanently delete all your conversation data from your account (if logged in) and local storage.",
+      "cancel": "Cancel",
+      "confirm": "Yes, delete all"
+    },
+    "accountDeletion": {
+      "title": "Delete Account",
+      "description": "Permanently delete your account and all associated data",
+      "action": "Delete Account",
+      "confirmTitle": "Are you sure?",
+      "confirmDescription": "This action cannot be undone. Your account and all associated data will be permanently deleted.",
+      "cancel": "Cancel",
+      "confirm": "Delete Account",
+      "deleting": "Deleting..."
+    }
+  },
+  "dataControl": {
+    "tab": "Data Management",
+    "title": "Data Management",
+    "description": "Manage data stored in Deni AI and locally.",
+    "conversation": "Conversation",
+    "importExport": "Import / Export Conversations",
+    "importExportDescription": "Import or export your conversations.",
+    "importWarning": "Note: Importing will delete all existing conversations and replace them.",
+    "import": "Import",
+    "export": "Export",
+    "deleteAll": "Delete All Conversations",
+    "destructive": "Destructive",
+    "deleteAllDescription": "Delete all conversations. This action cannot be undone.",
+    "delete": "Delete"
+  },
+  "model": {
+    "tab": "Models",
+    "title": "Manage Models",
+    "description": "Toggle the visibility of models in the chat model list.",
+    "filter": "Filter",
+    "modelTypes": "Model Types",
+    "features": "Features",
+    "reset": "Reset",
+    "showing": "showing",
+    "noModels": "No models match your filter criteria. Please adjust your filters.",
+    "experimentalInfo": "Information about experimental models",
+    "experimentalDescription": "Experimental models use experimental API servers that undergo maintenance at irregular intervals. If unavailable, please use release models.",
+    "knowledgeCutoff": "Knowledge cutoff:",
+    "reasoning": "Reasoning",
+    "experimental": "Experimental",
+    "fast": "Fast",
+    "image": "Image"
+  },
+  "chatSessions": {
+    "newChat": "New Chat",
+    "loadFailed": "Failed to load chat sessions.",
+    "saveFailed": "Failed to save chat sessions.",
+    "saveCurrentFailed": "Failed to save current chat session.",
+    "deleteFailed": "Failed to delete chat session.",
+    "deleteAllFailed": "Failed to delete all chat sessions.",
+    "syncSuccess": "Chat sessions synced successfully.",
+    "syncFailed": "Failed to sync chat sessions.",
+    "firebaseUnavailable": "Firebase services are unavailable.",
+    "checkFirebaseConfig": "Please check your Firebase configuration.",
+    "loginRequired": "Login required to sync sessions.",
+    "reauthRequired": "Please log in again to sync your sessions.",
+    "localSyncSuccess": "Local sessions synced to your account.",
+    "localSyncFailed": "Failed to sync local sessions to your account.",
+    "exportFirestoreFailed": "Failed to export sessions from cloud storage.",
+    "exportLocalFailed": "Failed to export sessions from local storage.",
+    "importParseFailed": "Failed to parse import file.",
+    "importFirestoreSuccess": "Sessions successfully imported to your account.",
+    "importFirestoreFailed": "Failed to import sessions to cloud storage.",
+    "importLocalSuccess": "Sessions successfully imported to local storage.",
+    "importLocalFailed": "Failed to import sessions to local storage."
+  },
+  "auth": {
+    "verificationEmailSent": "Verification email sent successfully",
+    "verificationEmailFailed": "Failed to send verification email"
   }
 }

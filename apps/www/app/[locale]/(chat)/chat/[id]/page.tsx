@@ -47,7 +47,12 @@ const MemoizedMessageList = memo(
     return (
       <>
         {messages.map((message, index) => (
-          <MessageLog sessionId={sessionId} key={index} message={message} onRegenerate={onRegenerate} />
+          <MessageLog
+            sessionId={sessionId}
+            key={index}
+            message={message}
+            onRegenerate={onRegenerate}
+          />
         ))}
         {error && (
           <div className="p-2 my-2 flex gap-2 items-center rounded-lg border border-red-400 text-white w-full md:w-[70%] lg:w-[65%]">
@@ -91,7 +96,12 @@ const MemoizedMessageList = memo(
 MemoizedMessageList.displayName = "MemoizedMessageList";
 
 const ChatApp: React.FC = () => {
-  const { updateSession, getSession, isLoading: isSessionsLoading, syncSessions } = useChatSessions();
+  const {
+    updateSession,
+    getSession,
+    isLoading: isSessionsLoading,
+    syncSessions,
+  } = useChatSessions();
   const { user, isLoading, auth } = useAuth();
 
   const t = useTranslations();
@@ -113,7 +123,7 @@ const ChatApp: React.FC = () => {
 
   const [availableTools, setAvailableTools] = useState<string[]>([]);
 
-  const [model, setModel] = useState("gpt-4o-2024-08-06");
+  const [model, setModel] = useState("gpt-4o-2024-11-20");
   const [reasoningEffort, setReasoningEffort] =
     useState<reasoningEffortType>("medium");
   const [isLogged, setIsLogged] = useState(false);
@@ -241,18 +251,24 @@ const ChatApp: React.FC = () => {
 
       // 最適化: JSON.stringifyを使わずに比較
       let hasChanges = prevMessages.length !== messages.length;
-      console.log(`Length check: ${prevMessages.length} vs ${messages.length}, hasChanges=${hasChanges}`);
+      console.log(
+        `Length check: ${prevMessages.length} vs ${messages.length}, hasChanges=${hasChanges}`
+      );
 
       if (!hasChanges && messages.length > 0) {
         const lastPrevMsg = prevMessages[prevMessages.length - 1];
         const lastNewMsg = messages[messages.length - 1];
-        
+
         // NULLチェックと厳密な比較
-        hasChanges = !lastPrevMsg || !lastNewMsg || 
-                      lastPrevMsg.id !== lastNewMsg.id || 
-                      lastPrevMsg.content !== lastNewMsg.content;
-        
-        console.log(`Content check: ID ${lastPrevMsg?.id} vs ${lastNewMsg?.id}, hasChanges=${hasChanges}`);
+        hasChanges =
+          !lastPrevMsg ||
+          !lastNewMsg ||
+          lastPrevMsg.id !== lastNewMsg.id ||
+          lastPrevMsg.content !== lastNewMsg.content;
+
+        console.log(
+          `Content check: ID ${lastPrevMsg?.id} vs ${lastNewMsg?.id}, hasChanges=${hasChanges}`
+        );
       }
 
       if (hasChanges) {
@@ -391,7 +407,7 @@ const ChatApp: React.FC = () => {
       return;
     }
 
-    setRetryCount(prev => prev + 1);
+    setRetryCount((prev) => prev + 1);
     authReload();
   };
 
@@ -554,9 +570,7 @@ const ChatApp: React.FC = () => {
   };
 
   if (isLoading || isSessionsLoading) {
-    return (
-      <Loading />
-    );
+    return <Loading />;
   }
 
   return (
@@ -605,7 +619,9 @@ const ChatApp: React.FC = () => {
 
                   if (!response.ok) {
                     const errorData = await response.json();
-                    throw new Error(errorData.error || t("chat.error.shareFailed"));
+                    throw new Error(
+                      errorData.error || t("chat.error.shareFailed")
+                    );
                   }
 
                   const data = await response.json();
@@ -619,12 +635,12 @@ const ChatApp: React.FC = () => {
                   });
                 } catch (error) {
                   console.error(error);
-                  toast.error(
-                    t("chat.error.shareFailed"),
-                    {
-                      description: error instanceof Error ? error.message : t("common.error.unknown"),
-                    }
-                  );
+                  toast.error(t("chat.error.shareFailed"), {
+                    description:
+                      error instanceof Error
+                        ? error.message
+                        : t("common.error.unknown"),
+                  });
                 }
               }}
             >
@@ -638,6 +654,7 @@ const ChatApp: React.FC = () => {
       <StatusAlert
         type="success"
         title="Issues are fixed!"
+        className="md:w-9/12 lg:w-7/12"
         description="All models are available again. You can use them without any issues!"
         show={showSystemAlert}
         onClose={() => setShowSystemAlert(false)}

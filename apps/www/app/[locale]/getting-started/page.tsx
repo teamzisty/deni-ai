@@ -12,6 +12,7 @@ import {
   CheckCircle2,
   AlertTriangle,
   Mail,
+  LogOut,
 } from "lucide-react";
 import { Button } from "@repo/ui/components/button";
 import { useChatSessions } from "@/hooks/use-chat-sessions";
@@ -317,7 +318,7 @@ const GettingStartedWizard: React.FC = () => {
 
             {displayName && (
               <StatusAlert
-                type="success"
+                type="info"
                 title={t("wizard.already.title")}
                 description={
                   <>
@@ -329,9 +330,7 @@ const GettingStartedWizard: React.FC = () => {
                       <Button
                         variant="outline"
                         className="ml-2"
-                        onClick={() => {
-                          setCurrentStep(WizardStep.Start);
-                        }}
+                        onClick={() => setCurrentStep(WizardStep.Start)}
                       >
                         {t("wizard.already.button")}
                       </Button>
@@ -339,7 +338,7 @@ const GettingStartedWizard: React.FC = () => {
                   </>
                 }
                 show={!!displayName}
-                className="text-left mb-4"
+                className="text-left mb-4 w-full"
               />
             )}
 
@@ -409,6 +408,15 @@ const GettingStartedWizard: React.FC = () => {
               >
                 <Check className="mr-2 h-4 w-4" />
                 {t("wizard.email.checkButton")}
+              </Button>
+
+              <Button
+                variant="link"
+                className="w-full"
+                onClick={() => auth?.signOut()}
+              >
+                <LogOut className="mr-2 h-4 w-4" />
+                {t("accountMenu.logout")}
               </Button>
 
               <Button
