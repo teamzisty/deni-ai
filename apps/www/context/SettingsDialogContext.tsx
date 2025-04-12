@@ -33,7 +33,7 @@ export const SettingsDialogProvider = ({ children }: { children: ReactNode }) =>
   }, [searchParams]);
 
   // ダイアログを開く
-  const openDialog = (type: string = "appearance") => {
+  const openDialog = (type: string = "general") => {
     // 現在のURLパラメータを維持しながら、settingsパラメータを追加
     const params = new URLSearchParams(Array.from(searchParams.entries()));
     params.set("settings", type);

@@ -5,7 +5,8 @@
     "paths": {
       "@repo/firebase-config/*": ["./src/*"]
     },
-    "moduleResolution": "bundler"
+    "module": "node16",
+    "moduleResolution": "node16"
   },
   "include": ["."],
   "exclude": ["node_modules", "dist"]

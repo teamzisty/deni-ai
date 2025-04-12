@@ -62,10 +62,13 @@
       "exportError": "Failed to export conversations.",
       "deleteAllError": "Failed to delete conversations."
     },
-    "appearance": {
-      "tab": "Appearance",
-      "title": "Language and Appearance Settings",
-      "description": "Change language and appearance settings.",
+    "general": {
+      "tab": "General",
+      "title": "General Settings",
+      "search": {
+        "title": "Advanced Search",
+        "description": "When an AI uses the search feature, it selects whether to provide detailed information from the page or not."
+      },
       "theme": {
         "title": "Appearance Theme",
         "description": "Change between light theme and dark theme.",

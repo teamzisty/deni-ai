@@ -53,7 +53,6 @@
       "importAllSuccess": "インポートされた会話を表示するには、ページを更新してください。",
       "deleteSuccess": "会話が正常に削除されました。",
       "deleteAllSuccess": "すべての会話が削除されました。",
-      "noConversations": "エクスポートする会話が見つかりません。",
       "invalidFileFormat": "無効なファイル形式です。有効なJSONファイルを選択してください。",
       "fileReadError": "選択したファイルの読み取り中にエラーが発生しました。",
       "accountDeleted": "アカウントが正常に削除されました。",
@@ -61,10 +60,12 @@
       "exportError": "会話のエクスポートに失敗しました。",
       "deleteAllError": "会話の削除に失敗しました。"
     },
-    "appearance": {
-      "tab": "言語と外観",
-      "title": "言語と外観の設定",
-      "description": "言語と外観の設定を変更します。",
+    "general": {
+      "tab": "一般",
+      "search": {
+        "title": "詳細な検索",
+        "description": "AI が検索機能を使用する際、ページの内容を詳しく送信するかどうかを選択します。"
+      },
       "theme": {
         "title": "外観テーマ",
         "description": "ライトテーマとダークテーマを切り替えます。",

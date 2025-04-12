@@ -68,7 +68,8 @@ const GettingStartedWizard: React.FC = () => {
   const [photoURL, setPhotoURL] = useState<string>("");
   const [currentAuthToken, setCurrentAuthToken] = useState<string | null>(null);
   const [emailVerified, setEmailVerified] = useState<boolean>(false);
-  const [sendingVerification, setSendingVerification] = useState<boolean>(false);
+  const [sendingVerification, setSendingVerification] =
+    useState<boolean>(false);
   const [lastSentTime, setLastSentTime] = useState<number | null>(null);
 
   // プロフィール更新中の状態
@@ -94,7 +95,20 @@ const GettingStartedWizard: React.FC = () => {
 
   // 次のステップに進む
   const goToNextStep = () => {
-    setCurrentStep((prev) => (prev < WizardStep.Start ? prev + 1 : prev));
+    // Handle progression through the wizard steps
+    if (currentStep === WizardStep.Language && emailVerified) {
+      // If email is already verified, skip the verification step
+      setCurrentStep(WizardStep.Profile);
+    } else if (currentStep === WizardStep.VerifyEmail && displayName) {
+      // If user already has a display name, skip the profile step
+      setCurrentStep(WizardStep.Theme);
+    } else {
+      // Otherwise, move to the next step
+      setCurrentStep((prev) => {
+        const nextStep = prev + 1;
+        return nextStep <= WizardStep.Start ? nextStep : WizardStep.Start;
+      });
+    }
   };
 
   // 前のステップに戻る
@@ -121,7 +135,9 @@ const GettingStartedWizard: React.FC = () => {
   const handleSendVerificationEmail = async () => {
     // メール送信間隔制限（60秒）
     if (lastSentTime && Date.now() - lastSentTime < 60000) {
-      const remainingSeconds = Math.ceil((60000 - (Date.now() - lastSentTime)) / 1000);
+      const remainingSeconds = Math.ceil(
+        (60000 - (Date.now() - lastSentTime)) / 1000
+      );
       toast.error(t("common.error.tooManyRequests"), {
         description: t("wizard.email.throttled", { seconds: remainingSeconds }),
       });
@@ -144,12 +160,12 @@ const GettingStartedWizard: React.FC = () => {
   // メール確認状態をチェックする
   const checkEmailVerification = async () => {
     if (!auth || !auth.currentUser) return;
-    
+
     try {
       // リロードしてユーザーの最新状態を取得
       await auth.currentUser.reload();
       setEmailVerified(auth.currentUser.emailVerified);
-      
+
       if (auth.currentUser.emailVerified) {
         // メール確認済みの場合、次のステップへ
         toast.success(t("wizard.email.verified"));
@@ -342,19 +358,10 @@ const GettingStartedWizard: React.FC = () => {
               />
             )}
 
-            <Button 
-              className="w-full" 
+            <Button
+              className="w-full"
               onClick={() => {
-                if (emailVerified) {
-                  if (displayName) {
-                    setCurrentStep(WizardStep.Start);
-                  } else {
-                    goToNextStep();
-                    goToNextStep(); // Skip email verification step
-                  }
-                } else {
-                  goToNextStep();
-                }
+                goToNextStep();
               }}
             >
               {t("wizard.next")} <ChevronRight className="ml-2 h-4 w-4" />
@@ -363,6 +370,7 @@ const GettingStartedWizard: React.FC = () => {
         );
 
       case WizardStep.VerifyEmail:
+        // Original email verification step for unverified emails
         return (
           <div className="space-y-6">
             <div className="text-center">
@@ -428,7 +436,11 @@ const GettingStartedWizard: React.FC = () => {
               </Button>
             </div>
 
-            <Button variant="outline" onClick={goToPreviousStep} className="w-full">
+            <Button
+              variant="outline"
+              onClick={goToPreviousStep}
+              className="w-full"
+            >
               {t("wizard.back")}
             </Button>
           </div>
@@ -572,7 +584,7 @@ const GettingStartedWizard: React.FC = () => {
                 className="justify-between"
                 onClick={() => setTheme("system")}
               >
-                <span>{t("settings.appearance.theme.system")}</span>
+                <span>{t("settings.general.theme.system")}</span>
                 {theme === "system" && <Check className="h-4 w-4" />}
               </Button>
             </div>

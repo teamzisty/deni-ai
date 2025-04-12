@@ -100,7 +100,6 @@ const ChatApp: React.FC = () => {
     updateSession,
     getSession,
     isLoading: isSessionsLoading,
-    syncSessions,
   } = useChatSessions();
   const { user, isLoading, auth } = useAuth();
 
@@ -115,7 +114,7 @@ const ChatApp: React.FC = () => {
   const router = useRouter();
 
   const [searchEnabled, setSearchEnabled] = useState(false);
-  const [deepResearch, setdeepResearch] = useState(false);
+  const [deepResearch, setDeepResearch] = useState(false);
 
   const [currentAuthToken, setCurrentAuthToken] = useState<string | null>(null);
 
@@ -328,7 +327,7 @@ const ChatApp: React.FC = () => {
         description: t("chat.deepResearch.description"),
       });
     }
-    setdeepResearch((prev) => !prev);
+    setDeepResearch((prev) => !prev);
   };
 
   const handleRegenerate = () => {
@@ -343,10 +342,14 @@ const ChatApp: React.FC = () => {
     if (!currentSession || !input) return;
     if (status === "streaming" || status === "submitted") return;
 
-    let newAvailableTools = [];
+    const newAvailableTools = [];
 
     if (searchEnabled) {
       newAvailableTools.push("search");
+    }
+
+    if (localStorage.getItem("advancedSearch")) {
+      newAvailableTools.push("advancedSearch");
     }
 
     if (deepResearch) {

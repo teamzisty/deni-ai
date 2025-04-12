@@ -207,9 +207,9 @@ export async function POST(req: Request) {
 
                           if (mainContent) {
                             // メタディスクリプションを取得
-                            if (toolList.includes("deepResearch")) {
-                              content =
-                                mainContent.textContent?.trim() || description;
+                            if (toolList.includes("deepResearch") || toolList.includes("advancedSearch")) {
+                                //content = mainContent.textContent?.trim() || description;
+                                content = (mainContent.textContent || description).replace(/\s+/g, ' ').replace(/\n+/g, '').trim();
                             } else {
                               const metaDesc = doc.querySelector(
                                 'meta[name="description"]'
