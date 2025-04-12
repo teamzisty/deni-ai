@@ -6,7 +6,7 @@ import InputBox from "./InputBox";
 import { ImagePreview } from "./ImagePreview";
 import { ImageAddButton } from "./ImageAddButton";
 import { SearchButton } from "./SearchButton";
-import { AdvancedSearchButton } from "./AdvancedSearchButton";
+import { DeepResearchButton } from "./DeepResearchButton";
 
 type ModelDescription =
   (typeof modelDescriptions)[keyof typeof modelDescriptions];
@@ -19,10 +19,10 @@ interface ChatInputProps {
   stop: () => void;
   generating: boolean;
   searchEnabled: boolean;
-  advancedSearch: boolean;
+  deepResearch: boolean;
   modelDescriptions: Record<string, ModelDescription>;
   handleInputChange: (e: React.ChangeEvent<HTMLTextAreaElement>) => void;
-  advancedSearchToggle: () => void;
+  deepResearchToggle: () => void;
   handleSendMessage: (e: React.MouseEvent<HTMLButtonElement>) => void;
   handleSendMessageKey: (e: React.KeyboardEvent<HTMLTextAreaElement>) => void;
   handleImagePaste: (e: React.ClipboardEvent<HTMLDivElement>) => void;
@@ -41,8 +41,8 @@ const ChatInput = memo(
     generating,
     isUploading,
     searchEnabled,
-    advancedSearch,
-    advancedSearchToggle,
+    deepResearch,
+    deepResearchToggle,
     searchToggle,
     modelDescriptions,
     handleInputChange,
@@ -86,12 +86,12 @@ const ChatInput = memo(
             searchEnabled={searchEnabled}
             searchToggle={searchToggle}
           />
-          <AdvancedSearchButton
+          <DeepResearchButton
             disabled={
               modelDescriptions[model]?.toolDisabled || !searchEnabled || false
             }
-            advancedSearch={advancedSearch}
-            advancedSearchToggle={advancedSearchToggle}
+            deepResearch={deepResearch}
+            deepResearchToggle={deepResearchToggle}
           />
         </div>
       </div>
@@ -102,7 +102,7 @@ const ChatInput = memo(
       prevProps.input === nextProps.input &&
       prevProps.image === nextProps.image &&
       prevProps.searchEnabled === nextProps.searchEnabled &&
-      prevProps.advancedSearch === nextProps.advancedSearch &&
+      prevProps.deepResearch === nextProps.deepResearch &&
       prevProps.isUploading === nextProps.isUploading &&
       prevProps.model === nextProps.model &&
       prevProps.generating === nextProps.generating &&

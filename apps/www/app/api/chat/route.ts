@@ -137,6 +137,15 @@ export async function POST(req: Request) {
                 return "OK";
               },
             }),
+            countChars: tool({
+              description: "Count the number of characters in the message.",
+              parameters: z.object({
+                message: z.string().describe("Message to count characters in."),
+              }),
+              execute: async ({ message }) => {
+                return message.length;
+              },
+            }),
           };
 
           if (toolList?.includes("search")) {
@@ -162,7 +171,7 @@ export async function POST(req: Request) {
                   }
                 ).then((res) => res.json());
 
-                const totalCount = toolList?.includes("advancedSearch")
+                const totalCount = toolList?.includes("deepResearch")
                   ? 10
                   : 5;
 
@@ -198,9 +207,9 @@ export async function POST(req: Request) {
 
                           if (mainContent) {
                             // メタディスクリプションを取得
-                            if (toolList.includes("advancedSearch")) {
-                              content =
-                                mainContent.textContent?.trim() || description;
+                            if (toolList.includes("deepResearch") || toolList.includes("advancedSearch")) {
+                                //content = mainContent.textContent?.trim() || description;
+                                content = (mainContent.textContent || description).replace(/\s+/g, ' ').replace(/\n+/g, '').trim();
                             } else {
                               const metaDesc = doc.querySelector(
                                 'meta[name="description"]'

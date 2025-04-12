@@ -2,7 +2,7 @@ import type { OpenAICompatibleChatSettings } from '@ai-sdk/openai-compatible';
 
 export type VoidsOAIChatModelId =
   | 'gpt-4-0613'
-  | 'gpt-4o-2024-08-06'
+  | 'gpt-4o-2024-11-20'
   | 'gpt-4-turbo-2024-04-09'
   | 'gpt-4o-mini-2024-07-18'
   | 'gpt-35-turbo-16k'

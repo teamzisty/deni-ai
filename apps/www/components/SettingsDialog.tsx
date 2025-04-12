@@ -6,7 +6,6 @@ import { useTranslations } from "next-intl";
 import {
   Dialog,
   DialogContent,
-  DialogHeader,
   DialogTitle,
 } from "@repo/ui/components/dialog";
 import {
@@ -21,9 +20,9 @@ import {
   TabsList,
   TabsTrigger,
 } from "@repo/ui/components/tabs";
-import { User, Paintbrush, X, Bot, Database } from "lucide-react";
+import { User, Paintbrush, X, Bot, Database, MenuIcon } from "lucide-react";
 import { Button } from "@repo/ui/components/button";
-import AppearanceSettings from "./ApperanceSettings";
+import GeneralSettings from "./GeneralSettings";
 import AccountSettings from "./AccountSettings";
 import ModelSettings from "./ModelSettings";
 import DataControlsSettings from "./DataControlsSettings";
@@ -54,6 +53,15 @@ export function SettingsDialog() {
       <Tabs defaultValue={initialTab} className="w-full">
         <div className="flex flex-col md:flex-row w-full h-full gap-4">
           <TabsList className="flex md:flex-col md:items-start mt-15 gap-2 bg-transparent">
+          <TabsTrigger
+              className="flex-1 justify-start w-full p-4 data-[state=active]:bg-primary"
+              value="general"
+            >
+              <MenuIcon className="md:mr-2" />
+              <span className="hidden md:inline">
+                {t("settings.general.tab")}
+              </span>
+            </TabsTrigger>
             <TabsTrigger
               className="flex-1 justify-start w-full p-4 data-[state=active]:bg-primary"
               value="account"
@@ -61,15 +69,6 @@ export function SettingsDialog() {
               <User className="md:mr-2" />
               <span className="hidden md:inline">
                 {t("settings.account.tab")}
-              </span>
-            </TabsTrigger>
-            <TabsTrigger
-              className="flex-1 justify-start w-full p-4 data-[state=active]:bg-primary"
-              value="appearance"
-            >
-              <Paintbrush className="md:mr-2" />
-              <span className="hidden md:inline">
-                {t("settings.appearance.tab")}
               </span>
             </TabsTrigger>
             <TabsTrigger
@@ -97,8 +96,8 @@ export function SettingsDialog() {
             <TabsContent value="account" className="h-full">
               <AccountSettings />
             </TabsContent>
-            <TabsContent value="appearance" className="h-full">
-              <AppearanceSettings />
+            <TabsContent value="general" className="h-full">
+              <GeneralSettings />
             </TabsContent>
             <TabsContent value="model" className="h-full">
               <ModelSettings />

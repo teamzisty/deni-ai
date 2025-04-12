@@ -16,102 +16,39 @@ import {
   useRouter as nextRouter,
   usePathname,
 } from "next/navigation";
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 
-export default function AppearanceSettings() {
-  // const { sessions, deleteSession, addSession } = useChatSessions();
+export default function GeneralSettings() {
   const { setTheme, theme } = useTheme();
   const t = useTranslations();
   const params = useParams();
   const language = params.locale === "ja" ? "ja" : "en";
   const NextRouter = nextRouter();
   const pathname = usePathname();
+  const [isLoading, setIsLoading] = useState(true);
 
-  // const exportAllConversion = () => {
-  //   const conversionsArray: ChatSession[] = [];
-  //   if (sessions) {
-  //     sessions.forEach((session) => {
-  //       conversionsArray.push(session);
-  //     });
-  //     if (conversionsArray.length > 0) {
-  //       const blob = new Blob([JSON.stringify(conversionsArray)], {
-  //         type: "application/json",
-  //       });
-  //       const url = URL.createObjectURL(blob);
-  //       const link = document.createElement("a");
-  //       link.href = url;
-  //       link.download = `deni-ai-conversions-${new Date().toISOString()}.json`;
-  //       link.click();
-  //       URL.revokeObjectURL(url);
-  //     } else {
-  //       toast.error(t("settings.error"), {
-  //         description: t("settings.noConversations"),
-  //       });
-  //     }
-  //     toast.success(t("settings.exportSuccess"));
-  //   } else {
-  //     toast.error(t("settings.error"), {
-  //       description: t("settings.noConversations"),
-  //     });
-  //   }
-  // };
+  const [advancedSearch, setAdvancedSearch] = useState(false);
 
-  // const importAllConversion = async () => {
-  //   try {
-  //     const input = document.createElement("input");
-  //     input.type = "file";
-  //     input.accept = ".json";
-  //     input.click();
+  useEffect(() => {
+    const AdvancedSearch = localStorage.getItem("advancedSearch");
+    if (AdvancedSearch === "true") {
+      setAdvancedSearch(true);
+    } else {
+      setAdvancedSearch(false);
+    }
 
-  //     input.onchange = (e) => {
-  //       const file = (e.target as HTMLInputElement).files?.[0];
-  //       if (!file) return;
-  //       const reader = new FileReader();
-  //       reader.onload = (event) => {
-  //         sessions.forEach((session) => {
-  //           deleteSession(session.id);
-  //         });
+    setIsLoading(false);
+  }, []);
 
-  //         const jsonData = JSON.parse(
-  //           event.target?.result as string
-  //         ) as ChatSession[];
-  //         jsonData.forEach((session: ChatSession) => {
-  //           const newSession: ChatSession = {
-  //             id: session.id,
-  //             title: session.title,
-  //             createdAt: session.createdAt,
-  //             messages: session.messages,
-  //           };
-  //           addSession(newSession);
-  //         });
-  //         toast.success(t("settings.importSuccess"), {
-  //           description: t("settings.importAllSuccess"),
-  //         });
-  //       };
-  //       reader.readAsText(file);
-  //     };
-  //   } catch (error: unknown) {
-  //     if (error instanceof Error && error.name === "AbortError") {
-  //       return;
-  //     }
-  //     toast.error(t("settings.error"), {
-  //       description: t("settings.fileReadError"),
-  //     });
-  //   }
-  // };
-
-  // const deleteAllConversion = () => {
-  //   sessions.forEach((session) => {
-  //     deleteSession(session.id);
-  //   });
-  //   toast.success(t("settings.deleteSuccess"), {
-  //     description: t("settings.deleteAllSuccess"),
-  //   });
-  // };
-
-  // if (isLoading) {
-  //   return <Loading />;
-  // }
+  useEffect(() => {
+    if (isLoading) return;
+    
+    if (advancedSearch) {
+      localStorage.setItem("advancedSearch", "true");
+    } else {
+      localStorage.removeItem("advancedSearch");
+    }
+  }, [advancedSearch]);
 
   return (
     <div className="space-y-6">
@@ -119,16 +56,39 @@ export default function AppearanceSettings() {
         <div className="flex p-5 items-center gap-4">
           <div className="flex-grow">
             <h3 className="text-lg font-bold">
-              {t("settings.appearance.theme.title")}
+              {t("settings.general.search.title")}
             </h3>
             <p className="text-sm text-muted-foreground">
-              {t("settings.appearance.theme.description")}
+              {t("settings.general.search.description")}
+            </p>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <Switch
+              id="search"
+              checked={advancedSearch}
+              onCheckedChange={(checked) => {
+                setAdvancedSearch(checked);
+              }}
+            />
+          </div>
+        </div>
+      </div>
+
+      <div className="bg-card/50 border border-border/30 rounded-md overflow-hidden">
+        <div className="flex p-5 items-center gap-4">
+          <div className="flex-grow">
+            <h3 className="text-lg font-bold">
+              {t("settings.general.theme.title")}
+            </h3>
+            <p className="text-sm text-muted-foreground">
+              {t("settings.general.theme.description")}
             </p>
           </div>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="outline">
-                {t("settings.appearance.theme.action")}
+                {t("settings.general.theme.action")}
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
@@ -141,7 +101,7 @@ export default function AppearanceSettings() {
                 {theme === "dark" && <Check className="ml-auto" />}
               </DropdownMenuItem>
               <DropdownMenuItem onClick={() => setTheme("system")}>
-                {t("settings.appearance.theme.system")}{" "}
+                {t("settings.general.theme.system")}{" "}
                 {theme === "system" && <Check className="ml-auto" />}
               </DropdownMenuItem>
             </DropdownMenuContent>
@@ -153,17 +113,17 @@ export default function AppearanceSettings() {
         <div className="flex p-5 items-center gap-4">
           <div className="flex-grow">
             <h3 className="text-lg font-bold">
-              {t("settings.appearance.language.title")}
+              {t("settings.general.language.title")}
             </h3>
             <p className="text-sm text-muted-foreground">
-              {t("settings.appearance.language.description")}
+              {t("settings.general.language.description")}
             </p>
           </div>
           <div>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="outline">
-                  {t("settings.appearance.language.action")}
+                  {t("settings.general.language.action")}
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">

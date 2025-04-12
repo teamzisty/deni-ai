@@ -4,7 +4,9 @@
     "baseUrl": ".",
     "paths": {
       "@repo/firebase-config/*": ["./src/*"]
-    }
+    },
+    "module": "node16",
+    "moduleResolution": "node16"
   },
   "include": ["."],
   "exclude": ["node_modules", "dist"]

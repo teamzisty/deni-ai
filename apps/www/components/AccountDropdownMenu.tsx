@@ -1,3 +1,5 @@
+"use client";
+
 import { Button } from "@repo/ui/components/button";
 import {
   Earth,
@@ -25,6 +27,20 @@ import { toast } from "sonner";
 import { buildInfo } from "@/lib/version";
 import { useTranslations } from "next-intl";
 import { useSettingsDialog } from "@/context/SettingsDialogContext";
+
+// Helper functions to truncate email and name
+const truncateEmail = (email: string | null | undefined): string => {
+  if (!email) return "";
+  const [username, domain] = email.split("@");
+  if (!domain) return email;
+  const truncatedUsername = username && username.length > 6 ? `${username.substring(0, 6)}...` : username || "";
+  return `${truncatedUsername}@${domain}`;
+};
+
+const truncateName = (name: string | null | undefined): string => {
+  if (!name) return "";
+  return name.length > 15 ? `${name.substring(0, 15)}...` : name;
+};
 
 interface AccountDropdownMenuProps {
   user: User | null;
@@ -121,14 +137,14 @@ export const AccountDropdownMenu = memo(
               )}
               <div className="flex flex-col text-left group-data-[collapsible=icon]:hidden">
                 <span className={privacyMode ? "blur-sm" : ""}>
-                  {user?.displayName}
+                  {truncateName(user?.displayName)}
                 </span>
                 <span
                   className={`text-muted-foreground min-w-0 block truncate ${
                     privacyMode ? "blur-sm" : ""
                   }`}
                 >
-                  {user?.email}
+                  {truncateEmail(user?.email)}
                 </span>
               </div>
             </Button>
@@ -161,14 +177,14 @@ export const AccountDropdownMenu = memo(
                   )}
                   <div className="flex flex-col text-left">
                     <span className={`${privacyMode && "blur-sm"}`}>
-                      {user?.displayName}
+                      {truncateName(user?.displayName)}
                     </span>
                     <span
                       className={`text-muted-foreground min-w-0 block truncate ${
                         privacyMode && "blur-sm"
                       }`}
                     >
-                      {user?.email}
+                      {truncateEmail(user?.email)}
                     </span>
                   </div>
                 </div>

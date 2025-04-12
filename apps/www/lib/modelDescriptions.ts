@@ -20,7 +20,7 @@ export type modelType = "ChatGPT" | "Gemini" | "Claude" | "Grok" | "DeepSeek";
 export type reasoningEffortType = "low" | "medium" | "high";
 
 export const modelDescriptions: modelDescriptionType = {
-  "gpt-4o-2024-08-06": {
+  "gpt-4o-2024-11-20": {
     displayName: "GPT-4o",
     knowledgeCutoff: "2023/10",
     defaultVisibility: true,
@@ -204,11 +204,12 @@ export const modelDescriptions: modelDescriptionType = {
     type: "DeepSeek",
   },
   "grok-3": {
-    displayName: "Grok 3",
+    displayName: "Grok 3 Beta",
+    vision: true,
     knowledgeCutoff: "-",
     type: "Grok",
   },
-  "grok-3-r1": {
+  "grok-3-thinking": {
     displayName: "Grok 3 (Think)",
     knowledgeCutoff: "-",
     reasoning: true,
