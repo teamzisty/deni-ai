@@ -1,0 +1,13 @@
+{
+  "extends": "@workspace/typescript-config/base.json",
+  "compilerOptions": {
+    "baseUrl": ".",
+    "paths": {
+      "@workspace/firebase-config/*": ["./src/*"]
+    },
+    "module": "node16",
+    "moduleResolution": "node16"
+  },
+  "include": ["."],
+  "exclude": ["node_modules", "dist"]
+}

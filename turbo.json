@@ -1,6 +1,12 @@
 {
   "$schema": "https://turbo.build/schema.json",
   "ui": "tui",
+  "globalEnv": [
+    "NODE_ENV",
+    "BRAVE_SEARCH_API_KEY",
+    "UPLOADTHING_TOKEN",
+    "FIREBASE_SERVICE_ACCOUNT_KEY"
+  ],
   "tasks": {
     "build": {
       "dependsOn": ["^build"],
