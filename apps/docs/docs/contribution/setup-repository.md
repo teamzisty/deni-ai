@@ -10,7 +10,7 @@ This page explains how to set up the repository to contribute to Deni AI.
 
 This repository uses a monorepo structure.
 
-- Uses [bun](https://bun.sh/) and its [Workspaces](https://bun.sh/docs/install/workspaces) feature for development
+- Uses [pnpm](https://pnpm.io/) and its [Workspaces](https://pnpm.io/docs/install/workspaces) feature for development
 - Uses [Turborepo](https://turbo.build/repo/) as the build system
 - Uses [Next.js](https://nextjs.org/) as the framework for the main app (apps/www)
 - Uses [Docusaurus](https://docusaurus.io/) as the framework for documentation (apps/docs)
@@ -57,7 +57,7 @@ git checkout -b <your-branch-name>
 ### Install Dependencies
 
 ```bash
-bun install
+pnpm install
 ```
 
 ### Run Locally
@@ -65,7 +65,7 @@ bun install
 To run only the Deni AI application, use the following command:
 
 ```bash
-bun --filter=www dev
+pnpm --filter=www dev
 ```
 
 ### Commit Requirements

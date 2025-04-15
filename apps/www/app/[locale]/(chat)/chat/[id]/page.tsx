@@ -1,6 +1,6 @@
 "use client";
 
-import { cn } from "@/lib/utils";
+import { cn } from "@workspace/ui/lib/utils";
 import { AlertCircleIcon, CheckCircleIcon, Share2 } from "lucide-react";
 import { MessageLog } from "@/components/MessageLog";
 import { useChatSessions } from "@/hooks/use-chat-sessions";

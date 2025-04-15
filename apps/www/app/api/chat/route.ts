@@ -4,8 +4,8 @@ import {
 } from "@/lib/modelDescriptions";
 import { getSystemPrompt } from "@/lib/systemPrompt";
 import { authAdmin, notAvailable } from "@workspace/firebase-config/server";
-import { createVoidsOAI } from "@workspace/voids-oai-provider/src/index";
-import { createVoidsAP } from "@workspace/voids-ap-provider/src/index";
+import { createVoidsOAI } from "@workspace/voids-oai-provider/index";
+import { createVoidsAP } from "@workspace/voids-ap-provider/index";
 import {
   convertToCoreMessages,
   createDataStreamResponse,

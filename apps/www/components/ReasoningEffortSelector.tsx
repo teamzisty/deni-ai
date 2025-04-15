@@ -15,7 +15,7 @@ import { ArrowDown, BrainCircuit, Zap, Brain } from "lucide-react";
 import { Badge } from "@workspace/ui/components/badge";
 import { EasyTip } from "@/components/easytip";
 import { memo, useCallback, useMemo } from "react";
-import { cn } from "@/lib/utils";
+import { cn } from "@workspace/ui/lib/utils";
 
 const ReasoningEffortItem = memo(
   ({

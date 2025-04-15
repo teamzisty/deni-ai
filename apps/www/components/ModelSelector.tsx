@@ -33,7 +33,7 @@ import { EasyTip } from "@/components/easytip";
 import { Link } from "@/i18n/navigation";
 import { useModelVisibility } from "@/hooks/use-model-settings";
 import { memo, useCallback, useMemo } from "react";
-import { cn } from "@/lib/utils";
+import { cn } from "@workspace/ui/lib/utils";
 import { DeepSeekIcon } from "./DeepSeekIcon";
 import { useSettingsDialog } from "@/context/SettingsDialogContext";
 

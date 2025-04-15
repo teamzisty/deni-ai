@@ -1,5 +1,5 @@
 import { Plus } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { cn } from "@workspace/ui/lib/utils";
 import { memo } from "react";
 import { EasyTip } from "@/components/easytip";
 import { useTranslations } from "next-intl";

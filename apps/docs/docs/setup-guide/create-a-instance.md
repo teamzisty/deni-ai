@@ -9,7 +9,7 @@ This page explains how to create your own instance.
 ## Prerequisites
 
 - Node.js (v18.18.0) or later
-- Bun (v1.2.7) or later
+- Latest version of pnpm
 - (Optional) Firebase project setup (See "Firebase Configuration" below for Firebase setup)
 - (Optional) Brave Search API key (used for search)
 - (Optional) Uploadthing token (used for image uploads)
@@ -33,7 +33,7 @@ cd deni-ai
 - Install dependencies:
 
 ```bash
-bun install
+pnpm install
 ```
 
 ## Setup (Local)
@@ -55,7 +55,7 @@ If you want to use authentication and conversation sync features, edit the `.env
 - Start the development server:
 
 ```bash
-bun dev
+pnpm dev
 ```
 
 ## Deploy to Vercel

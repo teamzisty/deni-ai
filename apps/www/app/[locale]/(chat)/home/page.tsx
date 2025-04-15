@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { cn } from "@/lib/utils";
+import { cn } from "@workspace/ui/lib/utils";
 import { Loader, Trash2 } from "lucide-react";
 import { Button } from "@workspace/ui/components/button";
 import { useChatSessions } from "@/hooks/use-chat-sessions";

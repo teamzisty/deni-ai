@@ -4,7 +4,10 @@
     "baseUrl": ".",
     "paths": {
       "@/*": ["./*"],
-      "@workspace/ui/*": ["../../packages/ui/src/*"]
+      "@workspace/ui/*": ["../../packages/ui/src/*"],
+      "@workspace/firebase-config/*": ["../../packages/firebase-config/src/*"],
+      "@workspace/voids-oai-provider/*": ["../../packages/voids-oai-provider/src/*"],
+      "@workspace/voids-ap-provider/*": ["../../packages/voids-ap-provider/src/*"],
     },
     "plugins": [
       {

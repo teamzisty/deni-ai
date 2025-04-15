@@ -20,7 +20,7 @@ import {
   SiX,
 } from "@icons-pack/react-simple-icons";
 import { Switch } from "@workspace/ui/components/switch";
-import { cn } from "@/lib/utils";
+import { cn } from "@workspace/ui/lib/utils";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
 import {
