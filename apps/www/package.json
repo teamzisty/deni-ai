@@ -21,25 +21,25 @@
     "date-fns": "^4.1.0",
     "framer-motion": "^12.7.3",
     "jsdom": "^26.1.0",
-    "lucide-react": "^0.488.0",
+    "lucide-react": "^0.475.0",
     "marked": "^15.0.8",
-    "next": "^15.3.0",
+    "next": "^15.2.3",
     "next-intl": "^4.0.2",
-    "next-themes": "^0.4.6",
+    "next-themes": "^0.4.4",
     "qrcode.react": "^4.2.0",
-    "react": "^19.1.0",
-    "react-dom": "^19.1.0",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
     "react-markdown": "^10.1.0",
     "react-syntax-highlighter": "^15.6.1",
     "remark-gfm": "^4.0.1",
     "uploadthing": "^7.6.0"
   },
   "devDependencies": {
-    "@types/node": "^22.14.1",
-    "@types/react": "^19.1.2",
-    "@types/react-dom": "^19.1.2",
+    "@types/node": "^20",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
     "@workspace/eslint-config": "workspace:^",
     "@workspace/typescript-config": "workspace:*",
-    "typescript": "^5.8.3"
+    "typescript": "^5.7.3"
   }
 }
