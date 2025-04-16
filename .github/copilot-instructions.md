@@ -1,2 +1,0 @@
-- Use Bun for all JavaScript and TypeScript development.
-- When adding text, immediately follow with a translation. (apps/www/messages/en.json and ja.json)
