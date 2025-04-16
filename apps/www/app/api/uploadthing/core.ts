@@ -41,7 +41,7 @@ async function auth(req: Request) {
   }
 }
 // FileRouter for your app, can contain multiple FileRoutes
-export const ourFileRouter = {
+export const ourFileRouter: FileRouter = {
   // Define as many FileRoutes as you like, each with a unique routeSlug
   imageUploader: f({
     image: {
