@@ -1,4 +1,4 @@
-# `@workspace/ui`
+# `@repo/ui`
 
 Shared ui for the workspace.
 
