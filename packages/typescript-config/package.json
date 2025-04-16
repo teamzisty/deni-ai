@@ -1,9 +1,0 @@
-{
-  "name": "@repo/typescript-config",
-  "version": "2.4",
-  "private": true,
-  "license": "PROPRIETARY",
-  "publishConfig": {
-    "access": "public"
-  }
-}
