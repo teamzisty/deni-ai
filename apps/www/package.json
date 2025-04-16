@@ -1,6 +1,6 @@
 {
   "name": "web",
-  "version": "2.4.1",
+  "version": "3.0.0",
   "type": "module",
   "private": true,
   "scripts": {
@@ -17,7 +17,7 @@
     "@uploadthing/react": "^7.3.0",
     "@vercel/analytics": "^1.5.0",
     "@workspace/ui": "workspace:*",
-    "ai": "^4.3.6",
+    "ai": "^4.3.8",
     "date-fns": "^4.1.0",
     "firebase": "^11.6.0",
     "firebase-admin": "^13.2.0",

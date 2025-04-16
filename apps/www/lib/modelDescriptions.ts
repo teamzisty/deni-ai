@@ -160,7 +160,7 @@ export const modelDescriptions: modelDescriptionType = {
     fast: true,
     type: "Gemini",
   },
-  "claude-3-7-sonnet-20250219": {
+  "us.anthropic.claude-3-7-sonnet-20250219-v1:0": {
     displayName: "Claude 3.7 Sonnet",
     knowledgeCutoff: "2024/10",
     defaultVisibility: true,
@@ -169,7 +169,7 @@ export const modelDescriptions: modelDescriptionType = {
     vision: true,
     type: "Claude",
   },
-  "us.anthropic.claude-3-7-sonnet-20250219-v1:0": {
+  "us.anthropic.claude-3-7-sonnet-20250219-v1:0-reasoning": {
     displayName: "Claude 3.7 Sonnet (Extended Thinking)",
     knowledgeCutoff: "2024/10",
     defaultVisibility: true,

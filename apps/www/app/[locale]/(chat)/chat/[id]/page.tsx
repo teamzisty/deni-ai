@@ -657,14 +657,14 @@ const ChatApp: React.FC = () => {
         }
       />
       {/* Chat Log */}
-      <StatusAlert
+      {/* <StatusAlert
         type="success"
         title="Issues are fixed!"
         className="md:w-9/12 lg:w-7/12"
         description="All models are available again. You can use them without any issues!"
         show={showSystemAlert}
         onClose={() => setShowSystemAlert(false)}
-      />
+      /> */}
 
       <div
         className="flex w-full h-full md:w-9/12 lg:w-7/12 rounded overflow-y-auto scrollbar-thin scrollbar-thumb-primary scrollbar-track-secondary scrollbar-thumb-rounded-md scrollbar-track-rounded-md"

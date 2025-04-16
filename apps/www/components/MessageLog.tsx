@@ -19,6 +19,7 @@ import {
 import { SiBrave } from "@icons-pack/react-simple-icons";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
+import { modelDescriptions } from "@/lib/modelDescriptions";
 
 interface MessageLogProps {
   message: UIMessage;
@@ -113,7 +114,7 @@ function messageReducer(
 }
 // メッセージのコントロール部分（コピーボタンと生成時間）を別コンポーネントとして抽出
 const MessageControls = memo(
-  ({ messageContent, thinkingTime, onRegenerate }: { messageContent: string; thinkingTime: number; onRegenerate?: () => void }) => {
+  ({ messageContent, thinkingTime, onRegenerate, model }: { messageContent: string; thinkingTime: number; onRegenerate?: () => void; model: string }) => {
     const t = useTranslations();
 
     const handleCopy = () => {
@@ -145,6 +146,7 @@ const MessageControls = memo(
                 onClick={onRegenerate}
               >
                 <RefreshCw size="16" />
+                {modelDescriptions[model]?.displayName}
               </Button>
             </EasyTip>
           </div>
@@ -425,6 +427,7 @@ export const MessageLog: FC<MessageLogProps> = memo(
                   messageContent={message.content}
                   thinkingTime={state.thinkingTime}
                   onRegenerate={onRegenerate}
+                  model={state.model}
                 />
               </div>
             ) : (
