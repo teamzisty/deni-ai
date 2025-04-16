@@ -58,7 +58,6 @@ const ChatApp: React.FC = () => {
       <div className={cn("w-full")}>
         {/* Hero Section */}
         <div className="relative overflow-hidden bg-background border-b border-border/40">
-          <div className="absolute inset-0 bg-grid-small-black/[0.1] [mask-image:linear-gradient(to_bottom_left,white,transparent,white)]"></div>
           <div className="flex items-center pt-20 animate-show flex-col w-full max-w-7xl m-auto px-6 lg:px-8 pb-24">
             <h1 className="px-1 text-center text-5xl font-bold tracking-tight pb-4 sm:text-6xl md:text-7xl md:px-0">
               {t("title")}
@@ -178,7 +177,7 @@ const ChatApp: React.FC = () => {
                       {t("featuresTab.two.subtitle")}
                     </p>
                     <Button asChild size="lg" className="rounded-full">
-                      <Link href="/pages/privacy-policy">
+                      <Link href="/privacy-policy">
                         <span className="flex items-center">
                           {t("featuresTab.two.button")}
                           <span className="ml-2 text-lg">↗</span>

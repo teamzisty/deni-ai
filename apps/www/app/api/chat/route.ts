@@ -146,6 +146,21 @@ export async function POST(req: Request) {
                 return message.length;
               },
             }),
+            canvas: tool({
+              description: "Create or edit content in the Canvas editor, supporting markdown formatting.",
+              parameters: z.object({
+                content: z.string().describe("The content to add to the Canvas, in markdown format."),
+                title: z.string().optional().describe("Optional title for the Canvas document. (Set desired title to the Canvas.)"),
+              }),
+              execute: async ({ content, title }) => {
+                dataStream.writeMessageAnnotation({
+                  canvasContent: content,
+                  canvasTitle: title || "Untitled Document",
+                });
+                
+                return "Canvas content created successfully.";
+              },
+            }),
           };
 
           if (toolList?.includes("search")) {
@@ -315,6 +330,7 @@ export async function POST(req: Request) {
           messages: coreMessage,
           tools: tools,
           maxSteps: 15,
+          toolCallStreaming: true,
           maxTokens: model.includes("claude-3-7-sonnet-20250219")
             ? 64000
             : 4096,

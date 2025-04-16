@@ -170,6 +170,12 @@ const ChatApp: React.FC = () => {
 
   const [showSystemAlert, setShowSystemAlert] = useState(true);
 
+  const [canvasEnabled, setCanvasEnabled] = useState(false);
+
+  const canvasToggle = () => {
+    setCanvasEnabled((prev) => !prev);
+  };
+
   useEffect(() => {
     if (!currentSession) {
       router.push("/home");
@@ -357,6 +363,10 @@ const ChatApp: React.FC = () => {
 
     if (deepResearch) {
       newAvailableTools.push("deepResearch");
+    }
+
+    if (canvasEnabled) {
+      newAvailableTools.push("canvas");
     }
 
     setAvailableTools(newAvailableTools);
@@ -718,18 +728,20 @@ const ChatApp: React.FC = () => {
         <ChatInput
           input={input}
           image={image}
+          model={model}
+          generating={status === "streaming" || status === "submitted"}
           stop={stop}
-          generating={status == "submitted" || status == "streaming"}
           isUploading={isUploading}
           searchEnabled={searchEnabled}
           deepResearch={deepResearch}
+          canvasEnabled={canvasEnabled}
+          modelDescriptions={modelDescriptions}
           deepResearchToggle={deepResearchToggle}
           searchToggle={searchToggle}
-          model={model}
-          modelDescriptions={modelDescriptions}
-          handleInputChange={handleInputChange}
+          canvasToggle={canvasToggle}
           handleSendMessage={handleSendMessage}
           handleSendMessageKey={handleSendMessageKey}
+          handleInputChange={handleInputChange}
           handleImagePaste={handleImagePaste}
           handleImageUpload={handleImageUpload}
           setImage={setImage}

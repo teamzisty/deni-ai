@@ -7,6 +7,7 @@ import { ImagePreview } from "./ImagePreview";
 import { ImageAddButton } from "./ImageAddButton";
 import { SearchButton } from "./SearchButton";
 import { DeepResearchButton } from "./DeepResearchButton";
+import CanvasButton from "./CanvasButton";
 
 type ModelDescription =
   (typeof modelDescriptions)[keyof typeof modelDescriptions];
@@ -20,9 +21,11 @@ interface ChatInputProps {
   generating: boolean;
   searchEnabled: boolean;
   deepResearch: boolean;
+  canvasEnabled: boolean;
   modelDescriptions: Record<string, ModelDescription>;
   handleInputChange: (e: React.ChangeEvent<HTMLTextAreaElement>) => void;
   deepResearchToggle: () => void;
+  canvasToggle: () => void;
   handleSendMessage: (e: React.MouseEvent<HTMLButtonElement>) => void;
   handleSendMessageKey: (e: React.KeyboardEvent<HTMLTextAreaElement>) => void;
   handleImagePaste: (e: React.ClipboardEvent<HTMLDivElement>) => void;
@@ -42,7 +45,9 @@ const ChatInput = memo(
     isUploading,
     searchEnabled,
     deepResearch,
+    canvasEnabled,
     deepResearchToggle,
+    canvasToggle,
     searchToggle,
     modelDescriptions,
     handleInputChange,
@@ -93,6 +98,11 @@ const ChatInput = memo(
             deepResearch={deepResearch}
             deepResearchToggle={deepResearchToggle}
           />
+          <CanvasButton
+            disabled={modelDescriptions[model]?.toolDisabled || false}
+            canvasEnabled={canvasEnabled}
+            canvasToggle={canvasToggle}
+          />
         </div>
       </div>
     );
@@ -105,6 +115,7 @@ const ChatInput = memo(
       prevProps.deepResearch === nextProps.deepResearch &&
       prevProps.isUploading === nextProps.isUploading &&
       prevProps.model === nextProps.model &&
+      prevProps.canvasEnabled === nextProps.canvasEnabled &&
       prevProps.generating === nextProps.generating &&
       JSON.stringify(prevProps.modelDescriptions) ===
         JSON.stringify(nextProps.modelDescriptions)

@@ -9,7 +9,8 @@
     "home": "Home",
     "app": "App",
     "sourceCode": "Source Code",
-    "privacyPolicy": "Privacy Policy"
+    "privacyPolicy": "Privacy Policy",
+    "termsOfService": "Terms of Service"
   },
   "messageLog": {
     "search": "Search",
@@ -37,7 +38,9 @@
   "chatInput": {
     "imageAdd": "Add Image",
     "search": "Search",
-    "deepResearch": "Deep Research"
+    "deepResearch": "Deep Research",
+    "canvas": "Canvas",
+    "translate": "Translate"
   },
   "headerArea": {
     "ready": "Ready",
@@ -1047,6 +1050,10 @@
   "privacyPolicy": {
     "title": "Privacy Policy",
     "subtitle": "How we handle your data and protect your privacy",
+    "voidsComply": {
+      "title": "Additional Terms of Service",
+      "content": "By using Deni AI, you agree to the terms of service of voids.top."
+    },
     "introduction": {
       "title": "Introduction",
       "content": "This Privacy Policy describes how your personal information is collected, used, and shared when you use our Deni AI service.",
@@ -1107,5 +1114,92 @@
       "content": "If you have any questions about this Privacy Policy, please contact us via our GitHub repository or through our support channels."
     },
     "lastUpdated": "Last Updated:"
+  },
+  "termsOfService": {
+    "title": "Terms of Service",
+    "subtitle": "Please read these terms carefully before using our service",
+    "introduction": {
+      "title": "Introduction",
+      "content": "Welcome to Deni AI. These Terms of Service govern your use of our website, products, and services.",
+      "operatedBy": "Deni AI is operated by the UpLauncher team."
+    },
+    "acceptance": {
+      "title": "Acceptance of Terms",
+      "content": "By accessing or using our service, you agree to be bound by these Terms of Service. If you disagree with any part of the terms, you may not access the service."
+    },
+    "eligibility": {
+      "title": "Eligibility",
+      "content": "You must be at least 13 years of age to use this service. By using our service, you represent and warrant that you meet this requirement."
+    },
+    "account": {
+      "title": "Account Registration and Security",
+      "content": "When you create an account with us, you must provide accurate information. You are responsible for maintaining the security of your account, and you agree to:",
+      "items": {
+        "accurate": "Provide accurate and complete registration information",
+        "secure": "Maintain the security of your account password",
+        "responsible": "Be responsible for all activities that occur under your account",
+        "notification": "Notify us immediately of any unauthorized use of your account"
+      }
+    },
+    "userConduct": {
+      "title": "User Conduct",
+      "content": "You agree not to use our service to:",
+      "items": {
+        "illegal": "Violate any applicable laws or regulations",
+        "harmful": "Post or transmit harmful, threatening, abusive, or unlawful content",
+        "impersonation": "Impersonate any person or entity",
+        "privacy": "Violate the privacy of others",
+        "spam": "Distribute spam, chain letters, or promote pyramid schemes",
+        "security": "Attempt to gain unauthorized access to our systems or networks"
+      }
+    },
+    "intellectualProperty": {
+      "title": "Intellectual Property Rights",
+      "content": "The service and its original content, features, and functionality are and will remain the exclusive property of Deni AI and its licensors. The service is protected by copyright, trademark, and other laws."
+    },
+    "userContent": {
+      "title": "User Content",
+      "content": "You retain all your ownership rights to your content. However, by submitting content to our service, you grant us a worldwide, non-exclusive, royalty-free license to use, reproduce, adapt, publish, and distribute your content.",
+      "license": "This license continues until you remove your content from our service."
+    },
+    "disclaimers": {
+      "title": "Disclaimers",
+      "content": "Your use of our service is at your sole risk. The service is provided on an 'AS IS' and 'AS AVAILABLE' basis. We expressly disclaim all warranties of any kind, whether express or implied."
+    },
+    "limitation": {
+      "title": "Limitation of Liability",
+      "content": "In no event shall Deni AI, nor its directors, employees, partners, agents, suppliers, or affiliates, be liable for any indirect, incidental, special, consequential or punitive damages resulting from your use of the service."
+    },
+    "indemnification": {
+      "title": "Indemnification",
+      "content": "You agree to defend, indemnify, and hold harmless Deni AI and its licensors from and against any claims, liabilities, damages, judgments, awards, losses, costs, expenses, or fees arising out of your use of the service."
+    },
+    "termination": {
+      "title": "Termination",
+      "content": "We may terminate or suspend your account and bar access to the service immediately, without prior notice or liability, for any reason whatsoever, including without limitation if you breach the Terms."
+    },
+    "changes": {
+      "title": "Changes to Terms",
+      "content": "We reserve the right to modify or replace these Terms at any time. It is your responsibility to review these Terms periodically for changes."
+    },
+    "contact": {
+      "title": "Contact Us",
+      "content": "If you have any questions about these Terms, please contact us via our GitHub repository or through our support channels."
+    },
+    "lastUpdated": "Last Updated:"
+  },
+  "canvas": {
+    "tooltip": "Use Canvas",
+    "view": "View",
+    "edit": "Edit",
+    "title": "Canvas",
+    "copied": "Canvas content copied to clipboard",
+    "clickToOpen": "Click to view canvas"
+  },
+  "translation": {
+    "tooltip": "Use Translation",
+    "title": "Translation",
+    "copied": "Translation copied to clipboard",
+    "clickToOpen": "Click to view translation"
   }
 }

@@ -31,6 +31,7 @@ export function Header() {
     { href: "/", label: t("header.home") },
     { href: "/home", label: t("header.app") },
     { href: "/privacy-policy", label: t("header.privacyPolicy") },
+    { href: "/terms-of-service", label: t("header.termsOfService") },
     { href: "https://github.com/raicdev/deni-ai", label: t("header.sourceCode") },
   ];
 
