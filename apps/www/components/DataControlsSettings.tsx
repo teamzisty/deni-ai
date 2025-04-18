@@ -303,8 +303,6 @@ export default function DataControlsSettings() {
           // Let's assume clearAllSessions handles the conversation data entirely.
           // const userDocRef = doc(firestore, `deni-ai-conversations/${user.uid}`);
           // await deleteDoc(userDocRef); // This might delete the parent doc if needed
-
-          console.log("Successfully deleted user's conversations data from Firestore via hook");
         } catch (error) {
           console.error("Error deleting user's conversations data via hook:", error);
           // Continue with account deletion even if Firestore deletion fails
@@ -370,7 +368,7 @@ export default function DataControlsSettings() {
 
       {/* Data Export/Import */}
       <div className="bg-card/50 border border-border/30 rounded-md overflow-hidden">
-        <div className="flex p-5 items-center gap-4">
+        <div className="flex flex-col p-5 gap-4">
           <div className="flex-grow">
             <h3 className="text-lg font-bold">
               {t("settings.dataControls.export.title")}

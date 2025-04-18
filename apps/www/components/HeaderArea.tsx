@@ -6,11 +6,17 @@ import { memo } from "react";
 import { ModelSelector } from "./ModelSelector";
 import { ReasoningEffortSelector } from "./ReasoningEffortSelector";
 import { Button } from "@workspace/ui/components/button";
-import { Settings } from "lucide-react";
+import { Settings, Share2 } from "lucide-react";
 import { EasyTip } from "@/components/easytip";
 import { useSettingsDialog } from "@/context/SettingsDialogContext";
 import { useTheme } from "next-themes";
 import { useTranslations } from "next-intl";
+import { useIsMobile } from "@workspace/ui/hooks/use-mobile";
+import { cn } from "@workspace/ui/lib/utils";
+import { toast } from "sonner";
+import ShareButton from "./ShareButton";
+import { ChatSession } from "@/hooks/use-chat-sessions";
+import { User } from "firebase/auth";
 
 interface HeaderAreaProps {
   model: string;
@@ -19,26 +25,36 @@ interface HeaderAreaProps {
   handleModelChange: (model: string) => void;
   reasoningEffort?: reasoningEffortType;
   handleReasoningEffortChange?: (effort: reasoningEffortType) => void;
-  rightContent?: React.ReactNode;
+  currentSession: ChatSession;
+  user: User;
+  messages: any[];
+  chatId: string;
 }
 
 const HeaderArea: React.FC<HeaderAreaProps> = memo(
   ({
     model,
-    generating,
-    stop,
     handleModelChange,
     reasoningEffort,
     handleReasoningEffortChange,
-    rightContent,
+    currentSession,
+    user,
+    messages,
   }) => {
     const { theme, setTheme } = useTheme();
+    const isMobile = useIsMobile();
     const t = useTranslations();
     const { openDialog } = useSettingsDialog();
 
     return (
-      <div className="shadow-xl bg-secondary/70 p-2 rounded-full flex items-center justify-between w-fit mx-auto">
-        <div className="flex gap-1 items-center">
+      <div className={cn(
+        "shadow-xl bg-secondary/70 rounded-full flex items-center justify-between mx-auto",
+        isMobile ? "p-1 px-2 gap-0.5" : "p-2 w-fit"
+      )}>
+        <div className={cn(
+          "flex items-center",
+          isMobile ? "gap-0.5" : "gap-1"
+        )}>
           <ModelSelector
             handleModelChange={handleModelChange}
             model={model}
@@ -56,16 +72,23 @@ const HeaderArea: React.FC<HeaderAreaProps> = memo(
             )}
           <EasyTip content={t("settings.title")}>
             <Button
-              className="rounded-full"
+              className={cn(
+                "rounded-full",
+                isMobile && "px-2 py-1"
+              )}
               variant={"secondary"}
               onClick={() => openDialog()}
             >
-              <Settings />
-              {t("settings.title")}
+              <Settings size={isMobile ? 18 : 24} />
+              {!isMobile && t("settings.title")}
             </Button>
           </EasyTip>
+          <ShareButton
+            currentSession={currentSession}
+            user={user}
+            messages={messages}
+          />
         </div>
-        {rightContent}
       </div>
     );
   },

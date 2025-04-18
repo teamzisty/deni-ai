@@ -65,20 +65,16 @@ export function ChatSessionsProvider({ children }: { children: ReactNode }) {
   const syncLocalStorageToFirebase = useCallback(async (clearAfterSync = false) => {
     if (!user && !firestore) return; // Removed auth/firestore check as they are stable
 
-    console.log("Syncing localStorage sessions to Firebase");
-
     try {
       const savedSessions = localStorage.getItem("chatSessions");
       const savedCurrentSession = localStorage.getItem("currentChatSession");
 
       if (!savedSessions || savedSessions === "[]") {
-        console.log("No localStorage sessions to sync");
         return;
       }
 
       const parsedSessions = JSON.parse(savedSessions);
       if (!Array.isArray(parsedSessions) || parsedSessions.length === 0) {
-        console.log("No valid localStorage sessions to sync");
         return;
       }
 
@@ -114,12 +110,10 @@ export function ChatSessionsProvider({ children }: { children: ReactNode }) {
           }
         });
 
-        console.log(`Syncing localStorage session ${session.id} to Firebase`);
         return setDoc(sessionDoc, sessionData);
       });
 
       await Promise.all(savePromises);
-      console.log(`Successfully synced ${parsedSessions.length} sessions from localStorage to Firebase`);
 
       // Save current session if available
       if (savedCurrentSession && savedCurrentSession !== "null") {
@@ -151,14 +145,12 @@ export function ChatSessionsProvider({ children }: { children: ReactNode }) {
           }
         });
 
-        console.log("Syncing localStorage current session to Firebase");
         await setDoc(activeSessionRef, sessionData);
-        console.log("Successfully synced current session from localStorage to Firebase");
       }
+
 
       // Optionally clear localStorage after successful sync
       if (clearAfterSync) {
-        console.log("Clearing localStorage after successful sync");
         localStorage.removeItem("chatSessions");
         localStorage.removeItem("currentChatSession");
       }
@@ -180,7 +172,6 @@ export function ChatSessionsProvider({ children }: { children: ReactNode }) {
 
     // Only sync when user transitions from logged out to logged in
     if (currentAuthState && !prevAuthState) {
-      console.log("Auth state changed: user logged in, syncing localStorage to Firebase");
       syncLocalStorageToFirebase(false); // Keep local copies as backup
     }
 
@@ -271,13 +262,8 @@ export function ChatSessionsProvider({ children }: { children: ReactNode }) {
 
           if (latestSession) {
             setCurrentSession(latestSession);
-            console.log("Found active session:", latestSession.id);
-          } else {
-            console.log("No valid active session found");
           }
-        } else {
-          console.log("No active sessions found in Firestore");
-        }
+          }
       } catch (error) {
         console.error("Failed to load sessions from Firestore:", error);
         toast.error(t("loadFailed"));
@@ -350,8 +336,6 @@ export function ChatSessionsProvider({ children }: { children: ReactNode }) {
                   sessionData[key] = null;
                 }
               });
-
-              console.log("Saving session:", sessionData);
 
               return setDoc(docRef, sessionData);
             });
@@ -452,8 +436,6 @@ export function ChatSessionsProvider({ children }: { children: ReactNode }) {
             }
           });
 
-          console.log("Saving current session:", sessionData);
-
           await setDoc(currentSessionRef, sessionData);
         } catch (error) {
           console.error("Failed to save current session to Firestore:", error);
@@ -537,9 +519,6 @@ export function ChatSessionsProvider({ children }: { children: ReactNode }) {
           `deni-ai-conversations/${user.uid}/sessions/${id}`
         );
         deleteDoc(sessionDocRef)
-          .then(() => {
-            console.log(`Session ${id} successfully deleted from Firestore`);
-          })
           .catch((error) => {
             console.error(
               `Error deleting session ${id} from Firestore:`,
@@ -583,7 +562,6 @@ export function ChatSessionsProvider({ children }: { children: ReactNode }) {
         activeSnapshot.docs.forEach((doc) => batch.delete(doc.ref));
 
         await batch.commit(); // Commit the batch delete
-        console.log("All sessions successfully deleted from Firestore");
       } catch (error) {
         console.error("Error deleting all sessions from Firestore:", error);
         toast.error(t("deleteAllFailed"));
@@ -597,7 +575,6 @@ export function ChatSessionsProvider({ children }: { children: ReactNode }) {
     try {
       localStorage.removeItem("chatSessions");
       localStorage.removeItem("currentChatSession");
-      console.log("Cleared sessions from localStorage");
     } catch (error) {
       console.error("Error clearing sessions from localStorage:", error);
       // Optionally notify user about localStorage clear failure
@@ -644,7 +621,6 @@ export function ChatSessionsProvider({ children }: { children: ReactNode }) {
     try {
       // ユーザーIDにcurrentUserのuidを使用して確実に現在の認証状態を反映
       const uid = currentUser.uid;
-      console.log("Syncing sessions for user:", uid);
 
       // Also check localStorage for any sessions that might need to be synced
       let localStorageSessions: ChatSession[] = [];
@@ -654,7 +630,6 @@ export function ChatSessionsProvider({ children }: { children: ReactNode }) {
           const parsedSessions = JSON.parse(savedSessions);
           if (Array.isArray(parsedSessions) && parsedSessions.length > 0) {
             localStorageSessions = parsedSessions;
-            console.log(`Found ${localStorageSessions.length} sessions in localStorage to sync`);
           }
         }
       } catch (localStorageError) {
@@ -670,7 +645,6 @@ export function ChatSessionsProvider({ children }: { children: ReactNode }) {
         const newLocalSessions = localStorageSessions.filter(s => !existingIds.has(s.id));
 
         if (newLocalSessions.length > 0) {
-          console.log(`Adding ${newLocalSessions.length} new sessions from localStorage`);
           allSessions.push(...newLocalSessions);
         }
       }
@@ -680,19 +654,9 @@ export function ChatSessionsProvider({ children }: { children: ReactNode }) {
         firestore, // firestore is checked above
         `deni-ai-conversations/${uid}/sessions`
       );
-      console.log(
-        "Session collection path:",
-        `deni-ai-conversations/${uid}/sessions`
-      );
 
       // まず、既存のセッションをFirestoreに保存（更新または作成）
       if (allSessions.length > 0) {
-        console.log(
-          "Saving sessions to Firestore:",
-          allSessions.length,
-          "sessions"
-        );
-
         const savePromises = allSessions.map((session) => {
           const sessionDoc = doc(sessionsRef, session.id);
           // createdAtがDate型であることを確認
@@ -717,15 +681,10 @@ export function ChatSessionsProvider({ children }: { children: ReactNode }) {
             }
           });
 
-          console.log("Saving session:", sessionData);
-
           return setDoc(sessionDoc, sessionData);
         });
 
         await Promise.all(savePromises);
-        console.log("Successfully saved all sessions to Firestore");
-      } else {
-        console.log("No sessions to save to Firestore");
       }
 
       // 現在のアクティブセッションを保存
@@ -734,7 +693,6 @@ export function ChatSessionsProvider({ children }: { children: ReactNode }) {
           firestore, // firestore is checked above
           `deni-ai-conversations/${uid}/active/${currentSession.id}`
         );
-        console.log("Saving active session:", currentSession.id);
 
         // createdAtがDate型であることを確認
         const createdAt =
@@ -758,14 +716,11 @@ export function ChatSessionsProvider({ children }: { children: ReactNode }) {
           }
         });
 
-        console.log("Saving active session with data:", sessionData);
         await setDoc(activeSessionRef, sessionData);
-        console.log("Successfully saved active session to Firestore");
       }
 
       // Firestoreからセッションを読み込む
       const snapshot = await getDocs(sessionsRef);
-      console.log("Retrieved", snapshot.docs.length, "sessions from Firestore");
 
       const loadedSessions = snapshot.docs.map((doc) => {
         const data = doc.data();
@@ -789,7 +744,6 @@ export function ChatSessionsProvider({ children }: { children: ReactNode }) {
       }) as ChatSession[];
 
       setSessions(loadedSessions);
-      console.log("Updated local sessions with data from Firestore");
 
       // Find the active session from the active collection
       const activeCollectionRef = collection(
@@ -830,12 +784,7 @@ export function ChatSessionsProvider({ children }: { children: ReactNode }) {
 
         if (latestSession) {
           setCurrentSession(latestSession);
-          console.log("Found active session:", latestSession.id);
-        } else {
-          console.log("No valid active session found");
         }
-      } else {
-        console.log("No active sessions found in Firestore");
       }
 
       // Clear localStorage after successful sync if needed
@@ -851,7 +800,6 @@ export function ChatSessionsProvider({ children }: { children: ReactNode }) {
           if (currentSession) {
             localStorage.setItem("currentChatSession", JSON.stringify(currentSession));
           }
-          console.log("Updated localStorage with latest data from Firebase");
         } catch (error) {
           console.error("Error updating localStorage after sync:", error);
         }
@@ -885,7 +833,6 @@ export function ChatSessionsProvider({ children }: { children: ReactNode }) {
           // Convert Timestamp to ISO string for JSON compatibility
           createdAt: (doc.data().createdAt?.toDate() || new Date()).toISOString(),
         })) as unknown as ChatSession[]; // Adjust type assertion as needed
-        console.log(`Exporting ${sessionsToExport.length} sessions from Firestore`);
       } catch (error) {
         console.error("Failed to fetch sessions from Firestore for export:", error);
         toast.error(t("exportFirestoreFailed"));
@@ -893,7 +840,6 @@ export function ChatSessionsProvider({ children }: { children: ReactNode }) {
         try {
           const savedSessions = localStorage.getItem("chatSessions");
           sessionsToExport = savedSessions ? JSON.parse(savedSessions) : [];
-          console.log(`Exporting ${sessionsToExport.length} sessions from localStorage (Firestore fallback)`);
         } catch (localError) {
           console.error("Failed to read localStorage for export fallback:", localError);
           toast.error(t("exportLocalFailed"));
@@ -905,7 +851,6 @@ export function ChatSessionsProvider({ children }: { children: ReactNode }) {
       try {
         const savedSessions = localStorage.getItem("chatSessions");
         sessionsToExport = savedSessions ? JSON.parse(savedSessions) : [];
-        console.log(`Exporting ${sessionsToExport.length} sessions from localStorage`);
       } catch (error) {
         console.error("Failed to read sessions from localStorage for export:", error);
         toast.error(t("exportLocalFailed"));
@@ -937,7 +882,6 @@ export function ChatSessionsProvider({ children }: { children: ReactNode }) {
         // Ensure createdAt is parsed back into a Date object for internal use
         createdAt: new Date(s.createdAt as string), // Added type assertion
       })) as ChatSession[]; // Added type assertion
-      console.log(`Attempting to import ${importedSessions.length} sessions`);
     } catch (error) {
       console.error("Failed to parse imported JSON data:", error);
       toast.error(t("importParseFailed"), {
@@ -979,7 +923,6 @@ export function ChatSessionsProvider({ children }: { children: ReactNode }) {
         });
 
         await batch.commit();
-        console.log(`Successfully imported ${importedSessions.length} sessions to Firestore`);
         toast.success(t("importFirestoreSuccess"));
 
         // Reload sessions from Firestore to update UI state
@@ -1005,7 +948,6 @@ export function ChatSessionsProvider({ children }: { children: ReactNode }) {
         setSessions(importedSessions); // Update local state directly
         setCurrentSession(null); // Reset current session after import
         localStorage.removeItem("currentChatSession"); // Clear potentially outdated current session
-        console.log(`Successfully imported ${importedSessions.length} sessions to localStorage`);
         toast.success(t("importLocalSuccess"));
       } catch (error) {
         console.error("Failed to import sessions to localStorage:", error);

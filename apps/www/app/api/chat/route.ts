@@ -151,14 +151,30 @@ export async function POST(req: Request) {
               parameters: z.object({
                 content: z.string().describe("The content to add to the Canvas, in markdown format."),
                 title: z.string().optional().describe("Optional title for the Canvas document. (Set desired title to the Canvas.)"),
+                mode: z.enum(["create", "append", "replace"]).optional().describe("How to update canvas content. 'create' creates a new canvas (default if not specified), 'append' adds content to the existing canvas, 'replace' replaces all content with new content."),
+                existingContent: z.string().optional().describe("Current content of the canvas, if available. Only used with 'append' mode."),
               }),
-              execute: async ({ content, title }) => {
+              execute: async ({ content, title, mode = "create", existingContent = "" }) => {
+                let finalContent = content;
+                
+                // If mode is append and existingContent is provided, append the new content
+                if (mode === "append" && existingContent) {
+                  finalContent = `${existingContent}\n\n${content}`;
+                } else if (mode === "append" && !existingContent) {
+                  // If append mode but no existingContent is provided, just use the content as is
+                  // This avoids the MessageLog component needing to directly modify invocation args
+                  console.log("Append mode requested but no existingContent provided");
+                  finalContent = content;
+                  // We'll return a specific message to indicate this
+                  mode = "create"; // Treat as create mode to avoid confusion
+                }
+                
                 dataStream.writeMessageAnnotation({
-                  canvasContent: content,
+                  canvasContent: finalContent,
                   canvasTitle: title || "Untitled Document",
                 });
                 
-                return "Canvas content created successfully.";
+                return `Canvas content ${mode}d successfully.`;
               },
             }),
           };

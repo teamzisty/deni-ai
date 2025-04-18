@@ -3,8 +3,8 @@
 import { cn } from "@workspace/ui/lib/utils";
 import { AlertCircleIcon, CheckCircleIcon, Share2 } from "lucide-react";
 import { MessageLog } from "@/components/MessageLog";
-import { useChatSessions } from "@/hooks/use-chat-sessions";
-import { useParams } from "next/navigation";
+import { useChatSessions, ChatSession } from "@/hooks/use-chat-sessions";
+import { useParams, useSearchParams } from "next/navigation";
 import {
   modelDescriptions,
   reasoningEffortType,
@@ -30,10 +30,9 @@ import { ChatRequestOptions, UIMessage } from "ai";
 import logger from "@/utils/logger";
 import { useAuth } from "@/context/AuthContext";
 import { useTranslations } from "next-intl";
-import { Alert, AlertDescription, AlertTitle } from "@workspace/ui/components/alert";
-import { StatusAlert } from "@/components/StatusAlert";
 import React from "react";
-
+import { useIsMobile } from "@workspace/ui/hooks/use-mobile";
+import { User } from "firebase/auth";
 interface MessageListProps {
   messages: UIMessage[];
   sessionId: string;
@@ -100,13 +99,17 @@ const ChatApp: React.FC = () => {
     updateSession,
     getSession,
     isLoading: isSessionsLoading,
+    sessions,
   } = useChatSessions();
   const { user, isLoading, auth } = useAuth();
 
   const t = useTranslations();
 
   const params = useParams<{ id: string }>();
-  const currentSession = getSession(params.id);
+  const searchParams = useSearchParams();
+  const [currentSession, setCurrentSessionData] = useState<
+    ChatSession | undefined
+  >(undefined);
 
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
@@ -116,6 +119,8 @@ const ChatApp: React.FC = () => {
   const [searchEnabled, setSearchEnabled] = useState(false);
   const [advancedSearch, setAdvancedSearch] = useState(false);
   const [deepResearch, setDeepResearch] = useState(false);
+
+  const isMobile = useIsMobile();
 
   const [currentAuthToken, setCurrentAuthToken] = useState<string | null>(null);
 
@@ -129,9 +134,13 @@ const ChatApp: React.FC = () => {
   const [isLogged, setIsLogged] = useState(false);
 
   const chatLogRef = useRef<HTMLDivElement>(null);
+  const sendButtonRef = useRef<HTMLButtonElement>(null);
 
   const [retryCount, setRetryCount] = useState<number>(0);
   const MAX_RETRIES = 3;
+
+  // Track if we've processed the params
+  const [paramsProcessed, setParamsProcessed] = useState(false);
 
   const {
     messages,
@@ -168,25 +177,85 @@ const ChatApp: React.FC = () => {
     },
   });
 
-  const [showSystemAlert, setShowSystemAlert] = useState(true);
-
   const [canvasEnabled, setCanvasEnabled] = useState(false);
 
   const canvasToggle = () => {
     setCanvasEnabled((prev) => !prev);
   };
 
+  const [isRedirecting, setIsRedirecting] = useState(false);
+  const [sessionChecked, setSessionChecked] = useState(false);
+
+  // 再読み込み時にセッションが消えるのを防ぐために、getSessionをメモ化する
+  const getCurrentSession = useCallback(() => {
+    // isSessionsLoadingが完了していないなら、nullを返す
+    if (isSessionsLoading) {
+      return null;
+    }
+    const session = getSession(params.id);
+    return session;
+  }, [getSession, params.id, isSessionsLoading, sessions?.length]);
+
+  // Handle URL query parameters
   useEffect(() => {
-    if (!currentSession) {
-      router.push("/home");
+    if (paramsProcessed || !searchParams || !isLogged) return;
+
+    // Handle initial model from URL
+    const modelParam = searchParams.get("model");
+    if (modelParam && modelDescriptions[modelParam]) {
+      setModel(modelParam);
+      logger.info("URL Params", `Set model to ${modelParam}`);
+    }
+
+    // Handle initial image from URL
+    const imgParam = searchParams.get("img");
+    if (imgParam) {
+      setImage(imgParam);
+      setVisionRequired(true);
+      logger.info("URL Params", "Found image in URL params");
+    }
+
+    // Mark params as processed
+    setParamsProcessed(true);
+  }, [searchParams, isLogged, paramsProcessed]);
+
+  useEffect(() => {
+    // 認証中は何もしない
+    if (isLoading || isSessionsLoading || sessionChecked || isRedirecting) {
       return;
     }
 
-    setAdvancedSearch(window.localStorage.getItem("advancedSearch") === "true");
+    // 少し遅延を入れて、確実にセッションデータが読み込まれるようにする
+    const timer = setTimeout(() => {
+      const session = getCurrentSession();
 
-    setMessages(currentSession.messages);
-    logger.info("Init", "Loaded Messages");
-  }, [currentSession, router, setMessages]);
+      // セッションが見つからない場合のみリダイレクト
+      if (!session) {
+        setIsRedirecting(true);
+        router.push("/home");
+        return;
+      }
+
+      setCurrentSessionData(session);
+      setSessionChecked(true);
+      setAdvancedSearch(
+        window.localStorage.getItem("advancedSearch") === "true"
+      );
+      setMessages(session.messages);
+      logger.info("Init", "Loaded Messages");
+    }, 1000); // 1000msの遅延を追加
+
+    return () => clearTimeout(timer);
+  }, [
+    isLoading,
+    isSessionsLoading,
+    getCurrentSession,
+    router,
+    setMessages,
+    params.id,
+    isRedirecting,
+    sessionChecked,
+  ]);
 
   useEffect(() => {
     if (!auth) return;
@@ -208,9 +277,8 @@ const ChatApp: React.FC = () => {
 
   // 初期メッセージを別のuseEffectで処理
   useEffect(() => {
-    if (!isLogged || !currentSession) return;
+    if (!isLogged || !currentSession || !paramsProcessed) return;
 
-    const searchParams = new URLSearchParams(window.location.search);
     const initialMessage = searchParams.get("i");
 
     if (initialMessage && !messages.length) {
@@ -221,10 +289,33 @@ const ChatApp: React.FC = () => {
       if (!hasSubmitted) {
         sessionStorage.setItem(`submitted_${params.id}`, "true");
         // 非同期でhandleSubmitを実行
-        Promise.resolve().then(() => {
-          const event = new Event("submit");
-          handleSubmit(event as Event);
-        });
+        setTimeout(() => {
+          // inputの値を設定してからhandleSubmitを呼び出す
+          logger.info(
+            "Initial message",
+            `Sending initial message: ${initialMessage}`
+          );
+
+          const sendInitialMessage = async () => {
+            try {
+              sendButtonRef.current?.click();
+            } catch (error) {
+              logger.error(
+                "Initial message",
+                `Failed to send initial message: ${error}`
+              );
+              toast.error(t("chat.error.messageSendFailed"), {
+                description:
+                  error instanceof Error
+                    ? error.message
+                    : t("common.error.unknown"),
+              });
+            }
+          };
+
+          // 送信を実行
+          sendInitialMessage();
+        }, 500); // タイミングを更に調整
       }
     }
   }, [
@@ -234,7 +325,13 @@ const ChatApp: React.FC = () => {
     setInput,
     params.id,
     handleSubmit,
-  ]); // handleSubmitを依存配列から削除
+    image,
+    searchParams,
+    paramsProcessed,
+    auth,
+    user,
+    t,
+  ]);
 
   useEffect(() => {
     if (
@@ -259,9 +356,6 @@ const ChatApp: React.FC = () => {
 
       // 最適化: JSON.stringifyを使わずに比較
       let hasChanges = prevMessages.length !== messages.length;
-      console.log(
-        `Length check: ${prevMessages.length} vs ${messages.length}, hasChanges=${hasChanges}`
-      );
 
       if (!hasChanges && messages.length > 0) {
         const lastPrevMsg = prevMessages[prevMessages.length - 1];
@@ -273,20 +367,13 @@ const ChatApp: React.FC = () => {
           !lastNewMsg ||
           lastPrevMsg.id !== lastNewMsg.id ||
           lastPrevMsg.content !== lastNewMsg.content;
-
-        console.log(
-          `Content check: ID ${lastPrevMsg?.id} vs ${lastNewMsg?.id}, hasChanges=${hasChanges}`
-        );
       }
 
       if (hasChanges) {
-        console.log(`Updating session ${params.id} (changes detected)`);
         updateSession(params.id, {
           ...currentSession,
           messages: messages,
         });
-      } else {
-        console.log(`Skipping session update (no changes detected)`);
       }
     }, 500); // 500ms遅延
 
@@ -386,6 +473,14 @@ const ChatApp: React.FC = () => {
           }
           submitOptions.headers = { Authorization: idToken };
         }
+      }
+
+      logger.info(
+        "Send message",
+        `Sending message with input: "${input.substring(0, 30)}..."`
+      );
+      if (image) {
+        logger.info("Send message", "Sending with image attachment");
       }
 
       handleSubmit(event, submitOptions);
@@ -585,7 +680,7 @@ const ChatApp: React.FC = () => {
     });
   };
 
-  if (isLoading || isSessionsLoading) {
+  if (isLoading || isSessionsLoading || isRedirecting || !sessionChecked) {
     return <Loading />;
   }
 
@@ -602,69 +697,10 @@ const ChatApp: React.FC = () => {
         handleModelChange={handleModelChange}
         reasoningEffort={reasoningEffort}
         handleReasoningEffortChange={setReasoningEffort}
-        rightContent={
-          <>
-            <Button
-              variant="secondary"
-              className="ml-2 rounded-full"
-              onClick={async () => {
-                if (!currentSession || !user) {
-                  toast.error(t("chat.error.shareNotLoggedIn"));
-                  return;
-                }
-
-                if (messages.length === 0) {
-                  toast.error(t("chat.error.shareNoMessages"));
-                  return;
-                }
-
-                try {
-                  const idToken = await user.getIdToken();
-                  const response = await fetch("/api/share", {
-                    method: "POST",
-                    headers: {
-                      "Content-Type": "application/json",
-                      Authorization: idToken,
-                    },
-                    body: JSON.stringify({
-                      sessionId: params.id,
-                      title: currentSession.title,
-                      messages: messages,
-                    }),
-                  });
-
-                  if (!response.ok) {
-                    const errorData = await response.json();
-                    throw new Error(
-                      errorData.error || t("chat.error.shareFailed")
-                    );
-                  }
-
-                  const data = await response.json();
-
-                  // クリップボードにURLをコピー
-                  const shareUrl = `${window.location.origin}${data.shareUrl}`;
-                  await navigator.clipboard.writeText(shareUrl);
-
-                  toast.success(t("chat.shareSuccess"), {
-                    description: t("chat.shareLinkCopied"),
-                  });
-                } catch (error) {
-                  console.error(error);
-                  toast.error(t("chat.error.shareFailed"), {
-                    description:
-                      error instanceof Error
-                        ? error.message
-                        : t("common.error.unknown"),
-                  });
-                }
-              }}
-            >
-              <Share2 className="mr-2 h-4 w-4" />
-              {t("chat.share")}
-            </Button>
-          </>
-        }
+        currentSession={currentSession as ChatSession}
+        user={user as User}
+        messages={messages}
+        chatId={params.id}
       />
       {/* Chat Log */}
       {/* <StatusAlert
@@ -677,7 +713,10 @@ const ChatApp: React.FC = () => {
       /> */}
 
       <div
-        className="flex w-full h-full md:w-9/12 lg:w-7/12 rounded overflow-y-auto scrollbar-thin scrollbar-thumb-primary scrollbar-track-secondary scrollbar-thumb-rounded-md scrollbar-track-rounded-md"
+        className={cn(
+          "flex w-full h-full md:w-9/12 lg:w-7/12 rounded overflow-y-auto scrollbar-thin scrollbar-thumb-primary scrollbar-track-secondary scrollbar-thumb-rounded-md scrollbar-track-rounded-md",
+          isMobile && "px-1"
+        )}
         ref={chatLogRef}
       >
         <div className="w-full">
@@ -734,6 +773,7 @@ const ChatApp: React.FC = () => {
           isUploading={isUploading}
           searchEnabled={searchEnabled}
           deepResearch={deepResearch}
+          sendButtonRef={sendButtonRef}
           canvasEnabled={canvasEnabled}
           modelDescriptions={modelDescriptions}
           deepResearchToggle={deepResearchToggle}

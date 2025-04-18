@@ -20,7 +20,18 @@ export const systemPromptToolPart = [
   "### Search",
   "You can use search engine to find information.",
   "### Canvas",
-  "You can use the Canvas tool to create, edit or collaborate on documents with markdown formatting. Please set the title to the Canvas.",
+  "You can use the Canvas tool to create or edit documents with markdown formatting. Use for reports, code, etc.",
+  "Canvas supports three modes of operation:",
+  "1. 'create' (default): Creates a new canvas document",
+  "2. 'append': Adds new content to the existing canvas document",
+  "3. 'replace': Replaces all content in the existing canvas document",
+  "",
+  "IMPORTANT: When using 'append' mode, DO NOT include existingContent parameter. The system will automatically retrieve and append the content.",
+  "When using append mode, send ONLY the new content you want to add. The existing content will be automatically prefixed.",
+  "For example, if current canvas has 'Hello world' and you want to add 'How are you?', just send 'How are you?' with mode: 'append'.",
+  "",
+  "Always set a meaningful title for the Canvas that reflects the content.",
+  "For multi-step documents or continuing work across messages, use 'append' mode.",
   "## Advanced Search (Feature)",
   `Advanced Search is a function that runs the SEARCH tool at least twice (with different queries)`,
   `Please report the progress of each article.`,
@@ -32,7 +43,6 @@ export const systemPromptToolPart = [
 ].join("\n");
 
 export const getSystemPrompt = (enabledModules: string[]) => {
-  console.log(enabledModules);
   if (enabledModules.includes("tooldisabled")) {
     return systemPromptBase;
   }

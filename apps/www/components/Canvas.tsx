@@ -1,41 +1,72 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { useTranslations } from "next-intl";
-import { Paintbrush, Download, Copy, X } from "lucide-react";
+import { Paintbrush, Download, Copy, X, Save } from "lucide-react";
 import { Button } from "@workspace/ui/components/button";
 import { ScrollArea } from "@workspace/ui/components/scroll-area";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { toast } from "sonner";
 import { Pre } from "@/components/markdown";
-import { cn } from "@workspace/ui/lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
+import { useCanvas } from "@/context/CanvasContext";
 
 interface CanvasProps {
   content: string;
   title: string;
+  sessionId: string;
   onClose: () => void;
+  canUpdate?: boolean;
+  onUpdateCanvas?: (sessionId: string, data: { content: string; title: string }) => void;
 }
 
 export const Canvas: React.FC<CanvasProps> = ({
   content,
   title = "Untitled Document",
+  sessionId,
   onClose,
+  canUpdate = true,
+  onUpdateCanvas,
 }) => {
   const t = useTranslations();
+  const { getCanvasData, updateCanvas } = useCanvas();
   const [editMode, setEditMode] = useState(false);
   const [editableContent, setEditableContent] = useState(content);
   const [isVisible, setIsVisible] = useState(true);
+  const [canvasTitle, setCanvasTitle] = useState(title);
 
+  // セッションIDに対応するキャンバスデータをメモ化して取得
+  // const canvasData = useMemo(() => getCanvasData(sessionId), [getCanvasData, sessionId]);
+
+  // コンポーネントマウント時またはpropsやcanvasDataが変更されたときだけ内容を更新
   useEffect(() => {
+    // コンポーネント内の状態を初期化
     setEditableContent(content);
-  }, [content]);
-
-  useEffect(() => {
+    setCanvasTitle(title);
     // コンポーネントがマウントされたら表示状態にする
     setIsVisible(true);
-  }, []);
+  }, [content, title]);
+
+  // Save changes to context with sessionId
+  const saveChanges = () => {
+    if (canUpdate) {
+      const updatedData = {
+        content: editableContent,
+        title: canvasTitle,
+      };
+      
+      // 親から渡された更新関数があればそちらを使う
+      if (onUpdateCanvas) {
+        onUpdateCanvas(sessionId, updatedData);
+      } else {
+        // なければデフォルトのcontextの関数を使う
+        updateCanvas(sessionId, updatedData);
+      }
+      
+      toast.success(t("canvas.saved") || "Canvas saved successfully");
+    }
+  };
 
   const handleCopy = () => {
     navigator.clipboard.writeText(editableContent);
@@ -47,7 +78,7 @@ export const Canvas: React.FC<CanvasProps> = ({
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = `${title.replace(/\s+/g, "-").toLowerCase()}.md`;
+    a.download = `${canvasTitle.replace(/\s+/g, "-").toLowerCase()}.md`;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
@@ -66,10 +97,13 @@ export const Canvas: React.FC<CanvasProps> = ({
   };
 
   const handleBackdropClick = (e: React.MouseEvent) => {
-    // 背景のクリックでのみ閉じる（コンテンツクリック時は閉じない）
     if (e.target === e.currentTarget) {
       handleClose();
     }
+  };
+
+  const handleTitleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setCanvasTitle(e.target.value);
   };
 
   return (
@@ -91,11 +125,26 @@ export const Canvas: React.FC<CanvasProps> = ({
             transition={{ type: "spring", damping: 30, stiffness: 300 }}
           >
             <div className="flex items-center justify-between p-3 border-b">
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 flex-1">
                 <Paintbrush size={18} className="text-primary" />
-                <span className="font-medium text-lg">{title}</span>
+                {editMode ? (
+                  <input
+                    type="text"
+                    value={canvasTitle}
+                    onChange={handleTitleChange}
+                    className="font-medium text-lg bg-transparent border-b border-primary focus:outline-none"
+                  />
+                ) : (
+                  <span className="font-medium text-lg">{canvasTitle}</span>
+                )}
               </div>
               <div className="flex items-center gap-2">
+                {canUpdate && editMode && (
+                  <Button variant="default" size="sm" onClick={saveChanges}>
+                    <Save size={16} className="mr-1" />
+                    {t("canvas.save") || "Save"}
+                  </Button>
+                )}
                 <Button variant="ghost" size="sm" onClick={handleCopy}>
                   <Copy size={16} />
                 </Button>

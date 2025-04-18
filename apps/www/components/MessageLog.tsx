@@ -1,4 +1,4 @@
-import { FC, memo, useEffect, useMemo, useState } from "react";
+import { FC, memo, useEffect, useMemo, useState, useCallback } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { Clock, Copy, MousePointer, RefreshCw, Paintbrush } from "lucide-react";
@@ -21,6 +21,7 @@ import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 import { modelDescriptions } from "@/lib/modelDescriptions";
 import Canvas from "./Canvas";
+import { useCanvas } from "@/context/CanvasContext";
 
 interface MessageLogProps {
   message: UIMessage;
@@ -65,6 +66,8 @@ MemoizedMarkdown.displayName = "MemoizedMarkdown";
 interface MessageState {
   model: string;
   thinkingTime: number;
+  canvasContent?: string;
+  canvasTitle?: string;
 }
 
 interface messageAnnotation {
@@ -78,6 +81,7 @@ interface messageAnnotation {
 type MessageAction =
   | { type: "SET_MODEL"; payload: string }
   | { type: "SET_THINKING_TIME"; payload: number }
+  | { type: "SET_CANVAS_CONTENT"; payload: { content: string; title: string } }
   | { type: "UPDATE_FROM_ANNOTATIONS"; payload: any[] };
 
 function messageReducer(
@@ -89,6 +93,12 @@ function messageReducer(
       return { ...state, model: action.payload };
     case "SET_THINKING_TIME":
       return { ...state, thinkingTime: action.payload };
+    case "SET_CANVAS_CONTENT":
+      return { 
+        ...state, 
+        canvasContent: action.payload.content,
+        canvasTitle: action.payload.title
+      };
     case "UPDATE_FROM_ANNOTATIONS":
       const annotations = action.payload;
       const updates: Partial<MessageState> = {};
@@ -110,11 +120,20 @@ function messageReducer(
         ).thinkingTime;
       }
 
+      const canvasAnnotation = annotations?.find(
+        (a) => (a as messageAnnotation).canvasContent
+      );
+      if (canvasAnnotation) {
+        updates.canvasContent = (canvasAnnotation as messageAnnotation).canvasContent;
+        updates.canvasTitle = (canvasAnnotation as messageAnnotation).canvasTitle || "Untitled Document";
+      }
+
       return { ...state, ...updates };
     default:
       return state;
   }
 }
+
 // メッセージのコントロール部分（コピーボタンと生成時間）を別コンポーネントとして抽出
 const MessageControls = memo(
   ({
@@ -140,8 +159,7 @@ const MessageControls = memo(
         <div className="p-1 text-gray-400 hover:text-foreground">
           <EasyTip content={t("messageLog.copy")}>
             <Button
-              size="sm"
-              className="p-0 ml-2 rounded-full"
+              className="p-0 mx-1 rounded-full"
               variant={"ghost"}
               onClick={handleCopy}
             >
@@ -153,8 +171,7 @@ const MessageControls = memo(
           <div className="p-1 text-gray-400 hover:text-foreground">
             <EasyTip content={t("messageLog.regenerate")}>
               <Button
-                size="sm"
-                className="p-0 ml-2 rounded-full"
+                className="p-0 mx-1 rounded-full"
                 variant={"ghost"}
                 onClick={onRegenerate}
               >
@@ -166,12 +183,9 @@ const MessageControls = memo(
         )}
         <div className="p-1 text-gray-400 transition-all cursor-default hover:text-foreground">
           <EasyTip content={t("messageLog.generationTime")}>
-            <Button
-              variant={"ghost"}
-              className="flex items-center ml-2 p-2 m-0 !px-1"
-            >
+            <div className="flex items-center gap-1 mx-1 p-1 m-0 px-1">
               <Clock size="16" />
-              <span>
+              <span className="text-sm">
                 {thinkingTime < 0
                   ? t("messageLog.thinking")
                   : thinkingTime > 3600000
@@ -192,7 +206,7 @@ const MessageControls = memo(
                           thinkingTime / 1000
                         )} ${t("messageLog.second")}`}{" "}
               </span>
-            </Button>
+            </div>
           </EasyTip>
         </div>
       </div>
@@ -215,8 +229,13 @@ export const MessageLog: FC<MessageLogProps> = memo(
       thinkingTime: 0,
     });
 
-    // Add new states for canvas
     const [showCanvas, setShowCanvas] = useState(false);
+    const { getCanvasData, updateCanvas } = useCanvas();
+    
+    // セッション固有のキャンバスデータの取得
+    const sessionCanvasData = useMemo(() => {
+      return getCanvasData(sessionId);
+    }, [getCanvasData, sessionId]);
 
     const { getSession, updateSession } = useChatSessions();
     const t = useTranslations();
@@ -224,6 +243,14 @@ export const MessageLog: FC<MessageLogProps> = memo(
     const toolInvocations = React.useMemo(
       () => message.parts.filter((part) => part.type === "tool-invocation"),
       [message.parts]
+    );
+
+    // Canvas tool invocations
+    const canvasInvocations = React.useMemo(
+      () => toolInvocations.filter(
+        (part) => part.toolInvocation.toolName === "canvas"
+      ),
+      [toolInvocations]
     );
 
     // 「search」ツールの呼び出しだけをまとめる
@@ -244,7 +271,60 @@ export const MessageLog: FC<MessageLogProps> = memo(
       [toolInvocations]
     );
 
-    // Canvas tool invocations
+    // ツール呼び出しからキャンバスを更新するuseEffectを修正
+    useEffect(() => {
+      // 処理済みの呼び出しを追跡するための参照を作成
+      const processedInvocations = new Set<string>();
+      
+      // canvasInvocationsが変更された時のみ実行し、stateやcontextの更新による再レンダリングを防ぐ
+      const handler = () => {
+        if (canvasInvocations.length > 0) {
+          const latestInvocation = canvasInvocations[canvasInvocations.length - 1];
+          // すでに処理済みの呼び出しはスキップ（二重処理防止）
+          if (latestInvocation && 
+              latestInvocation.toolInvocation.args?.content && 
+              latestInvocation.toolInvocation.state === "result") {
+            
+            // 呼び出しIDを使って処理済みかどうかチェック
+            const invocationId = latestInvocation.toolInvocation.toolCallId;
+            if (processedInvocations.has(invocationId)) return;
+            
+            // 処理済みセットに追加
+            processedInvocations.add(invocationId);
+            
+            // もしappendモードなら自分自身でコンテンツを結合する
+            if (latestInvocation.toolInvocation.args.mode === "append" && sessionCanvasData) {
+              const existingContent = sessionCanvasData.content;
+              const newContent = latestInvocation.toolInvocation.args.content;
+              const finalContent = `${existingContent}\n\n${newContent}`;
+              
+              updateCanvas(sessionId, {
+                content: finalContent,
+                title: latestInvocation.toolInvocation.args.title || sessionCanvasData.title || "Untitled Document",
+              });
+            } else {
+              // 通常のcreateまたはreplaceモード
+              updateCanvas(sessionId, {
+                content: latestInvocation.toolInvocation.args.content,
+                title: latestInvocation.toolInvocation.args.title || "Untitled Document",
+              });
+            }
+          }
+        }
+      };
+      
+      // 初回レンダリング時のみ実行
+      handler();
+      
+      // クリーンアップ関数
+      return () => {
+        // 処理済みセットをクリア
+        processedInvocations.clear();
+      };
+      // canvasInvocationsのみを依存配列に含めてループを防止
+    }, [canvasInvocations]);
+
+    // アノテーションとキャンバスデータを処理
     useEffect(() => {
       const annotations = message.annotations;
       if (!annotations) return;
@@ -262,11 +342,71 @@ export const MessageLog: FC<MessageLogProps> = memo(
           updateSession(sessionId, updatedSession);
         }
       }
-    }, [getSession, message.annotations, sessionId, updateSession]);
 
-    useEffect(() => {
-      console.log(showCanvas);
-    }, [showCanvas]);
+      // セッション固有のキャンバス状態を更新
+      const canvasAnnotation = annotations?.find(
+        (a) => (a as messageAnnotation).canvasContent
+      );
+      if (canvasAnnotation) {
+        updateCanvas(sessionId, {
+          content: (canvasAnnotation as messageAnnotation).canvasContent || "",
+          title: (canvasAnnotation as messageAnnotation).canvasTitle || "Untitled Document",
+        });
+      }
+    }, [message.annotations, sessionId, getSession, updateSession]);
+
+    // クリック時にCanvasを表示するハンドラー修正
+    const handleShowCanvas = () => {
+      setShowCanvas(true);
+    };
+
+    // Canvasを閉じるハンドラー
+    const handleCloseCanvas = () => {
+      setShowCanvas(false);
+    };
+
+    // カスタムフック使用部分を最適化
+    const memoizedUpdateCanvas = useCallback((sid: string, data: { content: string; title: string }) => {
+      updateCanvas(sid, data);
+    }, [updateCanvas]);
+
+    // 表示するキャンバスコンテンツを取得する部分も最適化
+    const canvasContentToShow = useMemo(() => {
+      // ここでのsessionCanvasDataへの参照が問題を起こす可能性があるため、
+      // 一旦sessionCanvasDataのコピーを作成して参照
+      const currentCanvasData = sessionCanvasData ? {
+        content: sessionCanvasData.content,
+        title: sessionCanvasData.title
+      } : null;
+      
+      // 最初にsessionCanvasDataを確認（もし存在するなら優先的に使う）
+      if (currentCanvasData) {
+        return currentCanvasData;
+      }
+      
+      // 次にアノテーションを確認
+      if (state.canvasContent) {
+        return {
+          content: state.canvasContent,
+          title: state.canvasTitle || "Untitled Document",
+        };
+      }
+      
+      // 最後にキャンバスツール呼び出しを確認
+      if (canvasInvocations.length > 0) {
+        const latestInvocation = canvasInvocations[canvasInvocations.length - 1];
+        if (latestInvocation && latestInvocation.toolInvocation.args?.content) {
+          return {
+            content: latestInvocation.toolInvocation.args.content,
+            title: latestInvocation.toolInvocation.args.title || "Untitled Document",
+          };
+        }
+      }
+      
+      return null;
+      // 依存関係を最小限に抑える
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [state.canvasContent, state.canvasTitle, canvasInvocations.length]);
 
     return (
       <div className={`flex w-full message-log visible`}>
@@ -402,32 +542,34 @@ export const MessageLog: FC<MessageLogProps> = memo(
                   </div>
                 )}
 
-                {/** Canvas tool display */}
-                {/* {canvasData && (
-                    <div className="mb-4">
-                      <div
-                        onClick={() => setShowCanvas(true)}
-                        className="flex flex-col gap-1 bg-secondary w-full sm:w-fit md:w-1/2 rounded-lg p-3 cursor-pointer hover:bg-secondary/80 transition-colors"
-                      >
-                        <div className="flex items-center gap-2">
-                          <Paintbrush size={16} className="text-primary" />
-                          <span className="font-medium">{canvasData.title}</span>
-                        </div>
-                        <span className="text-sm text-muted-foreground">
-                          {t("canvas.clickToOpen")}
-                        </span>
+                {/** Display Canvas preview if available */}
+                {canvasContentToShow && (
+                  <div className="mb-4">
+                    <div
+                      onClick={handleShowCanvas}
+                      className="flex flex-col gap-1 bg-secondary w-full sm:w-fit md:w-1/2 rounded-lg p-3 cursor-pointer hover:bg-secondary/80 transition-colors"
+                    >
+                      <div className="flex items-center gap-2">
+                        <Paintbrush size={16} className="text-primary" />
+                        <span className="font-medium">{canvasContentToShow.title}</span>
                       </div>
-                      {showCanvas && canvasData.content && (
-                        <Canvas 
-                          content={canvasData.content} 
-                          title={canvasData.title} 
-                          onClose={() => setShowCanvas(false)} 
-                        />
-                      )}
+                      <span className="text-sm text-muted-foreground">
+                        {t("canvas.clickToOpen")}
+                      </span>
                     </div>
-                  )} */}
+                    {showCanvas && (
+                      <Canvas 
+                        content={canvasContentToShow.content} 
+                        title={canvasContentToShow.title}
+                        sessionId={sessionId}
+                        onClose={handleCloseCanvas}
+                        onUpdateCanvas={memoizedUpdateCanvas} 
+                      />
+                    )}
+                  </div>
+                )}
 
-                {/** ここで「tool-invocation」以外のパートを表示する、たとえば text のみなど */}
+                {/** Display message parts */}
                 {message.parts.map((part, index) => {
                   switch (part.type) {
                     case "reasoning":
@@ -472,7 +614,6 @@ export const MessageLog: FC<MessageLogProps> = memo(
                       );
 
                     case "text":
-                      // text のみ表示
                       return (
                         <MemoizedMarkdown
                           key={`${message.id}_text_${index}`}
@@ -482,49 +623,14 @@ export const MessageLog: FC<MessageLogProps> = memo(
                       );
 
                     case "tool-invocation":
-                      switch (part.toolInvocation.toolName) {
-                        case "canvas":
-                          return (
-                            <div
-                              className="mb-4"
-                              key={`${message.id}_canvas_${index}`}
-                            >
-                              <div
-                                onClick={() => setShowCanvas(true)}
-                                className="flex flex-col gap-1 bg-secondary w-full sm:w-fit md:w-1/2 rounded-lg p-3 cursor-pointer hover:bg-secondary/80 transition-colors"
-                              >
-                                <div className="flex items-center gap-2">
-                                  <Paintbrush
-                                    size={16}
-                                    className="text-primary"
-                                  />
-                                  <span className="font-medium">
-                                    {part.toolInvocation.args?.title ||
-                                      "Untitled Document"}
-                                  </span>
-                                </div>
-                                <span className="text-sm text-muted-foreground">
-                                  {t("canvas.clickToOpen")}
-                                </span>
-                              </div>
-
-                              {showCanvas &&
-                                part.toolInvocation.args?.content && (
-                                  <Canvas
-                                    content={
-                                      part.toolInvocation.args?.content ??
-                                      "No content in this canvas."
-                                    }
-                                    title={
-                                      part.toolInvocation.args?.title ??
-                                      "Untitled Document"
-                                    }
-                                    onClose={() => setShowCanvas(false)}
-                                  />
-                                )}
-                            </div>
-                          );
+                      // Skip canvas invocations as we're handling them separately
+                      if (part.toolInvocation.toolName === "canvas") {
+                        return null;
                       }
+                      return null;
+                    
+                    default:
+                      return null;
                   }
                 })}
               </div>

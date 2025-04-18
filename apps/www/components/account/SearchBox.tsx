@@ -14,6 +14,7 @@ import {
     DialogTrigger,
 } from "@workspace/ui/components/dialog";
 import { Link } from "@/i18n/navigation";
+import { useAuth } from "@/context/AuthContext";
 
 // Define navigation items for searchable content
 
@@ -38,6 +39,7 @@ const genericItems: NavigationItem[] = [
 
 export function SearchBox() {
     const t = useTranslations("account.searchBox");
+    const { auth } = useAuth();
     const [open, setOpen] = React.useState(false);
     const [searchQuery, setSearchQuery] = React.useState("");
     const [filteredNavItems, setFilteredNavItems] = React.useState(navigationItems);
@@ -72,8 +74,7 @@ export function SearchBox() {
 
     // Handle logout action
     const handleLogout = () => {
-        // TODO: Implement actual logout logic
-        console.log("Logging out...");
+        auth?.signOut();
         setOpen(false);
     };
 

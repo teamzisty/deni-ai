@@ -19,13 +19,12 @@ const CanvasButton = memo(
     return (
       <EasyTip content={t("canvas.tooltip") || "Use Canvas"}>
         <Button
-          variant={canvasEnabled ? "default" : "secondary"}
-          size="sm"
-          className="h-7 px-2"
+          variant={canvasEnabled ? "default" : "outline"}
+          className="rounded-full"
           onClick={canvasToggle}
           disabled={disabled}
         >
-          <Paintbrush size={16} />
+          <Paintbrush />
         </Button>
       </EasyTip>
     );

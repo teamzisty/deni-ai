@@ -36,7 +36,6 @@ export default function SharedChatPage() {
         }
         
         const data = await response.json();
-        console.log(data);
         setChatData(data.data);
       } catch (err) {
         console.error(err);

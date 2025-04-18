@@ -9,6 +9,7 @@ import { Toaster } from "@workspace/ui/components/sonner";
 import { Locale, NextIntlClientProvider, hasLocale } from "next-intl";
 import { notFound } from "next/navigation";
 import { routing } from "@/i18n/routing";
+import { CanvasProvider } from "../../context/CanvasContext";
 
 type Props = {
   children: React.ReactNode;
@@ -65,9 +66,11 @@ export default async function LocaleLayout({ children, params }: Props) {
       <AuthProvider>
         <ChatSessionsProvider>
           <SettingsDialogProvider>
-            <DevelopmentBanner>{children}</DevelopmentBanner>
-            <Toaster richColors position="bottom-right" />
-            <SettingsDialog />
+            <CanvasProvider>
+              <DevelopmentBanner>{children}</DevelopmentBanner>
+              <Toaster richColors position="bottom-right" />
+              <SettingsDialog />
+            </CanvasProvider>
           </SettingsDialogProvider>
         </ChatSessionsProvider>
       </AuthProvider>

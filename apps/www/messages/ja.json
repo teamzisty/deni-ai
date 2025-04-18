@@ -97,12 +97,6 @@
         "title": "プライバシーモード",
         "description": "あなたの名前、メールアドレス、プロフィール画像を非表示にします。"
       },
-      "sync": {
-        "title": "会話履歴の同期",
-        "description": "会話履歴をクラウドと同期します。",
-        "action": "会話履歴を同期",
-        "syncing": "同期中..."
-      },
       "authDisabled": "認証は一時的に無効になっているか、あなたのインスタンスでは利用できません。",
       "data": {
         "title": "アカウントデータのダウンロード",
@@ -291,12 +285,8 @@
     "login": "ログイン",
     "account": "アカウント",
     "userSettings": "ユーザー設定",
-    "syncing": "同期しています...",
-    "syncHistory": "会話履歴を同期",
     "logout": "ログアウト",
-    "version": "Deni AI v{version} ({codename}) ({type})",
-    "syncSuccess": "会話履歴を同期しました",
-    "syncFailed": "同期に失敗しました"
+    "version": "Deni AI v{version} ({codename}) ({type})"
   },
   "footer": {
     "disclaimer": "AI の回答は必ずしも正しいとは限りません。すべての AI が無制限に利用できます。",
@@ -803,8 +793,6 @@
     "saveCurrentFailed": "現在のチャットセッションの保存に失敗しました。",
     "deleteFailed": "チャットセッションの削除に失敗しました。",
     "deleteAllFailed": "すべてのチャットセッションの削除に失敗しました。",
-    "syncSuccess": "チャットセッションが正常に同期されました。",
-    "syncFailed": "チャットセッションの同期に失敗しました。",
     "firebaseUnavailable": "Firebaseサービスが利用できません。",
     "checkFirebaseConfig": "Firebaseの設定を確認してください。",
     "loginRequired": "セッションを同期するにはログインが必要です。",
@@ -1151,8 +1139,10 @@
   },
   "canvas": {
     "tooltip": "キャンバスを使用",
+    "button": "Canvas",
     "view": "表示",
     "edit": "編集",
+    "save": "保存",
     "title": "キャンバス",
     "copied": "キャンバスの内容をコピーしました",
     "clickToOpen": "クリックして開く"

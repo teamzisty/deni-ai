@@ -100,12 +100,6 @@
         "title": "Privacy Mode",
         "description": "Hide your name, email address, and profile image."
       },
-      "sync": {
-        "title": "Sync Conversations",
-        "description": "Synchronize your conversations with the cloud.",
-        "action": "Sync Conversations",
-        "syncing": "Syncing..."
-      },
       "authDisabled": "Authentication is temporarily disabled or not available in your instance.",
       "data": {
         "title": "Download Account Data",
@@ -314,12 +308,8 @@
     "login": "Login",
     "account": "Account",
     "userSettings": "User Settings",
-    "syncing": "Syncing...",
-    "syncHistory": "Sync Conversation History",
     "logout": "Logout",
-    "version": "Deni AI v{version} ({codename}) ({type})",
-    "syncSuccess": "Conversation history synchronized",
-    "syncFailed": "Synchronization failed"
+    "version": "Deni AI v{version} ({codename}) ({type})"
   },
   "footer": {
     "disclaimer": "AI responses may not always be accurate. All AI models are available for unlimited use.",
@@ -1190,8 +1180,10 @@
   },
   "canvas": {
     "tooltip": "Use Canvas",
+    "button": "Canvas",
     "view": "View",
     "edit": "Edit",
+    "save": "Save",
     "title": "Canvas",
     "copied": "Canvas content copied to clipboard",
     "clickToOpen": "Click to view canvas"
