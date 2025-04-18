@@ -32,12 +32,14 @@ interface MessageLogProps {
 export const MemoMarkdown = memo(
   ({ content }: { content: string }) => {
     return (
-      <ReactMarkdown
-        remarkPlugins={[remarkGfm]}
-        components={{ pre: Pre, a: MarkdownLink }}
-      >
-        {content}
-      </ReactMarkdown>
+      <div className="text-sm md:text-base">
+        <ReactMarkdown
+          remarkPlugins={[remarkGfm]}
+          components={{ pre: Pre, a: MarkdownLink }}
+        >
+          {content}
+        </ReactMarkdown>
+      </div>
     );
   },
   (prevProps, nextProps) => {
@@ -94,10 +96,10 @@ function messageReducer(
     case "SET_THINKING_TIME":
       return { ...state, thinkingTime: action.payload };
     case "SET_CANVAS_CONTENT":
-      return { 
-        ...state, 
+      return {
+        ...state,
         canvasContent: action.payload.content,
-        canvasTitle: action.payload.title
+        canvasTitle: action.payload.title,
       };
     case "UPDATE_FROM_ANNOTATIONS":
       const annotations = action.payload;
@@ -124,8 +126,12 @@ function messageReducer(
         (a) => (a as messageAnnotation).canvasContent
       );
       if (canvasAnnotation) {
-        updates.canvasContent = (canvasAnnotation as messageAnnotation).canvasContent;
-        updates.canvasTitle = (canvasAnnotation as messageAnnotation).canvasTitle || "Untitled Document";
+        updates.canvasContent = (
+          canvasAnnotation as messageAnnotation
+        ).canvasContent;
+        updates.canvasTitle =
+          (canvasAnnotation as messageAnnotation).canvasTitle ||
+          "Untitled Document";
       }
 
       return { ...state, ...updates };
@@ -155,7 +161,7 @@ const MessageControls = memo(
     };
 
     return (
-      <div className="flex items-center rounded mt-3 bg-secondary text-xs">
+      <div className="flex items-center rounded mt-3 bg-secondary text-xs md:text-sm">
         <div className="p-1 text-gray-400 hover:text-foreground">
           <EasyTip content={t("messageLog.copy")}>
             <Button
@@ -167,25 +173,11 @@ const MessageControls = memo(
             </Button>
           </EasyTip>
         </div>
-        {onRegenerate && (
-          <div className="p-1 text-gray-400 hover:text-foreground">
-            <EasyTip content={t("messageLog.regenerate")}>
-              <Button
-                className="p-0 mx-1 rounded-full"
-                variant={"ghost"}
-                onClick={onRegenerate}
-              >
-                <RefreshCw size="16" />
-                {modelDescriptions[model]?.displayName}
-              </Button>
-            </EasyTip>
-          </div>
-        )}
         <div className="p-1 text-gray-400 transition-all cursor-default hover:text-foreground">
           <EasyTip content={t("messageLog.generationTime")}>
             <div className="flex items-center gap-1 mx-1 p-1 m-0 px-1">
               <Clock size="16" />
-              <span className="text-sm">
+              <span className="text-xs md:text-sm">
                 {thinkingTime < 0
                   ? t("messageLog.thinking")
                   : thinkingTime > 3600000
@@ -209,6 +201,20 @@ const MessageControls = memo(
             </div>
           </EasyTip>
         </div>
+        {onRegenerate && (
+          <div className="p-1 text-gray-400 hover:text-foreground">
+            <EasyTip content={t("messageLog.regenerate")}>
+              <Button
+                className="p-0 mx-1 rounded-full text-xs md:text-sm"
+                variant={"ghost"}
+                onClick={onRegenerate}
+              >
+                <RefreshCw size="16" />
+                {modelDescriptions[model]?.displayName}
+              </Button>
+            </EasyTip>
+          </div>
+        )}
       </div>
     );
   },
@@ -231,11 +237,18 @@ export const MessageLog: FC<MessageLogProps> = memo(
 
     const [showCanvas, setShowCanvas] = useState(false);
     const { getCanvasData, updateCanvas } = useCanvas();
-    
+
     // セッション固有のキャンバスデータの取得
     const sessionCanvasData = useMemo(() => {
       return getCanvasData(sessionId);
     }, [getCanvasData, sessionId]);
+
+    // Keep a stable reference to sessionCanvasData
+    const sessionCanvasDataRef = React.useRef(sessionCanvasData);
+    // Update ref when sessionCanvasData changes (without causing renders)
+    useEffect(() => {
+      sessionCanvasDataRef.current = sessionCanvasData;
+    }, [sessionCanvasData]);
 
     const { getSession, updateSession } = useChatSessions();
     const t = useTranslations();
@@ -247,9 +260,10 @@ export const MessageLog: FC<MessageLogProps> = memo(
 
     // Canvas tool invocations
     const canvasInvocations = React.useMemo(
-      () => toolInvocations.filter(
-        (part) => part.toolInvocation.toolName === "canvas"
-      ),
+      () =>
+        toolInvocations.filter(
+          (part) => part.toolInvocation.toolName === "canvas"
+        ),
       [toolInvocations]
     );
 
@@ -275,60 +289,74 @@ export const MessageLog: FC<MessageLogProps> = memo(
     useEffect(() => {
       // 処理済みの呼び出しを追跡するための参照を作成
       const processedInvocations = new Set<string>();
-      
+
       // canvasInvocationsが変更された時のみ実行し、stateやcontextの更新による再レンダリングを防ぐ
       const handler = () => {
         if (canvasInvocations.length > 0) {
-          const latestInvocation = canvasInvocations[canvasInvocations.length - 1];
+          const latestInvocation =
+            canvasInvocations[canvasInvocations.length - 1];
           // すでに処理済みの呼び出しはスキップ（二重処理防止）
-          if (latestInvocation && 
-              latestInvocation.toolInvocation.args?.content && 
-              latestInvocation.toolInvocation.state === "result") {
-            
+          if (
+            latestInvocation &&
+            latestInvocation.toolInvocation.args?.content &&
+            latestInvocation.toolInvocation.state === "result"
+          ) {
             // 呼び出しIDを使って処理済みかどうかチェック
             const invocationId = latestInvocation.toolInvocation.toolCallId;
             if (processedInvocations.has(invocationId)) return;
-            
+
             // 処理済みセットに追加
             processedInvocations.add(invocationId);
-            
+
             // もしappendモードなら自分自身でコンテンツを結合する
-            if (latestInvocation.toolInvocation.args.mode === "append" && sessionCanvasData) {
-              const existingContent = sessionCanvasData.content;
+            if (
+              latestInvocation.toolInvocation.args.mode === "append" &&
+              sessionCanvasDataRef.current
+            ) {
+              const existingContent = sessionCanvasDataRef.current.content;
               const newContent = latestInvocation.toolInvocation.args.content;
               const finalContent = `${existingContent}\n\n${newContent}`;
-              
+
               updateCanvas(sessionId, {
                 content: finalContent,
-                title: latestInvocation.toolInvocation.args.title || sessionCanvasData.title || "Untitled Document",
+                title:
+                  latestInvocation.toolInvocation.args.title ||
+                  sessionCanvasDataRef.current.title ||
+                  "Untitled Document",
               });
             } else {
               // 通常のcreateまたはreplaceモード
               updateCanvas(sessionId, {
                 content: latestInvocation.toolInvocation.args.content,
-                title: latestInvocation.toolInvocation.args.title || "Untitled Document",
+                title:
+                  latestInvocation.toolInvocation.args.title ||
+                  "Untitled Document",
               });
             }
           }
         }
       };
-      
+
       // 初回レンダリング時のみ実行
       handler();
-      
+
       // クリーンアップ関数
       return () => {
         // 処理済みセットをクリア
         processedInvocations.clear();
       };
       // canvasInvocationsのみを依存配列に含めてループを防止
-    }, [canvasInvocations, sessionCanvasData, getCanvasData, updateCanvas]);
+      // Use only stable dependencies to prevent re-runs
+    }, [canvasInvocations, sessionId, updateCanvas]);
+
+    // For tracking if annotations have been processed
+    const processedAnnotationsRef = React.useRef(false);
 
     // アノテーションとキャンバスデータを処理
     useEffect(() => {
       const annotations = message.annotations;
-      if (!annotations) return;
-
+      if (!annotations || processedAnnotationsRef.current) return;
+      
       dispatch({ type: "UPDATE_FROM_ANNOTATIONS", payload: annotations });
 
       const titleAnnotation = annotations?.find((a) => (a as any).title);
@@ -350,9 +378,14 @@ export const MessageLog: FC<MessageLogProps> = memo(
       if (canvasAnnotation) {
         updateCanvas(sessionId, {
           content: (canvasAnnotation as messageAnnotation).canvasContent || "",
-          title: (canvasAnnotation as messageAnnotation).canvasTitle || "Untitled Document",
+          title:
+            (canvasAnnotation as messageAnnotation).canvasTitle ||
+            "Untitled Document",
         });
       }
+      
+      // Mark annotations as processed to prevent re-processing
+      processedAnnotationsRef.current = true;
     }, [message.annotations, sessionId, getSession, updateSession, updateCanvas]);
 
     // クリック時にCanvasを表示するハンドラー修正
@@ -366,24 +399,29 @@ export const MessageLog: FC<MessageLogProps> = memo(
     };
 
     // カスタムフック使用部分を最適化
-    const memoizedUpdateCanvas = useCallback((sid: string, data: { content: string; title: string }) => {
-      updateCanvas(sid, data);
-    }, [updateCanvas]);
+    const memoizedUpdateCanvas = useCallback(
+      (sid: string, data: { content: string; title: string }) => {
+        updateCanvas(sid, data);
+      },
+      [updateCanvas]
+    );
 
     // 表示するキャンバスコンテンツを取得する部分も最適化
     const canvasContentToShow = useMemo(() => {
       // ここでのsessionCanvasDataへの参照が問題を起こす可能性があるため、
       // 一旦sessionCanvasDataのコピーを作成して参照
-      const currentCanvasData = sessionCanvasData ? {
-        content: sessionCanvasData.content,
-        title: sessionCanvasData.title
-      } : null;
-      
+      const currentCanvasData = sessionCanvasDataRef.current
+        ? {
+            content: sessionCanvasDataRef.current.content,
+            title: sessionCanvasDataRef.current.title,
+          }
+        : null;
+
       // 最初にsessionCanvasDataを確認（もし存在するなら優先的に使う）
       if (currentCanvasData) {
         return currentCanvasData;
       }
-      
+
       // 次にアノテーションを確認
       if (state.canvasContent) {
         return {
@@ -391,22 +429,23 @@ export const MessageLog: FC<MessageLogProps> = memo(
           title: state.canvasTitle || "Untitled Document",
         };
       }
-      
+
       // 最後にキャンバスツール呼び出しを確認
       if (canvasInvocations.length > 0) {
-        const latestInvocation = canvasInvocations[canvasInvocations.length - 1];
+        const latestInvocation =
+          canvasInvocations[canvasInvocations.length - 1];
         if (latestInvocation && latestInvocation.toolInvocation.args?.content) {
           return {
             content: latestInvocation.toolInvocation.args.content,
-            title: latestInvocation.toolInvocation.args.title || "Untitled Document",
+            title:
+              latestInvocation.toolInvocation.args.title || "Untitled Document",
           };
         }
       }
-      
+
       return null;
-      // 依存関係を最小限に抑える
-      // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [state.canvasContent, state.canvasTitle, canvasInvocations.length]);
+      // Remove sessionCanvasData from dependencies to prevent infinite loops
+    }, [state.canvasContent, state.canvasTitle, canvasInvocations]);
 
     return (
       <div className={`flex w-full message-log visible`}>
@@ -419,15 +458,15 @@ export const MessageLog: FC<MessageLogProps> = memo(
         >
           {message.role === "assistant" ? (
             <div key={message.id}>
-              <div className="ml-3 prose dark:prose-invert w-full max-w-11/12">
+              <div className="ml-3 prose dark:prose-invert w-full max-w-11/12 text-sm md:text-base">
                 {/** Search ツールが1回以上実行されていればまとめて表示 */}
                 {searchInvocations.length > 0 && (
                   <div className="flex flex-col gap-1 bg-secondary w-full md:w-2/3 rounded-xl mb-4 px-4 py-3 overflow-hidden">
-                    <span className="inline-flex items-center gap-1 text-muted-foreground">
+                    <span className="inline-flex items-center gap-1 text-muted-foreground text-xs md:text-sm">
                       <SiBrave className="text-orange-400" />{" "}
                       {t("messageLog.braveSearch")}
                     </span>
-                    <span className="inline-flex items-center gap-1 text-muted-foreground">
+                    <span className="inline-flex items-center gap-1 text-muted-foreground text-xs md:text-sm">
                       {t("messageLog.searchWord")}{" "}
                       {searchInvocations[0]?.toolInvocation.args?.query}
                     </span>
@@ -461,11 +500,11 @@ export const MessageLog: FC<MessageLogProps> = memo(
                               href={item.url}
                               target="_blank"
                               rel="noreferrer"
-                              className="text-white underline line-clamp-1 mb-0 overflow-hidden text-ellipsis"
+                              className="text-white underline line-clamp-1 mb-0 overflow-hidden text-ellipsis text-xs md:text-sm"
                             >
                               {item.title}
                             </a>
-                            <span className="text-muted-foreground overflow-hidden line-clamp-1">
+                            <span className="text-muted-foreground overflow-hidden line-clamp-1 text-xs md:text-sm">
                               {item.description.replace(/<[^>]*>/g, "")}
                             </span>
                           </p>
@@ -474,7 +513,7 @@ export const MessageLog: FC<MessageLogProps> = memo(
 
                       // 成功した検索がなければ、検索中の表示
                       return (
-                        <span className="animate-pulse">
+                        <span className="animate-pulse text-xs md:text-sm">
                           {t("messageLog.searching")}
                         </span>
                       );
@@ -485,7 +524,7 @@ export const MessageLog: FC<MessageLogProps> = memo(
                 {/** Visit ツールが1回以上実行されていればまとめて表示 */}
                 {visitInvocations.length > 0 && (
                   <div className="flex flex-col gap-1 bg-secondary rounded-xl w-full md:w-2/3 mb-4 px-4 py-3 overflow-hidden">
-                    <span className="inline-flex items-center gap-1 text-muted-foreground">
+                    <span className="inline-flex items-center gap-1 text-muted-foreground text-xs md:text-sm">
                       <MousePointer />
                       {t("messageLog.visitedWebsites")}
                     </span>
@@ -521,7 +560,7 @@ export const MessageLog: FC<MessageLogProps> = memo(
                                   href={url}
                                   target="_blank"
                                   rel="noreferrer"
-                                  className="text-white underline truncate overflow-hidden text-ellipsis"
+                                  className="text-white underline truncate overflow-hidden text-ellipsis text-xs md:text-sm"
                                 >
                                   {url}
                                 </a>
@@ -534,7 +573,7 @@ export const MessageLog: FC<MessageLogProps> = memo(
 
                       // 成功した訪問がなければ、検索中の表示
                       return (
-                        <span className="animate-pulse">
+                        <span className="animate-pulse text-xs md:text-sm">
                           {t("messageLog.searching")}
                         </span>
                       );
@@ -551,19 +590,23 @@ export const MessageLog: FC<MessageLogProps> = memo(
                     >
                       <div className="flex items-center gap-2">
                         <Paintbrush size={16} className="text-primary" />
-                        <span className="font-medium">{canvasContentToShow.title}</span>
+                        <span className="font-medium text-sm md:text-base">
+                          {canvasContentToShow.title}
+                        </span>
                       </div>
-                      <span className="text-sm text-muted-foreground">
+                      <span className="text-xs md:text-sm text-muted-foreground">
                         {t("canvas.clickToOpen")}
                       </span>
                     </div>
-                    {showCanvas && (
-                      <Canvas 
-                        content={canvasContentToShow.content} 
+                    {/* Only render Canvas when showCanvas is true */}
+                    {showCanvas && canvasContentToShow && (
+                      <Canvas
+                        key={`canvas-${sessionId}`}
+                        content={canvasContentToShow.content}
                         title={canvasContentToShow.title}
                         sessionId={sessionId}
                         onClose={handleCloseCanvas}
-                        onUpdateCanvas={memoizedUpdateCanvas} 
+                        onUpdateCanvas={memoizedUpdateCanvas}
                       />
                     )}
                   </div>
@@ -579,7 +622,7 @@ export const MessageLog: FC<MessageLogProps> = memo(
                           defaultOpen={true}
                         >
                           <CollapsibleTrigger className="mb-0">
-                            <span className="text-muted-foreground">
+                            <span className="text-muted-foreground text-xs md:text-sm">
                               {state.thinkingTime <= 0
                                 ? t("messageLog.reasoning")
                                 : state.thinkingTime > 3600000
@@ -603,7 +646,7 @@ export const MessageLog: FC<MessageLogProps> = memo(
                                         )} ${t("messageLog.second")} ${t("messageLog.reasonedFor")}`}{" "}
                             </span>
                           </CollapsibleTrigger>
-                          <CollapsibleContent className="border-l-2 mt-0 pl-4 outline-none data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2">
+                          <CollapsibleContent className="border-l-2 mt-0 pl-4 outline-none data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 text-xs md:text-sm">
                             <MemoizedMarkdown
                               key={`${message.id}_reasoning_content_${index}`}
                               id={`${message.id}_assistant_${index}`}
@@ -628,7 +671,7 @@ export const MessageLog: FC<MessageLogProps> = memo(
                         return null;
                       }
                       return null;
-                    
+
                     default:
                       return null;
                   }
@@ -651,7 +694,9 @@ export const MessageLog: FC<MessageLogProps> = memo(
                   height="300"
                 ></Image>
               )}
-              <div className="prose dark:prose-invert">{message.content}</div>
+              <div className="prose dark:prose-invert text-sm md:text-base">
+                {message.content}
+              </div>
             </>
           )}
         </div>

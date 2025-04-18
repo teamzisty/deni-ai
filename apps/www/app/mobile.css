@@ -1,123 +1,33 @@
 /* Mobile-specific styles to reduce text size on small screens */
+/* 
+  This file is now obsolete. 
+  Instead of using global CSS overrides with !important,
+  please use Tailwind's built-in responsive classes like:
+  
+  - text-sm
+  - md:text-base
+  - text-xs
+  - md:text-sm
+  
+  For example:
+  <p className="text-sm md:text-base">Mobile optimized text</p>
+  <h1 className="text-xl md:text-2xl">Responsive heading</h1>
+  
+  Use the following sizing guidelines:
+  - Normal text: text-sm (mobile) / text-base (desktop)
+  - Small text: text-xs (mobile) / text-sm (desktop) 
+  - H3: text-lg (mobile) / text-xl (desktop)
+  - H2: text-xl (mobile) / text-2xl (desktop)
+  - H1: text-2xl (mobile) / text-3xl (desktop)
+  
+  For spacing:
+  - p-2 (mobile) / p-4 (desktop)
+  - gap-2 (mobile) / gap-4 (desktop)
+  - my-2 (mobile) / my-4 (desktop)
+*/
+
+/* This media query is kept for reference only and will be removed
+   once all components have been updated to use Tailwind classes */
 @media (max-width: 768px) {
-  html {
-    font-size: 87.5%; /* Reduce base font size to 14px (assuming 16px default) */
-  }
-  
-  h1 {
-    font-size: 1.5rem !important; /* ~24px on mobile vs ~28px */
-  }
-  
-  h2 {
-    font-size: 1.25rem !important; /* ~20px on mobile vs ~24px */
-  }
-  
-  h3 {
-    font-size: 1.125rem !important; /* ~18px on mobile vs ~20px */
-  }
-  
-  p, span, div, button, input, textarea, select {
-    font-size: 0.875rem !important; /* ~14px on mobile vs ~16px */
-  }
-  
-  .text-xs {
-    font-size: 0.75rem !important; /* ~12px */
-  }
-  
-  .text-sm {
-    font-size: 0.8125rem !important; /* ~13px */
-  }
-  
-  .text-base {
-    font-size: 0.875rem !important; /* ~14px */
-  }
-  
-  .text-lg {
-    font-size: 1rem !important; /* ~16px */
-  }
-  
-  .text-xl {
-    font-size: 1.125rem !important; /* ~18px */
-  }
-  
-  .text-2xl {
-    font-size: 1.25rem !important; /* ~20px */
-  }
-  
-  /* Chat specific adjustments */
-  .message-log pre {
-    font-size: 0.75rem !important;
-  }
-  
-  .message-log code {
-    font-size: 0.75rem !important;
-  }
-  
-  /* Chat UI specific adjustments */
-  .user-message p, .assistant-message p {
-    font-size: 0.875rem !important;
-  }
-  
-  /* Message content specific adjustments */
-  .message-log {
-    font-size: 0.875rem !important;
-    padding: 0.5rem !important;
-  }
-  
-  /* Code blocks in chat */
-  pre, code {
-    font-size: 0.75rem !important;
-    line-height: 1.4 !important;
-  }
-  
-  /* Input field text size */
-  textarea, input {
-    font-size: 0.875rem !important;
-  }
-  
-  /* Button text */
-  button {
-    font-size: 0.875rem !important;
-    padding: 0.375rem 0.625rem !important;
-  }
-  
-  /* Header elements */
-  header h1, header h2 {
-    font-size: 1.25rem !important;
-  }
-  
-  /* Icon sizes */
-  svg {
-    transform: scale(0.9);
-  }
-  
-  /* Chat page specific styling */
-  main[class*="flex-col"] {
-    padding: 0.5rem !important;
-  }
-  
-  /* Chat input area */
-  .chat-input {
-    padding: 0.375rem !important;
-  }
-  
-  /* Spacing and margins */
-  .p-4 {
-    padding: 0.75rem !important;
-  }
-  
-  .gap-4 {
-    gap: 0.75rem !important;
-  }
-  
-  .my-4 {
-    margin-top: 0.75rem !important;
-    margin-bottom: 0.75rem !important;
-  }
-  
-  /* Footer */
-  footer {
-    padding: 0.5rem 0 !important;
-    font-size: 0.75rem !important;
-  }
+  /* Empty - all styles moved to Tailwind classes */
 } 

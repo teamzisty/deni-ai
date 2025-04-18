@@ -70,7 +70,7 @@ const ChatInput = memo(
       <div
         className={cn(
           "mt-4 border rounded-xl w-full md:max-w-9/12 lg:max-w-7/12",
-          isMobile ? "p-2 chat-input" : "p-2",
+          isMobile ? "p-2 chat-input" : "p-4",
           className
         )}
       >
@@ -91,7 +91,7 @@ const ChatInput = memo(
         />
         <div className={cn(
           "flex items-center",
-          isMobile ? "gap-0.5" : "gap-1"
+          "gap-1 md:gap-2"
         )}>
           <input
             type="file"

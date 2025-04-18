@@ -687,7 +687,7 @@ const ChatApp: React.FC = () => {
   return (
     <main
       className={cn(
-        "flex flex-col flex-1 w-full mr-0 p-4 h-screen items-center overflow-hidden justify-center"
+        "flex flex-col w-full mr-0 p-4 items-center overflow-hidden justify-between h-[100dvh]"
       )}
     >
       <HeaderArea
@@ -714,12 +714,12 @@ const ChatApp: React.FC = () => {
 
       <div
         className={cn(
-          "flex w-full h-full md:w-9/12 lg:w-7/12 rounded overflow-y-auto scrollbar-thin scrollbar-thumb-primary scrollbar-track-secondary scrollbar-thumb-rounded-md scrollbar-track-rounded-md",
+          "flex w-full md:w-9/12 lg:w-7/12 rounded overflow-y-auto scrollbar-thin scrollbar-thumb-primary scrollbar-track-secondary scrollbar-thumb-rounded-md scrollbar-track-rounded-md flex-1 my-2",
           isMobile && "px-1"
         )}
         ref={chatLogRef}
       >
-        <div className="w-full">
+        <div className="w-full overflow-y-auto">
           <Suspense fallback={<Loading />}>
             {currentSession && (
               <>
@@ -763,7 +763,7 @@ const ChatApp: React.FC = () => {
         </div>
       </div>
 
-      <div className={cn("w-full flex flex-col items-center justify-center")}>
+      <div className={cn("w-full flex flex-col items-center justify-center shrink-0 pb-1")}>
         <ChatInput
           input={input}
           image={image}

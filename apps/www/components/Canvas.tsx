@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo, useCallback } from "react";
 import { useTranslations } from "next-intl";
 import { Paintbrush, Download, Copy, X, Save } from "lucide-react";
 import { Button } from "@workspace/ui/components/button";
@@ -11,7 +11,8 @@ import { toast } from "sonner";
 import { Pre } from "@/components/markdown";
 import { motion, AnimatePresence } from "framer-motion";
 import { useCanvas } from "@/context/CanvasContext";
-
+import { cn } from "@workspace/ui/lib/utils";
+import { useIsMobile } from "@workspace/ui/hooks/use-mobile";
 interface CanvasProps {
   content: string;
   title: string;
@@ -21,7 +22,7 @@ interface CanvasProps {
   onUpdateCanvas?: (sessionId: string, data: { content: string; title: string }) => void;
 }
 
-export const Canvas: React.FC<CanvasProps> = ({
+export const Canvas: React.FC<CanvasProps> = React.memo(({
   content,
   title = "Untitled Document",
   sessionId,
@@ -35,6 +36,7 @@ export const Canvas: React.FC<CanvasProps> = ({
   const [editableContent, setEditableContent] = useState(content);
   const [isVisible, setIsVisible] = useState(true);
   const [canvasTitle, setCanvasTitle] = useState(title);
+  const isMobile = useIsMobile();
 
   // セッションIDに対応するキャンバスデータをメモ化して取得
   // const canvasData = useMemo(() => getCanvasData(sessionId), [getCanvasData, sessionId]);
@@ -49,7 +51,7 @@ export const Canvas: React.FC<CanvasProps> = ({
   }, [content, title]);
 
   // Save changes to context with sessionId
-  const saveChanges = () => {
+  const saveChanges = useCallback(() => {
     if (canUpdate) {
       const updatedData = {
         content: editableContent,
@@ -66,14 +68,14 @@ export const Canvas: React.FC<CanvasProps> = ({
       
       toast.success(t("canvas.saved") || "Canvas saved successfully");
     }
-  };
+  }, [canUpdate, editableContent, canvasTitle, sessionId, onUpdateCanvas, updateCanvas, t]);
 
-  const handleCopy = () => {
+  const handleCopy = useCallback(() => {
     navigator.clipboard.writeText(editableContent);
     toast.success(t("canvas.copied") || "Content copied to clipboard");
-  };
+  }, [editableContent, t]);
 
-  const handleDownload = () => {
+  const handleDownload = useCallback(() => {
     const blob = new Blob([editableContent], { type: "text/markdown" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
@@ -83,28 +85,32 @@ export const Canvas: React.FC<CanvasProps> = ({
     a.click();
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
-  };
+  }, [editableContent, canvasTitle]);
 
-  const toggleEditMode = () => {
+  const toggleEditMode = useCallback(() => {
     setEditMode(!editMode);
-  };
+  }, [editMode]);
 
-  const handleClose = () => {
+  const handleClose = useCallback(() => {
     setIsVisible(false);
     setTimeout(() => {
       onClose();
     }, 300);
-  };
+  }, [onClose]);
 
-  const handleBackdropClick = (e: React.MouseEvent) => {
+  const handleBackdropClick = useCallback((e: React.MouseEvent) => {
     if (e.target === e.currentTarget) {
       handleClose();
     }
-  };
+  }, [handleClose]);
 
-  const handleTitleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleTitleChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     setCanvasTitle(e.target.value);
-  };
+  }, []);
+
+  const handleContentChange = useCallback((e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    setEditableContent(e.target.value);
+  }, []);
 
   return (
     <AnimatePresence mode="wait">
@@ -124,8 +130,8 @@ export const Canvas: React.FC<CanvasProps> = ({
             exit={{ x: "100%" }}
             transition={{ type: "spring", damping: 30, stiffness: 300 }}
           >
-            <div className="flex items-center justify-between p-3 border-b">
-              <div className="flex items-center gap-2 flex-1">
+            <div className={cn("flex items-center p-3 border-b justify-between", isMobile && "flex-col")}>
+              <div className={cn("flex items-center gap-2 flex-1", isMobile && "w-full")}>
                 <Paintbrush size={18} className="text-primary" />
                 {editMode ? (
                   <input
@@ -138,7 +144,7 @@ export const Canvas: React.FC<CanvasProps> = ({
                   <span className="font-medium text-lg">{canvasTitle}</span>
                 )}
               </div>
-              <div className="flex items-center gap-2">
+              <div className={cn("flex items-center gap-2", isMobile && "mt-2 w-full")}>
                 {canUpdate && editMode && (
                   <Button variant="default" size="sm" onClick={saveChanges}>
                     <Save size={16} className="mr-1" />
@@ -167,7 +173,7 @@ export const Canvas: React.FC<CanvasProps> = ({
                 <textarea
                   className="w-full h-full min-h-[300px] p-3 font-mono text-sm bg-secondary/20 border rounded resize-none focus:outline-none focus:ring-1 focus:ring-primary"
                   value={editableContent}
-                  onChange={(e) => setEditableContent(e.target.value)}
+                  onChange={handleContentChange}
                 />
               ) : (
                 <div className="prose dark:prose-invert max-w-none">
@@ -185,6 +191,8 @@ export const Canvas: React.FC<CanvasProps> = ({
       )}
     </AnimatePresence>
   );
-};
+});
+
+Canvas.displayName = "Canvas";
 
 export default Canvas;

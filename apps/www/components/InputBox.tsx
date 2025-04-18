@@ -31,10 +31,7 @@ const InputBox: React.FC<InputBoxProps> = memo(
     const isMobile = useIsMobile();
 
     return (
-      <div className={cn(
-        "flex items-center", 
-        isMobile ? "mb-1" : "mb-2"
-      )} onPaste={handleImagePaste}>
+      <div className="flex items-center mb-1 md:mb-2" onPaste={handleImagePaste}>
         <div className="flex items-center w-full mb-2">
           <textarea
             value={input}
@@ -45,23 +42,18 @@ const InputBox: React.FC<InputBoxProps> = memo(
                 handleSendMessageKey(e);
               }
             }}
-            className={cn(
-              "w-full resize-none bg-transparent border-none shadow-none !outline-none focus:ring-0 focus:ring-offset-0 disabled:opacity-0",
-              isMobile ? "px-2 py-1.5" : "px-3 py-2"
-            )}
+            className="w-full resize-none bg-transparent border-none shadow-none !outline-none focus:ring-0 focus:ring-offset-0 disabled:opacity-0 px-2 py-1.5 md:px-3 md:py-2 text-sm md:text-base"
           />
           <Button
             aria-label={t("inputBox.send")}
-            className={cn(
-              isMobile ? "mr-2" : "mr-3"
-            )}
-            size={isMobile ? "sm" : "icon"}
+            className="mr-2 md:mr-3"
+            size="icon"
             ref={sendButtonRef}
             onClick={(e) => (generating ? stop() : handleSendMessage(e))}
           >
             {generating ? 
-              <StopCircle size={isMobile ? 18 : 24} /> : 
-              <SendHorizonal size={isMobile ? 18 : 24} />
+              <StopCircle className="h-[18px] w-[18px] md:h-6 md:w-6" /> : 
+              <SendHorizonal className="h-[18px] w-[18px] md:h-6 md:w-6" />
             }
           </Button>
         </div>
