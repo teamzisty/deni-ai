@@ -12,6 +12,12 @@
     "privacyPolicy": "プライバシーポリシー",
     "termsOfService": "利用規約"
   },
+  "analyticsConsent": {
+    "title": "分析を有効にしますか？",
+    "description": "当サイトではVercel Analyticsを使用して、ウェブサイトのパフォーマンスとユーザー体験を向上させるためのデータを収集しています。これを有効にすると、匿名の使用状況データが収集されます。",
+    "accept": "許可",
+    "reject": "拒否"
+  },
   "messageLog": {
     "search": "検索",
     "braveSearch": "Brave Search を使用した検索",
@@ -1140,6 +1146,7 @@
   "canvas": {
     "tooltip": "キャンバスを使用",
     "button": "Canvas",
+    "saved": "キャンバスを保存しました",
     "view": "表示",
     "edit": "編集",
     "save": "保存",

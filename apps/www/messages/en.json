@@ -12,6 +12,12 @@
     "privacyPolicy": "Privacy Policy",
     "termsOfService": "Terms of Service"
   },
+  "analyticsConsent": {
+    "title": "Enable Analytics?",
+    "description": "This site uses Vercel Analytics to collect usage data to improve site performance and user experience. By enabling this, anonymous usage data will be collected.",
+    "accept": "Accept",
+    "reject": "Reject"
+  },
   "messageLog": {
     "search": "Search",
     "braveSearch": "Search using Brave Search",
@@ -1181,6 +1187,7 @@
   "canvas": {
     "tooltip": "Use Canvas",
     "button": "Canvas",
+    "saved": "Canvas saved",
     "view": "View",
     "edit": "Edit",
     "save": "Save",

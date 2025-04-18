@@ -161,7 +161,7 @@ const MessageControls = memo(
     };
 
     return (
-      <div className="flex items-center rounded mt-3 bg-secondary text-xs md:text-sm">
+      <div className="flex items-center rounded mt-3 bg-secondary">
         <div className="p-1 text-gray-400 hover:text-foreground">
           <EasyTip content={t("messageLog.copy")}>
             <Button
@@ -205,7 +205,7 @@ const MessageControls = memo(
           <div className="p-1 text-gray-400 hover:text-foreground">
             <EasyTip content={t("messageLog.regenerate")}>
               <Button
-                className="p-0 mx-1 rounded-full text-xs md:text-sm"
+                className="p-0 mx-1 rounded-full"
                 variant={"ghost"}
                 onClick={onRegenerate}
               >
@@ -308,31 +308,13 @@ export const MessageLog: FC<MessageLogProps> = memo(
             // 処理済みセットに追加
             processedInvocations.add(invocationId);
 
-            // もしappendモードなら自分自身でコンテンツを結合する
-            if (
-              latestInvocation.toolInvocation.args.mode === "append" &&
-              sessionCanvasDataRef.current
-            ) {
-              const existingContent = sessionCanvasDataRef.current.content;
-              const newContent = latestInvocation.toolInvocation.args.content;
-              const finalContent = `${existingContent}\n\n${newContent}`;
-
-              updateCanvas(sessionId, {
-                content: finalContent,
-                title:
-                  latestInvocation.toolInvocation.args.title ||
-                  sessionCanvasDataRef.current.title ||
-                  "Untitled Document",
-              });
-            } else {
-              // 通常のcreateまたはreplaceモード
-              updateCanvas(sessionId, {
-                content: latestInvocation.toolInvocation.args.content,
-                title:
-                  latestInvocation.toolInvocation.args.title ||
-                  "Untitled Document",
-              });
-            }
+            // 通常のcreateまたはreplaceモード
+            updateCanvas(sessionId, {
+              content: latestInvocation.toolInvocation.args.content,
+              title:
+                latestInvocation.toolInvocation.args.title ||
+                "Untitled Document",
+            });
           }
         }
       };
@@ -356,7 +338,7 @@ export const MessageLog: FC<MessageLogProps> = memo(
     useEffect(() => {
       const annotations = message.annotations;
       if (!annotations || processedAnnotationsRef.current) return;
-      
+
       dispatch({ type: "UPDATE_FROM_ANNOTATIONS", payload: annotations });
 
       const titleAnnotation = annotations?.find((a) => (a as any).title);
@@ -383,10 +365,16 @@ export const MessageLog: FC<MessageLogProps> = memo(
             "Untitled Document",
         });
       }
-      
+
       // Mark annotations as processed to prevent re-processing
       processedAnnotationsRef.current = true;
-    }, [message.annotations, sessionId, getSession, updateSession, updateCanvas]);
+    }, [
+      message.annotations,
+      sessionId,
+      getSession,
+      updateSession,
+      updateCanvas,
+    ]);
 
     // クリック時にCanvasを表示するハンドラー修正
     const handleShowCanvas = () => {
@@ -458,15 +446,15 @@ export const MessageLog: FC<MessageLogProps> = memo(
         >
           {message.role === "assistant" ? (
             <div key={message.id}>
-              <div className="ml-3 prose dark:prose-invert w-full max-w-11/12 text-sm md:text-base">
+              <div className="ml-3 prose dark:prose-invert w-full max-w-11/12">
                 {/** Search ツールが1回以上実行されていればまとめて表示 */}
                 {searchInvocations.length > 0 && (
                   <div className="flex flex-col gap-1 bg-secondary w-full md:w-2/3 rounded-xl mb-4 px-4 py-3 overflow-hidden">
-                    <span className="inline-flex items-center gap-1 text-muted-foreground text-xs md:text-sm">
+                    <span className="inline-flex items-center gap-1 text-muted-foreground">
                       <SiBrave className="text-orange-400" />{" "}
                       {t("messageLog.braveSearch")}
                     </span>
-                    <span className="inline-flex items-center gap-1 text-muted-foreground text-xs md:text-sm">
+                    <span className="inline-flex items-center gap-1 text-muted-foreground">
                       {t("messageLog.searchWord")}{" "}
                       {searchInvocations[0]?.toolInvocation.args?.query}
                     </span>
@@ -500,11 +488,11 @@ export const MessageLog: FC<MessageLogProps> = memo(
                               href={item.url}
                               target="_blank"
                               rel="noreferrer"
-                              className="text-white underline line-clamp-1 mb-0 overflow-hidden text-ellipsis text-xs md:text-sm"
+                              className="text-white underline line-clamp-1 mb-0 overflow-hidden text-ellipsis"
                             >
                               {item.title}
                             </a>
-                            <span className="text-muted-foreground overflow-hidden line-clamp-1 text-xs md:text-sm">
+                            <span className="text-muted-foreground overflow-hidden line-clamp-1">
                               {item.description.replace(/<[^>]*>/g, "")}
                             </span>
                           </p>
@@ -513,7 +501,7 @@ export const MessageLog: FC<MessageLogProps> = memo(
 
                       // 成功した検索がなければ、検索中の表示
                       return (
-                        <span className="animate-pulse text-xs md:text-sm">
+                        <span className="animate-pulse">
                           {t("messageLog.searching")}
                         </span>
                       );
@@ -524,7 +512,7 @@ export const MessageLog: FC<MessageLogProps> = memo(
                 {/** Visit ツールが1回以上実行されていればまとめて表示 */}
                 {visitInvocations.length > 0 && (
                   <div className="flex flex-col gap-1 bg-secondary rounded-xl w-full md:w-2/3 mb-4 px-4 py-3 overflow-hidden">
-                    <span className="inline-flex items-center gap-1 text-muted-foreground text-xs md:text-sm">
+                    <span className="inline-flex items-center gap-1 text-muted-foreground">
                       <MousePointer />
                       {t("messageLog.visitedWebsites")}
                     </span>
@@ -560,7 +548,7 @@ export const MessageLog: FC<MessageLogProps> = memo(
                                   href={url}
                                   target="_blank"
                                   rel="noreferrer"
-                                  className="text-white underline truncate overflow-hidden text-ellipsis text-xs md:text-sm"
+                                  className="text-white underline truncate overflow-hidden text-ellipsis"
                                 >
                                   {url}
                                 </a>
@@ -573,7 +561,7 @@ export const MessageLog: FC<MessageLogProps> = memo(
 
                       // 成功した訪問がなければ、検索中の表示
                       return (
-                        <span className="animate-pulse text-xs md:text-sm">
+                        <span className="animate-pulse">
                           {t("messageLog.searching")}
                         </span>
                       );
@@ -622,7 +610,7 @@ export const MessageLog: FC<MessageLogProps> = memo(
                           defaultOpen={true}
                         >
                           <CollapsibleTrigger className="mb-0">
-                            <span className="text-muted-foreground text-xs md:text-sm">
+                            <span className="text-muted-foreground">
                               {state.thinkingTime <= 0
                                 ? t("messageLog.reasoning")
                                 : state.thinkingTime > 3600000
@@ -646,7 +634,7 @@ export const MessageLog: FC<MessageLogProps> = memo(
                                         )} ${t("messageLog.second")} ${t("messageLog.reasonedFor")}`}{" "}
                             </span>
                           </CollapsibleTrigger>
-                          <CollapsibleContent className="border-l-2 mt-0 pl-4 outline-none data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 text-xs md:text-sm">
+                          <CollapsibleContent className="border-l-2 mt-0 pl-4 outline-none data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2">
                             <MemoizedMarkdown
                               key={`${message.id}_reasoning_content_${index}`}
                               id={`${message.id}_assistant_${index}`}

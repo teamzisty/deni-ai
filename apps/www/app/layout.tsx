@@ -5,7 +5,6 @@ import { Noto_Sans_JP } from "next/font/google";
 import { JetBrains_Mono } from "next/font/google";
 import { Inter } from "next/font/google";
 import Script from "next/script";
-import { Analytics } from "@vercel/analytics/react";
 
 const notoSansJP = Noto_Sans_JP({
   subsets: ["latin"],
@@ -22,11 +21,12 @@ const jetbrainsMono = JetBrains_Mono({
   variable: "--font-jetbrains-mono",
 });
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+
   return (
     <html suppressHydrationWarning>
       <head>
@@ -55,7 +55,6 @@ export default function RootLayout({
           }}
         >
           {children}
-          <Analytics />
         </ThemeProvider>
       </body>
     </html>
