@@ -370,9 +370,17 @@ const ChatApp: React.FC = () => {
       }
 
       if (hasChanges) {
+        // Only save tool-invocation messages
+        const messagesWithoutToolInvocations = messages.filter(
+          (message) =>
+            !(
+              message.role === "assistant" &&
+              message.parts.some((part) => part.type === "tool-invocation")
+            )
+        );
         updateSession(params.id, {
           ...currentSession,
-          messages: messages,
+          messages: messagesWithoutToolInvocations,
         });
       }
     }, 500); // 500ms遅延
@@ -426,7 +434,10 @@ const ChatApp: React.FC = () => {
     setDeepResearch((prev) => !prev);
   };
 
-  const handleRegenerate = () => {
+  const handleRegenerate = (model?: string) => {
+    if (model) {
+      setModel(model);
+    }
     authReload();
   };
 

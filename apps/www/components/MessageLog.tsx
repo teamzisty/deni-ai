@@ -19,14 +19,15 @@ import {
 import { SiBrave } from "@icons-pack/react-simple-icons";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
-import { modelDescriptions } from "@/lib/modelDescriptions";
+import { modelDescriptions, modelDescriptionType } from "@/lib/modelDescriptions";
 import Canvas from "./Canvas";
 import { useCanvas } from "@/context/CanvasContext";
+import { ModelSelector } from "./ModelSelector";
 
 interface MessageLogProps {
   message: UIMessage;
   sessionId: string;
-  onRegenerate?: () => void;
+  onRegenerate?: (model: string) => void;
 }
 
 export const MemoMarkdown = memo(
@@ -67,7 +68,7 @@ MemoizedMarkdown.displayName = "MemoizedMarkdown";
 
 interface MessageState {
   model: string;
-  thinkingTime: number;
+  thinkingTime: number | undefined;
   canvasContent?: string;
   canvasTitle?: string;
 }
@@ -147,17 +148,25 @@ const MessageControls = memo(
     thinkingTime,
     onRegenerate,
     model,
+    modelDescriptions,
   }: {
     messageContent: string;
-    thinkingTime: number;
-    onRegenerate?: () => void;
+    thinkingTime?: number;
+    onRegenerate?: (model: string) => void;
     model: string;
+    modelDescriptions: modelDescriptionType;
   }) => {
     const t = useTranslations();
 
     const handleCopy = () => {
       navigator.clipboard.writeText(messageContent);
       toast.success(t("messageLog.copied"));
+    };
+
+    const handleModelChange = (selectedModel: string) => {
+      if (onRegenerate) {
+        onRegenerate(selectedModel);
+      }
     };
 
     return (
@@ -173,14 +182,14 @@ const MessageControls = memo(
             </Button>
           </EasyTip>
         </div>
-        <div className="p-1 text-gray-400 transition-all cursor-default hover:text-foreground">
-          <EasyTip content={t("messageLog.generationTime")}>
-            <div className="flex items-center gap-1 mx-1 p-1 m-0 px-1">
-              <Clock size="16" />
-              <span className="text-xs md:text-sm">
-                {thinkingTime < 0
-                  ? t("messageLog.thinking")
-                  : thinkingTime > 3600000
+        {/* Only show generation time if thinkingTime is defined and > 0 */}
+        {typeof thinkingTime === "number" && thinkingTime > 0 && (
+          <div className="p-1 text-gray-400 transition-all cursor-default hover:text-foreground">
+            <EasyTip content={t("messageLog.generationTime")}>
+              <div className="flex items-center gap-1 mx-1 p-1 m-0 px-1">
+                <Clock size="16" />
+                <span className="text-xs md:text-sm">
+                  {thinkingTime > 3600000
                     ? `${Math.floor(
                         thinkingTime / 3600000
                       )} ${t("messageLog.hour")} ${Math.floor(
@@ -196,23 +205,24 @@ const MessageControls = memo(
                         )} ${t("messageLog.second")}`
                       : `${Math.floor(
                           thinkingTime / 1000
-                        )} ${t("messageLog.second")}`}{" "}
-              </span>
-            </div>
-          </EasyTip>
-        </div>
-        {onRegenerate && (
-          <div className="p-1 text-gray-400 hover:text-foreground">
-            <EasyTip content={t("messageLog.regenerate")}>
-              <Button
-                className="p-0 mx-1 rounded-full"
-                variant={"ghost"}
-                onClick={onRegenerate}
-              >
-                <RefreshCw size="16" />
-                {modelDescriptions[model]?.displayName}
-              </Button>
+                        )} ${t("messageLog.second")}`} {" "}
+                </span>
+              </div>
             </EasyTip>
+          </div>
+        )}
+        {onRegenerate && (
+          <div className="flex items-center">
+            <div className="p-1 text-gray-400 hover:text-foreground">
+              <EasyTip content={t("messageLog.regenerate")}>
+              <ModelSelector
+                modelDescriptions={modelDescriptions}
+                model={model}
+                handleModelChange={handleModelChange}
+                refreshIcon={true}
+              />
+              </EasyTip>
+            </div>
           </div>
         )}
       </div>
@@ -222,7 +232,9 @@ const MessageControls = memo(
     // メッセージ内容とthinkingTimeが変わらない限り再レンダリングしない
     return (
       prevProps.messageContent === nextProps.messageContent &&
-      prevProps.thinkingTime === nextProps.thinkingTime
+      prevProps.thinkingTime === nextProps.thinkingTime &&
+      prevProps.model === nextProps.model &&
+      prevProps.modelDescriptions === nextProps.modelDescriptions
     );
   }
 );
@@ -232,7 +244,7 @@ export const MessageLog: FC<MessageLogProps> = memo(
   ({ message, sessionId, onRegenerate }) => {
     const [state, dispatch] = React.useReducer(messageReducer, {
       model: "gpt-4o-2024-11-20",
-      thinkingTime: 0,
+      thinkingTime: undefined,
     });
 
     const [showCanvas, setShowCanvas] = useState(false);
@@ -435,6 +447,33 @@ export const MessageLog: FC<MessageLogProps> = memo(
       // Remove sessionCanvasData from dependencies to prevent infinite loops
     }, [state.canvasContent, state.canvasTitle, canvasInvocations]);
 
+    // Regenerate handler with model selection
+    const handleRegenerate = useCallback(
+      (selectedModel: string) => {
+        dispatch({ type: "SET_MODEL", payload: selectedModel });
+        if (onRegenerate) {
+          onRegenerate(selectedModel);
+        }
+      },
+      [onRegenerate]
+    );
+
+    // Update thinkingTime from message.parts if available
+    useEffect(() => {
+      // Try to get thinkingTime from message.parts if not set by annotations
+      if (typeof state.thinkingTime !== "number" || state.thinkingTime === 0) {
+        // Try to find reasoning part with timing info
+        const reasoningPart = message.parts.find(
+          (part) =>
+            part.type === "reasoning" &&
+            typeof (part as any).thinkingTime === "number"
+        );
+        if (reasoningPart && typeof (reasoningPart as any).thinkingTime === "number") {
+          dispatch({ type: "SET_THINKING_TIME", payload: (reasoningPart as any).thinkingTime });
+        }
+      }
+    }, [message.parts, state.thinkingTime]);
+
     return (
       <div className={`flex w-full message-log visible`}>
         <div
@@ -611,27 +650,27 @@ export const MessageLog: FC<MessageLogProps> = memo(
                         >
                           <CollapsibleTrigger className="mb-0">
                             <span className="text-muted-foreground">
-                              {state.thinkingTime <= 0
+                              {typeof state.thinkingTime !== "number" || state.thinkingTime <= 0
                                 ? t("messageLog.reasoning")
                                 : state.thinkingTime > 3600000
                                   ? `${Math.floor(
-                                      state.thinkingTime / 3600000
+                                      (state.thinkingTime ?? 0) / 3600000
                                     )} ${t("messageLog.hour")} ${Math.floor(
-                                      (state.thinkingTime % 3600000) / 60000
+                                      ((state.thinkingTime ?? 0) % 3600000) / 60000
                                     )} ${t("messageLog.minute")} ${Math.floor(
-                                      (state.thinkingTime % 60000) / 1000
+                                      ((state.thinkingTime ?? 0) % 60000) / 1000
                                     )} ${t("messageLog.second")} ${t("messageLog.reasonedFor")}`
                                   : state.thinkingTime > 60000
                                     ? `${Math.floor(
-                                        state.thinkingTime / 60000
+                                        (state.thinkingTime ?? 0) / 60000
                                       )} ${t("messageLog.minute")} ${Math.floor(
-                                        (state.thinkingTime % 60000) / 1000
+                                        ((state.thinkingTime ?? 0) % 60000) / 1000
                                       )} ${t("messageLog.second")} ${t("messageLog.reasonedFor")}`
-                                    : state.thinkingTime < 1000
+                                    : (state.thinkingTime ?? 0) < 1000
                                       ? t("messageLog.reasoning")
                                       : `${Math.floor(
-                                          state.thinkingTime / 1000
-                                        )} ${t("messageLog.second")} ${t("messageLog.reasonedFor")}`}{" "}
+                                          (state.thinkingTime ?? 0) / 1000
+                                        )} ${t("messageLog.second")} ${t("messageLog.reasonedFor")}`} {" "}
                             </span>
                           </CollapsibleTrigger>
                           <CollapsibleContent className="border-l-2 mt-0 pl-4 outline-none data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2">
@@ -668,8 +707,9 @@ export const MessageLog: FC<MessageLogProps> = memo(
               <MessageControls
                 messageContent={message.content}
                 thinkingTime={state.thinkingTime}
-                onRegenerate={onRegenerate}
+                onRegenerate={handleRegenerate}
                 model={state.model}
+                modelDescriptions={modelDescriptions}
               />
             </div>
           ) : (

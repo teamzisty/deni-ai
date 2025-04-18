@@ -37,7 +37,7 @@ export default function AnalyticsConsent({ initialConsent = false }: AnalyticsCo
     window.location.reload();
   };
 
-  if (!isVisible && hasConsent) return null;
+  if (!isVisible && hasConsent != undefined) return null;
 
   return (
     <div className="fixed bottom-4 left-1/2 transform -translate-x-1/2 bg-popover border border-border rounded-md shadow-lg p-4 z-50 max-w-md w-full">

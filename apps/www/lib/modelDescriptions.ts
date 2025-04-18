@@ -8,6 +8,7 @@ export interface ImodelDescriptionType {
   toolDisabled?: boolean;
   reasoningEffort?: reasoningEffortType[];
   vision?: boolean;
+  officialAPI?: boolean;
   pdfSupport?: boolean;
   fast?: boolean;
   defaultVisibility?: boolean;
@@ -107,6 +108,15 @@ export const modelDescriptions: modelDescriptionType = {
     knowledgeCutoff: "2022/01",
     canary: true,
     type: "ChatGPT",
+  },
+  "gemini-2.5-flash-preview-04-17": {
+    displayName: "Gemini 2.5 Flash Preview",
+    knowledgeCutoff: "2025/01",
+    defaultVisibility: true,
+    vision: true,
+    canary: true,
+    type: "Gemini",
+    officialAPI: true,
   },
   "gemini-2.5-pro-exp-03-25": {
     displayName: "Gemini 2.5 Pro",
