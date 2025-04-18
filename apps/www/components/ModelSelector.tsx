@@ -30,7 +30,6 @@ import {
 } from "lucide-react";
 import { Badge } from "@workspace/ui/components/badge";
 import { EasyTip } from "@/components/easytip";
-import { Link } from "@/i18n/navigation";
 import { useModelVisibility } from "@/hooks/use-model-settings";
 import { memo, useCallback, useMemo } from "react";
 import { cn } from "@workspace/ui/lib/utils";
@@ -151,7 +150,7 @@ export const ModelSelector = memo(function ModelSelector({
       }));
   }, [modelDescriptions, visibility]);
 
-  const memoizedHandleModelChange = useCallback(handleModelChange, []);
+  const memoizedHandleModelChange = useCallback(handleModelChange, [handleModelChange]);
 
   return (
     <DropdownMenu>

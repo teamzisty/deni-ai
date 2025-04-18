@@ -38,7 +38,7 @@ export default function GeneralSettings() {
     }
 
     setIsLoading(false);
-  }, []);
+  });
 
   useEffect(() => {
     if (isLoading) return;

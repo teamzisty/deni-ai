@@ -34,7 +34,7 @@ export default async function AccountLayout({ children }: AccountLayoutProps) {
   const t = await getTranslations("account");
   // Note: useIsMobile is a client hook, so we need to use a workaround for SSR/CSR split.
   // We'll use a dynamic import for the Drawer/hamburger menu and fallback to normal sidebar on SSR.
-  // eslint-disable-next-line react-hooks/rules-of-hooks
+   
   const isMobile =
     typeof window !== "undefined"
       ? require("@/hooks/use-mobile").useIsMobile()

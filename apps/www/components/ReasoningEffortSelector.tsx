@@ -14,7 +14,7 @@ import {
 import { ArrowDown, BrainCircuit, Zap, Brain } from "lucide-react";
 import { Badge } from "@workspace/ui/components/badge";
 import { EasyTip } from "@/components/easytip";
-import { memo, useCallback, useMemo } from "react";
+import { memo, useCallback } from "react";
 import { cn } from "@workspace/ui/lib/utils";
 
 const ReasoningEffortItem = memo(
@@ -121,7 +121,7 @@ export const ReasoningEffortSelector = memo(function ReasoningEffortSelector({
 
   const memoizedHandleEffortChange = useCallback(
     handleReasoningEffortChange,
-    []
+    [handleReasoningEffortChange]
   );
 
   return (

@@ -66,7 +66,7 @@ const ChatApp: React.FC = () => {
       const session = createSession();
       
       // Get input value and image to send to chat page
-      let queryParams = new URLSearchParams();
+      const queryParams = new URLSearchParams();
       
       if (inputValue.trim()) {
         queryParams.set('i', inputValue.trim());

@@ -20,12 +20,10 @@ import {
   DrawerHeader,
   DrawerTitle,
 } from "@workspace/ui/components/drawer";
-import { useIsMobile } from "@workspace/ui/hooks/use-mobile";
 
 export function Header() {
   const t = useTranslations();
   const [isOpen, setIsOpen] = useState(false);
-  const isMobile = useIsMobile();
 
   const navigationLinks = [
     { href: "/", label: t("header.home") },

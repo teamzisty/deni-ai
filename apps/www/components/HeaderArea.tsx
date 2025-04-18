@@ -6,14 +6,12 @@ import { memo } from "react";
 import { ModelSelector } from "./ModelSelector";
 import { ReasoningEffortSelector } from "./ReasoningEffortSelector";
 import { Button } from "@workspace/ui/components/button";
-import { Settings, Share2 } from "lucide-react";
+import { Settings } from "lucide-react";
 import { EasyTip } from "@/components/easytip";
 import { useSettingsDialog } from "@/context/SettingsDialogContext";
-import { useTheme } from "next-themes";
 import { useTranslations } from "next-intl";
 import { useIsMobile } from "@workspace/ui/hooks/use-mobile";
 import { cn } from "@workspace/ui/lib/utils";
-import { toast } from "sonner";
 import ShareButton from "./ShareButton";
 import { ChatSession } from "@/hooks/use-chat-sessions";
 import { User } from "firebase/auth";
@@ -41,7 +39,6 @@ const HeaderArea: React.FC<HeaderAreaProps> = memo(
     user,
     messages,
   }) => {
-    const { theme, setTheme } = useTheme();
     const isMobile = useIsMobile();
     const t = useTranslations();
     const { openDialog } = useSettingsDialog();

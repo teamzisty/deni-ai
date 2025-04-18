@@ -22,7 +22,7 @@ import {
   TabsList,
   TabsTrigger,
 } from "@workspace/ui/components/tabs";
-import { User, Paintbrush, X, Bot, Database, MenuIcon } from "lucide-react";
+import { User, X, Bot, Database, MenuIcon } from "lucide-react";
 import GeneralSettings from "./GeneralSettings";
 import AccountSettings from "./AccountSettings";
 import ModelSettings from "./ModelSettings";
@@ -137,7 +137,7 @@ export function SettingsDialog() {
             className="absolute right-4 top-4"
           >
             <X />
-          </Button>{" "}
+          </Button>
         </div>
         <SettingsContent />
       </DialogContent>

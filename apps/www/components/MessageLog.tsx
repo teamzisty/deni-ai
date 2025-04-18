@@ -322,7 +322,7 @@ export const MessageLog: FC<MessageLogProps> = memo(
         processedInvocations.clear();
       };
       // canvasInvocationsのみを依存配列に含めてループを防止
-    }, [canvasInvocations]);
+    }, [canvasInvocations, sessionCanvasData, getCanvasData, updateCanvas]);
 
     // アノテーションとキャンバスデータを処理
     useEffect(() => {
@@ -353,7 +353,7 @@ export const MessageLog: FC<MessageLogProps> = memo(
           title: (canvasAnnotation as messageAnnotation).canvasTitle || "Untitled Document",
         });
       }
-    }, [message.annotations, sessionId, getSession, updateSession]);
+    }, [message.annotations, sessionId, getSession, updateSession, updateCanvas]);
 
     // クリック時にCanvasを表示するハンドラー修正
     const handleShowCanvas = () => {
