@@ -1,13 +1,11 @@
 import type { NextConfig } from "next";
+import nextIntlPlugin from "next-intl/plugin";
+
+const withNextIntl = nextIntlPlugin();
 
 const nextConfig: NextConfig = {
   /* config options here */
   transpilePackages: ["@workspace/ui/"],
-  turbopack: {
-    resolveAlias: {
-      "next-intl/config": "./i18n/request.ts",
-    },
-  },
   images: {
     remotePatterns: [
       {
@@ -30,4 +28,4 @@ const nextConfig: NextConfig = {
   }
 };
 
-export default nextConfig;
+export default withNextIntl(nextConfig);
