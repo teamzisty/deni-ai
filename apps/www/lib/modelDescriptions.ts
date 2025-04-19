@@ -21,6 +21,32 @@ export type modelType = "ChatGPT" | "Gemini" | "Claude" | "Grok" | "DeepSeek";
 export type reasoningEffortType = "low" | "medium" | "high";
 
 export const modelDescriptions: modelDescriptionType = {
+  "gpt-4.1-2025-04-14": {
+    displayName: "GPT-4.1",
+    knowledgeCutoff: "2024/06",
+    defaultVisibility: true,
+    officialAPI: true,
+    vision: true,
+    type: "ChatGPT",
+  },
+  "gpt-4.1-mini-2025-04-14": {
+    displayName: "GPT-4.1 mini",
+    knowledgeCutoff: "2024/06",
+    defaultVisibility: true,
+    fast: true,
+    officialAPI: true,
+    vision: true,
+    type: "ChatGPT",
+  },
+  "gpt-4.1-nano-2025-04-14": {
+    displayName: "GPT-4.1 nano",
+    knowledgeCutoff: "2024/06",
+    defaultVisibility: true,
+    fast: true,
+    officialAPI: true,
+    vision: true,
+    type: "ChatGPT",
+  },
   "gpt-4o-2024-11-20": {
     displayName: "GPT-4o",
     knowledgeCutoff: "2023/10",
@@ -32,7 +58,6 @@ export const modelDescriptions: modelDescriptionType = {
   "gpt-4o-search-preview-2025-03-11": {
     displayName: "GPT-4o Search Preview",
     knowledgeCutoff: "2023/10",
-    defaultVisibility: true,
     offline: true,
     toolDisabled: true,
     canary: true,
@@ -56,6 +81,16 @@ export const modelDescriptions: modelDescriptionType = {
     vision: true,
     type: "ChatGPT",
   },
+  "o4-mini-2025-04-16": {
+    displayName: "o4-mini",
+    knowledgeCutoff: "2024/06",
+    reasoningEffort: ["low", "medium", "high"],
+    defaultVisibility: true,
+    officialAPI: true,
+    reasoning: true,
+    vision: true,
+    type: "ChatGPT",
+  },
   "o3-mini-2025-01-31": {
     displayName: "o3-mini",
     knowledgeCutoff: "2023/10",
@@ -63,6 +98,16 @@ export const modelDescriptions: modelDescriptionType = {
     defaultVisibility: true,
     reasoning: true,
     canary: true,
+    type: "ChatGPT",
+  },
+  "o3-2025-04-16": {
+    displayName: "o3",
+    knowledgeCutoff: "2024/06",
+    reasoningEffort: ["low", "medium", "high"],
+    defaultVisibility: true,
+    officialAPI: true,
+    reasoning: true,
+    vision: true,
     type: "ChatGPT",
   },
   "o1-2024-12-17": {
@@ -145,7 +190,6 @@ export const modelDescriptions: modelDescriptionType = {
   "gemini-2.0-flash-thinking-exp-01-21": {
     displayName: "Gemini 2.0 Flash Thinking",
     knowledgeCutoff: "2024/06",
-    defaultVisibility: true,
     reasoning: true,
     toolDisabled: true,
     fast: true,
@@ -156,7 +200,6 @@ export const modelDescriptions: modelDescriptionType = {
   "gemini-2.0-flash-lite-001": {
     displayName: "Gemini 2.0 Flash Lite",
     knowledgeCutoff: "2024/06",
-    defaultVisibility: true,
     fast: true,
     vision: true,
     canary: true,

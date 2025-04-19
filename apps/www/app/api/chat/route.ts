@@ -3,6 +3,7 @@ import {
   reasoningEffortType,
 } from "@/lib/modelDescriptions";
 import { getSystemPrompt } from "@/lib/systemPrompt";
+import { createOpenAI } from "@ai-sdk/openai";
 import { authAdmin, notAvailable } from "@workspace/firebase-config/server";
 import { createVoidsOAI } from "@workspace/voids-oai-provider/index";
 import { createVoidsAP } from "@workspace/voids-ap-provider/index";
@@ -70,6 +71,10 @@ export async function POST(req: Request) {
       // custom settings, e.g.
       isCanary,
       apiKey: "no", // API key
+    });
+
+    const officialOpenAI = createOpenAI({
+      apiKey: process.env.OPENAI_API_KEY,
     });
 
     const anthropic = createVoidsAP({
@@ -320,11 +325,21 @@ export async function POST(req: Request) {
           }
         }
 
+        let selectedModel;
+        switch (modelDescription?.type) {
+          case "Claude":
+            selectedModel = anthropic(model);
+            break;
+          default:
+            if (modelDescription?.officialAPI) {
+              selectedModel = officialOpenAI(model);
+            } else {
+              selectedModel = openai(model);
+            }
+            break;
+        }
         const newModel = wrapLanguageModel({
-          model:
-            modelDescription?.type === "Claude"
-              ? anthropic(model)
-              : openai(model),
+          model: selectedModel,
           middleware: extractReasoningMiddleware({ tagName: "think" }),
         });
 

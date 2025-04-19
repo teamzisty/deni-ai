@@ -250,6 +250,10 @@ export function ChatSidebar() {
   return (
     <Sidebar collapsible="icon">
       <SidebarContent>
+        {/* 
+          To avoid hydration mismatches, ensure that all data rendered here is static or provided at build time.
+          If buildInfo.version is dynamic or only available on the client, render it only on the client.
+        */}
         <SidebarGroup className="pt-6 pl-4 pb-0 relative mb-2">
           <div className="flex items-center gap-2">
             <div className="flex items-center gap-2">
@@ -259,15 +263,18 @@ export function ChatSidebar() {
               >
                 Deni AI
               </Link>
-              <Badge
-                className="group-data-[collapsible=icon]:hidden flex items-center"
-                variant="secondary"
-              >
-                v{buildInfo.version}
-              </Badge>
-            </div>{" "}
+              {/* Only render version on client to avoid hydration issues if buildInfo.version is dynamic */}
+              {typeof window === "undefined" ? null : (
+                <Badge
+                  className="group-data-[collapsible=icon]:hidden flex items-center"
+                  variant="secondary"
+                >
+                  v{buildInfo.version}
+                </Badge>
+              )}
+            </div>
             <SidebarTrigger className="ml-auto group-data-[collapsible=icon]:absolute group-data-[collapsible=icon]:left-1/2 group-data-[collapsible=icon]:-translate-x-1/2 group-data-[collapsible=icon]:top-4" />
-          </div>{" "}
+          </div>
         </SidebarGroup>
         <ChatSidebarMenuSession />
       </SidebarContent>
