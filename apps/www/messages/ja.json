@@ -803,6 +803,8 @@
     "checkFirebaseConfig": "Firebaseの設定を確認してください。",
     "loginRequired": "セッションを同期するにはログインが必要です。",
     "reauthRequired": "セッションを同期するために再度ログインしてください。",
+    "sessionDeletedSuccess": "セッションが正常に削除されました。",
+    "sessionDeletedFailed": "セッションの削除に失敗しました。",
     "localSyncSuccess": "ローカルセッションがアカウントに同期されました。",
     "localSyncFailed": "ローカルセッションのアカウントへの同期に失敗しました。",
     "exportFirestoreFailed": "クラウドストレージからのセッションのエクスポートに失敗しました。",

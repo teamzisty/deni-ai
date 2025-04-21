@@ -269,6 +269,14 @@ export const modelDescriptions: modelDescriptionType = {
     reasoning: true,
     type: "ChatGPT",
   },
+  "openai/o3-2025-04-16": {
+    displayName: "o3",
+    knowledgeCutoff: "2024/06",
+    defaultVisibility: true,
+    reasoning: true,
+    vision: true,
+    type: "ChatGPT",
+  },
   "openai/o1-2024-12-17": {
     displayName: "o1",
     knowledgeCutoff: "2023/10",

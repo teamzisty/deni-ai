@@ -330,8 +330,6 @@ export async function POST(req: Request) {
         const modelProvider = model.split("/")[0];
         const modelName = model.substring(model.indexOf("/") + 1);
 
-        console.log(modelProvider, modelName);
-
         // switch (modelDescription?.type) {
         //   case "Claude":
         //     selectedModel = anthropic(model);

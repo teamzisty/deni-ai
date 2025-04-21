@@ -842,6 +842,8 @@
     "syncFailed": "Failed to sync chat sessions.",
     "firebaseUnavailable": "Firebase services are unavailable.",
     "checkFirebaseConfig": "Please check your Firebase configuration.",
+    "sessionDeletedSuccess": "Session deleted successfully.",
+    "sessionDeletedFailed": "Failed to delete session.",
     "loginRequired": "Login required to sync sessions.",
     "reauthRequired": "Please log in again to sync your sessions.",
     "localSyncSuccess": "Local sessions synced to your account.",
