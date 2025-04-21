@@ -22,7 +22,7 @@
     "@blocknote/mantine": "^0.29.1",
     "@blocknote/react": "^0.29.1",
     "@blocknote/shadcn": "^0.29.1",
-    "@icons-pack/react-simple-icons": "^12.6.0",
+    "@icons-pack/react-simple-icons": "^12.7.0",
     "@openrouter/ai-sdk-provider": "^0.4.5",
     "@uploadthing/react": "^7.3.0",
     "@vercel/analytics": "^1.5.0",
