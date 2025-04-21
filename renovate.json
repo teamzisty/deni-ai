@@ -10,12 +10,12 @@
       "automerge": true
     }
   ],
-  "schedule": ["0 0 * * *"],
+  "schedule": ["every weekend"],
   "prHourlyLimit": 5,
   "prConcurrentLimit": 10,
   "dependencyDashboard": true,
   "lockFileMaintenance": {
     "enabled": true,
-    "schedule": ["0 0 * * *"]
+    "schedule": ["every weekend"]
   }
 }
