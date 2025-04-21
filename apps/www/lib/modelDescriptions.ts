@@ -340,7 +340,6 @@ export const modelDescriptions: modelDescriptionType = {
     knowledgeCutoff: "2024/10",
     defaultVisibility: true,
     pdfSupport: true,
-    toolDisabled: true,
     vision: true,
     type: "Claude",
   },
@@ -369,7 +368,6 @@ export const modelDescriptions: modelDescriptionType = {
   "openrouter/x-ai/grok-3-beta": {
     displayName: "Grok 3 Beta (OpenRouter)",
     vision: true,
-    defaultVisibility: true,
     reasoning: true,
     knowledgeCutoff: "-",
     type: "Grok",
@@ -378,7 +376,6 @@ export const modelDescriptions: modelDescriptionType = {
     displayName: "Grok 3 Mini Beta (OpenRouter)",
     vision: true,
     reasoning: true,
-    defaultVisibility: true,
     toolDisabled: true,
     knowledgeCutoff: "-",
     type: "Grok",
