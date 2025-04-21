@@ -80,7 +80,7 @@ export default async function AccountLayout({ children }: AccountLayoutProps) {
                 </DrawerContent>
               </Drawer>
             </div>
-            <div className="hidden md:block">
+            <div className="hidden md:block h-full">
               <SidebarNav />
             </div>
           </aside>
