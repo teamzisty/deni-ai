@@ -3,9 +3,9 @@ import {
   Alert, 
   AlertDescription, 
   AlertTitle 
-} from "@repo/ui/components/alert";
+} from "@workspace/ui/components/alert";
 import { AlertCircleIcon, CheckCircleIcon, XCircleIcon, InfoIcon, X } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { cn } from "@workspace/ui/lib/utils";
 
 export type AlertType = 'success' | 'error' | 'warning' | 'info';
 

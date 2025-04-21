@@ -17,10 +17,7 @@ export const DevelopmentBanner = ({ children }: DevelopmentBannerProps) => {
     setIsMounted(true);
   }, []);
 
-  useEffect(() => {
-    // グローバルオブジェクトに isVisible の状態を公開
-    (window as any).__devBannerVisible = isVisible;
-    
+  useEffect(() => {    
     // カスタムイベントも発行（より直接的な通知方法）
     window.dispatchEvent(new CustomEvent('dev-banner-visibility-change', {
       detail: { isVisible }
@@ -37,24 +34,10 @@ export const DevelopmentBanner = ({ children }: DevelopmentBannerProps) => {
     window.addEventListener("keydown", handleKeyDown);
     return () => {
       window.removeEventListener("keydown", handleKeyDown);
-      delete (window as any).__devBannerVisible;
     };
   }, [isVisible]);
 
   const isDevelopment = process.env.NODE_ENV === "development";
-  const shouldApplyPadding = isDevelopment && isVisible;
-
-  // ハイドレーション完了後にのみスタイルを適用
-  useEffect(() => {
-    if (!isMounted) return;
-
-    // サイドバーとモバイルメニューボタンのスタイルを直接操作
-    if (shouldApplyPadding) {
-      // バナーが下部に移動したため、上部の余白調整は不要になりました
-    } else {
-      // バナーが下部に移動したため、リセットは不要になりました
-    }
-  }, [shouldApplyPadding, bannerHeight, isMounted]);
 
   return (
     <>

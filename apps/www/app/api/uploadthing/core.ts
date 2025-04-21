@@ -1,6 +1,6 @@
 import { createUploadthing, type FileRouter } from "uploadthing/next";
 import { UploadThingError } from "uploadthing/server";
-import { authAdmin, notAvailable } from "@repo/firebase-config/server";
+import { authAdmin, notAvailable } from "@workspace/firebase-config/server";
 import { DecodedIdToken } from "firebase-admin/auth";
 
 const f = createUploadthing();
@@ -41,7 +41,7 @@ async function auth(req: Request) {
   }
 }
 // FileRouter for your app, can contain multiple FileRoutes
-export const ourFileRouter = {
+export const ourFileRouter: FileRouter = {
   // Define as many FileRoutes as you like, each with a unique routeSlug
   imageUploader: f({
     image: {

@@ -9,7 +9,7 @@ sidebar_position: 1
 ## 前提条件
 
 - Node.js (v18.18.0) 以降
-- Bun (v1.2.7) 以降
+- 最新バージョンの pnpm
 - (オプション) Firebase プロジェクトの設定 (Firebase の設定については、以下の「Firebase の設定」を参照してください)
 - (オプション) Brave Search API キー (検索に使用)
 - (オプション) Uploadthing トークン (画像のアップロードに使用)
@@ -33,7 +33,7 @@ cd deni-ai
 - 依存関係をインストールする:
 
 ```bash
-bun install
+pnpm install
 ```
 
 ## セットアップ (ローカル)
@@ -55,7 +55,7 @@ cp .env.example .env.local
 - 開発サーバーを起動する:
 
 ```bash
-bun dev
+pnpm dev
 ```
 
 ## Vercel へデプロイ

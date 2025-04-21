@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useState, useRef } from "react";
-import { cn } from "@/lib/utils";
+import { cn } from "@workspace/ui/lib/utils";
 import {
   Check,
   ChevronRight,
@@ -14,25 +14,25 @@ import {
   Mail,
   LogOut,
 } from "lucide-react";
-import { Button } from "@repo/ui/components/button";
+import { Button } from "@workspace/ui/components/button";
 import { useChatSessions } from "@/hooks/use-chat-sessions";
 import { Link, useRouter } from "@/i18n/navigation";
 import { Footer } from "@/components/footer";
-import { auth } from "@repo/firebase-config/client";
+import { auth } from "@workspace/firebase-config/client";
 import { Loading } from "@/components/loading";
 import { useTranslations } from "next-intl";
 import { useTheme } from "next-themes";
-import { Input } from "@repo/ui/components/input";
-import { Label } from "@repo/ui/components/label";
+import { Input } from "@workspace/ui/components/input";
+import { Label } from "@workspace/ui/components/label";
 import {
   Avatar,
   AvatarFallback,
   AvatarImage,
-} from "@repo/ui/components/avatar";
+} from "@workspace/ui/components/avatar";
 import { updateProfile, sendEmailVerification } from "firebase/auth";
 import { useParams } from "next/navigation";
 import { toast } from "sonner";
-import { Alert, AlertDescription, AlertTitle } from "@repo/ui/components/alert";
+import { Alert, AlertDescription, AlertTitle } from "@workspace/ui/components/alert";
 import { useUploadThing } from "@/utils/uploadthing";
 import { useAuth } from "@/context/AuthContext";
 import { StatusAlert } from "@/components/StatusAlert";

@@ -4,13 +4,13 @@ import { usePathname } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { User, Key, Shield, ArrowLeft, Book } from "lucide-react";
 import Link from "next/link";
-import { Tabs, TabsList, TabsTrigger } from "@repo/ui/components/tabs";
+import { Tabs, TabsList, TabsTrigger } from "@workspace/ui/components/tabs";
 import { useAuth } from "@/context/AuthContext";
 import {
   Avatar,
   AvatarFallback,
   AvatarImage,
-} from "@repo/ui/components/avatar";
+} from "@workspace/ui/components/avatar";
 export const SidebarNav = () => {
   const t = useTranslations("account");
   const { user } = useAuth();

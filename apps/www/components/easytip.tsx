@@ -3,7 +3,7 @@ import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
-} from "@repo/ui/components/tooltip";
+} from "@workspace/ui/components/tooltip";
 
 interface EasyTipProps {
   content: React.ReactNode;

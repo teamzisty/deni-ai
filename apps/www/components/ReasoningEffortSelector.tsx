@@ -1,4 +1,4 @@
-import { Button } from "@repo/ui/components/button";
+import { Button } from "@workspace/ui/components/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -6,16 +6,16 @@ import {
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuTrigger,
-} from "@repo/ui/components/dropdown-menu";
+} from "@workspace/ui/components/dropdown-menu";
 import {
   modelDescriptions,
   reasoningEffortType,
 } from "@/lib/modelDescriptions";
 import { ArrowDown, BrainCircuit, Zap, Brain } from "lucide-react";
-import { Badge } from "@repo/ui/components/badge";
+import { Badge } from "@workspace/ui/components/badge";
 import { EasyTip } from "@/components/easytip";
-import { memo, useCallback, useMemo } from "react";
-import { cn } from "@/lib/utils";
+import { memo, useCallback } from "react";
+import { cn } from "@workspace/ui/lib/utils";
 
 const ReasoningEffortItem = memo(
   ({
@@ -121,7 +121,7 @@ export const ReasoningEffortSelector = memo(function ReasoningEffortSelector({
 
   const memoizedHandleEffortChange = useCallback(
     handleReasoningEffortChange,
-    []
+    [handleReasoningEffortChange]
   );
 
   return (

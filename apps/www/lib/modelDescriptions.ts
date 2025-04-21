@@ -19,7 +19,7 @@ export interface ImodelDescriptionType {
 export type modelType = "ChatGPT" | "Gemini" | "Claude" | "Grok" | "DeepSeek";
 export type reasoningEffortType = "low" | "medium" | "high";
 
-export const modelDescriptions: modelDescriptionType = {
+export const modelDescriptionsVoids: modelDescriptionType = {
   "gpt-4o-2024-11-20": {
     displayName: "GPT-4o",
     knowledgeCutoff: "2023/10",
@@ -31,7 +31,6 @@ export const modelDescriptions: modelDescriptionType = {
   "gpt-4o-search-preview-2025-03-11": {
     displayName: "GPT-4o Search Preview",
     knowledgeCutoff: "2023/10",
-    defaultVisibility: true,
     offline: true,
     toolDisabled: true,
     canary: true,
@@ -135,7 +134,6 @@ export const modelDescriptions: modelDescriptionType = {
   "gemini-2.0-flash-thinking-exp-01-21": {
     displayName: "Gemini 2.0 Flash Thinking",
     knowledgeCutoff: "2024/06",
-    defaultVisibility: true,
     reasoning: true,
     toolDisabled: true,
     fast: true,
@@ -146,7 +144,6 @@ export const modelDescriptions: modelDescriptionType = {
   "gemini-2.0-flash-lite-001": {
     displayName: "Gemini 2.0 Flash Lite",
     knowledgeCutoff: "2024/06",
-    defaultVisibility: true,
     fast: true,
     vision: true,
     canary: true,
@@ -160,7 +157,7 @@ export const modelDescriptions: modelDescriptionType = {
     fast: true,
     type: "Gemini",
   },
-  "claude-3-7-sonnet-20250219": {
+  "us.anthropic.claude-3-7-sonnet-20250219-v1:0": {
     displayName: "Claude 3.7 Sonnet",
     knowledgeCutoff: "2024/10",
     defaultVisibility: true,
@@ -169,7 +166,7 @@ export const modelDescriptions: modelDescriptionType = {
     vision: true,
     type: "Claude",
   },
-  "claude-3-7-sonnet-20250219-reasoning": {
+  "us.anthropic.claude-3-7-sonnet-20250219-v1:0-reasoning": {
     displayName: "Claude 3.7 Sonnet (Extended Thinking)",
     knowledgeCutoff: "2024/10",
     defaultVisibility: true,
@@ -213,6 +210,190 @@ export const modelDescriptions: modelDescriptionType = {
     displayName: "Grok 3 (Think)",
     knowledgeCutoff: "-",
     reasoning: true,
+    type: "Grok",
+  },
+};
+
+
+export const modelDescriptions: modelDescriptionType = {
+  "openai/gpt-4.1-2025-04-14": {
+    displayName: "GPT-4.1",
+    knowledgeCutoff: "2024/06",
+    defaultVisibility: true,
+    vision: true,
+    type: "ChatGPT",
+  },
+  "openai/gpt-4.1-mini-2025-04-14": {
+    displayName: "GPT-4.1 mini",
+    knowledgeCutoff: "2024/06",
+    defaultVisibility: true,
+    fast: true,
+    vision: true,
+    type: "ChatGPT",
+  },
+  "openai/gpt-4.1-nano-2025-04-14": {
+    displayName: "GPT-4.1 nano",
+    knowledgeCutoff: "2024/06",
+    defaultVisibility: true,
+    fast: true,
+    vision: true,
+    type: "ChatGPT",
+  },
+  "openai/gpt-4o-2024-11-20": {
+    displayName: "GPT-4o",
+    knowledgeCutoff: "2023/10",
+    defaultVisibility: true,
+    vision: true,
+    type: "ChatGPT",
+  },
+  "openai/gpt-4o-mini-2024-07-18": {
+    displayName: "GPT-4o mini",
+    knowledgeCutoff: "2023/10",
+    vision: true,
+    fast: true,
+    type: "ChatGPT",
+  },
+  "openai/o4-mini-2025-04-16": {
+    displayName: "o4-mini",
+    knowledgeCutoff: "2024/06",
+    reasoningEffort: ["low", "medium", "high"],
+    defaultVisibility: true,
+    reasoning: true,
+    vision: true,
+    type: "ChatGPT",
+  },
+  "openai/o3-mini-2025-01-31": {
+    displayName: "o3-mini",
+    knowledgeCutoff: "2023/10",
+    reasoningEffort: ["low", "medium", "high"],
+    reasoning: true,
+    type: "ChatGPT",
+  },
+  "openai/o3-2025-04-16": {
+    displayName: "o3",
+    knowledgeCutoff: "2024/06",
+    defaultVisibility: true,
+    reasoning: true,
+    vision: true,
+    type: "ChatGPT",
+  },
+  "openai/o1-2024-12-17": {
+    displayName: "o1",
+    knowledgeCutoff: "2023/10",
+    reasoningEffort: ["low", "medium", "high"],
+    reasoning: true,
+    vision: true,
+    type: "ChatGPT",
+  },
+  "openai/o1-mini-2024-09-12": {
+    displayName: "o1-mini",
+    knowledgeCutoff: "2023/10",
+    vision: true,
+    reasoning: true,
+    type: "ChatGPT",
+  },
+  "google/gemini-2.5-flash-preview-04-17": {
+    displayName: "Gemini 2.5 Flash Preview",
+    knowledgeCutoff: "2025/01",
+    defaultVisibility: true,
+    vision: true,
+    type: "Gemini",
+  },
+  "google/gemini-2.5-pro-exp-03-25": {
+    displayName: "Gemini 2.5 Pro",
+    knowledgeCutoff: "2025/01",
+    defaultVisibility: true,
+    vision: true,
+    type: "Gemini",
+  },
+  "google/gemini-2.0-flash-001": {
+    displayName: "Gemini 2.0 Flash",
+    knowledgeCutoff: "2024/06",
+    fast: true,
+    vision: true,
+    type: "Gemini",
+  },
+  "google/gemini-2.0-flash-lite-001": {
+    displayName: "Gemini 2.0 Flash Lite",
+    knowledgeCutoff: "2024/06",
+    fast: true,
+    vision: true,
+    type: "Gemini",
+  },
+  "google/gemini-1.5-pro": {
+    displayName: "Gemini 1.5 Pro",
+    knowledgeCutoff: "2023/11",
+    vision: true,
+    fast: true,
+    type: "Gemini",
+  },
+  "anthropic/claude-3-7-sonnet-20250219": {
+    displayName: "Claude 3.7 Sonnet",
+    knowledgeCutoff: "2024/10",
+    defaultVisibility: true,
+    pdfSupport: true,
+    vision: true,
+    type: "Claude",
+  },
+  "anthropic/claude-3-7-sonnet-20250219-reasoning": {
+    displayName: "Claude 3.7 Sonnet (Extended Thinking)",
+    knowledgeCutoff: "2024/10",
+    defaultVisibility: true,
+    pdfSupport: true,
+    toolDisabled: true,
+    vision: true,
+    type: "Claude",
+  },
+  "anthropic/claude-3-5-sonnet-20241022": {
+    displayName: "Claude 3.5 Sonnet",
+    knowledgeCutoff: "2024/04",
+    pdfSupport: true,
+    vision: true,
+    type: "Claude",
+  },
+  "groq/deepseek-r1-distill-llama-70b": {
+    displayName: "DeepSeek R1 (Distill)",
+    knowledgeCutoff: "2024/07",
+    defaultVisibility: true,
+    fast: true,
+    reasoning: true,
+    type: "DeepSeek",
+  },
+  "openrouter/deepseek/deepseek-chat": {
+    displayName: "DeepSeek V3",
+    knowledgeCutoff: "2023/10",
+    fast: true,
+    toolDisabled: true,
+    type: "DeepSeek",
+  },
+  "openrouter/x-ai/grok-3-beta": {
+    displayName: "Grok 3 Beta (OpenRouter)",
+    vision: true,
+    defaultVisibility: true,
+    reasoning: true,
+    knowledgeCutoff: "-",
+    type: "Grok",
+  },
+  "openrouter/x-ai/grok-3-mini-beta": {
+    displayName: "Grok 3 Mini Beta (OpenRouter)",
+    vision: true,
+    reasoning: true,
+    defaultVisibility: true,
+    toolDisabled: true,
+    knowledgeCutoff: "-",
+    type: "Grok",
+  },
+  "xai/grok-3-beta": {
+    displayName: "Grok 3 Beta",
+    vision: true,
+    defaultVisibility: true,
+    type: "Grok",
+  },
+  "xai/grok-3-mini-beta": {
+    displayName: "Grok 3 Mini Beta",
+    vision: true,
+    reasoning: true,
+    defaultVisibility: true,
     type: "Grok",
   },
 };

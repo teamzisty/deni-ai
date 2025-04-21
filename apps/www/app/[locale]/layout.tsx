@@ -5,10 +5,15 @@ import { ChatSessionsProvider } from "../../hooks/use-chat-sessions";
 import { SettingsDialogProvider } from "../../context/SettingsDialogContext";
 import { SettingsDialog } from "../../components/SettingsDialog";
 import { DevelopmentBanner } from "../../components/DevelopmentBanner";
-import { Toaster } from "@repo/ui/components/sonner";
+import { Toaster } from "@workspace/ui/components/sonner";
 import { Locale, NextIntlClientProvider, hasLocale } from "next-intl";
 import { notFound } from "next/navigation";
 import { routing } from "@/i18n/routing";
+import { CanvasProvider } from "../../context/CanvasContext";
+import { Analytics } from "@vercel/analytics/react";
+import AnalyticsConsent from "@/components/AnalyticsConsent";
+import { getAnalytics } from "@/lib/getAnalytics";
+import { cookies } from "next/headers";
 
 type Props = {
   children: React.ReactNode;
@@ -45,6 +50,12 @@ export async function generateMetadata() {
   };
 }
 
+export async function getAnalyticsConsent() {
+  const cookieStore = await cookies();
+  const isAnalyticsEnabled = cookieStore.get("analytics-consent")?.value === "true";
+  return isAnalyticsEnabled;
+}
+
 export default async function LocaleLayout({ children, params }: Props) {
   // Ensure that the incoming `locale` is valid
   const { locale } = await params;
@@ -60,14 +71,21 @@ export default async function LocaleLayout({ children, params }: Props) {
     console.error(`Failed to load messages for locale: ${locale}`, error);
   }
 
+  const isAnalyticsEnabled = await getAnalyticsConsent();
+
   return (
     <NextIntlClientProvider locale={locale} messages={messages}>
       <AuthProvider>
         <ChatSessionsProvider>
           <SettingsDialogProvider>
-            <DevelopmentBanner>{children}</DevelopmentBanner>
-            <Toaster richColors position="bottom-right" />
-            <SettingsDialog />
+            <CanvasProvider>
+              <DevelopmentBanner>{children}</DevelopmentBanner>
+              <Toaster richColors position="bottom-right" />
+              <SettingsDialog />
+
+              <AnalyticsConsent initialConsent={isAnalyticsEnabled} />
+              {isAnalyticsEnabled && <Analytics />}
+            </CanvasProvider>
           </SettingsDialogProvider>
         </ChatSessionsProvider>
       </AuthProvider>

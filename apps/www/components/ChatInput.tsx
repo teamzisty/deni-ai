@@ -7,6 +7,9 @@ import { ImagePreview } from "./ImagePreview";
 import { ImageAddButton } from "./ImageAddButton";
 import { SearchButton } from "./SearchButton";
 import { DeepResearchButton } from "./DeepResearchButton";
+import CanvasButton from "./CanvasButton";
+import { useIsMobile } from "@workspace/ui/hooks/use-mobile";
+import { cn } from "@workspace/ui/lib/utils";
 
 type ModelDescription =
   (typeof modelDescriptions)[keyof typeof modelDescriptions];
@@ -20,9 +23,13 @@ interface ChatInputProps {
   generating: boolean;
   searchEnabled: boolean;
   deepResearch: boolean;
+  canvasEnabled: boolean;
+  className?: string;
+  sendButtonRef?: React.RefObject<HTMLButtonElement | null>;
   modelDescriptions: Record<string, ModelDescription>;
   handleInputChange: (e: React.ChangeEvent<HTMLTextAreaElement>) => void;
   deepResearchToggle: () => void;
+  canvasToggle: () => void;
   handleSendMessage: (e: React.MouseEvent<HTMLButtonElement>) => void;
   handleSendMessageKey: (e: React.KeyboardEvent<HTMLTextAreaElement>) => void;
   handleImagePaste: (e: React.ClipboardEvent<HTMLDivElement>) => void;
@@ -41,8 +48,12 @@ const ChatInput = memo(
     generating,
     isUploading,
     searchEnabled,
+    sendButtonRef,
     deepResearch,
+    canvasEnabled,
+    className,
     deepResearchToggle,
+    canvasToggle,
     searchToggle,
     modelDescriptions,
     handleInputChange,
@@ -53,8 +64,15 @@ const ChatInput = memo(
     setImage,
     fileInputRef,
   }: ChatInputProps) => {
+    const isMobile = useIsMobile();
+    
     return (
-      <div className="mt-4 border p-2 rounded-xl md:w-9/12 lg:w-7/12">
+      <div
+        className={cn(
+          "mt-4 border rounded-xl w-full md:max-w-9/12 lg:max-w-7/12 p-2",
+          className
+        )}
+      >
         <ImagePreview
           image={image}
           isUploading={isUploading}
@@ -64,12 +82,16 @@ const ChatInput = memo(
           input={input}
           stop={stop}
           generating={generating}
+          sendButtonRef={sendButtonRef}
           handleInputChange={handleInputChange}
           handleSendMessage={handleSendMessage}
           handleSendMessageKey={handleSendMessageKey}
           handleImagePaste={handleImagePaste}
         />
-        <div className="flex items-center gap-1">
+        <div className={cn(
+          "flex items-center",
+          "gap-1 md:gap-2"
+        )}>
           <input
             type="file"
             accept="image/*"
@@ -80,6 +102,11 @@ const ChatInput = memo(
           <ImageAddButton
             modelSupportsVision={!!modelDescriptions[model]?.vision}
             onClick={() => fileInputRef.current?.click()}
+          />
+          <CanvasButton
+            disabled={modelDescriptions[model]?.toolDisabled || false}
+            canvasEnabled={canvasEnabled}
+            canvasToggle={canvasToggle}
           />
           <SearchButton
             disabled={modelDescriptions[model]?.toolDisabled || false}
@@ -105,6 +132,7 @@ const ChatInput = memo(
       prevProps.deepResearch === nextProps.deepResearch &&
       prevProps.isUploading === nextProps.isUploading &&
       prevProps.model === nextProps.model &&
+      prevProps.canvasEnabled === nextProps.canvasEnabled &&
       prevProps.generating === nextProps.generating &&
       JSON.stringify(prevProps.modelDescriptions) ===
         JSON.stringify(nextProps.modelDescriptions)

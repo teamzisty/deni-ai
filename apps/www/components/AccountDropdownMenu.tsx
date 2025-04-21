@@ -1,6 +1,6 @@
 "use client";
 
-import { Button } from "@repo/ui/components/button";
+import { Button } from "@workspace/ui/components/button";
 import {
   Earth,
   FolderSync,
@@ -17,7 +17,7 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@repo/ui/components/dropdown-menu";
+} from "@workspace/ui/components/dropdown-menu";
 import Image from "next/image";
 import { memo, useEffect, useState } from "react";
 import { User } from "firebase/auth";
@@ -51,8 +51,6 @@ interface AccountDropdownMenuProps {
 export const AccountDropdownMenu = memo(
   ({ user, isDisabled, handleAuth }: AccountDropdownMenuProps) => {
     const [privacyMode, setPrivacyMode] = useState(false);
-    const [isSyncing, setIsSyncing] = useState(false);
-    const { syncSessions } = useChatSessions();
     const t = useTranslations();
     const { openDialog } = useSettingsDialog();
 
@@ -87,25 +85,6 @@ export const AccountDropdownMenu = memo(
         );
       };
     }, []);
-
-    const handleSync = async () => {
-      if (!user) return;
-      setIsSyncing(true);
-      try {
-        await syncSessions();
-        toast.success(t("accountMenu.syncSuccess"));
-      } catch (error: unknown) {
-        if (error instanceof Error) {
-          toast.error(t("accountMenu.syncFailed"), {
-            description: error.message,
-          });
-        } else {
-          toast.error(t("accountMenu.syncFailed"));
-        }
-      } finally {
-        setIsSyncing(false);
-      }
-    };
 
     if (!user && !isDisabled) {
       return (
@@ -202,22 +181,6 @@ export const AccountDropdownMenu = memo(
               {t("accountMenu.userSettings")}
             </DropdownMenuItem>
           </DropdownMenuGroup>
-          {!isDisabled && (
-            <>
-              <DropdownMenuSeparator />
-
-              <DropdownMenuGroup>
-                <DropdownMenuItem onClick={handleSync} disabled={isSyncing}>
-                  <FolderSync />
-                  <span>
-                    {isSyncing
-                      ? t("accountMenu.syncing")
-                      : t("accountMenu.syncHistory")}
-                  </span>
-                </DropdownMenuItem>
-              </DropdownMenuGroup>
-            </>
-          )}
 
           <DropdownMenuSeparator />
 

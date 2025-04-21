@@ -7,25 +7,27 @@ import {
   Dialog,
   DialogContent,
   DialogTitle,
-} from "@repo/ui/components/dialog";
+} from "@workspace/ui/components/dialog";
 import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@repo/ui/components/popover";
-import { useIsMobile } from "@repo/ui/hooks/use-mobile";
+  Drawer,
+  DrawerContent,
+  DrawerClose,
+  DrawerHeader,
+  DrawerTitle,
+} from "@workspace/ui/components/drawer";
+import { useIsMobile } from "@workspace/ui/hooks/use-mobile";
 import {
   Tabs,
   TabsContent,
   TabsList,
   TabsTrigger,
-} from "@repo/ui/components/tabs";
-import { User, Paintbrush, X, Bot, Database, MenuIcon } from "lucide-react";
-import { Button } from "@repo/ui/components/button";
+} from "@workspace/ui/components/tabs";
+import { User, X, Bot, Database, MenuIcon } from "lucide-react";
 import GeneralSettings from "./GeneralSettings";
 import AccountSettings from "./AccountSettings";
 import ModelSettings from "./ModelSettings";
 import DataControlsSettings from "./DataControlsSettings";
+import { Button } from "@workspace/ui/components/button";
 export function SettingsDialog() {
   const { isOpen, closeDialog, dialogType } = useSettingsDialog();
   const t = useTranslations();
@@ -37,23 +39,10 @@ export function SettingsDialog() {
   // 設定コンテンツのコンポーネント
   const SettingsContent = () => (
     <div className="flex flex-col gap-5">
-      <div className="!h-fit !p-0 !mb-0">
-        <div className="text-lg leading-none font-semibold">
-          {t("settings.title")}
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={closeDialog}
-            className="absolute right-4 top-4"
-          >
-            <X />
-          </Button>{" "}
-        </div>
-      </div>
       <Tabs defaultValue={initialTab} className="w-full">
         <div className="flex flex-col md:flex-row w-full h-full gap-4">
           <TabsList className="flex md:flex-col md:items-start mt-15 gap-2 bg-transparent">
-          <TabsTrigger
+            <TabsTrigger
               className="flex-1 justify-start w-full p-4 data-[state=active]:bg-primary"
               value="general"
             >
@@ -89,7 +78,6 @@ export function SettingsDialog() {
                 {t("settings.dataControls.tab")}
               </span>
             </TabsTrigger>
-
           </TabsList>
 
           <div className="flex-1 overflow-y-auto h-[calc(80vh-120px)] md:h-[calc(70vh-120px)]">
@@ -111,15 +99,28 @@ export function SettingsDialog() {
     </div>
   );
 
-  // モバイル表示の場合はポップオーバーを使用
+  // モバイル表示の場合はドロワーを使用
   if (isMobile) {
     return (
-      <Popover open={isOpen} onOpenChange={(open) => !open && closeDialog()}>
-        <PopoverTrigger className="hidden">Open Settings</PopoverTrigger>
-        <PopoverContent className="h-[90vh] w-screen overflow-hidden">
-          <SettingsContent />
-        </PopoverContent>
-      </Popover>
+      <Drawer
+        open={isOpen}
+        onOpenChange={(open) => !open && closeDialog()}
+        direction="bottom"
+      >
+        <DrawerContent className="h-[90vh]">
+          <DrawerHeader className="border-b p-4 flex items-center flex-row justify-between">
+            <DrawerTitle>{t("settings.title")}</DrawerTitle>
+            <DrawerClose asChild>
+              <button className="p-1 rounded-full">
+                <X className="h-5 w-5" />
+              </button>
+            </DrawerClose>
+          </DrawerHeader>
+          <div className="p-4 overflow-auto">
+            <SettingsContent />
+          </div>
+        </DrawerContent>
+      </Drawer>
     );
   }
 
@@ -127,7 +128,17 @@ export function SettingsDialog() {
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && closeDialog()}>
       <DialogContent className="[&>button]:hidden rounded-3xl h-[80vh] md:h-[70vh] overflow-hidden md:w-[calc(100%-2rem)] !max-w-3xl">
-        <DialogTitle className="sr-only">設定</DialogTitle>
+        <DialogTitle>{t("settings.title")}</DialogTitle>
+        <div className="!h-fit !p-0 !mb-0">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={closeDialog}
+            className="absolute right-4 top-4"
+          >
+            <X />
+          </Button>
+        </div>
         <SettingsContent />
       </DialogContent>
     </Dialog>

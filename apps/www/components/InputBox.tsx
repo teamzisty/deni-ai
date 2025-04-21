@@ -1,7 +1,9 @@
-import { Button } from "@repo/ui/components/button";
+import { Button } from "@workspace/ui/components/button";
 import { SendHorizonal, StopCircle } from "lucide-react";
 import { memo } from "react";
 import { useTranslations } from "next-intl";
+import { useIsMobile } from "@workspace/ui/hooks/use-mobile";
+import { cn } from "@workspace/ui/lib/utils";
 
 interface InputBoxProps {
   input: string;
@@ -11,6 +13,7 @@ interface InputBoxProps {
   handleSendMessage: (e: React.MouseEvent<HTMLButtonElement>) => void;
   handleSendMessageKey: (e: React.KeyboardEvent<HTMLTextAreaElement>) => void;
   handleImagePaste: (e: React.ClipboardEvent<HTMLDivElement>) => void;
+  sendButtonRef?: React.RefObject<HTMLButtonElement | null>;
 }
 
 const InputBox: React.FC<InputBoxProps> = memo(
@@ -22,11 +25,13 @@ const InputBox: React.FC<InputBoxProps> = memo(
     handleSendMessage,
     handleSendMessageKey,
     handleImagePaste,
+    sendButtonRef,
   }) => {
     const t = useTranslations();
+    const isMobile = useIsMobile();
 
     return (
-      <div className="flex items-center mb-2" onPaste={handleImagePaste}>
+      <div className="flex items-center mb-1 md:mb-2" onPaste={handleImagePaste}>
         <div className="flex items-center w-full mb-2">
           <textarea
             value={input}
@@ -37,15 +42,19 @@ const InputBox: React.FC<InputBoxProps> = memo(
                 handleSendMessageKey(e);
               }
             }}
-            className="w-full px-3 py-2 resize-none bg-transparent border-none shadow-none !outline-none focus:ring-0 focus:ring-offset-0 disabled:opacity-0"
+            className="w-full resize-none bg-transparent border-none shadow-none !outline-none focus:ring-0 focus:ring-offset-0 disabled:opacity-0 px-2 py-1.5 md:px-3 md:py-2 text-sm md:text-base"
           />
           <Button
             aria-label={t("inputBox.send")}
-            className="mr-3"
+            className="mr-2 md:mr-3"
             size="icon"
+            ref={sendButtonRef}
             onClick={(e) => (generating ? stop() : handleSendMessage(e))}
           >
-            {generating ? <StopCircle /> : <SendHorizonal />}
+            {generating ? 
+              <StopCircle className="h-[18px] w-[18px] md:h-6 md:w-6" /> : 
+              <SendHorizonal className="h-[18px] w-[18px] md:h-6 md:w-6" />
+            }
           </Button>
         </div>
       </div>

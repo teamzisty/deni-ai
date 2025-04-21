@@ -1,9 +1,9 @@
 {
-  "extends": "@repo/typescript-config/base.json",
+  "extends": "@workspace/typescript-config/base.json",
   "compilerOptions": {
     "baseUrl": ".",
     "paths": {
-      "@repo/firebase-config/*": ["./src/*"]
+      "@workspace/firebase-config/*": ["./src/*"]
     },
     "module": "node16",
     "moduleResolution": "node16"

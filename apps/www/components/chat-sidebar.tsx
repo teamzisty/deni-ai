@@ -12,10 +12,10 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarTrigger,
-} from "@repo/ui/components/sidebar";
+} from "@workspace/ui/components/sidebar";
 import { MessageCircleMore, MoreHorizontal, Plus } from "lucide-react";
 import { Link } from "@/i18n/navigation";
-import { Badge } from "@repo/ui/components/badge";
+import { Badge } from "@workspace/ui/components/badge";
 import { useParams } from "next/navigation";
 import { useIsMobile } from "@/hooks/use-mobile";
 import {
@@ -24,9 +24,9 @@ import {
   DrawerDescription,
   DrawerTitle,
   DrawerTrigger,
-} from "@repo/ui/components/drawer";
+} from "@workspace/ui/components/drawer";
 import { useRouter } from "@/i18n/navigation";
-import { Button } from "@repo/ui/components/button";
+import { Button } from "@workspace/ui/components/button";
 import { toast } from "sonner";
 import { useEffect, useState } from "react";
 import { AccountDropdownMenu } from "./AccountDropdownMenu";
@@ -250,6 +250,10 @@ export function ChatSidebar() {
   return (
     <Sidebar collapsible="icon">
       <SidebarContent>
+        {/* 
+          To avoid hydration mismatches, ensure that all data rendered here is static or provided at build time.
+          If buildInfo.version is dynamic or only available on the client, render it only on the client.
+        */}
         <SidebarGroup className="pt-6 pl-4 pb-0 relative mb-2">
           <div className="flex items-center gap-2">
             <div className="flex items-center gap-2">
@@ -265,9 +269,9 @@ export function ChatSidebar() {
               >
                 v{buildInfo.version}
               </Badge>
-            </div>{" "}
+            </div>
             <SidebarTrigger className="ml-auto group-data-[collapsible=icon]:absolute group-data-[collapsible=icon]:left-1/2 group-data-[collapsible=icon]:-translate-x-1/2 group-data-[collapsible=icon]:top-4" />
-          </div>{" "}
+          </div>
         </SidebarGroup>
         <ChatSidebarMenuSession />
       </SidebarContent>

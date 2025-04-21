@@ -2,8 +2,8 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "@/i18n/navigation";
-import { Button } from "@repo/ui/components/button";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@repo/ui/components/card";
+import { Button } from "@workspace/ui/components/button";
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@workspace/ui/components/card";
 import { MessageCircle, Eye, Calendar, ArrowRight } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Loading } from "@/components/loading";

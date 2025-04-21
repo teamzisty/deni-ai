@@ -2,14 +2,14 @@
 
 import { useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
-import { Button } from "@repo/ui/components/button";
+import { Button } from "@workspace/ui/components/button";
 import {
   Accordion,
   AccordionContent,
   AccordionItem,
   AccordionTrigger,
-} from "@repo/ui/components/accordion";
-import { Textarea } from "@repo/ui/components/textarea";
+} from "@workspace/ui/components/accordion";
+import { Textarea } from "@workspace/ui/components/textarea";
 import {
   Card,
   CardContent,
@@ -17,14 +17,14 @@ import {
   CardFooter,
   CardHeader,
   CardTitle,
-} from "@repo/ui/components/card";
+} from "@workspace/ui/components/card";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@repo/ui/components/dropdown-menu";
+} from "@workspace/ui/components/dropdown-menu";
 import {
   AlertDialog,
   AlertDialogCancel,
@@ -33,7 +33,7 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from "@repo/ui/components/alert-dialog";
+} from "@workspace/ui/components/alert-dialog";
 import { toast } from "sonner";
 
 export default function Error({

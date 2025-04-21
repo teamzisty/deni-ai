@@ -7,9 +7,9 @@ import {
   CardDescription,
   CardHeader,
   CardTitle,
-} from "@repo/ui/components/card";
-import { Switch } from "@repo/ui/components/switch";
-import { Label } from "@repo/ui/components/label";
+} from "@workspace/ui/components/card";
+import { Switch } from "@workspace/ui/components/switch";
+import { Label } from "@workspace/ui/components/label";
 import { useState, useEffect } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { useRouter } from "@/i18n/navigation";
@@ -23,13 +23,13 @@ import {
   TotpMultiFactorGenerator,
   getMultiFactorResolver,
 } from "firebase/auth";
-import { Input } from "@repo/ui/components/input";
+import { Input } from "@workspace/ui/components/input";
 import { toast } from "sonner";
 import {
   InputOTP,
   InputOTPGroup,
   InputOTPSlot,
-} from "@repo/ui/components/input-otp";
+} from "@workspace/ui/components/input-otp";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -39,7 +39,7 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from "@repo/ui/components/alert-dialog";
+} from "@workspace/ui/components/alert-dialog";
 import { QRCodeSVG } from "qrcode.react";
 import { Loading } from "@/components/loading";
 

@@ -1,25 +1,25 @@
 "use client";
 
 import { useTranslations } from "next-intl";
-import { Button } from "@repo/ui/components/button";
+import { Button } from "@workspace/ui/components/button";
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-} from "@repo/ui/components/card";
+} from "@workspace/ui/components/card";
 import {
   Avatar,
   AvatarFallback,
   AvatarImage,
-} from "@repo/ui/components/avatar";
+} from "@workspace/ui/components/avatar";
 import { useAuth } from "@/context/AuthContext";
 import { deleteUser, getAuth, updateProfile, EmailAuthProvider, reauthenticateWithCredential, reauthenticateWithPopup, GoogleAuthProvider, GithubAuthProvider, getMultiFactorResolver, TotpMultiFactorGenerator } from "firebase/auth";
 import { useRef, useState } from "react";
 import { toast } from "sonner";
-import { Badge } from "@repo/ui/components/badge";
-import { Input } from "@repo/ui/components/input";
+import { Badge } from "@workspace/ui/components/badge";
+import { Input } from "@workspace/ui/components/input";
 import logger from "@/utils/logger";
 import { uploadResponse, useUploadThing } from "@/utils/uploadthing";
 import {
@@ -29,7 +29,7 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@repo/ui/components/dialog";
+} from "@workspace/ui/components/dialog";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -39,14 +39,14 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from "@repo/ui/components/alert-dialog";
-import { Label } from "@repo/ui/components/label";
+} from "@workspace/ui/components/alert-dialog";
+import { Label } from "@workspace/ui/components/label";
 import { Loading } from "@/components/loading";
 import {
   InputOTP,
   InputOTPGroup,
   InputOTPSlot,
-} from "@repo/ui/components/input-otp";
+} from "@workspace/ui/components/input-otp";
 import { useChatSessions } from "@/hooks/use-chat-sessions";
 
 export function AccountSettings() {

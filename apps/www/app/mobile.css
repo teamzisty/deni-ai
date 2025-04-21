@@ -1,0 +1,33 @@
+/* Mobile-specific styles to reduce text size on small screens */
+/* 
+  This file is now obsolete. 
+  Instead of using global CSS overrides with !important,
+  please use Tailwind's built-in responsive classes like:
+  
+  - text-sm
+  - md:text-base
+  - text-xs
+  - md:text-sm
+  
+  For example:
+  <p className="text-sm md:text-base">Mobile optimized text</p>
+  <h1 className="text-xl md:text-2xl">Responsive heading</h1>
+  
+  Use the following sizing guidelines:
+  - Normal text: text-sm (mobile) / text-base (desktop)
+  - Small text: text-xs (mobile) / text-sm (desktop) 
+  - H3: text-lg (mobile) / text-xl (desktop)
+  - H2: text-xl (mobile) / text-2xl (desktop)
+  - H1: text-2xl (mobile) / text-3xl (desktop)
+  
+  For spacing:
+  - p-2 (mobile) / p-4 (desktop)
+  - gap-2 (mobile) / gap-4 (desktop)
+  - my-2 (mobile) / my-4 (desktop)
+*/
+
+/* This media query is kept for reference only and will be removed
+   once all components have been updated to use Tailwind classes */
+@media (max-width: 768px) {
+  /* Empty - all styles moved to Tailwind classes */
+} 

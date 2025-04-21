@@ -1,12 +1,12 @@
 import { Loading } from "@/components/loading";
 import { Suspense } from "react";
-import { ThemeProvider } from "@repo/ui/components/theme-provider";
+import { ThemeProvider } from "@workspace/ui/components/theme-provider";
 
-import { SidebarProvider } from "@repo/ui/components/sidebar";
+import { SidebarProvider } from "@workspace/ui/components/sidebar";
 import { ChatSidebar } from "@/components/chat-sidebar";
 import { AuthProvider } from "@/context/AuthContext";
 import { cookies } from "next/headers";
-import { TooltipProvider } from "@repo/ui/components/tooltip";
+import { TooltipProvider } from "@workspace/ui/components/tooltip";
 
 export default async function Layout({
   children,

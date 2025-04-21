@@ -1,4 +1,4 @@
-import { Button } from "@repo/ui/components/button";
+import { Button } from "@workspace/ui/components/button";
 import { Loader2, XIcon } from "lucide-react";
 import Image from "next/image";
 import { memo } from "react";

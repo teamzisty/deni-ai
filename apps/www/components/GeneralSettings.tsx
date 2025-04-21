@@ -1,13 +1,13 @@
 "use client";
 
-import { Button } from "@repo/ui/components/button";
+import { Button } from "@workspace/ui/components/button";
 import {
   DropdownMenu,
   DropdownMenuTrigger,
   DropdownMenuContent,
   DropdownMenuItem,
-} from "@repo/ui/components/dropdown-menu";
-import { Switch } from "@repo/ui/components/switch";
+} from "@workspace/ui/components/dropdown-menu";
+import { Switch } from "@workspace/ui/components/switch";
 import { Check } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useTheme } from "next-themes";
@@ -38,7 +38,7 @@ export default function GeneralSettings() {
     }
 
     setIsLoading(false);
-  }, []);
+  });
 
   useEffect(() => {
     if (isLoading) return;

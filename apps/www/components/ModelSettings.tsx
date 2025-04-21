@@ -1,6 +1,6 @@
 "use client";
 
-import { Avatar } from "@repo/ui/components/avatar";
+import { Avatar } from "@workspace/ui/components/avatar";
 import {
   BrainCircuit,
   Eye,
@@ -9,7 +9,7 @@ import {
   Filter,
   Ban,
 } from "lucide-react";
-import { Badge } from "@repo/ui/components/badge";
+import { Badge } from "@workspace/ui/components/badge";
 import { useModelVisibility } from "@/hooks/use-model-settings";
 import { modelDescriptions } from "@/lib/modelDescriptions";
 
@@ -19,17 +19,17 @@ import {
   SiClaude,
   SiX,
 } from "@icons-pack/react-simple-icons";
-import { Switch } from "@repo/ui/components/switch";
-import { cn } from "@/lib/utils";
+import { Switch } from "@workspace/ui/components/switch";
+import { cn } from "@workspace/ui/lib/utils";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
-} from "@repo/ui/components/popover";
-import { Checkbox } from "@repo/ui/components/checkbox";
-import { Button } from "@repo/ui/components/button";
+} from "@workspace/ui/components/popover";
+import { Checkbox } from "@workspace/ui/components/checkbox";
+import { Button } from "@workspace/ui/components/button";
 import { DeepSeekIcon } from "@/components/DeepSeekIcon";
 
 export default function ModelSettings() {

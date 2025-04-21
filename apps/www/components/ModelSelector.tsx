@@ -1,4 +1,4 @@
-import { Button } from "@repo/ui/components/button";
+import { Button } from "@workspace/ui/components/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -7,7 +7,7 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@repo/ui/components/dropdown-menu";
+} from "@workspace/ui/components/dropdown-menu";
 import {
   ImodelDescriptionType,
   modelDescriptionType,
@@ -28,12 +28,11 @@ import {
   RefreshCw,
   Zap,
 } from "lucide-react";
-import { Badge } from "@repo/ui/components/badge";
+import { Badge } from "@workspace/ui/components/badge";
 import { EasyTip } from "@/components/easytip";
-import { Link } from "@/i18n/navigation";
 import { useModelVisibility } from "@/hooks/use-model-settings";
 import { memo, useCallback, useMemo } from "react";
-import { cn } from "@/lib/utils";
+import { cn } from "@workspace/ui/lib/utils";
 import { DeepSeekIcon } from "./DeepSeekIcon";
 import { useSettingsDialog } from "@/context/SettingsDialogContext";
 
@@ -151,7 +150,7 @@ export const ModelSelector = memo(function ModelSelector({
       }));
   }, [modelDescriptions, visibility]);
 
-  const memoizedHandleModelChange = useCallback(handleModelChange, []);
+  const memoizedHandleModelChange = useCallback(handleModelChange, [handleModelChange]);
 
   return (
     <DropdownMenu>

@@ -4,7 +4,7 @@ import {
   ContextMenuContent,
   ContextMenuItem,
   ContextMenuTrigger,
-} from "@repo/ui/components/context-menu";
+} from "@workspace/ui/components/context-menu";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -14,10 +14,11 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from "@repo/ui/components/alert-dialog";
-import { Button } from "@repo/ui/components/button";
-import { Input } from "@repo/ui/components/input";
-import { memo, useState } from "react";
+} from "@workspace/ui/components/alert-dialog";
+import { Button } from "@workspace/ui/components/button";
+import { Input } from "@workspace/ui/components/input";
+import { memo, useEffect, useState } from "react";
+import { useTranslations } from "next-intl";
 
 interface ChatContextMenuProps {
   session: ChatSession;
@@ -25,6 +26,7 @@ interface ChatContextMenuProps {
 }
 
 export const ChatContextMenu = memo(({ session, children }: ChatContextMenuProps) => {
+  const t = useTranslations("contextMenu");
   const [nameOpen, setNameOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [chatName, setChatName] = useState(session.title);
@@ -37,6 +39,10 @@ export const ChatContextMenu = memo(({ session, children }: ChatContextMenuProps
     createdAt: session.createdAt,
     messages: session.messages,
   };
+
+  useEffect(() => {
+    setChatName(session.title);
+  })
 
   const handleChatNameChange = () => {
     baseSession.title = chatName;
@@ -52,15 +58,11 @@ export const ChatContextMenu = memo(({ session, children }: ChatContextMenuProps
       <ContextMenu>
         <ContextMenuTrigger>{children}</ContextMenuTrigger>
         <ContextMenuContent className="w-64">
-          {/* <ContextMenuItem onClick={onCopy}>
-          コピー
-        </ContextMenuItem>
-        <ContextMenuSeparator /> */}
           <ContextMenuItem onClick={() => setNameOpen(true)}>
-            名前を変更
+            {t("rename")}
           </ContextMenuItem>
           <ContextMenuItem onClick={() => setDeleteOpen(true)} className="text-red-500">
-            削除
+            {t("delete")}
           </ContextMenuItem>
         </ContextMenuContent>
       </ContextMenu>
@@ -68,9 +70,9 @@ export const ChatContextMenu = memo(({ session, children }: ChatContextMenuProps
       <AlertDialog open={nameOpen} onOpenChange={() => setNameOpen(!open)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>名前の変更</AlertDialogTitle>
+            <AlertDialogTitle>{t("renameTitle")}</AlertDialogTitle>
             <AlertDialogDescription>
-              この会話の名前を変更します。
+              {t("renameDescription")}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <Input
@@ -78,9 +80,9 @@ export const ChatContextMenu = memo(({ session, children }: ChatContextMenuProps
             onChange={(e) => setChatName(e.target.value)}
           />
           <AlertDialogFooter>
-            <AlertDialogCancel>キャンセル</AlertDialogCancel>
+            <AlertDialogCancel>{t("cancel")}</AlertDialogCancel>
             <AlertDialogAction onClick={handleChatNameChange}>
-              名前を変更
+              {t("rename")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -92,15 +94,15 @@ export const ChatContextMenu = memo(({ session, children }: ChatContextMenuProps
       >
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>会話を削除する</AlertDialogTitle>
+            <AlertDialogTitle>{t("deleteTitle")}</AlertDialogTitle>
             <AlertDialogDescription>
-              この会話を本当に削除しますか？チャットをエクスポートしない限り、この会話の内容は永久的に失われます。
+              {t("deleteDescription")}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel >キャンセル</AlertDialogCancel>
+            <AlertDialogCancel>{t("cancel")}</AlertDialogCancel>
             <AlertDialogAction asChild onClick={handleDelete}>
-              <Button variant="destructive">削除</Button>
+              <Button variant="destructive">{t("delete")}</Button>
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

@@ -1,11 +1,7 @@
 {
   "name": "deni-ai",
-  "version": "2.4",
+  "version": "3.0.0",
   "private": true,
-  "workspaces": [
-    "apps/*",
-    "packages/*"
-  ],
   "scripts": {
     "build": "turbo build",
     "dev": "turbo dev",
@@ -13,22 +9,17 @@
     "format": "prettier --write \"**/*.{ts,tsx,md}\""
   },
   "devDependencies": {
-    "@repo/eslint-config": "workspace:*",
-    "@repo/typescript-config": "workspace:*",
-    "@types/react-syntax-highlighter": "^15.5.13",
+    "@workspace/eslint-config": "workspace:*",
+    "@workspace/typescript-config": "workspace:*",
     "prettier": "^3.5.3",
     "turbo": "^2.5.0",
     "typescript": "5.8.3"
   },
-  "packageManager": "bun@1.2.7",
+  "packageManager": "pnpm@10.8.1",
   "engines": {
     "node": ">=20"
   },
   "dependencies": {
-    "date-fns": "^4.1.0",
-    "firebase": "^11.6.0",
-    "firebase-admin": "^13.2.0",
-    "qrcode.react": "^4.2.0",
-    "react-syntax-highlighter": "^15.6.1"
+    "zod": "^3.24.3"
   }
 }

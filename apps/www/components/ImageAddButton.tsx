@@ -1,9 +1,9 @@
 import { Plus } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { cn } from "@workspace/ui/lib/utils";
 import { memo } from "react";
 import { EasyTip } from "@/components/easytip";
 import { useTranslations } from "next-intl";
-import { Button } from "@repo/ui/components/button";
+import { Button } from "@workspace/ui/components/button";
 
 interface ImageAddButtonProps {
   modelSupportsVision: boolean;

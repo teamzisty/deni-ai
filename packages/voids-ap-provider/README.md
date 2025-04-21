@@ -1,4 +1,4 @@
-# `@repo/voids-ap-provider`
+# `@workspace/voids-ap-provider`
 
 Voids AP Provider is a package that provides an interface for interacting with voids.top Anthropic AI models.
 

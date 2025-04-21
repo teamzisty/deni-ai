@@ -8,8 +8,8 @@ import {
   CardDescription,
   CardContent,
   CardFooter,
-} from "@repo/ui/components/card";
-import { Button } from "@repo/ui/components/button";
+} from "@workspace/ui/components/card";
+import { Button } from "@workspace/ui/components/button";
 import { Link } from "@/i18n/navigation";
 
 export default function NotFound() {

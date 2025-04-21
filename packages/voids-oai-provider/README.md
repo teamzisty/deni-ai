@@ -1,4 +1,4 @@
-# `@repo/voids-oai-provider`
+# `@workspace/voids-oai-provider`
 
 Voids OAI Provider is a package that provides an interface for interacting with voids.top OpenAI models.
 

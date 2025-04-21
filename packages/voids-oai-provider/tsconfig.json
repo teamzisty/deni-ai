@@ -10,7 +10,7 @@
 
     "baseUrl": ".",
     "paths": {
-      "@repo/ui/*": ["./src/*"]
+      "@workspace/ui/*": ["./src/*"]
     },
 
     // Bundler mode

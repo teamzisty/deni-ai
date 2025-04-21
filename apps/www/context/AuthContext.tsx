@@ -2,7 +2,7 @@
 "use client";
 
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import { auth } from '@repo/firebase-config/client';
+import { auth } from '@workspace/firebase-config/client';
 import { User, sendEmailVerification } from 'firebase/auth';
 import { useRouter, usePathname } from 'next/navigation';
 import { toast } from 'sonner';

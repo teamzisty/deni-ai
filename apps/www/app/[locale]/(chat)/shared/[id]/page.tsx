@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import { UIMessage } from "ai";
 import { MessageLog } from "@/components/MessageLog";
-import { Button } from "@repo/ui/components/button";
+import { Button } from "@workspace/ui/components/button";
 import { Share2, Copy } from "lucide-react";
 import { toast } from "sonner";
 import { useTranslations } from "next-intl";
@@ -36,7 +36,6 @@ export default function SharedChatPage() {
         }
         
         const data = await response.json();
-        console.log(data);
         setChatData(data.data);
       } catch (err) {
         console.error(err);

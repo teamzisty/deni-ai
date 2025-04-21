@@ -1,4 +1,4 @@
-# `@repo/firebase-config`
+# `@workspace/firebase-config`
 
 Shared firebase configuration for the workspace.
 

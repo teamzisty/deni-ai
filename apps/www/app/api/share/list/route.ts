@@ -1,4 +1,4 @@
-import { authAdmin, notAvailable, firestoreAdmin } from "@repo/firebase-config/server";
+import { authAdmin, notAvailable, firestoreAdmin } from "@workspace/firebase-config/server";
 import { NextResponse } from "next/server";
 
 export async function GET(req: Request) {

@@ -1,7 +1,7 @@
 import { useTranslations } from "next-intl";
 import { Link } from "@/i18n/navigation";
 import React, { memo } from "react";
-import { cn } from "@repo/ui/lib/utils";
+import { cn } from "@workspace/ui/lib/utils";
 
 const Footer = memo(() => {
   const t = useTranslations();

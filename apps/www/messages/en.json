@@ -8,7 +8,15 @@
   "header": {
     "home": "Home",
     "app": "App",
-    "sourceCode": "Source Code"
+    "sourceCode": "Source Code",
+    "privacyPolicy": "Privacy Policy",
+    "termsOfService": "Terms of Service"
+  },
+  "analyticsConsent": {
+    "title": "Enable Analytics?",
+    "description": "This site uses Vercel Analytics to collect usage data to improve site performance and user experience. By enabling this, anonymous usage data will be collected.",
+    "accept": "Accept",
+    "reject": "Reject"
   },
   "messageLog": {
     "search": "Search",
@@ -36,7 +44,9 @@
   "chatInput": {
     "imageAdd": "Add Image",
     "search": "Search",
-    "deepResearch": "Deep Research"
+    "deepResearch": "Deep Research",
+    "canvas": "Canvas",
+    "translate": "Translate"
   },
   "headerArea": {
     "ready": "Ready",
@@ -95,12 +105,6 @@
       "privacyMode": {
         "title": "Privacy Mode",
         "description": "Hide your name, email address, and profile image."
-      },
-      "sync": {
-        "title": "Sync Conversations",
-        "description": "Synchronize your conversations with the cloud.",
-        "action": "Sync Conversations",
-        "syncing": "Syncing..."
       },
       "authDisabled": "Authentication is temporarily disabled or not available in your instance.",
       "data": {
@@ -310,12 +314,8 @@
     "login": "Login",
     "account": "Account",
     "userSettings": "User Settings",
-    "syncing": "Syncing...",
-    "syncHistory": "Sync Conversation History",
     "logout": "Logout",
-    "version": "Deni AI v{version} ({codename}) ({type})",
-    "syncSuccess": "Conversation history synchronized",
-    "syncFailed": "Synchronization failed"
+    "version": "Deni AI v{version} ({codename}) ({type})"
   },
   "footer": {
     "disclaimer": "AI responses may not always be accurate. All AI models are available for unlimited use.",
@@ -350,20 +350,57 @@
   "landing": {
     "title": "Save Your 20 Dollars",
     "subtitle": "A safe AI chat service that is unlimited, completely free, and made for everyone",
-    "featuresTitle": "Key Features",
-    "featuresHeading": "Better AI Chat Experience",
-    "featuresSubtitle": "Next-generation AI chat service with advanced features and ease of use",
-    "freeTitle": "Completely Free",
-    "freeDescription": "No subscriptions or hidden fees. All features available for free.",
-    "privacyTitle": "Privacy Focused",
-    "privacyDescription": "We respect data security and privacy, protecting your data.",
-    "speedTitle": "Fast Response",
-    "speedDescription": "Utilizing the latest technology to provide users with fast responses.",
-    "supportTitle": "Support",
-    "supportDescription": "Support for AI is available during support hours.",
-    "compatibilityTitle": "Compatible with Major AI Models",
-    "yourModel": "Your",
-    "compatible": "compatible",
+    "features": {
+      "oneTitle": "Save Your 20 Dollars",
+      "oneSubtitle": "You can stop paying for AI services.",
+      "twoTitle": "Secure and Private",
+      "twoSubtitle": "We dont sell data to third parties.",
+      "threeTitle": "Fast and Reliable",
+      "threeSubtitle": "We provide fast and reliable service."
+    },
+    "featuresTab": {
+      "one": {
+        "title": "Stop paying for AI services",
+        "subtitle": "You can stop paying for AI services, such as ChatGPT, Claude, and Grok.",
+        "button": "Compare AI services",
+        "heroTitle": "Free from chains",
+        "heroDescription": "Lets free you from the chains of AI services."
+      },
+      "two": {
+        "title": "Secure and Private",
+        "subtitle": "Our service is secure and private. We dont sell your data to third parties.",
+        "button": "Privacy Policy",
+        "heroDescription": "We dont sell your data to third parties."
+      },
+      "three": {
+        "title": "Fast and Reliable",
+        "subtitle": "We use the latest technology to provide you with fast and reliable service.",
+        "button": "Compare AI services",
+        "heroDescription": "Our optimized infrastructure (with {provider}) ensures quick responses and 99.9% uptime"
+      }
+    },
+    "characteristics": {
+      "one": {
+        "badge": "Coming Soon",
+        "title": "Development, Powered by AI",
+        "description": "You can use Deni AI to develop your own applications."
+      },
+      "two": {
+        "badge": "Customizable",
+        "title": "Your AI Chat Bot, Your way",
+        "description": "You can customize the chat bot to your liking. and deploy it to the web."
+      },
+      "three": {
+        "badge": "Fast, Reliable",
+        "title": "Fast, Reliable, and Unlimited",
+        "description": "You can use Deni AI for only email verification. No credit card required."
+      },
+      "four": {
+        "badge": "Secure",
+        "title": "Secure and Private",
+        "description": "Rest assured, your data is safe with us. We dont sell your data to third parties."
+      }
+    },
     "startNow": "Start Now",
     "startButton": "Get Started"
   },
@@ -584,6 +621,15 @@
     "layout": {
       "return": "Return to Deni AI"
     },
+    "menu": "Menu",
+    "searchBox": {
+      "dialogTitle": "Action Menu",
+      "dialogDescription": "To search for a specific action, please enter the action name in the search box.",
+      "returnToDeniAI": "Return to Deni AI",
+      "logout": "Logout",
+      "noResults": "No results found",
+      "triggerPlaceholder": "Action Menu"
+    },
     "profileUpdateSuccess": "Profile updated successfully",
     "profileUpdateError": "Failed to update profile",
     "profile": {
@@ -796,6 +842,8 @@
     "syncFailed": "Failed to sync chat sessions.",
     "firebaseUnavailable": "Firebase services are unavailable.",
     "checkFirebaseConfig": "Please check your Firebase configuration.",
+    "sessionDeletedSuccess": "Session deleted successfully.",
+    "sessionDeletedFailed": "Failed to delete session.",
     "loginRequired": "Login required to sync sessions.",
     "reauthRequired": "Please log in again to sync your sessions.",
     "localSyncSuccess": "Local sessions synced to your account.",
@@ -811,5 +859,348 @@
   "auth": {
     "verificationEmailSent": "Verification email sent successfully",
     "verificationEmailFailed": "Failed to send verification email"
+  },
+  "contextMenu": {
+    "rename": "Rename",
+    "delete": "Delete",
+    "renameTitle": "Rename",
+    "renameDescription": "Change the name of this conversation.",
+    "cancel": "Cancel",
+    "deleteTitle": "Delete Conversation",
+    "deleteDescription": "Are you sure you want to delete this conversation? Unless you export the chat, the contents will be lost permanently."
+  },
+  "compare": {
+    "heroTitle": "AI Service Comparison",
+    "heroSubtitle": "See how Deni AI stacks up against other popular AI services, offering premium features completely free.",
+    "recommended": "Recommended",
+    "topModels": "Top Models",
+    "usageLimits": "Usage Limits",
+    "privacy": "Privacy",
+    "keyFeatures": "Key Features",
+    "limitations": "Limitations",
+    "more": "more",
+    "detailedComparison": "Detailed Feature Comparison",
+    "feature": "Feature",
+    "faqTitle": "Frequently Asked Questions",
+    "ctaTitle": "Start using the best AI service today.",
+    "ctaSubtitle": "No credit card required.",
+    "getStarted": "Get Started",
+    "standardPlans": "Standard Plans ($20/month)",
+    "premiumPlans": "Premium Plans ($100-200/month)",
+    "pricingNote": "Features and pricing may vary. Please check the official websites for the most current information.",
+    "services": {
+      "deniAI": {
+        "description": "Completely free AI chat interface with unlimited access to premium models",
+        "price": "Free",
+        "priceDescription": "Completely free with no usage limits",
+        "limits": "Unlimited messages",
+        "privacy": "Full data privacy, no selling user data",
+        "registration": "Email only",
+        "features": {
+          "unlimited": "Unlimited usage",
+          "noPayment": "No payment required",
+          "imageCapability": "Image input/output",
+          "privacy": "Privacy focused",
+          "allModels": "All premium models"
+        },
+        "buttonText": "Start using Deni AI"
+      },
+      "chatGPT": {
+        "description": "OpenAI's premium chat interface with access to latest models",
+        "price": "$20/month | $200/month",
+        "priceDescription": "Monthly subscription required",
+        "limits": "Limited requests per hour depending on load",
+        "privacy": "Data used for training by default",
+        "registration": "Email, phone verification",
+        "features": {
+          "models": "GPT-4.5 models",
+          "imageGen": "Image generation",
+          "voice": "Voice interface",
+          "browse": "Browse capability"
+        },
+        "cons": {
+          "cost": "Monthly cost",
+          "rateLimits": "Rate limits during peak hours",
+          "dataTraining": "Data used for training"
+        },
+        "buttonText": "Visit ChatGPT"
+      },
+      "claude": {
+        "description": "Anthropic's premium offering with Claude 3.7 models",
+        "price": "$20/month | $100/month",
+        "priceDescription": "Monthly subscription required",
+        "limits": "Pro: 5x Free | Max: 5x Pro, 20x Pro ($200/month)",
+        "privacy": "Data not used for training",
+        "registration": "Email, payment info",
+        "features": {
+          "models": "Claude 3.7 models",
+          "contextWindow": "Long context window",
+          "speed": "Fast response time",
+          "privacy": "Data privacy"
+        },
+        "cons": {
+          "cost": "Monthly cost",
+          "limits": "Usage limits",
+          "noAPI": "No API access in basic plan"
+        },
+        "buttonText": "Visit Claude"
+      },
+      "gemini": {
+        "description": "Google's premium AI offering with Gemini models",
+        "price": "$20/month",
+        "priceDescription": "Via Google One AI Premium subscription",
+        "limits": "Limited requests per minute",
+        "privacy": "Data used for service improvement",
+        "registration": "Google account, payment info",
+        "features": {
+          "ultra": "Gemini 2.5 Pro model",
+          "googleApps": "Integration with Google apps",
+          "multiModal": "Multi-modal capabilities"
+        },
+        "cons": {
+          "cost": "Monthly cost",
+          "ecosystem": "Limited to Google ecosystem",
+          "newer": "Newer service with evolving features"
+        },
+        "buttonText": "Visit Gemini"
+      }
+    },
+    "features": {
+      "cost": {
+        "title": "Cost",
+        "tooltip": "Monthly subscription cost for the service",
+        "deniAI": "Free",
+        "chatGPT": "$20/month | $200/month",
+        "claude": "$20/month | $100/month | $200/month",
+        "gemini": "$20/month"
+      },
+      "models": {
+        "title": "Best Available Models",
+        "tooltip": "The most advanced models available on the platform",
+        "deniAI": "GPT-4.5, Claude 3.7, etc.",
+        "chatGPT": "GPT-4.5, o1-pro",
+        "claude": "Claude 3.7 Sonnet",
+        "gemini": "Gemini 2.5 Pro"
+      },
+      "messageLimits": {
+        "title": "Message Limits",
+        "tooltip": "Restrictions on how many messages you can send",
+        "deniAI": "Unlimited",
+        "chatGPT": "Limited by model (No limits with Pro)",
+        "claude": "5x by Gratis | 5x by Pro | 20x by Pro",
+        "gemini": "Rate limited"
+      },
+      "imageUnderstanding": {
+        "title": "Image Understanding",
+        "tooltip": "Ability to analyze and understand images"
+      },
+      "privacy": {
+        "title": "User Data Protection",
+        "tooltip": "How user data is handled",
+        "chatGPT": "Uses data by default",
+        "claude": "Uses data by default",
+        "gemini": "Uses data by default"
+      },
+      "payment": {
+        "title": "Payment Required",
+        "tooltip": "Whether a payment method is needed"
+      },
+      "imageGeneration": {
+        "title": "Image Generation",
+        "tooltip": "Ability to create images from text prompts"
+      },
+      "contextWindow": {
+        "title": "Context Window",
+        "tooltip": "How much information the AI can consider at once",
+        "deniAI": "Large (100k+ tokens)",
+        "chatGPT": "Large (128k tokens)",
+        "claude": "Large (200k tokens)",
+        "gemini": "Limited (32k tokens)"
+      },
+      "webSearch": {
+        "title": "Real-time Web Search",
+        "tooltip": "Ability to search the web for current information"
+      }
+    },
+    "faq": {
+      "howFree": {
+        "question": "How is Deni AI completely free?",
+        "answer": "Deni AI is able to offer premium AI services for free through an efficiency-focused approach and optimized infrastructure. We believe in making advanced AI accessible to everyone without paywalls or restrictions."
+      },
+      "models": {
+        "question": "What models does Deni AI support?",
+        "answer": "Deni AI provides access to all major AI models including Claude 3.7 Sonnet, GPT-4.5, Gemini 2.5 Pro, o1, and many others. You can switch between models freely without any additional costs."
+      },
+      "limitations": {
+        "question": "Are there any limitations to using Deni AI?",
+        "answer": "Deni AI has virtually no limitations. You can send unlimited messages without hitting rate limits or token caps. The only features not currently supported are image generation (like DALL-E), which may be added in future updates."
+      },
+      "dataHandling": {
+        "question": "How does Deni AI handle my data?",
+        "answer": "We take privacy seriously. Your data is never sold to third parties and isn't used for training the AI models. We only store your conversations to provide the service and allow you to reference your past interactions."
+      },
+      "account": {
+        "question": "Do I need to create an account?",
+        "answer": "While you can use Deni AI without registration, creating a free account allows you to sync your conversation history across devices. Registration only requires an email address - no payment information or personal details are needed."
+      }
+    }
+  },
+  "privacyPolicy": {
+    "title": "Privacy Policy",
+    "subtitle": "How we handle your data and protect your privacy",
+    "voidsComply": {
+      "title": "Additional Terms of Service",
+      "content": "By using Deni AI, you agree to the terms of service of voids.top."
+    },
+    "introduction": {
+      "title": "Introduction",
+      "content": "This Privacy Policy describes how your personal information is collected, used, and shared when you use our Deni AI service.",
+      "operatedBy": "Deni AI is operated by the UpLauncher team."
+    },
+    "informationCollection": {
+      "title": "Information We Collect",
+      "content": "When you use our service, we may collect several types of information:",
+      "items": {
+        "personalInfo": "Personal information you provide to us, such as your name, email address, and profile picture when you create an account",
+        "usage": "Information about how you use our service, including your conversation history, queries, and interactions with AI models",
+        "technical": "Technical information such as your IP address, browser type, device information, and cookies"
+      }
+    },
+    "informationUse": {
+      "title": "How We Use Your Information",
+      "content": "We use the information we collect for various purposes, including:",
+      "items": {
+        "service": "To provide, maintain, and improve our services",
+        "improvement": "To develop new features and enhance user experience",
+        "communication": "To communicate with you about updates, security alerts, and support",
+        "security": "To detect, prevent, and address technical issues and security threats"
+      }
+    },
+    "dataSharing": {
+      "title": "Information Sharing and Disclosure",
+      "content": "We do not sell your personal information. We may share information in the following circumstances:",
+      "items": {
+        "serviceProviders": "With service providers who help us operate our service, such as cloud hosting providers",
+        "legal": "When required by law, such as to comply with a subpoena or similar legal process",
+        "business": "In connection with a merger, acquisition, or sale of assets"
+      }
+    },
+    "dataSecurity": {
+      "title": "Data Security",
+      "content": "We take reasonable measures to help protect your personal information from loss, theft, misuse, unauthorized access, disclosure, alteration, and destruction."
+    },
+    "userRights": {
+      "title": "Your Rights",
+      "content": "Depending on your location, you may have certain rights regarding your personal information, including:",
+      "items": {
+        "access": "The right to access personal information we hold about you",
+        "rectification": "The right to request correction of inaccurate information",
+        "deletion": "The right to request deletion of your personal information",
+        "restriction": "The right to restrict or object to our processing of your information"
+      }
+    },
+    "cookies": {
+      "title": "Cookies and Similar Technologies",
+      "content": "We use cookies and similar tracking technologies to track activity on our service and hold certain information. You can instruct your browser to refuse all cookies or to indicate when a cookie is being sent."
+    },
+    "changes": {
+      "title": "Changes to This Privacy Policy",
+      "content": "We may update this privacy policy from time to time to reflect changes to our practices or for other operational, legal, or regulatory reasons. We will notify you of any material changes by posting the new policy on this page."
+    },
+    "contact": {
+      "title": "Contact Us",
+      "content": "If you have any questions about this Privacy Policy, please contact us via our GitHub repository or through our support channels."
+    },
+    "lastUpdated": "Last Updated:"
+  },
+  "termsOfService": {
+    "title": "Terms of Service",
+    "subtitle": "Please read these terms carefully before using our service",
+    "introduction": {
+      "title": "Introduction",
+      "content": "Welcome to Deni AI. These Terms of Service govern your use of our website, products, and services.",
+      "operatedBy": "Deni AI is operated by the UpLauncher team."
+    },
+    "acceptance": {
+      "title": "Acceptance of Terms",
+      "content": "By accessing or using our service, you agree to be bound by these Terms of Service. If you disagree with any part of the terms, you may not access the service."
+    },
+    "eligibility": {
+      "title": "Eligibility",
+      "content": "You must be at least 13 years of age to use this service. By using our service, you represent and warrant that you meet this requirement."
+    },
+    "account": {
+      "title": "Account Registration and Security",
+      "content": "When you create an account with us, you must provide accurate information. You are responsible for maintaining the security of your account, and you agree to:",
+      "items": {
+        "accurate": "Provide accurate and complete registration information",
+        "secure": "Maintain the security of your account password",
+        "responsible": "Be responsible for all activities that occur under your account",
+        "notification": "Notify us immediately of any unauthorized use of your account"
+      }
+    },
+    "userConduct": {
+      "title": "User Conduct",
+      "content": "You agree not to use our service to:",
+      "items": {
+        "illegal": "Violate any applicable laws or regulations",
+        "harmful": "Post or transmit harmful, threatening, abusive, or unlawful content",
+        "impersonation": "Impersonate any person or entity",
+        "privacy": "Violate the privacy of others",
+        "spam": "Distribute spam, chain letters, or promote pyramid schemes",
+        "security": "Attempt to gain unauthorized access to our systems or networks"
+      }
+    },
+    "intellectualProperty": {
+      "title": "Intellectual Property Rights",
+      "content": "The service and its original content, features, and functionality are and will remain the exclusive property of Deni AI and its licensors. The service is protected by copyright, trademark, and other laws."
+    },
+    "userContent": {
+      "title": "User Content",
+      "content": "You retain all your ownership rights to your content. However, by submitting content to our service, you grant us a worldwide, non-exclusive, royalty-free license to use, reproduce, adapt, publish, and distribute your content.",
+      "license": "This license continues until you remove your content from our service."
+    },
+    "disclaimers": {
+      "title": "Disclaimers",
+      "content": "Your use of our service is at your sole risk. The service is provided on an 'AS IS' and 'AS AVAILABLE' basis. We expressly disclaim all warranties of any kind, whether express or implied."
+    },
+    "limitation": {
+      "title": "Limitation of Liability",
+      "content": "In no event shall Deni AI, nor its directors, employees, partners, agents, suppliers, or affiliates, be liable for any indirect, incidental, special, consequential or punitive damages resulting from your use of the service."
+    },
+    "indemnification": {
+      "title": "Indemnification",
+      "content": "You agree to defend, indemnify, and hold harmless Deni AI and its licensors from and against any claims, liabilities, damages, judgments, awards, losses, costs, expenses, or fees arising out of your use of the service."
+    },
+    "termination": {
+      "title": "Termination",
+      "content": "We may terminate or suspend your account and bar access to the service immediately, without prior notice or liability, for any reason whatsoever, including without limitation if you breach the Terms."
+    },
+    "changes": {
+      "title": "Changes to Terms",
+      "content": "We reserve the right to modify or replace these Terms at any time. It is your responsibility to review these Terms periodically for changes."
+    },
+    "contact": {
+      "title": "Contact Us",
+      "content": "If you have any questions about these Terms, please contact us via our GitHub repository or through our support channels."
+    },
+    "lastUpdated": "Last Updated:"
+  },
+  "canvas": {
+    "tooltip": "Use Canvas",
+    "button": "Canvas",
+    "saved": "Canvas saved",
+    "view": "View",
+    "edit": "Edit",
+    "save": "Save",
+    "title": "Canvas",
+    "copied": "Canvas content copied to clipboard",
+    "clickToOpen": "Click to view canvas"
+  },
+  "translation": {
+    "tooltip": "Use Translation",
+    "title": "Translation",
+    "copied": "Translation copied to clipboard",
+    "clickToOpen": "Click to view translation"
   }
 }

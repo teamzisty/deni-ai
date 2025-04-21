@@ -8,7 +8,15 @@
   "header": {
     "home": "ホーム",
     "app": "アプリ",
-    "sourceCode": "ソースコード"
+    "sourceCode": "ソースコード",
+    "privacyPolicy": "プライバシーポリシー",
+    "termsOfService": "利用規約"
+  },
+  "analyticsConsent": {
+    "title": "分析を有効にしますか？",
+    "description": "当サイトではVercel Analyticsを使用して、ウェブサイトのパフォーマンスとユーザー体験を向上させるためのデータを収集しています。これを有効にすると、匿名の使用状況データが収集されます。",
+    "accept": "許可",
+    "reject": "拒否"
   },
   "messageLog": {
     "search": "検索",
@@ -36,7 +44,9 @@
   "chatInput": {
     "imageAdd": "画像を追加",
     "search": "検索",
-    "deepResearch": "詳細なリサーチ"
+    "deepResearch": "詳細なリサーチ",
+    "canvas": "キャンバス",
+    "translate": "翻訳"
   },
   "headerArea": {
     "ready": "準備完了",
@@ -92,12 +102,6 @@
       "privacyMode": {
         "title": "プライバシーモード",
         "description": "あなたの名前、メールアドレス、プロフィール画像を非表示にします。"
-      },
-      "sync": {
-        "title": "会話履歴の同期",
-        "description": "会話履歴をクラウドと同期します。",
-        "action": "会話履歴を同期",
-        "syncing": "同期中..."
       },
       "authDisabled": "認証は一時的に無効になっているか、あなたのインスタンスでは利用できません。",
       "data": {
@@ -287,12 +291,8 @@
     "login": "ログイン",
     "account": "アカウント",
     "userSettings": "ユーザー設定",
-    "syncing": "同期しています...",
-    "syncHistory": "会話履歴を同期",
     "logout": "ログアウト",
-    "version": "Deni AI v{version} ({codename}) ({type})",
-    "syncSuccess": "会話履歴を同期しました",
-    "syncFailed": "同期に失敗しました"
+    "version": "Deni AI v{version} ({codename}) ({type})"
   },
   "footer": {
     "disclaimer": "AI の回答は必ずしも正しいとは限りません。すべての AI が無制限に利用できます。",
@@ -327,20 +327,57 @@
   "landing": {
     "title": "あなたの20ドルを節約",
     "subtitle": "すべての人のために作られた、無制限・完全無料で安全な AI チャットサービス",
-    "featuresTitle": "主な特徴",
-    "featuresHeading": "より良いAIチャット体験を",
-    "featuresSubtitle": "高度な機能と使いやすさを兼ね備えた、次世代のAIチャットサービス",
-    "freeTitle": "完全無料",
-    "freeDescription": "サブスクリプションや隠れた料金は一切なし。すべての機能を無料で利用可能。",
-    "privacyTitle": "プライバシーに配慮",
-    "privacyDescription": "データのセキュリティとプライバシーを尊重し、ユーザーのデータを保護します。",
-    "speedTitle": "高速なレスポンス",
-    "speedDescription": "最新のテクノロジーを活用し、ユーザーに高速なレスポンスを提供します。",
-    "supportTitle": "サポート",
-    "supportDescription": "サポートの時間内なら、AIについてのサポートをご利用いただけます。",
-    "compatibilityTitle": "主要なAIモデルとの互換性",
-    "yourModel": "あなたの",
-    "compatible": "互換",
+    "features": {
+      "oneTitle": "あなたの20ドルを節約",
+      "oneSubtitle": "AIサービスに料金を支払う必要はありません。",
+      "twoTitle": "安全でプライベート",
+      "twoSubtitle": "第三者にデータを販売することはありません。",
+      "threeTitle": "高速で信頼性あり",
+      "threeSubtitle": "高速で信頼性の高いサービスを提供します。"
+    },
+    "featuresTab": {
+      "one": {
+        "title": "AIサービスへの支払いを停止",
+        "subtitle": "ChatGPT、Claude、Grokなどのサービスへの支払いを停止できます。",
+        "button": "AI サービスを比較",
+        "heroTitle": "制約から解放",
+        "heroDescription": "AIサービスの制約から解放しましょう。"
+      },
+      "two": {
+        "title": "安全でプライベート",
+        "subtitle": "私たちのサービスは安全でプライベートです。第三者にデータを販売することはありません。",
+        "button": "プライバシーポリシー",
+        "heroDescription": "第三者にデータを販売することはありません。"
+      },
+      "three": {
+        "title": "高速で信頼性あり",
+        "subtitle": "最新のテクノロジーを使用して、高速で信頼性の高いサービスを提供します。",
+        "button": "AI サービスを比較",
+        "heroDescription": "最適化されたインフラストラクチャ（{provider} の使用）により、迅速な応答と99.9%の稼働率を保証します"
+      }
+    },
+    "characteristics": {
+      "one": {
+        "badge": "近日公開",
+        "title": "AIによる開発",
+        "description": "Deni AIを使用して独自のアプリケーションを開発できます。"
+      },
+      "two": {
+        "badge": "カスタマイズ可能",
+        "title": "あなた好みのAIチャットボット",
+        "description": "チャットボットを好みにカスタマイズし、Webに展開できます。"
+      },
+      "three": {
+        "badge": "高速、信頼性",
+        "title": "高速、信頼性、無制限",
+        "description": "Deni AIはメール認証のみで利用可能です。クレジットカードは不要です。"
+      },
+      "four": {
+        "badge": "安全",
+        "title": "安全でプライベート",
+        "description": "安心してください、あなたのデータは私たちと共に安全です。第三者にデータを販売することはありません。"
+      }
+    },
     "startNow": "今すぐ始める",
     "startButton": "始める"
   },
@@ -562,10 +599,12 @@
     "layout": {
       "return": "Deni AI に戻る"
     },
+    "menu": "メニュー",
     "searchBox": {
       "dialogTitle": "アクションメニュー",
       "dialogDescription": "アクションメニューを検索するには、以下のフィールドに入力してください。",
       "returnToDeniAI": "Deni AI に戻る",
+      "noResults": "結果が見つかりません",
       "logout": "ログアウト",
       "triggerPlaceholder": "アクションメニュー"
     },
@@ -760,12 +799,12 @@
     "saveCurrentFailed": "現在のチャットセッションの保存に失敗しました。",
     "deleteFailed": "チャットセッションの削除に失敗しました。",
     "deleteAllFailed": "すべてのチャットセッションの削除に失敗しました。",
-    "syncSuccess": "チャットセッションが正常に同期されました。",
-    "syncFailed": "チャットセッションの同期に失敗しました。",
     "firebaseUnavailable": "Firebaseサービスが利用できません。",
     "checkFirebaseConfig": "Firebaseの設定を確認してください。",
     "loginRequired": "セッションを同期するにはログインが必要です。",
     "reauthRequired": "セッションを同期するために再度ログインしてください。",
+    "sessionDeletedSuccess": "セッションが正常に削除されました。",
+    "sessionDeletedFailed": "セッションの削除に失敗しました。",
     "localSyncSuccess": "ローカルセッションがアカウントに同期されました。",
     "localSyncFailed": "ローカルセッションのアカウントへの同期に失敗しました。",
     "exportFirestoreFailed": "クラウドストレージからのセッションのエクスポートに失敗しました。",
@@ -779,5 +818,348 @@
   "auth": {
     "verificationEmailSent": "確認メールが正常に送信されました",
     "verificationEmailFailed": "確認メールの送信に失敗しました"
+  },
+  "contextMenu": {
+    "rename": "名前を変更",
+    "delete": "削除",
+    "renameTitle": "名前の変更",
+    "renameDescription": "この会話の名前を変更します。",
+    "cancel": "キャンセル",
+    "deleteTitle": "会話を削除する",
+    "deleteDescription": "この会話を本当に削除しますか？チャットをエクスポートしない限り、この会話の内容は永久的に失われます。"
+  },
+  "compare": {
+    "heroTitle": "AI サービス比較",
+    "heroSubtitle": "Deni AI が他の人気 AI サービスと比較してどのように優れているか、プレミアム機能を完全に無料で提供しています。",
+    "recommended": "おすすめ",
+    "topModels": "トップモデル",
+    "usageLimits": "使用制限",
+    "privacy": "プライバシー",
+    "keyFeatures": "主な機能",
+    "limitations": "制限事項",
+    "more": "詳細",
+    "detailedComparison": "詳細機能比較",
+    "feature": "機能",
+    "faqTitle": "よくある質問",
+    "ctaTitle": "今日から最高の AI サービスを使い始めましょう。",
+    "ctaSubtitle": "クレジットカードは不要です。",
+    "getStarted": "始める",
+    "standardPlans": "スタンダードプラン (月額約 2,000円)",
+    "premiumPlans": "プレミアムプラン (月額約 10,000-20,000円)",
+    "pricingNote": "機能と価格は変更される場合があります。最新情報は公式ウェブサイトでご確認ください。",
+    "services": {
+      "deniAI": {
+        "description": "プレミアムモデルに無制限にアクセスできる完全無料のAIチャットインターフェース",
+        "price": "無料",
+        "priceDescription": "利用制限なしで完全無料",
+        "limits": "無制限のメッセージ",
+        "privacy": "完全なデータプライバシー、ユーザーデータを販売しません",
+        "registration": "メールのみ",
+        "features": {
+          "unlimited": "無制限の使用",
+          "noPayment": "支払い不要",
+          "imageCapability": "画像の入出力",
+          "privacy": "プライバシー重視",
+          "allModels": "すべてのプレミアムモデル"
+        },
+        "buttonText": "Deni AIを使い始める"
+      },
+      "chatGPT": {
+        "description": "OpenAI の 最新モデルにアクセスできるプレミアムチャットインターフェース",
+        "price": "$20/月 | $200/月",
+        "priceDescription": "月額サブスクリプションが必要",
+        "limits": "負荷に応じて1時間あたりのリクエスト数に制限あり",
+        "privacy": "データはデフォルトでトレーニングに使用されます",
+        "registration": "メール、電話番号の確認",
+        "features": {
+          "models": "GPT-4.5 モデル",
+          "imageGen": "画像生成",
+          "voice": "音声インターフェース",
+          "browse": "ブラウズ機能"
+        },
+        "cons": {
+          "cost": "月額コスト",
+          "rateLimits": "ピーク時のレート制限",
+          "dataTraining": "データがトレーニングに使用される"
+        },
+        "buttonText": "ChatGPT を訪問"
+      },
+      "claude": {
+        "description": "AnthropicのClaude 3.7 モデルを提供するプレミアムサービス",
+        "price": "$20/月 | $100/月",
+        "priceDescription": "月額サブスクリプションが必要",
+        "limits": "Pro: Freeの5倍 | Max: Proの5倍、20倍 ($200/月)",
+        "privacy": "データはトレーニングに使用されません",
+        "registration": "メール、支払い情報",
+        "features": {
+          "models": "Claude 3.7 モデル",
+          "contextWindow": "長いコンテキストウィンドウ",
+          "speed": "高速な応答時間",
+          "privacy": "データプライバシー"
+        },
+        "cons": {
+          "cost": "月額コスト",
+          "limits": "使用制限",
+          "noAPI": "基本プランにはAPI利用不可"
+        },
+        "buttonText": "Claude を訪問"
+      },
+      "gemini": {
+        "description": "GoogleのGeminiモデルを提供するプレミアムAIサービス",
+        "price": "$20/月",
+        "priceDescription": "Google One AIプレミアムサブスクリプション経由",
+        "limits": "1分あたりのリクエスト数に制限あり",
+        "privacy": "サービス改善のためにデータが使用されます",
+        "registration": "Googleアカウント、支払い情報",
+        "features": {
+          "ultra": "Gemini Pro モデル",
+          "googleApps": "Google アプリとの連携",
+          "multiModal": "マルチモーダル機能"
+        },
+        "cons": {
+          "cost": "月額コスト",
+          "ecosystem": "Google エコシステムに限定",
+          "newer": "進化し続ける新しいサービス"
+        },
+        "buttonText": "Gemini を訪問"
+      }
+    },
+    "features": {
+      "cost": {
+        "title": "コスト",
+        "tooltip": "サービスの月額サブスクリプション費用",
+        "deniAI": "無料",
+        "chatGPT": "$20/月 | $200/月",
+        "claude": "$20/月 | $100/月 | $200/月",
+        "gemini": "$20/月"
+      },
+      "models": {
+        "title": "利用可能な最高モデル",
+        "tooltip": "プラットフォームで利用可能な最も高度なモデル",
+        "deniAI": "GPT-4.5, Claude 3.7 など",
+        "chatGPT": "GPT-4.5, o1-pro",
+        "claude": "Claude 3.7 Sonnet",
+        "gemini": "Gemini 2.5 Pro"
+      },
+      "messageLimits": {
+        "title": "メッセージ制限",
+        "tooltip": "送信できるメッセージ数の制限",
+        "deniAI": "無制限",
+        "chatGPT": "モデルごとに制限 (Proは制限なし)",
+        "claude": "フリーの5倍 | Pro の5倍 | Pro の20倍",
+        "gemini": "レート制限あり"
+      },
+      "imageUnderstanding": {
+        "title": "画像理解",
+        "tooltip": "画像を分析・理解する能力"
+      },
+      "privacy": {
+        "title": "ユーザーデータの保護",
+        "tooltip": "ユーザーデータの取り扱い方法",
+        "chatGPT": "デフォルトでデータを使用",
+        "claude": "デフォルトでデータを使用",
+        "gemini": "デフォルトでデータを使用"
+      },
+      "payment": {
+        "title": "支払い必須",
+        "tooltip": "支払い方法が必要かどうか"
+      },
+      "imageGeneration": {
+        "title": "画像生成",
+        "tooltip": "テキストプロンプトから画像を作成する能力"
+      },
+      "contextWindow": {
+        "title": "コンテキストウィンドウ",
+        "tooltip": "AIが一度に考慮できる情報量",
+        "deniAI": "大規模（10万+トークン）",
+        "chatGPT": "大規模（12.8万トークン）",
+        "claude": "大規模（20万トークン）",
+        "gemini": "限定的（3.2万トークン）"
+      },
+      "webSearch": {
+        "title": "リアルタイムウェブ検索",
+        "tooltip": "現在の情報をウェブで検索する能力"
+      }
+    },
+    "faq": {
+      "howFree": {
+        "question": "Deni AIはなぜ完全無料なのですか？",
+        "answer": "Deni AIは、効率重視のアプローチと最適化されたインフラストラクチャにより、プレミアムAIサービスを無料で提供することができます。私たちは、高度なAIを誰もが利用できるようにし、ペイウォールや制限なしで提供することを信念としています。"
+      },
+      "models": {
+        "question": "Deni AIはどのようなモデルをサポートしていますか？",
+        "answer": "Deni AIは、Claude 3.7 Sonnet、GPT-4.5、Gemini 2.5 Pro、o1など、すべての主要なAIモデルへのアクセスを提供しています。追加費用なしで自由にモデルを切り替えることができます。"
+      },
+      "limitations": {
+        "question": "Deni AIを使用する上で制限はありますか？",
+        "answer": "Deni AIには事実上制限がありません。レート制限やトークン上限に達することなく、無制限にメッセージを送信できます。現在サポートされていない唯一の機能は、（DALL-Eのような）画像生成で、これは将来のアップデートで追加される可能性があります。"
+      },
+      "dataHandling": {
+        "question": "Deni AIは私のデータをどのように扱いますか？",
+        "answer": "私たちはプライバシーを重視しています。あなたのデータが第三者に販売されることはなく、AIモデルのトレーニングに使用されることもありません。サービスを提供し、過去のやり取りを参照できるようにするためだけに会話を保存します。"
+      },
+      "account": {
+        "question": "アカウントを作成する必要がありますか？",
+        "answer": "登録なしでもDeni AIを使用できますが、無料アカウントを作成すると、デバイス間で会話履歴を同期できます。登録に必要なのはメールアドレスのみで、支払い情報や個人情報は不要です。"
+      }
+    }
+  },
+  "privacyPolicy": {
+    "title": "プライバシーポリシー",
+    "subtitle": "お客様のデータの取り扱いとプライバシー保護について",
+    "introduction": {
+      "title": "はじめに",
+      "content": "このプライバシーポリシーは、Deni AIサービスをご利用いただく際に、お客様の個人情報がどのように収集、使用、共有されるかについて説明しています。",
+      "operatedBy": "Deni AIはUpLauncherチームによって運営されています。"
+    },
+    "informationCollection": {
+      "title": "収集する情報",
+      "content": "サービスをご利用いただく際に、以下の種類の情報を収集する場合があります：",
+      "items": {
+        "personalInfo": "アカウント作成時にご提供いただく、お名前、メールアドレス、プロフィール画像などの個人情報",
+        "usage": "会話履歴、検索クエリ、AIモデルとのやり取りなど、サービスの利用状況に関する情報",
+        "technical": "IPアドレス、ブラウザの種類、デバイス情報、Cookieなどの技術的情報"
+      }
+    },
+    "informationUse": {
+      "title": "情報の利用方法",
+      "content": "収集した情報は、以下を含むさまざまな目的で使用されます：",
+      "items": {
+        "service": "サービスの提供、維持、改善",
+        "improvement": "新機能の開発とユーザー体験の向上",
+        "communication": "更新情報、セキュリティアラート、サポートに関する連絡",
+        "security": "技術的問題やセキュリティ上の脅威の検出、防止、対処"
+      }
+    },
+    "dataSharing": {
+      "title": "情報の共有と開示",
+      "content": "お客様の個人情報を販売することはありません。以下の状況においてのみ情報を共有することがあります：",
+      "items": {
+        "serviceProviders": "クラウドホスティングプロバイダーなど、サービス運営を支援するサービスプロバイダーとの共有",
+        "legal": "召喚状や類似の法的手続きに従うなど、法律で要求される場合",
+        "business": "合併、買収、または資産の売却に関連する場合"
+      }
+    },
+    "dataSecurity": {
+      "title": "データセキュリティ",
+      "content": "お客様の個人情報を紛失、盗難、不正使用、不正アクセス、開示、改ざん、破壊から保護するための合理的な対策を講じています。"
+    },
+    "userRights": {
+      "title": "お客様の権利",
+      "content": "お住まいの地域によっては、個人情報に関して以下のような権利を有する場合があります：",
+      "items": {
+        "access": "当社が保持するお客様の個人情報へのアクセス権",
+        "rectification": "不正確な情報の訂正を要求する権利",
+        "deletion": "個人情報の削除を要求する権利",
+        "restriction": "情報処理の制限または異議申し立ての権利"
+      }
+    },
+    "cookies": {
+      "title": "CookieおよびI同様のテクロノジー",
+      "content": "サービス上での活動を追跡し、特定の情報を保持するために、CookieやI同様の追跡技術を使用しています。ブラウザですべてのCookieを拒否するか、Cookieが送信される際に通知するよう設定することができます。"
+    },
+    "changes": {
+      "title": "プライバシーポリシーの変更",
+      "content": "当社の慣行の変更や、その他の運用上、法的、または規制上の理由により、このプライバシーポリシーを適宜更新する場合があります。重要な変更がある場合は、新しいポリシーをこのページに掲載してお知らせします。"
+    },
+    "contact": {
+      "title": "お問い合わせ",
+      "content": "このプライバシーポリシーに関するご質問は、GitHubリポジトリまたはサポートチャネルを通じてお問い合わせください。"
+    },
+    "lastUpdated": "最終更新日："
+  },
+  "termsOfService": {
+    "title": "利用規約",
+    "subtitle": "サービスを利用する前に、以下の利用規約をよくお読みください",
+    "voidsComply": {
+      "title": "追加の利用規約",
+      "content": "本サービスの利用には、voids.topの利用規約にも同意したものとみなされます。"
+    },
+    "introduction": {
+      "title": "はじめに",
+      "content": "Deni AIへようこそ。この利用規約は、当社のウェブサイト、製品、およびサービスの利用に適用されます。",
+      "operatedBy": "Deni AIはUpLauncherチームによって運営されています。"
+    },
+    "acceptance": {
+      "title": "規約の承認",
+      "content": "本サービスにアクセスまたは利用することで、これらの利用規約に同意したものとみなされます。この規約のいずれかの部分に同意できない場合は、本サービスを利用することはできません。"
+    },
+    "eligibility": {
+      "title": "利用資格",
+      "content": "本サービスを利用するには、13歳以上である必要があります。本サービスを利用することで、あなたはこの要件を満たしていることを表明し保証したものとみなされます。"
+    },
+    "account": {
+      "title": "アカウント登録とセキュリティ",
+      "content": "当社のアカウントを作成する際は、正確な情報を提供する必要があります。あなたはアカウントのセキュリティを維持する責任があり、以下に同意するものとします：",
+      "items": {
+        "accurate": "正確かつ完全な登録情報を提供すること",
+        "secure": "アカウントパスワードのセキュリティを維持すること",
+        "responsible": "アカウントで発生するすべての活動に責任を持つこと",
+        "notification": "アカウントの不正使用を発見した場合、直ちに当社に通知すること"
+      }
+    },
+    "userConduct": {
+      "title": "ユーザー行動",
+      "content": "あなたは本サービスを以下の目的で使用しないことに同意します：",
+      "items": {
+        "illegal": "適用される法律や規制に違反すること",
+        "harmful": "有害、脅迫的、虐待的、または違法なコンテンツを投稿または送信すること",
+        "impersonation": "他者や団体になりすますこと",
+        "privacy": "他者のプライバシーを侵害すること",
+        "spam": "スパム、チェーンメール、またはねずみ講を配布すること",
+        "security": "当社のシステムやネットワークへの不正アクセスを試みること"
+      }
+    },
+    "intellectualProperty": {
+      "title": "知的財産権",
+      "content": "本サービスおよびそのオリジナルコンテンツ、機能、および機能性は、Deni AIとそのライセンサーの独占的財産であり、今後もそのままであるものとします。本サービスは著作権、商標、およびその他の法律によって保護されています。"
+    },
+    "userContent": {
+      "title": "ユーザーコンテンツ",
+      "content": "あなたはコンテンツに対するすべての所有権を保持します。ただし、コンテンツを当社のサービスに提出することにより、あなたは当社に対し、そのコンテンツを使用、複製、適応、公開、および配布するための世界的、非独占的、ロイヤリティフリーのライセンスを付与したことになります。",
+      "license": "このライセンスは、あなたが当社のサービスからコンテンツを削除するまで継続します。"
+    },
+    "disclaimers": {
+      "title": "免責事項",
+      "content": "本サービスの使用はあなた自身の責任において行われます。本サービスは「現状のまま」かつ「利用可能な状態で」提供されます。当社は、明示的または黙示的を問わず、あらゆる種類の保証を明示的に否認します。"
+    },
+    "limitation": {
+      "title": "責任の制限",
+      "content": "いかなる場合も、Deni AI、その取締役、従業員、パートナー、代理人、サプライヤー、または関連会社は、本サービスの使用に起因する間接的、偶発的、特別、結果的、または懲罰的損害について責任を負わないものとします。"
+    },
+    "indemnification": {
+      "title": "補償",
+      "content": "あなたは、本サービスの使用に起因する請求、責任、損害、判決、賞金、損失、費用、または手数料からDeni AIとそのライセンサーを防御し、補償し、免責することに同意するものとします。"
+    },
+    "termination": {
+      "title": "終了",
+      "content": "当社は、あなたが本規約に違反した場合を含め、いかなる理由でも、事前の通知や責任なしに、直ちにあなたのアカウントを終了または停止し、本サービスへのアクセスを禁止することがあります。"
+    },
+    "changes": {
+      "title": "規約の変更",
+      "content": "当社は、いつでもこれらの規約を変更または置き換える権利を留保します。変更を確認するために定期的にこれらの規約を確認することはあなたの責任です。"
+    },
+    "contact": {
+      "title": "お問い合わせ",
+      "content": "これらの規約に関するご質問がある場合は、GitHubリポジトリまたはサポートチャネルを通じてお問い合わせください。"
+    },
+    "lastUpdated": "最終更新日："
+  },
+  "canvas": {
+    "tooltip": "キャンバスを使用",
+    "button": "Canvas",
+    "saved": "キャンバスを保存しました",
+    "view": "表示",
+    "edit": "編集",
+    "save": "保存",
+    "title": "キャンバス",
+    "copied": "キャンバスの内容をコピーしました",
+    "clickToOpen": "クリックして開く"
+  },
+  "translation": {
+    "tooltip": "翻訳を使用",
+    "title": "翻訳",
+    "copied": "翻訳をコピーしました",
+    "clickToOpen": "クリックして開く"
   }
 }

@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useRef, useState } from "react";
-import { auth } from "@repo/firebase-config/client";
+import { auth } from "@workspace/firebase-config/client";
 import { useTranslations } from "next-intl";
 import {
   signInWithEmailAndPassword,
@@ -11,9 +11,9 @@ import {
   GoogleAuthProvider,
   GithubAuthProvider,
 } from "firebase/auth";
-import { Button } from "@repo/ui/components/button";
-import { Label } from "@repo/ui/components/label";
-import { Input } from "@repo/ui/components/input";
+import { Button } from "@workspace/ui/components/button";
+import { Label } from "@workspace/ui/components/label";
+import { Input } from "@workspace/ui/components/input";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -23,15 +23,15 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from "@repo/ui/components/alert-dialog";
+} from "@workspace/ui/components/alert-dialog";
 import {
   InputOTP,
   InputOTPGroup,
   InputOTPSeparator,
   InputOTPSlot,
-} from "@repo/ui/components/input-otp";
+} from "@workspace/ui/components/input-otp";
 import { Link, useRouter } from "@/i18n/navigation";
-import { cn } from "@/lib/utils";
+import { cn } from "@workspace/ui/lib/utils";
 import { SiGithub, SiGoogle } from "@icons-pack/react-simple-icons";
 import { useParams } from "next/navigation";
 import { toast } from "sonner";

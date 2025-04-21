@@ -1,7 +1,7 @@
 "use client";
 
-import { Button } from "@repo/ui/components/button";
-import { Switch } from "@repo/ui/components/switch";
+import { Button } from "@workspace/ui/components/button";
+import { Switch } from "@workspace/ui/components/switch";
 import { Trash2, Download, Upload } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useRouter as nextRouter } from "next/navigation";
@@ -17,7 +17,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
   AlertDialogTrigger,
-} from "@repo/ui/components/alert-dialog";
+} from "@workspace/ui/components/alert-dialog";
 import { useAuth } from "@/context/AuthContext";
 import {
   reauthenticateWithCredential,
@@ -31,15 +31,15 @@ import {
   AuthError, // Import AuthError type
   MultiFactorError, // Import MultiFactorError type
 } from "firebase/auth";
-import { Input } from "@repo/ui/components/input";
-import { Label } from "@repo/ui/components/label";
+import { Input } from "@workspace/ui/components/input";
+import { Label } from "@workspace/ui/components/label";
 import {
   InputOTP,
   InputOTPGroup,
   InputOTPSeparator,
   InputOTPSlot,
-} from "@repo/ui/components/input-otp";
-import { firestore } from "@repo/firebase-config/client";
+} from "@workspace/ui/components/input-otp";
+import { firestore } from "@workspace/firebase-config/client";
 import { useChatSessions } from "@/hooks/use-chat-sessions";
 
 export default function DataControlsSettings() {
@@ -303,8 +303,6 @@ export default function DataControlsSettings() {
           // Let's assume clearAllSessions handles the conversation data entirely.
           // const userDocRef = doc(firestore, `deni-ai-conversations/${user.uid}`);
           // await deleteDoc(userDocRef); // This might delete the parent doc if needed
-
-          console.log("Successfully deleted user's conversations data from Firestore via hook");
         } catch (error) {
           console.error("Error deleting user's conversations data via hook:", error);
           // Continue with account deletion even if Firestore deletion fails
@@ -370,7 +368,7 @@ export default function DataControlsSettings() {
 
       {/* Data Export/Import */}
       <div className="bg-card/50 border border-border/30 rounded-md overflow-hidden">
-        <div className="flex p-5 items-center gap-4">
+        <div className="flex flex-col p-5 gap-4">
           <div className="flex-grow">
             <h3 className="text-lg font-bold">
               {t("settings.dataControls.export.title")}
