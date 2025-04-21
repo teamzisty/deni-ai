@@ -4,6 +4,11 @@ import {
 } from "@/lib/modelDescriptions";
 import { getSystemPrompt } from "@/lib/systemPrompt";
 import { createOpenAI } from "@ai-sdk/openai";
+import { createAnthropic } from "@ai-sdk/anthropic";
+import { createXai } from "@ai-sdk/xai";
+import { createGoogleGenerativeAI, GoogleGenerativeAIProviderOptions } from "@ai-sdk/google";
+import { createOpenRouter, OpenRouterProviderOptions } from "@openrouter/ai-sdk-provider";
+import { createGroq } from "@ai-sdk/groq";
 import { authAdmin, notAvailable } from "@workspace/firebase-config/server";
 import { createVoidsOAI } from "@workspace/voids-oai-provider/index";
 import { createVoidsAP } from "@workspace/voids-ap-provider/index";
@@ -67,19 +72,42 @@ export async function POST(req: Request) {
     model = model.replace("-reasoning", "");
 
     const isCanary = modelDescription?.canary;
-    const openai = createVoidsOAI({
+
+    // Voids Provider (not used)
+    const VoidsOpenAI = createVoidsOAI({
       // custom settings, e.g.
       isCanary,
       apiKey: "no", // API key
     });
 
-    const officialOpenAI = createOpenAI({
+    const VoidsAnthropic = createVoidsAP({
+      isCanary,
+      apiKey: "no",
+    });
+
+    // Official Provider
+    const openai = createOpenAI({
       apiKey: process.env.OPENAI_API_KEY,
     });
 
-    const anthropic = createVoidsAP({
-      isCanary,
-      apiKey: "no",
+    const anthropic = createAnthropic({
+      apiKey: process.env.ANTHROPIC_API_KEY,
+    });
+
+    const google = createGoogleGenerativeAI({
+      apiKey: process.env.GOOGLE_API_KEY,
+    });
+
+    const openrouter = createOpenRouter({
+      apiKey: process.env.OPENROUTER_API_KEY,
+    });
+
+    const groq = createGroq({
+      apiKey: process.env.GROQ_API_KEY,
+    });
+
+    const xai = createXai({
+      apiKey: process.env.XAI_API_KEY,
     });
 
     if (modelDescription?.offline) {
@@ -103,22 +131,33 @@ export async function POST(req: Request) {
     const startTime = Date.now();
     let firstChunk = false;
 
-    const visitedWebsites = new Set<string>();
-
     function errorHandler(error: unknown) {
-      if (error == null) {
-        return "unknown error";
-      }
+      if (process.env.NODE_ENV === "development") {
+        const errorStack = [
+          "API Error at " + new Date().toISOString(),
+          "Model: " + model,
+          "Error: " + error,
+        ].join("\n");
 
-      if (typeof error === "string") {
-        return error;
-      }
+        console.error(errorStack);
 
-      if (error instanceof Error) {
-        return error.message;
-      }
+        if (error == null) {
+          return "unknown error";
+        }
 
-      return JSON.stringify(error);
+        if (typeof error === "string") {
+          return error;
+        }
+
+        if (error instanceof Error) {
+          return error.message;
+        }
+
+        return JSON.stringify(error);
+      } else {
+        // hide error details in production
+        return "An error occurred while processing your request. Please try again later.";
+      }
     }
 
     return createDataStreamResponse({
@@ -152,192 +191,184 @@ export async function POST(req: Request) {
               },
             }),
             canvas: tool({
-              description: "Create or edit content in the Canvas editor, supporting markdown formatting.",
+              description:
+                "Create or edit content in the Canvas editor, supporting markdown formatting.",
               parameters: z.object({
-                content: z.string().describe("The content to add to the Canvas, in markdown format."),
-                title: z.string().optional().describe("Optional title for the Canvas document. (Set desired title to the Canvas.)"),
-                mode: z.enum(["create", "replace"]).optional().describe("How to update canvas content. 'create' creates a new canvas (default if not specified), 'replace' replaces all content with new content."),
+                content: z
+                  .string()
+                  .describe(
+                    "The content to add to the Canvas, in markdown format."
+                  ),
+                title: z
+                  .string()
+                  .optional()
+                  .describe(
+                    "Optional title for the Canvas document. (Set desired title to the Canvas.)"
+                  ),
+                mode: z
+                  .enum(["create", "replace"])
+                  .optional()
+                  .describe(
+                    "How to update canvas content. 'create' creates a new canvas (default if not specified), 'replace' replaces all content with new content."
+                  ),
               }),
               execute: async ({ content, title, mode = "create" }) => {
                 let finalContent = content;
-                                
+
                 dataStream.writeMessageAnnotation({
                   canvasContent: finalContent,
                   canvasTitle: title || "Untitled Document",
                 });
-                
+
                 return `Canvas content ${mode}d successfully.`;
               },
             }),
-          };
-
-          if (toolList?.includes("search")) {
-            tools.search = tool({
-              description:
-                "Search the web for information that may be useful in answering the users question.",
-              parameters: z.object({
-                query: z.string().describe("Query to search for."),
-              }),
-              execute: async ({ query }) => {
-                if (!process.env.BRAVE_SEARCH_API_KEY) {
-                  return "Search is temporarily disabled or not available in your instance.";
-                }
-                const results = await fetch(
-                  `https://api.search.brave.com/res/v1/web/search?q=${query}`,
-                  {
-                    headers: new Headers({
-                      Accept: "application/json",
-                      "Accept-Encoding": "gzip",
-                      "X-Subscription-Token":
-                        process.env.BRAVE_SEARCH_API_KEY || "",
-                    }),
+              search: tool({
+                description:
+                  "Search the web for information that may be useful in answering the users question.",
+                parameters: z.object({
+                  query: z.string().describe("Query to search for."),
+                }),
+                execute: async ({ query }) => {
+                  if (!process.env.BRAVE_SEARCH_API_KEY) {
+                    return "Search is temporarily disabled or not available in your instance.";
                   }
-                ).then((res) => res.json());
-
-                const totalCount = toolList?.includes("deepResearch")
-                  ? 10
-                  : 5;
-
-                const searchResults = await Promise.all(
-                  results.web.results
-                    .slice(0, totalCount)
-                    .map(
-                      async (result: {
-                        title: string;
-                        url: string;
-                        description: string;
-                      }) => {
-                        const { title, url, description } = result;
-                        let content = description;
-
-                        try {
-                          const pageResponse = await fetch(url);
-                          const pageText = await pageResponse.text();
-                          const dom = new JSDOM(pageText);
-                          const doc = dom.window.document;
-
-                          // Remove script and style tags
-                          const scripts = doc.getElementsByTagName("script");
-                          const styles = doc.getElementsByTagName("style");
-                          while (scripts.length > 0) scripts[0]?.remove();
-                          while (styles.length > 0) styles[0]?.remove();
-
-                          // Extract main content
-                          const mainContent =
-                            doc.querySelector("main") ||
-                            doc.querySelector("article") ||
-                            doc.body;
-
-                          if (mainContent) {
-                            // メタディスクリプションを取得
-                            if (toolList.includes("deepResearch") || toolList.includes("advancedSearch")) {
+                  const results = await fetch(
+                    `https://api.search.brave.com/res/v1/web/search?q=${query}`,
+                    {
+                      headers: new Headers({
+                        Accept: "application/json",
+                        "Accept-Encoding": "gzip",
+                        "X-Subscription-Token":
+                          process.env.BRAVE_SEARCH_API_KEY || "",
+                      }),
+                    }
+                  ).then((res) => res.json());
+  
+                  const totalCount = toolList?.includes("deepResearch") ? 10 : 5;
+  
+                  const searchResults = await Promise.all(
+                    results.web.results
+                      .slice(0, totalCount)
+                      .map(
+                        async (result: {
+                          title: string;
+                          url: string;
+                          description: string;
+                        }) => {
+                          const { title, url, description } = result;
+                          let content = description;
+  
+                          try {
+                            const pageResponse = await fetch(url);
+                            const pageText = await pageResponse.text();
+                            const dom = new JSDOM(pageText);
+                            const doc = dom.window.document;
+  
+                            // Remove script and style tags
+                            const scripts = doc.getElementsByTagName("script");
+                            const styles = doc.getElementsByTagName("style");
+                            while (scripts.length > 0) scripts[0]?.remove();
+                            while (styles.length > 0) styles[0]?.remove();
+  
+                            // Extract main content
+                            const mainContent =
+                              doc.querySelector("main") ||
+                              doc.querySelector("article") ||
+                              doc.body;
+  
+                            if (mainContent) {
+                              // メタディスクリプションを取得
+                              if (
+                                toolList?.includes("deepResearch") ||
+                                toolList?.includes("advancedSearch")
+                              ) {
                                 //content = mainContent.textContent?.trim() || description;
-                                content = (mainContent.textContent || description).replace(/\s+/g, ' ').replace(/\n+/g, '').trim();
-                            } else {
-                              const metaDesc = doc.querySelector(
-                                'meta[name="description"]'
-                              );
-                              if (metaDesc) {
-                                content =
-                                  metaDesc.getAttribute("content")?.trim() ||
-                                  description;
+                                content = (mainContent.textContent || description)
+                                  .replace(/\s+/g, " ")
+                                  .replace(/\n+/g, "")
+                                  .trim();
                               } else {
-                                content = description;
+                                const metaDesc = doc.querySelector(
+                                  'meta[name="description"]'
+                                );
+                                if (metaDesc) {
+                                  content =
+                                    metaDesc.getAttribute("content")?.trim() ||
+                                    description;
+                                } else {
+                                  content = description;
+                                }
                               }
                             }
+                          } catch (error) {
+                            console.error(`Error fetching ${url}:`, error);
                           }
-                        } catch (error) {
-                          console.error(`Error fetching ${url}:`, error);
+  
+                          return {
+                            title,
+                            url,
+                            description,
+                            content,
+                          };
                         }
-
-                        return {
-                          title,
-                          url,
-                          description,
-                          content,
-                        };
-                      }
-                    )
-                );
-
-                dataStream.writeMessageAnnotation({
-                  searchResults,
-                  searchQuery: query,
-                });
-
-                return JSON.stringify(searchResults);
-              },
-            });
-
-            // tools.visit = tool({
-            //   description: "visit a website and extract information from it.",
-            //   parameters: z.object({
-            //     url: z.string().describe("URL to visit."),
-            //   }),
-            //   execute: async ({ url }) => {
-            //     const results = await fetch(url, {
-            //       headers: {
-            //         "User-Agent":
-            //           "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-            //       },
-            //     }).then((res) => res.text());
-
-            //     visitedWebsites.add(url);
-
-            //     const dom = new JSDOM(results, {
-            //       url: url,
-            //     });
-            //     const doc = dom.window.document;
-
-            //     // Remove script and style tags
-            //     const scripts = doc.getElementsByTagName("script");
-            //     const styles = doc.getElementsByTagName("style");
-            //     while (scripts.length > 0) scripts[0]?.remove();
-            //     while (styles.length > 0) styles[0]?.remove();
-
-            //     // Remove unnecessary sections
-            //     const headers = doc.getElementsByTagName("header");
-            //     const footers = doc.getElementsByTagName("footer");
-            //     const navs = doc.getElementsByTagName("nav");
-            //     const asides = doc.getElementsByTagName("aside");
-            //     while (headers.length > 0) headers[0]?.remove();
-            //     while (footers.length > 0) footers[0]?.remove();
-            //     while (navs.length > 0) navs[0]?.remove();
-            //     while (asides.length > 0) asides[0]?.remove();
-
-            //     // Extract main content
-            //     const mainContent =
-            //       doc.querySelector("main") ||
-            //       doc.querySelector("article") ||
-            //       doc.body;
-
-            //     // Extract text content
-            //     let extractedText = mainContent.textContent || "";
-            //     extractedText = extractedText.replace(/\s+/g, " ").trim();
-            //     extractedText = extractedText.replace(
-            //       /(\r\n|\n|\r){2,}/gm,
-            //       "\n\n"
-            //     );
-
-            //     return extractedText;
-            //   },
-            // });
-          }
+                      )
+                  );
+  
+                  dataStream.writeMessageAnnotation({
+                    searchResults,
+                    searchQuery: query,
+                  });
+  
+                  return JSON.stringify(searchResults);
+                },
+              })
+          };
         }
 
         let selectedModel;
-        switch (modelDescription?.type) {
-          case "Claude":
-            selectedModel = anthropic(model);
+        const modelProvider = model.split("/")[0];
+        const modelName = model.substring(model.indexOf("/") + 1);
+
+        console.log(modelProvider, modelName);
+
+        // switch (modelDescription?.type) {
+        //   case "Claude":
+        //     selectedModel = anthropic(model);
+        //     break;
+        //   default:
+        //     if (modelDescription?.officialAPI) {
+        //       selectedModel = officialOpenAI(model);
+        //     } else {
+        //       selectedModel = openai(model);
+        //     }
+        //     break;
+        // }
+
+        switch (modelProvider) {
+          case "openai":
+            selectedModel = openai(modelName);
+            break;
+          case "anthropic":
+            selectedModel = anthropic(modelName);
+            break;
+          case "google":
+            selectedModel = google(modelName);
+            break;
+          case "openrouter":
+            selectedModel = openrouter(modelName);
+            break;
+          case "groq":
+            selectedModel = groq(modelName);
+            break;
+          case "xai":
+            selectedModel = xai(modelName);
             break;
           default:
-            if (modelDescription?.officialAPI) {
-              selectedModel = officialOpenAI(model);
-            } else {
-              selectedModel = openai(model);
-            }
+            selectedModel = openai(modelName);
             break;
         }
+
         const newModel = wrapLanguageModel({
           model: selectedModel,
           middleware: extractReasoningMiddleware({ tagName: "think" }),
@@ -349,9 +380,6 @@ export async function POST(req: Request) {
           tools: tools,
           maxSteps: 15,
           toolCallStreaming: true,
-          maxTokens: model.includes("claude-3-7-sonnet-20250219")
-            ? 64000
-            : 4096,
           temperature: 1,
 
           providerOptions: {
@@ -360,6 +388,14 @@ export async function POST(req: Request) {
                 reasoningEffort: reasoningEffort,
               },
             }),
+            google: {
+              thinkingConfig: {
+                thinkingBudget: 2048
+              }
+            } as GoogleGenerativeAIProviderOptions,
+            openrouter: {
+              reasoning: { effort: "medium" },
+            } as OpenRouterProviderOptions,
             ...(isReasoning && {
               anthropic: {
                 thinking: { type: "enabled", budgetTokens: 8192 },

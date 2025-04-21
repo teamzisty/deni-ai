@@ -21,7 +21,7 @@ const ChatApp: React.FC = () => {
   const [creating, setCreating] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [inputValue, setInputValue] = useState("");
-  const [selectedModel, setSelectedModel] = useState<string>("gpt-4o-2024-11-20");
+  const [selectedModel, setSelectedModel] = useState<string>("openai/gpt-4.1-mini-2025-04-14");
   const [image, setImage] = useState<string | null>(null);
   const [isUploading, setIsUploading] = useState(false);
   const [searchEnabled, setSearchEnabled] = useState(false);

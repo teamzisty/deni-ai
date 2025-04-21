@@ -263,15 +263,12 @@ export function ChatSidebar() {
               >
                 Deni AI
               </Link>
-              {/* Only render version on client to avoid hydration issues if buildInfo.version is dynamic */}
-              {typeof window === "undefined" ? null : (
-                <Badge
-                  className="group-data-[collapsible=icon]:hidden flex items-center"
-                  variant="secondary"
-                >
-                  v{buildInfo.version}
-                </Badge>
-              )}
+              <Badge
+                className="group-data-[collapsible=icon]:hidden flex items-center"
+                variant="secondary"
+              >
+                v{buildInfo.version}
+              </Badge>
             </div>
             <SidebarTrigger className="ml-auto group-data-[collapsible=icon]:absolute group-data-[collapsible=icon]:left-1/2 group-data-[collapsible=icon]:-translate-x-1/2 group-data-[collapsible=icon]:top-4" />
           </div>

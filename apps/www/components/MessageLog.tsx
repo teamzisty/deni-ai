@@ -111,7 +111,7 @@ function messageReducer(
       );
       if (modelAnnotation) {
         updates.model =
-          (modelAnnotation as messageAnnotation).model || "gpt-4o-2024-11-20";
+          (modelAnnotation as messageAnnotation).model || "openai/gpt-4.1-mini-2025-04-14";
       }
 
       const timeAnnotation = annotations?.find(
@@ -243,7 +243,7 @@ MessageControls.displayName = "MessageControls";
 export const MessageLog: FC<MessageLogProps> = memo(
   ({ message, sessionId, onRegenerate }) => {
     const [state, dispatch] = React.useReducer(messageReducer, {
-      model: "gpt-4o-2024-11-20",
+      model: "openai/gpt-4.1-mini-2025-04-14",
       thinkingTime: undefined,
     });
 

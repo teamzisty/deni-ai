@@ -27,8 +27,8 @@ export const systemPromptToolPart = [
   "",
   "",
   "Always set a meaningful title for the Canvas that reflects the content.",
-  "## Advanced Search (Feature)",
-  `Advanced Search is a function that runs the SEARCH tool at least twice (with different queries)`,
+  "## Deep Research (Feature)",
+  `Deep Research is a function that runs the SEARCH tool at least twice (with different queries)`,
   `Please report the progress of each article.`,
   `!If this feature is enabled even when the user only says "search", please follow the advanced search rules! THAT'S CRITICAL, DONT IGNORE THIS! WHY YOU IGNORE THIS????????????`,
   `!YOU MUST TO SEARCH IN CONVERSATION!`,
@@ -38,14 +38,48 @@ export const systemPromptToolPart = [
 ].join("\n");
 
 export const getSystemPrompt = (enabledModules: string[]) => {
+  // Check if tools are explicitly disabled (e.g., by model configuration)
   if (enabledModules.includes("tooldisabled")) {
+    // If tools are disabled, only return the base system prompt.
     return systemPromptBase;
   }
 
-  let systemPrompt = systemPromptBase;
-  systemPrompt += systemPromptToolPart;
-  systemPrompt +=
-    "Enabled Tools / Feature: SetTitle, " + enabledModules.join(", ") + "\n";
+  // Start with the base prompt and add the general tool descriptions.
+  // Ensure there's a newline between the base and tool parts.
+  let systemPrompt = systemPromptBase + "\n" + systemPromptToolPart;
+
+  // Categorize the enabled modules based on the instructions:
+  // "search" and "canvas" are considered "Enforced Tools".
+  const enforcedTools = enabledModules.filter(module =>
+    ["search", "canvas"].includes(module)
+  );
+
+  // Other modules (excluding enforced ones and the 'tooldisabled' flag)
+  // are considered "Enabled Tools / Feature".
+  const otherEnabledFeatures = enabledModules.filter(module =>
+    !["deepResearch", "advancedSearch", "tooldisabled"].includes(module)
+  );
+
+  // Add a section listing the enforced tools, if any are enabled.
+  // Note: SetTitle is described in systemPromptToolPart and implicitly always active
+  // when tools are enabled, so it's not listed based on enabledModules here.
+  if (enforcedTools.length > 0) {
+    // Add newline separator before listing tools
+    systemPrompt += "\nEnforced Tools: SetTitle, " + enforcedTools.join(", ");
+  }
+
+  // Add a section listing the other enabled tools/features, if any exist.
+  if (otherEnabledFeatures.length > 0) {
+    // Add a newline separator before this section, regardless of whether
+    // enforced tools were listed, to ensure separation from the toolPart or enforced list.
+    systemPrompt += "\n";
+    systemPrompt += "Useable Tools / Feature: Search, Canvas," + otherEnabledFeatures.join(", ");
+  }
+
+  // Add a final newline for better separation if any tool sections were added.
+  if (enforcedTools.length > 0 || otherEnabledFeatures.length > 0) {
+    systemPrompt += "\n";
+  }
 
   return systemPrompt;
 };
