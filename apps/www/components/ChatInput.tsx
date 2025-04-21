@@ -23,14 +23,12 @@ interface ChatInputProps {
   generating: boolean;
   searchEnabled: boolean;
   deepResearch: boolean;
-  advancedSearch: boolean;
   canvasEnabled: boolean;
   className?: string;
   sendButtonRef?: React.RefObject<HTMLButtonElement | null>;
   modelDescriptions: Record<string, ModelDescription>;
   handleInputChange: (e: React.ChangeEvent<HTMLTextAreaElement>) => void;
   deepResearchToggle: () => void;
-  advancedSearchToggle: () => void;
   canvasToggle: () => void;
   handleSendMessage: (e: React.MouseEvent<HTMLButtonElement>) => void;
   handleSendMessageKey: (e: React.KeyboardEvent<HTMLTextAreaElement>) => void;
