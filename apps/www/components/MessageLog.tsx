@@ -19,7 +19,10 @@ import {
 import { SiBrave } from "@icons-pack/react-simple-icons";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
-import { modelDescriptions, modelDescriptionType } from "@/lib/modelDescriptions";
+import {
+  modelDescriptions,
+  modelDescriptionType,
+} from "@/lib/modelDescriptions";
 import Canvas from "./Canvas";
 import { useCanvas } from "@/context/CanvasContext";
 import { ModelSelector } from "./ModelSelector";
@@ -68,93 +71,33 @@ MemoizedMarkdown.displayName = "MemoizedMarkdown";
 
 interface MessageState {
   model: string;
-  thinkingTime: number | undefined;
   canvasContent?: string;
   canvasTitle?: string;
+  generationTime?: number;
 }
 
 interface messageAnnotation {
   model?: string;
   title?: string;
-  thinkingTime?: number;
   canvasContent?: string;
   canvasTitle?: string;
-}
-
-type MessageAction =
-  | { type: "SET_MODEL"; payload: string }
-  | { type: "SET_THINKING_TIME"; payload: number }
-  | { type: "SET_CANVAS_CONTENT"; payload: { content: string; title: string } }
-  | { type: "UPDATE_FROM_ANNOTATIONS"; payload: any[] };
-
-function messageReducer(
-  state: MessageState,
-  action: MessageAction
-): MessageState {
-  switch (action.type) {
-    case "SET_MODEL":
-      return { ...state, model: action.payload };
-    case "SET_THINKING_TIME":
-      return { ...state, thinkingTime: action.payload };
-    case "SET_CANVAS_CONTENT":
-      return {
-        ...state,
-        canvasContent: action.payload.content,
-        canvasTitle: action.payload.title,
-      };
-    case "UPDATE_FROM_ANNOTATIONS":
-      const annotations = action.payload;
-      const updates: Partial<MessageState> = {};
-
-      const modelAnnotation = annotations?.find(
-        (a) => (a as messageAnnotation).model
-      );
-      if (modelAnnotation) {
-        updates.model =
-          (modelAnnotation as messageAnnotation).model || "openai/gpt-4.1-mini-2025-04-14";
-      }
-
-      const timeAnnotation = annotations?.find(
-        (a) => (a as messageAnnotation).thinkingTime
-      );
-      if (timeAnnotation) {
-        updates.thinkingTime = (
-          timeAnnotation as messageAnnotation
-        ).thinkingTime;
-      }
-
-      const canvasAnnotation = annotations?.find(
-        (a) => (a as messageAnnotation).canvasContent
-      );
-      if (canvasAnnotation) {
-        updates.canvasContent = (
-          canvasAnnotation as messageAnnotation
-        ).canvasContent;
-        updates.canvasTitle =
-          (canvasAnnotation as messageAnnotation).canvasTitle ||
-          "Untitled Document";
-      }
-
-      return { ...state, ...updates };
-    default:
-      return state;
-  }
+  generationTime?: number;
 }
 
 // メッセージのコントロール部分（コピーボタンと生成時間）を別コンポーネントとして抽出
 const MessageControls = memo(
   ({
     messageContent,
-    thinkingTime,
     onRegenerate,
     model,
     modelDescriptions,
+    generationTime,
   }: {
     messageContent: string;
-    thinkingTime?: number;
     onRegenerate?: (model: string) => void;
     model: string;
     modelDescriptions: modelDescriptionType;
+    generationTime?: number;
   }) => {
     const t = useTranslations();
 
@@ -169,72 +112,67 @@ const MessageControls = memo(
       }
     };
 
+    const formatTime = (ms: number) => {
+      if (ms < 1000) return `${ms}ms`;
+      
+      const seconds = Math.floor(ms / 1000);
+      if (seconds < 60) return `${seconds}${t("messageLog.second")}`;
+      
+      const minutes = Math.floor(seconds / 60);
+      const remainingSeconds = seconds % 60;
+      if (minutes < 60) {
+        return `${minutes}${t("messageLog.minute")} ${remainingSeconds}${t("messageLog.second")}`;
+      }
+      
+      const hours = Math.floor(minutes / 60);
+      const remainingMinutes = minutes % 60;
+      return `${hours}${t("messageLog.hour")} ${remainingMinutes}${t("messageLog.minute")} ${remainingSeconds}${t("messageLog.second")}`;
+    };
+
     return (
-      <div className="flex items-center rounded mt-3 bg-secondary">
-        <div className="p-1 text-gray-400 hover:text-foreground">
-          <EasyTip content={t("messageLog.copy")}>
-            <Button
-              className="p-0 mx-1 rounded-full"
-              variant={"ghost"}
-              onClick={handleCopy}
-            >
-              <Copy size="16" />
-            </Button>
-          </EasyTip>
-        </div>
-        {/* Only show generation time if thinkingTime is defined and > 0 */}
-        {typeof thinkingTime === "number" && thinkingTime > 0 && (
-          <div className="p-1 text-gray-400 transition-all cursor-default hover:text-foreground">
-            <EasyTip content={t("messageLog.generationTime")}>
-              <div className="flex items-center gap-1 mx-1 p-1 m-0 px-1">
-                <Clock size="16" />
-                <span className="text-xs md:text-sm">
-                  {thinkingTime > 3600000
-                    ? `${Math.floor(
-                        thinkingTime / 3600000
-                      )} ${t("messageLog.hour")} ${Math.floor(
-                        (thinkingTime % 3600000) / 60000
-                      )} ${t("messageLog.minute")} ${Math.floor(
-                        (thinkingTime % 60000) / 1000
-                      )} ${t("messageLog.second")}`
-                    : thinkingTime > 60000
-                      ? `${Math.floor(
-                          thinkingTime / 60000
-                        )} ${t("messageLog.minute")} ${Math.floor(
-                          (thinkingTime % 60000) / 1000
-                        )} ${t("messageLog.second")}`
-                      : `${Math.floor(
-                          thinkingTime / 1000
-                        )} ${t("messageLog.second")}`} {" "}
-                </span>
-              </div>
+      <div className="flex items-center justify-between rounded mt-3 bg-secondary">
+        <div className="flex items-center">
+          <div className="p-1 text-gray-400 hover:text-foreground">
+            <EasyTip content={t("messageLog.copy")}>
+              <Button
+                className="p-0 mx-1 rounded-full"
+                variant={"ghost"}
+                onClick={handleCopy}
+              >
+                <Copy size="16" />
+              </Button>
             </EasyTip>
           </div>
-        )}
-        {onRegenerate && (
-          <div className="flex items-center">
-            <div className="p-1 text-gray-400 hover:text-foreground">
-              <EasyTip content={t("messageLog.regenerate")}>
-              <ModelSelector
-                modelDescriptions={modelDescriptions}
-                model={model}
-                handleModelChange={handleModelChange}
-                refreshIcon={true}
-              />
-              </EasyTip>
-            </div>
+          {generationTime && (
+          <div className="flex items-center p-2 text-sm cursor-default text-muted-foreground">
+            <Clock size={16} className="mr-1" />
+            <span>{t("messageLog.generationTime")} {formatTime(generationTime)}</span>
           </div>
         )}
+          {onRegenerate && (
+            <div className="flex items-center">
+              <div className="p-1 text-gray-400 hover:text-foreground">
+                <EasyTip content={t("messageLog.regenerate")}>
+                  <ModelSelector
+                    modelDescriptions={modelDescriptions}
+                    model={model}
+                    handleModelChange={handleModelChange}
+                    refreshIcon={true}
+                  />
+                </EasyTip>
+              </div>
+            </div>
+          )}
+        </div>
       </div>
     );
   },
   (prevProps, nextProps) => {
-    // メッセージ内容とthinkingTimeが変わらない限り再レンダリングしない
     return (
       prevProps.messageContent === nextProps.messageContent &&
-      prevProps.thinkingTime === nextProps.thinkingTime &&
       prevProps.model === nextProps.model &&
-      prevProps.modelDescriptions === nextProps.modelDescriptions
+      prevProps.modelDescriptions === nextProps.modelDescriptions &&
+      prevProps.generationTime === nextProps.generationTime
     );
   }
 );
@@ -242,14 +180,18 @@ MessageControls.displayName = "MessageControls";
 
 export const MessageLog: FC<MessageLogProps> = memo(
   ({ message, sessionId, onRegenerate }) => {
-    const [state, dispatch] = React.useReducer(messageReducer, {
-      model: "openai/gpt-4.1-mini-2025-04-14",
-      thinkingTime: undefined,
-    });
+    // Replace useReducer with individual useState hooks
+    const [model, setModel] = useState<string>("openai/gpt-4.1-mini-2025-04-14");
+    const [canvasContent, setCanvasContent] = useState<string | undefined>(undefined);
+    const [canvasTitle, setCanvasTitle] = useState<string | undefined>(undefined);
+    const [generationTime, setGenerationTime] = useState<number | undefined>(undefined);
+    
+    // Create a state object to track reasoning state for all reasoning parts
+    const [reasoningStates, setReasoningStates] = useState<Record<string, "inProgress" | "completed">>({});
 
     const [showCanvas, setShowCanvas] = useState(false);
     const { getCanvasData, updateCanvas } = useCanvas();
-
+    // Ref to track if we've processed the thinking time from parts
     // セッション固有のキャンバスデータの取得
     const sessionCanvasData = useMemo(() => {
       return getCanvasData(sessionId);
@@ -297,6 +239,57 @@ export const MessageLog: FC<MessageLogProps> = memo(
       [toolInvocations]
     );
 
+    // Key for annotation changes
+    const annotationsKey = useMemo(() => JSON.stringify(message.annotations || []), [message.annotations]);
+
+    // アノテーションとキャンバスデータを処理
+    useEffect(() => {
+      const annotations = message.annotations;
+      if (!annotations) return;
+
+      // Process model annotation
+      const modelAnnotation = annotations.find(
+        (a) => (a as messageAnnotation).model
+      );
+      if (modelAnnotation) {
+        setModel((modelAnnotation as messageAnnotation).model || 
+          "openai/gpt-4.1-mini-2025-04-14");
+      }
+
+      // Process title annotation
+      const titleAnnotation = annotations.find((a) => (a as any).title);
+      if (titleAnnotation) {
+        const session = getSession(sessionId);
+        if (session && session.title !== (titleAnnotation as any).title) {
+          const updatedSession = {
+            ...session,
+            title: (titleAnnotation as any).title,
+          };
+          updateSession(sessionId, updatedSession);
+        }
+      }
+
+      // Process canvas annotation
+      const canvasAnnotation = annotations.find(
+        (a) => (a as messageAnnotation).canvasContent
+      );
+      if (canvasAnnotation) {
+        const c = canvasAnnotation as messageAnnotation;
+        setCanvasContent(c.canvasContent);
+        setCanvasTitle(c.canvasTitle || "Untitled Document");
+        
+        updateCanvas(sessionId, { content: c.canvasContent || "", title: c.canvasTitle || "Untitled Document" });
+      }
+
+      // Process generation time annotation
+      const genAnnotation = annotations.find(
+        (a) => (a as messageAnnotation).generationTime
+      );
+      if (genAnnotation) {
+        setGenerationTime((genAnnotation as messageAnnotation).generationTime);
+      }
+    }, [annotationsKey, sessionId, getSession, updateSession, updateCanvas]);
+
     // ツール呼び出しからキャンバスを更新するuseEffectを修正
     useEffect(() => {
       // 処理済みの呼び出しを追跡するための参照を作成
@@ -343,50 +336,68 @@ export const MessageLog: FC<MessageLogProps> = memo(
       // Use only stable dependencies to prevent re-runs
     }, [canvasInvocations, sessionId, updateCanvas]);
 
-    // For tracking if annotations have been processed
-    const processedAnnotationsRef = React.useRef(false);
-
-    // アノテーションとキャンバスデータを処理
+    // Check reasoning completion for all reasoning parts
     useEffect(() => {
-      const annotations = message.annotations;
-      if (!annotations || processedAnnotationsRef.current) return;
-
-      dispatch({ type: "UPDATE_FROM_ANNOTATIONS", payload: annotations });
-
-      const titleAnnotation = annotations?.find((a) => (a as any).title);
-      if (titleAnnotation) {
-        const session = getSession(sessionId);
-        if (session && session.title !== (titleAnnotation as any).title) {
-          const updatedSession = {
-            ...session,
-            title: (titleAnnotation as any).title,
-          };
-          updateSession(sessionId, updatedSession);
-        }
-      }
-
-      // セッション固有のキャンバス状態を更新
-      const canvasAnnotation = annotations?.find(
-        (a) => (a as messageAnnotation).canvasContent
+      // Find all reasoning parts
+      const reasoningParts = message.parts.filter(
+        (part) => part.type === "reasoning" && part.reasoning
       );
-      if (canvasAnnotation) {
-        updateCanvas(sessionId, {
-          content: (canvasAnnotation as messageAnnotation).canvasContent || "",
-          title:
-            (canvasAnnotation as messageAnnotation).canvasTitle ||
-            "Untitled Document",
-        });
+      
+      if (reasoningParts.length === 0) return;
+      
+      // Create a new state object to avoid direct mutations
+      const newReasoningStates = { ...reasoningStates };
+      let stateChanged = false;
+      
+      reasoningParts.forEach((part, index) => {
+        const key = `${message.id}_reasoning_${index}`;
+        
+        // Skip already completed reasoning
+        if (newReasoningStates[key] === "completed") return;
+        
+        // Check if message has text parts which would indicate reasoning is done
+        const hasTextParts = message.parts.some(p => 
+          p.type === "text" && p.text && p.text.trim().length > 0
+        );
+        
+        // If message has text parts or is otherwise complete, mark reasoning as completed
+        if (hasTextParts || message.content) {
+          newReasoningStates[key] = "completed";
+          stateChanged = true;
+        } else if (!newReasoningStates[key]) {
+          newReasoningStates[key] = "inProgress";
+          stateChanged = true;
+        }
+      });
+      
+      // Only update state if changes were made
+      if (stateChanged) {
+        setReasoningStates(newReasoningStates);
       }
-
-      // Mark annotations as processed to prevent re-processing
-      processedAnnotationsRef.current = true;
-    }, [
-      message.annotations,
-      sessionId,
-      getSession,
-      updateSession,
-      updateCanvas,
-    ]);
+    }, [message.parts, message.id, message.content, reasoningStates]);
+    
+    // Set a timer to mark all reasoning as completed after a timeout
+    useEffect(() => {
+      // Find all reasoning parts that are still in progress
+      const inProgressKeys = Object.entries(reasoningStates)
+        .filter(([_, state]) => state === "inProgress")
+        .map(([key]) => key);
+      
+      if (inProgressKeys.length === 0) return;
+      
+      // Set a fallback timer for any reasoning still in progress
+      const timer = setTimeout(() => {
+        setReasoningStates(prev => {
+          const newState = { ...prev };
+          inProgressKeys.forEach(key => {
+            newState[key] = "completed";
+          });
+          return newState;
+        });
+      }, 5000);
+      
+      return () => clearTimeout(timer);
+    }, [reasoningStates]);
 
     // クリック時にCanvasを表示するハンドラー修正
     const handleShowCanvas = () => {
@@ -423,10 +434,10 @@ export const MessageLog: FC<MessageLogProps> = memo(
       }
 
       // 次にアノテーションを確認
-      if (state.canvasContent) {
+      if (canvasContent) {
         return {
-          content: state.canvasContent,
-          title: state.canvasTitle || "Untitled Document",
+          content: canvasContent,
+          title: canvasTitle || "Untitled Document",
         };
       }
 
@@ -445,34 +456,18 @@ export const MessageLog: FC<MessageLogProps> = memo(
 
       return null;
       // Remove sessionCanvasData from dependencies to prevent infinite loops
-    }, [state.canvasContent, state.canvasTitle, canvasInvocations]);
+    }, [canvasContent, canvasTitle, canvasInvocations]);
 
     // Regenerate handler with model selection
     const handleRegenerate = useCallback(
       (selectedModel: string) => {
-        dispatch({ type: "SET_MODEL", payload: selectedModel });
+        setModel(selectedModel);
         if (onRegenerate) {
           onRegenerate(selectedModel);
         }
       },
       [onRegenerate]
     );
-
-    // Update thinkingTime from message.parts if available
-    useEffect(() => {
-      // Try to get thinkingTime from message.parts if not set by annotations
-      if (typeof state.thinkingTime !== "number" || state.thinkingTime === 0) {
-        // Try to find reasoning part with timing info
-        const reasoningPart = message.parts.find(
-          (part) =>
-            part.type === "reasoning" &&
-            typeof (part as any).thinkingTime === "number"
-        );
-        if (reasoningPart && typeof (reasoningPart as any).thinkingTime === "number") {
-          dispatch({ type: "SET_THINKING_TIME", payload: (reasoningPart as any).thinkingTime });
-        }
-      }
-    }, [message.parts, state.thinkingTime]);
 
     return (
       <div className={`flex w-full message-log visible`}>
@@ -643,6 +638,8 @@ export const MessageLog: FC<MessageLogProps> = memo(
                 {message.parts.map((part, index) => {
                   switch (part.type) {
                     case "reasoning":
+                      // Get reasoning state from our state object using a unique key
+                      
                       return (
                         <Collapsible
                           key={`${message.id}_reasoning_${index}`}
@@ -650,27 +647,25 @@ export const MessageLog: FC<MessageLogProps> = memo(
                         >
                           <CollapsibleTrigger className="mb-0">
                             <span className="text-muted-foreground">
-                              {typeof state.thinkingTime !== "number" || state.thinkingTime <= 0
-                                ? t("messageLog.reasoning")
-                                : state.thinkingTime > 3600000
-                                  ? `${Math.floor(
-                                      (state.thinkingTime ?? 0) / 3600000
-                                    )} ${t("messageLog.hour")} ${Math.floor(
-                                      ((state.thinkingTime ?? 0) % 3600000) / 60000
-                                    )} ${t("messageLog.minute")} ${Math.floor(
-                                      ((state.thinkingTime ?? 0) % 60000) / 1000
-                                    )} ${t("messageLog.second")} ${t("messageLog.reasonedFor")}`
-                                  : state.thinkingTime > 60000
-                                    ? `${Math.floor(
-                                        (state.thinkingTime ?? 0) / 60000
-                                      )} ${t("messageLog.minute")} ${Math.floor(
-                                        ((state.thinkingTime ?? 0) % 60000) / 1000
-                                      )} ${t("messageLog.second")} ${t("messageLog.reasonedFor")}`
-                                    : (state.thinkingTime ?? 0) < 1000
-                                      ? t("messageLog.reasoning")
-                                      : `${Math.floor(
-                                          (state.thinkingTime ?? 0) / 1000
-                                        )} ${t("messageLog.second")} ${t("messageLog.reasonedFor")}`} {" "}
+                              {generationTime && generationTime > 0 ? 
+                                (() => {
+                                  const seconds = Math.abs(Math.floor(generationTime / 1000));
+                                  let baseTime = "";
+                                  if (seconds >= 3600) {
+                                    const hours = Math.floor(seconds / 3600);
+                                    const minutes = Math.floor((seconds % 3600) / 60);
+                                    const remainingSeconds = seconds % 60;
+                                    baseTime = `${hours} ${t("messageLog.hour")} ${minutes}$ {t("messageLog.minute")} ${remainingSeconds} ${t("messageLog.second")}`;
+                                  } else if (seconds >= 60) {
+                                    const minutes = Math.floor(seconds / 60);
+                                    const remainingSeconds = seconds % 60;
+                                    baseTime = `${minutes} ${t("messageLog.minute")} ${remainingSeconds}$ {t("messageLog.second")}`;
+                                  } else {
+                                    baseTime = `${seconds} ${t("messageLog.second")}`;
+                                  }
+                                  return t("messageLog.reasonedFor", { time: baseTime });
+                                })() 
+                                : t("messageLog.reasoning")}
                             </span>
                           </CollapsibleTrigger>
                           <CollapsibleContent className="border-l-2 mt-0 pl-4 outline-none data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2">
@@ -697,6 +692,64 @@ export const MessageLog: FC<MessageLogProps> = memo(
                       if (part.toolInvocation.toolName === "canvas") {
                         return null;
                       }
+                      if (part.toolInvocation.toolName === "search") {
+                        <div className="flex flex-col gap-1 bg-secondary w-full md:w-2/3 rounded-xl mb-4 px-4 py-3 overflow-hidden">
+                        <span className="inline-flex items-center gap-1 text-muted-foreground">
+                          <SiBrave className="text-orange-400" />{" "}
+                          {t("messageLog.braveSearch")}
+                        </span>
+                        <span className="inline-flex items-center gap-1 text-muted-foreground">
+                          {t("messageLog.searchWord")}{" "}
+                          {part.toolInvocation.args?.query}
+                        </span>
+                        {(() => {
+                          // 最初の成功した検索結果だけを表示
+                          const successfulInvocation = part.toolInvocation.state === "result" ? part.toolInvocation : null;
+    
+                          if (
+                            successfulInvocation &&
+                            successfulInvocation.state === "result"
+                          ) {
+                            const callId =
+                              successfulInvocation.toolCallId;
+                            const toolResult = JSON.parse(
+                              successfulInvocation.result
+                            );
+                            const result = toolResult as {
+                              title: string;
+                              url: string;
+                              description: string;
+                            }[];
+    
+                            return result.map((item, index) => (
+                              <p
+                                key={`${callId}-${index}`}
+                                className="mb-0 mt-0 max-w-full"
+                              >
+                                <a
+                                  href={item.url}
+                                  target="_blank"
+                                  rel="noreferrer"
+                                  className="text-white underline line-clamp-1 mb-0 overflow-hidden text-ellipsis"
+                                >
+                                  {item.title}
+                                </a>
+                                <span className="text-muted-foreground overflow-hidden line-clamp-1">
+                                  {item.description.replace(/<[^>]*>/g, "")}
+                                </span>
+                              </p>
+                            ));
+                          }
+    
+                          // 成功した検索がなければ、検索中の表示
+                          return (
+                            <span className="animate-pulse">
+                              {t("messageLog.searching")}
+                            </span>
+                          );
+                        })()}
+                      </div>
+                      }
                       return null;
 
                     default:
@@ -706,10 +759,10 @@ export const MessageLog: FC<MessageLogProps> = memo(
               </div>
               <MessageControls
                 messageContent={message.content}
-                thinkingTime={state.thinkingTime}
                 onRegenerate={handleRegenerate}
-                model={state.model}
+                model={model}
                 modelDescriptions={modelDescriptions}
+                generationTime={generationTime}
               />
             </div>
           ) : (

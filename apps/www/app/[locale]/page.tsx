@@ -79,7 +79,7 @@ const ChatApp: React.FC = () => {
                 size="lg"
                 className="h-12 px-8 font-medium"
               >
-                <Link href="https://ai-docs.raic.dev">Docs</Link>
+                <Link href="https://ai-docs.raic.jp">Docs</Link>
               </Button>
             </div>
           </div>

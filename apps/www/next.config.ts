@@ -25,7 +25,19 @@ const nextConfig: NextConfig = {
       },
     ]
 
-  }
+  },
+  // Add cross-origin isolation for WebContainers on dev pages
+  async headers() {
+    return [
+      {
+        source: '/:locale/dev/:path*',
+        headers: [
+          { key: 'Cross-Origin-Opener-Policy', value: 'same-origin' },
+          { key: 'Cross-Origin-Embedder-Policy', value: 'require-corp' },
+        ],
+      },
+    ];
+  },
 };
 
 export default withNextIntl(nextConfig);

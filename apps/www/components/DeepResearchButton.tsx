@@ -1,5 +1,5 @@
 import { Button } from "@workspace/ui/components/button";
-import { NotebookPen } from "lucide-react";
+import { Telescope } from "lucide-react";
 import { memo } from "react";
 import { useTranslations } from "next-intl";
 import { useIsMobile } from "@workspace/ui/hooks/use-mobile";
@@ -22,7 +22,7 @@ export const DeepResearchButton = memo(
         size={isMobile ? "sm" : "default"}
         onClick={deepResearchToggle}
       >
-        <NotebookPen />
+        <Telescope />
         {t("chatInput.deepResearch")}
       </Button>
     );

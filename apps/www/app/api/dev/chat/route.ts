@@ -2,7 +2,7 @@ import {
   modelDescriptions,
   reasoningEffortType,
 } from "@/lib/modelDescriptions";
-import { getSystemPrompt } from "@/lib/systemPrompt";
+import { getSystemPrompt, systemPromptDev } from "@/lib/systemPrompt";
 import { createOpenAI } from "@ai-sdk/openai";
 import { createAnthropic } from "@ai-sdk/anthropic";
 import { createXai } from "@ai-sdk/xai";
@@ -70,21 +70,25 @@ export async function POST(req: Request) {
     const modelDescription = modelDescriptions[model];
     const isReasoning = model.endsWith("-reasoning");
 
+    if (modelDescription?.toolDisabled) {
+      return "This model is not available on dev mode."
+    }
+
     model = model.replace("-reasoning", "");
 
     const isCanary = modelDescription?.canary;
 
     // Voids Provider (not used)
-    const VoidsOpenAI = createVoidsOAI({
-      // custom settings, e.g.
-      isCanary,
-      apiKey: "no", // API key
-    });
+    // const VoidsOpenAI = createVoidsOAI({
+    //   // custom settings, e.g.
+    //   isCanary,
+    //   apiKey: "no", // API key
+    // });
 
-    const VoidsAnthropic = createVoidsAP({
-      isCanary,
-      apiKey: "no",
-    });
+    // const VoidsAnthropic = createVoidsAP({
+    //   isCanary,
+    //   apiKey: "no",
+    // });
 
     // Official Provider
     const openai = createOpenAI({
@@ -126,7 +130,7 @@ export async function POST(req: Request) {
 
     coreMessage.unshift({
       role: "system",
-      content: getSystemPrompt(toolList || []),
+      content: systemPromptDev
     });
 
     const startTime = Date.now();
@@ -161,6 +165,8 @@ export async function POST(req: Request) {
       }
     }
 
+    const actionAnnotations: { [key: string]: any } = {};
+
     return createDataStreamResponse({
       execute: (dataStream) => {
         let tools: { [key: string]: Tool } | undefined = {};
@@ -182,149 +188,149 @@ export async function POST(req: Request) {
                 return "OK";
               },
             }),
-            countChars: tool({
-              description: "Count the number of characters in the message.",
-              parameters: z.object({
-                message: z.string().describe("Message to count characters in."),
+            webcontainer: tool({
+              description: "Execute commands in WebContainer or manage files in the virtual filesystem.",
+              parameters: z.object({  
+                steps: z.array(z.object({
+                  id: z.string().describe("Unique identifier for this step"),
+                  title: z.string().describe("Human-readable title for this step"),
+                  command: z.string().describe("Command to execute (only for 'run' action, MAKE NULL TO OTHER ACTIONS, IF NOT, IT WILL ERROR)").nullable(),
+                  action: z.enum(["run", "write", "read"]).describe("Action type").nullable(),
+                  path: z.string().describe("File path for file operations").nullable(),
+                  content: z.string().describe("Content for write operations").nullable(),
+                })).describe("Sequence of steps to execute").nullable(),
               }),
-              execute: async ({ message }) => {
-                return message.length;
-              },
-            }),
-            canvas: tool({
-              description:
-                "Create or edit content in the Canvas editor, supporting markdown formatting.",
-              parameters: z.object({
-                content: z
-                  .string()
-                  .describe(
-                    "The content to add to the Canvas, in markdown format."
-                  ),
-                title: z
-                  .string()
-                  .describe(
-                    "An optional title for the Canvas document. (Set desired title to the Canvas.)"
-                  ).nullable(),
-                mode: z
-                  .enum(["create", "replace"])
-                  .describe(
-                    "How to update canvas content. 'create' creates a new canvas (default if not specified), 'replace' replaces all content with new content."
-                  ).nullable(),
-              }).refine(data => !!data.content, {
-                message: "Content is required",
-                path: ["content"]
-              }),
-              execute: async ({ content, title, mode = "create" }) => {
-                let finalContent = content;
-
-                dataStream.writeMessageAnnotation({
-                  canvasContent: finalContent,
-                  canvasTitle: title || "Untitled Document",
-                });
-
-                return `Canvas content ${mode}d successfully.`;
-              },
-            }),
-              search: tool({
-                description:
-                  "Search the web for information that may be useful in answering the users question.",
-                parameters: z.object({
-                  query: z.string().describe("Query to search for."),
-                }),
-                execute: async ({ query }) => {
-                  if (!process.env.BRAVE_SEARCH_API_KEY) {
-                    return "Search is temporarily disabled or not available in your instance.";
-                  }
-                  const results = await fetch(
-                    `https://api.search.brave.com/res/v1/web/search?q=${query}`,
-                    {
-                      headers: new Headers({
-                        Accept: "application/json",
-                        "Accept-Encoding": "gzip",
-                        "X-Subscription-Token":
-                          process.env.BRAVE_SEARCH_API_KEY || "",
-                      }),
+              execute: async ({ steps }) => {
+                // この関数はフロントエンド側でWebContainerインスタンスを管理しているため
+                // 実際の処理はフロントエンドで行われます。このツールはAIに情報を提供するためのものです。
+                
+                if (steps && steps.length > 0) {
+                  console.log("Sending steps to client:", steps);
+                  // 手順のシーケンスをクライアントに送信
+                  dataStream.writeMessageAnnotation({
+                    webcontainerAction: {
+                      action: "steps",
+                      steps: steps
                     }
-                  ).then((res) => res.json());
-  
-                  const totalCount = toolList?.includes("deepResearch") ? 10 : 5;
-  
-                  const searchResults = await Promise.all(
-                    results.web.results
-                      .slice(0, totalCount)
-                      .map(
-                        async (result: {
-                          title: string;
-                          url: string;
-                          description: string;
-                        }) => {
-                          const { title, url, description } = result;
-                          let content = description;
-  
-                          try {
-                            const pageResponse = await fetch(url);
-                            const pageText = await pageResponse.text();
-                            const dom = new JSDOM(pageText);
-                            const doc = dom.window.document;
-  
-                            // Remove script and style tags
-                            const scripts = doc.getElementsByTagName("script");
-                            const styles = doc.getElementsByTagName("style");
-                            while (scripts.length > 0) scripts[0]?.remove();
-                            while (styles.length > 0) styles[0]?.remove();
-  
-                            // Extract main content
-                            const mainContent =
-                              doc.querySelector("main") ||
-                              doc.querySelector("article") ||
-                              doc.body;
-  
-                            if (mainContent) {
-                              // メタディスクリプションを取得
-                              if (
-                                toolList?.includes("deepResearch") ||
-                                toolList?.includes("advancedSearch")
-                              ) {
-                                //content = mainContent.textContent?.trim() || description;
-                                content = (mainContent.textContent || description)
-                                  .replace(/\s+/g, " ")
-                                  .replace(/\n+/g, "")
-                                  .trim();
+                  });
+                  
+                  // 手順の概要を返す
+                  const stepTitles = steps.map((step, index) => `${index + 1}. ${step.title}`).join('\n');
+                  return `STEPS ARE SENDED, BUT NOT COMPLETED, WAIT FOR NEXT USER MESSAGE:\n${stepTitles}`;
+                } else { 
+                  // 従来の単一アクション
+                  // タイムスタンプを追加して同じコマンドの連続実行を防止
+                  const timestamp = Date.now();
+                  dataStream.writeMessageAnnotation({
+                    webcontainerAction: {
+                      action: "steps",
+                      steps: steps,
+                      timestamp: timestamp  // タイムスタンプを追加
+                    } 
+                  });
+                }
+              },
+            }),
+            search: tool({
+              description:
+                "Search the web for information that may be useful in answering the users question.",
+              parameters: z.object({
+                query: z.string().describe("Query to search for."),
+              }),
+              execute: async ({ query }) => {
+                if (!process.env.BRAVE_SEARCH_API_KEY) {
+                  return "Search is temporarily disabled or not available in your instance.";
+                }
+                const results = await fetch(
+                  `https://api.search.brave.com/res/v1/web/search?q=${query}`,
+                  {
+                    headers: new Headers({
+                      Accept: "application/json",
+                      "Accept-Encoding": "gzip",
+                      "X-Subscription-Token":
+                        process.env.BRAVE_SEARCH_API_KEY || "",
+                    }),
+                  }
+                ).then((res) => res.json());
+    
+                const totalCount = toolList?.includes("deepResearch") ? 10 : 5;
+    
+                const searchResults = await Promise.all(
+                  results.web.results
+                    .slice(0, totalCount)
+                    .map(
+                      async (result: {
+                        title: string;
+                        url: string;
+                        description: string;
+                      }) => {
+                        const { title, url, description } = result;
+                        let content = description;
+    
+                        try {
+                          const pageResponse = await fetch(url);
+                          const pageText = await pageResponse.text();
+                          const dom = new JSDOM(pageText);
+                          const doc = dom.window.document;
+    
+                          // Remove script and style tags
+                          const scripts = doc.getElementsByTagName("script");
+                          const styles = doc.getElementsByTagName("style");
+                          while (scripts.length > 0) scripts[0]?.remove();
+                          while (styles.length > 0) styles[0]?.remove();
+    
+                          // Extract main content
+                          const mainContent =
+                            doc.querySelector("main") ||
+                            doc.querySelector("article") ||
+                            doc.body;
+    
+                          if (mainContent) {
+                            // メタディスクリプションを取得
+                            if (
+                              toolList?.includes("deepResearch") ||
+                              toolList?.includes("advancedSearch")
+                            ) {
+                              //content = mainContent.textContent?.trim() || description;
+                              content = (mainContent.textContent || description)
+                                .replace(/\s+/g, " ")
+                                .replace(/\n+/g, "")
+                                .trim();
+                            } else {
+                              const metaDesc = doc.querySelector(
+                                'meta[name="description"]'
+                              );
+                              if (metaDesc) {
+                                content =
+                                  metaDesc.getAttribute("content")?.trim() ||
+                                  description;
                               } else {
-                                const metaDesc = doc.querySelector(
-                                  'meta[name="description"]'
-                                );
-                                if (metaDesc) {
-                                  content =
-                                    metaDesc.getAttribute("content")?.trim() ||
-                                    description;
-                                } else {
-                                  content = description;
-                                }
+                                content = description;
                               }
                             }
-                          } catch (error) {
-                            console.error(`Error fetching ${url}:`, error);
                           }
-  
-                          return {
-                            title,
-                            url,
-                            description,
-                            content,
-                          };
+                        } catch (error) {
+                          console.error(`Error fetching ${url}:`, error);
                         }
-                      )
-                  );
-  
-                  dataStream.writeMessageAnnotation({
-                    searchResults,
-                    searchQuery: query,
-                  });
-  
-                  return JSON.stringify(searchResults);
-                },
-              })
+    
+                        return {
+                          title,
+                          url,
+                          description,
+                          content,
+                        };
+                      }
+                    )
+                );
+    
+                dataStream.writeMessageAnnotation({
+                  searchResults,
+                  searchQuery: query,
+                });
+    
+                return JSON.stringify(searchResults);
+              },
+            })
           };
         }
 

@@ -24,7 +24,7 @@ async function auth(req: Request) {
     return verifiedId;
   } catch (e: unknown) {
     if (e instanceof AuthAdminError == false) {
-      throw new UploadThingError("Something went wrong");
+      throw new UploadThingError("Something went wrong" + e,);
     }
 
     if (e instanceof AuthAdminError) {
@@ -35,7 +35,7 @@ async function auth(req: Request) {
       } else if (e.code === "auth/invalid-id-token") {
         throw new UploadThingError("Token invalid");
       } else {
-        throw new UploadThingError("Something went wrong");
+        throw new UploadThingError("Something went wrong" + e);
       }
     }
   }
@@ -64,10 +64,10 @@ export const ourFileRouter: FileRouter = {
           if (e.message.includes("Token")) {
             throw new UploadThingError("Unauthorized");
           } else {
-            throw new UploadThingError("Something went wrong");
+            throw new UploadThingError("Something went wrong" + e);
           }
         } else {
-          throw new UploadThingError("Something went wrong");
+          throw new UploadThingError("Something went wrong" + e);
         }
       }
 

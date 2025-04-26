@@ -16,6 +16,7 @@ import { Badge } from "@workspace/ui/components/badge";
 import { EasyTip } from "@/components/easytip";
 import { memo, useCallback } from "react";
 import { cn } from "@workspace/ui/lib/utils";
+import { useTranslations } from "next-intl";
 
 const ReasoningEffortItem = memo(
   ({
@@ -25,14 +26,16 @@ const ReasoningEffortItem = memo(
     effort: reasoningEffortType;
     handleEffortChange: (effort: reasoningEffortType) => void;
   }) => {
+    const t = useTranslations();
+
     const getEffortDisplayName = (effort: reasoningEffortType): string => {
       switch (effort) {
         case "low":
-          return "低";
+          return t("reasoningEffort.low") || "Low";
         case "medium":
-          return "中";
+          return t("reasoningEffort.medium") || "Medium";
         case "high":
-          return "高";
+          return t("reasoningEffort.high") || "High";
         default:
           return effort;
       }
@@ -50,7 +53,7 @@ const ReasoningEffortItem = memo(
           <span className="text-base">{getEffortDisplayName(effort)}</span>
           <div className="flex items-center gap-2">
             {effort === "low" && (
-              <EasyTip content="高速だが浅い推論">
+              <EasyTip content={t("reasoningEffort.lowTip") || "Fast but shallow reasoning"}>
                 <Badge variant="secondary" className="p-1 flex gap-1">
                   <Zap size="16" />
                 </Badge>
@@ -58,7 +61,7 @@ const ReasoningEffortItem = memo(
             )}
 
             {effort === "medium" && (
-              <EasyTip content="バランスの取れた推論">
+              <EasyTip content={t("reasoningEffort.mediumTip") || "Balanced reasoning"}>
                 <Badge className="p-1" variant="secondary">
                   <BrainCircuit size="16" />
                 </Badge>
@@ -66,7 +69,7 @@ const ReasoningEffortItem = memo(
             )}
 
             {effort === "high" && (
-              <EasyTip content="深い推論（時間がかかる）">
+              <EasyTip content={t("reasoningEffort.highTip") || "Deep reasoning (takes more time)"}>
                 <Badge className="p-1" variant="secondary">
                   <Brain size="16" />
                 </Badge>
@@ -91,6 +94,8 @@ export const ReasoningEffortSelector = memo(function ReasoningEffortSelector({
   handleReasoningEffortChange: (effort: reasoningEffortType) => void;
   availableEfforts?: reasoningEffortType[];
 }) {
+  const t = useTranslations();
+  
   if (!modelDescriptions[model]?.reasoningEffort) return null;
 
   const getEffortIcon = (effort: reasoningEffortType) => {
@@ -109,11 +114,11 @@ export const ReasoningEffortSelector = memo(function ReasoningEffortSelector({
   const getEffortDisplayName = (effort: reasoningEffortType): string => {
     switch (effort) {
       case "low":
-        return "低";
+        return t("reasoningEffort.low") || "Low";
       case "medium":
-        return "中";
+        return t("reasoningEffort.medium") || "Medium";
       case "high":
-        return "高";
+        return t("reasoningEffort.high") || "High";
       default:
         return effort;
     }
@@ -137,10 +142,10 @@ export const ReasoningEffortSelector = memo(function ReasoningEffortSelector({
       </DropdownMenuTrigger>
 
       <DropdownMenuContent className="w-64">
-        <DropdownMenuLabel className="pb-0!">推論努力</DropdownMenuLabel>
+        <DropdownMenuLabel className="pb-0!">{t("reasoningEffort.label") || "Reasoning Effort"}</DropdownMenuLabel>
         <div className="ml-2">
           <span className="text-sm text-muted-foreground">
-            AIが問題解決に費やす思考の深さを選択します
+            {t("reasoningEffort.description") || "Choose the depth of thinking AI uses to solve problems"}
           </span>
         </div>
         <DropdownMenuGroup>

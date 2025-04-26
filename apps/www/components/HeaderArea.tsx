@@ -23,7 +23,7 @@ interface HeaderAreaProps {
   handleModelChange: (model: string) => void;
   reasoningEffort?: reasoningEffortType;
   handleReasoningEffortChange?: (effort: reasoningEffortType) => void;
-  currentSession: ChatSession;
+  currentSession?: ChatSession;
   user: User;
   messages: any[];
   chatId: string;
@@ -44,14 +44,15 @@ const HeaderArea: React.FC<HeaderAreaProps> = memo(
     const { openDialog } = useSettingsDialog();
 
     return (
-      <div className={cn(
-        "shadow-xl bg-secondary/70 rounded-full flex items-center justify-between mx-auto",
-        isMobile ? "p-1 px-2 gap-0.5" : "p-2 w-fit"
-      )}>
-        <div className={cn(
-          "flex items-center",
-          isMobile ? "gap-0.5" : "gap-1"
-        )}>
+      <div
+        className={cn(
+          "shadow-xl bg-secondary/70 rounded-full flex items-center justify-between mx-auto",
+          isMobile ? "p-1 px-2 gap-0.5" : "p-2 w-fit"
+        )}
+      >
+        <div
+          className={cn("flex items-center", isMobile ? "gap-0.5" : "gap-1")}
+        >
           <ModelSelector
             handleModelChange={handleModelChange}
             model={model}
@@ -69,10 +70,7 @@ const HeaderArea: React.FC<HeaderAreaProps> = memo(
             )}
           <EasyTip content={t("settings.title")}>
             <Button
-              className={cn(
-                "rounded-full",
-                isMobile && "px-2 py-1"
-              )}
+              className={cn("rounded-full", isMobile && "px-2 py-1")}
               variant={"secondary"}
               onClick={() => openDialog()}
             >
@@ -80,11 +78,13 @@ const HeaderArea: React.FC<HeaderAreaProps> = memo(
               {!isMobile && t("settings.title")}
             </Button>
           </EasyTip>
-          <ShareButton
-            currentSession={currentSession}
-            user={user}
-            messages={messages}
-          />
+          {currentSession && (
+            <ShareButton
+              currentSession={currentSession}
+              user={user}
+              messages={messages}
+            />
+          )}
         </div>
       </div>
     );

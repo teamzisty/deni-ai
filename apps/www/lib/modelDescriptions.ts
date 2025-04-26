@@ -285,6 +285,14 @@ export const modelDescriptions: modelDescriptionType = {
     vision: true,
     type: "ChatGPT",
   },
+  "openai/o1-pro-2025-03-19": {
+    displayName: "o1 pro mode (NOT UNLIMITED)",
+    knowledgeCutoff: "2023/10",
+    defaultVisibility: true,
+    reasoning: true,
+    vision: true,
+    type: "ChatGPT",
+  },
   "openai/o1-mini-2024-09-12": {
     displayName: "o1-mini",
     knowledgeCutoff: "2023/10",

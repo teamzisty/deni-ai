@@ -69,7 +69,7 @@ const ChatInput = memo(
     return (
       <div
         className={cn(
-          "mt-4 border rounded-xl w-full md:max-w-9/12 lg:max-w-7/12 p-2",
+          "mt-4 border rounded-xl w-full p-2",
           className
         )}
       >
