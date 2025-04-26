@@ -228,17 +228,128 @@ const Chat: React.FC<ChatProps> = ({
   const debouncedUpdateSession = useDebouncedCallback(
     (updatedMessages: UIMessage[]) => {
       if (!currentSession) return;
+
+      // Explicitly create plain objects for Firestore compatibility
+      const messagesToSave = updatedMessages.map((message) => {
+        // 1. Create plain message object
+        const plainMessage: any = { // Use 'any' for flexibility, ensure properties exist
+          id: message.id,
+          role: message.role,
+          content: message.content, // Keep the top-level content
+          createdAt: message.createdAt, // Keep as Date obj, assume use-chat-sessions handles Timestamp
+        };
+
+        // 2. Process Parts -> Plain Parts
+        if (message.parts && message.parts.length > 0) {
+          plainMessage.parts = message.parts.map((part) => {
+            const plainPart: any = { type: part.type };
+
+            if (part.type === 'text' && part.text) {
+              plainPart.text = part.text;
+            } else if (part.type === 'reasoning' && part.reasoning) {
+              plainPart.reasoning = part.reasoning; // Include reasoning if present
+            } else if (part.type === 'tool-invocation') {
+              // Create plain toolInvocation object
+              const plainToolInvocation: any = {
+                toolCallId: part.toolInvocation.toolCallId,
+                toolName: part.toolInvocation.toolName,
+              };
+               // Copy args if they exist (should be serializable JSON)
+              if (part.toolInvocation.args) {
+                 plainToolInvocation.args = part.toolInvocation.args;
+              }
+
+              // Handle state and potentially modified result
+              plainToolInvocation.state = part.toolInvocation.state;
+              let resultString = part.toolInvocation.state === 'result' ? part.toolInvocation.result : undefined;
+
+              // Modify search result string if necessary
+              if (
+                plainToolInvocation.toolName === "search" &&
+                plainToolInvocation.state === "result" &&
+                resultString
+              ) {
+                try {
+                  const result = JSON.parse(resultString);
+                  if (result && Array.isArray(result.searchResults)) {
+                    const modifiedSearchResults = result.searchResults.map((searchResult: any) => {
+                      const { content, ...rest } = searchResult; // Remove content
+                      return rest;
+                    });
+                    // Re-stringify with modified results
+                    resultString = JSON.stringify({ ...result, searchResults: modifiedSearchResults });
+                  }
+                } catch (e) {
+                  console.error("Failed to parse/modify search result for saving:", e);
+                  // Keep original result string if error occurs
+                }
+              }
+               // Add the result string if it exists
+              if (resultString !== undefined) {
+                 plainToolInvocation.result = resultString;
+              }
+
+              plainPart.toolInvocation = plainToolInvocation;
+            }
+             // Add other part types if necessary (e.g., 'step-start', 'step-end')
+             else if (part.type === 'step-start') {
+                 // Include step-start specific data if needed, otherwise just type is fine
+             }
+             // ... other part types like step-end, ui ...
+
+            return plainPart;
+          });
+        } else {
+           // Ensure parts array exists even if empty, or handle null case if preferred
+           plainMessage.parts = [];
+        }
+
+        // 3. Process Annotations -> Plain Annotations
+        if (message.annotations && message.annotations.length > 0) {
+          // Ensure annotations are plain objects
+          plainMessage.annotations = message.annotations
+            .map(annotation => {
+              // Check if annotation is a non-null object before spreading
+              if (annotation && typeof annotation === 'object') {
+                return { ...annotation };
+              }
+              // Return null or handle non-object annotations if necessary
+              // For now, returning null to filter them out later
+              return null;
+            })
+            .filter(Boolean); // Filter out any null values from the map
+        } else {
+           plainMessage.annotations = []; // Ensure array exists
+        }
+
+         // Add revisionId if it exists
+         if ((message as any).revisionId) {
+            plainMessage.revisionId = (message as any).revisionId;
+         }
+         
+         // Add experimental_attachments if it exists and is serializable
+         if (message.experimental_attachments && message.experimental_attachments.length > 0) {
+             // Assuming attachments are already plain objects with url/contentType
+             plainMessage.experimental_attachments = message.experimental_attachments.map(att => ({ ...att }));
+         }
+
+
+        // Return the fully plain message object
+        return plainMessage as UIMessage; // Cast back to UIMessage for consistency if needed downstream
+      });
+
+      // Create the final session object with plain messages
       const updatedSessionData = {
         ...currentSession,
-        messages: updatedMessages, // Save the complete message list
+        messages: messagesToSave,
       };
-      // Check if local state needs update (optional, useChat should be source of truth)
-      // setCurrentSession(updatedSessionData);
+
+      // Update the session in the parent/storage
       updateSession(sessionId, updatedSessionData);
-      console.log("Chat Component: Session updated via debounced call.");
+      console.log("Chat Component: Session updated via debounced call (plain objects, search content removed).");
     },
-    1000
-  ); // Debounce time in milliseconds (e.g., 1000ms = 1 second)
+    1000 // Debounce time
+  );
 
   // Save session whenever messages change (debounced)
   useEffect(() => {
@@ -294,9 +405,9 @@ const Chat: React.FC<ChatProps> = ({
 
   // --- Handler Functions ---
 
-  const canvasToggle = () => {
+  const canvasToggle = useCallback(() => {
     setCanvasEnabled((prev) => !prev);
-  };
+  }, []);
 
   const handleModelChange = useCallback(
     (newModel: string) => {
@@ -319,28 +430,19 @@ const Chat: React.FC<ChatProps> = ({
     [image] // Dependency on image state
   );
 
-  const searchToggle = () => {
+  const searchToggle = useCallback(() => {
     setSearchEnabled((prev) => !prev);
     // Update local storage? Maybe keep that in page.tsx?
-  };
+  }, []);
 
-  const advancedSearchToggle = () => {
-    // Added for completeness
-    setAdvancedSearch((prev) => {
-      const newValue = !prev;
-      window.localStorage.setItem("advancedSearch", String(newValue));
-      return newValue;
-    });
-  };
-
-  const deepResearchToggle = () => {
+  const deepResearchToggle = useCallback(() => {
     if (!deepResearch) {
       toast.info(t("chat.deepResearch.info"), {
         description: t("chat.deepResearch.description"),
       });
     }
     setDeepResearch((prev) => !prev);
-  };
+  }, [t]);
 
   const baseSendMessage = async (
     event:

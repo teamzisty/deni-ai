@@ -1,6 +1,6 @@
 "use client";
 
-import { memo } from "react";
+import React, { useState, useEffect, useRef, useCallback, memo } from "react";
 import { modelDescriptions } from "@/lib/modelDescriptions";
 import InputBox from "./InputBox";
 import { ImagePreview } from "./ImagePreview";
@@ -66,6 +66,11 @@ const ChatInput = memo(
   }: ChatInputProps) => {
     const isMobile = useIsMobile();
     
+    // Callback for ImageAddButton click
+    const handleImageAddClick = useCallback(() => {
+      fileInputRef.current?.click();
+    }, []); // fileInputRef is stable
+
     return (
       <div
         className={cn(
@@ -101,7 +106,7 @@ const ChatInput = memo(
           />
           <ImageAddButton
             modelSupportsVision={!!modelDescriptions[model]?.vision}
-            onClick={() => fileInputRef.current?.click()}
+            onClick={handleImageAddClick}
           />
           <CanvasButton
             disabled={modelDescriptions[model]?.toolDisabled || false}

@@ -552,6 +552,8 @@ export function ChatSessionsProvider({ children }: { children: ReactNode }) {
               }
             });
 
+            console.log("Saving current session to Firestore:", sessionData);
+
             await setDoc(currentSessionRef, sessionData);
             console.log("Successfully saved current session to Firestore active collection.");
           } catch (error) {

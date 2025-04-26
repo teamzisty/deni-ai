@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState, useCallback } from "react";
+import React, { useEffect, useRef, useState, useCallback, memo } from "react";
 import {
   WebContainer as WebContainerAPI,
   WebContainerProcess,
@@ -782,7 +782,8 @@ export interface WebContainerUIProps {
   terminalRef?: React.RefObject<HTMLDivElement>;
 }
 
-export const WebContainerUI: React.FC<WebContainerUIProps> = ({
+// Wrap component definition with React.memo
+export const WebContainerUI: React.FC<WebContainerUIProps> = memo(({
   chatId,
   onServerReady,
   onError,
@@ -1190,13 +1191,22 @@ export const WebContainerUI: React.FC<WebContainerUIProps> = ({
 
   // Add handler for reloading the preview iframe
   const handleReloadPreview = useCallback(() => {
-    if (appFrameRef.current) {
-      console.log("[handleReloadPreview] Reloading iframe...");
-      appFrameRef.current.contentWindow?.location.reload();
+    if (appFrameRef.current && iframeUrl) {
+      console.log("[handleReloadPreview] Reloading iframe using src manipulation...");
+      const currentSrc = iframeUrl; // Store the current URL
+      // Temporarily set src to about:blank
+      appFrameRef.current.src = 'about:blank';
+      // Immediately set it back to the original URL to force reload
+      setTimeout(() => {
+        if (appFrameRef.current) {
+          appFrameRef.current.src = currentSrc;
+          console.log("[handleReloadPreview] Iframe src set back to:", currentSrc);
+        }
+      }, 0); // Use setTimeout to ensure the change is processed
     } else {
-      console.warn("[handleReloadPreview] Iframe ref not found.");
+      console.warn("[handleReloadPreview] Iframe ref or iframeUrl not found.");
     }
-  }, [appFrameRef]); // Dependency is the ref itself
+  }, [appFrameRef, iframeUrl]); // Add iframeUrl as dependency
 
   // renderFileTree - uses expandedDirs and toggleDir from hook
   const renderFileTree = useCallback(
@@ -1478,4 +1488,7 @@ export const WebContainerUI: React.FC<WebContainerUIProps> = ({
       </div>
     </div>
   );
-};
+});
+
+// Add display name for better debugging
+WebContainerUI.displayName = "WebContainerUI";

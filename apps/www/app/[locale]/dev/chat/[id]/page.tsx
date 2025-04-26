@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useRef, useState, useCallback } from "react";
+import React, { useEffect, useRef, useState, useCallback, memo } from "react";
 import { useParams } from "next/navigation";
 import DevChat from "@/components/DevChat";
 import type { ChatSession } from "@/hooks/use-chat-sessions";
@@ -12,6 +12,8 @@ import { reasoningEffortType } from "@/lib/modelDescriptions";
 import { useDevSessions, DevSession } from "@/hooks/use-dev-sessions";
 import { useChat } from "@ai-sdk/react";
 import { useTranslations } from "next-intl";
+import { useUploadThing, uploadResponse } from "@/utils/uploadthing";
+import { toast } from "sonner";
 
 // Import WebContainerUI component
 import { WebContainerUI, webContainerProcess, webContainerFS, getWebContainerInstance } from "@/components/WebContainer";
@@ -34,6 +36,76 @@ const spinnerStyle = `
 // Add this at the top of the file, after any imports but before the component definition
 declare function atob(data: string): string;
 
+// Define the new memoized component for the terminal display
+interface TerminalDisplayProps {
+  showTerminal: boolean;
+  setShowTerminal: React.Dispatch<React.SetStateAction<boolean>>;
+  logs: TerminalLogEntry[];
+  terminalRef: React.RefObject<HTMLDivElement | null>;
+}
+
+const TerminalDisplay = memo(
+  ({ showTerminal, setShowTerminal, logs, terminalRef }: TerminalDisplayProps) => {
+    return (
+      <div
+        className={`border-t border-border bg-black relative ${showTerminal ? "h-48" : "h-6"}`}
+        style={{
+          resize: showTerminal ? "vertical" : "none",
+          overflow: "auto",
+        }}
+        id="terminal-container"
+      >
+        <div
+          className="flex items-center px-2 py-1 bg-muted hover:bg-accent cursor-pointer border-b border-border"
+          onClick={() => setShowTerminal(!showTerminal)}
+        >
+          <TerminalIcon size={14} className="mr-2" />
+          <span className="text-sm">Terminal</span>
+        </div>
+
+        <MemoizedTerminal
+          logs={logs}
+          showTerminal={showTerminal}
+          terminalRef={terminalRef}
+        />
+
+        {showTerminal && (
+          <div
+            className="absolute top-0 left-0 w-full h-1 cursor-ns-resize hover:bg-primary/50"
+            onMouseDown={(e) => {
+              const terminalContainer =
+                document.getElementById("terminal-container");
+              if (!terminalContainer) return;
+
+              const startY = e.clientY;
+              const startHeight = terminalContainer.offsetHeight;
+
+              const onMouseMove = (moveEvent: MouseEvent) => {
+                if (terminalContainer) {
+                  const newHeight =
+                    startHeight - (moveEvent.clientY - startY);
+                  if (newHeight > 30) {
+                    terminalContainer.style.height = `${newHeight}px`;
+                  }
+                }
+              };
+
+              const onMouseUp = () => {
+                document.removeEventListener("mousemove", onMouseMove);
+                document.removeEventListener("mouseup", onMouseUp);
+              };
+
+              document.addEventListener("mousemove", onMouseMove);
+              document.addEventListener("mouseup", onMouseUp);
+            }}
+          />
+        )}
+      </div>
+    );
+  }
+);
+TerminalDisplay.displayName = "TerminalDisplay";
+
 export default function DevChatPage() {
   const { locale, id } = useParams() as { locale: string; id: string };
   const { user, auth, isLoading: authLoading } = useAuth();
@@ -50,6 +122,68 @@ export default function DevChatPage() {
 
   // WebContainerを手動でリフレッシュするための状態
   const [refreshTrigger, setRefreshTrigger] = useState<number>(0);
+
+  const {
+    getSession: getDevSession,
+    createSession: createDevSession,
+    updateSession: updateDevSession,
+    selectSession: selectDevSession,
+    isLoading: sessionsLoading,
+  } = useDevSessions();
+
+  const [activeSessionData, setActiveSessionData] = useState<DevSession | null>(
+    null
+  );
+
+  // Initialize useChat hook
+  const {
+    messages,
+    setMessages,
+    input,
+    setInput,
+    status,
+    reload,
+    stop,
+    error,
+    handleSubmit,
+    append,
+  } = useChat({
+    id: id,
+    initialMessages: [],
+    api: "/api/dev/chat",
+    body: {
+      model,
+    },
+    onError: (error) => {
+      console.error("Chat error:", error);
+    },
+  });
+
+  // Move useUploadThing hook here
+  const { isUploading, startUpload } = useUploadThing("imageUploader", {
+    headers: {
+      Authorization: auth && authToken ? authToken : "",
+    },
+    // onClientUploadComplete/onUploadError likely handled within DevChat via toast.promise?
+    // If direct feedback needed here, add handlers.
+    onUploadError: (error: Error) => {
+      // Example: Log error at page level if needed
+      console.error("DevChatPage: Upload Error:", error);
+      toast.error(t("chat.error.imageUpload"), {
+        description: t("chat.error.errorOccurred", { message: error.message }),
+      });
+    },
+  });
+
+  // Log state on each render for debugging
+  console.log("DevChatPage Render:", {
+    id,
+    sessionsLoading,
+    authLoading,
+    messages: messages, // Log current messages array
+    activeSessionData: activeSessionData, // Log current session data
+    status, // Log chat status
+  });
 
   // Function to add logs to the terminal output state
   const addTerminalLog = useCallback(
@@ -86,40 +220,6 @@ export default function DevChatPage() {
     },
     [setTerminalLogs]
   );
-
-  const {
-    getSession: getDevSession,
-    createSession: createDevSession,
-    updateSession: updateDevSession,
-    selectSession: selectDevSession,
-    isLoading: sessionsLoading,
-  } = useDevSessions();
-
-  const [activeSessionData, setActiveSessionData] = useState<DevSession | null>(
-    null
-  );
-
-  // Initialize useChat hook
-  const {
-    messages,
-    setMessages,
-    input,
-    setInput,
-    status,
-    reload,
-    stop,
-    error,
-    handleSubmit,
-  } = useChat({
-    id: id,
-    initialMessages: [],
-    body: {
-      model,
-    },
-    onError: (error) => {
-      console.error("Chat error:", error);
-    },
-  });
 
   // Effect to load session data when ID changes or sessions finish loading
   useEffect(() => {
@@ -557,6 +657,36 @@ You can view the application in the browser when server is ready.`);
     };
   }, [updateFileStructure]);
 
+  // Effect to save messages when they change
+  useEffect(() => {
+    // Only save if session data is loaded and messages exist
+    if (activeSessionData && messages && messages.length >= 0) { // Allow saving even if messages array becomes empty
+      if (status === "submitted" || status == "streaming") return; // if Generating, skip saving
+      // Compare current messages with stored messages before saving
+      const currentMessagesString = JSON.stringify(messages);
+      const storedMessagesString = JSON.stringify(activeSessionData.messages || []);
+
+      if (currentMessagesString !== storedMessagesString) {
+        console.log("DevChatPage: Message content changed, attempting to save session...", {
+          sessionId: activeSessionData.id,
+          messageCount: messages.length,
+        });
+        updateDevSession(activeSessionData.id, {
+          ...activeSessionData,
+          messages: messages, // Save the current messages from useChat
+        });
+      } else {
+         console.log("DevChatPage: Message content identical to stored, skipping save.");
+      }
+    } else {
+      console.log("DevChatPage: Skipping message save.", {
+        hasSession: !!activeSessionData,
+        hasMessages: messages && messages.length > 0,
+      });
+    }
+    // Depend on the JSON string of messages to ensure the effect runs when content changes
+  }, [JSON.stringify(messages), activeSessionData, updateDevSession]);
+
   // ダミーのセッションデータ
   const initialSessionData: ChatSession = {
     id,
@@ -568,11 +698,6 @@ You can view the application in the browser when server is ready.`);
   // セッション更新ハンドラ（Devではnoop）
   const handleUpdate = (_id: string, _session: ChatSession) => {
     console.log("Dev session update:", _id, _session);
-  };
-
-  // Handle model change
-  const handleModelChange = (newModel: string) => {
-    setModel(newModel);
   };
 
   return (
@@ -588,7 +713,7 @@ You can view the application in the browser when server is ready.`);
           handleReasoningEffortChange={setReasoningEffort}
           generating={status === "submitted"}
           stop={stop}
-          handleModelChange={handleModelChange}
+          handleModelChange={setModel}
           currentSession={undefined}
           user={user!!}
           messages={messages}
@@ -599,10 +724,25 @@ You can view the application in the browser when server is ready.`);
           <DevChat
             sessionId={id}
             onAnnotation={handleAnnotation}
-            initialSessionData={initialSessionData}
             authToken={authToken}
             auth={auth}
             updateSession={handleUpdate}
+            messages={messages}
+            setMessages={setMessages}
+            input={input}
+            setInput={setInput}
+            status={status}
+            reload={reload}
+            stop={stop}
+            error={error}
+            handleSubmit={handleSubmit}
+            append={append}
+            model={model}
+            reasoningEffort={reasoningEffort}
+            handleModelChange={setModel}
+            handleReasoningEffortChange={setReasoningEffort}
+            startUpload={startUpload}
+            isUploading={isUploading}
           />
         </div>
       </div>
@@ -621,62 +761,13 @@ You can view the application in the browser when server is ready.`);
           />
         </div>
 
-        {/* ターミナル */}
-        <div
-          className={`border-t border-border bg-black relative ${showTerminal ? "h-48" : "h-6"}`}
-          style={{
-            resize: showTerminal ? "vertical" : "none",
-            overflow: "auto",
-          }}
-          id="terminal-container"
-        >
-          <div
-            className="flex items-center px-2 py-1 bg-muted hover:bg-accent cursor-pointer border-b border-border"
-            onClick={() => setShowTerminal(!showTerminal)}
-          >
-            <TerminalIcon size={14} className="mr-2" />
-            <span className="text-sm">Terminal</span>
-          </div>
-
-          <MemoizedTerminal
-            logs={terminalLogs}
-            showTerminal={showTerminal}
-            terminalRef={terminalRef}
-          />
-
-          {showTerminal && (
-            <div
-              className="absolute top-0 left-0 w-full h-1 cursor-ns-resize hover:bg-primary/50"
-              onMouseDown={(e) => {
-                // Store a reference to the parent element
-                const terminalContainer =
-                  document.getElementById("terminal-container");
-                if (!terminalContainer) return;
-
-                const startY = e.clientY;
-                const startHeight = terminalContainer.offsetHeight;
-
-                const onMouseMove = (moveEvent: MouseEvent) => {
-                  if (terminalContainer) {
-                    const newHeight =
-                      startHeight - (moveEvent.clientY - startY);
-                    if (newHeight > 30) {
-                      terminalContainer.style.height = `${newHeight}px`;
-                    }
-                  }
-                };
-
-                const onMouseUp = () => {
-                  document.removeEventListener("mousemove", onMouseMove);
-                  document.removeEventListener("mouseup", onMouseUp);
-                };
-
-                document.addEventListener("mousemove", onMouseMove);
-                document.addEventListener("mouseup", onMouseUp);
-              }}
-            />
-          )}
-        </div>
+        {/* Use the memoized TerminalDisplay component */}
+        <TerminalDisplay
+          showTerminal={showTerminal}
+          setShowTerminal={setShowTerminal}
+          logs={terminalLogs}
+          terminalRef={terminalRef}
+        />
       </div>
     </div>
   );

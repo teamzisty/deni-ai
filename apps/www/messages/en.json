@@ -27,7 +27,8 @@
     "urlNotFound": "URL not found",
     "reasoning": "Reasoning...",
     "reasoningCompleted": "Reasoning completed",
-    "reasonedFor": "reasoned for {time}",
+    "reasonedFor": "Reasoned for {time}",
+    "summaryWith": "Summary generated with {model}",
     "generationTime": "Generation time:",
     "hour": "hour",
     "minute": "min",
@@ -36,7 +37,23 @@
     "thinking": "Thinking...",
     "image": "Image",
     "copied": "Copied",
-    "regenerate": "Regenerate"
+    "regenerate": "Regenerate",
+    "deepResearch": "Deep Research",
+    "clickForDetails": "Click for details",
+    "activityLog": "Deep Research Log",
+    "searchedFor": "Searched for:",
+    "unknownSearch": "Unknown Search",
+    "searchFailed": "Search failed",
+    "visited": "Visited:",
+    "unknownUrl": "Unknown URL",
+    "visitSuccess": "Visit successful",
+    "visitFailed": "Visit failed",
+    "visiting": "Visiting",
+    "updatedCanvas": "Updated Canvas:",
+    "untitledCanvas": "Untitled Canvas",
+    "canvasUpdateSuccess": "Canvas update successful",
+    "canvasUpdateFailed": "Canvas update failed",
+    "updatingCanvas": "Updating canvas..."
   },
   "devMessageLog": {
     "writeAction": "File write: {path}",
@@ -499,7 +516,7 @@
     },
     "deepResearch": {
       "info": "About Deep Research",
-      "description": "Deep Research is in beta. Click on 'Visited websites' to see search results."
+      "description": "Deep Research is in beta. Some features may not work as expected."
     },
     "image": {
       "uploading": "Uploading image...",

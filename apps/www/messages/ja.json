@@ -36,7 +36,8 @@
     "visitedWebsites": "閲覧したウェブサイト",
     "urlNotFound": "URLがありません",
     "reasoning": "推論中...",
-    "reasonedFor": "の間、推論済み",
+    "reasonedFor": "{time} 考えました",
+    "summaryWith": "{model} を使用して要約しました",
     "hour": "時間",
     "minute": "分",
     "second": "秒",
@@ -45,7 +46,23 @@
     "thinking": "考え中...",
     "image": "画像",
     "copied": "コピーしました",
-    "regenerate": "再生成"
+    "regenerate": "再生成",
+    "deepResearch": "詳細調査",
+    "clickForDetails": "クリックして詳細を表示",
+    "activityLog": "詳細な検索のログ",
+    "searchedFor": "検索:",
+    "unknownSearch": "不明な検索",
+    "searchFailed": "検索失敗",
+    "visited": "訪問:",
+    "unknownUrl": "不明なURL",
+    "visitSuccess": "訪問成功",
+    "visitFailed": "訪問失敗",
+    "visiting": "訪問中",
+    "updatedCanvas": "キャンバス更新:",
+    "untitledCanvas": "無題のキャンバス",
+    "canvasUpdateSuccess": "キャンバス更新成功",
+    "canvasUpdateFailed": "キャンバス更新失敗",
+    "updatingCanvas": "キャンバス更新中..."
   },
   "devMessageLog": {
     "writeAction": "ファイル書き込み: {path}",
@@ -483,7 +500,7 @@
     },
     "deepResearch": {
       "info": "詳細なリサーチについて",
-      "description": "詳細なリサーチはベータ版です。「ウェブサイトを閲覧しました」等をクリックすると、検索結果が表示されます。"
+      "description": "詳細なリサーチはベータ版です。一部の機能は予期せずに動作しない可能性があります。"
     },
     "image": {
       "uploading": "画像をアップロード中...",

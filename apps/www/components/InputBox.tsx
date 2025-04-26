@@ -1,6 +1,6 @@
 import { Button } from "@workspace/ui/components/button";
 import { SendHorizonal, StopCircle } from "lucide-react";
-import { memo } from "react";
+import { memo, useCallback } from "react";
 import { useTranslations } from "next-intl";
 import { useIsMobile } from "@workspace/ui/hooks/use-mobile";
 import { cn } from "@workspace/ui/lib/utils";
@@ -30,6 +30,14 @@ const InputBox: React.FC<InputBoxProps> = memo(
     const t = useTranslations();
     const isMobile = useIsMobile();
 
+    const handleButtonClick = useCallback((e: React.MouseEvent<HTMLButtonElement>) => {
+      if (generating) {
+        stop();
+      } else {
+        handleSendMessage(e);
+      }
+    }, [generating, stop, handleSendMessage]);
+
     return (
       <div className="flex items-center mb-1 md:mb-2" onPaste={handleImagePaste}>
         <div className="flex items-center w-full mb-2">
@@ -49,7 +57,7 @@ const InputBox: React.FC<InputBoxProps> = memo(
             className="mr-2 md:mr-3"
             size="icon"
             ref={sendButtonRef}
-            onClick={(e) => (generating ? stop() : handleSendMessage(e))}
+            onClick={handleButtonClick}
           >
             {generating ? 
               <StopCircle className="h-[18px] w-[18px] md:h-6 md:w-6" /> : 

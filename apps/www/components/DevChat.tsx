@@ -21,7 +21,7 @@ import { AlertCircleIcon } from "lucide-react";
 import { Button } from "@workspace/ui/components/button";
 import { toast } from "sonner";
 import { useTranslations } from "next-intl";
-import { UIMessage, ChatRequestOptions } from "ai";
+import { UIMessage, ChatRequestOptions, CreateMessage } from "ai";
 import { User } from "firebase/auth";
 
 import logger from "@/utils/logger";
@@ -31,6 +31,7 @@ import DevMessageLog from "@/components/DevMessageLog";
 import ChatInput from "@/components/ChatInput";
 import { useAuth } from "@/context/AuthContext";
 import { useDebouncedCallback } from "use-debounce";
+import { UseChatHelpers } from "@ai-sdk/react";
 
 interface MemoizedMessageLogProps {
   message: UIMessage;
@@ -154,7 +155,6 @@ VirtualizedMessageList.displayName = "VirtualizedMessageList";
 
 interface DevChatProps {
   sessionId: string;
-  initialSessionData: ChatSession;
   authToken: string | null;
   initialModel?: string;
   initialImage?: string;
@@ -162,11 +162,26 @@ interface DevChatProps {
   auth: any;
   onAnnotation?: (annotation: any) => void;
   updateSession: (id: string, updatedSession: ChatSession) => void;
+  messages: UIMessage[];
+  setMessages: (messages: UIMessage[]) => void;
+  input: string;
+  setInput: (input: string) => void;
+  status: UseChatHelpers['status'];
+  reload: UseChatHelpers['reload'];
+  stop: UseChatHelpers['stop'];
+  error: UseChatHelpers['error'];
+  handleSubmit: UseChatHelpers['handleSubmit'];
+  append: UseChatHelpers['append'];
+  model: string;
+  reasoningEffort: reasoningEffortType;
+  handleModelChange: (newModel: string) => void;
+  handleReasoningEffortChange: (value: reasoningEffortType) => void;
+  startUpload: (files: File[], input?: any) => Promise<any>;
+  isUploading: boolean;
 }
 
 const DevChat: React.FC<DevChatProps> = memo(({
   sessionId,
-  initialSessionData,
   authToken,
   initialModel,
   initialImage,
@@ -174,13 +189,25 @@ const DevChat: React.FC<DevChatProps> = memo(({
   auth,
   onAnnotation,
   updateSession,
+  messages,
+  setMessages,
+  input,
+  setInput,
+  status,
+  reload,
+  stop,
+  error,
+  handleSubmit,
+  append,
+  model,
+  reasoningEffort,
+  handleModelChange,
+  handleReasoningEffortChange,
+  startUpload,
+  isUploading,
 }) => {
   const t = useTranslations();
   const isMobile = useIsMobile();
-
-  // Track session data locally to persist messages
-  const [currentSession, setCurrentSession] = useState<ChatSession>(initialSessionData);
-  useEffect(() => setCurrentSession(initialSessionData), [initialSessionData]);
 
   const { user } = useAuth();
 
@@ -197,11 +224,6 @@ const DevChat: React.FC<DevChatProps> = memo(({
   const [availableTools, setAvailableTools] = useState<string[]>([
     "webcontainer",
   ]);
-  const [model, setModel] = useState(
-    initialModel || "openai/gpt-4.1-mini-2025-04-14"
-  );
-  const [reasoningEffort, setReasoningEffort] =
-    useState<reasoningEffortType>("medium");
   const [canvasEnabled, setCanvasEnabled] = useState(false);
   const [retryCount, setRetryCount] = useState<number>(0);
   const MAX_RETRIES = 3;
@@ -210,48 +232,10 @@ const DevChat: React.FC<DevChatProps> = memo(({
   const sendButtonRef = useRef<HTMLButtonElement>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
-  const {
-    messages,
-    input,
-    setInput,
-    status,
-    setMessages,
-    reload,
-    stop,
-    error,
-    handleSubmit,
-  } = useChat({
-    initialMessages: initialSessionData.messages,
-    id: sessionId,
-    onError: (error) => {
-      toast.error(String(error));
-    },
-    body: {
-      toolList: availableTools,
-      model,
-      reasoningEffort,
-    },
-    api: "/api/dev/chat",
-  });
-
-  const { isUploading, startUpload } = useUploadThing("imageUploader", {
-    headers: {
-      Authorization: auth && authToken ? authToken : "",
-    },
-    onClientUploadComplete: (res) => {
-      setImage(res[0]?.ufsUrl || null);
-    },
-    onUploadError: (error: Error) => {
-      toast.error(t("chat.error.imageUpload"), {
-        description: t("chat.error.errorOccurred", { message: error.message }),
-      });
-    },
-  });
-
   useEffect(() => {
     if (
       initialMessage &&
-      messages.length <= initialSessionData.messages.length
+      messages.length === 0 
     ) {
       setInput(initialMessage);
       setTimeout(() => {
@@ -263,7 +247,6 @@ const DevChat: React.FC<DevChatProps> = memo(({
     initialMessage,
     setInput,
     messages.length,
-    initialSessionData.messages.length,
   ]);
 
   useEffect(() => {
@@ -281,17 +264,6 @@ const DevChat: React.FC<DevChatProps> = memo(({
   // 各 stepId を一度だけ実行させるためのセット
   const executedStepIdsRef   = useRef<Set<string>>(new Set());
 
-  // Debounced session update to avoid infinite loops
-  const debouncedUpdateSession = useDebouncedCallback(
-    (updatedMessages: UIMessage[]) => {
-      if (!currentSession) return;
-      const updatedSession = { ...currentSession, messages: updatedMessages };
-      updateSession(sessionId, updatedSession);
-      console.log(t('devChat.sessionUpdated'));
-    },
-    1000
-  );
-
   useEffect(() => {
     if (
       !visionRequired &&
@@ -305,7 +277,7 @@ const DevChat: React.FC<DevChatProps> = memo(({
 
   useEffect(() => {
     if (initialModel && model !== initialModel) {
-      setModel(initialModel);
+      handleModelChange(initialModel);
     }
     if (initialImage && image !== initialImage) {
       setImage(initialImage);
@@ -371,56 +343,30 @@ const DevChat: React.FC<DevChatProps> = memo(({
     });
   }, []);
 
-  const canvasToggle = () => {
+  const canvasToggle = useCallback(() => {
     setCanvasEnabled((prev) => !prev);
-  };
+  }, []);
 
-  const handleModelChange = useCallback(
-    (newModel: string) => {
-      if (!modelDescriptions[newModel]?.vision && image) {
-        logger.warn(
-          "handleModelChange",
-          t('devChat.visionWarning')
-        );
-        setImage(null);
-      }
-      if (modelDescriptions[newModel]?.toolDisabled) {
-        setAvailableTools([]);
-      } else {
-        setAvailableTools([]);
-      }
-      logger.info("handleModelChange", t('devChat.modelChanged', { model: newModel }));
-      setModel(newModel);
-    },
-    [image]
-  );
-
-  const searchToggle = () => {
+  const searchToggle = useCallback(() => {
     setSearchEnabled((prev) => !prev);
-  };
+  }, []);
 
-  const advancedSearchToggle = () => {
-    setAdvancedSearch((prev) => {
-      const newValue = !prev;
-      window.localStorage.setItem("advancedSearch", String(newValue));
-      return newValue;
-    });
-  };
+  const advancedSearchToggle = useCallback(() => {
+    const newValue = !advancedSearch;
+    setAdvancedSearch(newValue);
+    localStorage.setItem("advancedSearch", String(newValue));
+  }, [advancedSearch]);
 
-  const deepResearchToggle = () => {
+  const deepResearchToggle = useCallback(() => {
     if (!deepResearch) {
       toast.info(t("chat.deepResearch.info"), {
         description: t("chat.deepResearch.description"),
       });
     }
     setDeepResearch((prev) => !prev);
-  };
+  }, [deepResearch, t]);
 
-  const handleReasoningEffortChange = (value: reasoningEffortType) => {
-    setReasoningEffort(value);
-  };
-
-  const baseSendMessage = async (
+  const baseSendMessage = useCallback(async (
     event:
       | React.MouseEvent<HTMLButtonElement>
       | React.KeyboardEvent<HTMLTextAreaElement>
@@ -466,7 +412,7 @@ const DevChat: React.FC<DevChatProps> = memo(({
       );
       if (image) logger.info("Send message", t('devChat.sendImageLog'));
 
-      handleSubmit(event, submitOptions);
+      handleSubmit(event as any, submitOptions);
       setImage(null);
       setRetryCount(0);
     } catch (error) {
@@ -476,16 +422,16 @@ const DevChat: React.FC<DevChatProps> = memo(({
           error instanceof Error ? error.message : t("common.error.unknown"),
       });
     }
-  };
+  }, [handleSubmit, model, reasoningEffort, image, user, auth, authToken, append, availableTools, t]);
 
-  const authReload = async (options?: { regenerateWithModel?: string }) => {
+  const authReload = useCallback(async (options?: { regenerateWithModel?: string }) => {
     const submitOptions: ChatRequestOptions = {
       experimental_attachments: image
         ? [{ url: image, contentType: "image/png" }]
         : undefined,
     };
     if (options?.regenerateWithModel) {
-      setModel(options.regenerateWithModel);
+      handleModelChange(options.regenerateWithModel);
       console.warn(
         t('devChat.regenerateWarning')
       );
@@ -509,7 +455,7 @@ const DevChat: React.FC<DevChatProps> = memo(({
           error instanceof Error ? error.message : t("common.error.unknown"),
       });
     }
-  };
+  }, [reload, model, reasoningEffort, append, availableTools, auth, authToken, handleModelChange, t]);
 
   const handleRegenerate = useCallback(
     (modelOverride?: string) => {
@@ -518,29 +464,29 @@ const DevChat: React.FC<DevChatProps> = memo(({
     [authReload]
   );
 
-  const handleRetry = async () => {
+  const handleRetry = useCallback(async () => {
     if (retryCount >= MAX_RETRIES) {
       toast.error(t("chat.error.maxRetriesReached"));
       return;
     }
-    setRetryCount((prev) => prev + 1);
-    authReload();
-  };
+    setRetryCount(retryCount + 1);
+    await authReload();
+  }, [retryCount, authReload, t]);
 
-  const handleSendMessage = async (
+  const handleSendMessage = useCallback(async (
     event: React.MouseEvent<HTMLButtonElement>
   ) => {
-    baseSendMessage(event);
-  };
+    await baseSendMessage(event);
+  }, [baseSendMessage]);
 
-  const handleSendMessageKey = async (
+  const handleSendMessageKey = useCallback(async (
     event: React.KeyboardEvent<HTMLTextAreaElement>
   ) => {
-    if (event.key === "Enter" && !event.shiftKey) {
+    if (event.key === "Enter" && !event.shiftKey && !isMobile) {
       event.preventDefault();
-      baseSendMessage(event);
+      await baseSendMessage(event);
     }
-  };
+  }, [baseSendMessage, isMobile]);
 
   const uploadImage = useCallback(
     (file?: File): Promise<uploadResponse> => {
@@ -570,8 +516,8 @@ const DevChat: React.FC<DevChatProps> = memo(({
           new File([file], `${crypto.randomUUID()}.png`, { type: file.type }),
         ])
           .then((data) => {
-            if (data && data[0]?.ufsUrl) {
-              resolve({ status: "success", data: { url: data[0].ufsUrl } });
+            if (data && data[0]?.data?.url) {
+              resolve({ status: "success", data: { url: data[0].data.url } });
             } else {
               resolve({
                 status: "error",
@@ -597,7 +543,7 @@ const DevChat: React.FC<DevChatProps> = memo(({
     [startUpload, auth, authToken, t]
   );
 
-  const handleImagePaste = async (
+  const handleImagePaste = useCallback(async (
     event: React.ClipboardEvent<HTMLDivElement>
   ) => {
     if (
@@ -624,13 +570,13 @@ const DevChat: React.FC<DevChatProps> = memo(({
         return res.error?.message || t("common.error.unknown");
       },
     });
-  };
+  }, [startUpload, setImage, t]);
 
-  const handleInputChange = (event: React.ChangeEvent<HTMLTextAreaElement>) => {
+  const handleInputChange = useCallback((event: React.ChangeEvent<HTMLTextAreaElement>) => {
     setInput(event.target.value);
-  };
+  }, [setInput]);
 
-  const handleImageUpload = async (
+  const handleImageUpload = useCallback(async (
     event: React.ChangeEvent<HTMLInputElement>
   ) => {
     if (
@@ -660,7 +606,7 @@ const DevChat: React.FC<DevChatProps> = memo(({
     if (fileInputRef.current) {
       fileInputRef.current.value = "";
     }
-  };
+  }, [startUpload, setImage, t]);
 
   // thinking中のレンダリング最適化用に状態を安定化
   const isThinking = status === "submitted";
@@ -714,23 +660,10 @@ const DevChat: React.FC<DevChatProps> = memo(({
   // DevChat 本体内 (Hooks 定義より下に追加) ----------------------------
   /** 「順番に実行」ボタンから渡ってきた steps を実行 */
   const handleExecuteSteps = useCallback((steps: any[]) => {
-    console.log("DevChat: handleExecuteSteps called with steps:", { 
-      count: steps.length,
-      ids: steps.map(s => s.id) 
-    });
-    
-    if (onAnnotation && Array.isArray(steps) && steps.length > 0) {
-      // カスタムイベントとしてページに送信
-      const event = new CustomEvent("executeSteps", { 
-        detail: { steps } 
-      });
-      window.dispatchEvent(event);
-      
-      console.log("DevChat: Dispatched executeSteps event", { stepsCount: steps.length });
-    } else {
-      console.warn("DevChat: Could not execute steps - invalid data or missing onAnnotation");
-    }
-  }, [onAnnotation]);
+    console.log("DevChat: Executing steps", steps);
+    const event = new CustomEvent("executeSteps", { detail: { steps } });
+    window.dispatchEvent(event);
+  }, []);
   // ---------------------------------------------------------------------
 
   return (

@@ -146,6 +146,8 @@ export function DevSessionsProvider({ children }: { children: ReactNode }) {
       setCurrentSession(newCurrentSession);
     }
 
+    // Add console log here to check the data being saved
+    console.log("Saving updated session:", validatedSession);
     saveToLocalStorage(updatedSessions, newCurrentSession);
   }, [sessions, currentSession, saveToLocalStorage]);
 
@@ -164,6 +166,8 @@ export function DevSessionsProvider({ children }: { children: ReactNode }) {
       setCurrentSession(newCurrentSession);
     }
 
+    // Add console log here to check the data being saved
+    console.log("Saving updated session:", newCurrentSession);
     saveToLocalStorage(updatedSessions, newCurrentSession);
     toast.success(
       t("devSessions.sessionDeletedSuccess") || "Session deleted"

@@ -6,8 +6,14 @@ import { getSystemPrompt } from "@/lib/systemPrompt";
 import { createOpenAI } from "@ai-sdk/openai";
 import { createAnthropic } from "@ai-sdk/anthropic";
 import { createXai } from "@ai-sdk/xai";
-import { createGoogleGenerativeAI, GoogleGenerativeAIProviderOptions } from "@ai-sdk/google";
-import { createOpenRouter, OpenRouterProviderOptions } from "@openrouter/ai-sdk-provider";
+import {
+  createGoogleGenerativeAI,
+  GoogleGenerativeAIProviderOptions,
+} from "@ai-sdk/google";
+import {
+  createOpenRouter,
+  OpenRouterProviderOptions,
+} from "@openrouter/ai-sdk-provider";
 import { createGroq } from "@ai-sdk/groq";
 import { authAdmin, notAvailable } from "@workspace/firebase-config/server";
 import { createVoidsOAI } from "@workspace/voids-oai-provider/index";
@@ -16,6 +22,7 @@ import {
   convertToCoreMessages,
   createDataStreamResponse,
   extractReasoningMiddleware,
+  generateText,
   smoothStream,
   streamText,
   Tool,
@@ -88,7 +95,7 @@ export async function POST(req: Request) {
 
     // Official Provider
     const openai = createOpenAI({
-      apiKey: process.env.OPENAI_API_KEY
+      apiKey: process.env.OPENAI_API_KEY,
     });
 
     const anthropic = createAnthropic({
@@ -194,26 +201,30 @@ export async function POST(req: Request) {
             canvas: tool({
               description:
                 "Create or edit content in the Canvas editor, supporting markdown formatting.",
-              parameters: z.object({
-                content: z
-                  .string()
-                  .describe(
-                    "The content to add to the Canvas, in markdown format."
-                  ),
-                title: z
-                  .string()
-                  .describe(
-                    "An optional title for the Canvas document. (Set desired title to the Canvas.)"
-                  ).nullable(),
-                mode: z
-                  .enum(["create", "replace"])
-                  .describe(
-                    "How to update canvas content. 'create' creates a new canvas (default if not specified), 'replace' replaces all content with new content."
-                  ).nullable(),
-              }).refine(data => !!data.content, {
-                message: "Content is required",
-                path: ["content"]
-              }),
+              parameters: z
+                .object({
+                  content: z
+                    .string()
+                    .describe(
+                      "The content to add to the Canvas, in markdown format."
+                    ),
+                  title: z
+                    .string()
+                    .describe(
+                      "An optional title for the Canvas document. (Set desired title to the Canvas.)"
+                    )
+                    .nullable(),
+                  mode: z
+                    .enum(["create", "replace"])
+                    .describe(
+                      "How to update canvas content. 'create' creates a new canvas (default if not specified), 'replace' replaces all content with new content."
+                    )
+                    .nullable(),
+                })
+                .refine((data) => !!data.content, {
+                  message: "Content is required",
+                  path: ["content"],
+                }),
               execute: async ({ content, title, mode = "create" }) => {
                 let finalContent = content;
 
@@ -225,106 +236,166 @@ export async function POST(req: Request) {
                 return `Canvas content ${mode}d successfully.`;
               },
             }),
-              search: tool({
-                description:
-                  "Search the web for information that may be useful in answering the users question.",
-                parameters: z.object({
-                  query: z.string().describe("Query to search for."),
-                }),
-                execute: async ({ query }) => {
-                  if (!process.env.BRAVE_SEARCH_API_KEY) {
-                    return "Search is temporarily disabled or not available in your instance.";
+            search: tool({
+              description:
+                "Search the web for information that may be useful in answering the users question.",
+              parameters: z.object({
+                query: z.string().describe("Query to search for."),
+              }),
+              execute: async ({ query }) => {
+                if (!process.env.BRAVE_SEARCH_API_KEY) {
+                  return "Search is temporarily disabled or not available in your instance.";
+                }
+                const results = await fetch(
+                  `https://api.search.brave.com/res/v1/web/search?q=${query}`,
+                  {
+                    headers: new Headers({
+                      Accept: "application/json",
+                      "Accept-Encoding": "gzip",
+                      "X-Subscription-Token":
+                        process.env.BRAVE_SEARCH_API_KEY || "",
+                    }),
                   }
-                  const results = await fetch(
-                    `https://api.search.brave.com/res/v1/web/search?q=${query}`,
-                    {
-                      headers: new Headers({
-                        Accept: "application/json",
-                        "Accept-Encoding": "gzip",
-                        "X-Subscription-Token":
-                          process.env.BRAVE_SEARCH_API_KEY || "",
-                      }),
-                    }
-                  ).then((res) => res.json());
-  
-                  const totalCount = toolList?.includes("deepResearch") ? 10 : 5;
-  
-                  const searchResults = await Promise.all(
-                    results.web.results
-                      .slice(0, totalCount)
-                      .map(
-                        async (result: {
-                          title: string;
-                          url: string;
-                          description: string;
-                        }) => {
-                          const { title, url, description } = result;
-                          let content = description;
-  
-                          try {
-                            const pageResponse = await fetch(url);
-                            const pageText = await pageResponse.text();
-                            const dom = new JSDOM(pageText);
-                            const doc = dom.window.document;
-  
-                            // Remove script and style tags
-                            const scripts = doc.getElementsByTagName("script");
-                            const styles = doc.getElementsByTagName("style");
-                            while (scripts.length > 0) scripts[0]?.remove();
-                            while (styles.length > 0) styles[0]?.remove();
-  
-                            // Extract main content
-                            const mainContent =
-                              doc.querySelector("main") ||
-                              doc.querySelector("article") ||
-                              doc.body;
-  
-                            if (mainContent) {
-                              // メタディスクリプションを取得
-                              if (
-                                toolList?.includes("deepResearch") ||
-                                toolList?.includes("advancedSearch")
-                              ) {
-                                //content = mainContent.textContent?.trim() || description;
-                                content = (mainContent.textContent || description)
-                                  .replace(/\s+/g, " ")
-                                  .replace(/\n+/g, "")
-                                  .trim();
-                              } else {
-                                const metaDesc = doc.querySelector(
-                                  'meta[name="description"]'
+                ).then((res) => res.json());
+
+                const totalCount = toolList?.includes("deepResearch") ? 10 : 5;
+                let type = "search";
+
+                const searchResults = await Promise.all(
+                  results.web.results
+                    .slice(0, totalCount)
+                    .map(
+                      async (result: {
+                        title: string;
+                        url: string;
+                        description: string;
+                      }) => {
+                        const { title, url, description } = result;
+                        let content = description;
+                        let summary = "";
+
+                        try {
+                          const pageResponse = await fetch(url);
+                          const pageText = await pageResponse.text();
+                          const dom = new JSDOM(pageText);
+                          const doc = dom.window.document;
+
+                          // Remove script and style tags
+                          const scripts = doc.getElementsByTagName("script");
+                          const styles = doc.getElementsByTagName("style");
+                          while (scripts.length > 0) scripts[0]?.remove();
+                          while (styles.length > 0) styles[0]?.remove();
+
+                          // Extract main content
+                          const mainContent =
+                            doc.querySelector("main") ||
+                            doc.querySelector("article") ||
+                            doc.body;
+
+
+                          if (mainContent) {
+                            const rawContent = (
+                              mainContent.textContent || description
+                            )
+                              .replace(/\s+/g, " ")
+                              .replace(/\n+/g, "")
+                              .trim();
+
+                            if (toolList?.includes("deepResearch")) {
+                              type = "deepResearch";
+                              // Summarize using gpt-4.1-nano for deep research
+                              
+                              const lastMessage = messages.slice(-1)[0];
+                              const lastMessageContent = lastMessage?.content || "Sorry, no last message found.";
+                              try {
+                                const summarizationResult = await generateText({
+                                  model: openai("gpt-4.1-nano-2025-04-14"), // Use gpt-4.1-nano
+                                  messages: [
+                                    {
+                                      role: "system",
+                                      content: `You are a helpful assistant that summarizes text. Summarize the user text to markdown. Generate with user language, user prompt is: ${lastMessageContent}`,
+                                    },
+                                    {
+                                      role: "user",
+                                      content: rawContent,
+                                    },
+                                  ],
+                                  tools: {
+                                    countChars: tool({
+                                      description: "Count the number of characters in the text.",
+                                      parameters: z.object({
+                                        text: z.string().describe("The text to count characters in."),
+                                      }),
+                                      execute: async ({ text }) => {
+                                        return text.length;
+                                      },
+                                    }),
+                                    summary: tool({
+                                      description: "Save the generated summary.",
+                                      parameters: z.object({
+                                        text: z.string().describe("The 50~70 chars simple summary of the text. (use count chars tool to check the length)"),
+                                      }),
+                                      execute: async ({ text }) => {
+                                        summary = text;
+                                        return "OK";
+                                      },
+                                    }),
+                                  },
+                                  maxTokens: 1000, // Limit summary length
+                                });
+                                content =
+                                  summarizationResult.text || rawContent; // Fallback to raw content if summary fails
+                              } catch (summarizationError) {
+                                console.error(
+                                  `Error summarizing ${url}:`,
+                                  summarizationError
                                 );
-                                if (metaDesc) {
-                                  content =
-                                    metaDesc.getAttribute("content")?.trim() ||
-                                    description;
-                                } else {
-                                  content = description;
-                                }
+                                content = rawContent; // Fallback to raw content on error
+                              }
+                            } else if (toolList?.includes("advancedSearch")) {
+                              // Keep full content for advanced search (non-deep research)
+                              content = rawContent;
+                            } else {
+                              // Keep meta description logic for standard search
+                              const metaDesc = doc.querySelector(
+                                'meta[name="description"]'
+                              );
+                              if (metaDesc) {
+                                content =
+                                  metaDesc.getAttribute("content")?.trim() ||
+                                  description;
+                              } else {
+                                content = description;
                               }
                             }
-                          } catch (error) {
-                            console.error(`Error fetching ${url}:`, error);
                           }
-  
-                          return {
-                            title,
-                            url,
-                            description,
-                            content,
-                          };
+                        } catch (error) {
+                          console.error(`Error fetching ${url}:`, error);
+                          // Keep default description on fetch error
+                          content = description;
                         }
-                      )
-                  );
-  
-                  dataStream.writeMessageAnnotation({
-                    searchResults,
-                    searchQuery: query,
-                  });
-  
-                  return JSON.stringify(searchResults);
-                },
-              })
+
+                        return {
+                          title,
+                          url,
+                          description: description.slice(0, 100) + "...",
+                          summary,
+                          content,
+                          type,
+                        };
+                      }
+                    )
+                );
+
+                dataStream.writeMessageAnnotation({
+                  searchResults,
+                  searchQuery: query,
+                  type,
+                });
+
+                return JSON.stringify({ searchResults, type });
+              },
+            }),
           };
         }
 
@@ -377,7 +448,10 @@ export async function POST(req: Request) {
         });
 
         const response = streamText({
-          model: modelDescription?.type == "ChatGPT" ? openai.responses(modelName) : newModel,
+          model:
+            modelDescription?.type == "ChatGPT"
+              ? openai.responses(modelName)
+              : newModel,
           messages: coreMessage,
           tools: tools,
           maxSteps: 15,
@@ -391,13 +465,13 @@ export async function POST(req: Request) {
             ...(modelDescription?.reasoningEffort && {
               openai: {
                 reasoningEffort: reasoningEffort,
-                reasoningSummary: "detailed"
+                reasoningSummary: "detailed",
               },
             }),
             google: {
               thinkingConfig: {
-                thinkingBudget: 2048
-              }
+                thinkingBudget: 2048,
+              },
             } as GoogleGenerativeAIProviderOptions,
             openrouter: {
               reasoning: { effort: "medium" },
@@ -423,7 +497,7 @@ export async function POST(req: Request) {
             dataStream.writeMessageAnnotation({
               generationTime,
             });
-          }
+          },
         });
 
         response.mergeIntoDataStream(dataStream, {
