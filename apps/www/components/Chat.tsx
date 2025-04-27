@@ -162,6 +162,7 @@ const Chat: React.FC<ChatProps> = ({
     },
     body: {
       toolList: availableTools,
+      language: navigator.language,
       model,
       reasoningEffort,
     },

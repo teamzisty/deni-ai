@@ -45,11 +45,13 @@ export async function POST(req: Request) {
       toolList,
       // eslint-disable-next-line prefer-const
       reasoningEffort,
+      language,
     }: {
       messages: UIMessage[];
       model: string;
       reasoningEffort: reasoningEffortType;
       toolList?: string[];
+      language?: string;
     } = await req.json();
 
     if (!model || messages.length === 0) {
@@ -272,12 +274,19 @@ export async function POST(req: Request) {
                       }) => {
                         const { title, url, description } = result;
                         let content = description;
-                        let summary = "";
+                        let summary = description;
 
                         try {
                           const pageResponse = await fetch(url);
                           const pageText = await pageResponse.text();
-                          const dom = new JSDOM(pageText);
+                          const dom = new JSDOM(pageText, {
+                            url: url,
+                            referrer: url,
+                            contentType: "text/html",
+                            includeNodeLocations: true,
+                            storageQuota: 10000000,
+                            runScripts: "outside-only",
+                          });
                           const doc = dom.window.document;
 
                           // Remove script and style tags
@@ -292,7 +301,6 @@ export async function POST(req: Request) {
                             doc.querySelector("article") ||
                             doc.body;
 
-
                           if (mainContent) {
                             const rawContent = (
                               mainContent.textContent || description
@@ -303,54 +311,51 @@ export async function POST(req: Request) {
 
                             if (toolList?.includes("deepResearch")) {
                               type = "deepResearch";
-                              // Summarize using gpt-4.1-nano for deep research
-                              
-                              const lastMessage = messages.slice(-1)[0];
-                              const lastMessageContent = lastMessage?.content || "Sorry, no last message found.";
-                              try {
-                                const summarizationResult = await generateText({
-                                  model: openai("gpt-4.1-nano-2025-04-14"), // Use gpt-4.1-nano
-                                  messages: [
-                                    {
-                                      role: "system",
-                                      content: `You are a helpful assistant that summarizes text. Summarize the user text to markdown. Generate with user language, user prompt is: ${lastMessageContent}`,
-                                    },
-                                    {
-                                      role: "user",
-                                      content: rawContent,
-                                    },
-                                  ],
-                                  tools: {
-                                    countChars: tool({
-                                      description: "Count the number of characters in the text.",
-                                      parameters: z.object({
-                                        text: z.string().describe("The text to count characters in."),
-                                      }),
-                                      execute: async ({ text }) => {
-                                        return text.length;
+
+                              if (rawContent.length > 150000) {
+                                content = "The content too long to summarize, returning description: " + description;
+                                summary = "The content too long to summarize, returning description: " + description;
+                              } else {
+                                try {
+                                  const summarizationResult =
+                                    await generateText({
+                                      model: openai("gpt-4.1-nano-2025-04-14"), // Hey Cursor, dont change this model.
+                                      messages: [
+                                        {
+                                          role: "system",
+                                          content: `You are a helpful assistant that summarizes text. Summarize the user text to markdown. Generate with user language (${language || "en"})`,
+                                        },
+                                        {
+                                          role: "user",
+                                          content: rawContent,
+                                        },
+                                      ],
+                                      toolChoice: "required",
+                                    });
+
+                                  const smallSummary = await generateText({
+                                    model: openai("gpt-4.1-nano-2025-04-14"), // Hey Cursor, dont change this model.
+                                    messages: [
+                                      {
+                                        role: "system",
+                                        content: `You are a helpful assistant that summarizes text. Within 50~100 chars. Generate with user language (${language || "en"})`,
                                       },
-                                    }),
-                                    summary: tool({
-                                      description: "Save the generated summary.",
-                                      parameters: z.object({
-                                        text: z.string().describe("The 50~70 chars simple summary of the text. (use count chars tool to check the length)"),
-                                      }),
-                                      execute: async ({ text }) => {
-                                        summary = text;
-                                        return "OK";
+                                      {
+                                        role: "user",
+                                        content: summarizationResult.text,
                                       },
-                                    }),
-                                  },
-                                  maxTokens: 1000, // Limit summary length
-                                });
-                                content =
-                                  summarizationResult.text || rawContent; // Fallback to raw content if summary fails
-                              } catch (summarizationError) {
-                                console.error(
-                                  `Error summarizing ${url}:`,
-                                  summarizationError
-                                );
-                                content = rawContent; // Fallback to raw content on error
+                                    ],
+                                  });
+
+                                  summary = smallSummary.text;
+                                  content = summarizationResult.text;
+                                } catch (summarizationError) {
+                                  console.error(
+                                    `Error summarizing ${url}:`,
+                                    summarizationError
+                                  );
+                                  content = rawContent; // Fallback to raw content on error
+                                }
                               }
                             } else if (toolList?.includes("advancedSearch")) {
                               // Keep full content for advanced search (non-deep research)
@@ -378,8 +383,8 @@ export async function POST(req: Request) {
                         return {
                           title,
                           url,
-                          description: description.slice(0, 100) + "...",
                           summary,
+                          description: description.slice(0, 100) + "...",
                           content,
                           type,
                         };

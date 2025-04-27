@@ -92,10 +92,7 @@ const DeepResearchPanel: FC<DeepResearchPanelProps> = ({
               : null;
 
           return (
-            <div
-              key={key}
-              className="mb-1 w-full max-w-full px-3 rounded-lg"
-            >
+            <div key={key} className="mb-1 w-full max-w-full px-3 rounded-lg">
               <p className="font-medium mb-1 inline-flex items-center gap-1">
                 <Search size={16} className="text-primary" />{" "}
                 {t("messageLog.searchedFor")} {query}
@@ -141,6 +138,7 @@ const DeepResearchPanel: FC<DeepResearchPanelProps> = ({
                 <Paintbrush size={14} /> {t("messageLog.updatedCanvas")} "
                 {title}"
               </p>
+              <br />
               {state === "result" ? (
                 <span className="text-xs text-green-500">
                   {t("messageLog.canvasUpdateSuccess")}
