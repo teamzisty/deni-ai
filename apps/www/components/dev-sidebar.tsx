@@ -362,7 +362,7 @@ export function DevSidebar() {
           <SidebarMenuItem>
             <Link href="/home">
               <Button variant="outline" size="sm" className="w-full">
-                {t("sidebar.backToHome") || "Back to Home"}
+                {t("devSidebar.backToHome") || "Back to Home"}
               </Button>
             </Link>
           </SidebarMenuItem>

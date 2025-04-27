@@ -84,6 +84,7 @@
     "imageAdd": "Add Image",
     "search": "Search",
     "deepResearch": "Deep Research",
+    "devNotAvailable": "Not available in Dev Mode",
     "canvas": "Canvas",
     "translate": "Translate"
   },
@@ -348,8 +349,7 @@
     "thisWeek": "This Week",
     "thisMonth": "This Month",
     "older": "Older",
-    "chat": "Chat Sessions",
-    "backToHome": "Back to Home"
+    "chat": "Chat Sessions"
   },
   "accountMenu": {
     "login": "Login",
@@ -516,7 +516,8 @@
     },
     "deepResearch": {
       "info": "About Deep Research",
-      "description": "Deep Research is in beta. Some features may not work as expected."
+      "description": "Deep Research is in beta. Some features may not work as expected.",
+      "tooltip": "Use Deep Research"
     },
     "image": {
       "uploading": "Uploading image...",
@@ -1274,6 +1275,7 @@
     "delete": "Delete",
     "confirm": "Confirm",
     "cancel": "Cancel",
+    "backToHome": "Back to Home",
     "deleteTooltip": "Delete session"
   },
   "webContainer": {

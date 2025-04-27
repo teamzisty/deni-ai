@@ -93,6 +93,7 @@
     "imageAdd": "画像を追加",
     "search": "検索",
     "deepResearch": "詳細なリサーチ",
+    "devNotAvailable": "開発モードでは利用できません",
     "canvas": "キャンバス",
     "translate": "翻訳"
   },
@@ -500,7 +501,8 @@
     },
     "deepResearch": {
       "info": "詳細なリサーチについて",
-      "description": "詳細なリサーチはベータ版です。一部の機能は予期せずに動作しない可能性があります。"
+      "description": "詳細なリサーチはベータ版です。一部の機能は予期せずに動作しない可能性があります。",
+      "tooltip": "詳細なリサーチを使用する"
     },
     "image": {
       "uploading": "画像をアップロード中...",
@@ -1240,6 +1242,7 @@
     "delete": "削除",
     "confirm": "確認",
     "cancel": "キャンセル",
+    "backToHome": "ホームに戻る",
     "deleteTooltip": "セッションを削除"
   },
   "devHomePage": {

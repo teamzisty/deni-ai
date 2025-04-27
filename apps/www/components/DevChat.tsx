@@ -716,6 +716,7 @@ const DevChat: React.FC<DevChatProps> = memo(({
             model={model}
             generating={memoizedStatus.isThinking || memoizedStatus.isStreaming}
             stop={stop}
+            devMode={true}
             isUploading={isUploading}
             searchEnabled={searchEnabled}
             deepResearch={deepResearch}

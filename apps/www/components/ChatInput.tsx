@@ -27,6 +27,7 @@ interface ChatInputProps {
   className?: string;
   sendButtonRef?: React.RefObject<HTMLButtonElement | null>;
   modelDescriptions: Record<string, ModelDescription>;
+  devMode?: boolean;
   handleInputChange: (e: React.ChangeEvent<HTMLTextAreaElement>) => void;
   deepResearchToggle: () => void;
   canvasToggle: () => void;
@@ -63,6 +64,7 @@ const ChatInput = memo(
     handleImageUpload,
     setImage,
     fileInputRef,
+    devMode,
   }: ChatInputProps) => {
     const isMobile = useIsMobile();
     
@@ -111,6 +113,7 @@ const ChatInput = memo(
           <CanvasButton
             disabled={modelDescriptions[model]?.toolDisabled || false}
             canvasEnabled={canvasEnabled}
+            devMode={devMode}
             canvasToggle={canvasToggle}
           />
           <SearchButton
@@ -122,6 +125,7 @@ const ChatInput = memo(
             disabled={
               modelDescriptions[model]?.toolDisabled || !searchEnabled || false
             }
+            devMode={devMode}
             deepResearch={deepResearch}
             deepResearchToggle={deepResearchToggle}
           />
