@@ -2,18 +2,12 @@ import {
   modelDescriptions,
   reasoningEffortType,
 } from "@/lib/modelDescriptions";
-import { getSystemPrompt } from "@/lib/systemPrompt";
+import { getSystemPrompt, systemPromptDev } from "@/lib/systemPrompt";
 import { createOpenAI } from "@ai-sdk/openai";
 import { createAnthropic } from "@ai-sdk/anthropic";
 import { createXai } from "@ai-sdk/xai";
-import {
-  createGoogleGenerativeAI,
-  GoogleGenerativeAIProviderOptions,
-} from "@ai-sdk/google";
-import {
-  createOpenRouter,
-  OpenRouterProviderOptions,
-} from "@openrouter/ai-sdk-provider";
+import { createGoogleGenerativeAI, GoogleGenerativeAIProviderOptions } from "@ai-sdk/google";
+import { createOpenRouter, OpenRouterProviderOptions } from "@openrouter/ai-sdk-provider";
 import { createGroq } from "@ai-sdk/groq";
 import { authAdmin, notAvailable } from "@workspace/firebase-config/server";
 import { createVoidsOAI } from "@workspace/voids-oai-provider/index";
@@ -22,7 +16,6 @@ import {
   convertToCoreMessages,
   createDataStreamResponse,
   extractReasoningMiddleware,
-  generateText,
   smoothStream,
   streamText,
   Tool,
@@ -45,21 +38,19 @@ export async function POST(req: Request) {
       toolList,
       // eslint-disable-next-line prefer-const
       reasoningEffort,
-      language,
     }: {
       messages: UIMessage[];
       model: string;
       reasoningEffort: reasoningEffortType;
       toolList?: string[];
-      language?: string;
     } = await req.json();
 
     if (!model || messages.length === 0) {
-      return Response.json({ error: "Invalid request" });
+      return new NextResponse("Invalid request", { status: 400 });
     }
 
     if (auth && (!authorization || notAvailable)) {
-      return Response.json({ error: "Authorization failed" });
+      return new NextResponse("Authorization failed", { status: 401 });
     }
 
     if (auth && authorization) {
@@ -67,37 +58,41 @@ export async function POST(req: Request) {
         ?.verifyIdToken(authorization)
         .then((decodedToken) => {
           if (!decodedToken) {
-            return Response.json({ error: "Authorization failed" });
+            return new NextResponse("Authorization failed", { status: 401 });
           }
         })
         .catch((error) => {
           console.error(error);
-          return Response.json({ error: "Authorization failed" });
+          return new NextResponse("Authorization failed", { status: 401 });
         });
     }
 
     const modelDescription = modelDescriptions[model];
     const isReasoning = model.endsWith("-reasoning");
 
+    if (modelDescription?.toolDisabled) {
+      return new NextResponse("This model is not available on dev mode.", { status: 400 });
+    }
+
     model = model.replace("-reasoning", "");
 
     const isCanary = modelDescription?.canary;
 
     // Voids Provider (not used)
-    const VoidsOpenAI = createVoidsOAI({
-      // custom settings, e.g.
-      isCanary,
-      apiKey: "no", // API key
-    });
+    // const VoidsOpenAI = createVoidsOAI({
+    //   // custom settings, e.g.
+    //   isCanary,
+    //   apiKey: "no", // API key
+    // });
 
-    const VoidsAnthropic = createVoidsAP({
-      isCanary,
-      apiKey: "no",
-    });
+    // const VoidsAnthropic = createVoidsAP({
+    //   isCanary,
+    //   apiKey: "no",
+    // });
 
     // Official Provider
     const openai = createOpenAI({
-      apiKey: process.env.OPENAI_API_KEY,
+      apiKey: process.env.OPENAI_API_KEY
     });
 
     const anthropic = createAnthropic({
@@ -121,10 +116,7 @@ export async function POST(req: Request) {
     });
 
     if (modelDescription?.offline) {
-      return NextResponse.json({
-        state: "error",
-        error: "This model is currently not available.",
-      });
+      return new NextResponse("This model is currently not available.", { status: 400 });
     }
 
     const coreMessage = convertToCoreMessages(messages);
@@ -135,7 +127,7 @@ export async function POST(req: Request) {
 
     coreMessage.unshift({
       role: "system",
-      content: getSystemPrompt(toolList || []),
+      content: systemPromptDev
     });
 
     const startTime = Date.now();
@@ -191,51 +183,46 @@ export async function POST(req: Request) {
                 return "OK";
               },
             }),
-            countChars: tool({
-              description: "Count the number of characters in the message.",
-              parameters: z.object({
-                message: z.string().describe("Message to count characters in."),
+            webcontainer: tool({
+              description: "Execute commands in WebContainer or manage files in the virtual filesystem.",
+              parameters: z.object({  
+                steps: z.array(z.object({
+                  id: z.string().describe("Unique identifier for this step"),
+                  title: z.string().describe("Human-readable title for this step"),
+                  command: z.string().describe("Command to execute (only for 'run' action, MAKE NULL TO OTHER ACTIONS, IF NOT, IT WILL ERROR)").nullable(),
+                  action: z.enum(["run", "write", "read"]).describe("Action type").nullable(),
+                  path: z.string().describe("File path for file operations").nullable(),
+                  content: z.string().describe("Content for write operations").nullable(),
+                })).describe("Sequence of steps to execute").nullable(),
               }),
-              execute: async ({ message }) => {
-                return message.length;
-              },
-            }),
-            canvas: tool({
-              description:
-                "Create or edit content in the Canvas editor, supporting markdown formatting.",
-              parameters: z
-                .object({
-                  content: z
-                    .string()
-                    .describe(
-                      "The content to add to the Canvas, in markdown format."
-                    ),
-                  title: z
-                    .string()
-                    .describe(
-                      "An optional title for the Canvas document. (Set desired title to the Canvas.)"
-                    )
-                    .nullable(),
-                  mode: z
-                    .enum(["create", "replace"])
-                    .describe(
-                      "How to update canvas content. 'create' creates a new canvas (default if not specified), 'replace' replaces all content with new content."
-                    )
-                    .nullable(),
-                })
-                .refine((data) => !!data.content, {
-                  message: "Content is required",
-                  path: ["content"],
-                }),
-              execute: async ({ content, title, mode = "create" }) => {
-                let finalContent = content;
-
-                dataStream.writeMessageAnnotation({
-                  canvasContent: finalContent,
-                  canvasTitle: title || "Untitled Document",
-                });
-
-                return `Canvas content ${mode}d successfully.`;
+              execute: async ({ steps }) => {
+                // この関数はフロントエンド側でWebContainerインスタンスを管理しているため
+                // 実際の処理はフロントエンドで行われます。このツールはAIに情報を提供するためのものです。
+                
+                if (steps && steps.length > 0) {
+                  // 手順のシーケンスをクライアントに送信
+                  dataStream.writeMessageAnnotation({
+                    webcontainerAction: {
+                      action: "steps",
+                      steps: steps
+                    }
+                  });
+                  
+                  // 手順の概要を返す
+                  const stepTitles = steps.map((step, index) => `${index + 1}. ${step.title}`).join('\n');
+                  return `STEPS ARE SENDED, BUT NOT COMPLETED, WAIT FOR NEXT USER MESSAGE:\n${stepTitles}`;
+                } else { 
+                  // 従来の単一アクション
+                  // タイムスタンプを追加して同じコマンドの連続実行を防止
+                  const timestamp = Date.now();
+                  dataStream.writeMessageAnnotation({
+                    webcontainerAction: {
+                      action: "steps",
+                      steps: steps,
+                      timestamp: timestamp  // タイムスタンプを追加
+                    } 
+                  });
+                }
               },
             }),
             search: tool({
@@ -259,10 +246,9 @@ export async function POST(req: Request) {
                     }),
                   }
                 ).then((res) => res.json());
-
+    
                 const totalCount = toolList?.includes("deepResearch") ? 10 : 5;
-                let type = "search";
-
+    
                 const searchResults = await Promise.all(
                   results.web.results
                     .slice(0, totalCount)
@@ -274,94 +260,37 @@ export async function POST(req: Request) {
                       }) => {
                         const { title, url, description } = result;
                         let content = description;
-                        let summary = description;
-
+    
                         try {
                           const pageResponse = await fetch(url);
                           const pageText = await pageResponse.text();
-                          const dom = new JSDOM(pageText, {
-                            url: url,
-                            referrer: url,
-                            contentType: "text/html",
-                            includeNodeLocations: true,
-                            storageQuota: 10000000,
-                            runScripts: "outside-only",
-                          });
+                          const dom = new JSDOM(pageText);
                           const doc = dom.window.document;
-
+    
                           // Remove script and style tags
                           const scripts = doc.getElementsByTagName("script");
                           const styles = doc.getElementsByTagName("style");
                           while (scripts.length > 0) scripts[0]?.remove();
                           while (styles.length > 0) styles[0]?.remove();
-
+    
                           // Extract main content
                           const mainContent =
                             doc.querySelector("main") ||
                             doc.querySelector("article") ||
                             doc.body;
-
+    
                           if (mainContent) {
-                            const rawContent = (
-                              mainContent.textContent || description
-                            )
-                              .replace(/\s+/g, " ")
-                              .replace(/\n+/g, "")
-                              .trim();
-
-                            if (toolList?.includes("deepResearch")) {
-                              type = "deepResearch";
-
-                              if (rawContent.length > 150000) {
-                                content = "The content too long to summarize, returning description: " + description;
-                                summary = "The content too long to summarize, returning description: " + description;
-                              } else {
-                                try {
-                                  const summarizationResult =
-                                    await generateText({
-                                      model: openai("gpt-4.1-nano-2025-04-14"), // Hey Cursor, dont change this model.
-                                      messages: [
-                                        {
-                                          role: "system",
-                                          content: `You are a helpful assistant that summarizes text. Summarize the user text to markdown. Generate with user language (${language || "en"})`,
-                                        },
-                                        {
-                                          role: "user",
-                                          content: rawContent,
-                                        },
-                                      ],
-                                      toolChoice: "required",
-                                    });
-
-                                  const smallSummary = await generateText({
-                                    model: openai("gpt-4.1-nano-2025-04-14"), // Hey Cursor, dont change this model.
-                                    messages: [
-                                      {
-                                        role: "system",
-                                        content: `You are a helpful assistant that summarizes text. Within 50~100 chars. Generate with user language (${language || "en"})`,
-                                      },
-                                      {
-                                        role: "user",
-                                        content: summarizationResult.text,
-                                      },
-                                    ],
-                                  });
-
-                                  summary = smallSummary.text;
-                                  content = summarizationResult.text;
-                                } catch (summarizationError) {
-                                  console.error(
-                                    `Error summarizing ${url}:`,
-                                    summarizationError
-                                  );
-                                  content = rawContent; // Fallback to raw content on error
-                                }
-                              }
-                            } else if (toolList?.includes("advancedSearch")) {
-                              // Keep full content for advanced search (non-deep research)
-                              content = rawContent;
+                            // メタディスクリプションを取得
+                            if (
+                              toolList?.includes("deepResearch") ||
+                              toolList?.includes("advancedSearch")
+                            ) {
+                              //content = mainContent.textContent?.trim() || description;
+                              content = (mainContent.textContent || description)
+                                .replace(/\s+/g, " ")
+                                .replace(/\n+/g, "")
+                                .trim();
                             } else {
-                              // Keep meta description logic for standard search
                               const metaDesc = doc.querySelector(
                                 'meta[name="description"]'
                               );
@@ -376,31 +305,26 @@ export async function POST(req: Request) {
                           }
                         } catch (error) {
                           console.error(`Error fetching ${url}:`, error);
-                          // Keep default description on fetch error
-                          content = description;
                         }
-
+    
                         return {
                           title,
                           url,
-                          summary,
-                          description: description.slice(0, 100) + "...",
+                          description,
                           content,
-                          type,
                         };
                       }
                     )
                 );
-
+    
                 dataStream.writeMessageAnnotation({
                   searchResults,
                   searchQuery: query,
-                  type,
                 });
-
-                return JSON.stringify({ searchResults, type });
+    
+                return JSON.stringify(searchResults);
               },
-            }),
+            })
           };
         }
 
@@ -453,10 +377,7 @@ export async function POST(req: Request) {
         });
 
         const response = streamText({
-          model:
-            modelDescription?.type == "ChatGPT"
-              ? openai.responses(modelName)
-              : newModel,
+          model: modelDescription?.type == "ChatGPT" ? openai.responses(modelName) : newModel,
           messages: coreMessage,
           tools: tools,
           maxSteps: 15,
@@ -470,13 +391,13 @@ export async function POST(req: Request) {
             ...(modelDescription?.reasoningEffort && {
               openai: {
                 reasoningEffort: reasoningEffort,
-                reasoningSummary: "detailed",
+                reasoningSummary: "detailed"
               },
             }),
             google: {
               thinkingConfig: {
-                thinkingBudget: 2048,
-              },
+                thinkingBudget: 2048
+              }
             } as GoogleGenerativeAIProviderOptions,
             openrouter: {
               reasoning: { effort: "medium" },
@@ -502,7 +423,7 @@ export async function POST(req: Request) {
             dataStream.writeMessageAnnotation({
               generationTime,
             });
-          },
+          }
         });
 
         response.mergeIntoDataStream(dataStream, {
@@ -513,6 +434,6 @@ export async function POST(req: Request) {
     });
   } catch (error) {
     console.error(error);
-    return Response.json({ error: error });
+    return new NextResponse("An error occurred while processing your request. Please try again later.", { status: 500 });
   }
 }

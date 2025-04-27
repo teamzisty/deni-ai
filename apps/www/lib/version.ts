@@ -1,6 +1,6 @@
-const version = "3.0.0";
-const codename = "Poodle"
-const date = "2025-04-18"
+const version = "3.1.0";
+const codename = "Bloodhound"
+const date = "2025-04-27"
 
 export const buildInfo = {
     version,

@@ -9,20 +9,21 @@ import { memo } from "react";
 interface CanvasButtonProps {
   disabled: boolean;
   canvasEnabled: boolean;
+  devMode?: boolean;
   canvasToggle: () => void;
 }
 
 const CanvasButton = memo(
-  ({ disabled, canvasEnabled, canvasToggle }: CanvasButtonProps) => {
+  ({ disabled, canvasEnabled, canvasToggle, devMode }: CanvasButtonProps) => {
     const t = useTranslations();
     
     return (
-      <EasyTip content={t("canvas.tooltip") || "Use Canvas"}>
+      <EasyTip content={devMode ? t("chatInput.devNotAvailable") : t("canvas.tooltip") || "Use Canvas"}>
         <Button
           variant={canvasEnabled ? "default" : "outline"}
           className="rounded-full"
           onClick={canvasToggle}
-          disabled={disabled}
+          disabled={devMode || disabled}
         >
           <Paintbrush />
         </Button>

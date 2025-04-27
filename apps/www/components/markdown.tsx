@@ -96,11 +96,11 @@ export const Pre = memo(({ children, ...props }: PreProps) => {
 
   return (
     <div className="not-prose flex flex-col">
-      <div className="relative">
+      <div className="relative overflow-x-auto">
         <Button
           onClick={handleCopy}
           variant="ghost"
-          className="absolute right-2 top-2 rounded-md px-2 py-1 text-xs font-medium text-zinc-600 hover:bg-zinc-100 dark:text-zinc-400 dark:hover:bg-zinc-800"
+          className="absolute right-2 top-2 rounded-md px-2 py-1 text-xs font-medium text-zinc-600 hover:bg-zinc-100 dark:text-zinc-400 dark:hover:bg-zinc-800 z-10"
         >
           {copied ? "Copied!" : "Copy"}
         </Button>

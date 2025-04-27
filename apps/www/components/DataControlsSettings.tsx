@@ -156,9 +156,6 @@ export default function DataControlsSettings() {
   const deleteAllConversations = async () => {
     try {
       await clearAllSessions(); // Use hook function
-      toast.success(t("settings.popupMessages.deleteSuccess"), {
-        description: t("settings.popupMessages.deleteAllSuccess"),
-      });
     } catch (error) {
        // Error toast is handled within the hook now
        console.error("Delete all error:", error);

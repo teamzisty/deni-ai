@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState, useRef } from "react";
+import React, { useEffect, useState, useRef, useCallback } from "react";
 import { cn } from "@workspace/ui/lib/utils";
 import { useChatSessions } from "@/hooks/use-chat-sessions";
 import { useRouter } from "@/i18n/navigation";
@@ -243,25 +243,25 @@ const ChatApp: React.FC = () => {
     });
   };
 
-  const handleModelChange = (model: string) => {
+  const handleModelChange = useCallback((model: string) => {
     if (!modelDescriptions[model]?.vision && image) {
       setImage(null);
       toast.warning(t("chat.warning.modelDoesNotSupportVision") || "Selected model doesn't support images");
     }
     setSelectedModel(model);
-  };
+  }, [image, t]);
 
-  const searchToggle = () => {
-    setSearchEnabled(!searchEnabled);
-  };
+  const searchToggle = useCallback(() => {
+    setSearchEnabled((prev) => !prev);
+  }, []);
 
-  const deepResearchToggle = () => {
-    setDeepResearch(!deepResearch);
-  };
+  const deepResearchToggle = useCallback(() => {
+    setDeepResearch((prev) => !prev);
+  }, []);
 
-  const canvasToggle = () => {
-    setCanvasEnabled(!canvasEnabled);
-  };
+  const canvasToggle = useCallback(() => {
+    setCanvasEnabled((prev) => !prev);
+  }, []);
 
   useEffect(() => {
     if (!auth) {
