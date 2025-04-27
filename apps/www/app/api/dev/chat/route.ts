@@ -46,11 +46,11 @@ export async function POST(req: Request) {
     } = await req.json();
 
     if (!model || messages.length === 0) {
-      return Response.json({ error: "Invalid request" });
+      return new NextResponse("Invalid request", { status: 400 });
     }
 
     if (auth && (!authorization || notAvailable)) {
-      return Response.json({ error: "Authorization failed" });
+      return new NextResponse("Authorization failed", { status: 401 });
     }
 
     if (auth && authorization) {
@@ -58,12 +58,12 @@ export async function POST(req: Request) {
         ?.verifyIdToken(authorization)
         .then((decodedToken) => {
           if (!decodedToken) {
-            return Response.json({ error: "Authorization failed" });
+            return new NextResponse("Authorization failed", { status: 401 });
           }
         })
         .catch((error) => {
           console.error(error);
-          return Response.json({ error: "Authorization failed" });
+          return new NextResponse("Authorization failed", { status: 401 });
         });
     }
 
@@ -71,7 +71,7 @@ export async function POST(req: Request) {
     const isReasoning = model.endsWith("-reasoning");
 
     if (modelDescription?.toolDisabled) {
-      return "This model is not available on dev mode."
+      return new NextResponse("This model is not available on dev mode.", { status: 400 });
     }
 
     model = model.replace("-reasoning", "");
@@ -116,10 +116,7 @@ export async function POST(req: Request) {
     });
 
     if (modelDescription?.offline) {
-      return NextResponse.json({
-        state: "error",
-        error: "This model is currently not available.",
-      });
+      return new NextResponse("This model is currently not available.", { status: 400 });
     }
 
     const coreMessage = convertToCoreMessages(messages);
@@ -165,8 +162,6 @@ export async function POST(req: Request) {
       }
     }
 
-    const actionAnnotations: { [key: string]: any } = {};
-
     return createDataStreamResponse({
       execute: (dataStream) => {
         let tools: { [key: string]: Tool } | undefined = {};
@@ -205,7 +200,6 @@ export async function POST(req: Request) {
                 // 実際の処理はフロントエンドで行われます。このツールはAIに情報を提供するためのものです。
                 
                 if (steps && steps.length > 0) {
-                  console.log("Sending steps to client:", steps);
                   // 手順のシーケンスをクライアントに送信
                   dataStream.writeMessageAnnotation({
                     webcontainerAction: {
@@ -440,6 +434,6 @@ export async function POST(req: Request) {
     });
   } catch (error) {
     console.error(error);
-    return Response.json({ error: error });
+    return new NextResponse("An error occurred while processing your request. Please try again later.", { status: 500 });
   }
 }
