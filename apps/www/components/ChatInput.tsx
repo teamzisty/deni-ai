@@ -23,7 +23,7 @@ interface ChatInputProps {
   generating: boolean;
   searchEnabled: boolean;
   deepResearch: boolean;
-  researchDepth: ResearchDepth;
+  researchDepth?: ResearchDepth;
   canvasEnabled: boolean;
   className?: string;
   sendButtonRef?: React.RefObject<HTMLButtonElement | null>;
@@ -31,7 +31,7 @@ interface ChatInputProps {
   devMode?: boolean;
   handleInputChange: (e: React.ChangeEvent<HTMLTextAreaElement>) => void;
   deepResearchToggle: () => void;
-  onResearchDepthChange: (depth: ResearchDepth) => void;
+  onResearchDepthChange?: (depth: ResearchDepth) => void;
   canvasToggle: () => void;
   handleSendMessage: (e: React.MouseEvent<HTMLButtonElement>) => void;
   handleSendMessageKey: (e: React.KeyboardEvent<HTMLTextAreaElement>) => void;
@@ -71,19 +71,14 @@ const ChatInput = memo(
     devMode,
   }: ChatInputProps) => {
     const isMobile = useIsMobile();
-    
+
     // Callback for ImageAddButton click
     const handleImageAddClick = useCallback(() => {
       fileInputRef.current?.click();
     }, []); // fileInputRef is stable
 
     return (
-      <div
-        className={cn(
-          "mt-4 border rounded-xl w-full p-2",
-          className
-        )}
-      >
+      <div className={cn("mt-4 border rounded-xl w-full p-2", className)}>
         <ImagePreview
           image={image}
           isUploading={isUploading}
@@ -99,10 +94,7 @@ const ChatInput = memo(
           handleSendMessageKey={handleSendMessageKey}
           handleImagePaste={handleImagePaste}
         />
-        <div className={cn(
-          "flex items-center",
-          "gap-1 md:gap-2"
-        )}>
+        <div className={cn("flex items-center", "gap-1 md:gap-2")}>
           <input
             type="file"
             accept="image/*"
@@ -125,16 +117,20 @@ const ChatInput = memo(
             searchEnabled={searchEnabled}
             searchToggle={searchToggle}
           />
-          <DeepResearchButton
-            disabled={
-              modelDescriptions[model]?.toolDisabled || !searchEnabled || false
-            }
-            devMode={devMode}
-            deepResearch={deepResearch}
-            researchDepth={researchDepth}
-            deepResearchToggle={deepResearchToggle}
-            onResearchDepthChange={onResearchDepthChange}
-          />
+          {researchDepth && onResearchDepthChange && (
+            <DeepResearchButton
+              disabled={
+                modelDescriptions[model]?.toolDisabled ||
+                !searchEnabled ||
+                false
+              }
+              devMode={devMode}
+              deepResearch={deepResearch}
+              researchDepth={researchDepth}
+              deepResearchToggle={deepResearchToggle}
+              onResearchDepthChange={onResearchDepthChange}
+            />
+          )}
         </div>
       </div>
     );
