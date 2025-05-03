@@ -36,7 +36,9 @@
     "visitedWebsites": "閲覧したウェブサイト",
     "urlNotFound": "URLがありません",
     "reasoning": "推論中...",
-    "reasonedFor": "{time} 考えました",
+    "generatingImage": "画像を生成しています...",
+    "generatedImageWith": "{model} を使用して画像を生成しました。",
+    "reasoned": "推論が完了しました",
     "summaryWith": "{model} を使用して要約しました",
     "hour": "時間",
     "minute": "分",
@@ -48,7 +50,11 @@
     "copied": "コピーしました",
     "regenerate": "再生成",
     "deepResearch": "詳細なリサーチ",
+    "deepResearchStatus": "詳細なリサーチの状態",
+    "shallowResearch": "浅いリサーチ",
+    "shallowResearchStatus": "浅いリサーチの状態",
     "clickForDetails": "クリックして詳細を表示",
+    "usedSources": "{count} 件のソースを使用",
     "activityLog": "詳細なリサーチのログ",
     "searchedFor": "検索:",
     "unknownSearch": "不明な検索",
@@ -93,6 +99,8 @@
     "imageAdd": "画像を追加",
     "search": "検索",
     "deepResearch": "詳細なリサーチ",
+    "shallowResearch": "浅いリサーチ",
+    "advancedResearch": "高度なリサーチ",
     "devNotAvailable": "開発モードでは利用できません",
     "canvas": "キャンバス",
     "translate": "翻訳"
@@ -111,6 +119,7 @@
       "importSuccess": "会話が正常にインポートされました。",
       "importAllSuccess": "インポートされた会話を表示するには、ページを更新してください。",
       "deleteSuccess": "会話が正常に削除されました。",
+      "deleteAllLoading": "すべての会話を削除しています...",
       "deleteAllSuccess": "すべての会話が削除されました。",
       "invalidFileFormat": "無効なファイル形式です。有効なJSONファイルを選択してください。",
       "fileReadError": "選択したファイルの読み取り中にエラーが発生しました。",
@@ -371,6 +380,7 @@
       "uploading": "アップロードしています...",
       "uploaded": "アップロードに成功しました！"
     },
+    "delete": "削除",
     "cancel": "キャンセル"
   },
   "landing": {
@@ -502,7 +512,13 @@
     "deepResearch": {
       "info": "詳細なリサーチについて",
       "description": "詳細なリサーチはベータ版です。一部の機能は予期せずに動作しない可能性があります。",
-      "tooltip": "詳細なリサーチを使用する"
+      "tooltip": "詳細なリサーチを使用する",
+      "shallow": "浅いリサーチ",
+      "shallowDescription": "早くて浅いリサーチ。すぐ終了します。",
+      "deep": "深いリサーチ",
+      "deepDescription": "より詳細なリサーチ。時間がかかります。",
+      "advanced": "高度なリサーチ",
+      "advancedDescription": "より高度なリサーチ。より時間がかかります。"
     },
     "image": {
       "uploading": "画像をアップロード中...",

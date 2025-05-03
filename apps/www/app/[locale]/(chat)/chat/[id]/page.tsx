@@ -29,7 +29,6 @@ const ChatPage: React.FC = () => {
   const [currentSessionData, setCurrentSessionData] = useState<ChatSession | undefined>(undefined);
   const [isRedirecting, setIsRedirecting] = useState(false);
   const [sessionChecked, setSessionChecked] = useState(false);
-  const [paramsProcessed, setParamsProcessed] = useState(false);
   const [authToken, setAuthToken] = useState<string | null>(null);
 
   const getCurrentSession = useCallback(() => {

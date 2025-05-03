@@ -26,8 +26,10 @@
     "visitedWebsites": "Visited websites",
     "urlNotFound": "URL not found",
     "reasoning": "Reasoning...",
+    "generatingImage": "Generating image...",
+    "generatedImageWith": "Generated image with {model}",
     "reasoningCompleted": "Reasoning completed",
-    "reasonedFor": "Reasoned for {time}",
+    "reasoned": "Reasoning completed",
     "summaryWith": "Summary generated with {model}",
     "generationTime": "Generation time:",
     "hour": "hour",
@@ -39,6 +41,12 @@
     "copied": "Copied",
     "regenerate": "Regenerate",
     "deepResearch": "Deep Research",
+    "shallowResearch": "Shallow Research",
+    "advancedResearch": "Advanced Research",
+    "deepResearchStatus": "Deep Research Status",
+    "shallowResearchStatus": "Shallow Research Status",
+    "advancedResearchStatus": "Advanced Research Status",
+    "usedSources": "Used {count} sources",
     "clickForDetails": "Click for details",
     "activityLog": "Deep Research Log",
     "searchedFor": "Searched for:",
@@ -84,6 +92,8 @@
     "imageAdd": "Add Image",
     "search": "Search",
     "deepResearch": "Deep Research",
+    "shallowResearch": "Shallow Research",
+    "advancedResearch": "Advanced Research",
     "devNotAvailable": "Not available in Dev Mode",
     "canvas": "Canvas",
     "translate": "Translate"
@@ -386,6 +396,7 @@
       "uploading": "Uploading...",
       "uploaded": "Upload completed"
     },
+    "delete": "Delete",
     "cancel": "Cancel"
   },
   "landing": {
@@ -517,7 +528,13 @@
     "deepResearch": {
       "info": "About Deep Research",
       "description": "Deep Research is in beta. Some features may not work as expected.",
-      "tooltip": "Use Deep Research"
+      "tooltip": "Use Deep Research",
+      "advanced": "Advanced Research",
+      "advancedDescription": "Search web advanced. It takes more time to respond.",
+      "shallow": "Shallow Research",
+      "shallowDescription": "Fast research mode. It responds quickly.",
+      "deep": "Deep Research",
+      "deepDescription": "More detailed research mode. It takes longer to respond."
     },
     "image": {
       "uploading": "Uploading image...",

@@ -6,7 +6,7 @@ import InputBox from "./InputBox";
 import { ImagePreview } from "./ImagePreview";
 import { ImageAddButton } from "./ImageAddButton";
 import { SearchButton } from "./SearchButton";
-import { DeepResearchButton } from "./DeepResearchButton";
+import { DeepResearchButton, ResearchDepth } from "./DeepResearchButton";
 import CanvasButton from "./CanvasButton";
 import { useIsMobile } from "@workspace/ui/hooks/use-mobile";
 import { cn } from "@workspace/ui/lib/utils";
@@ -23,6 +23,7 @@ interface ChatInputProps {
   generating: boolean;
   searchEnabled: boolean;
   deepResearch: boolean;
+  researchDepth: ResearchDepth;
   canvasEnabled: boolean;
   className?: string;
   sendButtonRef?: React.RefObject<HTMLButtonElement | null>;
@@ -30,6 +31,7 @@ interface ChatInputProps {
   devMode?: boolean;
   handleInputChange: (e: React.ChangeEvent<HTMLTextAreaElement>) => void;
   deepResearchToggle: () => void;
+  onResearchDepthChange: (depth: ResearchDepth) => void;
   canvasToggle: () => void;
   handleSendMessage: (e: React.MouseEvent<HTMLButtonElement>) => void;
   handleSendMessageKey: (e: React.KeyboardEvent<HTMLTextAreaElement>) => void;
@@ -51,9 +53,11 @@ const ChatInput = memo(
     searchEnabled,
     sendButtonRef,
     deepResearch,
+    researchDepth,
     canvasEnabled,
     className,
     deepResearchToggle,
+    onResearchDepthChange,
     canvasToggle,
     searchToggle,
     modelDescriptions,
@@ -127,7 +131,9 @@ const ChatInput = memo(
             }
             devMode={devMode}
             deepResearch={deepResearch}
+            researchDepth={researchDepth}
             deepResearchToggle={deepResearchToggle}
+            onResearchDepthChange={onResearchDepthChange}
           />
         </div>
       </div>
@@ -139,6 +145,7 @@ const ChatInput = memo(
       prevProps.image === nextProps.image &&
       prevProps.searchEnabled === nextProps.searchEnabled &&
       prevProps.deepResearch === nextProps.deepResearch &&
+      prevProps.researchDepth === nextProps.researchDepth &&
       prevProps.isUploading === nextProps.isUploading &&
       prevProps.model === nextProps.model &&
       prevProps.canvasEnabled === nextProps.canvasEnabled &&

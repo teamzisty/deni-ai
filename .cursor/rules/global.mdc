@@ -1,6 +1,11 @@
 ---
 description: 
 globs: 
+alwaysApply: false
+---
+---
+description: 
+globs: 
 alwaysApply: true
 ---
 ---
@@ -108,6 +113,7 @@ Based on these instructions, proceed with the following process:
 - **Do not make changes that are not explicitly instructed.** If changes seem necessary, first report them as proposals and implement only after obtaining approval.
 - **Changes to UI/UX design (layout, colors, fonts, spacing, etc.) are prohibited** unless you first present the reasons and receive approval.
 - **Do not arbitrarily change versions listed in the technology stack (APIs, frameworks, libraries, etc.).** If changes are necessary, clearly explain the reasons and do not make changes until approval is received.
+- **Do not use ScrollArea!** Too many bugs in ScrollArea, dont use this component.
 
 ---
 
