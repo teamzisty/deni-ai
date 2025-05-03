@@ -1,6 +1,6 @@
 ---
 slug: deni-ai-api-preview
-title: 近日登場: Deni AI API
+title: 近日登場 - Deni AI API
 description: 近日登場する新しい Deni AI API について
 authors: [rai]
 tags: [api]

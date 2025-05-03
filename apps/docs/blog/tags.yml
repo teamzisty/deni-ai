@@ -1,4 +1,9 @@
 update:
   label: Update
   permalink: /update
-  description: Deni AI のアップデート情報
+  description: A information about Deni AI updates
+
+api:
+  label: Deni AI API
+  permalink: /api
+  description: A information about Deni AI API

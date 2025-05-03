@@ -1,6 +1,6 @@
 ---
 slug: deni-ai-api-preview
-title: Coming Soon: Deni AI API
+title: Coming Soon - Deni AI API
 description: Learn about the new Deni AI API coming soon
 authors: [rai]
 tags: [api]
