@@ -26,7 +26,7 @@ interface ChatContextMenuProps {
 }
 
 export const ChatContextMenu = memo(({ session, children }: ChatContextMenuProps) => {
-  const t = useTranslations("contextMenu");
+  const t = useTranslations();
   const [nameOpen, setNameOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [chatName, setChatName] = useState(session.title);
@@ -59,10 +59,10 @@ export const ChatContextMenu = memo(({ session, children }: ChatContextMenuProps
         <ContextMenuTrigger>{children}</ContextMenuTrigger>
         <ContextMenuContent className="w-64">
           <ContextMenuItem onClick={() => setNameOpen(true)}>
-            {t("rename")}
+            {t("contextMenu.rename")}
           </ContextMenuItem>
           <ContextMenuItem onClick={() => setDeleteOpen(true)} className="text-red-500">
-            {t("delete")}
+            {t("common.delete")}
           </ContextMenuItem>
         </ContextMenuContent>
       </ContextMenu>
@@ -70,9 +70,9 @@ export const ChatContextMenu = memo(({ session, children }: ChatContextMenuProps
       <AlertDialog open={nameOpen} onOpenChange={() => setNameOpen(!open)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>{t("renameTitle")}</AlertDialogTitle>
+            <AlertDialogTitle>{t("contextMenu.renameTitle")}</AlertDialogTitle>
             <AlertDialogDescription>
-              {t("renameDescription")}
+              {t("contextMenu.renameDescription")}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <Input
@@ -80,9 +80,9 @@ export const ChatContextMenu = memo(({ session, children }: ChatContextMenuProps
             onChange={(e) => setChatName(e.target.value)}
           />
           <AlertDialogFooter>
-            <AlertDialogCancel>{t("cancel")}</AlertDialogCancel>
+            <AlertDialogCancel>{t("contextMenu.cancel")}</AlertDialogCancel>
             <AlertDialogAction onClick={handleChatNameChange}>
-              {t("rename")}
+              {t("contextMenu.rename")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -94,15 +94,15 @@ export const ChatContextMenu = memo(({ session, children }: ChatContextMenuProps
       >
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>{t("deleteTitle")}</AlertDialogTitle>
+            <AlertDialogTitle>{t("contextMenu.deleteTitle")}</AlertDialogTitle>
             <AlertDialogDescription>
-              {t("deleteDescription")}
+              {t("contextMenu.deleteDescription")}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>{t("cancel")}</AlertDialogCancel>
+            <AlertDialogCancel>{t("common.cancel")}</AlertDialogCancel>
             <AlertDialogAction asChild onClick={handleDelete}>
-              <Button variant="destructive">{t("delete")}</Button>
+              <Button variant="destructive">{t("common.delete")}</Button>
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

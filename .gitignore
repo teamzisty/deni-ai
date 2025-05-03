@@ -5,6 +5,9 @@ node_modules
 .pnp
 .pnp.js
 
+# API (in progress)
+apps/api
+
 # Local env files
 .env
 .env.local

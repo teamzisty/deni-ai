@@ -2,9 +2,6 @@
   "name": "@workspace/voids-oai-provider",
   "module": "index.ts",
   "type": "module",
-  "devDependencies": {
-    "@types/bun": "^1.2.10"
-  },
   "peerDependencies": {
     "typescript": "^5.8.3"
   },

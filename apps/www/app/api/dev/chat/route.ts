@@ -24,6 +24,7 @@ import {
   wrapLanguageModel,
 } from "ai";
 import { JSDOM } from "jsdom";
+import { VirtualConsole } from "jsdom";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { auth } from "@workspace/firebase-config/client";
@@ -264,7 +265,9 @@ export async function POST(req: Request) {
                         try {
                           const pageResponse = await fetch(url);
                           const pageText = await pageResponse.text();
-                          const dom = new JSDOM(pageText);
+                          const dom = new JSDOM(pageText, {
+                            virtualConsole: new VirtualConsole().sendTo(console, { omitJSDOMErrors: true })
+                          });
                           const doc = dom.window.document;
     
                           // Remove script and style tags

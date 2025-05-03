@@ -255,7 +255,7 @@ export const Canvas: React.FC<CanvasProps> = React.memo(function Canvas({
               </div>
             </div>
 
-            <ScrollArea className="flex-1 p-4 overflow-y-scroll">
+            <div className="flex-1 p-4 overflow-y-scroll overflow-x-scroll">
               <div
                 className={cn(
                   "w-full h-full min-h-[300px]",
@@ -286,7 +286,7 @@ export const Canvas: React.FC<CanvasProps> = React.memo(function Canvas({
                   {canvasData?.content}
                 </ReactMarkdown>
               </div>
-            </ScrollArea>
+            </div>
           </motion.div>
         </motion.div>
       )}

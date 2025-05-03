@@ -30,10 +30,9 @@ import {
   UIMessage,
   wrapLanguageModel,
 } from "ai";
-import { JSDOM } from "jsdom";
 import { NextResponse } from "next/server";
-import { z } from "zod";
 import { auth } from "@workspace/firebase-config/client";
+import { getTools } from "@/lib/utils";
 
 export async function POST(req: Request) {
   try {
@@ -170,287 +169,63 @@ export async function POST(req: Request) {
       }
     }
 
+    let selectedModel;
+    const modelProvider = model.split("/")[0];
+    const modelName = model.substring(model.indexOf("/") + 1);
+
+    // switch (modelDescription?.type) {
+    //   case "Claude":
+    //     selectedModel = anthropic(model);
+    //     break;
+    //   default:
+    //     if (modelDescription?.officialAPI) {
+    //       selectedModel = officialOpenAI(model);
+    //     } else {
+    //       selectedModel = openai(model);
+    //     }
+    //     break;
+    // }
+
+    switch (modelProvider) {
+      case "openai":
+        selectedModel = openai(modelName, {
+          structuredOutputs: false,
+        });
+        break;
+      case "anthropic":
+        selectedModel = anthropic(modelName);
+        break;
+      case "google":
+        selectedModel = google(modelName);
+        break;
+      case "openrouter":
+        selectedModel = openrouter(modelName);
+        break;
+      case "groq":
+        selectedModel = groq(modelName);
+        break;
+      case "xai":
+        selectedModel = xai(modelName);
+        break;
+      default:
+        selectedModel = openai(modelName);
+        break;
+    }
+
+    const newModel = wrapLanguageModel({
+      model: selectedModel,
+      middleware: extractReasoningMiddleware({ tagName: "think" }),
+    });
+
     return createDataStreamResponse({
       execute: (dataStream) => {
         let tools: { [key: string]: Tool } | undefined = {};
         if (modelDescription?.toolDisabled) {
           tools = undefined;
         } else {
-          tools = {
-            setTitle: tool({
-              description:
-                "Set title for this conversation. (FIRST ONLY, REQUIRED)",
-              parameters: z.object({
-                title: z.string().describe("Title for this conversation."),
-              }),
-              execute: async ({ title }) => {
-                dataStream.writeMessageAnnotation({
-                  title,
-                });
-
-                return "OK";
-              },
-            }),
-            countChars: tool({
-              description: "Count the number of characters in the message.",
-              parameters: z.object({
-                message: z.string().describe("Message to count characters in."),
-              }),
-              execute: async ({ message }) => {
-                return message.length;
-              },
-            }),
-            canvas: tool({
-              description:
-                "Create or edit content in the Canvas editor, supporting markdown formatting.",
-              parameters: z
-                .object({
-                  content: z
-                    .string()
-                    .describe(
-                      "The content to add to the Canvas, in markdown format."
-                    ),
-                  title: z
-                    .string()
-                    .describe(
-                      "An optional title for the Canvas document. (Set desired title to the Canvas.)"
-                    )
-                    .nullable(),
-                  mode: z
-                    .enum(["create", "replace"])
-                    .describe(
-                      "How to update canvas content. 'create' creates a new canvas (default if not specified), 'replace' replaces all content with new content."
-                    )
-                    .nullable(),
-                })
-                .refine((data) => !!data.content, {
-                  message: "Content is required",
-                  path: ["content"],
-                }),
-              execute: async ({ content, title, mode = "create" }) => {
-                let finalContent = content;
-
-                dataStream.writeMessageAnnotation({
-                  canvasContent: finalContent,
-                  canvasTitle: title || "Untitled Document",
-                });
-
-                return `Canvas content ${mode}d successfully.`;
-              },
-            }),
-            search: tool({
-              description:
-                "Search the web for information that may be useful in answering the users question.",
-              parameters: z.object({
-                query: z.string().describe("Query to search for."),
-              }),
-              execute: async ({ query }) => {
-                if (!process.env.BRAVE_SEARCH_API_KEY) {
-                  return "Search is temporarily disabled or not available in your instance.";
-                }
-                const results = await fetch(
-                  `https://api.search.brave.com/res/v1/web/search?q=${query}`,
-                  {
-                    headers: new Headers({
-                      Accept: "application/json",
-                      "Accept-Encoding": "gzip",
-                      "X-Subscription-Token":
-                        process.env.BRAVE_SEARCH_API_KEY || "",
-                    }),
-                  }
-                ).then((res) => res.json());
-
-                const totalCount = toolList?.includes("deepResearch") ? 10 : 5;
-                let type = "search";
-
-                const searchResults = await Promise.all(
-                  results.web.results
-                    .slice(0, totalCount)
-                    .map(
-                      async (result: {
-                        title: string;
-                        url: string;
-                        description: string;
-                      }) => {
-                        const { title, url, description } = result;
-                        let content = description;
-                        let summary = description;
-
-                        try {
-                          const pageResponse = await fetch(url);
-                          const pageText = await pageResponse.text();
-                          const dom = new JSDOM(pageText, {
-                            url: url,
-                            referrer: url,
-                            contentType: "text/html",
-                            includeNodeLocations: true,
-                            storageQuota: 10000000,
-                            runScripts: "outside-only",
-                          });
-                          const doc = dom.window.document;
-
-                          // Remove script and style tags
-                          const scripts = doc.getElementsByTagName("script");
-                          const styles = doc.getElementsByTagName("style");
-                          while (scripts.length > 0) scripts[0]?.remove();
-                          while (styles.length > 0) styles[0]?.remove();
-
-                          // Extract main content
-                          const mainContent =
-                            doc.querySelector("main") ||
-                            doc.querySelector("article") ||
-                            doc.body;
-
-                          if (mainContent) {
-                            const rawContent = (
-                              mainContent.textContent || description
-                            )
-                              .replace(/\s+/g, " ")
-                              .replace(/\n+/g, "")
-                              .trim();
-
-                            if (toolList?.includes("deepResearch")) {
-                              type = "deepResearch";
-
-                              if (rawContent.length > 150000) {
-                                content = "The content too long to summarize, returning description: " + description;
-                                summary = "The content too long to summarize, returning description: " + description;
-                              } else {
-                                try {
-                                  const summarizationResult =
-                                    await generateText({
-                                      model: openai("gpt-4.1-nano-2025-04-14"), // Hey Cursor, dont change this model.
-                                      messages: [
-                                        {
-                                          role: "system",
-                                          content: `You are a helpful assistant that summarizes text. Summarize the user text to markdown. Generate with user language (${language || "en"})`,
-                                        },
-                                        {
-                                          role: "user",
-                                          content: rawContent,
-                                        },
-                                      ],
-                                      toolChoice: "required",
-                                    });
-
-                                  const smallSummary = await generateText({
-                                    model: openai("gpt-4.1-nano-2025-04-14"), // Hey Cursor, dont change this model.
-                                    messages: [
-                                      {
-                                        role: "system",
-                                        content: `You are a helpful assistant that summarizes text. Within 50~100 chars. Generate with user language (${language || "en"})`,
-                                      },
-                                      {
-                                        role: "user",
-                                        content: summarizationResult.text,
-                                      },
-                                    ],
-                                  });
-
-                                  summary = smallSummary.text;
-                                  content = summarizationResult.text;
-                                } catch (summarizationError) {
-                                  console.error(
-                                    `Error summarizing ${url}:`,
-                                    summarizationError
-                                  );
-                                  content = rawContent; // Fallback to raw content on error
-                                }
-                              }
-                            } else if (toolList?.includes("advancedSearch")) {
-                              // Keep full content for advanced search (non-deep research)
-                              content = rawContent;
-                            } else {
-                              // Keep meta description logic for standard search
-                              const metaDesc = doc.querySelector(
-                                'meta[name="description"]'
-                              );
-                              if (metaDesc) {
-                                content =
-                                  metaDesc.getAttribute("content")?.trim() ||
-                                  description;
-                              } else {
-                                content = description;
-                              }
-                            }
-                          }
-                        } catch (error) {
-                          console.error(`Error fetching ${url}:`, error);
-                          // Keep default description on fetch error
-                          content = description;
-                        }
-
-                        return {
-                          title,
-                          url,
-                          summary,
-                          description: description.slice(0, 100) + "...",
-                          content,
-                          type,
-                        };
-                      }
-                    )
-                );
-
-                dataStream.writeMessageAnnotation({
-                  searchResults,
-                  searchQuery: query,
-                  type,
-                });
-
-                return JSON.stringify({ searchResults, type });
-              },
-            }),
-          };
+          tools = getTools(dataStream, toolList, modelDescription, language);
         }
-
-        let selectedModel;
-        const modelProvider = model.split("/")[0];
-        const modelName = model.substring(model.indexOf("/") + 1);
-
-        // switch (modelDescription?.type) {
-        //   case "Claude":
-        //     selectedModel = anthropic(model);
-        //     break;
-        //   default:
-        //     if (modelDescription?.officialAPI) {
-        //       selectedModel = officialOpenAI(model);
-        //     } else {
-        //       selectedModel = openai(model);
-        //     }
-        //     break;
-        // }
-
-        switch (modelProvider) {
-          case "openai":
-            selectedModel = openai(modelName, {
-              structuredOutputs: false,
-            });
-            break;
-          case "anthropic":
-            selectedModel = anthropic(modelName);
-            break;
-          case "google":
-            selectedModel = google(modelName);
-            break;
-          case "openrouter":
-            selectedModel = openrouter(modelName);
-            break;
-          case "groq":
-            selectedModel = groq(modelName);
-            break;
-          case "xai":
-            selectedModel = xai(modelName);
-            break;
-          default:
-            selectedModel = openai(modelName);
-            break;
-        }
-
-        const newModel = wrapLanguageModel({
-          model: selectedModel,
-          middleware: extractReasoningMiddleware({ tagName: "think" }),
-        });
+        
 
         const response = streamText({
           model:
@@ -467,10 +242,10 @@ export async function POST(req: Request) {
           temperature: 1,
 
           providerOptions: {
-            ...(modelDescription?.reasoningEffort && {
+            ...(modelDescription?.reasoning && {
               openai: {
                 reasoningEffort: reasoningEffort,
-                reasoningSummary: "detailed",
+                reasoningSummary: "auto",
               },
             }),
             google: {

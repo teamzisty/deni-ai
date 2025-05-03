@@ -13,7 +13,18 @@ import {
   SidebarMenuItem,
   SidebarTrigger,
 } from "@workspace/ui/components/sidebar";
-import { Code2, MoreHorizontal, Plus, Server } from "lucide-react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@workspace/ui/components/alert-dialog";
+import { Code2, MoreHorizontal, Plus, Trash2 } from "lucide-react";
 import { Link } from "@/i18n/navigation";
 import { Badge } from "@workspace/ui/components/badge";
 import { useParams } from "next/navigation";
@@ -91,101 +102,49 @@ function DevContextMenu({
 }) {
   const { deleteSession } = useDevSessions();
   const t = useTranslations();
-  const [showConfirm, setShowConfirm] = useState(false);
 
   const handleDelete = (e: React.MouseEvent) => {
+    // Prevent default context menu behavior if triggered from action
     e.preventDefault();
-    e.stopPropagation();
-    setShowConfirm(true);
-  };
-
-  const confirmDelete = (e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
     deleteSession(session.id);
-    setShowConfirm(false);
-  };
-
-  const cancelDelete = (e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setShowConfirm(false);
   };
 
   return (
-    <div className="group relative flex items-center">
-      {children}
-      <div className="absolute right-2 opacity-0 group-hover:opacity-100 transition-opacity">
-        {!showConfirm ? (
-          <Button
-            size="icon"
-            variant="ghost"
-            className="h-5 w-5"
+    <AlertDialog>
+      <ContextMenu>
+        <ContextMenuTrigger asChild>{children}</ContextMenuTrigger>
+        <ContextMenuContent className="w-48">
+          <AlertDialogTrigger asChild>
+            <ContextMenuItem className="text-destructive focus:text-destructive focus:bg-destructive/10">
+              <Trash2 className="mr-2 h-4 w-4" />
+              <span>{t("contextMenu.delete")}</span>
+            </ContextMenuItem>
+          </AlertDialogTrigger>
+          {/* Add other context menu items here if needed */}
+        </ContextMenuContent>
+      </ContextMenu>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>
+            {t("contextMenu.deleteTitle")}
+          </AlertDialogTitle>
+          <AlertDialogDescription>
+            {t("contextMenu.deleteDescription", {
+              title: session.title,
+            })}
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel>{t("common.cancel")}</AlertDialogCancel>
+          <AlertDialogAction
             onClick={handleDelete}
+            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
           >
-            <span className="sr-only">Delete</span>
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              className="h-4 w-4 text-destructive"
-            >
-              <path d="M3 6h18"></path>
-              <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"></path>
-              <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"></path>
-            </svg>
-          </Button>
-        ) : (
-          <div className="flex bg-background border rounded p-1 shadow-md">
-            <Button
-              size="icon"
-              variant="ghost"
-              className="h-5 w-5 text-destructive"
-              onClick={confirmDelete}
-            >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                className="h-4 w-4"
-              >
-                <polyline points="20 6 9 17 4 12"></polyline>
-              </svg>
-              <span className="sr-only">Confirm</span>
-            </Button>
-            <Button
-              size="icon"
-              variant="ghost"
-              className="h-5 w-5"
-              onClick={cancelDelete}
-            >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                className="h-4 w-4"
-              >
-                <line x1="18" y1="6" x2="6" y2="18"></line>
-                <line x1="6" y1="6" x2="18" y2="18"></line>
-              </svg>
-              <span className="sr-only">Cancel</span>
-            </Button>
-          </div>
-        )}
-      </div>
-    </div>
+            {t("common.delete")}
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
   );
 }
 
@@ -359,6 +318,9 @@ export function DevSidebar() {
       </SidebarContent>
       <SidebarFooter>
         <SidebarMenu className="mt-auto mb-3 gap-3">
+          <span className="text-xs mx-auto text-muted-foreground">
+            Public Beta: May not work as expected
+          </span>
           <SidebarMenuItem>
             <Link href="/home">
               <Button variant="outline" size="sm" className="w-full">

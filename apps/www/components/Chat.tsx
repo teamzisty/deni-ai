@@ -31,6 +31,7 @@ import { MessageLog } from "@/components/MessageLog";
 import ChatInput from "@/components/ChatInput";
 import { Footer } from "@/components/footer";
 import { useDebouncedCallback } from "use-debounce"; // Import useDebouncedCallback
+import { ResearchDepth } from "@/components/DeepResearchButton"; // Import the ResearchDepth type
 
 interface MessageListProps {
   messages: UIMessage[];
@@ -127,6 +128,7 @@ const Chat: React.FC<ChatProps> = ({
     return false;
   });
   const [deepResearch, setDeepResearch] = useState(false);
+  const [researchDepth, setResearchDepth] = useState<ResearchDepth>("deep");
   const [visionRequired, setVisionRequired] = useState(!!initialImage);
   const [availableTools, setAvailableTools] = useState<string[]>([]);
   const [model, setModel] = useState(
@@ -445,6 +447,11 @@ const Chat: React.FC<ChatProps> = ({
     setDeepResearch((prev) => !prev);
   }, [t]);
 
+  const handleResearchDepthChange = useCallback((depth: ResearchDepth) => {
+    setResearchDepth(depth);
+    logger.info("handleResearchDepthChange", `Research depth changed to ${depth}`);
+  }, []);
+
   const baseSendMessage = async (
     event:
       | React.MouseEvent<HTMLButtonElement>
@@ -457,7 +464,19 @@ const Chat: React.FC<ChatProps> = ({
     const newAvailableTools = [];
     if (searchEnabled) newAvailableTools.push("search");
     if (advancedSearch) newAvailableTools.push("advancedSearch");
-    if (deepResearch) newAvailableTools.push("deepResearch");
+    if (deepResearch) {
+      if (researchDepth === "shallow") {
+        newAvailableTools.push("shallowResearch"); // Add tool for shallow research
+        newAvailableTools.push("researchStatus"); // Add status reporting tool
+      } else if (researchDepth === "deep") {
+        newAvailableTools.push("deepResearch"); // Add tool for deep research
+        newAvailableTools.push("researchStatus"); // Add status reporting tool
+      } else if (researchDepth === "advanced") {
+        newAvailableTools.push("advancedResearch"); // Add tool for advanced research
+        newAvailableTools.push("researchStatus"); // Add status reporting tool
+      }
+
+    }
     if (canvasEnabled) newAvailableTools.push("canvas");
     setAvailableTools(newAvailableTools);
 
@@ -773,10 +792,12 @@ const Chat: React.FC<ChatProps> = ({
           isUploading={isUploading}
           searchEnabled={searchEnabled}
           deepResearch={deepResearch}
+          researchDepth={researchDepth}
           sendButtonRef={sendButtonRef}
           canvasEnabled={canvasEnabled}
           modelDescriptions={modelDescriptions}
           deepResearchToggle={deepResearchToggle}
+          onResearchDepthChange={handleResearchDepthChange}
           searchToggle={searchToggle}
           canvasToggle={canvasToggle}
           handleSendMessage={handleSendMessage}
