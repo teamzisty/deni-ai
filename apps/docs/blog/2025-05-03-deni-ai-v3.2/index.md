@@ -1,76 +1,76 @@
 ---
 slug: deni-ai-v3-2
-title: Deni AI v3.2 のリリース
-description: バージョン 3.2 の新しい機能やバグ修正、改善点をご紹介します。
+title: Deni AI v3.2 Release
+description: Introducing new features, bug fixes, and improvements in version 3.2.
 authors: [rai]
 tags: [update]
 ---
 
-バージョン 3.2 の新しい機能やバグ修正、改善点をご紹介します。
+Introducing new features, bug fixes, and improvements in version 3.2.
 
 <!--truncate-->
 
-Deni AI v3.2 のリリースが遅延してしまい申し訳ございません。
+We apologize for the delay in the release of Deni AI v3.2.
 
-## Deni AI Dev (正式リリース)
+## Deni AI Dev (Official Release)
 
-Deni AI Dev は、あなたの新しい開発プラットフォームです。アイデアを得たり、そのままアプリを作ったり。あなたの自由に開発できます。
+Deni AI Dev is your new development platform. Get ideas, build apps directly. Develop freely.
 
-今回のバージョンでは、ターミナルに接触できたりセッションをクラウドと同期することができるようになりました。
+In this version, you can now interact with the terminal and sync sessions with the cloud.
 
-![Deni AI Dev のプレビュー](deni-ai-dev.png)
-_Deni AI Dev のプレビュー_
+![Deni AI Dev Preview](deni-ai-dev.png)
+_Deni AI Dev Preview_
 
-## 詳細なリサーチが進化
+## Deep Research Evolves
 
-詳細なリサーチへ以下の変更が行われました。
+The following changes have been made to Deep Research:
 
-- **モード**: Deep Research にモードを追加しました。詳細に検索したり、早く検索したりできます。
-- **モード: Shallow Research**: 早くて軽いリサーチを実行します。1~3回リサーチをし、結果を出力します。
-- **モード: Advanced Research**: さらに時間がかかる高度なリサーチを実行します。3~5回以上リサーチをし、分析をしてから結果を出力します。
-- **ソースの数を表示**: Deep Research で使用したソース数が表示されるようになりました。
-- **リサーチ状況を表示**: AI が進捗を設定し、表示されるようになりました。
+- **Modes**: Added modes to Deep Research. You can search in detail or quickly.
+- **Mode: Shallow Research**: Executes fast and light research. Researches 1-3 times and outputs the results.
+- **Mode: Advanced Research**: Executes more time-consuming advanced research. Researches 3-5+ times, analyzes, and then outputs the results.
+- **Display Source Count**: The number of sources used in Deep Research is now displayed.
+- **Display Research Status**: AI now sets and displays the progress.
 
-![進化したリサーチ のプレビュー](deep-research.png)
-_進化したリサーチ のプレビュー_
+![Evolved Research Preview](deep-research.png)
+_Evolved Research Preview_
 
-![進化したリサーチ のプレビュー (2)](deep-research-sources.png)
-_進化したリサーチ のプレビュー (2)_
+![Evolved Research Preview (2)](deep-research-sources.png)
+_Evolved Research Preview (2)_
 
-## 機能の変更
+## Feature Changes
 
-このバージョンでは、8 つの機能変更が追加されました。
+8 feature changes have been added in this version:
 
-- Dev: ターミナルに入力できる機能を追加
-- Dev: セッションをクラウドに同期する機能を追加
-- Dev: 現在のセッションを保存する機能を削除
-- セッション: クラウドに保存できない場合、IndexedDBへ保存するように変更
-- リサーチ: モード機能を追加
-- リサーチ: ソース数を表示する機能を追加
-- リサーチ: 状況を表示する機能を追加
-- アプリ: 推論が完了したときのメッセージを変更
+- Dev: Added the ability to input into the terminal.
+- Dev: Added the ability to sync sessions to the cloud.
+- Dev: Removed the feature to save the current session.
+- Session: Changed to save to IndexedDB if saving to the cloud is not possible.
+- Research: Added mode feature.
+- Research: Added feature to display source count.
+- Research: Added feature to display status.
+- App: Changed the message when inference is complete.
 
-## システムの変更
+## System Changes
 
-このバージョンでは、1 つのシステム変更が行われました。
+1 system change has been made in this version:
 
-- すべてのプロジェクトの依存関係を更新
+- Updated dependencies for all projects.
 
-## 今後の予定
+## Future Plans
 
-- **Deni AI CLI**: 開発は一時的に破棄しました。
-- **Deni AI API**: Deni AI の近日登場する API プラットフォームです。[詳細](/blog/deni-ai-api-preview)
+- **Deni AI CLI**: Development has been temporarily abandoned.
+- **Deni AI API**: Deni AI's upcoming API platform. [Details](/blog/deni-ai-api-preview)
 
-パッチノートに含まれていないすべての変更点は、[GitHub の Pull requests](https://github.com/raicdev/deni-ai/pull/33) をご覧ください。
+For all changes not included in the patch notes, please see the [GitHub Pull requests](https://github.com/raicdev/deni-ai/pull/33).
 
 :::note
 
-Deni AI のレポジトリは、https://github.com/raicdev/deni-ai に移動しました。今後はこちらのレポジトリでコミットされます。
+The Deni AI repository has moved to https://github.com/raicdev/deni-ai. Future commits will be made to this repository.
 
 :::
 
 :::note
 
-デフォルトブランチが``canary``に変更されました。リリース版については``master``ブランチをご確認してください。
+The default branch has been changed to ``canary``. Please check the ``master`` branch for the release version.
 
 :::
