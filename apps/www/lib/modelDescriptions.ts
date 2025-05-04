@@ -310,7 +310,7 @@ export const modelDescriptions: modelDescriptionType = {
   "google/gemini-1.5-pro": {
     displayName: "Gemini 1.5 Pro",
     knowledgeCutoff: "2023/11",
-    description: "Leaving in May 10, 2025. A legacy Pro model.",
+    description: "Leaving in May 10, 2025.",
     vision: true,
     fast: true,
     type: "Gemini",
@@ -350,7 +350,7 @@ export const modelDescriptions: modelDescriptionType = {
   },
   "openrouter/x-ai/grok-3-beta": {
     displayName: "Grok 3 Beta (OpenRouter)",
-    description: "Leaving in May 10, 2025. Advanced model with superior reasoning and extensive knowledge.",
+    description: "Leaving in May 10, 2025.",
     vision: true,
     reasoning: true,
     knowledgeCutoff: "-",
@@ -358,7 +358,7 @@ export const modelDescriptions: modelDescriptionType = {
   },
   "openrouter/x-ai/grok-3-mini-beta": {
     displayName: "Grok 3 Mini Beta (OpenRouter)",
-    description: "Leaving in May 10, 2025. A lightweight model that thinks before responding.",
+    description: "Leaving in May 10, 2025.",
     vision: true,
     reasoning: true,
     toolDisabled: true,
