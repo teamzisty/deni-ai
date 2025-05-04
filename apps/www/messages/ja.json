@@ -37,7 +37,6 @@
     "urlNotFound": "URLがありません",
     "reasoning": "推論中...",
     "generatingImage": "画像を生成しています...",
-    "generatedImageWith": "{model} を使用して画像を生成しました。",
     "reasoned": "推論が完了しました",
     "summaryWith": "{model} を使用して要約しました",
     "hour": "時間",

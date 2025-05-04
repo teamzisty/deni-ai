@@ -302,7 +302,7 @@ export const modelDescriptions: modelDescriptionType = {
   "google/gemini-2.0-flash-lite-001": {
     displayName: "Gemini 2.0 Flash Lite",
     knowledgeCutoff: "2024/06",
-    description: "Leaving in May 10, 2025. A faster Gemini 2.0 Flash alternative.",
+    description: "Leaving in May 10, 2025.",
     fast: true,
     vision: true,
     type: "Gemini",

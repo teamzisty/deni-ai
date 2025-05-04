@@ -13,7 +13,14 @@ import {
   SidebarMenuItem,
   SidebarTrigger,
 } from "@workspace/ui/components/sidebar";
-import { MessageCircleMore, MoreHorizontal, Plus, Search } from "lucide-react";
+import {
+  Code2,
+  MessageCircleMore,
+  MoreHorizontal,
+  Plus,
+  Search,
+  Settings,
+} from "lucide-react";
 import { Link } from "@/i18n/navigation";
 import { Badge } from "@workspace/ui/components/badge";
 import { useParams } from "next/navigation";
@@ -135,38 +142,43 @@ function useDebounce<T>(value: T, delay: number): T {
 }
 
 // メモ化された新しい検索バーコンポーネント
-const SearchBar = memo(({ onSearch }: { onSearch: (query: string) => void }) => {
-  const [inputValue, setInputValue] = useState("");
-  const t = useTranslations();
-  
-  // 入力値をdebounceする
-  const debouncedValue = useDebounce(inputValue, 300);
-  
-  // debouncedValueが変わったときだけonSearchを呼び出す
-  useEffect(() => {
-    onSearch(debouncedValue);
-  }, [debouncedValue, onSearch]);
-  
-  // 入力値の変更を即時反映（UIの反応は即時）
-  const handleSearchChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    setInputValue(e.target.value);
-  }, []);
-  
-  return (
-    <SidebarMenuItem>
-      <div className="relative mt-3">
-        <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-        <Input
-          type="text"
-          placeholder={t("sidebar.searchChats")}
-          className="pl-8"
-          value={inputValue}
-          onChange={handleSearchChange}
-        />
-      </div>
-    </SidebarMenuItem>
-  );
-});
+const SearchBar = memo(
+  ({ onSearch }: { onSearch: (query: string) => void }) => {
+    const [inputValue, setInputValue] = useState("");
+    const t = useTranslations();
+
+    // 入力値をdebounceする
+    const debouncedValue = useDebounce(inputValue, 300);
+
+    // debouncedValueが変わったときだけonSearchを呼び出す
+    useEffect(() => {
+      onSearch(debouncedValue);
+    }, [debouncedValue, onSearch]);
+
+    // 入力値の変更を即時反映（UIの反応は即時）
+    const handleSearchChange = useCallback(
+      (e: React.ChangeEvent<HTMLInputElement>) => {
+        setInputValue(e.target.value);
+      },
+      []
+    );
+
+    return (
+      <SidebarMenuItem>
+        <div className="relative mt-3">
+          <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+          <Input
+            type="text"
+            placeholder={t("sidebar.searchChats")}
+            className="pl-8"
+            value={inputValue}
+            onChange={handleSearchChange}
+          />
+        </div>
+      </SidebarMenuItem>
+    );
+  }
+);
 
 SearchBar.displayName = "SearchBar";
 
@@ -178,7 +190,7 @@ function ChatSidebarMenuSession() {
   const params = useParams<{ id: string }>();
   const [searchQuery, setSearchQuery] = useState("");
   const t = useTranslations();
-  
+
   // 検索条件でセッションをフィルタリング（useMemoで最適化）
   const filteredSessions = useMemo(() => {
     if (searchQuery.trim() === "") {
@@ -190,10 +202,11 @@ function ChatSidebarMenuSession() {
   }, [searchQuery, sessions]);
 
   // グループ化も最適化
-  const groupedSessions = useMemo(() => 
-    groupSessionsByDate(filteredSessions),
-  [filteredSessions]);
-  
+  const groupedSessions = useMemo(
+    () => groupSessionsByDate(filteredSessions),
+    [filteredSessions]
+  );
+
   // 検索処理はコールバックで最適化
   const handleSearch = useCallback((query: string) => {
     setSearchQuery(query);
@@ -220,12 +233,12 @@ function ChatSidebarMenuSession() {
                 </span>
               </SidebarMenuButton>
             </SidebarMenuItem>
-            
+
             <SearchBar onSearch={handleSearch} />
           </SidebarMenu>
         </SidebarGroupContent>
       </SidebarGroup>
-      
+
       <MemoizedSessionGroup
         sessions={groupedSessions.today}
         label={t("sidebar.today")}

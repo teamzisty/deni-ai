@@ -27,7 +27,6 @@
     "urlNotFound": "URL not found",
     "reasoning": "Reasoning...",
     "generatingImage": "Generating image...",
-    "generatedImageWith": "Generated image with {model}",
     "reasoningCompleted": "Reasoning completed",
     "reasoned": "Reasoning completed",
     "summaryWith": "Summary generated with {model}",

@@ -132,8 +132,6 @@ export const getSystemPrompt = (enabledModules: string[]) => {
       ].includes(module)
   );
 
-  console.log(enforcedTools.join(", "), otherEnabledFeatures.join(", "));
-
   // Add a section listing the enforced tools, if any are enabled.
   // Note: SetTitle is described in systemPromptToolPart and implicitly always active
   // when tools are enabled, so it's not listed based on enabledModules here.
@@ -151,8 +149,6 @@ export const getSystemPrompt = (enabledModules: string[]) => {
   systemPrompt += "\n";
   systemPrompt +=
     "Useable Tools / Feature: Search, Canvas" + otherEnabledFeaturesString;
-
-  console.log(systemPrompt);
 
   // Add a final newline for better separation if any tool sections were added.
   if (enforcedTools.length > 0 || otherEnabledFeatures.length > 0) {
