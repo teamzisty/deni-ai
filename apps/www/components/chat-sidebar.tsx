@@ -28,13 +28,14 @@ import {
 import { useRouter } from "@/i18n/navigation";
 import { Button } from "@workspace/ui/components/button";
 import { toast } from "sonner";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo, useCallback, memo, useRef } from "react";
 import { AccountDropdownMenu } from "./AccountDropdownMenu";
 import { ChatContextMenu } from "./context-menu";
 import { buildInfo } from "@/lib/version";
 import { useTranslations } from "next-intl";
 import { useAuth } from "@/context/AuthContext";
 import { Input } from "@workspace/ui/components/input";
+import LoadingIndicator from "./LoadingIndicator";
 
 interface GroupedSessions {
   today: ChatSession[];
@@ -72,6 +73,7 @@ function groupSessionsByDate(sessions: ChatSession[]): GroupedSessions {
     ),
   };
 }
+
 function SessionGroup({
   sessions,
   label,
@@ -103,6 +105,7 @@ function SessionGroup({
                     <Link href={`/chat/${session.id}`}>
                       <MessageCircleMore className="mr-2" />
                       <span className="truncate">{session.title}</span>
+                      <LoadingIndicator className="ml-auto" />
                     </Link>
                   </SidebarMenuButton>
                 </ChatContextMenu>
@@ -113,26 +116,88 @@ function SessionGroup({
     </SidebarGroup>
   );
 }
+
+// debounce hook
+function useDebounce<T>(value: T, delay: number): T {
+  const [debouncedValue, setDebouncedValue] = useState<T>(value);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedValue(value);
+    }, delay);
+
+    return () => {
+      clearTimeout(timer);
+    };
+  }, [value, delay]);
+
+  return debouncedValue;
+}
+
+// メモ化された新しい検索バーコンポーネント
+const SearchBar = memo(({ onSearch }: { onSearch: (query: string) => void }) => {
+  const [inputValue, setInputValue] = useState("");
+  const t = useTranslations();
+  
+  // 入力値をdebounceする
+  const debouncedValue = useDebounce(inputValue, 300);
+  
+  // debouncedValueが変わったときだけonSearchを呼び出す
+  useEffect(() => {
+    onSearch(debouncedValue);
+  }, [debouncedValue, onSearch]);
+  
+  // 入力値の変更を即時反映（UIの反応は即時）
+  const handleSearchChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    setInputValue(e.target.value);
+  }, []);
+  
+  return (
+    <SidebarMenuItem>
+      <div className="relative mt-3">
+        <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+        <Input
+          type="text"
+          placeholder={t("sidebar.searchChats")}
+          className="pl-8"
+          value={inputValue}
+          onChange={handleSearchChange}
+        />
+      </div>
+    </SidebarMenuItem>
+  );
+});
+
+SearchBar.displayName = "SearchBar";
+
+// メモ化されたセッショングループコンポーネント
+const MemoizedSessionGroup = memo(SessionGroup);
+
 function ChatSidebarMenuSession() {
   const { sessions, createSession } = useChatSessions();
   const params = useParams<{ id: string }>();
   const [searchQuery, setSearchQuery] = useState("");
-  const [filteredSessions, setFilteredSessions] =
-    useState<ChatSession[]>(sessions);
   const t = useTranslations();
-
-  useEffect(() => {
+  
+  // 検索条件でセッションをフィルタリング（useMemoで最適化）
+  const filteredSessions = useMemo(() => {
     if (searchQuery.trim() === "") {
-      setFilteredSessions(sessions);
-    } else {
-      const filtered = sessions.filter((session) =>
-        session.title.toLowerCase().includes(searchQuery.toLowerCase())
-      );
-      setFilteredSessions(filtered);
+      return sessions;
     }
+    return sessions.filter((session) =>
+      session.title.toLowerCase().includes(searchQuery.toLowerCase())
+    );
   }, [searchQuery, sessions]);
 
-  const groupedSessions = groupSessionsByDate(filteredSessions);
+  // グループ化も最適化
+  const groupedSessions = useMemo(() => 
+    groupSessionsByDate(filteredSessions),
+  [filteredSessions]);
+  
+  // 検索処理はコールバックで最適化
+  const handleSearch = useCallback((query: string) => {
+    setSearchQuery(query);
+  }, []);
 
   return (
     <>
@@ -150,50 +215,38 @@ function ChatSidebarMenuSession() {
                 data-size="lg"
               >
                 <Plus />
-                {/* クライアントサイドのみでレンダリングするようにする */}
                 <span className="group-data-[collapsible=icon]:hidden">
                   {t("sidebar.newChat")}
                 </span>
               </SidebarMenuButton>
             </SidebarMenuItem>
-
-            <SidebarMenuItem>
-              <div className="relative mt-3">
-                <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-                <Input
-                  type="text"
-                  placeholder={t("sidebar.searchChats")}
-                  className="pl-8"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                />
-              </div>
-            </SidebarMenuItem>
+            
+            <SearchBar onSearch={handleSearch} />
           </SidebarMenu>
         </SidebarGroupContent>
       </SidebarGroup>
-
-      <SessionGroup
+      
+      <MemoizedSessionGroup
         sessions={groupedSessions.today}
         label={t("sidebar.today")}
         currentSessionId={params.id}
       />
-      <SessionGroup
+      <MemoizedSessionGroup
         sessions={groupedSessions.yesterday}
         label={t("sidebar.yesterday")}
         currentSessionId={params.id}
       />
-      <SessionGroup
+      <MemoizedSessionGroup
         sessions={groupedSessions.thisWeek}
         label={t("sidebar.thisWeek")}
         currentSessionId={params.id}
       />
-      <SessionGroup
+      <MemoizedSessionGroup
         sessions={groupedSessions.thisMonth}
         label={t("sidebar.thisMonth")}
         currentSessionId={params.id}
       />
-      <SessionGroup
+      <MemoizedSessionGroup
         sessions={groupedSessions.older}
         label={t("sidebar.older")}
         currentSessionId={params.id}
