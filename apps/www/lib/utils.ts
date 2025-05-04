@@ -385,7 +385,8 @@ export function getTools(
 
   if (
     toolList?.includes("deepResearch") ||
-    toolList?.includes("shallowResearch")
+    toolList?.includes("shallowResearch") ||
+    toolList?.includes("advancedResearch")
   ) {
     tools.researchStatus = researchStatus(dataStream);
   }

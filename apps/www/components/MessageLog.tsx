@@ -752,10 +752,7 @@ export const MessageLog: FC<MessageLogProps> = memo(
     }, [isDeepResearchMessage, searchInvocations, t]);
 
     // Extract the top sources from search results to display in the UI
-    const topSources = useMemo(() => {
-      // Maximum number of sources to show in the preview
-      const MAX_SOURCES = 3;
-      
+    const topSources = useMemo(() => {      
       const sources: { title: string; url: string }[] = [];
       
       for (const inv of searchInvocations) {
@@ -890,7 +887,7 @@ export const MessageLog: FC<MessageLogProps> = memo(
                       </span>
                     )}
                     <span className="text-xs text-muted-foreground">
-                      {t("messageLog.usedSources", { count: topSources })} ･ {generationTime ? formatTime(generationTime) : ""}
+                      {t("messageLog.usedSources", { count: topSources })} ･ {generationTime ? formatTime(generationTime) : t("messageLog.searching")}
                     </span>
                     {researchProgress && (
                       <div className="mt-1">

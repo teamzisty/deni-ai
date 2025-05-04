@@ -4,10 +4,9 @@ import { Avatar } from "@workspace/ui/components/avatar";
 import {
   BrainCircuit,
   Eye,
-  FlaskConical,
   Zap,
   Filter,
-  Ban,
+  DoorOpen,
 } from "lucide-react";
 import { Badge } from "@workspace/ui/components/badge";
 import { useModelVisibility } from "@/hooks/use-model-settings";
@@ -46,9 +45,7 @@ export default function ModelSettings() {
     },
     features: {
       reasoning: false,
-      vision: false,
-      canary: false,
-      offline: false,
+      vision: false
     },
   });
 
@@ -83,9 +80,7 @@ export default function ModelSettings() {
       },
       features: {
         reasoning: false,
-        vision: false,
-        canary: false,
-        offline: false,
+        vision: false
       },
     });
   };
@@ -234,31 +229,6 @@ export default function ModelSettings() {
                     {t("common.modelFeatures.vision")}
                   </label>
                 </div>
-                <div className="flex items-center space-x-2">
-                  <Checkbox
-                    id="canary"
-                    checked={filters.features.canary}
-                    onCheckedChange={() => toggleFilter("features", "canary")}
-                  />
-                  <label htmlFor="canary" className="text-sm flex items-center">
-                    <FlaskConical size={14} className="mr-1" />{" "}
-                    {t("common.modelFeatures.experimental")}
-                  </label>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <Checkbox
-                    id="offline"
-                    checked={filters.features.offline}
-                    onCheckedChange={() => toggleFilter("features", "offline")}
-                  />
-                  <label
-                    htmlFor="offline"
-                    className="text-sm flex items-center"
-                  >
-                    <Ban size={14} className="mr-1" />{" "}
-                    {t("common.modelFeatures.offline")}
-                  </label>
-                </div>
               </div>
 
               <div className="flex justify-between pt-2">
@@ -286,13 +256,11 @@ export default function ModelSettings() {
                 id,
                 {
                   displayName,
-                  knowledgeCutoff,
                   type,
                   fast,
-                  canary,
                   reasoning,
+                  description,
                   vision,
-                  offline,
                 },
               ]) => (
                 <div
@@ -300,8 +268,8 @@ export default function ModelSettings() {
                   className="w-full max-w-full flex flex-col p-3 sm:p-4 gap-3 bg-card/50 hover:bg-card/80 cursor-pointer transition-colors rounded-md border border-border/30 mb-6 overflow-hidden"
                 >
                   <div className="flex flex-col md:flex-row items-left justify-between w-full">
-                    <div className="flex items-center gap-3 min-w-0 flex-1">
-                      <Avatar className="bg-secondary flex items-center justify-center flex-shrink-0">
+                    <div className="flex items-start gap-3 min-w-0 flex-1">
+                      <Avatar className="bg-secondary flex items-center justify-center flex-shrink-0 p-2 w-10 h-10">
                         {type === "ChatGPT" && <SiOpenai />}
                         {type === "Gemini" && <SiGooglegemini />}
                         {type === "Claude" && <SiClaude />}
@@ -312,10 +280,14 @@ export default function ModelSettings() {
                         <h3 className="text-md sm:text-lg font-bold block min-w-0 truncate">
                           {displayName}
                         </h3>
-                        <p className="text-xs sm:text-sm text-muted-foreground truncate">
-                          {t("settings.model.knowledgeCutoff")}{" "}
-                          {knowledgeCutoff}
-                        </p>
+                        <div className="flex items-center gap-1">
+                          {description.includes("Leaving") && (
+                            <DoorOpen size={16} className="text-red-400" />
+                          )}
+                          <span className="text-xs sm:text-sm text-muted-foreground">
+                            {description}
+                          </span>
+                        </div>
                       </div>
                     </div>
                     <Switch
@@ -329,10 +301,8 @@ export default function ModelSettings() {
                     className={cn(
                       "flex items-center flex-wrap gap-2 mt-1 max-w-full overflow-hidden",
                       !reasoning &&
-                        !canary &&
                         !vision &&
                         !fast &&
-                        !offline &&
                         "hidden"
                     )}
                   >
@@ -341,20 +311,12 @@ export default function ModelSettings() {
                         variant="secondary"
                         className="bg-red-400/20 text-red-400 hover:bg-red-400/30"
                       >
-                        <BrainCircuit size="14" className="mr-1 flex-shrink-0" />
+                        <BrainCircuit
+                          size="14"
+                          className="mr-1 flex-shrink-0"
+                        />
                         <span className="text-[10px] sm:text-xs truncate max-w-[80px] sm:max-w-none">
                           {t("common.modelFeatures.reasoning")}
-                        </span>
-                      </Badge>
-                    )}
-                    {canary && (
-                      <Badge
-                        variant="secondary"
-                        className="bg-green-400/20 text-green-400 hover:bg-green-400/30"
-                      >
-                        <FlaskConical size="14" className="mr-1 flex-shrink-0" />
-                        <span className="text-[10px] sm:text-xs truncate max-w-[80px] sm:max-w-none">
-                          {t("common.modelFeatures.experimental")}
                         </span>
                       </Badge>
                     )}
@@ -377,17 +339,6 @@ export default function ModelSettings() {
                         <Eye size="14" className="mr-1 flex-shrink-0" />
                         <span className="text-[10px] sm:text-xs truncate max-w-[80px] sm:max-w-none">
                           {t("common.modelFeatures.vision")}
-                        </span>
-                      </Badge>
-                    )}
-                    {offline && (
-                      <Badge
-                        variant="secondary"
-                        className="bg-purple-400/20 text-purple-400 hover:bg-purple-400/30"
-                      >
-                        <Ban size="14" className="mr-1 flex-shrink-0" />
-                        <span className="text-[10px] sm:text-xs truncate max-w-[80px] sm:max-w-none">
-                          {t("common.modelFeatures.offline")}
                         </span>
                       </Badge>
                     )}

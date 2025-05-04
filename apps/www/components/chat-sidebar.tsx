@@ -13,7 +13,7 @@ import {
   SidebarMenuItem,
   SidebarTrigger,
 } from "@workspace/ui/components/sidebar";
-import { MessageCircleMore, MoreHorizontal, Plus } from "lucide-react";
+import { MessageCircleMore, MoreHorizontal, Plus, Search } from "lucide-react";
 import { Link } from "@/i18n/navigation";
 import { Badge } from "@workspace/ui/components/badge";
 import { useParams } from "next/navigation";
@@ -34,6 +34,7 @@ import { ChatContextMenu } from "./context-menu";
 import { buildInfo } from "@/lib/version";
 import { useTranslations } from "next-intl";
 import { useAuth } from "@/context/AuthContext";
+import { Input } from "@workspace/ui/components/input";
 
 interface GroupedSessions {
   today: ChatSession[];
@@ -83,7 +84,7 @@ function SessionGroup({
   if (sessions.length === 0) return null;
 
   return (
-    <SidebarGroup>
+    <SidebarGroup className="pt-1">
       <SidebarGroupLabel>{label}</SidebarGroupLabel>
       <SidebarGroupContent>
         <SidebarMenu>
@@ -115,19 +116,34 @@ function SessionGroup({
 function ChatSidebarMenuSession() {
   const { sessions, createSession } = useChatSessions();
   const params = useParams<{ id: string }>();
-  const groupedSessions = groupSessionsByDate(sessions);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [filteredSessions, setFilteredSessions] =
+    useState<ChatSession[]>(sessions);
   const t = useTranslations();
+
+  useEffect(() => {
+    if (searchQuery.trim() === "") {
+      setFilteredSessions(sessions);
+    } else {
+      const filtered = sessions.filter((session) =>
+        session.title.toLowerCase().includes(searchQuery.toLowerCase())
+      );
+      setFilteredSessions(filtered);
+    }
+  }, [searchQuery, sessions]);
+
+  const groupedSessions = groupSessionsByDate(filteredSessions);
 
   return (
     <>
-      <SidebarGroup>
+      <SidebarGroup className="pb-0">
         <SidebarGroupContent>
           <SidebarMenu>
             <SidebarMenuItem>
               <SidebarMenuButton
                 variant={"outline"}
                 size="lg"
-                className="flex items-center justify-center"
+                className="flex items-center justify-center transition-all duration-200 ease-in-out"
                 onClick={createSession}
                 tooltip={t("sidebar.newChat")}
                 data-sidebar="menu-button"
@@ -140,9 +156,23 @@ function ChatSidebarMenuSession() {
                 </span>
               </SidebarMenuButton>
             </SidebarMenuItem>
+
+            <SidebarMenuItem>
+              <div className="relative mt-3">
+                <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+                <Input
+                  type="text"
+                  placeholder={t("sidebar.searchChats")}
+                  className="pl-8"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                />
+              </div>
+            </SidebarMenuItem>
           </SidebarMenu>
         </SidebarGroupContent>
       </SidebarGroup>
+
       <SessionGroup
         sessions={groupedSessions.today}
         label={t("sidebar.today")}
@@ -212,7 +242,11 @@ function ChatSidebarMenuFooter() {
 
   return (
     <SidebarMenu className="mt-auto mb-3 gap-3">
-      <AccountDropdownMenu user={user} isDisabled={isDisabled} handleAuth={handleAuth} />
+      <AccountDropdownMenu
+        user={user}
+        isDisabled={isDisabled}
+        handleAuth={handleAuth}
+      />
     </SidebarMenu>
   );
 }

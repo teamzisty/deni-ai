@@ -347,6 +347,8 @@
     "model": "Model",
     "visionRequired": "This conversation contains images, so only image-compatible models are available.",
     "manageModels": "Manage visible models",
+    "showAllModels": "Show All Models",
+    "searchModels": "Search models...",
     "offline": "Offline",
     "fast": "Fast",
     "visionCapable": "Image recognition capable",
@@ -359,7 +361,8 @@
     "thisWeek": "This Week",
     "thisMonth": "This Month",
     "older": "Older",
-    "chat": "Chat Sessions"
+    "chat": "Chat Sessions",
+    "searchChats": "Search chats..."
   },
   "accountMenu": {
     "login": "Login",
