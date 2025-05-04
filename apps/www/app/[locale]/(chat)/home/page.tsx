@@ -14,14 +14,19 @@ import ChatInput from "@/components/ChatInput";
 import { uploadResponse, useUploadThing } from "@/utils/uploadthing";
 import logger from "@/utils/logger";
 import { useAuth } from "@/context/AuthContext";
+import { ExampleQuestion } from "@/components/ExampleQuestion";
 
 const ChatApp: React.FC = () => {
   const t = useTranslations();
-  const { createSession, clearAllSessions, sessions, isLoading: isSessionsLoading } = useChatSessions();
-  const [creating, setCreating] = useState(false);
+  const {
+    createSession,
+    isLoading: isSessionsLoading,
+  } = useChatSessions();
   const [isLoading, setIsLoading] = useState(true);
   const [inputValue, setInputValue] = useState("");
-  const [selectedModel, setSelectedModel] = useState<string>("openai/gpt-4.1-mini-2025-04-14");
+  const [selectedModel, setSelectedModel] = useState<string>(
+    "openai/gpt-4.1-mini-2025-04-14"
+  );
   const [image, setImage] = useState<string | null>(null);
   const [isUploading, setIsUploading] = useState(false);
   const [searchEnabled, setSearchEnabled] = useState(false);
@@ -30,23 +35,28 @@ const ChatApp: React.FC = () => {
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const [currentAuthToken, setCurrentAuthToken] = useState<string | null>(null);
   const { user } = useAuth();
-  
+
   const router = useRouter();
 
   // Setup uploadthing for image uploads
-  const { isUploading: uploading, startUpload } = useUploadThing("imageUploader", {
-    headers: {
-      Authorization: auth ? currentAuthToken || "" : "",
-    },
-    onClientUploadComplete: (res) => {
-      setImage(res[0]?.ufsUrl || null);
-    },
-    onUploadError: (error: Error) => {
-      toast.error(t("chat.error.imageUpload"), {
-        description: t("chat.error.errorOccurred", { message: error.message }),
-      });
-    },
-  });
+  const { isUploading: uploading, startUpload } = useUploadThing(
+    "imageUploader",
+    {
+      headers: {
+        Authorization: auth ? currentAuthToken || "" : "",
+      },
+      onClientUploadComplete: (res) => {
+        setImage(res[0]?.ufsUrl || null);
+      },
+      onUploadError: (error: Error) => {
+        toast.error(t("chat.error.imageUpload"), {
+          description: t("chat.error.errorOccurred", {
+            message: error.message,
+          }),
+        });
+      },
+    }
+  );
 
   useEffect(() => {
     if (uploading) {
@@ -57,34 +67,28 @@ const ChatApp: React.FC = () => {
   }, [uploading]);
 
   const handleNewSession = () => {
-    setCreating(true);
+    // Create new session
+    const session = createSession();
 
-    const randomNumber = Math.floor(Math.random() * (750 - 350 + 1)) + 350;
+    // Get input value and image to send to chat page
+    const queryParams = new URLSearchParams();
 
-    setTimeout(() => {
-      // Create new session
-      const session = createSession();
-      
-      // Get input value and image to send to chat page
-      const queryParams = new URLSearchParams();
-      
-      if (inputValue.trim()) {
-        queryParams.set('i', inputValue.trim());
-      }
-      
-      if (image) {
-        queryParams.set('img', image);
-      }
-      
-      if (selectedModel) {
-        queryParams.set('model', selectedModel);
-      }
-      
-      // Build the URL with query parameters
-      const url = `/chat/${session.id}${queryParams.toString() ? `?${queryParams.toString()}` : ''}`;
-      
-      router.push(url);
-    }, randomNumber);
+    if (inputValue.trim()) {
+      queryParams.set("i", inputValue.trim());
+    }
+
+    if (image) {
+      queryParams.set("img", image);
+    }
+
+    if (selectedModel) {
+      queryParams.set("model", selectedModel);
+    }
+
+    // Build the URL with query parameters
+    const url = `/chat/${session.id}${queryParams.toString() ? `?${queryParams.toString()}` : ""}`;
+
+    router.push(url);
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
@@ -97,7 +101,9 @@ const ChatApp: React.FC = () => {
     }
   };
 
-  const handleSendMessageKey = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+  const handleSendMessageKey = (
+    e: React.KeyboardEvent<HTMLTextAreaElement>
+  ) => {
     e.preventDefault();
     if (inputValue.trim() || image) {
       handleNewSession();
@@ -243,13 +249,19 @@ const ChatApp: React.FC = () => {
     });
   };
 
-  const handleModelChange = useCallback((model: string) => {
-    if (!modelDescriptions[model]?.vision && image) {
-      setImage(null);
-      toast.warning(t("chat.warning.modelDoesNotSupportVision") || "Selected model doesn't support images");
-    }
-    setSelectedModel(model);
-  }, [image, t]);
+  const handleModelChange = useCallback(
+    (model: string) => {
+      if (!modelDescriptions[model]?.vision && image) {
+        setImage(null);
+        toast.warning(
+          t("chat.warning.modelDoesNotSupportVision") ||
+            "Selected model doesn't support images"
+        );
+      }
+      setSelectedModel(model);
+    },
+    [image, t]
+  );
 
   const searchToggle = useCallback(() => {
     setSearchEnabled((prev) => !prev);
@@ -267,8 +279,8 @@ const ChatApp: React.FC = () => {
     if (!auth) {
       setIsLoading(false);
       return;
-    };
-    
+    }
+
     const event = auth.onAuthStateChanged((user) => {
       if (!user) {
         router.push("/login");
@@ -283,9 +295,7 @@ const ChatApp: React.FC = () => {
   }, [router]);
 
   if (isLoading || isSessionsLoading) {
-    return (
-      <Loading />
-    );
+    return <Loading />;
   }
 
   return (
@@ -303,11 +313,27 @@ const ChatApp: React.FC = () => {
           <h1 className="m-auto text-xl lg:text-3xl mb-1 font-bold">
             {t("home.title")}
           </h1>
-          <p className="text-muted-foreground mb-2">
-            {t("home.subtitle")}
-          </p>
+          <p className="text-muted-foreground mb-2">{t("home.subtitle")}</p>
 
-          
+          {/* Example Questions */}
+          <div className="mt-2 space-y-3 max-w-lg mx-auto">
+            <ExampleQuestion onClick={() => setInputValue("What is Deni AI?")}>
+              What is Deni AI?
+            </ExampleQuestion>
+            <ExampleQuestion
+              onClick={() => setInputValue("Generate image with cute cat")}
+            >
+              Generate image with cute cat
+            </ExampleQuestion>
+            <ExampleQuestion
+              onClick={() =>
+                setInputValue('Search the Latest News on US')
+              }
+            >
+              Search the Latest News on US
+            </ExampleQuestion>
+          </div>
+
           <ChatInput
             input={inputValue}
             image={image}
