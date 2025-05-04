@@ -37,7 +37,6 @@
     "urlNotFound": "URLがありません",
     "reasoning": "推論中...",
     "generatingImage": "画像を生成しています...",
-    "generatedImageWith": "{model} を使用して画像を生成しました。",
     "reasoned": "推論が完了しました",
     "summaryWith": "{model} を使用して要約しました",
     "hour": "時間",
@@ -53,6 +52,8 @@
     "deepResearchStatus": "詳細なリサーチの状態",
     "shallowResearch": "浅いリサーチ",
     "shallowResearchStatus": "浅いリサーチの状態",
+    "advancedResearch": "高度なリサーチ",
+    "advancedResearchStatus": "高度なリサーチの状態",
     "clickForDetails": "クリックして詳細を表示",
     "usedSources": "{count} 件のソースを使用",
     "activityLog": "詳細なリサーチのログ",
@@ -331,6 +332,8 @@
     "model": "モデル",
     "visionRequired": "この会話には画像を含んでいるため、画像対応モデルのみが利用可能です。",
     "manageModels": "表示するモデルを管理",
+    "showAllModels": "すべてのモデルを表示",
+    "searchModels": "モデルを検索...",
     "offline": "オフライン",
     "fast": "高速",
     "visionCapable": "画像を認識可能",
@@ -343,7 +346,8 @@
     "thisWeek": "今週",
     "thisMonth": "今月",
     "older": "それより前",
-    "chat": "チャット"
+    "chat": "チャット",
+    "searchChats": "会話を検索..."
   },
   "accountMenu": {
     "login": "ログイン",

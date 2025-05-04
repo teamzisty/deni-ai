@@ -8,13 +8,14 @@ import {
 interface EasyTipProps {
   content: React.ReactNode;
   children: React.ReactNode;
+  className?: string;
 }
 
-export const EasyTip = React.memo(({ content, children }: EasyTipProps) => {
+export const EasyTip = React.memo(({ content, children, className }: EasyTipProps) => {
   return (
     <Tooltip>
       <TooltipTrigger asChild>
-        <div>{children}</div>
+        <div className={className}>{children}</div>
       </TooltipTrigger>
       <TooltipContent>{content}</TooltipContent>
     </Tooltip>

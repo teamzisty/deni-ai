@@ -2,6 +2,7 @@
 
 import { Button } from "@workspace/ui/components/button";
 import {
+  Code2,
   Earth,
   FolderSync,
   LogOut,
@@ -184,6 +185,16 @@ export const AccountDropdownMenu = memo(
 
           <DropdownMenuSeparator />
 
+          <DropdownMenuGroup>
+            <DropdownMenuItem asChild>
+              <Link href="/dev" className="w-full">
+                <Code2 />
+                {t("devSidebar.devMode")}
+              </Link>
+            </DropdownMenuItem>
+          </DropdownMenuGroup>
+
+          <DropdownMenuSeparator />
           <DropdownMenuGroup>
             <DropdownMenuItem asChild>
               <Link href="https://voids.top" target="_blank" className="w-full">

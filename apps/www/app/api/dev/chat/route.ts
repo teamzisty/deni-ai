@@ -77,7 +77,7 @@ export async function POST(req: Request) {
 
     model = model.replace("-reasoning", "");
 
-    const isCanary = modelDescription?.canary;
+    // const isCanary = modelDescription?.canary;
 
     // Voids Provider (not used)
     // const VoidsOpenAI = createVoidsOAI({
@@ -115,10 +115,6 @@ export async function POST(req: Request) {
     const xai = createXai({
       apiKey: process.env.XAI_API_KEY,
     });
-
-    if (modelDescription?.offline) {
-      return new NextResponse("This model is currently not available.", { status: 400 });
-    }
 
     const coreMessage = convertToCoreMessages(messages);
 

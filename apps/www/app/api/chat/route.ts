@@ -54,11 +54,11 @@ export async function POST(req: Request) {
     } = await req.json();
 
     if (!model || messages.length === 0) {
-      return Response.json({ error: "Invalid request" });
+      return new NextResponse("Invalid request", { status: 400 });
     }
 
     if (auth && (!authorization || notAvailable)) {
-      return Response.json({ error: "Authorization failed" });
+      return new NextResponse("Authorization failed", { status: 401 });
     }
 
     if (auth && authorization) {
@@ -66,12 +66,12 @@ export async function POST(req: Request) {
         ?.verifyIdToken(authorization)
         .then((decodedToken) => {
           if (!decodedToken) {
-            return Response.json({ error: "Authorization failed" });
+            return new NextResponse("Authorization failed", { status: 401 });
           }
         })
         .catch((error) => {
           console.error(error);
-          return Response.json({ error: "Authorization failed" });
+          return new NextResponse("Authorization failed", { status: 401 });
         });
     }
 
@@ -80,19 +80,19 @@ export async function POST(req: Request) {
 
     model = model.replace("-reasoning", "");
 
-    const isCanary = modelDescription?.canary;
+    // const isCanary = modelDescription?.canary;
 
-    // Voids Provider (not used)
-    const VoidsOpenAI = createVoidsOAI({
-      // custom settings, e.g.
-      isCanary,
-      apiKey: "no", // API key
-    });
+    // // Voids Provider (not used)
+    // const VoidsOpenAI = createVoidsOAI({
+    //   // custom settings, e.g.
+    //   isCanary,
+    //   apiKey: "no", // API key
+    // });
 
-    const VoidsAnthropic = createVoidsAP({
-      isCanary,
-      apiKey: "no",
-    });
+    // const VoidsAnthropic = createVoidsAP({
+    //   isCanary,
+    //   apiKey: "no",
+    // });
 
     // Official Provider
     const openai = createOpenAI({
@@ -118,13 +118,6 @@ export async function POST(req: Request) {
     const xai = createXai({
       apiKey: process.env.XAI_API_KEY,
     });
-
-    if (modelDescription?.offline) {
-      return NextResponse.json({
-        state: "error",
-        error: "This model is currently not available.",
-      });
-    }
 
     const coreMessage = convertToCoreMessages(messages);
 
@@ -288,6 +281,6 @@ export async function POST(req: Request) {
     });
   } catch (error) {
     console.error(error);
-    return Response.json({ error: error });
+    return new NextResponse(error as string, { status: 500 });
   }
 }

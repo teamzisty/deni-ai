@@ -264,6 +264,7 @@ export const Canvas: React.FC<CanvasProps> = React.memo(function Canvas({
               >
                 <BlockNoteView
                   editor={editor}
+                  className="w-full"
                   onChange={async (editor) => {
                     const markdown = await editor.blocksToMarkdownLossy(
                       editor.document

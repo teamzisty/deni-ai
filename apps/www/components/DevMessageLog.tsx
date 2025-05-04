@@ -675,14 +675,8 @@ export const DevMessageLog: FC<DevMessageLogProps> = memo(
     );
     const [webcontainerActions, setWebcontainerActions] = useState<any[]>([]);
     const [steps, setSteps] = useState<any[]>([]);
-    const [currentStep, setCurrentStep] = useState<number>(0);
-    const [stepStatuses, setStepStatuses] = useState<
-      Record<number, StepStatus>
-    >({});
-    const [showExecutionPlan, setShowExecutionPlan] = useState(false);
 
     const t = useTranslations();
-    const ansiConverter = new AnsiToHtml();
 
     // annotationsKeyの計算
     // const annotationsKey = useMemo(() => {

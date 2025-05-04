@@ -13,7 +13,14 @@ import {
   SidebarMenuItem,
   SidebarTrigger,
 } from "@workspace/ui/components/sidebar";
-import { MessageCircleMore, MoreHorizontal, Plus } from "lucide-react";
+import {
+  Code2,
+  MessageCircleMore,
+  MoreHorizontal,
+  Plus,
+  Search,
+  Settings,
+} from "lucide-react";
 import { Link } from "@/i18n/navigation";
 import { Badge } from "@workspace/ui/components/badge";
 import { useParams } from "next/navigation";
@@ -28,12 +35,14 @@ import {
 import { useRouter } from "@/i18n/navigation";
 import { Button } from "@workspace/ui/components/button";
 import { toast } from "sonner";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo, useCallback, memo, useRef } from "react";
 import { AccountDropdownMenu } from "./AccountDropdownMenu";
 import { ChatContextMenu } from "./context-menu";
 import { buildInfo } from "@/lib/version";
 import { useTranslations } from "next-intl";
 import { useAuth } from "@/context/AuthContext";
+import { Input } from "@workspace/ui/components/input";
+import LoadingIndicator from "./LoadingIndicator";
 
 interface GroupedSessions {
   today: ChatSession[];
@@ -71,6 +80,7 @@ function groupSessionsByDate(sessions: ChatSession[]): GroupedSessions {
     ),
   };
 }
+
 function SessionGroup({
   sessions,
   label,
@@ -83,7 +93,7 @@ function SessionGroup({
   if (sessions.length === 0) return null;
 
   return (
-    <SidebarGroup>
+    <SidebarGroup className="pt-1">
       <SidebarGroupLabel>{label}</SidebarGroupLabel>
       <SidebarGroupContent>
         <SidebarMenu>
@@ -102,6 +112,7 @@ function SessionGroup({
                     <Link href={`/chat/${session.id}`}>
                       <MessageCircleMore className="mr-2" />
                       <span className="truncate">{session.title}</span>
+                      <LoadingIndicator className="ml-auto" />
                     </Link>
                   </SidebarMenuButton>
                 </ChatContextMenu>
@@ -112,58 +123,143 @@ function SessionGroup({
     </SidebarGroup>
   );
 }
+
+// debounce hook
+function useDebounce<T>(value: T, delay: number): T {
+  const [debouncedValue, setDebouncedValue] = useState<T>(value);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedValue(value);
+    }, delay);
+
+    return () => {
+      clearTimeout(timer);
+    };
+  }, [value, delay]);
+
+  return debouncedValue;
+}
+
+// メモ化された新しい検索バーコンポーネント
+const SearchBar = memo(
+  ({ onSearch }: { onSearch: (query: string) => void }) => {
+    const [inputValue, setInputValue] = useState("");
+    const t = useTranslations();
+
+    // 入力値をdebounceする
+    const debouncedValue = useDebounce(inputValue, 300);
+
+    // debouncedValueが変わったときだけonSearchを呼び出す
+    useEffect(() => {
+      onSearch(debouncedValue);
+    }, [debouncedValue, onSearch]);
+
+    // 入力値の変更を即時反映（UIの反応は即時）
+    const handleSearchChange = useCallback(
+      (e: React.ChangeEvent<HTMLInputElement>) => {
+        setInputValue(e.target.value);
+      },
+      []
+    );
+
+    return (
+      <SidebarMenuItem>
+        <div className="relative mt-3">
+          <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+          <Input
+            type="text"
+            placeholder={t("sidebar.searchChats")}
+            className="pl-8"
+            value={inputValue}
+            onChange={handleSearchChange}
+          />
+        </div>
+      </SidebarMenuItem>
+    );
+  }
+);
+
+SearchBar.displayName = "SearchBar";
+
+// メモ化されたセッショングループコンポーネント
+const MemoizedSessionGroup = memo(SessionGroup);
+
 function ChatSidebarMenuSession() {
   const { sessions, createSession } = useChatSessions();
   const params = useParams<{ id: string }>();
-  const groupedSessions = groupSessionsByDate(sessions);
+  const [searchQuery, setSearchQuery] = useState("");
   const t = useTranslations();
+
+  // 検索条件でセッションをフィルタリング（useMemoで最適化）
+  const filteredSessions = useMemo(() => {
+    if (searchQuery.trim() === "") {
+      return sessions;
+    }
+    return sessions.filter((session) =>
+      session.title.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+  }, [searchQuery, sessions]);
+
+  // グループ化も最適化
+  const groupedSessions = useMemo(
+    () => groupSessionsByDate(filteredSessions),
+    [filteredSessions]
+  );
+
+  // 検索処理はコールバックで最適化
+  const handleSearch = useCallback((query: string) => {
+    setSearchQuery(query);
+  }, []);
 
   return (
     <>
-      <SidebarGroup>
+      <SidebarGroup className="pb-0">
         <SidebarGroupContent>
           <SidebarMenu>
             <SidebarMenuItem>
               <SidebarMenuButton
                 variant={"outline"}
                 size="lg"
-                className="flex items-center justify-center"
+                className="flex items-center justify-center transition-all duration-200 ease-in-out"
                 onClick={createSession}
                 tooltip={t("sidebar.newChat")}
                 data-sidebar="menu-button"
                 data-size="lg"
               >
                 <Plus />
-                {/* クライアントサイドのみでレンダリングするようにする */}
                 <span className="group-data-[collapsible=icon]:hidden">
                   {t("sidebar.newChat")}
                 </span>
               </SidebarMenuButton>
             </SidebarMenuItem>
+
+            <SearchBar onSearch={handleSearch} />
           </SidebarMenu>
         </SidebarGroupContent>
       </SidebarGroup>
-      <SessionGroup
+
+      <MemoizedSessionGroup
         sessions={groupedSessions.today}
         label={t("sidebar.today")}
         currentSessionId={params.id}
       />
-      <SessionGroup
+      <MemoizedSessionGroup
         sessions={groupedSessions.yesterday}
         label={t("sidebar.yesterday")}
         currentSessionId={params.id}
       />
-      <SessionGroup
+      <MemoizedSessionGroup
         sessions={groupedSessions.thisWeek}
         label={t("sidebar.thisWeek")}
         currentSessionId={params.id}
       />
-      <SessionGroup
+      <MemoizedSessionGroup
         sessions={groupedSessions.thisMonth}
         label={t("sidebar.thisMonth")}
         currentSessionId={params.id}
       />
-      <SessionGroup
+      <MemoizedSessionGroup
         sessions={groupedSessions.older}
         label={t("sidebar.older")}
         currentSessionId={params.id}
@@ -212,7 +308,11 @@ function ChatSidebarMenuFooter() {
 
   return (
     <SidebarMenu className="mt-auto mb-3 gap-3">
-      <AccountDropdownMenu user={user} isDisabled={isDisabled} handleAuth={handleAuth} />
+      <AccountDropdownMenu
+        user={user}
+        isDisabled={isDisabled}
+        handleAuth={handleAuth}
+      />
     </SidebarMenu>
   );
 }

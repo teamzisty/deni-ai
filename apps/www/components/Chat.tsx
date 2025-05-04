@@ -744,17 +744,19 @@ const Chat: React.FC<ChatProps> = ({
                 error={error}
                 onRegenerate={handleRegenerate} // Pass handler
               />
-              {status === "submitted" && (
-                <div className="flex w-full message-log visible">
-                  <div className="p-2 my-2 rounded-lg text-muted-foreground w-full">
-                    <div className="ml-3 animate-pulse">
-                      {modelDescriptions[model]?.reasoning
-                        ? t("messageLog.reasoning")
-                        : t("messageLog.thinking")}
+              {status === "submitted" &&
+                messages.length > 0 &&
+                !messages[messages.length - 1]?.content && (
+                  <div className="flex w-full message-log visible">
+                    <div className="p-2 my-2 rounded-lg text-muted-foreground w-full">
+                      <div className="ml-3 animate-pulse">
+                        {modelDescriptions[model]?.reasoning
+                          ? t("messageLog.reasoning")
+                          : t("messageLog.thinking")}
+                      </div>
                     </div>
                   </div>
-                </div>
-              )}
+                )}
               {error && (
                 <div className="flex w-full message-log visible">
                   <div className="p-2 my-2 rounded-lg text-muted-foreground w-full">

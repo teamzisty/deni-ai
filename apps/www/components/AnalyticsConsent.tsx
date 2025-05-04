@@ -8,9 +8,9 @@ interface AnalyticsConsentProps {
   initialConsent?: boolean;
 }
 
-export default function AnalyticsConsent({ initialConsent = false }: AnalyticsConsentProps) {
+export default function AnalyticsConsent({ initialConsent }: AnalyticsConsentProps) {
   const [isVisible, setIsVisible] = useState(initialConsent === undefined);
-  const [hasConsent, setHasConsent] = useState(initialConsent);
+  const [hasConsent, setHasConsent] = useState(initialConsent ?? false);
 
   const t = useTranslations("analyticsConsent");
   

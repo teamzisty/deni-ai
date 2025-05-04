@@ -71,15 +71,18 @@ const DeepResearchPanel: FC<DeepResearchPanelProps> = ({
   if (!message) return null;
 
   // Check if message generation is complete
-  const isMessageComplete = message.content && message.content.trim().length > 0;
-  
+  const isMessageComplete =
+    message.content && message.content.trim().length > 0;
+
   // If message is complete and there are no active search tools, hide panel
-  const hasActiveSearchTools = message.parts.some(part => 
-    part.type === "tool-invocation" && 
-    part.toolInvocation.toolName === "search" && 
-    (part.toolInvocation.state === "call" || part.toolInvocation.state === "partial-call")
+  const hasActiveSearchTools = message.parts.some(
+    (part) =>
+      part.type === "tool-invocation" &&
+      part.toolInvocation.toolName === "search" &&
+      (part.toolInvocation.state === "call" ||
+        part.toolInvocation.state === "partial-call")
   );
-  
+
   if (isMessageComplete && !hasActiveSearchTools && !isOpen) {
     return null;
   }
@@ -183,29 +186,31 @@ const DeepResearchPanel: FC<DeepResearchPanelProps> = ({
   // Show research progress from annotation at the top of the panel
   const renderResearchProgressHeader = () => {
     if (!researchProgress) return null;
-    
+
     return (
       <div className="mb-4 p-4 bg-secondary/30 rounded-lg w-full border border-secondary">
         <div className="flex justify-between items-center mb-2">
           <h3 className="font-medium inline-flex items-center gap-1">
             <RefreshCw size={16} className="mr-1 animate-spin" />
-            {researchProgress.type === "deepResearch" 
-              ? t("messageLog.deepResearchStatus") 
+            {researchProgress.type === "deepResearch"
+              ? t("messageLog.deepResearchStatus")
               : researchProgress.type === "advancedResearch"
-              ? t("messageLog.advancedResearchStatus")
-              : t("messageLog.shallowResearchStatus")}
+                ? t("messageLog.advancedResearchStatus")
+                : t("messageLog.shallowResearchStatus")}
           </h3>
-          <span className="text-sm font-semibold">{Math.min(researchProgress.progress, 100)}%</span>
+          <span className="text-sm font-semibold">
+            {Math.min(researchProgress.progress, 100)}%
+          </span>
         </div>
-        
+
         <div className="text-sm text-muted-foreground mb-2 overflow-hidden text-ellipsis line-clamp-2">
           {researchProgress.status}
         </div>
-        
+
         <div className="w-full flex items-center">
-          <Progress 
-            value={Math.min(researchProgress.progress, 100)} 
-            max={100} 
+          <Progress
+            value={Math.min(researchProgress.progress, 100)}
+            max={100}
           />
         </div>
       </div>
@@ -419,9 +424,9 @@ export const MessageLog: FC<MessageLogProps> = memo(
     const [generationTime, setGenerationTime] = useState<number | undefined>(
       undefined
     );
-    const [researchProgress, setResearchProgress] = useState<messageAnnotation["researchProgress"] | undefined>(
-      undefined
-    );
+    const [researchProgress, setResearchProgress] = useState<
+      messageAnnotation["researchProgress"] | undefined
+    >(undefined);
 
     const [reasoningStates, setReasoningStates] = useState<
       Record<string, "inProgress" | "completed">
@@ -516,25 +521,28 @@ export const MessageLog: FC<MessageLogProps> = memo(
       if (genAnnotation) {
         setGenerationTime((genAnnotation as messageAnnotation).generationTime);
       }
-      
+
       const progressAnnotations = annotations.filter(
         (a) => (a as messageAnnotation).researchProgress !== undefined
       );
-      
+
       // timestampがあると仮定して、timestampでソート（昇順）
       const sortedProgressAnnotations = progressAnnotations.sort((a, b) => {
         const aTime = (a as messageAnnotation).researchProgress?.timestamp || 0;
         const bTime = (b as messageAnnotation).researchProgress?.timestamp || 0;
         return aTime - bTime;
       });
-      
+
       // 最新の注釈は最後の要素
-      const latestProgressAnnotation = sortedProgressAnnotations.length > 0 
-        ? sortedProgressAnnotations[sortedProgressAnnotations.length - 1]
-        : null;
-      
+      const latestProgressAnnotation =
+        sortedProgressAnnotations.length > 0
+          ? sortedProgressAnnotations[sortedProgressAnnotations.length - 1]
+          : null;
+
       if (latestProgressAnnotation) {
-        setResearchProgress((latestProgressAnnotation as messageAnnotation).researchProgress);
+        setResearchProgress(
+          (latestProgressAnnotation as messageAnnotation).researchProgress
+        );
       }
     }, [annotationsKey, sessionId, getSession, updateSession, updateCanvas]);
 
@@ -753,14 +761,15 @@ export const MessageLog: FC<MessageLogProps> = memo(
 
     // Extract the top sources from search results to display in the UI
     const topSources = useMemo(() => {
-      // Maximum number of sources to show in the preview
-      const MAX_SOURCES = 3;
-      
       const sources: { title: string; url: string }[] = [];
-      
+
       for (const inv of searchInvocations) {
-        if (inv.type !== "tool-invocation" || inv.toolInvocation.state !== "result") continue;
-        
+        if (
+          inv.type !== "tool-invocation" ||
+          inv.toolInvocation.state !== "result"
+        )
+          continue;
+
         try {
           if (inv.toolInvocation.result) {
             const result = JSON.parse(inv.toolInvocation.result);
@@ -769,7 +778,7 @@ export const MessageLog: FC<MessageLogProps> = memo(
                 if (item.title && item.url) {
                   sources.push({
                     title: item.title,
-                    url: item.url
+                    url: item.url,
                   });
                 }
               });
@@ -779,7 +788,7 @@ export const MessageLog: FC<MessageLogProps> = memo(
           console.error("Failed to parse search sources:", e);
         }
       }
-      
+
       // Return the first MAX_SOURCES number of sources
       return sources.length;
     }, [searchInvocations]);
@@ -800,22 +809,28 @@ export const MessageLog: FC<MessageLogProps> = memo(
         // Only apply auto-close logic when panel is open and we're showing this message
         if (selectedMessageForPanel?.id === message.id) {
           // Check if message has content (generation is done)
-          const isMessageComplete = message.content && message.content.trim().length > 0;
-          
+          const isMessageComplete =
+            message.content && message.content.trim().length > 0;
+
           // Check if all search operations are completed
-          const hasActiveSearches = message.parts.some(part => 
-            part.type === "tool-invocation" && 
-            (part.toolInvocation.toolName === "search" || 
-             part.toolInvocation.toolName === "deepResearch" ||
-             part.toolInvocation.toolName === "shallowResearch" ||
-             part.toolInvocation.toolName === "advancedResearch") && 
-            (part.toolInvocation.state === "call" || part.toolInvocation.state === "partial-call")
+          const hasActiveSearches = message.parts.some(
+            (part) =>
+              part.type === "tool-invocation" &&
+              (part.toolInvocation.toolName === "search" ||
+                part.toolInvocation.toolName === "deepResearch" ||
+                part.toolInvocation.toolName === "shallowResearch" ||
+                part.toolInvocation.toolName === "advancedResearch") &&
+              (part.toolInvocation.state === "call" ||
+                part.toolInvocation.state === "partial-call")
           );
-          
+
           // Auto-close when message is complete AND all searches are done
           if (isMessageComplete && !hasActiveSearches) {
             // Only auto-close if not actively focused or visible
-            if (!document.hasFocus() || document.visibilityState !== "visible") {
+            if (
+              !document.hasFocus() ||
+              document.visibilityState !== "visible"
+            ) {
               setIsDeepResearchPanelOpen(false);
             }
           }
@@ -845,17 +860,21 @@ export const MessageLog: FC<MessageLogProps> = memo(
       const reasoningParts = message.parts.filter(
         (part) => part.type === "reasoning" && part.reasoning
       );
-      
+
       if (reasoningParts.length === 0) return "";
-      
+
       return reasoningParts
-        .map(part => part.type === "reasoning" ? part.reasoning || "" : "")
+        .map((part) => (part.type === "reasoning" ? part.reasoning || "" : ""))
         .join("\n\n");
     }, [message.parts]);
 
     const hasCompletedReasoning = useMemo(() => {
-      return combinedReasoningContent.trim().length > 0 && (
-        message.content || message.parts.some(p => p.type === "text" && p.text && p.text.trim().length > 0)
+      return (
+        combinedReasoningContent.trim().length > 0 &&
+        (message.content ||
+          message.parts.some(
+            (p) => p.type === "text" && p.text && p.text.trim().length > 0
+          ))
       );
     }, [combinedReasoningContent, message.content, message.parts]);
 
@@ -871,7 +890,9 @@ export const MessageLog: FC<MessageLogProps> = memo(
           {message.role === "assistant" ? (
             <div key={message.id}>
               <div className="ml-3 prose dark:prose-invert w-full max-w-11/12">
-                {isDeepResearchMessage || isShallowResearchMessage || isAdvancedResearchMessage ? (
+                {isDeepResearchMessage ||
+                isShallowResearchMessage ||
+                isAdvancedResearchMessage ? (
                   <div
                     className="flex flex-col gap-1 bg-secondary w-full md:w-2/3 rounded-xl mb-4 px-4 py-3 overflow-hidden cursor-pointer hover:bg-secondary/80 transition-colors"
                     onClick={handleDeepResearchClick}
@@ -881,8 +902,8 @@ export const MessageLog: FC<MessageLogProps> = memo(
                       {isDeepResearchMessage
                         ? t("messageLog.deepResearch")
                         : isShallowResearchMessage
-                        ? t("messageLog.shallowResearch")
-                        : t("messageLog.advancedResearch")}
+                          ? t("messageLog.shallowResearch")
+                          : t("messageLog.advancedResearch")}
                     </span>
                     {firstSearchQuery && (
                       <span className="text-sm text-muted-foreground">
@@ -890,18 +911,25 @@ export const MessageLog: FC<MessageLogProps> = memo(
                       </span>
                     )}
                     <span className="text-xs text-muted-foreground">
-                      {t("messageLog.usedSources", { count: topSources })} ･ {generationTime ? formatTime(generationTime) : ""}
+                      {t("messageLog.usedSources", { count: topSources })} ･{" "}
+                      {generationTime
+                        ? formatTime(generationTime)
+                        : t("messageLog.searching")}
                     </span>
                     {researchProgress && (
                       <div className="mt-1">
                         <div className="flex justify-between text-xs text-muted-foreground mb-1">
-                          <span className="truncate max-w-[70%]">{researchProgress.status}</span>
-                          <span>{Math.min(researchProgress.progress, 100)}%</span>
+                          <span className="truncate max-w-[70%]">
+                            {researchProgress.status}
+                          </span>
+                          <span>
+                            {Math.min(researchProgress.progress, 100)}%
+                          </span>
                         </div>
                         <div className="w-full flex items-center">
-                          <Progress 
-                            value={Math.min(researchProgress.progress, 100)} 
-                            max={100} 
+                          <Progress
+                            value={Math.min(researchProgress.progress, 100)}
+                            max={100}
                           />
                         </div>
                       </div>
@@ -1022,26 +1050,30 @@ export const MessageLog: FC<MessageLogProps> = memo(
                 )}
 
                 {/* Render combined reasoning section if there's any reasoning content and not a deep research message */}
-                {combinedReasoningContent && !isDeepResearchMessage && hasCompletedReasoning && (
-                  <Collapsible
-                    key={`${message.id}_reasoning_combined`}
-                    defaultOpen={true}
-                    className="mb-3"
-                  >
-                    <CollapsibleTrigger className="mb-0">
-                      <span className="text-muted-foreground">
-                        {generationTime ? t("messageLog.reasoned") : t("messageLog.reasoning")}
-                      </span>
-                    </CollapsibleTrigger>
-                    <CollapsibleContent className="border-l-2 mt-0 pl-4 outline-none data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2">
-                      <MemoizedMarkdown
-                        key={`${message.id}_reasoning_content_combined`}
-                        id={`${message.id}_assistant_reasoning_combined`}
-                        content={combinedReasoningContent}
-                      />
-                    </CollapsibleContent>
-                  </Collapsible>
-                )}
+                {combinedReasoningContent &&
+                  !isDeepResearchMessage &&
+                  hasCompletedReasoning && (
+                    <Collapsible
+                      key={`${message.id}_reasoning_combined`}
+                      defaultOpen={true}
+                      className="mb-3"
+                    >
+                      <CollapsibleTrigger className="mb-0">
+                        <span className="text-muted-foreground">
+                          {generationTime
+                            ? t("messageLog.reasoned")
+                            : t("messageLog.reasoning")}
+                        </span>
+                      </CollapsibleTrigger>
+                      <CollapsibleContent className="border-l-2 mt-0 pl-4 outline-none data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2">
+                        <MemoizedMarkdown
+                          key={`${message.id}_reasoning_content_combined`}
+                          id={`${message.id}_assistant_reasoning_combined`}
+                          content={combinedReasoningContent}
+                        />
+                      </CollapsibleContent>
+                    </Collapsible>
+                  )}
 
                 {message.parts.map((part, index) => {
                   switch (part.type) {
@@ -1067,23 +1099,25 @@ export const MessageLog: FC<MessageLogProps> = memo(
                           if (part.toolInvocation.state === "result") {
                             const result = part.toolInvocation.result;
                             return (
-                              <div key={`${part.toolInvocation.toolCallId}-image`} className="flex flex-col gap-1 w-full rounded-xl mb-2 p-2 max-w-[320px] overflow-hidden">
-                                <img src={result.image} width="300" height="300" alt="Generated Image" />
-                                <span className="text-sm text-muted-foreground">
-                                  {t("messageLog.generatedImageWith", {model: "GPT-Image 1"})}
-                                </span>
+                              <div
+                                key={`${part.toolInvocation.toolCallId}-image`}
+                                className="flex flex-col gap-1 w-full rounded-xl mb-2 p-2 max-w-[320px] overflow-hidden"
+                              >
+                                <img
+                                  src={result.image}
+                                  width="300"
+                                  height="300"
+                                  alt="Generated Image"
+                                />
                               </div>
                             );
                           }
 
-                          if (part.toolInvocation.state === "partial-call" || part.toolInvocation.state === "call") {
-                            return (
-                              <span className="animate-pulse text-xs text-muted-foreground">
-                                {t("messageLog.generatingImage")}
-                              </span>
-                            );
-                          }
-                          return null;
+                          return (
+                            <span className="animate-pulse text-xs text-muted-foreground">
+                              {t("messageLog.generatingImage")}
+                            </span>
+                          );
                       }
                       if (
                         part.toolInvocation.toolName === "canvas" ||

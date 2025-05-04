@@ -49,8 +49,14 @@ export async function generateMetadata() {
 
 export async function getAnalyticsConsent() {
   const cookieStore = await cookies();
-  const isAnalyticsEnabled = cookieStore.get("analytics-consent")?.value === "true";
-  return isAnalyticsEnabled;
+  const consentCookie = cookieStore.get("analytics-consent");
+  
+  // Return undefined if cookie doesn't exist (first visit)
+  if (!consentCookie) {
+    return undefined;
+  }
+  
+  return consentCookie.value === "true";
 }
 
 export default async function LocaleLayout({ children, params }: Props) {
@@ -73,13 +79,13 @@ export default async function LocaleLayout({ children, params }: Props) {
   return (
     <NextIntlClientProvider locale={locale} messages={messages}>
       <AuthProvider>
-            <CanvasProvider>
-              <DevelopmentBanner>{children}</DevelopmentBanner>
-              <Toaster richColors position="bottom-right" />
+        <CanvasProvider>
+          <DevelopmentBanner>{children}</DevelopmentBanner>
+          <Toaster richColors position="bottom-right" />
 
-              <AnalyticsConsent initialConsent={isAnalyticsEnabled} />
-              {isAnalyticsEnabled && <Analytics />}
-            </CanvasProvider>
+          <AnalyticsConsent initialConsent={isAnalyticsEnabled} />
+          {isAnalyticsEnabled && <Analytics />}
+        </CanvasProvider>
       </AuthProvider>
     </NextIntlClientProvider>
   );
