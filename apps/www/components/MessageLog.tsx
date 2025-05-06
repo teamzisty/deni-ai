@@ -477,8 +477,6 @@ export const MessageLog: FC<MessageLogProps> = memo(
       const annotations = message.annotations;
       if (!annotations) return;
 
-      console.log(annotations);
-
       const modelAnnotation = annotations.find(
         (a) => (a as messageAnnotation).model
       );
@@ -911,7 +909,7 @@ export const MessageLog: FC<MessageLogProps> = memo(
                       </span>
                     )}
                     <span className="text-xs text-muted-foreground">
-                      {t("messageLog.usedSources", { count: topSources })} ･{" "}
+                      {t("messageLog.sources", { count: topSources })} ･{" "}
                       {generationTime
                         ? formatTime(generationTime)
                         : t("messageLog.searching")}
@@ -1049,28 +1047,56 @@ export const MessageLog: FC<MessageLogProps> = memo(
                   </div>
                 )}
 
-                {/* Render combined reasoning section if there's any reasoning content and not a deep research message */}
-                {combinedReasoningContent &&
+                {/* Render reasoning parts individually with connected visual elements */}
+                {message.parts.some(
+                  (part) =>
+                    part.type === "reasoning" &&
+                    "reasoning" in part &&
+                    part.reasoning
+                ) &&
                   !isDeepResearchMessage &&
                   hasCompletedReasoning && (
-                    <Collapsible
-                      key={`${message.id}_reasoning_combined`}
-                      defaultOpen={true}
-                      className="mb-3"
-                    >
-                      <CollapsibleTrigger className="mb-0">
+                    <Collapsible key={`${message.id}_reasoning_combined`}>
+                      <CollapsibleTrigger className="mb-0 w-full text-left">
                         <span className="text-muted-foreground">
                           {generationTime
                             ? t("messageLog.reasoned")
                             : t("messageLog.reasoning")}
                         </span>
                       </CollapsibleTrigger>
-                      <CollapsibleContent className="border-l-2 mt-0 pl-4 outline-none data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2">
-                        <MemoizedMarkdown
-                          key={`${message.id}_reasoning_content_combined`}
-                          id={`${message.id}_assistant_reasoning_combined`}
-                          content={combinedReasoningContent}
-                        />
+                      <CollapsibleContent className="outline-none data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 mt-2 space-y-1">
+                        {message.parts
+                          .filter(
+                            (part) =>
+                              part.type === "reasoning" &&
+                              "reasoning" in part &&
+                              part.reasoning
+                          )
+                          .map((part, index, array) => (
+                            <div
+                              key={`${message.id}_reasoning_${index}`}
+                            >
+                              <div className="flex items-start mb-3">
+                                <div className="min-w-8 h-8 bg-primary rounded-full flex items-center justify-center text-primary-foreground mr-3 flex-shrink-0 mt-0.5">
+                                  {index + 1}
+                                </div>
+                                <div className="flex-1">
+                                  <div className="-mt-3">
+                                    <MemoizedMarkdown
+                                      key={`${message.id}_reasoning_content_${index}`}
+                                      id={`${message.id}_assistant_reasoning_${index}`}
+                                      content={
+                                        part.type === "reasoning"
+                                          ? part.reasoning || ""
+                                          : ""
+                                      }
+                                    />
+                                  </div>
+                                </div>
+                              </div>
+
+                            </div>
+                          ))}
                       </CollapsibleContent>
                     </Collapsible>
                   )}
@@ -1078,7 +1104,7 @@ export const MessageLog: FC<MessageLogProps> = memo(
                 {message.parts.map((part, index) => {
                   switch (part.type) {
                     case "reasoning":
-                      // Skip rendering individual reasoning parts as they're now combined
+                      // Skip rendering individual reasoning parts as they're now handled above
                       return null;
 
                     case "text":

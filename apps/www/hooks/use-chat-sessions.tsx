@@ -337,9 +337,7 @@ export function ChatSessionsProvider({ children }: { children: ReactNode }) {
     const debounceTimeout = setTimeout(() => {
       const saveSessions = async () => {
         // Check if there are sessions and modifications
-        console.log("Attempting to save. Modified IDs:", modifiedSessionIds); // Log entry
         if (sessions.length === 0 || modifiedSessionIds.size === 0) {
-            console.log("Save skipped: No sessions or no modifications.");
             return;
         }
 
@@ -352,10 +350,8 @@ export function ChatSessionsProvider({ children }: { children: ReactNode }) {
             const sessionsToSave = sessions.filter(session => currentModifiedIds.has(session.id));
 
             if (sessionsToSave.length === 0) {
-                console.log("Save skipped: No matching sessions found for modified IDs.");
                 return;
             }
-            console.log(`Saving ${sessionsToSave.length} sessions to Firestore:`, sessionsToSave.map(s => ({ id: s.id, title: s.title, msgCount: s.messages.length }))); // Log data being saved
 
             // Process each modified session individually instead of in batch
             for (const session of sessionsToSave) {
@@ -402,7 +398,6 @@ export function ChatSessionsProvider({ children }: { children: ReactNode }) {
               });
               
               await setDoc(docRef, sessionData);
-              console.log(`Successfully saved session ${session.id} to Firestore.`);
               
               // Remove this ID from the modified set once saved
               setModifiedSessionIds(prev => {
@@ -421,7 +416,6 @@ export function ChatSessionsProvider({ children }: { children: ReactNode }) {
               const sessionsToSave = sessions.filter(session => currentModifiedIds.has(session.id));
               if (sessionsToSave.length > 0) {
                 await saveSessionsToIndexedDB(sessionsToSave);
-                console.log(`Saved ${sessionsToSave.length} sessions to IndexedDB (Firestore fallback).`);
                 // Clear ONLY the saved IDs from the main set even on fallback
                 sessionsToSave.forEach(session => {
                   setModifiedSessionIds(prev => {
@@ -450,7 +444,6 @@ export function ChatSessionsProvider({ children }: { children: ReactNode }) {
               
               // Save all sessions back to IndexedDB
               await saveSessionsToIndexedDB(mergedSessions);
-              console.log(`Saved ${sessionsToSave.length} sessions to IndexedDB.`);
               
               // Clear ONLY the saved IDs from the main set
               sessionsToSave.forEach(session => {
@@ -851,7 +844,6 @@ export function ChatSessionsProvider({ children }: { children: ReactNode }) {
         // Optional: Delete existing sessions before importing (clean slate)
         const existingSnapshot = await getDocs(sessionsRef);
         existingSnapshot.docs.forEach(doc => batch.delete(doc.ref));
-        console.log("Cleared existing Firestore sessions before import");
 
         // Add imported sessions
         importedSessions.forEach((session) => {

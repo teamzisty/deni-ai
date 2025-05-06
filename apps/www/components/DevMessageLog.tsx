@@ -239,9 +239,7 @@ const StepsExecution = memo(
         const shouldUpdate = initialSteps.length !== steps.length || 
           ![...newStepIds].every(id => currentStepIds.has(id));
         
-        if (shouldUpdate) {
-          console.log("StepsExecution: Updating steps from props");
-          
+        if (shouldUpdate) {          
           // 既存のステップのIDとステータスをマップ
           const existingStatuses = steps.reduce((acc, step) => {
             if (step.id && (step.status === "completed" || step.status === "failed")) {
@@ -266,13 +264,8 @@ const StepsExecution = memo(
 
     // デバッグ用にステップの状態変化をログ出力
     useEffect(() => {
-      console.log("StepsExecution: Steps updated", 
-        steps.map(s => ({ id: s.id, status: s.status }))
-      );
-      
       // 実行中かどうかを判定
       const executing = steps.some((step) => step.status === "running");
-      console.log("StepsExecution: Execution status", { executing, stepsCount: steps.length });
       
       // 実行状態が変わった場合のみ更新（全てのステップが完了/失敗した場合も実行中フラグは更新）
       setIsExecuting(executing);
@@ -285,13 +278,8 @@ const StepsExecution = memo(
         
         // 既に実行中の場合は何もしない
         if (isExecuting) {
-          console.log("Already executing, ignoring click");
           return;
         }
-        
-        console.log(
-          "DevMessageLog: Execute button clicked, initializing steps"
-        );
 
         // すべてのステップのステータスを初期化
         const initializedSteps = steps.map((step, index) => ({
@@ -307,7 +295,6 @@ const StepsExecution = memo(
         
         // 実行中状態に設定
         setIsExecuting(true);
-        console.log("DevMessageLog: Set executing state to true");
         
         // カスタムイベントを発生させて実行を開始
         const event = new CustomEvent("executeSteps", { 
@@ -316,7 +303,6 @@ const StepsExecution = memo(
           } 
         });
         window.dispatchEvent(event);
-        console.log("DevMessageLog: Dispatched executeSteps event");
         
         // 実行ボタンクリック時にステップリストを展開
         setExpanded(true);
@@ -329,9 +315,7 @@ const StepsExecution = memo(
       const handleStepStatusUpdate = (event: CustomEvent<StepStatusEventDetail>) => {
         const { stepId, status, output } = event.detail;
         if (!stepId) return;
-        
-        console.log(`StepsExecution: Received status update for step ${stepId}: ${status}`);
-        
+                
         setSteps(currentSteps => {
           // IDで該当するステップを探す
           const stepIndex = currentSteps.findIndex(step => step.id === stepId);
@@ -356,7 +340,6 @@ const StepsExecution = memo(
                 ...nextStep,
                 status: "running"
               };
-              console.log(`StepsExecution: Automatically advancing to next step ${nextStep.id}`);
             }
           }
           
@@ -364,10 +347,6 @@ const StepsExecution = memo(
           const allDone = updatedSteps.every(step => 
             step.status === "completed" || step.status === "failed"
           );
-          
-          if (allDone) {
-            console.log("StepsExecution: All steps have completed or failed");
-          }
           
           return updatedSteps;
         });
@@ -699,7 +678,6 @@ export const DevMessageLog: FC<DevMessageLogProps> = memo(
 
       // 非同期処理を1回のみ実行し、処理中に他の再レンダリングの影響を受けないようにする
       const processAnnotations = async () => {
-        console.log("Processing message annotations:", message.id, annotations);
 
         // モデル情報とタイトル情報の処理
         const newWebcontainerActions: any[] = [];

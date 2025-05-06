@@ -55,7 +55,7 @@
     "advancedResearch": "高度なリサーチ",
     "advancedResearchStatus": "高度なリサーチの状態",
     "clickForDetails": "クリックして詳細を表示",
-    "usedSources": "{count} 件のソースを使用",
+    "sources": "{count} 件のソース",
     "activityLog": "詳細なリサーチのログ",
     "searchedFor": "検索:",
     "unknownSearch": "不明な検索",

@@ -93,13 +93,6 @@ export const Canvas: React.FC<CanvasProps> = React.memo(function Canvas({
     setIsVisible(true);
 
     setLanguage(pathname.split("/")[1]);
-
-    // console.log(editor, content, !isJsonString(content), isFirstLoad);
-    // if (editor && content && !isJsonString(content) && isFirstLoad) {
-    //   // If content is not already JSON (BlockNote format), set it as markdown
-    //   editor.pasteMarkdown(content);
-    //   isFirstLoad = false;
-    // }
   }, [content, title, editor, editMode, isFirstLoad]);
 
   // Helper to check if a string is valid JSON
@@ -118,8 +111,6 @@ export const Canvas: React.FC<CanvasProps> = React.memo(function Canvas({
       content: editableContent,
       title: canvasTitle,
     };
-
-    console.log(updatedData);
 
     // 親から渡された更新関数があればそちらを使う
     if (onUpdateCanvas) {
@@ -269,7 +260,6 @@ export const Canvas: React.FC<CanvasProps> = React.memo(function Canvas({
                     const markdown = await editor.blocksToMarkdownLossy(
                       editor.document
                     );
-                    console.log(markdown);  
                     setEditableContent(markdown);
                   }}
                 />

@@ -235,7 +235,8 @@ const Chat: React.FC<ChatProps> = ({
       // Explicitly create plain objects for Firestore compatibility
       const messagesToSave = updatedMessages.map((message) => {
         // 1. Create plain message object
-        const plainMessage: any = { // Use 'any' for flexibility, ensure properties exist
+        const plainMessage: any = {
+          // Use 'any' for flexibility, ensure properties exist
           id: message.id,
           role: message.role,
           content: message.content, // Keep the top-level content
@@ -247,24 +248,27 @@ const Chat: React.FC<ChatProps> = ({
           plainMessage.parts = message.parts.map((part) => {
             const plainPart: any = { type: part.type };
 
-            if (part.type === 'text' && part.text) {
+            if (part.type === "text" && part.text) {
               plainPart.text = part.text;
-            } else if (part.type === 'reasoning' && part.reasoning) {
+            } else if (part.type === "reasoning" && part.reasoning) {
               plainPart.reasoning = part.reasoning; // Include reasoning if present
-            } else if (part.type === 'tool-invocation') {
+            } else if (part.type === "tool-invocation") {
               // Create plain toolInvocation object
               const plainToolInvocation: any = {
                 toolCallId: part.toolInvocation.toolCallId,
                 toolName: part.toolInvocation.toolName,
               };
-               // Copy args if they exist (should be serializable JSON)
+              // Copy args if they exist (should be serializable JSON)
               if (part.toolInvocation.args) {
-                 plainToolInvocation.args = part.toolInvocation.args;
+                plainToolInvocation.args = part.toolInvocation.args;
               }
 
               // Handle state and potentially modified result
               plainToolInvocation.state = part.toolInvocation.state;
-              let resultString = part.toolInvocation.state === 'result' ? part.toolInvocation.result : undefined;
+              let resultString =
+                part.toolInvocation.state === "result"
+                  ? part.toolInvocation.result
+                  : undefined;
 
               // Modify search result string if necessary
               if (
@@ -275,45 +279,53 @@ const Chat: React.FC<ChatProps> = ({
                 try {
                   const result = JSON.parse(resultString);
                   if (result && Array.isArray(result.searchResults)) {
-                    const modifiedSearchResults = result.searchResults.map((searchResult: any) => {
-                      const { content, ...rest } = searchResult; // Remove content
-                      return rest;
-                    });
+                    const modifiedSearchResults = result.searchResults.map(
+                      (searchResult: any) => {
+                        const { content, ...rest } = searchResult; // Remove content
+                        return rest;
+                      }
+                    );
                     // Re-stringify with modified results
-                    resultString = JSON.stringify({ ...result, searchResults: modifiedSearchResults });
+                    resultString = JSON.stringify({
+                      ...result,
+                      searchResults: modifiedSearchResults,
+                    });
                   }
                 } catch (e) {
-                  console.error("Failed to parse/modify search result for saving:", e);
+                  console.error(
+                    "Failed to parse/modify search result for saving:",
+                    e
+                  );
                   // Keep original result string if error occurs
                 }
               }
-               // Add the result string if it exists
+              // Add the result string if it exists
               if (resultString !== undefined) {
-                 plainToolInvocation.result = resultString;
+                plainToolInvocation.result = resultString;
               }
 
               plainPart.toolInvocation = plainToolInvocation;
             }
-             // Add other part types if necessary (e.g., 'step-start', 'step-end')
-             else if (part.type === 'step-start') {
-                 // Include step-start specific data if needed, otherwise just type is fine
-             }
-             // ... other part types like step-end, ui ...
+            // Add other part types if necessary (e.g., 'step-start', 'step-end')
+            else if (part.type === "step-start") {
+              // Include step-start specific data if needed, otherwise just type is fine
+            }
+            // ... other part types like step-end, ui ...
 
             return plainPart;
           });
         } else {
-           // Ensure parts array exists even if empty, or handle null case if preferred
-           plainMessage.parts = [];
+          // Ensure parts array exists even if empty, or handle null case if preferred
+          plainMessage.parts = [];
         }
 
         // 3. Process Annotations -> Plain Annotations
         if (message.annotations && message.annotations.length > 0) {
           // Ensure annotations are plain objects
           plainMessage.annotations = message.annotations
-            .map(annotation => {
+            .map((annotation) => {
               // Check if annotation is a non-null object before spreading
-              if (annotation && typeof annotation === 'object') {
+              if (annotation && typeof annotation === "object") {
                 return { ...annotation };
               }
               // Return null or handle non-object annotations if necessary
@@ -322,20 +334,23 @@ const Chat: React.FC<ChatProps> = ({
             })
             .filter(Boolean); // Filter out any null values from the map
         } else {
-           plainMessage.annotations = []; // Ensure array exists
+          plainMessage.annotations = []; // Ensure array exists
         }
 
-         // Add revisionId if it exists
-         if ((message as any).revisionId) {
-            plainMessage.revisionId = (message as any).revisionId;
-         }
-         
-         // Add experimental_attachments if it exists and is serializable
-         if (message.experimental_attachments && message.experimental_attachments.length > 0) {
-             // Assuming attachments are already plain objects with url/contentType
-             plainMessage.experimental_attachments = message.experimental_attachments.map(att => ({ ...att }));
-         }
+        // Add revisionId if it exists
+        if ((message as any).revisionId) {
+          plainMessage.revisionId = (message as any).revisionId;
+        }
 
+        // Add experimental_attachments if it exists and is serializable
+        if (
+          message.experimental_attachments &&
+          message.experimental_attachments.length > 0
+        ) {
+          // Assuming attachments are already plain objects with url/contentType
+          plainMessage.experimental_attachments =
+            message.experimental_attachments.map((att) => ({ ...att }));
+        }
 
         // Return the fully plain message object
         return plainMessage as UIMessage; // Cast back to UIMessage for consistency if needed downstream
@@ -349,7 +364,9 @@ const Chat: React.FC<ChatProps> = ({
 
       // Update the session in the parent/storage
       updateSession(sessionId, updatedSessionData);
-      console.log("Chat Component: Session updated via debounced call (plain objects, search content removed).");
+      console.log(
+        "Chat Component: Session updated via debounced call (plain objects, search content removed)."
+      );
     },
     1000 // Debounce time
   );
@@ -449,7 +466,10 @@ const Chat: React.FC<ChatProps> = ({
 
   const handleResearchDepthChange = useCallback((depth: ResearchDepth) => {
     setResearchDepth(depth);
-    logger.info("handleResearchDepthChange", `Research depth changed to ${depth}`);
+    logger.info(
+      "handleResearchDepthChange",
+      `Research depth changed to ${depth}`
+    );
   }, []);
 
   const baseSendMessage = async (
@@ -475,7 +495,6 @@ const Chat: React.FC<ChatProps> = ({
         newAvailableTools.push("advancedResearch"); // Add tool for advanced research
         newAvailableTools.push("researchStatus"); // Add status reporting tool
       }
-
     }
     if (canvasEnabled) newAvailableTools.push("canvas");
     setAvailableTools(newAvailableTools);
@@ -712,6 +731,10 @@ const Chat: React.FC<ChatProps> = ({
     }
   };
 
+  useEffect(() => {
+    console.log(status, "Status changed to: ", status);
+  }, [status]); // Add status as dependency
+
   // --- Render ---
   return (
     <>
@@ -744,19 +767,17 @@ const Chat: React.FC<ChatProps> = ({
                 error={error}
                 onRegenerate={handleRegenerate} // Pass handler
               />
-              {status === "submitted" &&
-                messages.length > 0 &&
-                !messages[messages.length - 1]?.content && (
-                  <div className="flex w-full message-log visible">
-                    <div className="p-2 my-2 rounded-lg text-muted-foreground w-full">
-                      <div className="ml-3 animate-pulse">
-                        {modelDescriptions[model]?.reasoning
-                          ? t("messageLog.reasoning")
-                          : t("messageLog.thinking")}
-                      </div>
-                    </div>
+              {status === "submitted" || status === "streaming" && !messages[messages.length - 1]?.content && (
+                <div className="flex w-full message-log visible">
+                  <div className="p-2 my-2 rounded-lg text-muted-foreground w-full">
+                    <span className="animate-pulse">
+                      {modelDescriptions[model]?.reasoning
+                        ? t("messageLog.reasoning")
+                        : t("messageLog.thinking")}
+                    </span>
                   </div>
-                )}
+                </div>
+              )}
               {error && (
                 <div className="flex w-full message-log visible">
                   <div className="p-2 my-2 rounded-lg text-muted-foreground w-full">
