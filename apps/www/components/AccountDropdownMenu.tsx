@@ -3,6 +3,7 @@
 import { Button } from "@workspace/ui/components/button";
 import {
   Code2,
+  CrownIcon,
   Earth,
   FolderSync,
   LogOut,
@@ -28,13 +29,17 @@ import { toast } from "sonner";
 import { buildInfo } from "@/lib/version";
 import { useTranslations } from "next-intl";
 import { useSettingsDialog } from "@/context/SettingsDialogContext";
+import { useRouter } from "next/navigation";
 
 // Helper functions to truncate email and name
 const truncateEmail = (email: string | null | undefined): string => {
   if (!email) return "";
   const [username, domain] = email.split("@");
   if (!domain) return email;
-  const truncatedUsername = username && username.length > 6 ? `${username.substring(0, 6)}...` : username || "";
+  const truncatedUsername =
+    username && username.length > 6
+      ? `${username.substring(0, 6)}...`
+      : username || "";
   return `${truncatedUsername}@${domain}`;
 };
 
@@ -54,6 +59,7 @@ export const AccountDropdownMenu = memo(
     const [privacyMode, setPrivacyMode] = useState(false);
     const t = useTranslations();
     const { openDialog } = useSettingsDialog();
+    const router = useRouter();
 
     useEffect(() => {
       // 初期値の設定
@@ -181,10 +187,8 @@ export const AccountDropdownMenu = memo(
               <Settings />
               {t("accountMenu.userSettings")}
             </DropdownMenuItem>
-          </DropdownMenuGroup>
-
+          </DropdownMenuGroup>{" "}
           <DropdownMenuSeparator />
-
           <DropdownMenuGroup>
             <DropdownMenuItem asChild>
               <Link href="/dev" className="w-full">
@@ -193,7 +197,6 @@ export const AccountDropdownMenu = memo(
               </Link>
             </DropdownMenuItem>
           </DropdownMenuGroup>
-
           <DropdownMenuSeparator />
           <DropdownMenuGroup>
             <DropdownMenuItem asChild>
@@ -214,9 +217,7 @@ export const AccountDropdownMenu = memo(
               </Link>
             </DropdownMenuItem>
           </DropdownMenuGroup>
-
           <DropdownMenuSeparator />
-
           <DropdownMenuGroup>
             <DropdownMenuItem onClick={handleAuth}>
               <LogOut /> {t("accountMenu.logout")}

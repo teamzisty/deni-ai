@@ -318,16 +318,6 @@ const DevChat: React.FC<DevChatProps> = memo(({
               "DevChat: steps annotation received. Execution is disabled until user clicks the run‑all button."
             );
           }
-
-          // （任意）run コマンド等のログ出力はそのまま
-          if (
-            annotation.webcontainerAction?.action === "run" &&
-            annotation.webcontainerAction.command
-          ) {
-            console.log(
-              `Command execution initiated: ${annotation.webcontainerAction.command}`
-            );
-          }
         });
       }
     }
@@ -660,7 +650,6 @@ const DevChat: React.FC<DevChatProps> = memo(({
   // DevChat 本体内 (Hooks 定義より下に追加) ----------------------------
   /** 「順番に実行」ボタンから渡ってきた steps を実行 */
   const handleExecuteSteps = useCallback((steps: any[]) => {
-    console.log("DevChat: Executing steps", steps);
     const event = new CustomEvent("executeSteps", { detail: { steps } });
     window.dispatchEvent(event);
   }, []);

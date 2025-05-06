@@ -110,17 +110,6 @@ export default function DevChatPage() {
       });
     },
   });
-
-  // Log state on each render for debugging
-  console.log("DevChatPage Render:", {
-    id,
-    sessionsLoading,
-    authLoading,
-    messages: messages, // Log current messages array
-    activeSessionData: activeSessionData, // Log current session data
-    status, // Log chat status
-  });
-
   // WebContainerのログ表示関数をメモ化
   const handleLogMessage = useCallback((log: TerminalLogEntry) => {
     // Check if this message is identical to the last one in terminalLogs
@@ -136,7 +125,6 @@ export default function DevChatPage() {
         lastLog.className === log.className &&
         lastLog.html === log.html
       ) {
-        console.log("Preventing duplicate terminal message:", log.text);
         return prevLogs; // Return unchanged logs
       }
 
@@ -366,7 +354,6 @@ export default function DevChatPage() {
                 pattern.test(data.trim())
               );
               if (isPrompt) {
-                console.log("Detected input prompt:", data);
                 setIsWaitingForInput(true);
               }
             },
@@ -412,14 +399,6 @@ export default function DevChatPage() {
   // executeStepsイベントハンドラー - WebContainerでステップを実行する関数
   const executeSteps = useCallback(
     async (steps: any[]) => {
-      console.log("DevChatPage: executeSteps handler triggered", {
-        steps: steps.map((s) => ({
-          id: s.id,
-          title: s.title,
-          status: s.status,
-        })),
-      });
-
       if (!steps || !steps.length) {
         console.warn("DevChatPage: No steps to execute");
         return;
@@ -450,7 +429,6 @@ export default function DevChatPage() {
           },
         });
         window.dispatchEvent(event);
-        console.log(`DevChatPage: Step ${stepId} status updated to ${status}`);
       };
 
       // ステップを順番に実行
@@ -579,9 +557,6 @@ export default function DevChatPage() {
                         },
                       })
                     );
-
-                    // プロセスはバックグラウンドで継続実行
-                    console.log("Development server started in background");
                   } catch (err) {
                     // エラーは表示するが次のステップには進む
                     console.error("Error starting development server:", err);
@@ -760,7 +735,6 @@ You can view the application in the browser when server is ready.`
   // executeStepsイベントリスナーの設定
   useEffect(() => {
     const handleExecuteStepsEvent = (event: any) => {
-      console.log("DevChatPage: executeSteps event received", event.detail);
       if (event.detail && event.detail.steps) {
         executeSteps(event.detail.steps);
       }
@@ -861,7 +835,6 @@ You can view the application in the browser when server is ready.`
 
         // Handle process exit
         shellProcess.exit.then((exitCode) => {
-          console.log("Shell exited with code:", exitCode);
           setActiveProcess(null);
           setIsWaitingForInput(false);
           handleLogMessage({
@@ -925,7 +898,6 @@ You can view the application in the browser when server is ready.`
 
           // Handle process exit
           shellProcess.exit.then((exitCode) => {
-            console.log("Shell exited with code:", exitCode);
             setActiveProcess(null);
             setIsWaitingForInput(false);
             handleLogMessage({
@@ -961,7 +933,6 @@ You can view the application in the browser when server is ready.`
 
     // server-readyイベントのリスナーを設定
     const handleServerReady = (port: number, url: string) => {
-      console.log(`WebContainer server ready on port ${port}, URL: ${url}`);
       handleLogMessage({
         text: `Server ready on port ${port}`,
         className: "text-green-500",
@@ -975,7 +946,6 @@ You can view the application in the browser when server is ready.`
 
     // WebContainerが準備完了したときのイベント (onBoot)
     instance.on("port", () => {
-      console.log("WebContainer ports are ready");
       // Start shell when WebContainer is ready
       initializeShell();
     });
@@ -993,7 +963,6 @@ You can view the application in the browser when server is ready.`
   useEffect(() => {
     const handleStepStatusEvent = (event: CustomEvent<any>) => {
       const { stepId, status, output } = event.detail;
-      console.log(`Step ${stepId} status changed to ${status}`, { output });
 
       // 完了または失敗時にはファイル構造を更新
       if (status === "completed" || status === "failed") {
@@ -1028,27 +997,11 @@ You can view the application in the browser when server is ready.`
       );
 
       if (currentMessagesString !== storedMessagesString) {
-        console.log(
-          "DevChatPage: Message content changed, attempting to save session...",
-          {
-            sessionId: activeSessionData.id,
-            messageCount: messages.length,
-          }
-        );
         updateDevSession(activeSessionData.id, {
           ...activeSessionData,
           messages: messages, // Save the current messages from useChat
         });
-      } else {
-        console.log(
-          "DevChatPage: Message content identical to stored, skipping save."
-        );
       }
-    } else {
-      console.log("DevChatPage: Skipping message save.", {
-        hasSession: !!activeSessionData,
-        hasMessages: messages && messages.length > 0,
-      });
     }
     // Depend on the JSON string of messages to ensure the effect runs when content changes
   }, [JSON.stringify(messages), activeSessionData, updateDevSession]);
@@ -1061,36 +1014,20 @@ You can view the application in the browser when server is ready.`
     messages: [],
   };
 
-  // セッション更新ハンドラ（Devではnoop）
   const handleUpdate = (_id: string, _session: ChatSession) => {
-    console.log("Dev session update:", _id, _session);
+    if (_id === id) {
+      setMessages(_session.messages || []);
+    }
   };
 
   // Effect to load session data when ID changes or sessions finish loading
   useEffect(() => {
-    if (!id || sessionsLoading) {
-      console.log("DevChatPage: Waiting for ID or sessions to load...", {
-        id,
-        sessionsLoading,
-      });
-      return;
-    }
-    console.log(
-      "DevChatPage: ID and sessions loaded, attempting to load session.",
-      { id }
-    );
+    if (!id || sessionsLoading) return;
 
     const loadSession = async () => {
       let session = getDevSession(id);
-      console.log("DevChatPage: getDevSession result:", session);
       if (session) {
-        console.log(`DevChatPage: Loading existing session: ${id}`, session);
-        setActiveSessionData(session);
         const messagesToLoad = session.messages || [];
-        console.log(
-          "DevChatPage: Setting messages for existing session:",
-          messagesToLoad
-        );
         setMessages(messagesToLoad);
       }
     };
@@ -1101,17 +1038,13 @@ You can view the application in the browser when server is ready.`
   // Get auth token when user changes
   useEffect(() => {
     if (authLoading) {
-      console.log("DevChatPage: Auth Loading...");
       return;
     }
     if (auth && auth.currentUser) {
-      console.log("DevChatPage: Authenticated with Firebase Auth");
       auth.currentUser.getIdToken().then(setAuthToken);
     } else if (user) {
-      console.log("DevChatPage: Authenticated with NextAuth");
       user.getIdToken().then(setAuthToken);
     } else {
-      console.log("DevChatPage: Not authenticated");
       setAuthToken(null);
     }
   }, [user, auth, authLoading]);
@@ -1119,10 +1052,6 @@ You can view the application in the browser when server is ready.`
   // メッセージアノテーション処理
   const handleAnnotation = (annotation: any) => {
     if (annotation?.webcontainerAction) {
-      console.log(
-        "WebContainer action received:",
-        annotation.webcontainerAction
-      );
       setLastWebContainerAction(annotation.webcontainerAction);
     }
   };

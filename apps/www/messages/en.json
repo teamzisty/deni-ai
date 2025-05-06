@@ -45,7 +45,7 @@
     "deepResearchStatus": "Deep Research Status",
     "shallowResearchStatus": "Shallow Research Status",
     "advancedResearchStatus": "Advanced Research Status",
-    "usedSources": "Used {count} sources",
+    "sources": "{count} sources",
     "clickForDetails": "Click for details",
     "activityLog": "Deep Research Log",
     "searchedFor": "Searched for:",
