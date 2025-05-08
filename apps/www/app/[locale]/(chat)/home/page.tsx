@@ -317,20 +317,20 @@ const ChatApp: React.FC = () => {
 
           {/* Example Questions */}
           <div className="mt-2 space-y-3 max-w-lg mx-auto">
-            <ExampleQuestion onClick={() => setInputValue("What is Deni AI?")}>
-              What is Deni AI?
+            <ExampleQuestion onClick={() => setInputValue(t("home.example1"))}>
+              {t("home.example1")}
             </ExampleQuestion>
             <ExampleQuestion
-              onClick={() => setInputValue("Generate image with cute cat")}
+              onClick={() => setInputValue(t("home.example2"))}
             >
-              Generate image with cute cat
+              {t("home.example2")}
             </ExampleQuestion>
             <ExampleQuestion
               onClick={() =>
-                setInputValue('Search the Latest News on US')
+                setInputValue(t("home.example3"))
               }
             >
-              Search the Latest News on US
+              {t("home.example3")}
             </ExampleQuestion>
           </div>
 

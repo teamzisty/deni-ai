@@ -132,7 +132,7 @@ const ModelItem = memo(
         <div className="flex items-center w-full justify-between">
           <div className="flex items-center gap-2">
             <span className="text-base">{modelDescription.displayName}</span>
-            <EasyTip content={modelDescription.description}>
+            <EasyTip content={t(`modelDescriptions.${model.replace(".", "-")}`)}>
               <Info size={16} />
             </EasyTip>
           </div>
@@ -376,7 +376,7 @@ export const ModelSelector = memo(function ModelSelector({
                 <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-2">
                   {filteredModels.map((model) => (
                     <EasyTip
-                      content={modelDescriptions[model.key]?.description}
+                      content={t(`modelDescriptions.${model.key.replace(".", "-")}`)}
                       key={model.key}
                     >
                       <ModelItem

@@ -72,11 +72,11 @@ export default function Home(): ReactNode {
                       Try out the official Deni AI instance at
                     </Translate>{" "}
                     <a
-                      href="https://deni-ai.vercel.app/"
+                      href="https://deniai.app/"
                       target="_blank"
                       rel="noopener noreferrer"
                     >
-                      deni-ai.vercel.app
+                      deniai.app
                     </a>
                   </p>
                 </div>

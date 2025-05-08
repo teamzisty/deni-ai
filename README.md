@@ -6,12 +6,13 @@
 <a href="https://github.com/raicdev/deni-ai" ><img alt="Preview CI" src="https://img.shields.io/github/deployments/raicdev/deni-ai/preview?style=for-the-badge&label=Preview"></a>
 <a href="https://github.com/raicdev/deni-ai" ><img alt="Production CI" src="https://img.shields.io/github/deployments/raicdev/deni-ai/production?style=for-the-badge&label=Production"></a>
 
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fraicdev%2Fdeni-ai&env=OPENAI_API_KEY,ANTHROPIC_API_KEY,NEXT_PUBLIC_FIREBASE_API_KEY,GOOGLE_API_KEY,XAI_API_KEY,GROQ_API_KEY,OPENROUTER_API_KEY,FIREBASE_SERVICE_ACCOUNT_KEY,BRAVE_SEARCH_API_KEY,UPLOADTHING_TOKEN,NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,NEXT_PUBLIC_FIREBASE_PROJECT_ID,NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN&project-name=deni-ai&repository-name=deni-ai)
 
 Deni AI is a versatile chat application that allows interaction with multiple AI models. Built with Next.js and Firebase, it provides an intuitive user interface.
 
 ## Getting Started
 
-To getting started, visit [Docs](https://ai-docs.raic.jp/docs/).
+To getting started, visit [Docs](https://docs.deniai.app/docs/getting-started).
 
 ## Key Features
 
@@ -22,19 +23,9 @@ To getting started, visit [Docs](https://ai-docs.raic.jp/docs/).
 - 🖼️ **Image Upload**: Share images during chat
 - 📱 **Responsive Design**: Optimized for mobile and desktop
 
-## Credit
-
-- [Vercel](https://vercel.com) - Deni AI (+ Docs) Hosting service
-- [Next.js](https://nextjs.org/) - React framework for server-rendered applications
-- [Tailwind CSS](https://tailwindcss.com/) - Utility-first CSS framework
-- [Firebase](https://firebase.google.com/) - Backend-as-a-Service platform
-- [Uploadthing](https://uploadthing.com/) - Image upload service
-<!-- - [voids.top](https://voids.top/) - AI model provider -->
-
 ## Tech Stack
 
-- **Frontend**: Next.js, React, TypeScript
-- **AI SDK**: Vercel AI SDK
+- **Frontend**: Next.js, React, TypeScript, Vercel AI SDK
 - **Styling**: Tailwind CSS
 - **Backend**: Next.js API Routes
 - **Authentication**: Firebase Authentication
@@ -57,5 +48,5 @@ A: Please use the [Issue Tracker](https://github.com/raicdev/deni-ai/issues) to 
 
 ## Contributing
 
-For more information on contributing to this project, please refer to the [Contribution Guide](https://ai-docs.raic.jp/docs/contribution/setup-repository).
+For more information on contributing to this project, please refer to the [Contribution Guide](https://docs.deniai.app/docs/contribution/setup-repository).
 
