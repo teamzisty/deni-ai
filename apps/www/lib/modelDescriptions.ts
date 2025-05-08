@@ -3,7 +3,6 @@ export interface modelDescriptionType {
 }
 export interface ImodelDescriptionType {
   displayName: string;
-  description?: string;
   toolDisabled?: boolean;
   reasoningEffort?: reasoningEffortType[];
   vision?: boolean;
@@ -210,12 +209,10 @@ export type reasoningEffortType = "low" | "medium" | "high";
 //   },
 // };
 
-
 export const modelDescriptions: modelDescriptionType = {
   "openai/gpt-4.1-2025-04-14": {
     displayName: "GPT-4.1",
     knowledgeCutoff: "2024/06",
-    description: "OpenAI's flagship model for complex tasks.",
     defaultVisibility: true,
     vision: true,
     type: "ChatGPT",
@@ -223,7 +220,6 @@ export const modelDescriptions: modelDescriptionType = {
   "openai/gpt-4.1-mini-2025-04-14": {
     displayName: "GPT-4.1 mini",
     knowledgeCutoff: "2024/06",
-    description: "A smaller GPT-4.1 model with good balance.",
     defaultVisibility: true,
     fast: true,
     vision: true,
@@ -232,7 +228,6 @@ export const modelDescriptions: modelDescriptionType = {
   "openai/gpt-4.1-nano-2025-04-14": {
     displayName: "GPT-4.1 nano",
     knowledgeCutoff: "2024/06",
-    description: "The fastest, most cost-effective GPT-4.1 model.",
     defaultVisibility: true,
     fast: true,
     vision: true,
@@ -241,7 +236,6 @@ export const modelDescriptions: modelDescriptionType = {
   "openai/gpt-4o-2024-11-20": {
     displayName: "GPT-4o",
     knowledgeCutoff: "2023/10",
-    description: "Versatile, high-intelligence flagship model.",
     defaultVisibility: true,
     vision: true,
     type: "ChatGPT",
@@ -249,7 +243,6 @@ export const modelDescriptions: modelDescriptionType = {
   "openai/gpt-4o-mini-2024-07-18": {
     displayName: "GPT-4o mini",
     knowledgeCutoff: "2023/10",
-    description: "A fast, affordable small model for focused tasks.",
     vision: true,
     fast: true,
     type: "ChatGPT",
@@ -257,7 +250,6 @@ export const modelDescriptions: modelDescriptionType = {
   "openai/o4-mini-2025-04-16": {
     displayName: "o4-mini",
     knowledgeCutoff: "2024/06",
-    description: "Optimized for fast, efficient reasoning.",
     reasoningEffort: ["low", "medium", "high"],
     defaultVisibility: true,
     reasoning: true,
@@ -267,7 +259,6 @@ export const modelDescriptions: modelDescriptionType = {
   "openai/o3-2025-04-16": {
     displayName: "o3",
     knowledgeCutoff: "2024/06",
-    description: "High-performance model for complex reasoning tasks.",
     defaultVisibility: true,
     reasoningEffort: ["low", "medium", "high"],
     reasoning: true,
@@ -278,23 +269,26 @@ export const modelDescriptions: modelDescriptionType = {
     displayName: "Gemini 2.5 Flash Preview",
     knowledgeCutoff: "2025/01",
     fast: true,
-    description: "Best model for fast performance on complex tasks.",
+    defaultVisibility: true,
+    vision: true,
+    type: "Gemini",
+  },
+  "google/gemini-2.5-pro-preview-05-06": {
+    displayName: "Gemini 2.5 Pro",
+    knowledgeCutoff: "2025/01",
     defaultVisibility: true,
     vision: true,
     type: "Gemini",
   },
   "google/gemini-2.5-pro-preview-03-25": {
-    displayName: "Gemini 2.5 Pro",
+    displayName: "Gemini 2.5 Pro (Old)",
     knowledgeCutoff: "2025/01",
-    description: "Best model for coding and complex prompts.",
-    defaultVisibility: true,
     vision: true,
     type: "Gemini",
   },
   "google/gemini-2.0-flash-001": {
     displayName: "Gemini 2.0 Flash",
     knowledgeCutoff: "2024/06",
-    description: "A good model at inteligence, speed, cost, and context window.",
     fast: true,
     vision: true,
     type: "Gemini",
@@ -302,7 +296,6 @@ export const modelDescriptions: modelDescriptionType = {
   "google/gemini-2.0-flash-lite-001": {
     displayName: "Gemini 2.0 Flash Lite",
     knowledgeCutoff: "2024/06",
-    description: "Leaving in May 10, 2025.",
     fast: true,
     vision: true,
     type: "Gemini",
@@ -310,7 +303,6 @@ export const modelDescriptions: modelDescriptionType = {
   "google/gemini-1.5-pro": {
     displayName: "Gemini 1.5 Pro",
     knowledgeCutoff: "2023/11",
-    description: "Leaving in May 10, 2025.",
     vision: true,
     fast: true,
     type: "Gemini",
@@ -318,7 +310,6 @@ export const modelDescriptions: modelDescriptionType = {
   "anthropic/claude-3-7-sonnet-20250219": {
     displayName: "Claude 3.7 Sonnet",
     knowledgeCutoff: "2024/10",
-    description: "Most intelligent model to date, first hybrid reasoning model.",
     defaultVisibility: true,
     vision: true,
     type: "Claude",
@@ -326,7 +317,6 @@ export const modelDescriptions: modelDescriptionType = {
   "anthropic/claude-3-7-sonnet-20250219-reasoning": {
     displayName: "Claude 3.7 Sonnet (Reasoning)",
     knowledgeCutoff: "2024/10",
-    description: "Claude 3.7 Sonnet with extended reasoning ability.",
     defaultVisibility: true,
     vision: true,
     type: "Claude",
@@ -334,7 +324,6 @@ export const modelDescriptions: modelDescriptionType = {
   "groq/deepseek-r1-distill-llama-70b": {
     displayName: "DeepSeek R1 (Distill)",
     knowledgeCutoff: "2024/07",
-    description: "A first-generation reasoning model.",
     defaultVisibility: true,
     fast: true,
     reasoning: true,
@@ -343,14 +332,12 @@ export const modelDescriptions: modelDescriptionType = {
   "openrouter/deepseek/deepseek-chat": {
     displayName: "DeepSeek V3",
     knowledgeCutoff: "2023/10",
-    description: "A strong MoE language model (671B total / 37B active parameters).",
     fast: true,
     toolDisabled: true,
     type: "DeepSeek",
   },
   "openrouter/x-ai/grok-3-beta": {
     displayName: "Grok 3 Beta (OpenRouter)",
-    description: "Leaving in May 10, 2025.",
     vision: true,
     reasoning: true,
     knowledgeCutoff: "-",
@@ -358,7 +345,6 @@ export const modelDescriptions: modelDescriptionType = {
   },
   "openrouter/x-ai/grok-3-mini-beta": {
     displayName: "Grok 3 Mini Beta (OpenRouter)",
-    description: "Leaving in May 10, 2025.",
     vision: true,
     reasoning: true,
     toolDisabled: true,
@@ -367,14 +353,12 @@ export const modelDescriptions: modelDescriptionType = {
   },
   "xai/grok-3-beta": {
     displayName: "Grok 3 Beta",
-    description: "Advanced model with superior reasoning and extensive knowledge.",
     vision: true,
     defaultVisibility: true,
     type: "Grok",
   },
   "xai/grok-3-mini-beta": {
     displayName: "Grok 3 Mini Beta",
-    description: "A lightweight model that thinks before responding.",
     vision: true,
     reasoning: true,
     defaultVisibility: true,

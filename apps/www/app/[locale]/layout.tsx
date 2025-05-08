@@ -26,17 +26,17 @@ export async function generateMetadata() {
     openGraph: {
       title: t("layout.title"),
       description: t("layout.description"),
-      url: "https://deni-ai.vercel.app",
+      url: "https://deniai.app",
       siteName: "Deni AI",
       images: [
         {
-          url: "https://deni-ai.vercel.app/banner.png",
+          url: "https://deniai.app/banner.png",
           width: 800,
           height: 600,
         },
       ],
     },
-    metadataBase: new URL("https://deni-ai.vercel.app"),
+    metadataBase: new URL("https://deniai.app"),
     alternates: {
       canonical: "/",
       languages: {

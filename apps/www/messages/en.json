@@ -461,13 +461,9 @@
   "home": {
     "title": "How can I help you today?",
     "subtitle": "Create a new chat or select a conversation from the sidebar on the left to start chatting!",
-    "newChat": "Create New Chat",
-    "creating": "Creating...",
-    "clearHistory": "Clear History",
-    "clearHistoryConfirmTitle": "Clear Chat History?",
-    "clearHistoryConfirmDescription": "This action cannot be undone. All chat history will be permanently deleted.",
-    "clearHistoryConfirm": "Clear",
-    "historyCleared": "Chat history cleared"
+    "example1": "What is Deni AI?",
+    "example2": "Generate an image of a cute cat",
+    "example3": "Tell me the latest news in the US"
   },
   "login": {
     "title": "Login",
@@ -1376,5 +1372,28 @@
     "lowTip": "Fast but shallow reasoning",
     "mediumTip": "Balanced reasoning",
     "highTip": "Deep reasoning (takes more time)"
+  },
+  "modelDescriptions": {
+    "openai/gpt-4-1-2025-04-14": "OpenAI's flagship model for complex tasks.",
+    "openai/gpt-4-1-mini-2025-04-14": "A smaller GPT-4-1 model with good balance.",
+    "openai/gpt-4-1-nano-2025-04-14": "The fastest, most cost-effective GPT-4-1 model.",
+    "openai/gpt-4o-2024-11-20": "Versatile, high-intelligence flagship model.",
+    "openai/gpt-4o-mini-2024-07-18": "A fast, affordable small model for focused tasks.",
+    "openai/o4-mini-2025-04-16": "Optimized for fast, efficient reasoning.",
+    "openai/o3-2025-04-16": "High-performance model for complex reasoning tasks.",
+    "google/gemini-2-5-flash-preview-04-17": "Best model for fast performance on complex tasks.",
+    "google/gemini-2-5-pro-preview-05-06": "Best model for coding and complex prompts.",
+    "google/gemini-2-5-pro-preview-03-25": "Leaving in May 10, 2025.",
+    "google/gemini-2-0-flash-001": "A good model at intelligence, speed, cost, and context window.",
+    "google/gemini-2-0-flash-lite-001": "Leaving in May 10, 2025.",
+    "google/gemini-1-5-pro": "Leaving in May 10, 2025.",
+    "anthropic/claude-3-7-sonnet-20250219": "Most intelligent model to date, first hybrid reasoning model.",
+    "anthropic/claude-3-7-sonnet-20250219-reasoning": "Claude 3-7 Sonnet with extended reasoning ability.",
+    "groq/deepseek-r1-distill-llama-70b": "A first-generation reasoning model.",
+    "openrouter/deepseek/deepseek-chat": "A strong MoE language model (671B total  active parameters).",
+    "openrouter/x-ai/grok-3-beta": "Leaving in May 10, 2025.",
+    "openrouter/x-ai/grok-3-mini-beta": "Leaving in May 10, 2025.",
+    "xai/grok-3-beta": "Advanced model with superior reasoning and extensive knowledge.",
+    "xai/grok-3-mini-beta": "A lightweight model that thinks before responding."
   }
 }

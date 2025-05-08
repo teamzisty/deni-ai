@@ -21,7 +21,7 @@ Deni AI is a powerful AI assistant platform designed to help you with various ta
 
 You have several options to use Deni AI:
 
-1. **Use the Official Instance**: Access the [official instance](https://deni-ai.vercel.app/)
+1. **Use the Official Instance**: Access the [official instance](https://deniai.app/)
 2. **Create Your Own Instance**: Set up your personal instance by following our [setup guide](/docs/setup-guide/create-a-instance)
 3. **Use Other Instances**: Connect to instances provided by others
 

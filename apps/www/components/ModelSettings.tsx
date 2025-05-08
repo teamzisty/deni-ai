@@ -259,7 +259,6 @@ export default function ModelSettings() {
                   type,
                   fast,
                   reasoning,
-                  description,
                   vision,
                 },
               ]) => (
@@ -281,11 +280,11 @@ export default function ModelSettings() {
                           {displayName}
                         </h3>
                         <div className="flex items-center gap-1">
-                          {description.includes("Leaving") && (
+                          {t(`modelDescriptions.${id.replace(".", "-")}`).includes("Leaving") || t(`modelDescriptions.${id.replace(".", "-")}`).includes("廃止予定") && (
                             <DoorOpen size={16} className="text-red-400" />
                           )}
                           <span className="text-xs sm:text-sm text-muted-foreground">
-                            {description}
+                            {t(`modelDescriptions.${id.replace(".", "-")}`)}
                           </span>
                         </div>
                       </div>
