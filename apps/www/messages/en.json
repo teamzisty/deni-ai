@@ -10,7 +10,8 @@
     "app": "App",
     "sourceCode": "Source Code",
     "privacyPolicy": "Privacy Policy",
-    "termsOfService": "Terms of Service"
+    "termsOfService": "Terms of Service",
+    "createBranch": "Create Branch"
   },
   "analyticsConsent": {
     "title": "Enable Analytics?",
@@ -60,7 +61,11 @@
     "untitledCanvas": "Untitled Canvas",
     "canvasUpdateSuccess": "Canvas update successful",
     "canvasUpdateFailed": "Canvas update failed",
-    "updatingCanvas": "Updating canvas..."
+    "updatingCanvas": "Updating canvas...",
+    "createBranchFromMessage": "Create Branch from this Message",
+    "createBranchFromMessageDescription": "Enter a name for the new branch that will be created from this message.",
+    "branchName": "Branch Name",
+    "branchNamePlaceholder": "e.g., My New Idea"
   },
   "devMessageLog": {
     "writeAction": "File write: {path}",
@@ -100,6 +105,20 @@
   "headerArea": {
     "ready": "Ready",
     "themeSwitch": "Switch theme"
+  },
+  "createBranchModal": {
+    "title": "Create New Branch",
+    "description": "Create a new branch from '{parentTitle}'.",
+    "label": {
+      "branchName": "Branch Name"
+    },
+    "placeholder": {
+      "branchName": "Enter branch name"
+    },
+    "error": {
+      "nameRequired": "Branch name is required.",
+      "creationFailed": "Failed to create branch."
+    }
   },
   "settings": {
     "title": "Settings",
@@ -329,6 +348,20 @@
       "description": "Toggle the visibility of models in the chat model list.",
       "filter": "Filter",
       "modelTypes": "Model Types",
+      "createBranchModal": {
+        "title": "Create New Branch",
+        "description": "Create a new branch from '{parentTitle}'.",
+        "label": {
+          "branchName": "Branch Name"
+        },
+        "placeholder": {
+          "branchName": "Enter branch name"
+        },
+        "error": {
+          "nameRequired": "Branch name is required.",
+          "creationFailed": "Failed to create branch."
+        }
+      },
       "features": "Features",
       "reset": "Reset",
       "showing": "showing",
@@ -360,8 +393,48 @@
     "thisWeek": "This Week",
     "thisMonth": "This Month",
     "older": "Older",
-    "chat": "Chat Sessions",
-    "searchChats": "Search chats..."
+    "chat": "Chat",
+    "searchChats": "Search chats...",
+    "branchTooltipPrefix": "Branch of {parentTitle}",
+    "branchPrefix": "{parentTitle}",
+    "hubs": "Hubs",
+    "myHubs": "My Hubs",
+    "hubsDescription": "Organize your conversations into hubs"
+  },
+  "Hubs": {
+    "title": "Hubs (Beta)",
+    "createNew": "Create New Hub",
+    "noHubsYet": "No Hubs Yet",
+    "noHubsDescription": "Create your first hub to organize your conversations into collections. Hubs help you group related chats together.",
+    "createDescription": "Enter a name and optional description for your new hub.",
+    "name": "Name",
+    "description": "Description",
+    "nameRequired": "Hub name is required.",
+    "chatAddedToHub": "Chat added to Hub",
+    "created": "Hub created successfully.",
+    "updated": "Hub updated successfully.",
+    "deleted": "Hub deleted successfully.",
+    "editTitle": "Edit Hub",
+    "editDescription": "Update the name and description of this hub.",
+    "linkedChats": "Linked Chat Sessions",
+    "removeFromHub": "Remove from Hub",
+    "deleteConfirmDescription": "Are you sure you want to delete this hub? This action cannot be undone.",
+    "chatSessionsCount": "{count, plural, =0 {No chat sessions} one {# chat session} other {# chat sessions}}",
+    "linkedChatsCaption": "Chat sessions linked to this hub",
+    "noLinkedChats": "No linked chat sessions found in this hub.",
+    "addNewChat": "New Chat",
+    "remove": "Remove",
+    "noDescription": "No description provided",
+    "createdOn": "Created on {date}",
+    "notFound": "Hub not found",
+    "delete": "Delete Hub",
+    "addToHub": "Add to Hub",
+    "dragToAdd": "Drag conversations here to add them to this hub",
+    "dropToAdd": "Drop to add to hub",
+    "addedToHub": "Added to hub",
+    "removedFromHub": "Removed from hub",
+    "cannotAddToHub": "Cannot add to hub",
+    "confirm": "Confirm"
   },
   "accountMenu": {
     "login": "Login",
@@ -369,11 +442,6 @@
     "userSettings": "User Settings",
     "logout": "Logout",
     "version": "Deni AI v{version} ({codename}) ({type})"
-  },
-  "footer": {
-    "disclaimer": "AI responses may not always be accurate. All AI models are available for unlimited use.",
-    "poweredBy": "Powered by voids.top",
-    "and": "and"
   },
   "common": {
     "themes": {
@@ -398,8 +466,23 @@
       "uploading": "Uploading...",
       "uploaded": "Upload completed"
     },
+    "errorTitle": "Error",
+    "backToHubs": "Back to Hubs",
+    "cancel": "Cancel",
+    "edit": "Edit",
+    "view": "View",
+    "title": "Title",
+    "loading": "Loading...",
+    "actions": "Actions",
+    "name": "Name",
+    "save": "Save",
+    "deleteConfirmTitle": "Confirm Deletion",
     "delete": "Delete",
-    "cancel": "Cancel"
+    "create": "Create",
+    "chatLinked": "Chat session linked.",
+    "chatUnlinked": "Chat session unlinked.",
+    "fileAdded": "File added.",
+    "fileRemoved": "File removed."
   },
   "landing": {
     "title": "Save Your 20 Dollars",
@@ -876,6 +959,20 @@
     "description": "Toggle the visibility of models in the chat model list.",
     "filter": "Filter",
     "modelTypes": "Model Types",
+    "createBranchModal": {
+      "title": "Create New Branch",
+      "description": "Create a new branch from '{parentTitle}'.",
+      "label": {
+        "branchName": "Branch Name"
+      },
+      "placeholder": {
+        "branchName": "Enter branch name"
+      },
+      "error": {
+        "nameRequired": "Branch name is required.",
+        "creationFailed": "Failed to create branch."
+      }
+    },
     "features": "Features",
     "reset": "Reset",
     "showing": "showing",
@@ -892,6 +989,7 @@
     "newChat": "New Chat",
     "loadFailed": "Failed to load chat sessions.",
     "saveFailed": "Failed to save chat sessions.",
+    "branchCreatedSuccess": "Branch '{branchName}' created successfully.",
     "saveCurrentFailed": "Failed to save current chat session.",
     "deleteFailed": "Failed to delete chat session.",
     "deleteAllFailed": "Failed to delete all chat sessions.",
@@ -911,7 +1009,9 @@
     "importFirestoreSuccess": "Sessions successfully imported to your account.",
     "importFirestoreFailed": "Failed to import sessions to cloud storage.",
     "importLocalSuccess": "Sessions successfully imported to local storage.",
-    "importLocalFailed": "Failed to import sessions to local storage."
+    "importLocalFailed": "Failed to import sessions to local storage.",
+    "messageNotFoundForBranch": "Could not find the selected message to create a branch.",
+    "branchFromMessageCreatedSuccess": "Branch '{branchName}' created successfully from message."
   },
   "auth": {
     "verificationEmailSent": "Verification email sent successfully",

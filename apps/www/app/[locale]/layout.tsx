@@ -7,7 +7,7 @@ import { Locale, NextIntlClientProvider, hasLocale } from "next-intl";
 import { notFound } from "next/navigation";
 import { routing } from "@/i18n/routing";
 import { CanvasProvider } from "../../context/CanvasContext";
-import { Analytics } from "@vercel/analytics/react";
+import { Analytics } from "@vercel/analytics/next";
 import AnalyticsConsent from "@/components/AnalyticsConsent";
 import { getAnalytics } from "@/lib/getAnalytics";
 import { cookies } from "next/headers";

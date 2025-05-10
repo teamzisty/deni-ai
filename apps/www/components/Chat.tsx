@@ -831,7 +831,6 @@ const Chat: React.FC<ChatProps> = ({
           setImage={setImage}
           fileInputRef={fileInputRef}
         />
-        <Footer />
       </div>
     </>
   );

@@ -1,21 +1,16 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React from "react";
 import { motion } from "framer-motion";
 import { cn } from "@workspace/ui/lib/utils";
 import {
   ArrowUpRight,
-  CircleDollarSign,
   DollarSignIcon,
   Edit,
   EyeOff,
-  GitCommit,
-  GitPullRequest,
   InfinityIcon,
-  Keyboard,
   KeyboardIcon,
   LockIcon,
-  MessageSquare,
   ServerIcon,
   Shield,
   ShieldCheck,
@@ -27,19 +22,6 @@ import { Button } from "@workspace/ui/components/button";
 import { Header } from "@/components/header";
 import Image from "next/image";
 import { Link } from "@/i18n/navigation";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-  CardFooter,
-} from "@workspace/ui/components/card";
-import {
-  SiClaude,
-  SiGooglegemini,
-  SiOpenai,
-  SiX,
-} from "@icons-pack/react-simple-icons";
 import { useTranslations } from "next-intl";
 import { Badge } from "@workspace/ui/components/badge";
 import {

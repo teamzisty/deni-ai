@@ -20,7 +20,8 @@
     "app": "アプリ",
     "sourceCode": "ソースコード",
     "privacyPolicy": "プライバシーポリシー",
-    "termsOfService": "利用規約"
+    "termsOfService": "利用規約",
+    "createBranch": "ブランチを作成"
   },
   "analyticsConsent": {
     "title": "分析を有効にしますか？",
@@ -69,7 +70,11 @@
     "untitledCanvas": "無題のキャンバス",
     "canvasUpdateSuccess": "キャンバス更新成功",
     "canvasUpdateFailed": "キャンバス更新失敗",
-    "updatingCanvas": "キャンバス更新中..."
+    "updatingCanvas": "キャンバス更新中...",
+    "createBranchFromMessage": "ブランチをこのメッセージから作成",
+    "createBranchFromMessageDescription": "このメッセージから作成される新しいブランチの名前を入力してください。",
+    "branchName": "ブランチ名",
+    "branchNamePlaceholder": "例: 私の新しいアイデア"
   },
   "devMessageLog": {
     "writeAction": "ファイル書き込み: {path}",
@@ -328,6 +333,20 @@
       "image": "画像"
     }
   },
+  "createBranchModal": {
+    "title": "新しいブランチを作成",
+    "description": "'{parentTitle}' から新しいブランチを作成します。",
+    "label": {
+      "branchName": "ブランチ名"
+    },
+    "placeholder": {
+      "branchName": "ブランチ名を入力"
+    },
+    "error": {
+      "nameRequired": "ブランチ名は必須です。",
+      "creationFailed": "ブランチの作成に失敗しました。"
+    }
+  },
   "modelSelector": {
     "model": "モデル",
     "visionRequired": "この会話には画像を含んでいるため、画像対応モデルのみが利用可能です。",
@@ -347,7 +366,12 @@
     "thisMonth": "今月",
     "older": "それより前",
     "chat": "チャット",
-    "searchChats": "会話を検索..."
+    "searchChats": "会話を検索...",
+    "branchTooltipPrefix": "{parentTitle} のブランチ",
+    "branchPrefix": "{parentTitle}",
+    "hubs": "ハブ",
+    "myHubs": "マイハブ",
+    "hubsDescription": "会話をハブに整理する"
   },
   "accountMenu": {
     "login": "ログイン",
@@ -356,22 +380,52 @@
     "logout": "ログアウト",
     "version": "Deni AI v{version} ({codename}) ({type})"
   },
-  "footer": {
-    "disclaimer": "AI の回答は必ずしも正しいとは限りません。すべての AI が無制限に利用できます。",
-    "poweredBy": "Powered by voids.top",
-    "and": "and"
+  "Hubs": {
+    "title": "ハブ (ベータ)",
+    "createNew": "新しいハブを作成",
+    "noHubsYet": "ハブはまだありません",
+    "noHubsDescription": "最初のハブを作成して、会話をコレクションに整理しましょう。ハブは関連するチャットをグループ化するのに役立ちます。",
+    "createDescription": "新しいハブの名前とオプションの説明を入力してください。",
+    "name": "名前",
+    "description": "説明",
+    "nameRequired": "ハブ名は必須です。",
+    "chatAddedToHub": "チャットがハブに追加されました",
+    "created": "ハブが正常に作成されました。",
+    "updated": "ハブが正常に更新されました。",
+    "deleted": "ハブが正常に削除されました。",
+    "editTitle": "ハブを編集",
+    "editDescription": "このハブの名前と説明を更新します。",
+    "linkedChats": "リンクされたチャットセッション",
+    "removeFromHub": "ハブから削除",
+    "deleteConfirmDescription": "このハブを削除してもよろしいですか？この操作は元に戻せません。",
+    "chatSessionsCount": "{count, plural, =0 {チャットセッションなし} one {# 件のチャットセッション} other {# 件のチャットセッション}}",
+    "linkedChatsCaption": "このハブにリンクされたチャットセッション",
+    "noLinkedChats": "このハブにリンクされたチャットセッションはありません。",
+    "addNewChat": "新しいチャット",
+    "remove": "削除",
+    "noDescription": "説明はありません",
+    "createdOn": "作成日: {date}",
+    "notFound": "ハブが見つかりません",
+    "delete": "ハブを削除",
+    "addToHub": "ハブに追加",
+    "dragToAdd": "会話をここにドラッグしてハブに追加",
+    "dropToAdd": "ドロップしてハブに追加",
+    "addedToHub": "ハブに追加しました",
+    "removedFromHub": "ハブから削除しました",
+    "cannotAddToHub": "ハブに追加できません",
+    "confirm": "確認"
   },
   "common": {
+    "themes": {
+      "dark": "ダーク",
+      "light": "ライト"
+    },
     "modelFeatures": {
       "reasoning": "推論",
       "experimental": "試験的",
       "fast": "高速",
       "vision": "画像",
       "offline": "オフライン"
-    },
-    "themes": {
-      "dark": "ダーク",
-      "light": "ライト"
     },
     "error": {
       "occurred": "エラーが発生しました",
@@ -384,8 +438,25 @@
       "uploading": "アップロードしています...",
       "uploaded": "アップロードに成功しました！"
     },
+    "name": "名前",
     "delete": "削除",
-    "cancel": "キャンセル"
+    "cancel": "キャンセル",
+    "creating": "作成中...",
+    "view": "表示",
+    "create": "作成",
+    "save": "保存",
+    "confirm": "確認",
+    "errorTitle": "エラー",
+    "backToHubs": "Hub一覧に戻る",
+    "title": "タイトル",
+    "actions": "アクション",
+    "edit": "編集",
+    "deleteConfirmTitle": "削除の確認",
+    "loading": "読み込み中...",
+    "chatLinked": "チャットセッションをリンクしました。",
+    "chatUnlinked": "チャットセッションのリンクを解除しました。",
+    "fileAdded": "ファイルを追加しました。",
+    "fileRemoved": "ファイルを削除しました。"
   },
   "landing": {
     "title": "あなたの20ドルを節約",
@@ -862,6 +933,7 @@
     "newChat": "新規チャット",
     "loadFailed": "チャットセッションの読み込みに失敗しました。",
     "saveFailed": "チャットセッションの保存に失敗しました。",
+    "branchCreatedSuccess": "ブランチ '{branchName}' が作成されました。",
     "saveCurrentFailed": "現在のチャットセッションの保存に失敗しました。",
     "deleteFailed": "チャットセッションの削除に失敗しました。",
     "deleteAllFailed": "すべてのチャットセッションの削除に失敗しました。",

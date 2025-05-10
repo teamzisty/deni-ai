@@ -18,6 +18,8 @@ import {
   X,
   Search,
   Bot,
+  MoreVertical,
+  GitFork,
 } from "lucide-react";
 import { Button } from "@workspace/ui/components/button";
 import { Progress } from "@workspace/ui/components/progress";
@@ -27,7 +29,7 @@ import Image from "next/image";
 import { UIMessage } from "ai";
 import React from "react";
 import { marked } from "marked";
-import { useChatSessions } from "@/hooks/use-chat-sessions";
+import { ChatSession, useChatSessions } from "@/hooks/use-chat-sessions";
 import { Link as MarkdownLink } from "@/components/markdown";
 import {
   Collapsible,
@@ -52,6 +54,22 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@workspace/ui/components/sheet";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@workspace/ui/components/dialog";
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+} from "@workspace/ui/components/dropdown-menu";
+import { Input } from "@workspace/ui/components/input";
+import { Label } from "@workspace/ui/components/label";
 
 interface DeepResearchPanelProps {
   isOpen: boolean;
@@ -313,22 +331,27 @@ interface messageAnnotation {
 
 const MessageControls = memo(
   ({
-    messageContent,
+    message,
     onRegenerate,
     model,
     modelDescriptions,
+    currentSession,
     generationTime,
   }: {
-    messageContent: string;
+    message: UIMessage;
     onRegenerate?: (model: string) => void;
     model: string;
     modelDescriptions: modelDescriptionType;
+    currentSession: ChatSession;
     generationTime?: number;
   }) => {
     const t = useTranslations();
+    const { createBranchFromMessage } = useChatSessions(); // Use the hook
+    const [isBranchModalOpen, setIsBranchModalOpen] = useState(false);
+    const [branchName, setBranchName] = useState("");
 
     const handleCopy = () => {
-      navigator.clipboard.writeText(messageContent);
+      navigator.clipboard.writeText(message.content || "");
       toast.success(t("messageLog.copied"));
     };
 
@@ -338,21 +361,31 @@ const MessageControls = memo(
       }
     };
 
+    const handleCreateBranch = () => {
+      if (branchName.trim() && currentSession) {
+        createBranchFromMessage(currentSession, message.id, branchName.trim());
+        setIsBranchModalOpen(false);
+        setBranchName(""); // Reset branch name
+      } else {
+        toast.error(branchName.trim() + currentSession);
+      }
+    };
+
     const formatTime = (ms: number) => {
       if (ms < 1000) return `${ms}ms`;
 
       const seconds = Math.floor(ms / 1000);
-      if (seconds < 60) return `${seconds}${t("messageLog.second")}`;
+      if (seconds < 60) return `${seconds} ${t("messageLog.second")}`;
 
       const minutes = Math.floor(seconds / 60);
       const remainingSeconds = seconds % 60;
       if (minutes < 60) {
-        return `${minutes}${t("messageLog.minute")} ${remainingSeconds}${t("messageLog.second")}`;
+        return `${minutes} ${t("messageLog.minute")} ${remainingSeconds} ${t("messageLog.second")}`;
       }
 
       const hours = Math.floor(minutes / 60);
       const remainingMinutes = minutes % 60;
-      return `${hours}${t("messageLog.hour")} ${remainingMinutes}${t("messageLog.minute")} ${remainingSeconds}${t("messageLog.second")}`;
+      return `${hours} ${t("messageLog.hour")} ${remainingMinutes} ${t("messageLog.minute")} ${remainingSeconds} ${t("messageLog.second")}`;
     };
 
     if (!generationTime) {
@@ -376,9 +409,7 @@ const MessageControls = memo(
           {generationTime && (
             <div className="flex items-center p-2 text-sm cursor-default text-muted-foreground">
               <Clock size={16} className="mr-1" />
-              <span>
-                {t("messageLog.generationTime")} {formatTime(generationTime)}
-              </span>
+              <span>{formatTime(generationTime)}</span>
             </div>
           )}
           {onRegenerate && (
@@ -395,13 +426,67 @@ const MessageControls = memo(
               </div>
             </div>
           )}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="icon" className="rounded-full text-gray-400 hover:text-foreground">
+                <MoreVertical size={18} />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent>
+              <DropdownMenuItem onClick={() => setIsBranchModalOpen(true)}>
+                <GitFork size={14} className="mr-2" />
+                {t("messageLog.createBranchFromMessage")}
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+
+          <Dialog open={isBranchModalOpen} onOpenChange={setIsBranchModalOpen}>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>
+                  {t("messageLog.createBranchFromMessage")}
+                </DialogTitle>
+                <DialogDescription>
+                  {t("messageLog.createBranchFromMessageDescription")}
+                </DialogDescription>
+              </DialogHeader>
+              <div className="grid gap-4 py-4">
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="branchName" className="text-right">
+                    {t("messageLog.branchName")}
+                  </Label>
+                  <Input
+                    id="branchName"
+                    value={branchName}
+                    onChange={(e) => setBranchName(e.target.value)}
+                    className="col-span-3"
+                    placeholder={t("messageLog.branchNamePlaceholder")}
+                  />
+                </div>
+              </div>
+              <DialogFooter>
+                <Button
+                  variant="outline"
+                  onClick={() => setIsBranchModalOpen(false)}
+                >
+                  {t("common.cancel")}
+                </Button>
+                <Button
+                  onClick={handleCreateBranch}
+                  disabled={!branchName.trim()}
+                >
+                  {t("common.create")}
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
         </div>
       </div>
     );
   },
   (prevProps, nextProps) => {
     return (
-      prevProps.messageContent === nextProps.messageContent &&
+      prevProps.message === nextProps.message &&
       prevProps.model === nextProps.model &&
       prevProps.modelDescriptions === nextProps.modelDescriptions &&
       prevProps.generationTime === nextProps.generationTime
@@ -433,7 +518,7 @@ export const MessageLog: FC<MessageLogProps> = memo(
     >({});
 
     const [showCanvas, setShowCanvas] = useState(false);
-    const [renderedSearch, setRenderedSearch] = useState(false);
+    const [currentSession, setCurrentSession] = useState<ChatSession | null>(null);
     const { getCanvasData, updateCanvas } = useCanvas();
     const sessionCanvasData = useMemo(() => {
       return getCanvasData(sessionId);
@@ -472,6 +557,13 @@ export const MessageLog: FC<MessageLogProps> = memo(
       () => JSON.stringify(message.annotations || []),
       [message.annotations]
     );
+
+    useEffect(() => {
+      const session = getSession(sessionId);
+      if (session) {
+        setCurrentSession(session);
+      }
+    }, [])
 
     useEffect(() => {
       const annotations = message.annotations;
@@ -1073,9 +1165,7 @@ export const MessageLog: FC<MessageLogProps> = memo(
                               part.reasoning
                           )
                           .map((part, index, array) => (
-                            <div
-                              key={`${message.id}_reasoning_${index}`}
-                            >
+                            <div key={`${message.id}_reasoning_${index}`}>
                               <div className="flex items-start mb-3">
                                 <div className="min-w-8 h-8 bg-primary rounded-full flex items-center justify-center text-primary-foreground mr-3 flex-shrink-0 mt-0.5">
                                   {index + 1}
@@ -1094,7 +1184,6 @@ export const MessageLog: FC<MessageLogProps> = memo(
                                   </div>
                                 </div>
                               </div>
-
                             </div>
                           ))}
                       </CollapsibleContent>
@@ -1159,9 +1248,10 @@ export const MessageLog: FC<MessageLogProps> = memo(
                 })}
               </div>
               <MessageControls
-                messageContent={message.content}
+                message={message}
                 onRegenerate={handleRegenerate}
                 model={model}
+                currentSession={currentSession!}
                 modelDescriptions={modelDescriptions}
                 generationTime={generationTime}
               />

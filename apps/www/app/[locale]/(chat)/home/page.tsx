@@ -9,19 +9,18 @@ import { auth } from "@workspace/firebase-config/client";
 import { Loading } from "@/components/loading";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
+import { AnimatedGradientText } from "@workspace/ui/components/magicui/animated-gradient-text";
 import { modelDescriptions } from "@/lib/modelDescriptions";
 import ChatInput from "@/components/ChatInput";
 import { uploadResponse, useUploadThing } from "@/utils/uploadthing";
 import logger from "@/utils/logger";
 import { useAuth } from "@/context/AuthContext";
 import { ExampleQuestion } from "@/components/ExampleQuestion";
+import { ChevronRight } from "lucide-react";
 
 const ChatApp: React.FC = () => {
   const t = useTranslations();
-  const {
-    createSession,
-    isLoading: isSessionsLoading,
-  } = useChatSessions();
+  const { createSession, isLoading: isSessionsLoading } = useChatSessions();
   const [isLoading, setIsLoading] = useState(true);
   const [inputValue, setInputValue] = useState("");
   const [selectedModel, setSelectedModel] = useState<string>(
@@ -310,6 +309,30 @@ const ChatApp: React.FC = () => {
 
         {/* Input Area */}
         <div className="flex items-center flex-col w-full md:w-7/12 m-auto">
+          <div className="group relative mx-auto flex items-center justify-center rounded-full px-4 py-1.5 shadow-[inset_0_-8px_10px_#8fdfff1f] transition-shadow duration-500 ease-out hover:shadow-[inset_0_-5px_10px_#8fdfff3f] ">
+            <span
+              className={cn(
+                "absolute inset-0 block h-full w-full animate-gradient rounded-[inherit] bg-gradient-to-r from-[#ffaa40]/50 via-[#9c40ff]/50 to-[#ffaa40]/50 bg-[length:300%_100%] p-[1px]"
+              )}
+              style={{
+                WebkitMask:
+                  "linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0)",
+                WebkitMaskComposite: "destination-out",
+                mask: "linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0)",
+                maskComposite: "subtract",
+                WebkitClipPath: "padding-box",
+              }}
+            />
+            🎉 <hr className="mx-2 h-4 w-px shrink-0 bg-neutral-500" />
+            <AnimatedGradientText className="text-sm font-medium">
+              Introducing Magic UI
+            </AnimatedGradientText>
+            <ChevronRight
+              className="ml-1 size-4 stroke-neutral-500 transition-transform
+ duration-300 ease-in-out group-hover:translate-x-0.5"
+            />
+          </div>
+
           <h1 className="m-auto text-xl lg:text-3xl mb-1 font-bold">
             {t("home.title")}
           </h1>
@@ -320,16 +343,10 @@ const ChatApp: React.FC = () => {
             <ExampleQuestion onClick={() => setInputValue(t("home.example1"))}>
               {t("home.example1")}
             </ExampleQuestion>
-            <ExampleQuestion
-              onClick={() => setInputValue(t("home.example2"))}
-            >
+            <ExampleQuestion onClick={() => setInputValue(t("home.example2"))}>
               {t("home.example2")}
             </ExampleQuestion>
-            <ExampleQuestion
-              onClick={() =>
-                setInputValue(t("home.example3"))
-              }
-            >
+            <ExampleQuestion onClick={() => setInputValue(t("home.example3"))}>
               {t("home.example3")}
             </ExampleQuestion>
           </div>
@@ -358,8 +375,6 @@ const ChatApp: React.FC = () => {
             fileInputRef={fileInputRef}
           />
         </div>
-
-        <Footer />
       </div>
     </main>
   );

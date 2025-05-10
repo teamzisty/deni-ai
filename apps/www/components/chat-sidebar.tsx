@@ -20,6 +20,10 @@ import {
   Plus,
   Search,
   Settings,
+  GitFork,
+  ArrowRight,
+  LayoutGrid,
+  FolderDotIcon,
 } from "lucide-react";
 import { Link } from "@/i18n/navigation";
 import { Badge } from "@workspace/ui/components/badge";
@@ -43,6 +47,8 @@ import { useTranslations } from "next-intl";
 import { useAuth } from "@/context/AuthContext";
 import { Input } from "@workspace/ui/components/input";
 import LoadingIndicator from "./LoadingIndicator";
+import { HubSidebar } from "./hub-sidebar";
+import { useHubs } from "@/hooks/use-hubs";
 
 interface GroupedSessions {
   today: ChatSession[];
@@ -60,24 +66,50 @@ function groupSessionsByDate(sessions: ChatSession[]): GroupedSessions {
   const oneMonthAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
 
   return {
-    older: sessions.filter(
-      (session) => new Date(session.createdAt) <= oneMonthAgo
-    ),
-    thisMonth: sessions.filter((session) => {
-      const date = new Date(session.createdAt);
-      return date <= oneWeekAgo && date > oneMonthAgo;
-    }),
-    thisWeek: sessions.filter((session) => {
-      const date = new Date(session.createdAt);
-      return date <= twoDaysAgo && date > oneWeekAgo;
-    }),
-    yesterday: sessions.filter((session) => {
-      const date = new Date(session.createdAt);
-      return date <= oneDayAgo && date > twoDaysAgo;
-    }),
-    today: sessions.filter(
-      (session) => new Date(session.createdAt) > oneDayAgo
-    ),
+    today: sessions
+      .filter((session) => new Date(session.createdAt) > oneDayAgo)
+      .sort(
+        (a, b) =>
+          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+      )
+      .reverse(),
+    yesterday: sessions
+      .filter((session) => {
+        const date = new Date(session.createdAt);
+        return date <= oneDayAgo && date > twoDaysAgo;
+      })
+      .sort(
+        (a, b) =>
+          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+      )
+      .reverse(),
+    thisWeek: sessions
+      .filter((session) => {
+        const date = new Date(session.createdAt);
+        return date <= twoDaysAgo && date > oneWeekAgo;
+      })
+      .sort(
+        (a, b) =>
+          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+      )
+      .reverse(),
+    thisMonth: sessions
+      .filter((session) => {
+        const date = new Date(session.createdAt);
+        return date <= oneWeekAgo && date > oneMonthAgo;
+      })
+      .sort(
+        (a, b) =>
+          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+      )
+      .reverse(),
+    older: sessions
+      .filter((session) => new Date(session.createdAt) <= oneMonthAgo)
+      .sort(
+        (a, b) =>
+          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+      )
+      .reverse(),
   };
 }
 
@@ -91,27 +123,109 @@ function SessionGroup({
   currentSessionId?: string;
 }) {
   if (sessions.length === 0) return null;
+  const t = useTranslations();
+  const { getHub } = useHubs();
+
+  // Setup drag and drop handlers for chat sessions
+  const handleDragStart = (
+    e: React.DragEvent,
+    sessionId: string,
+    sessionTitle: string
+  ) => {
+    e.dataTransfer.setData("text/plain", sessionId);
+    e.dataTransfer.setData(
+      "application/json",
+      JSON.stringify({
+        id: sessionId,
+        title: sessionTitle,
+      })
+    );
+    e.dataTransfer.effectAllowed = "move";
+
+    // Add a class to the dragging element for styling
+    const target = e.currentTarget as HTMLElement;
+    target.classList.add("opacity-50");
+  };
+
+  const handleDragEnd = (e: React.DragEvent) => {
+    // Remove styling class when drag ends
+    const target = e.currentTarget as HTMLElement;
+    target.classList.remove("opacity-50");
+  };
 
   return (
     <SidebarGroup className="pt-1">
       <SidebarGroupLabel>{label}</SidebarGroupLabel>
       <SidebarGroupContent>
-        <SidebarMenu>
+        <SidebarMenu suppressHydrationWarning>
           {sessions
             .slice()
             .reverse()
             .map((session) => (
-              <SidebarMenuItem key={session.id}>
+              <SidebarMenuItem
+                key={session.id}
+                draggable
+                onDragStart={(e) =>
+                  handleDragStart(e, session.id, session.title)
+                }
+                onDragEnd={handleDragEnd}
+                className="chat-session-item cursor-grab active:cursor-grabbing"
+                data-chat-id={session.id}
+              >
                 <ChatContextMenu session={session}>
                   <SidebarMenuButton
                     className="flex"
                     isActive={currentSessionId === session.id}
                     asChild
-                    tooltip={session.title}
+                    tooltip={
+                      session.isBranch && session.branchName
+                        ? `${t("sidebar.branchTooltipPrefix", {
+                            parentTitle:
+                              sessions.find(
+                                (s) => s.id === session.parentSessionId
+                              )?.title || "Unknown Parent",
+                          })}: ${session.branchName}`
+                        : session.title
+                    }
                   >
-                    <Link href={`/chat/${session.id}`}>
-                      <MessageCircleMore className="mr-2" />
-                      <span className="truncate">{session.title}</span>
+                    <Link
+                      href={`/chat/${session.id}`}
+                      className={`flex items-center`}
+                    >
+                      {session.isBranch && !session.hubId ? (
+                        <GitFork className="h-4 w-4 text-primary" />
+                      ) : session.hubId && session.isBranch ? (
+                        <FolderDotIcon className="h-4 w-4 text-primary" />
+                      ) : session.hubId ? (
+                        <FolderDotIcon className="h-4 w-4 text-primary" />
+                      ) : (
+                        <MessageCircleMore className="mr-2 h-4 w-4" />
+                      )}
+                      <div className="flex items-center w-full min-w-0">
+                        {session.hubId && (
+                          <div className="flex items-center gap-1 mr-1">
+                            <span className="text-muted-foreground">
+                              {getHub(session.hubId)?.name}
+                            </span>
+                            <ArrowRight size={12} />
+                            {session.isBranch && session.branchName ? (
+                              <GitFork className="h-4 w-4 text-primary" />
+                            ) : (
+                              <MessageCircleMore className="h-4 w-4" />
+                            )}
+                          </div>
+                        )}
+                        {session.isBranch && session.branchName && (
+                          <div className="flex items-center gap-1 mr-1">
+                            <span className="text-muted-foreground">
+                              {session.branchName}
+                            </span>
+                            <ArrowRight size={12} />
+                            <MessageCircleMore className="h-4 w-4" />
+                          </div>
+                        )}
+                        <p className="truncate min-w-0">{session.title}</p>
+                      </div>
                       <LoadingIndicator className="ml-auto" />
                     </Link>
                   </SidebarMenuButton>
@@ -216,7 +330,7 @@ function ChatSidebarMenuSession() {
     <>
       <SidebarGroup className="pb-0">
         <SidebarGroupContent>
-          <SidebarMenu>
+          <SidebarMenu suppressHydrationWarning>
             <SidebarMenuItem>
               <SidebarMenuButton
                 variant={"outline"}
@@ -233,11 +347,31 @@ function ChatSidebarMenuSession() {
                 </span>
               </SidebarMenuButton>
             </SidebarMenuItem>
+            <SidebarMenuItem>
+              <SidebarMenuButton
+                variant={"default"} // Changed from "ghost" to "default"
+                size="lg"
+                className="flex items-center justify-center transition-all duration-200 ease-in-out"
+                asChild
+                tooltip={t("sidebar.hubs")}
+                data-sidebar="menu-button"
+                data-size="lg"
+              >
+                <Link href="/hubs" className="flex items-center">
+                  <LayoutGrid />
+                  <span className="group-data-[collapsible=icon]:hidden ml-2">
+                    {t("sidebar.hubs")}
+                  </span>
+                </Link>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
 
             <SearchBar onSearch={handleSearch} />
           </SidebarMenu>
         </SidebarGroupContent>
       </SidebarGroup>
+
+      <HubSidebar />
 
       <MemoizedSessionGroup
         sessions={groupedSessions.today}
@@ -321,6 +455,7 @@ export function ChatSidebar() {
   const isMobile = useIsMobile();
   const t = useTranslations();
 
+  // Include HubSidebar in desktop view
   if (isMobile) {
     return (
       <Drawer>
@@ -339,6 +474,23 @@ export function ChatSidebar() {
             </DrawerTitle>
             <DrawerDescription>{t("sidebar.chat")}</DrawerDescription>
 
+            {/* Add Hubs link for mobile view */}
+            <SidebarMenuItem>
+              <SidebarMenuButton
+                variant={"default"}
+                size="lg"
+                className="flex items-center justify-center transition-all duration-200 ease-in-out w-full"
+                asChild
+                tooltip={t("sidebar.hubs")}
+              >
+                <Link href="/hubs" className="flex items-center justify-center">
+                  <LayoutGrid className="mr-2 h-5 w-5" />
+                  {t("sidebar.hubs")}
+                </Link>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+
+            <HubSidebar />
             <ChatSidebarMenuSession />
             <ChatSidebarMenuFooter />
           </div>
@@ -373,6 +525,7 @@ export function ChatSidebar() {
             <SidebarTrigger className="ml-auto group-data-[collapsible=icon]:absolute group-data-[collapsible=icon]:left-1/2 group-data-[collapsible=icon]:-translate-x-1/2 group-data-[collapsible=icon]:top-4" />
           </div>
         </SidebarGroup>
+
         <ChatSidebarMenuSession />
       </SidebarContent>
       <SidebarFooter>

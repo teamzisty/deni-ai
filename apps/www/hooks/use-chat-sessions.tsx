@@ -34,6 +34,15 @@ interface ChatSessionsContextValue {
   syncSessions: () => Promise<void>;
   exportAllSessions: () => Promise<string>; // Add export function
   importAllSessions: (jsonData: string) => Promise<void>; // Add import function
+  createBranchSession: (
+    parentSession: ChatSession,
+    branchName: string
+  ) => ChatSession;
+  createBranchFromMessage: ( // Add this function
+    parentSession: ChatSession,
+    messageId: string,
+    branchName: string
+  ) => ChatSession | undefined;
   isLoading: boolean;
   isFirestoreLoaded: boolean; // Add this
 }
@@ -43,6 +52,10 @@ export interface ChatSession {
   title: string;
   messages: UIMessage[];
   createdAt: Date;
+  isBranch?: boolean; // Optional: Indicates if the session is a branch
+  parentSessionId?: string; // Optional: ID of the parent session if it's a branch
+  branchName?: string; // Optional: Name of the branch
+  hubId?: string; // Optional: ID of the hub if associated
 }
 
 const ChatSessionsContext = createContext<ChatSessionsContextValue | undefined>(
@@ -369,7 +382,11 @@ export function ChatSessionsProvider({ children }: { children: ReactNode }) {
                 id: session.id || null,
                 title: session.title || t("chatSessions.newChat"),
                 messages: Array.isArray(session.messages) ? session.messages : [],
-                createdAt: Timestamp.fromDate(createdAt)
+                createdAt: Timestamp.fromDate(createdAt),
+                isBranch: session.isBranch || false,
+                hubId: session.hubId || null,
+                parentSessionId: session.parentSessionId || null,
+                branchName: session.branchName || null,
               };
 
               // Clear large tool invocation results before saving to prevent exceeding size limits
@@ -485,6 +502,66 @@ export function ChatSessionsProvider({ children }: { children: ReactNode }) {
 
     return newSession;
   }, [sessions, t, saveToIndexedDB]);
+
+  const createBranchSession = useCallback((parentSession: ChatSession, branchName: string) => {
+    const newBranchSession: ChatSession = {
+      ...parentSession, // Copy all properties from parent
+      id: crypto.randomUUID(), // Generate a new unique ID for the branch
+      title: `${parentSession.title} (${branchName})`, // Or a more sophisticated naming
+      isBranch: true,
+      parentSessionId: parentSession.id,
+      branchName: branchName,
+      createdAt: new Date(), // Set new creation date for the branch
+      messages: parentSession.messages.map(msg => ({ ...msg })), // Deep copy messages
+    };
+
+    const updatedSessions = [...sessions, newBranchSession];
+    setSessions(updatedSessions);
+    setModifiedSessionIds((prev) => new Set(prev).add(newBranchSession.id));
+    saveToIndexedDB(updatedSessions);
+
+    toast.success(t("chatSessions.branchCreatedSuccess", { branchName })); // Add translation
+    return newBranchSession;
+  }, [sessions, t, saveToIndexedDB]);
+
+  const createBranchFromMessage = useCallback(
+    (parentSession: ChatSession, messageId: string, branchName: string) => {
+      const messageIndex = parentSession.messages.findIndex(
+        (msg) => msg.id === messageId
+      );
+
+      if (messageIndex === -1) {
+        toast.error(t("chatSessions.messageNotFoundForBranch"));
+        return undefined;
+      }
+
+      // Create a new session with messages up to the selected message
+      const messagesForBranch = parentSession.messages
+        .slice(0, messageIndex + 1)
+        .map((msg) => ({ ...msg })); // Deep copy messages
+
+      const newBranchSession: ChatSession = {
+        id: crypto.randomUUID(),
+        title: `${parentSession.title} (${branchName} - branched from message)`,
+        messages: messagesForBranch,
+        createdAt: new Date(),
+        isBranch: true,
+        parentSessionId: parentSession.id,
+        branchName: branchName,
+      };
+
+      const updatedSessions = [...sessions, newBranchSession];
+      setSessions(updatedSessions);
+      setModifiedSessionIds((prev) => new Set(prev).add(newBranchSession.id));
+      saveToIndexedDB(updatedSessions);
+
+      toast.success(
+        t("chatSessions.branchFromMessageCreatedSuccess", { branchName })
+      );
+      return newBranchSession;
+    },
+    [sessions, t, saveToIndexedDB]
+  );
 
   const addSession = useCallback((session: ChatSession) => {
     const updatedSessions = [...sessions, session];
@@ -904,6 +981,8 @@ export function ChatSessionsProvider({ children }: { children: ReactNode }) {
     importAllSessions,
     isLoading,
     isFirestoreLoaded,
+    createBranchSession,
+    createBranchFromMessage, // Add this
   };
 
   return (
