@@ -38,6 +38,7 @@ import { cn } from "@workspace/ui/lib/utils";
 import { DeepSeekIcon } from "./DeepSeekIcon";
 import { useSettingsDialog } from "@/context/SettingsDialogContext";
 import { Input } from "@workspace/ui/components/input";
+import { useIsMobile } from "@workspace/ui/hooks/use-mobile";
 
 const ModelItem = memo(
   ({
@@ -188,6 +189,7 @@ export const ModelSelector = memo(function ModelSelector({
   const [isAnimating, setIsAnimating] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [isOpen, setIsOpen] = useState(false);
+  const isMobile = useIsMobile();
   const triggerRef = useRef<HTMLButtonElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
 
@@ -290,6 +292,10 @@ export const ModelSelector = memo(function ModelSelector({
     [closeDropdown, openDialog]
   );
 
+  const getShrinkedName = (name?: string) => {
+    return name?.replace("GPT-", "").replace("Gemini ", "").replace("Claude ", "").replace("Grok ", "").replace("DeepSeek ", "") || "";
+  }
+
   // Apply fade-in animation when content changes
   useEffect(() => {
     if (contentRef.current) {
@@ -310,7 +316,7 @@ export const ModelSelector = memo(function ModelSelector({
         >
           {ModelIcon}
           <span className="inline-flex items-center justify-center">
-            {modelDescriptions[model]?.displayName}{" "}
+            {isMobile ? getShrinkedName(modelDescriptions[model]?.displayName) : modelDescriptions[model]?.displayName}
           </span>
           <ArrowDown className="text-zinc-400 text-sm" />
         </Button>

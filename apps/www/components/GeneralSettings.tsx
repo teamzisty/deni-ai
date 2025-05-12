@@ -1,5 +1,6 @@
 "use client";
 
+import { useSettings } from "@/hooks/use-settings";
 import { Button } from "@workspace/ui/components/button";
 import {
   DropdownMenu,
@@ -25,30 +26,7 @@ export default function GeneralSettings() {
   const language = params.locale === "ja" ? "ja" : "en";
   const NextRouter = nextRouter();
   const pathname = usePathname();
-  const [isLoading, setIsLoading] = useState(true);
-
-  const [advancedSearch, setAdvancedSearch] = useState(false);
-
-  useEffect(() => {
-    const AdvancedSearch = localStorage.getItem("advancedSearch");
-    if (AdvancedSearch === "true") {
-      setAdvancedSearch(true);
-    } else {
-      setAdvancedSearch(false);
-    }
-
-    setIsLoading(false);
-  }, []);
-
-  useEffect(() => {
-    if (isLoading) return;
-    
-    if (advancedSearch) {
-      localStorage.setItem("advancedSearch", "true");
-    } else {
-      localStorage.removeItem("advancedSearch");
-    }
-  }, [advancedSearch]);
+  const { settings, updateSetting } = useSettings();
 
   return (
     <div className="space-y-6">
@@ -66,9 +44,9 @@ export default function GeneralSettings() {
           <div className="flex items-center gap-2">
             <Switch
               id="search"
-              checked={advancedSearch}
+              checked={settings.advancedSearch}
               onCheckedChange={(checked) => {
-                setAdvancedSearch(checked);
+                updateSetting("advancedSearch", checked);
               }}
             />
           </div>
@@ -129,27 +107,6 @@ export default function GeneralSettings() {
               <DropdownMenuContent align="end">
                 <DropdownMenuItem
                   onClick={() => {
-                    // 言語変更前にLocalStorageのデータを確保
-                    const currentSessions =
-                      localStorage.getItem("chatSessions");
-                    const currentSession =
-                      localStorage.getItem("currentChatSession");
-
-                    // 言語変更後に使用するためにセッションデータをsessionStorageに一時保存
-                    if (currentSessions && currentSessions !== "[]") {
-                      sessionStorage.setItem(
-                        "temp_chatSessions",
-                        currentSessions
-                      );
-                    }
-                    if (currentSession && currentSession !== "null") {
-                      sessionStorage.setItem(
-                        "temp_currentSession",
-                        currentSession
-                      );
-                    }
-
-                    // 言語変更ページへ移動
                     NextRouter.push(pathname.replace("/" + language, "/ja"));
                   }}
                 >
@@ -158,27 +115,6 @@ export default function GeneralSettings() {
                 </DropdownMenuItem>
                 <DropdownMenuItem
                   onClick={() => {
-                    // 言語変更前にLocalStorageのデータを確保
-                    const currentSessions =
-                      localStorage.getItem("chatSessions");
-                    const currentSession =
-                      localStorage.getItem("currentChatSession");
-
-                    // 言語変更後に使用するためにセッションデータをsessionStorageに一時保存
-                    if (currentSessions && currentSessions !== "[]") {
-                      sessionStorage.setItem(
-                        "temp_chatSessions",
-                        currentSessions
-                      );
-                    }
-                    if (currentSession && currentSession !== "null") {
-                      sessionStorage.setItem(
-                        "temp_currentSession",
-                        currentSession
-                      );
-                    }
-
-                    // 言語変更ページへ移動
                     NextRouter.push(pathname.replace("/" + language, "/en"));
                   }}
                 >

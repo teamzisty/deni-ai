@@ -417,6 +417,7 @@
     "editTitle": "Edit Hub",
     "editDescription": "Update the name and description of this hub.",
     "linkedChats": "Linked Chat Sessions",
+    "chatRemoved": "Chat removed from Hub",
     "removeFromHub": "Remove from Hub",
     "deleteConfirmDescription": "Are you sure you want to delete this hub? This action cannot be undone.",
     "chatSessionsCount": "{count, plural, =0 {No chat sessions} one {# chat session} other {# chat sessions}}",
@@ -467,6 +468,7 @@
       "uploaded": "Upload completed"
     },
     "errorTitle": "Error",
+    "success": "Success",
     "backToHubs": "Back to Hubs",
     "cancel": "Cancel",
     "edit": "Edit",

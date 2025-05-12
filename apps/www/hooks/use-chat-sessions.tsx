@@ -66,6 +66,15 @@ const ChatSessionsContext = createContext<ChatSessionsContextValue | undefined>(
 const DB_NAME = "deni-ai-chat-db";
 const DB_VERSION = 1;
 const CHAT_SESSIONS_STORE = "chatSessions";
+const FIRESTORE_TIMEOUT_MS = 15000; // 15 seconds timeout for Firestore operations
+
+// Helper function for Firestore getDocs with timeout
+const getDocsWithTimeout = async (query: any, timeoutMs: number) => {
+  const timeoutPromise = new Promise((_, reject) =>
+    setTimeout(() => reject(new Error('Firestore operation timed out')), timeoutMs)
+  );
+  return Promise.race([getDocs(query), timeoutPromise]);
+};
 
 // Helper functions for IndexedDB operations
 const initDatabase = async (): Promise<IDBDatabase> => {
@@ -299,19 +308,24 @@ export function ChatSessionsProvider({ children }: { children: ReactNode }) {
           firestore,
           `deni-ai-conversations/${user.uid}/sessions`
         );
-        const snapshot = await getDocs(sessionsRef);
-        const loadedSessions = snapshot.docs.map((doc) => ({
+        // const snapshot = await getDocs(sessionsRef); // Original call
+        const snapshot = await getDocsWithTimeout(sessionsRef, FIRESTORE_TIMEOUT_MS) as any; // Using timeout
+
+        const loadedSessions = snapshot.docs.map((doc: any) => ({ // Added type for doc
           id: doc.id,
           ...doc.data(),
           createdAt: doc.data().createdAt?.toDate() || new Date(),
         })) as ChatSession[];
 
         setSessions(loadedSessions);
-      } catch (error) {
+      } catch (error: any) {
         console.error("Failed to load sessions from Firestore:", error);
-        toast.error(t("chatSessions.loadFailed"));
+        const errorMessage = error.message && error.message.includes('timed out')
+          ? t("chatSessions.loadFailedTimeout")
+          : t("chatSessions.loadFailed");
+        toast.error(errorMessage);
 
-        // On Firestore error, try to fall back to IndexedDB
+        // On Firestore error (including timeout), try to fall back to IndexedDB
         try {
           const savedSessions = await getSessionsFromIndexedDB();
           if (savedSessions && savedSessions.length > 0) {
@@ -790,9 +804,11 @@ export function ChatSessionsProvider({ children }: { children: ReactNode }) {
       }
 
       // Firestoreからセッションを読み込む
-      const snapshot = await getDocs(sessionsRef);
+      // const snapshot = await getDocs(sessionsRef); // Original call
+      const snapshot = await getDocsWithTimeout(sessionsRef, FIRESTORE_TIMEOUT_MS) as any; // Using timeout
 
-      const loadedSessions = snapshot.docs.map((doc) => {
+
+      const loadedSessions = snapshot.docs.map((doc: any) => { // Added type for doc
         const data = doc.data();
         // createdAtフィールドの変換を安全に行う
         let createdAt: Date;
@@ -826,10 +842,12 @@ export function ChatSessionsProvider({ children }: { children: ReactNode }) {
       }
 
       toast.success(t("chatSessions.syncSuccess"));
-    } catch (error) {
+    } catch (error: any) { // Added type for error
       console.error("Failed to sync sessions:", error);
-      let errorMessage = t("chatSessions.syncFailed");
-      if (error instanceof Error) {
+      let errorMessage = error.message && error.message.includes('timed out')
+        ? t("chatSessions.syncFailedTimeout")
+        : t("chatSessions.syncFailed");
+      if (error instanceof Error && !(error.message && error.message.includes('timed out'))) {
         errorMessage += `: ${error.message}`;
       }
       toast.error(errorMessage);
@@ -846,16 +864,20 @@ export function ChatSessionsProvider({ children }: { children: ReactNode }) {
           firestore,
           `deni-ai-conversations/${user.uid}/sessions`
         );
-        const snapshot = await getDocs(sessionsRef);
-        sessionsToExport = snapshot.docs.map((doc) => ({
+        // const snapshot = await getDocs(sessionsRef); // Original call
+        const snapshot = await getDocsWithTimeout(sessionsRef, FIRESTORE_TIMEOUT_MS) as any; // Using timeout
+        sessionsToExport = snapshot.docs.map((doc: any) => ({ // Added type for doc
           id: doc.id,
           ...doc.data(),
           // Convert Timestamp to ISO string for JSON compatibility
           createdAt: (doc.data().createdAt?.toDate() || new Date()).toISOString(),
         })) as unknown as ChatSession[]; // Adjust type assertion as needed
-      } catch (error) {
+      } catch (error: any) {
         console.error("Failed to fetch sessions from Firestore for export:", error);
-        toast.error(t("chatSessions.exportFirestoreFailed"));
+        const errorMessage = error.message && error.message.includes('timed out')
+          ? t("chatSessions.exportFirestoreFailedTimeout")
+          : t("chatSessions.exportFirestoreFailed");
+        toast.error(errorMessage);
         // Fallback to IndexedDB on Firestore error
         try {
           const savedSessions = await getSessionsFromIndexedDB();
@@ -919,8 +941,9 @@ export function ChatSessionsProvider({ children }: { children: ReactNode }) {
         );
 
         // Optional: Delete existing sessions before importing (clean slate)
-        const existingSnapshot = await getDocs(sessionsRef);
-        existingSnapshot.docs.forEach(doc => batch.delete(doc.ref));
+        // const existingSnapshot = await getDocs(sessionsRef); // Original call
+        const existingSnapshot = await getDocsWithTimeout(sessionsRef, FIRESTORE_TIMEOUT_MS) as any; // Using timeout
+        existingSnapshot.docs.forEach((doc: any) => batch.delete(doc.ref)); // Added type for doc
 
         // Add imported sessions
         importedSessions.forEach((session) => {
@@ -946,9 +969,12 @@ export function ChatSessionsProvider({ children }: { children: ReactNode }) {
         // Reload sessions from Firestore to update UI state
         await syncSessions(); // Use syncSessions to reload and update state
 
-      } catch (error) {
+      } catch (error: any) { // Added type for error
         console.error("Failed to import sessions to Firestore:", error);
-        toast.error(t("chatSessions.importFirestoreFailed"), {
+        const errorMessage = error.message && error.message.includes('timed out')
+          ? t("chatSessions.importFirestoreFailedTimeout")
+          : t("chatSessions.importFirestoreFailed");
+        toast.error(errorMessage, {
           description: error instanceof Error ? error.message : String(error),
         });
       }

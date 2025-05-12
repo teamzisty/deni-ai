@@ -43,13 +43,14 @@ import {
 import { Input } from "@workspace/ui/components/input";
 import { Textarea } from "@workspace/ui/components/textarea";
 import { toast } from "sonner";
+import { create } from "domain";
 
 export default function HubDetailPage() {
   const t = useTranslations();
   const params = useParams();
   const router = useRouter();
   const { getHub, updateHub, removeChatFromHub, deleteHub } = useHubs();
-  const { sessions } = useChatSessions();
+  const { sessions, createSession, updateSession } = useChatSessions();
   const [hub, setHub] = useState<Hub | undefined>(undefined);
   const [hubSessions, setHubSessions] = useState<ChatSession[]>([]);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
@@ -145,6 +146,38 @@ export default function HubDetailPage() {
     toast.success(t("Hubs.chatRemoved"));
   };
 
+  const createNewChat = () => {
+    // Create a new chat session
+    const session = createSession();
+
+    if (!session) {
+      toast.error(t("common.error.occurred"));
+      return;
+    }
+
+    // Add the new session to the hub
+    if (hub) {
+      const updatedHub = {
+        ...hub,
+        chatSessionIds: [...hub.chatSessionIds, session.id],
+        updatedAt: Date.now()
+      };
+      
+      updateHub(hub.id, updatedHub);
+      
+      // Update local state
+      setHub(updatedHub);
+      setHubSessions([...hubSessions, session]);
+
+      updateSession(session.id, {
+        ...session,
+        hubId: hub.id
+      });
+
+      toast.success(t("common.success"));
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-full">
@@ -205,8 +238,8 @@ export default function HubDetailPage() {
                 {t("Hubs.chatSessionsCount", { count: hubSessions.length })}
               </CardDescription>
             </div>
-            <Button variant="outline" asChild>
-              <Link href="/chat">{t("Hubs.addNewChat")}</Link>
+            <Button variant="outline" onClick={createNewChat}>
+              {t("Hubs.addNewChat")}
             </Button>
           </div>
         </CardHeader>

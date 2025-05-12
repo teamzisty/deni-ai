@@ -71,8 +71,7 @@ function groupSessionsByDate(sessions: ChatSession[]): GroupedSessions {
       .sort(
         (a, b) =>
           new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-      )
-      .reverse(),
+      ),
     yesterday: sessions
       .filter((session) => {
         const date = new Date(session.createdAt);
@@ -81,8 +80,7 @@ function groupSessionsByDate(sessions: ChatSession[]): GroupedSessions {
       .sort(
         (a, b) =>
           new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-      )
-      .reverse(),
+      ),
     thisWeek: sessions
       .filter((session) => {
         const date = new Date(session.createdAt);
@@ -91,8 +89,7 @@ function groupSessionsByDate(sessions: ChatSession[]): GroupedSessions {
       .sort(
         (a, b) =>
           new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-      )
-      .reverse(),
+      ),
     thisMonth: sessions
       .filter((session) => {
         const date = new Date(session.createdAt);
@@ -101,15 +98,13 @@ function groupSessionsByDate(sessions: ChatSession[]): GroupedSessions {
       .sort(
         (a, b) =>
           new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-      )
-      .reverse(),
+      ),
     older: sessions
       .filter((session) => new Date(session.createdAt) <= oneMonthAgo)
       .sort(
         (a, b) =>
           new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-      )
-      .reverse(),
+      ),
   };
 }
 
@@ -158,80 +153,80 @@ function SessionGroup({
       <SidebarGroupLabel>{label}</SidebarGroupLabel>
       <SidebarGroupContent>
         <SidebarMenu suppressHydrationWarning>
-          {sessions
-            .slice()
-            .reverse()
-            .map((session) => (
-              <SidebarMenuItem
-                key={session.id}
-                draggable
-                onDragStart={(e) =>
-                  handleDragStart(e, session.id, session.title)
-                }
-                onDragEnd={handleDragEnd}
-                className="chat-session-item cursor-grab active:cursor-grabbing"
-                data-chat-id={session.id}
-              >
-                <ChatContextMenu session={session}>
-                  <SidebarMenuButton
-                    className="flex"
-                    isActive={currentSessionId === session.id}
-                    asChild
-                    tooltip={
-                      session.isBranch && session.branchName
-                        ? `${t("sidebar.branchTooltipPrefix", {
-                            parentTitle:
-                              sessions.find(
-                                (s) => s.id === session.parentSessionId
-                              )?.title || "Unknown Parent",
-                          })}: ${session.branchName}`
-                        : session.title
-                    }
+          {sessions.slice().map((session) => {
+            const hub = session.hubId ? getHub(session.hubId) : undefined;
+            const isBranch = session.isBranch && session.branchName;
+            const isHub = session.hubId && hub;
+
+            return (
+            <SidebarMenuItem
+              key={session.id}
+              draggable
+              onDragStart={(e) => handleDragStart(e, session.id, session.title)}
+              onDragEnd={handleDragEnd}
+              className="chat-session-item cursor-grab active:cursor-grabbing"
+              data-chat-id={session.id}
+            >
+              <ChatContextMenu session={session}>
+                <SidebarMenuButton
+                  className="flex"
+                  isActive={currentSessionId === session.id}
+                  asChild
+                  tooltip={
+                    isBranch
+                      ? `${t("sidebar.branchTooltipPrefix", {
+                          parentTitle:
+                            sessions.find(
+                              (s) => s.id === session.parentSessionId
+                            )?.title || "Unknown Parent",
+                        })}: ${session.branchName}`
+                      : session.title
+                  }
+                >
+                  <Link
+                    href={`/chat/${session.id}`}
+                    className={`flex items-center`}
                   >
-                    <Link
-                      href={`/chat/${session.id}`}
-                      className={`flex items-center`}
-                    >
-                      {session.isBranch && !session.hubId ? (
-                        <GitFork className="h-4 w-4 text-primary" />
-                      ) : session.hubId && session.isBranch ? (
-                        <FolderDotIcon className="h-4 w-4 text-primary" />
-                      ) : session.hubId ? (
-                        <FolderDotIcon className="h-4 w-4 text-primary" />
-                      ) : (
-                        <MessageCircleMore className="mr-2 h-4 w-4" />
-                      )}
-                      <div className="flex items-center w-full min-w-0">
-                        {session.hubId && (
-                          <div className="flex items-center gap-1 mr-1">
-                            <span className="text-muted-foreground">
-                              {getHub(session.hubId)?.name}
-                            </span>
-                            <ArrowRight size={12} />
-                            {session.isBranch && session.branchName ? (
-                              <GitFork className="h-4 w-4 text-primary" />
-                            ) : (
-                              <MessageCircleMore className="h-4 w-4" />
-                            )}
-                          </div>
-                        )}
-                        {session.isBranch && session.branchName && (
-                          <div className="flex items-center gap-1 mr-1">
-                            <span className="text-muted-foreground">
-                              {session.branchName}
-                            </span>
-                            <ArrowRight size={12} />
+                    {isHub && !session.hubId ? (
+                      <GitFork className="h-4 w-4 text-primary" />
+                    ) : isHub && session.isBranch ? (
+                      <FolderDotIcon className="h-4 w-4 text-primary" />
+                    ) : isHub ? (
+                      <FolderDotIcon className="h-4 w-4 text-primary" />
+                    ) : (
+                      <MessageCircleMore className="mr-2 h-4 w-4" />
+                    )}
+                    <div className="flex items-center w-full min-w-0">
+                      {session.hubId && hub && (
+                        <div className="flex items-center gap-1 mr-1">
+                          <span className="text-muted-foreground">
+                            {hub?.name}
+                          </span>
+                          <ArrowRight size={12} />
+                          {session.isBranch && session.branchName ? (
+                            <GitFork className="h-4 w-4 text-primary" />
+                          ) : (
                             <MessageCircleMore className="h-4 w-4" />
-                          </div>
-                        )}
-                        <p className="truncate min-w-0">{session.title}</p>
-                      </div>
-                      <LoadingIndicator className="ml-auto" />
-                    </Link>
-                  </SidebarMenuButton>
-                </ChatContextMenu>
-              </SidebarMenuItem>
-            ))}
+                          )}
+                        </div>
+                      )}
+                      {isBranch && (
+                        <div className="flex items-center gap-1 mr-1">
+                          <span className="text-muted-foreground">
+                            {session.branchName}
+                          </span>
+                          <ArrowRight size={12} />
+                          <MessageCircleMore className="h-4 w-4" />
+                        </div>
+                      )}
+                      <p className="truncate min-w-0">{session.title}</p>
+                    </div>
+                    <LoadingIndicator className="ml-auto" />
+                  </Link>
+                </SidebarMenuButton>
+              </ChatContextMenu>
+            </SidebarMenuItem>
+          )})}
         </SidebarMenu>
       </SidebarGroupContent>
     </SidebarGroup>
@@ -371,8 +366,6 @@ function ChatSidebarMenuSession() {
         </SidebarGroupContent>
       </SidebarGroup>
 
-      <HubSidebar />
-
       <MemoizedSessionGroup
         sessions={groupedSessions.today}
         label={t("sidebar.today")}
@@ -474,23 +467,6 @@ export function ChatSidebar() {
             </DrawerTitle>
             <DrawerDescription>{t("sidebar.chat")}</DrawerDescription>
 
-            {/* Add Hubs link for mobile view */}
-            <SidebarMenuItem>
-              <SidebarMenuButton
-                variant={"default"}
-                size="lg"
-                className="flex items-center justify-center transition-all duration-200 ease-in-out w-full"
-                asChild
-                tooltip={t("sidebar.hubs")}
-              >
-                <Link href="/hubs" className="flex items-center justify-center">
-                  <LayoutGrid className="mr-2 h-5 w-5" />
-                  {t("sidebar.hubs")}
-                </Link>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-
-            <HubSidebar />
             <ChatSidebarMenuSession />
             <ChatSidebarMenuFooter />
           </div>
@@ -527,6 +503,7 @@ export function ChatSidebar() {
         </SidebarGroup>
 
         <ChatSidebarMenuSession />
+        <HubSidebar /> {/* Moved HubSidebar here */}
       </SidebarContent>
       <SidebarFooter>
         <ChatSidebarMenuFooter />

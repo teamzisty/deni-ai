@@ -25,10 +25,11 @@ import {
 import { Input } from "@workspace/ui/components/input";
 import { Textarea } from "@workspace/ui/components/textarea";
 import { toast } from "sonner";
+import { Loading } from "@/components/loading";
 
 export default function HubsPage() {
   const t = useTranslations();
-  const { hubs, createHub } = useHubs();
+  const { hubs, createHub, isLoading } = useHubs();
   const [isNewHubDialogOpen, setIsNewHubDialogOpen] = useState(false);
   const [newHubName, setNewHubName] = useState("");
   const [newHubDescription, setNewHubDescription] = useState("");
@@ -45,6 +46,14 @@ export default function HubsPage() {
     setIsNewHubDialogOpen(false);
     toast.success(t("Hubs.created"));
   };
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-screen">
+        <Loading />
+      </div>
+    );
+  }
 
   return (
     <div className="container max-w-5xl mx-auto py-8">

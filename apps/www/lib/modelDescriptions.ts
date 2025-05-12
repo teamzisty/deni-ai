@@ -280,31 +280,11 @@ export const modelDescriptions: modelDescriptionType = {
     vision: true,
     type: "Gemini",
   },
-  "google/gemini-2.5-pro-preview-03-25": {
-    displayName: "Gemini 2.5 Pro (Old)",
-    knowledgeCutoff: "2025/01",
-    vision: true,
-    type: "Gemini",
-  },
   "google/gemini-2.0-flash-001": {
     displayName: "Gemini 2.0 Flash",
     knowledgeCutoff: "2024/06",
     fast: true,
     vision: true,
-    type: "Gemini",
-  },
-  "google/gemini-2.0-flash-lite-001": {
-    displayName: "Gemini 2.0 Flash Lite",
-    knowledgeCutoff: "2024/06",
-    fast: true,
-    vision: true,
-    type: "Gemini",
-  },
-  "google/gemini-1.5-pro": {
-    displayName: "Gemini 1.5 Pro",
-    knowledgeCutoff: "2023/11",
-    vision: true,
-    fast: true,
     type: "Gemini",
   },
   "anthropic/claude-3-7-sonnet-20250219": {
@@ -335,21 +315,6 @@ export const modelDescriptions: modelDescriptionType = {
     fast: true,
     toolDisabled: true,
     type: "DeepSeek",
-  },
-  "openrouter/x-ai/grok-3-beta": {
-    displayName: "Grok 3 Beta (OpenRouter)",
-    vision: true,
-    reasoning: true,
-    knowledgeCutoff: "-",
-    type: "Grok",
-  },
-  "openrouter/x-ai/grok-3-mini-beta": {
-    displayName: "Grok 3 Mini Beta (OpenRouter)",
-    vision: true,
-    reasoning: true,
-    toolDisabled: true,
-    knowledgeCutoff: "-",
-    type: "Grok",
   },
   "xai/grok-3-beta": {
     displayName: "Grok 3 Beta",

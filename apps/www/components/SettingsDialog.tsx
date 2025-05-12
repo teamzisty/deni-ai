@@ -28,6 +28,7 @@ import AccountSettings from "./AccountSettings";
 import ModelSettings from "./ModelSettings";
 import DataControlsSettings from "./DataControlsSettings";
 import { Button } from "@workspace/ui/components/button";
+
 export function SettingsDialog() {
   const { isOpen, closeDialog, dialogType } = useSettingsDialog();
   const t = useTranslations();

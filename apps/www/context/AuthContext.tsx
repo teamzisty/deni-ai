@@ -22,6 +22,8 @@ const AuthContext = createContext<AuthContextType>({
   sendVerificationEmail: async () => {},
 });
 
+const AUTH_TIMEOUT_MS = 15000; // 15 seconds for auth state to resolve
+
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -43,11 +45,23 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   useEffect(() => {
     if (!auth) {
+      console.warn("Firebase auth is not initialized. Setting isLoading to false.");
       setIsLoading(false);
       return;
     }
 
+    // Set a timeout for auth state resolution
+    const authTimeout = setTimeout(() => {
+      if (isLoading) { // Only if still loading
+        console.warn(`Authentication state did not resolve within ${AUTH_TIMEOUT_MS / 1000} seconds. Forcing isLoading to false.`);
+        setIsLoading(false);
+        // Potentially set user to null or handle as an error state if needed
+        // setUser(null); 
+      }
+    }, AUTH_TIMEOUT_MS);
+
     const unsubscribe = auth.onAuthStateChanged((user) => {
+      clearTimeout(authTimeout); // Clear the timeout as auth state has resolved
       setUser(user);
       setIsLoading(false);
 
