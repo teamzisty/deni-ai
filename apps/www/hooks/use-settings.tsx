@@ -12,6 +12,7 @@ export interface Settings {
   advancedSearch: boolean;
   autoScroll: boolean;
   privacyMode: boolean;
+  conversationsPrivacyMode: boolean;
   // Add more settings here as needed
 }
 
@@ -20,6 +21,7 @@ const DEFAULT_SETTINGS: Settings = {
   advancedSearch: false,
   autoScroll: true,
   privacyMode: false,
+  conversationsPrivacyMode: false,  
 };
 
 const FIRESTORE_COLLECTION = "deni-ai-settings";

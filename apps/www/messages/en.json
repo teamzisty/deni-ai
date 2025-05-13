@@ -175,6 +175,10 @@
         "title": "Privacy Mode",
         "description": "Hide your name, email address, and profile image."
       },
+      "conversationsPrivacyMode": {
+        "title": "Conversations Privacy Mode",
+        "description": "Hide your conversations name. hover to see the conversation name."
+      },
       "authDisabled": "Authentication is temporarily disabled or not available in your instance.",
       "data": {
         "title": "Download Account Data",

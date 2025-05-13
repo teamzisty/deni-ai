@@ -58,21 +58,21 @@ export default function DataControlsSettings() {
   const dialogPromiseRef = useRef<{ resolve: (value: string) => void } | null>(null);
 
   useEffect(() => {
-    const dataCollection = localStorage.getItem("dataCollection");
-    if (dataCollection === "true") {
+    // Read the 'analytics-consent' cookie on component mount
+    const cookieValue = document.cookie
+      .split('; ')
+      .find(row => row.startsWith('analytics-consent='))
+      ?.split('=')[1];
+
+    if (cookieValue === "true") {
       setDataCollection(true);
     } else {
+      // If cookie is "false", not set, or any other value, default dataCollection to false
       setDataCollection(false);
-    }
-  }, []);
+      }
 
-  useEffect(() => {
-    if (dataCollection) {
-      localStorage.setItem("dataCollection", "true");
-    } else {
-      localStorage.setItem("dataCollection", "false");
-    }
-  }, [dataCollection]);
+    console.log("Cookie value:", cookieValue); // Debugging line
+  }, []); // Runs once on mount
 
   // Updated export function
   const exportAllConversations = async () => {
@@ -292,14 +292,8 @@ export default function DataControlsSettings() {
       // Delete the user's conversations data from Firestore
       if (firestore) {
         try {
-          // Delete all sessions using the hook's logic (covers sessions and active)
-          await clearAllSessions(); // Use the hook to clear Firestore data
-
-          // Delete the user's main document (if it exists separately, though clearing sessions might be enough)
-          // Check if this is still needed or if clearAllSessions covers it.
-          // Let's assume clearAllSessions handles the conversation data entirely.
-          // const userDocRef = doc(firestore, `deni-ai-conversations/${user.uid}`);
-          // await deleteDoc(userDocRef); // This might delete the parent doc if needed
+          // Delete all sessions using the hook's logic
+          await clearAllSessions();
         } catch (error) {
           console.error("Error deleting user's conversations data via hook:", error);
           // Continue with account deletion even if Firestore deletion fails
@@ -338,10 +332,16 @@ export default function DataControlsSettings() {
     setShowReauthDialog(true);
   };
 
+  const toggleDataCollection = async (checked: boolean) => {
+    setDataCollection(checked);
+    const cookieValue = checked ? "true" : "false";
+    document.cookie = `analytics-consent=${cookieValue}; path=/; max-age=31536000`; // 1 year
+  }
+
   return (
     <div className="space-y-6">
       {/* Data Control Settings */}
-      <div className="bg-card/50 opacity-50 pointer-events-none border border-border/30 rounded-md overflow-hidden">
+      <div className="bg-card/50 border border-border/30 rounded-md overflow-hidden">
         <div className="flex p-5 items-center gap-4">
           <div className="flex-grow">
             <h3 className="text-lg font-bold">
@@ -353,11 +353,10 @@ export default function DataControlsSettings() {
           </div>
           <div>
             <Switch
-              disabled={true}
               className="scale-125"
               name="dataCollection"
               checked={dataCollection}
-              onCheckedChange={setDataCollection}
+              onCheckedChange={toggleDataCollection}
             />
           </div>
         </div>
