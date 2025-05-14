@@ -27,11 +27,13 @@ import {
 import { Input } from "@workspace/ui/components/input";
 import { Textarea } from "@workspace/ui/components/textarea";
 import { toast } from "sonner";
+import { useSettings } from "@/hooks/use-settings";
 
 export function HubSidebar() {
   const t = useTranslations();
   const { hubs, createHub, addChatToHub, isLoading } = useHubs();
   const [isNewHubDialogOpen, setIsNewHubDialogOpen] = useState(false);
+  const { settings } = useSettings();
   const [newHubName, setNewHubName] = useState("");
   const [newHubDescription, setNewHubDescription] = useState("");
 
@@ -97,6 +99,10 @@ export function HubSidebar() {
         </SidebarGroupContent>
       </SidebarGroup>
     );
+  }
+
+  if (!settings.hubs) {
+    return null;
   }
 
   if (hubs === undefined) {

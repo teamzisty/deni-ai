@@ -163,6 +163,18 @@
         "title": "詳細な検索",
         "description": "AI が検索機能を使用する際、ページの内容を詳しく送信するかどうかを選択します。"
       },
+      "hubs": {
+        "title": "Hub",
+        "description": "Hub を有効にすることで、会話をグループで整理できます。"
+      },
+      "branch": {
+        "title": "ブランチ",
+        "description": "ブランチを有効にすることで、会話を分岐させることができます。"
+      },
+      "autoScroll": {
+        "title": "自動スクロール",
+        "description": "メッセージの生成中に自動的に下へスクロールします。"
+      },
       "theme": {
         "title": "外観テーマ",
         "description": "ライトテーマとダークテーマを切り替えます。",
@@ -310,16 +322,21 @@
         "title": "データ収集",
         "description": "サービスの改善のために使用データの収集を許可する"
       },
+      
       "reauth": {
         "title": "再認証",
         "description": "データのエクスポートや削除を行うために、パスワードを入力してください。",
         "providerAuth": "Google または GitHub で再認証して、削除を続行します。"
       },
       "export": {
-        "title": "データのエクスポート/インポート",
+        "title": "会話データの管理",
         "description": "すべての会話をJSONファイルにエクスポートするか、ファイルからインポートします。",
         "export": "すべてエクスポート",
         "import": "すべてインポート"
+      },
+      "devExport": {
+        "title": "開発モードの会話を管理",
+        "description": "開発モードの会話をJSONファイルにエクスポートするか、ファイルからインポートします。"
       },
       "deleteData": {
         "title": "すべての会話を削除",
@@ -329,6 +346,10 @@
         "confirmDescription": "これにより、アカウント（ログインしている場合）およびローカルストレージからすべての会話データが完全に削除されます。",
         "cancel": "キャンセル",
         "confirm": "はい、すべて削除します"
+      },
+      "deleteDevData": {
+        "title": "開発モードの会話を削除",
+        "description": "開発モードのすべての会話履歴を完全に削除します。この操作は元に戻せません。"
       },
       "accountDeletion": {
         "title": "アカウント削除",
@@ -396,9 +417,9 @@
     "searchChats": "会話を検索...",
     "branchTooltipPrefix": "{parentTitle} のブランチ",
     "branchPrefix": "{parentTitle}",
-    "hubs": "ハブ",
-    "myHubs": "マイハブ",
-    "hubsDescription": "会話をハブに整理する"
+    "hubs": "Hub",
+    "myHubs": "自分の Hub",
+    "hubsDescription": "会話を Hub に整理する"
   },
   "accountMenu": {
     "login": "ログイン",
@@ -408,39 +429,39 @@
     "version": "Deni AI v{version} ({codename}) ({type})"
   },
   "Hubs": {
-    "title": "ハブ (ベータ)",
-    "createNew": "新しいハブを作成",
-    "noHubsYet": "ハブはまだありません",
-    "noHubsDescription": "最初のハブを作成して、会話をコレクションに整理しましょう。ハブは関連するチャットをグループ化するのに役立ちます。",
-    "createDescription": "新しいハブの名前とオプションの説明を入力してください。",
+    "title": "Hub (ベータ)",
+    "createNew": "新しい Hub を作成",
+    "noHubsYet": "Hub はまだありません",
+    "noHubsDescription": "最初の Hub を作成して、会話をコレクションに整理しましょう。Hub は関連するチャットをグループ化するのに役立ちます。",
+    "createDescription": "新しい Hub の名前とオプションの説明を入力してください。",
     "name": "名前",
     "description": "説明",
-    "nameRequired": "ハブ名は必須です。",
-    "chatAddedToHub": "チャットがハブに追加されました",
-    "created": "ハブが正常に作成されました。",
-    "updated": "ハブが正常に更新されました。",
-    "deleted": "ハブが正常に削除されました。",
-    "editTitle": "ハブを編集",
-    "editDescription": "このハブの名前と説明を更新します。",
+    "nameRequired": "Hub の名前は必須です。",
+    "chatAddedToHub": "チャットが Hub に追加されました",
+    "created": "Hub が正常に作成されました。",
+    "updated": "Hub が正常に更新されました。",
+    "deleted": "Hub が正常に削除されました。",
+    "editTitle": "Hub を編集",
+    "editDescription": "この Hub の名前と説明を更新します。",
     "linkedChats": "リンクされたチャットセッション",
-    "removeFromHub": "ハブから削除",
-    "chatRemoved": "チャットがハブから削除されました",
-    "deleteConfirmDescription": "このハブを削除してもよろしいですか？この操作は元に戻せません。",
+    "removeFromHub": "Hub から削除",
+    "chatRemoved": "チャットが Hub から削除されました",
+    "deleteConfirmDescription": "この Hub を削除してもよろしいですか？この操作は元に戻せません。",
     "chatSessionsCount": "{count, plural, =0 {チャットセッションなし} one {# 件のチャットセッション} other {# 件のチャットセッション}}",
-    "linkedChatsCaption": "このハブにリンクされたチャットセッション",
-    "noLinkedChats": "このハブにリンクされたチャットセッションはありません。",
+    "linkedChatsCaption": "この Hub にリンクされたチャットセッション",
+    "noLinkedChats": "この Hub にリンクされたチャットセッションはありません。",
     "addNewChat": "新しいチャット",
     "remove": "削除",
     "noDescription": "説明はありません",
     "createdOn": "作成日: {date}",
-    "notFound": "ハブが見つかりません",
-    "delete": "ハブを削除",
-    "addToHub": "ハブに追加",
-    "dragToAdd": "会話をここにドラッグしてハブに追加",
-    "dropToAdd": "ドロップしてハブに追加",
-    "addedToHub": "ハブに追加しました",
-    "removedFromHub": "ハブから削除しました",
-    "cannotAddToHub": "ハブに追加できません",
+    "notFound": "Hub が見つかりません",
+    "delete": "Hub を削除",
+    "addToHub": "Hub に追加",
+    "dragToAdd": "会話をここにドラッグして Hub に追加",
+    "dropToAdd": "ドロップして Hub に追加",
+    "addedToHub": "Hub に追加しました",
+    "removedFromHub": "Hub から削除しました",
+    "cannotAddToHub": "Hub に追加できません",
     "confirm": "確認"
   },
   "common": {

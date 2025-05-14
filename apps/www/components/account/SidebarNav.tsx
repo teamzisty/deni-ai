@@ -1,6 +1,6 @@
 "use client";
 
-import { usePathname } from "next/navigation";
+import { usePathname } from "@/i18n/navigation";
 import { useTranslations } from "next-intl";
 import { User, Key, Shield, ArrowLeft, Book } from "lucide-react";
 import Link from "next/link";
@@ -11,9 +11,10 @@ import {
   AvatarFallback,
   AvatarImage,
 } from "@workspace/ui/components/avatar";
+import { Skeleton } from "@workspace/ui/components/skeleton";
 export const SidebarNav = () => {
   const t = useTranslations("account");
-  const { user } = useAuth();
+  const { user, isLoading } = useAuth();
   const pathname = usePathname();
 
   const items = [
@@ -54,49 +55,82 @@ export const SidebarNav = () => {
 
   return (
     <div className="flex flex-col h-full">
-      {user && (
-        <div className="flex items-center gap-4 mb-4">
-          <Avatar className="h-12 w-12">
-            <AvatarImage src={user.photoURL || ""} />
-            <AvatarFallback>{user.displayName?.charAt(0)}</AvatarFallback>
-          </Avatar>
-          <p>{user.displayName}</p>
-        </div>
+      {isLoading ? (
+        <>
+          <div className="flex items-center gap-4 mb-4">
+            <Skeleton className="h-12 w-12 rounded-full" />
+            <Skeleton className="h-4 w-24" />
+          </div>
+          <div className="w-full flex-grow">
+            <div className="flex flex-col space-y-2 w-full h-auto">
+              {[...Array(3)].map((_, i) => (
+                <Skeleton key={i} className="h-10 w-full rounded-md" />
+              ))}
+            </div>
+          </div>
+          <div className="w-full mt-auto">
+            <div className="flex flex-col space-y-2 w-full h-auto">
+              {[...Array(2)].map((_, i) => (
+                <Skeleton key={i} className="h-10 w-full rounded-md" />
+              ))}
+            </div>
+          </div>
+        </>
+      ) : (
+        <>
+          {user && (
+            <div className="flex items-center gap-4 mb-4">
+              <Avatar className="h-12 w-12">
+                <AvatarImage src={user.photoURL || ""} />
+                <AvatarFallback>{user.displayName?.charAt(0)}</AvatarFallback>
+              </Avatar>
+              <p>{user.displayName}</p>
+            </div>
+          )}
+          <Tabs
+            defaultValue={pathname}
+            className="w-full flex-grow"
+            orientation="vertical"
+          >
+            <TabsList className="flex flex-col bg-transparent space-y-2 w-full h-auto">
+              {items.map((item) => (
+                <TabsTrigger
+                  key={item.href}
+                  value={item.value}
+                  className="w-full justify-start py-2 px-3 text-md hover:bg-secondary transition-all duration-300"
+                  asChild
+                >
+                  <Link href={item.href} className="flex items-center">
+                    {item.icon}
+                    <span>{item.title}</span>
+                  </Link>
+                </TabsTrigger>
+              ))}
+            </TabsList>
+          </Tabs>
+          <Tabs
+            defaultValue={pathname}
+            className="w-full"
+            orientation="vertical"
+          >
+            <TabsList className="flex flex-col bg-transparent space-y-2 w-full h-auto mt-auto">
+              {bottomItems.map((item) => (
+                <TabsTrigger
+                  key={item.href}
+                  value={item.value}
+                  className="w-full justify-start py-2 px-3 text-md hover:bg-secondary transition-all duration-300"
+                  asChild
+                >
+                  <Link href={item.href} className="flex items-center">
+                    {item.icon}
+                    <span>{item.title}</span>
+                  </Link>
+                </TabsTrigger>
+              ))}
+            </TabsList>
+          </Tabs>
+        </>
       )}
-      <Tabs defaultValue={pathname} className="w-full flex-grow" orientation="vertical">
-        <TabsList className="flex flex-col bg-transparent space-y-2 w-full h-auto">
-          {items.map((item) => (
-            <TabsTrigger
-              key={item.href}
-              value={item.value}
-              className="w-full justify-start py-2 px-3 text-md hover:bg-secondary transition-all duration-300"
-              asChild
-            >
-              <Link href={item.href} className="flex items-center">
-                {item.icon}
-                <span>{item.title}</span>
-              </Link>
-            </TabsTrigger>
-          ))}
-        </TabsList>
-      </Tabs>
-      <Tabs defaultValue={pathname} className="w-full flex-grow" orientation="vertical">
-        <TabsList className="flex flex-col bg-transparent space-y-2 w-full h-auto mt-auto">
-          {bottomItems.map((item) => (
-            <TabsTrigger
-              key={item.href}
-              value={item.value}
-              className="w-full justify-start py-2 px-3 text-md hover:bg-secondary transition-all duration-300"
-              asChild
-            >
-              <Link href={item.href} className="flex items-center">
-                {item.icon}
-                <span>{item.title}</span>
-              </Link>
-            </TabsTrigger>
-          ))}
-        </TabsList>
-      </Tabs>
     </div>
   );
 };

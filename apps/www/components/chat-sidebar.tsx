@@ -49,6 +49,8 @@ import { Input } from "@workspace/ui/components/input";
 import LoadingIndicator from "./LoadingIndicator";
 import { HubSidebar } from "./hub-sidebar";
 import { useHubs } from "@/hooks/use-hubs";
+import { useSettings } from "@/hooks/use-settings";
+import { cn } from "@workspace/ui/lib/utils";
 
 interface GroupedSessions {
   today: ChatSession[];
@@ -119,6 +121,7 @@ function SessionGroup({
 }) {
   if (sessions.length === 0) return null;
   const t = useTranslations();
+  const { settings } = useSettings();
   const { getHub } = useHubs();
 
   // Setup drag and drop handlers for chat sessions
@@ -159,74 +162,95 @@ function SessionGroup({
             const isHub = session.hubId && hub;
 
             return (
-            <SidebarMenuItem
-              key={session.id}
-              draggable
-              onDragStart={(e) => handleDragStart(e, session.id, session.title)}
-              onDragEnd={handleDragEnd}
-              className="chat-session-item cursor-grab active:cursor-grabbing"
-              data-chat-id={session.id}
-            >
-              <ChatContextMenu session={session}>
-                <SidebarMenuButton
-                  className="flex"
-                  isActive={currentSessionId === session.id}
-                  asChild
-                  tooltip={
-                    isBranch
-                      ? `${t("sidebar.branchTooltipPrefix", {
-                          parentTitle:
-                            sessions.find(
-                              (s) => s.id === session.parentSessionId
-                            )?.title || "Unknown Parent",
-                        })}: ${session.branchName}`
-                      : session.title
-                  }
-                >
-                  <Link
-                    href={`/chat/${session.id}`}
-                    className={`flex items-center`}
+              <SidebarMenuItem
+                key={session.id}
+                draggable
+                onDragStart={(e) =>
+                  handleDragStart(e, session.id, session.title)
+                }
+                onDragEnd={handleDragEnd}
+                className="chat-session-item cursor-grab active:cursor-grabbing"
+                data-chat-id={session.id}
+              >
+                <ChatContextMenu session={session}>
+                  <SidebarMenuButton
+                    className="flex"
+                    isActive={currentSessionId === session.id}
+                    asChild
+                    forceShowTooltip={settings.conversationsPrivacyMode}
+                    tooltip={
+                      isBranch
+                        ? `${t("sidebar.branchTooltipPrefix", {
+                            parentTitle:
+                              sessions.find(
+                                (s) => s.id === session.parentSessionId
+                              )?.title || "Unknown Parent",
+                          })}: ${session.branchName}`
+                        : session.title
+                    }
                   >
-                    {isHub && !session.hubId ? (
-                      <GitFork className="h-4 w-4 text-primary" />
-                    ) : isHub && session.isBranch ? (
-                      <FolderDotIcon className="h-4 w-4 text-primary" />
-                    ) : isHub ? (
-                      <FolderDotIcon className="h-4 w-4 text-primary" />
-                    ) : (
-                      <MessageCircleMore className="mr-2 h-4 w-4" />
-                    )}
-                    <div className="flex items-center w-full min-w-0">
-                      {session.hubId && hub && (
-                        <div className="flex items-center gap-1 mr-1">
-                          <span className="text-muted-foreground">
-                            {hub?.name}
-                          </span>
-                          <ArrowRight size={12} />
-                          {session.isBranch && session.branchName ? (
-                            <GitFork className="h-4 w-4 text-primary" />
-                          ) : (
+                    <Link
+                      href={`/chat/${session.id}`}
+                      className={`flex items-center`}
+                    >
+                      {isHub && !session.hubId ? (
+                        <GitFork className="h-4 w-4 text-primary" />
+                      ) : isHub && session.isBranch ? (
+                        <FolderDotIcon className="h-4 w-4 text-primary" />
+                      ) : isHub ? (
+                        <FolderDotIcon className="h-4 w-4 text-primary" />
+                      ) : (
+                        <MessageCircleMore className="mr-2 h-4 w-4" />
+                      )}
+                      <div className="flex items-center w-full min-w-0">
+                        {session.hubId && hub && (
+                          <div className="flex items-center gap-1 mr-1">
+                            <span
+                              className={cn(
+                                "text-muted-foreground",
+                                settings.conversationsPrivacyMode && "blur-sm"
+                              )}
+                            >
+                              {hub?.name}
+                            </span>
+                            <ArrowRight size={12} />
+                            {session.isBranch && session.branchName ? (
+                              <GitFork className="h-4 w-4 text-primary" />
+                            ) : (
+                              <MessageCircleMore className="h-4 w-4" />
+                            )}
+                          </div>
+                        )}
+                        {isBranch && (
+                          <div className="flex items-center gap-1 mr-1">
+                            <span
+                              className={cn(
+                                "text-muted-foreground",
+                                settings.conversationsPrivacyMode && "blur-sm"
+                              )}
+                            >
+                              {session.branchName}
+                            </span>
+                            <ArrowRight size={12} />
                             <MessageCircleMore className="h-4 w-4" />
+                          </div>
+                        )}
+                        <p
+                          className={cn(
+                            "truncate min-w-0",
+                            settings.conversationsPrivacyMode && "blur-sm"
                           )}
-                        </div>
-                      )}
-                      {isBranch && (
-                        <div className="flex items-center gap-1 mr-1">
-                          <span className="text-muted-foreground">
-                            {session.branchName}
-                          </span>
-                          <ArrowRight size={12} />
-                          <MessageCircleMore className="h-4 w-4" />
-                        </div>
-                      )}
-                      <p className="truncate min-w-0">{session.title}</p>
-                    </div>
-                    <LoadingIndicator className="ml-auto" />
-                  </Link>
-                </SidebarMenuButton>
-              </ChatContextMenu>
-            </SidebarMenuItem>
-          )})}
+                        >
+                          {session.title}
+                        </p>
+                      </div>
+                      <LoadingIndicator className="ml-auto" />
+                    </Link>
+                  </SidebarMenuButton>
+                </ChatContextMenu>
+              </SidebarMenuItem>
+            );
+          })}
         </SidebarMenu>
       </SidebarGroupContent>
     </SidebarGroup>
@@ -298,6 +322,7 @@ function ChatSidebarMenuSession() {
   const { sessions, createSession } = useChatSessions();
   const params = useParams<{ id: string }>();
   const [searchQuery, setSearchQuery] = useState("");
+  const { settings } = useSettings();
   const t = useTranslations();
 
   // 検索条件でセッションをフィルタリング（useMemoで最適化）
@@ -342,24 +367,27 @@ function ChatSidebarMenuSession() {
                 </span>
               </SidebarMenuButton>
             </SidebarMenuItem>
-            <SidebarMenuItem>
-              <SidebarMenuButton
-                variant={"default"} // Changed from "ghost" to "default"
-                size="lg"
-                className="flex items-center justify-center transition-all duration-200 ease-in-out"
-                asChild
-                tooltip={t("sidebar.hubs")}
-                data-sidebar="menu-button"
-                data-size="lg"
-              >
-                <Link href="/hubs" className="flex items-center">
-                  <LayoutGrid />
-                  <span className="group-data-[collapsible=icon]:hidden ml-2">
-                    {t("sidebar.hubs")}
-                  </span>
-                </Link>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
+
+            {settings.hubs && (
+              <SidebarMenuItem>
+                <SidebarMenuButton
+                  variant={"default"} // Changed from "ghost" to "default"
+                  size="lg"
+                  className="flex items-center justify-center transition-all duration-200 ease-in-out"
+                  asChild
+                  tooltip={t("sidebar.hubs")}
+                  data-sidebar="menu-button"
+                  data-size="lg"
+                >
+                  <Link href="/hubs" className="flex items-center">
+                    <LayoutGrid />
+                    <span className="group-data-[collapsible=icon]:hidden ml-2">
+                      {t("sidebar.hubs")}
+                    </span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+            )}
 
             <SearchBar onSearch={handleSearch} />
           </SidebarMenu>
@@ -501,7 +529,6 @@ export function ChatSidebar() {
             <SidebarTrigger className="ml-auto group-data-[collapsible=icon]:absolute group-data-[collapsible=icon]:left-1/2 group-data-[collapsible=icon]:-translate-x-1/2 group-data-[collapsible=icon]:top-4" />
           </div>
         </SidebarGroup>
-
         <ChatSidebarMenuSession />
         <HubSidebar /> {/* Moved HubSidebar here */}
       </SidebarContent>

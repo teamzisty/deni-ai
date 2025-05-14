@@ -25,6 +25,7 @@ import { memo, useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
 import { useHubs } from "@/hooks/use-hubs";
 import { FolderPlus, Folder } from "lucide-react";
+import { useSettings } from "@/hooks/use-settings";
 
 interface ChatContextMenuProps {
   session: ChatSession;
@@ -36,6 +37,7 @@ export const ChatContextMenu = memo(({ session, children }: ChatContextMenuProps
   const [nameOpen, setNameOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [chatName, setChatName] = useState(session.title);
+  const { settings } = useSettings();
 
   const { updateSession, deleteSession } = useChatSessions();
   const { hubs, addChatToHub, removeChatFromHub } = useHubs();
@@ -85,7 +87,7 @@ export const ChatContextMenu = memo(({ session, children }: ChatContextMenuProps
           </ContextMenuItem>
           
           {/* Hub Management Submenu */}
-          {hubs.length > 0 && (
+          {hubs.length > 0 && settings.hubs && (
             <>
               <ContextMenuSeparator />
               

@@ -32,6 +32,7 @@ import ChatInput from "@/components/ChatInput";
 import { Footer } from "@/components/footer";
 import { useDebouncedCallback } from "use-debounce"; // Import useDebouncedCallback
 import { ResearchDepth } from "@/components/DeepResearchButton"; // Import the ResearchDepth type
+import { useSettings } from "@/hooks/use-settings";
 
 interface MessageListProps {
   messages: UIMessage[];
@@ -117,22 +118,16 @@ const Chat: React.FC<ChatProps> = ({
   const isMobile = useIsMobile();
 
   // --- State Variables ---
-  const [currentSession, setCurrentSession] =
-    useState<ChatSession>(initialSessionData);
   const [image, setImage] = useState<string | null>(initialImage || null);
   const [searchEnabled, setSearchEnabled] = useState(false);
-  const [advancedSearch, setAdvancedSearch] = useState(() => {
-    if (typeof window !== "undefined") {
-      return window.localStorage.getItem("advancedSearch") === "true";
-    }
-    return false;
-  });
+  const [currentSession] = useState<ChatSession>(initialSessionData);
+  const { settings } = useSettings();
   const [deepResearch, setDeepResearch] = useState(false);
   const [researchDepth, setResearchDepth] = useState<ResearchDepth>("deep");
   const [visionRequired, setVisionRequired] = useState(!!initialImage);
   const [availableTools, setAvailableTools] = useState<string[]>([]);
-  const [model, setModel] = useState(
-    initialModel || "openai/gpt-4.1-mini-2025-04-14"
+  const [model, setModel] = useState<string>(
+    initialModel || "openai/gpt-4.1-2025-04-14"
   );
   const [reasoningEffort, setReasoningEffort] =
     useState<reasoningEffortType>("medium");
@@ -219,6 +214,7 @@ const Chat: React.FC<ChatProps> = ({
 
   // Scroll chat log
   useEffect(() => {
+    if (!settings.autoScroll) return; // Check if auto-scroll is enabled
     if (
       (status === "streaming" || status === "submitted") &&
       chatLogRef.current
@@ -230,7 +226,7 @@ const Chat: React.FC<ChatProps> = ({
   // Debounced function to save session data
   const debouncedUpdateSession = useDebouncedCallback(
     (updatedMessages: UIMessage[]) => {
-      if (!currentSession) return;
+      if (!currentSession) return; // Ensure currentSession is defined
 
       // Explicitly create plain objects for Firestore compatibility
       const messagesToSave = updatedMessages.map((message) => {
@@ -483,7 +479,7 @@ const Chat: React.FC<ChatProps> = ({
 
     const newAvailableTools = [];
     if (searchEnabled) newAvailableTools.push("search");
-    if (advancedSearch) newAvailableTools.push("advancedSearch");
+    if (settings.advancedSearch) newAvailableTools.push("advancedSearch");
     if (deepResearch) {
       if (researchDepth === "shallow") {
         newAvailableTools.push("shallowResearch"); // Add tool for shallow research
@@ -552,6 +548,7 @@ const Chat: React.FC<ChatProps> = ({
       );
     }
 
+    // Wait for 1 second before reloading
     if (auth && authToken) {
       submitOptions.headers = { Authorization: authToken };
     } else if (auth && !authToken && user) {
@@ -561,6 +558,8 @@ const Chat: React.FC<ChatProps> = ({
     } else if (auth) {
       throw new Error(t("chat.error.idTokenFailed"));
     }
+
+    await new Promise(resolve => setTimeout(resolve, 300));
 
     try {
       reload(submitOptions);
@@ -767,17 +766,19 @@ const Chat: React.FC<ChatProps> = ({
                 error={error}
                 onRegenerate={handleRegenerate} // Pass handler
               />
-              {status === "submitted" || status === "streaming" && !messages[messages.length - 1]?.content && (
-                <div className="flex w-full message-log visible">
-                  <div className="p-2 my-2 rounded-lg text-muted-foreground w-full">
-                    <span className="animate-pulse">
-                      {modelDescriptions[model]?.reasoning
-                        ? t("messageLog.reasoning")
-                        : t("messageLog.thinking")}
-                    </span>
-                  </div>
-                </div>
-              )}
+              {status === "submitted" ||
+                (status === "streaming" &&
+                  !messages[messages.length - 1]?.content && (
+                    <div className="flex w-full message-log visible">
+                      <div className="p-2 my-2 rounded-lg text-muted-foreground w-full">
+                        <span className="animate-pulse">
+                          {modelDescriptions[model]?.reasoning
+                            ? t("messageLog.reasoning")
+                            : t("messageLog.thinking")}
+                        </span>
+                      </div>
+                    </div>
+                  ))}
               {error && (
                 <div className="flex w-full message-log visible">
                   <div className="p-2 my-2 rounded-lg text-muted-foreground w-full">

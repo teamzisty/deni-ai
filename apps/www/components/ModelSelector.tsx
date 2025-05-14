@@ -6,6 +6,9 @@ import {
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuSeparator,
+  DropdownMenuSub,
+  DropdownMenuSubContent,
+  DropdownMenuSubTrigger,
   DropdownMenuTrigger,
 } from "@workspace/ui/components/dropdown-menu";
 import {
@@ -39,6 +42,7 @@ import { DeepSeekIcon } from "./DeepSeekIcon";
 import { useSettingsDialog } from "@/context/SettingsDialogContext";
 import { Input } from "@workspace/ui/components/input";
 import { useIsMobile } from "@workspace/ui/hooks/use-mobile";
+import React from "react";
 
 const ModelItem = memo(
   ({
@@ -133,7 +137,9 @@ const ModelItem = memo(
         <div className="flex items-center w-full justify-between">
           <div className="flex items-center gap-2">
             <span className="text-base">{modelDescription.displayName}</span>
-            <EasyTip content={t(`modelDescriptions.${model.replace(".", "-")}`)}>
+            <EasyTip
+              content={t(`modelDescriptions.${model.replace(".", "-")}`)}
+            >
               <Info size={16} />
             </EasyTip>
           </div>
@@ -168,6 +174,176 @@ const ModelItem = memo(
   }
 );
 ModelItem.displayName = "ModelItem";
+
+export const RefreshModelSelector = memo(function ModelSelector({
+  modelDescriptions,
+  model,
+  visionRequired,
+  handleModelChange,
+}: {
+  modelDescriptions: modelDescriptionType;
+  model: string;
+  visionRequired?: boolean;
+  handleModelChange: (model: string) => void;
+}) {
+  const t = useTranslations();
+  const { openDialog } = useSettingsDialog();
+  const [isOpen, setIsOpen] = useState(false);
+  const isMobile = useIsMobile();
+  const triggerRef = useRef<HTMLButtonElement>(null);
+  const contentRef = useRef<HTMLDivElement>(null);
+
+  const ModelIcon = useMemo(() => {
+    return <RefreshCw />;
+  }, []);
+
+  const memoizedHandleModelChange = useCallback(handleModelChange, [
+    handleModelChange,
+  ]);
+
+  const closeDropdown = useCallback(() => {
+    setIsOpen(false);
+  }, []);
+
+  const handleManageModels = useCallback(
+    (e: React.MouseEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
+      closeDropdown();
+      openDialog("model");
+    },
+    [closeDropdown, openDialog]
+  );
+
+  const getShrinkedName = (name?: string) => {
+    return (
+      name
+        ?.replace("GPT-", "")
+        .replace("Gemini ", "")
+        .replace("Claude ", "")
+        .replace("Grok ", "")
+        .replace("DeepSeek ", "") || ""
+    );
+  };
+
+  return (
+    <DropdownMenu open={isOpen} onOpenChange={setIsOpen}>
+      <DropdownMenuTrigger className="m-0" asChild>
+        <Button
+          ref={triggerRef}
+          variant={"ghost"}
+          className={cn("!p-1 rounded-full")}
+        >
+          {ModelIcon}
+          <span className="inline-flex items-center justify-center">
+            {isMobile
+              ? getShrinkedName(modelDescriptions[model]?.displayName)
+              : modelDescriptions[model]?.displayName}
+          </span>
+          <ArrowDown className="text-zinc-400 text-sm" />
+        </Button>
+      </DropdownMenuTrigger>
+
+      <DropdownMenuContent
+        className="w-96"
+        onCloseAutoFocus={(e) => e.preventDefault()}
+      >
+        <DropdownMenuLabel className="pb-0">
+          {t("modelSelector.model")}
+        </DropdownMenuLabel>
+
+        {visionRequired && (
+          <div className="ml-2">
+            <span className="text-sm text-muted-foreground">
+              {t("modelSelector.visionRequired")}
+            </span>
+          </div>
+        )}
+
+        <div
+          ref={contentRef}
+          className="transition-all duration-200 ease-in-out"
+        >
+          <DropdownMenuGroup>
+            {(() => {
+              // 1. Filter models
+
+              // 2. Group filtered models by type
+              const groupedModels = Object.keys(modelDescriptions).reduce(
+                (acc, modelKey) => {
+                  const modelDesc = modelDescriptions[modelKey];
+                  const type = modelDesc?.type || "Uncategorized"; // Fallback for models without a type
+                  if (!acc[type]) {
+                    acc[type] = [];
+                  }
+                  acc[type].push(modelKey);
+                  return acc;
+                },
+                {} as Record<string, string[]>
+              );
+
+              // Sort models within each group by displayName for consistent ordering
+              for (const type in groupedModels) {
+                groupedModels[type]?.sort((keyA, keyB) => {
+                  const nameA = modelDescriptions[keyA]?.displayName || "";
+                  const nameB = modelDescriptions[keyB]?.displayName || "";
+                  return nameA.localeCompare(nameB);
+                });
+              }
+
+              // 3. Get sorted type keys for ordered group rendering
+              const sortedTypeKeys = Object.keys(groupedModels).sort();
+
+              // 4. Render grouped models
+              return (
+                <>
+                  {sortedTypeKeys.map((type, groupIndex) => (
+                    <React.Fragment key={type}>
+                      <DropdownMenuSub>
+                        <DropdownMenuSubTrigger className="flex items-center gap-2">
+                          {type === "ChatGPT" && <SiOpenai size={16} />}
+                          {type === "Gemini" && <SiGooglegemini size={16} />}
+                          {type === "Claude" && <SiClaude size={16} />}
+                          {type === "Grok" && <SiX size={16} />}
+                          {type === "DeepSeek" && <DeepSeekIcon size={16} />}
+                          <span className="text-base">{type}</span>
+                        </DropdownMenuSubTrigger>
+                        <DropdownMenuSubContent className="w-96">
+                          {groupedModels[type]?.map((modelKey) => (
+                            <ModelItem
+                              key={modelKey}
+                              model={modelKey}
+                              modelDescription={
+                                modelDescriptions[
+                                  modelKey
+                                ] as ImodelDescriptionType
+                              }
+                              visionRequired={visionRequired}
+                              handleModelChange={memoizedHandleModelChange}
+                              t={t}
+                              isGridView={false}
+                              closeDropdown={closeDropdown}
+                            />
+                          ))}
+                        </DropdownMenuSubContent>
+                      </DropdownMenuSub>
+                    </React.Fragment>
+                  ))}
+                  {/* Separator before "Manage Models" if any models were listed */}
+                  {sortedTypeKeys.length > 0 && <DropdownMenuSeparator />}
+                </>
+              );
+            })()}
+            <DropdownMenuItem onClick={handleManageModels}>
+              {t("modelSelector.manageModels")}
+              <ArrowRight className="ml-auto" />
+            </DropdownMenuItem>
+          </DropdownMenuGroup>
+        </div>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+});
 
 export const ModelSelector = memo(function ModelSelector({
   modelDescriptions,
@@ -293,8 +469,15 @@ export const ModelSelector = memo(function ModelSelector({
   );
 
   const getShrinkedName = (name?: string) => {
-    return name?.replace("GPT-", "").replace("Gemini ", "").replace("Claude ", "").replace("Grok ", "").replace("DeepSeek ", "") || "";
-  }
+    return (
+      name
+        ?.replace("GPT-", "")
+        .replace("Gemini ", "")
+        .replace("Claude ", "")
+        .replace("Grok ", "")
+        .replace("DeepSeek ", "") || ""
+    );
+  };
 
   // Apply fade-in animation when content changes
   useEffect(() => {
@@ -316,7 +499,9 @@ export const ModelSelector = memo(function ModelSelector({
         >
           {ModelIcon}
           <span className="inline-flex items-center justify-center">
-            {isMobile ? getShrinkedName(modelDescriptions[model]?.displayName) : modelDescriptions[model]?.displayName}
+            {isMobile
+              ? getShrinkedName(modelDescriptions[model]?.displayName)
+              : modelDescriptions[model]?.displayName}
           </span>
           <ArrowDown className="text-zinc-400 text-sm" />
         </Button>
@@ -382,7 +567,9 @@ export const ModelSelector = memo(function ModelSelector({
                 <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-2">
                   {filteredModels.map((model) => (
                     <EasyTip
-                      content={t(`modelDescriptions.${model.key.replace(".", "-")}`)}
+                      content={t(
+                        `modelDescriptions.${model.key.replace(".", "-")}`
+                      )}
                       key={model.key}
                     >
                       <ModelItem

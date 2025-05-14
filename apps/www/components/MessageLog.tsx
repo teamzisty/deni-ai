@@ -45,7 +45,7 @@ import {
 } from "@/lib/modelDescriptions";
 import Canvas from "./Canvas";
 import { useCanvas } from "@/context/CanvasContext";
-import { ModelSelector } from "./ModelSelector";
+import { ModelSelector, RefreshModelSelector } from "./ModelSelector";
 import { ScrollArea } from "@workspace/ui/components/scroll-area";
 import {
   Sheet,
@@ -70,6 +70,7 @@ import {
 } from "@workspace/ui/components/dropdown-menu";
 import { Input } from "@workspace/ui/components/input";
 import { Label } from "@workspace/ui/components/label";
+import { useSettings } from "@/hooks/use-settings";
 
 interface DeepResearchPanelProps {
   isOpen: boolean;
@@ -347,6 +348,7 @@ const MessageControls = memo(
   }) => {
     const t = useTranslations();
     const { createBranchFromMessage } = useChatSessions(); // Use the hook
+    const { settings } = useSettings();
     const [isBranchModalOpen, setIsBranchModalOpen] = useState(false);
     const [branchName, setBranchName] = useState("");
 
@@ -416,29 +418,34 @@ const MessageControls = memo(
             <div className="flex items-center">
               <div className="p-1 text-gray-400 hover:text-foreground">
                 <EasyTip content={t("messageLog.regenerate")}>
-                  <ModelSelector
+                  <RefreshModelSelector
                     modelDescriptions={modelDescriptions}
                     model={model}
                     handleModelChange={handleModelChange}
-                    refreshIcon={true}
                   />
                 </EasyTip>
               </div>
             </div>
           )}
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon" className="rounded-full text-gray-400 hover:text-foreground">
-                <MoreVertical size={18} />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent>
-              <DropdownMenuItem onClick={() => setIsBranchModalOpen(true)}>
-                <GitFork size={14} className="mr-2" />
-                {t("messageLog.createBranchFromMessage")}
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+          {settings.branch && (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="rounded-full text-gray-400 hover:text-foreground"
+                >
+                  <MoreVertical size={18} />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent>
+                <DropdownMenuItem onClick={() => setIsBranchModalOpen(true)}>
+                  <GitFork size={14} className="mr-2" />
+                  {t("messageLog.createBranchFromMessage")}
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          )}
 
           <Dialog open={isBranchModalOpen} onOpenChange={setIsBranchModalOpen}>
             <DialogContent>
@@ -498,7 +505,7 @@ MessageControls.displayName = "MessageControls";
 export const MessageLog: FC<MessageLogProps> = memo(
   ({ message, sessionId, onRegenerate }) => {
     const [model, setModel] = useState<string>(
-      "openai/gpt-4.1-mini-2025-04-14"
+      "openai/gpt-4.1-2025-04-14"
     );
     const [canvasContent, setCanvasContent] = useState<string | undefined>(
       undefined
@@ -518,7 +525,9 @@ export const MessageLog: FC<MessageLogProps> = memo(
     >({});
 
     const [showCanvas, setShowCanvas] = useState(false);
-    const [currentSession, setCurrentSession] = useState<ChatSession | null>(null);
+    const [currentSession, setCurrentSession] = useState<ChatSession | null>(
+      null
+    );
     const { getCanvasData, updateCanvas } = useCanvas();
     const sessionCanvasData = useMemo(() => {
       return getCanvasData(sessionId);
@@ -563,7 +572,7 @@ export const MessageLog: FC<MessageLogProps> = memo(
       if (session) {
         setCurrentSession(session);
       }
-    }, [])
+    }, []);
 
     useEffect(() => {
       const annotations = message.annotations;
@@ -575,7 +584,7 @@ export const MessageLog: FC<MessageLogProps> = memo(
       if (modelAnnotation) {
         setModel(
           (modelAnnotation as messageAnnotation).model ||
-            "openai/gpt-4.1-mini-2025-04-14"
+            "openai/gpt-4.1-2025-04-14"
         );
       }
 

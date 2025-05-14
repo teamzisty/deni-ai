@@ -22,6 +22,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@workspace/ui/components/dropdown-menu";
+import { useSettings } from "@/hooks/use-settings";
 
 interface HeaderAreaProps {
   model: string;
@@ -49,6 +50,7 @@ const HeaderArea: React.FC<HeaderAreaProps> = memo(
     const isMobile = useIsMobile();
     const t = useTranslations();
     const { openDialog } = useSettingsDialog();
+    const { settings } = useSettings();
     const [createBranchModalOpen, setCreateBranchModalOpen] = useState(false);
 
     return (
@@ -104,12 +106,14 @@ const HeaderArea: React.FC<HeaderAreaProps> = memo(
                     messages={messages}
                   />
                 </DropdownMenuItem>
-                <DropdownMenuItem
-                  onClick={() => setCreateBranchModalOpen(true)}
-                >
-                  <GitFork />
-                  {t("header.createBranch")}
-                </DropdownMenuItem>
+                {settings.branch && (
+                  <DropdownMenuItem
+                    onClick={() => setCreateBranchModalOpen(true)}
+                  >
+                    <GitFork />
+                    {t("header.createBranch")}
+                  </DropdownMenuItem>
+                )}
               </DropdownMenuContent>
             </DropdownMenu>
           )}

@@ -50,7 +50,7 @@ export default function DevChatPage() {
   const [lastWebContainerAction, setLastWebContainerAction] =
     useState<any>(null);
   const [iframeUrl, setIframeUrl] = useState<string | null>(null);
-  const [model, setModel] = useState<string>("openai/gpt-4.1-mini-2025-04-14");
+  const [model, setModel] = useState<string>("openai/gpt-4.1-2025-04-14");
   const [reasoningEffort, setReasoningEffort] =
     useState<reasoningEffortType>("medium");
   const [terminalLogs, setTerminalLogs] = useState<TerminalLogEntry[]>([]);

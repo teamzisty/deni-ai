@@ -171,6 +171,18 @@
         "title": "Advanced Search",
         "description": "When an AI uses the search feature, it selects whether to provide detailed information from the page or not."
       },
+      "hubs": {
+        "title": "Hubs",
+        "description": "Organize your conversations into hubs. Hubs help you group related chats together."
+      },
+      "branch": {
+        "title": "Branch",
+        "description": "Enable branching to create separate threads for different topics."
+      },
+      "autoScroll": {
+        "title": "Auto Scroll",
+        "description": "Automatically scroll to the bottom of the chat when generating a response."
+      },
       "theme": {
         "title": "Appearance Theme",
         "description": "Change between light theme and dark theme.",
@@ -324,10 +336,14 @@
         "description": "Allow collection of usage data to improve the service"
       },
       "export": {
-        "title": "Export/Import Data",
+        "title": "Manage Conversations Data",
         "description": "Export all your conversations to a JSON file or import them from a file.",
         "export": "Export All",
         "import": "Import All"
+      },
+      "devExport": {
+        "title": "Management Dev Mode Data",
+        "description": "Export all your dev conversations to a JSON file or import them from a file."
       },
       "reauth": {
         "title": "Reauthentication",
@@ -342,6 +358,10 @@
         "confirmDescription": "This will permanently delete all your conversation data from your account (if logged in) and local storage.",
         "cancel": "Cancel",
         "confirm": "Yes, delete all"
+      },
+      "deleteDevData": {
+        "title": "Delete All Dev Conversations",
+        "description": "Permanently delete all your dev conversation history. This action cannot be undone."
       },
       "accountDeletion": {
         "title": "Delete Account",

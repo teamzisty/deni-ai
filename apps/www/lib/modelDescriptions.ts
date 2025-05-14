@@ -220,7 +220,6 @@ export const modelDescriptions: modelDescriptionType = {
   "openai/gpt-4.1-mini-2025-04-14": {
     displayName: "GPT-4.1 mini",
     knowledgeCutoff: "2024/06",
-    defaultVisibility: true,
     fast: true,
     vision: true,
     type: "ChatGPT",
@@ -228,7 +227,6 @@ export const modelDescriptions: modelDescriptionType = {
   "openai/gpt-4.1-nano-2025-04-14": {
     displayName: "GPT-4.1 nano",
     knowledgeCutoff: "2024/06",
-    defaultVisibility: true,
     fast: true,
     vision: true,
     type: "ChatGPT",
@@ -326,7 +324,6 @@ export const modelDescriptions: modelDescriptionType = {
     displayName: "Grok 3 Mini Beta",
     vision: true,
     reasoning: true,
-    defaultVisibility: true,
     type: "Grok",
   },
 };
