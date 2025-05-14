@@ -23,14 +23,6 @@ const TermsOfServicePage = () => {
             </p>
           </div>
         </div>
-        
-        <StatusAlert
-          className="w-full mt-12 max-w-3xl mx-auto"
-          title={t("voidsComply.title")}
-          description={<a href="https://voids.top/terms-of-service" className="text-primary" target="_blank" rel="noopener noreferrer">{t("voidsComply.content")}</a>}
-          type="info"
-          show={true}
-        />
 
         {/* Terms of Service Content */}
         <div className="w-full pb-12 px-6 max-w-3xl mx-auto prose dark:prose-invert">

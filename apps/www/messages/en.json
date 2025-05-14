@@ -11,7 +11,30 @@
     "sourceCode": "Source Code",
     "privacyPolicy": "Privacy Policy",
     "termsOfService": "Terms of Service",
+    "info": "Info",
     "createBranch": "Create Branch"
+  },
+  "footer": {
+    "disclaimer": "AI models are not perfect and may produce incorrect or nonsensical answers. Use at your own risk.",
+    "pages": "Pages",
+    "resources": {
+      "title": "Resources",
+      "privacyPolicy": "Privacy Policy",
+      "termsOfService": "Terms of Service",
+      "sourceCode": "Source Code",
+      "donate": "Donate",
+      "blog": "Blog"
+    },
+    "team": {
+      "title": "Team",
+      "website": "Website",
+      "github": "GitHub",
+      "jobs": "Jobs",
+      "contact": "Contact",
+      "blog": "Blog",
+      "support": "Support"
+    },
+    "social": "Social"
   },
   "analyticsConsent": {
     "title": "Enable Analytics?",
@@ -494,12 +517,9 @@
     "title": "Save Your 20 Dollars",
     "subtitle": "A safe AI chat service that is unlimited, completely free, and made for everyone",
     "features": {
-      "oneTitle": "Save Your 20 Dollars",
-      "oneSubtitle": "You can stop paying for AI services.",
-      "twoTitle": "Secure and Private",
-      "twoSubtitle": "We dont sell data to third parties.",
-      "threeTitle": "Fast and Reliable",
-      "threeSubtitle": "We provide fast and reliable service."
+      "oneTitle": "Save Money",
+      "twoTitle": "Secure",
+      "threeTitle": "Fast"
     },
     "featuresTab": {
       "one": {
@@ -1211,10 +1231,6 @@
   "privacyPolicy": {
     "title": "Privacy Policy",
     "subtitle": "How we handle your data and protect your privacy",
-    "voidsComply": {
-      "title": "Additional Terms of Service",
-      "content": "By using Deni AI, you agree to the terms of service of voids.top."
-    },
     "introduction": {
       "title": "Introduction",
       "content": "This Privacy Policy describes how your personal information is collected, used, and shared when you use our Deni AI service.",

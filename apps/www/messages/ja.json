@@ -21,7 +21,30 @@
     "sourceCode": "ソースコード",
     "privacyPolicy": "プライバシーポリシー",
     "termsOfService": "利用規約",
+    "info": "情報",
     "createBranch": "ブランチを作成"
+  },
+  "footer": {
+    "disclaimer": "AI モデルは完璧ではなく、不正確または無意味な回答を生成する可能性があります。自己責任でご利用ください。",
+    "pages": "ページ",
+    "resources": {
+      "title": "リソース",
+      "privacyPolicy": "プライバシーポリシー",
+      "termsOfService": "利用規約",
+      "sourceCode": "ソースコード",
+      "donate": "寄付",
+      "blog": "ブログ"
+    },
+    "team": {
+      "title": "チーム",
+      "website": "ウェブサイト",
+      "github": "GitHub",
+      "jobs": "採用情報",
+      "contact": "お問い合わせ",
+      "blog": "ブログ",
+      "support": "サポート"
+    },
+    "social": "ソーシャル"
   },
   "analyticsConsent": {
     "title": "分析を有効にしますか？",
@@ -468,12 +491,9 @@
     "title": "あなたの20ドルを節約",
     "subtitle": "すべての人のために作られた、無制限・完全無料で安全な AI チャットサービス",
     "features": {
-      "oneTitle": "あなたの20ドルを節約",
-      "oneSubtitle": "AIサービスに料金を支払う必要はありません。",
-      "twoTitle": "安全でプライベート",
-      "twoSubtitle": "第三者にデータを販売することはありません。",
-      "threeTitle": "高速で信頼性あり",
-      "threeSubtitle": "高速で信頼性の高いサービスを提供します。"
+      "oneTitle": "節約",
+      "twoTitle": "安全",
+      "threeTitle": "高速"
     },
     "featuresTab": {
       "one": {
@@ -1215,10 +1235,6 @@
   "termsOfService": {
     "title": "利用規約",
     "subtitle": "サービスを利用する前に、以下の利用規約をよくお読みください",
-    "voidsComply": {
-      "title": "追加の利用規約",
-      "content": "本サービスの利用には、voids.topの利用規約にも同意したものとみなされます。"
-    },
     "introduction": {
       "title": "はじめに",
       "content": "Deni AIへようこそ。この利用規約は、当社のウェブサイト、製品、およびサービスの利用に適用されます。",
