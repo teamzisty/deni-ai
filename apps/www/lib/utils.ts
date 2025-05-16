@@ -11,28 +11,29 @@ import { UTFile } from "uploadthing/server";
 
 const utapi = new UTApi();
 
-
 // Helper function to upload to uploadThing API
-async function uploadToUploadThing(imageBase64: string): Promise<string | null> {
+async function uploadToUploadThing(
+  imageBase64: string
+): Promise<string | null> {
   try {
     // Convert base64 to Buffer
-    const buffer = Buffer.from(imageBase64, 'base64');
+    const buffer = Buffer.from(imageBase64, "base64");
     const filename = `${generateUUID()}.png`;
-    
-        // Create a Blob-like object that UTApi can handle
+
+    // Create a Blob-like object that UTApi can handle
     const file = new UTFile([buffer], filename, { type: "image/png" });
-    
+
     // Use the UTApi to upload the file
     const response = await utapi.uploadFiles(file);
-    
+
     if (!response || response.error) {
-      console.error('Upload failed:', response?.error);
+      console.error("Upload failed:", response?.error);
       return null;
     }
-    
+
     return response.data?.ufsUrl || null;
   } catch (error) {
-    console.error('Error uploading to UploadThing:', error);
+    console.error("Error uploading to UploadThing:", error);
     return null;
   }
 }
@@ -113,14 +114,7 @@ const canvas = (dataStream: DataStreamWriter) =>
         message: "Content is required",
         path: ["content"],
       }),
-    execute: async ({ content, title, mode = "create" }) => {
-      let finalContent = content;
-
-      dataStream.writeMessageAnnotation({
-        canvasContent: finalContent,
-        canvasTitle: title || "Untitled Document",
-      });
-
+    execute: async ({ mode = "create" }) => {
       return `Canvas content ${mode}d successfully.`;
     },
   });
@@ -143,7 +137,11 @@ const search = (
       }
       const results = await fetchSearchResults(query);
 
-      const totalCount = toolList?.includes("deepResearch") ? 10 : toolList?.includes("advancedResearch") ? 20 : 5;
+      const totalCount = toolList?.includes("deepResearch")
+        ? 10
+        : toolList?.includes("advancedResearch")
+          ? 20
+          : 5;
       let type = "search";
 
       const searchResults = await Promise.all(
@@ -169,7 +167,9 @@ const search = (
                   includeNodeLocations: true,
                   storageQuota: 10000000,
                   runScripts: "outside-only",
-                  virtualConsole: new VirtualConsole().sendTo(console, { omitJSDOMErrors: true })
+                  virtualConsole: new VirtualConsole().sendTo(console, {
+                    omitJSDOMErrors: true,
+                  }),
                 });
                 const doc = dom.window.document;
 
@@ -198,8 +198,8 @@ const search = (
                     type = toolList?.includes("shallowResearch")
                       ? "shallowResearch"
                       : toolList?.includes("advancedResearch")
-                      ? "advancedResearch"
-                      : "deepResearch";
+                        ? "advancedResearch"
+                        : "deepResearch";
 
                     if (rawContent.length > 150000) {
                       content =
@@ -224,7 +224,6 @@ const search = (
                               content: rawContent,
                             },
                           ],
-                          toolChoice: "required",
                         });
 
                         const smallSummary = await generateText({
@@ -340,9 +339,7 @@ const generateImage = (dataStream: DataStreamWriter) =>
   tool({
     description: "Generate an image based on a text prompt.",
     parameters: z.object({
-      prompt: z
-        .string()
-        .describe("The text prompt for the image generation."),
+      prompt: z.string().describe("The text prompt for the image generation."),
     }),
     execute: async ({ prompt }) => {
       // Generate image with OpenAI
@@ -350,14 +347,14 @@ const generateImage = (dataStream: DataStreamWriter) =>
         model: openai.image("gpt-image-1"),
         prompt,
       });
-      
+
       // Upload the generated image to uploadThing
       const imageUrl = await uploadToUploadThing(image.base64);
-      
+
       // Return both the base64 image and the uploaded URL if available
-      return { 
-        image: imageUrl, 
-        prompt
+      return {
+        image: imageUrl,
+        prompt,
       };
     },
   });

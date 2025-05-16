@@ -20,6 +20,7 @@ import { createVoidsOAI } from "@workspace/voids-oai-provider/index";
 import { createVoidsAP } from "@workspace/voids-ap-provider/index";
 import {
   convertToCoreMessages,
+  CoreMessage,
   createDataStreamResponse,
   extractReasoningMiddleware,
   generateText,
@@ -120,6 +121,7 @@ export async function POST(req: Request) {
     });
 
     const coreMessage = convertToCoreMessages(messages);
+    // const coreMessage = messages as CoreMessage[]; // temporary fix for the new API
 
     if (modelDescription?.toolDisabled) {
       toolList = ["tooldisabled"];
@@ -227,7 +229,7 @@ export async function POST(req: Request) {
               : newModel,
           messages: coreMessage,
           tools: tools,
-          maxSteps: 15,
+          maxSteps: 50,
           experimental_transform: smoothStream({
             chunking: /[\u3040-\u309F\u30A0-\u30FF]|\S+\s+/,
           }),
@@ -243,7 +245,7 @@ export async function POST(req: Request) {
             }),
             google: {
               thinkingConfig: {
-                thinkingBudget: 2048,
+                thinkingBudget: 8192,
               },
             } as GoogleGenerativeAIProviderOptions,
             openrouter: {

@@ -86,14 +86,15 @@
     "searchFailed": "検索失敗",
     "visited": "訪問:",
     "unknownUrl": "不明なURL",
-    "visitSuccess": "訪問成功",
-    "visitFailed": "訪問失敗",
+    "visitSuccess": "訪問成功",    "visitFailed": "訪問失敗",
     "visiting": "訪問中",
     "updatedCanvas": "キャンバス更新:",
     "untitledCanvas": "無題のキャンバス",
     "canvasUpdateSuccess": "キャンバス更新成功",
     "canvasUpdateFailed": "キャンバス更新失敗",
     "updatingCanvas": "キャンバス更新中...",
+    "andMore": "他に {count} 件のソース",
+    "research": "リサーチ",
     "createBranchFromMessage": "ブランチをこのメッセージから作成",
     "createBranchFromMessageDescription": "このメッセージから作成される新しいブランチの名前を入力してください。",
     "branchName": "ブランチ名",
@@ -159,6 +160,23 @@
     },
     "general": {
       "tab": "一般",
+      "theme": {
+        "title": "外観テーマ",
+        "description": "ライトテーマとダークテーマを切り替えます。",
+        "action": "テーマを変更",
+        "light": "ライト",
+        "dark": "ダーク",
+        "system": "システム"
+      },
+      "language": {
+        "title": "言語",
+        "description": "表示言語を変更します。",
+        "action": "言語を変更"
+      }
+    },
+    "customize": {
+      "tab": "カスタマイズ",
+      "title": "カスタマイズと挙動",
       "search": {
         "title": "詳細な検索",
         "description": "AI が検索機能を使用する際、ページの内容を詳しく送信するかどうかを選択します。"
@@ -174,19 +192,6 @@
       "autoScroll": {
         "title": "自動スクロール",
         "description": "メッセージの生成中に自動的に下へスクロールします。"
-      },
-      "theme": {
-        "title": "外観テーマ",
-        "description": "ライトテーマとダークテーマを切り替えます。",
-        "action": "テーマを変更",
-        "light": "ライト",
-        "dark": "ダーク",
-        "system": "システム"
-      },
-      "language": {
-        "title": "言語",
-        "description": "表示言語を変更します。",
-        "action": "言語を変更"
       }
     },
     "account": {
@@ -1325,8 +1330,7 @@
       "content": "これらの規約に関するご質問がある場合は、GitHubリポジトリまたはサポートチャネルを通じてお問い合わせください。"
     },
     "lastUpdated": "最終更新日："
-  },
-  "canvas": {
+  },  "canvas": {
     "tooltip": "キャンバスを使用",
     "button": "Canvas",
     "saved": "キャンバスを保存しました",
@@ -1335,7 +1339,9 @@
     "save": "保存",
     "title": "キャンバス",
     "copied": "キャンバスの内容をコピーしました",
-    "clickToOpen": "クリックして開く"
+    "clickToOpen": "クリックして開く",
+    "streaming": "ストリーミング中",
+    "streamingWaiting": "コンテンツを待っています..."
   },
   "translation": {
     "tooltip": "翻訳を使用",

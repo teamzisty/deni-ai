@@ -77,14 +77,15 @@
     "searchFailed": "Search failed",
     "visited": "Visited:",
     "unknownUrl": "Unknown URL",
-    "visitSuccess": "Visit successful",
-    "visitFailed": "Visit failed",
+    "visitSuccess": "Visit successful",    "visitFailed": "Visit failed",
     "visiting": "Visiting",
     "updatedCanvas": "Updated Canvas:",
     "untitledCanvas": "Untitled Canvas",
     "canvasUpdateSuccess": "Canvas update successful",
     "canvasUpdateFailed": "Canvas update failed",
     "updatingCanvas": "Updating canvas...",
+    "andMore": "and {count} more sources",
+    "research": "Research",
     "createBranchFromMessage": "Create Branch from this Message",
     "createBranchFromMessageDescription": "Enter a name for the new branch that will be created from this message.",
     "branchName": "Branch Name",
@@ -167,6 +168,23 @@
     "general": {
       "tab": "General",
       "title": "General Settings",
+      "theme": {
+        "title": "Appearance Theme",
+        "description": "Change between light theme and dark theme.",
+        "action": "Change Theme",
+        "light": "Light",
+        "dark": "Dark",
+        "system": "System"
+      },
+      "language": {
+        "title": "Language",
+        "description": "Change the display language.",
+        "action": "Change Language"
+      }
+    },
+    "customize": {
+      "tab": "Customize",
+      "title": "Customize & Behavior",
       "search": {
         "title": "Advanced Search",
         "description": "When an AI uses the search feature, it selects whether to provide detailed information from the page or not."
@@ -182,19 +200,6 @@
       "autoScroll": {
         "title": "Auto Scroll",
         "description": "Automatically scroll to the bottom of the chat when generating a response."
-      },
-      "theme": {
-        "title": "Appearance Theme",
-        "description": "Change between light theme and dark theme.",
-        "action": "Change Theme",
-        "light": "Light",
-        "dark": "Dark",
-        "system": "System"
-      },
-      "language": {
-        "title": "Language",
-        "description": "Change the display language.",
-        "action": "Change Language"
       }
     },
     "account": {
@@ -1384,8 +1389,7 @@
       "content": "If you have any questions about these Terms, please contact us via our GitHub repository or through our support channels."
     },
     "lastUpdated": "Last Updated:"
-  },
-  "canvas": {
+  },  "canvas": {
     "tooltip": "Use Canvas",
     "button": "Canvas",
     "saved": "Canvas saved",
@@ -1394,7 +1398,9 @@
     "save": "Save",
     "title": "Canvas",
     "copied": "Canvas content copied to clipboard",
-    "clickToOpen": "Click to view canvas"
+    "clickToOpen": "Click to view canvas",
+    "streaming": "Streaming",
+    "streamingWaiting": "Waiting for content..."
   },
   "translation": {
     "tooltip": "Use Translation",

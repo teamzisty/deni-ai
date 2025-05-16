@@ -25,6 +25,7 @@ interface CanvasProps {
   sessionId: string;
   onClose: () => void;
   canUpdate?: boolean;
+  isStreaming?: boolean;
   onUpdateCanvas?: (
     sessionId: string,
     data: { content: string; title: string }
@@ -37,6 +38,7 @@ export const Canvas: React.FC<CanvasProps> = React.memo(function Canvas({
   sessionId,
   onClose,
   canUpdate = true,
+  isStreaming = false,
   onUpdateCanvas,
 }) {
   const t = useTranslations();
@@ -244,39 +246,53 @@ export const Canvas: React.FC<CanvasProps> = React.memo(function Canvas({
                   <X size={16} />
                 </Button>
               </div>
-            </div>
-
-            <div className="flex-1 p-4 overflow-y-scroll overflow-x-scroll">
-              <div
-                className={cn(
-                  "w-full h-full min-h-[300px]",
-                  !editMode && "hidden"
-                )}
-              >
-                <BlockNoteView
-                  editor={editor}
-                  className="w-full"
-                  onChange={async (editor) => {
-                    const markdown = await editor.blocksToMarkdownLossy(
-                      editor.document
-                    );
-                    setEditableContent(markdown);
-                  }}
-                />
-              </div>
-              <div
-                className={cn(
-                  "prose dark:prose-invert max-w-none",
-                  editMode && "hidden"
-                )}
-              >
-                <ReactMarkdown
-                  remarkPlugins={[remarkGfm]}
-                  components={{ pre: Pre }}
-                >
-                  {canvasData?.content}
-                </ReactMarkdown>
-              </div>
+            </div>            <div className={cn(
+                "flex-1 p-4 overflow-y-scroll overflow-x-scroll",
+                isStreaming && "bg-secondary/10 border border-primary/20 rounded-b"
+              )}>
+              {isStreaming && content.trim() === "" ? (
+                <div className="flex flex-col items-center justify-center h-full space-y-2 text-muted-foreground">
+                  <div className="animate-pulse flex space-x-1">
+                    <div className="h-2 w-2 rounded-full bg-primary"></div>
+                    <div className="h-2 w-2 rounded-full bg-primary animation-delay-200"></div>
+                    <div className="h-2 w-2 rounded-full bg-primary animation-delay-400"></div>
+                  </div>
+                  <p>{t("canvas.streamingWaiting")}</p>
+                </div>
+              ) : (
+                <>
+                  <div
+                    className={cn(
+                      "w-full h-full min-h-[300px]",
+                      !editMode && "hidden"
+                    )}
+                  >
+                    <BlockNoteView
+                      editor={editor}
+                      className="w-full"
+                      onChange={async (editor) => {
+                        const markdown = await editor.blocksToMarkdownLossy(
+                          editor.document
+                        );
+                        setEditableContent(markdown);
+                      }}
+                    />
+                  </div>
+                  <div
+                    className={cn(
+                      "prose dark:prose-invert max-w-none",
+                      editMode && "hidden"
+                    )}
+                  >
+                    <ReactMarkdown
+                      remarkPlugins={[remarkGfm]}
+                      components={{ pre: Pre }}
+                    >
+                      {canvasData?.content || content}
+                    </ReactMarkdown>
+                  </div>
+                </>
+              )}
             </div>
           </motion.div>
         </motion.div>

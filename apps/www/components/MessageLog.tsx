@@ -5,14 +5,12 @@ import {
   useMemo,
   useState,
   useCallback,
-  Fragment,
 } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import {
   Clock,
   Copy,
-  MousePointer,
   RefreshCw,
   Paintbrush,
   X,
@@ -36,7 +34,7 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@workspace/ui/components/collapsible";
-import { SiBrave, SiGoogle } from "@icons-pack/react-simple-icons";
+import { SiBrave } from "@icons-pack/react-simple-icons";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 import {
@@ -45,14 +43,12 @@ import {
 } from "@/lib/modelDescriptions";
 import Canvas from "./Canvas";
 import { useCanvas } from "@/context/CanvasContext";
-import { ModelSelector, RefreshModelSelector } from "./ModelSelector";
-import { ScrollArea } from "@workspace/ui/components/scroll-area";
+import { RefreshModelSelector } from "./ModelSelector";
 import {
   Sheet,
   SheetContent,
   SheetHeader,
   SheetTitle,
-  SheetTrigger,
 } from "@workspace/ui/components/sheet";
 import {
   Dialog,
@@ -631,7 +627,7 @@ export const MessageLog: FC<MessageLogProps> = memo(
         const bTime = (b as messageAnnotation).researchProgress?.timestamp || 0;
         return aTime - bTime;
       });
-
+      
       // 最新の注釈は最後の要素
       const latestProgressAnnotation =
         sortedProgressAnnotations.length > 0
@@ -1275,9 +1271,9 @@ export const MessageLog: FC<MessageLogProps> = memo(
                   height="300"
                 ></Image>
               )}
-              <div className="prose dark:prose-invert text-sm md:text-base">
+              <p className="prose dark:prose-invert text-sm md:text-base">
                 {message.content}
-              </div>
+              </p>
             </>
           )}
         </div>
