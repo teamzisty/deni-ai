@@ -10,6 +10,7 @@ import { DeepResearchButton, ResearchDepth } from "./DeepResearchButton";
 import CanvasButton from "./CanvasButton";
 import { useIsMobile } from "@workspace/ui/hooks/use-mobile";
 import { cn } from "@workspace/ui/lib/utils";
+import { Bot } from "@/types/bot";
 
 type ModelDescription =
   (typeof modelDescriptions)[keyof typeof modelDescriptions];
@@ -26,6 +27,7 @@ interface ChatInputProps {
   researchDepth?: ResearchDepth;
   canvasEnabled: boolean;
   className?: string;
+  bot?: Bot;
   sendButtonRef?: React.RefObject<HTMLButtonElement | null>;
   modelDescriptions: Record<string, ModelDescription>;
   devMode?: boolean;
@@ -56,6 +58,7 @@ const ChatInput = memo(
     researchDepth,
     canvasEnabled,
     className,
+    bot,
     deepResearchToggle,
     onResearchDepthChange,
     canvasToggle,
@@ -132,6 +135,7 @@ const ChatInput = memo(
             />
           )}
         </div>
+        {!isMobile && bot && <span className="text-muted-foreground text-xs">You are in the bot "{bot.name}". To leave, Create a new conversations.</span>}
       </div>
     );
   },

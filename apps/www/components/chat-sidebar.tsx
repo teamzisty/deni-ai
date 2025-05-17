@@ -24,6 +24,7 @@ import {
   ArrowRight,
   LayoutGrid,
   FolderDotIcon,
+  BotMessageSquare,
 } from "lucide-react";
 import { Link } from "@/i18n/navigation";
 import { Badge } from "@workspace/ui/components/badge";
@@ -158,8 +159,10 @@ function SessionGroup({
         <SidebarMenu suppressHydrationWarning>
           {sessions.slice().map((session) => {
             const hub = session.hubId ? getHub(session.hubId) : undefined;
+            const bot = session.bot || undefined;
             const isBranch = session.isBranch && session.branchName;
             const isHub = session.hubId && hub;
+            const isBot = session.bot;
 
             return (
               <SidebarMenuItem
@@ -199,6 +202,8 @@ function SessionGroup({
                         <FolderDotIcon className="h-4 w-4 text-primary" />
                       ) : isHub ? (
                         <FolderDotIcon className="h-4 w-4 text-primary" />
+                      ) : isBot ? (
+                        <BotMessageSquare className="h-4 w-4 text-primary" />
                       ) : (
                         <MessageCircleMore className="mr-2 h-4 w-4" />
                       )}
@@ -213,6 +218,20 @@ function SessionGroup({
                             >
                               {hub?.name}
                             </span>
+                            <ArrowRight size={12} />
+                            {session.isBranch && session.branchName ? (
+                              <GitFork className="h-4 w-4 text-primary" />
+                            ) : isBot ? (
+                              <BotMessageSquare className="h-4 w-4 text-primary" />
+                            ) : (
+                              <MessageCircleMore className="h-4 w-4" />
+                            )}
+                          </div>
+                        )}
+                        {isBot && (
+                          <div className="flex items-center gap-1 mr-1">
+                            <span className="text-muted-foreground">{bot?.name}</span>
+
                             <ArrowRight size={12} />
                             {session.isBranch && session.branchName ? (
                               <GitFork className="h-4 w-4 text-primary" />
@@ -346,6 +365,10 @@ function ChatSidebarMenuSession() {
     setSearchQuery(query);
   }, []);
 
+  const handleCreateSession = useCallback(() => {
+    createSession();
+  }, [createSession]);
+
   return (
     <>
       <SidebarGroup className="pb-0">
@@ -356,7 +379,7 @@ function ChatSidebarMenuSession() {
                 variant={"outline"}
                 size="lg"
                 className="flex items-center justify-center transition-all duration-200 ease-in-out"
-                onClick={createSession}
+                onClick={handleCreateSession}
                 tooltip={t("sidebar.newChat")}
                 data-sidebar="menu-button"
                 data-size="lg"

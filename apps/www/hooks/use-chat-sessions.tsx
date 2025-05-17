@@ -22,10 +22,11 @@ import { auth, firestore } from "@workspace/firebase-config/client";
 import { useAuth } from "@/context/AuthContext";
 import { toast } from "sonner";
 import { useTranslations } from "next-intl";
+import { Bot } from "@/types/bot";
 
 interface ChatSessionsContextValue {
   sessions: ChatSession[];
-  createSession: () => ChatSession;
+  createSession: (bot?: Bot) => ChatSession;
   addSession: (session: ChatSession) => void;
   updateSession: (id: string, updatedSession: ChatSession) => void;
   deleteSession: (id: string) => void;
@@ -53,6 +54,7 @@ export interface ChatSession {
   messages: UIMessage[];
   createdAt: Date;
   isBranch?: boolean; // Optional: Indicates if the session is a branch
+  bot?: Bot; // Optional: The bot if associated
   parentSessionId?: string; // Optional: ID of the parent session if it's a branch
   branchName?: string; // Optional: Name of the branch
   hubId?: string; // Optional: ID of the hub if associated
@@ -399,6 +401,7 @@ export function ChatSessionsProvider({ children }: { children: ReactNode }) {
                 createdAt: Timestamp.fromDate(createdAt),
                 isBranch: session.isBranch || false,
                 hubId: session.hubId || null,
+                bot: session.bot || null,
                 parentSessionId: session.parentSessionId || null,
                 branchName: session.branchName || null,
               };
@@ -500,13 +503,17 @@ export function ChatSessionsProvider({ children }: { children: ReactNode }) {
     // Keep dependencies, ensure firestore/auth are stable or handled correctly if they change
   }, [sessions, user, modifiedSessionIds, t, firestore, auth]);
 
-  const createSession = useCallback(() => {
+  const createSession = useCallback((bot?: Bot) => {
     const newSession: ChatSession = {
       id: crypto.randomUUID(),
       title: t("chatSessions.newChat"),
       messages: [],
       createdAt: new Date(),
     };
+
+    if (bot) {
+      newSession.bot = bot;
+    }
 
     const updatedSessions = [...sessions, newSession];
     setSessions(updatedSessions);

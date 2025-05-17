@@ -4,6 +4,7 @@ import { Link } from "@/i18n/navigation";
 import { ExternalLinkIcon } from "lucide-react";
 import { SiGithub, SiX } from "@icons-pack/react-simple-icons";
 import { buildInfo } from "@/lib/version";
+import TeamIcon from "./TeamIcon";
 
 const Footer = memo(() => {
   const t = useTranslations();
@@ -11,6 +12,17 @@ const Footer = memo(() => {
   return (
     <footer className="bg-black border-t border-neutral-800 text-white py-16 relative">
       <div className="absolute inset-0 bg-dot-pattern opacity-20"></div>
+      <div className="absolute top-6 right-6 md:right-10">
+        <Link
+          href="https://team.deniai.app"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="hover:text-neutral-400 transition-colors flex items-center"
+        >
+          <TeamIcon size={32} />
+          <span className="font-semibold">UpLauncher</span>
+        </Link>
+      </div>
       <div className="container mx-auto px-6 relative z-10">
         <div className="flex flex-col md:flex-row gap-10 md:gap-20 mb-16">
           {/* Logo and Description */}
@@ -150,7 +162,8 @@ const Footer = memo(() => {
                     target="_blank"
                     className="text-neutral-400 text-sm hover:text-white transition-colors inline-flex items-center gap-1"
                   >
-                    {t("footer.resources.donate")} <ExternalLinkIcon size={14} />
+                    {t("footer.resources.donate")}{" "}
+                    <ExternalLinkIcon size={14} />
                   </Link>
                 </li>
               </ul>

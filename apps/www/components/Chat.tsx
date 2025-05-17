@@ -29,10 +29,10 @@ import { Loading } from "@/components/loading";
 import HeaderArea from "@/components/HeaderArea";
 import { MessageLog } from "@/components/MessageLog";
 import ChatInput from "@/components/ChatInput";
-import { Footer } from "@/components/footer";
 import { useDebouncedCallback } from "use-debounce"; // Import useDebouncedCallback
 import { ResearchDepth } from "@/components/DeepResearchButton"; // Import the ResearchDepth type
 import { useSettings } from "@/hooks/use-settings";
+import { useTitle } from "@/hooks/use-title";
 
 interface MessageListProps {
   messages: UIMessage[];
@@ -124,6 +124,7 @@ const Chat: React.FC<ChatProps> = ({
   const { settings } = useSettings();
   const [deepResearch, setDeepResearch] = useState(false);
   const [researchDepth, setResearchDepth] = useState<ResearchDepth>("deep");
+  const { setTitle } = useTitle({ defaultTitle: currentSession.title });
   const [visionRequired, setVisionRequired] = useState(!!initialImage);
   const [availableTools, setAvailableTools] = useState<string[]>([]);
   const [model, setModel] = useState<string>(
@@ -820,6 +821,7 @@ const Chat: React.FC<ChatProps> = ({
           sendButtonRef={sendButtonRef}
           canvasEnabled={canvasEnabled}
           modelDescriptions={modelDescriptions}
+          bot={currentSession.bot}
           deepResearchToggle={deepResearchToggle}
           onResearchDepthChange={handleResearchDepthChange}
           searchToggle={searchToggle}
