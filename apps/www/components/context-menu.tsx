@@ -42,25 +42,15 @@ export const ChatContextMenu = memo(({ session, children }: ChatContextMenuProps
   const { updateSession, deleteSession } = useChatSessions();
   const { hubs, addChatToHub, removeChatFromHub } = useHubs();
 
-  const baseSession: ChatSession = {
-    id: session.id,
-    title: session.title,
-    createdAt: session.createdAt,
-    messages: session.messages,
-  };
-
   useEffect(() => {
     setChatName(session.title);
   }, [session.title]);
-
-  const handleChatNameChange = () => {
-    baseSession.title = chatName;
-    updateSession(session.id, baseSession);
+  const handleChatNameChange = async () => {
+    await updateSession(session.id, { ...session, title: chatName });
     setNameOpen(false);
   };
-
-  const handleDelete = () => {
-    deleteSession(session.id);
+  const handleDelete = async () => {
+    await deleteSession(session.id);
     setDeleteOpen(false);
   };
 

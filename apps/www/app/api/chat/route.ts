@@ -248,7 +248,6 @@ export async function POST(req: Request) {
           experimental_transform: smoothStream({
             chunking: /[\u3040-\u309F\u30A0-\u30FF]|\S+\s+/,
           }),
-          toolCallStreaming: true,
           temperature: 1,
 
           providerOptions: {

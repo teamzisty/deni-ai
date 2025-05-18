@@ -145,8 +145,7 @@ export default function HubDetailPage() {
     
     toast.success(t("Hubs.chatRemoved"));
   };
-
-  const createNewChat = () => {
+  const createNewChat = async () => {
     // Create a new chat session
     const session = createSession();
 
@@ -167,9 +166,7 @@ export default function HubDetailPage() {
       
       // Update local state
       setHub(updatedHub);
-      setHubSessions([...hubSessions, session]);
-
-      updateSession(session.id, {
+      setHubSessions([...hubSessions, session]);await updateSession(session.id, {
         ...session,
         hubId: hub.id
       });

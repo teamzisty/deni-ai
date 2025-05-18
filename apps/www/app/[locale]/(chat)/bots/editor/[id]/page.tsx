@@ -63,7 +63,7 @@ export default function BotEditorPage() {
 
   useEffect(() => {
     if (!user && !isLoading && auth) {
-      toast.error("You need to be logged in to view this page.");
+      toast.error(t("shared.auth.loginRequired"));
       return;
     }
 
@@ -86,7 +86,7 @@ export default function BotEditorPage() {
 
         if (!response.ok) {
           const errorData = await response.json();
-          throw new Error(errorData.error || "Failed to fetch bot data");
+          throw new Error(errorData.error || t("bots.editor.fetchError"));
         }
 
         const data = await response.json();
@@ -100,7 +100,7 @@ export default function BotEditorPage() {
       } catch (err) {
         console.error(err);
         setError(
-          err instanceof Error ? err.message : "Failed to fetch bot data"
+          err instanceof Error ? err.message : t("bots.editor.fetchError")
         );
       } finally {
         setLoading(false);
@@ -114,12 +114,12 @@ export default function BotEditorPage() {
 
   const handleSave = async () => {
     if (!user) {
-      toast.error("You need to be logged in to save changes.");
+      toast.error(t("bots.editor.loginRequired"));
       return;
     }
 
     if (!name || !description || !systemInstruction) {
-      toast.error("Please fill in all required fields.");
+      toast.error(t("bots.editor.requiredFields"));
       return;
     }
 
@@ -150,14 +150,14 @@ export default function BotEditorPage() {
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.error || "Failed to update bot");
+        throw new Error(errorData.error || t("bots.editor.updateError"));
       }
 
-      toast.success("Bot updated successfully!");
+      toast.success(t("bots.editor.updateSuccess"));
     } catch (error) {
       console.error(error);
       toast.error(
-        error instanceof Error ? error.message : "Failed to update bot"
+        error instanceof Error ? error.message : t("bots.editor.updateError")
       );
     } finally {
       setIsSaving(false);
@@ -166,7 +166,7 @@ export default function BotEditorPage() {
 
   const handleAddInstruction = () => {
     if (instructions.length >= 4) {
-      toast.error("You can only add up to 4 instructions.");
+      toast.error(t("bots.editor.maxInstructions"));
       return;
     }
 
@@ -186,7 +186,7 @@ export default function BotEditorPage() {
 
   const handleDeleteBot = async () => {
     if (!user) {
-      toast.error("You need to be logged in to delete this bot.");
+      toast.error(t("bots.editor.loginToDelete"));
       return;
     }
 
@@ -200,15 +200,15 @@ export default function BotEditorPage() {
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.error || "Failed to delete bot");
+        throw new Error(errorData.error || t("bots.editor.deleteError"));
       }
 
-      toast.success("Bot deleted successfully!");
+      toast.success(t("bots.editor.deleteSuccess"));
       router.push("/bots");
     } catch (error) {
       console.error(error);
       toast.error(
-        error instanceof Error ? error.message : "Failed to delete bot"
+        error instanceof Error ? error.message : t("bots.editor.deleteError")
       );
     } finally {
       setDeleteDialogOpen(false);
@@ -218,7 +218,7 @@ export default function BotEditorPage() {
   const handleCopyShareLink = () => {
     const url = `${window.location.origin}/bots/${params.id}`;
     navigator.clipboard.writeText(url);
-    toast.success("Share link copied to clipboard!");
+    toast.success(t("shared.clipboard.linkCopied"));
   };
 
   if (loading || isLoading) {
@@ -234,7 +234,9 @@ export default function BotEditorPage() {
       <div className="flex flex-col items-center justify-center w-full min-h-screen p-4">
         <h1 className="text-2xl font-bold mb-4">{t("shared.error.title")}</h1>
         <p className="text-muted-foreground mb-6">{error}</p>
-        <Button onClick={() => window.history.back()}>Back</Button>
+        <Button onClick={() => window.history.back()}>
+          {t("shared.back")}
+        </Button>
       </div>
     );
   }
@@ -248,11 +250,12 @@ export default function BotEditorPage() {
       <Card className="w-full max-w-3xl mx-auto my-auto">
         <CardHeader>
           <CardTitle className="flex justify-between items-center">
-            <span className="text-lg">Edit Bot</span>
+            {" "}
+            <span className="text-lg">{t("bots.editor.title")}</span>
             <div className="flex gap-2">
               <Button variant="outline" size="sm" onClick={handleCopyShareLink}>
                 <Copy className="h-4 w-4 mr-2" />
-                Share Link
+                {t("shared.shareLink")}
               </Button>
               <Button
                 variant="destructive"
@@ -260,51 +263,57 @@ export default function BotEditorPage() {
                 onClick={() => setDeleteDialogOpen(true)}
               >
                 <Trash className="h-4 w-4 mr-2" />
-                Delete
+                {t("shared.delete")}
               </Button>
             </div>
-          </CardTitle>
-          <CardDescription>
-            Modify your bot's details and instructions
-          </CardDescription>
+          </CardTitle>{" "}
+          <CardDescription>{t("bots.editor.description")}</CardDescription>
         </CardHeader>
 
         <CardContent className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="name">Name *</Label>
+            {" "}
+            <Label htmlFor="name">{t("bots.editor.nameLabel")} *</Label>
             <Input
               id="name"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              placeholder="Bot name"
+              placeholder={t("bots.editor.namePlaceholder")}
             />
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="description">Description *</Label>
+            {" "}
+            <Label htmlFor="description">
+              {t("bots.editor.descriptionLabel")} *
+            </Label>
             <Textarea
               id="description"
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              placeholder="Describe what your bot does"
+              placeholder={t("bots.editor.descriptionPlaceholder")}
               className="min-h-[100px]"
             />
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="systemInstruction">System Instruction *</Label>
+            {" "}
+            <Label htmlFor="systemInstruction">
+              {t("bots.editor.systemInstructionLabel")} *
+            </Label>
             <Textarea
               id="systemInstruction"
               value={systemInstruction}
               onChange={(e) => setSystemInstruction(e.target.value)}
-              placeholder="Enter system instruction"
+              placeholder={t("bots.editor.systemInstructionPlaceholder")}
               className="min-h-[100px]"
             />
           </div>
 
           <div className="space-y-2">
             <div className="flex justify-between items-center">
-              <Label>Instructions</Label>
+              {" "}
+              <Label>{t("bots.editor.instructionsLabel")}</Label>
               <Button
                 variant="outline"
                 size="sm"
@@ -312,7 +321,7 @@ export default function BotEditorPage() {
                 onClick={handleAddInstruction}
               >
                 <PlusCircle className="h-4 w-4 mr-2" />
-                Add Instruction ({instructions.length} / 4)
+                {t("bots.editor.addInstruction")} ({instructions.length} / 4)
               </Button>
             </div>
 
@@ -324,7 +333,7 @@ export default function BotEditorPage() {
                     onChange={(e) =>
                       handleUpdateInstruction(index, e.target.value)
                     }
-                    placeholder="Enter instruction"
+                    placeholder={t("bots.editor.instructionPlaceholder")}
                     className="flex-1"
                   />
                   <Button
@@ -339,8 +348,7 @@ export default function BotEditorPage() {
 
               {instructions.length === 0 && (
                 <p className="text-sm text-muted-foreground">
-                  No instructions added yet. Instructions help the user
-                  understand how to interact with the bot.
+                  {t("bots.editor.noInstructions")}
                 </p>
               )}
             </div>
@@ -348,8 +356,9 @@ export default function BotEditorPage() {
 
           {bot.createdBy && (
             <div className="pt-2 border-t">
+              {" "}
               <p className="text-sm text-muted-foreground inline-flex items-center">
-                Created by: {bot.createdBy.name}
+                {t("bots.createdBy")}: {bot.createdBy.name}
                 {bot.createdBy.verified && (
                   <Verified className="ml-1 h-4 w-4 text-primary-foreground rounded-full" />
                 )}
@@ -364,39 +373,37 @@ export default function BotEditorPage() {
               <>
                 {" "}
                 <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                Saving...
+                {t("shared.saving")}
               </>
             ) : (
               <>
                 <Save className="h-4 w-4 mr-2" />
-                Save Changes
+                {t("shared.saveChanges")}
               </>
             )}
           </Button>
-          <Button
-            variant="secondary"
-            className="w-full"
-            asChild>
-            <Link href={`/bots/${bot.id}`}>View</Link>
+          <Button variant="secondary" className="w-full" asChild>
+            <Link href={`/bots/${bot.id}`}>{t("shared.view")}</Link>
           </Button>
         </CardFooter>
       </Card>
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+            {" "}
+            <AlertDialogTitle>{t("shared.areYouSure")}</AlertDialogTitle>
             <AlertDialogDescription>
-              This action cannot be undone. This will permanently delete your
-              bot.
+              {t("bots.editor.deleteWarning")}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            {" "}
+            <AlertDialogCancel>{t("shared.cancel")}</AlertDialogCancel>
             <AlertDialogAction
               onClick={handleDeleteBot}
               className="bg-destructive"
             >
-              Delete
+              {t("shared.delete")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

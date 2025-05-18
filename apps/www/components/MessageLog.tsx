@@ -1,11 +1,4 @@
-import {
-  FC,
-  memo,
-  useEffect,
-  useMemo,
-  useState,
-  useCallback,
-} from "react";
+import { FC, memo, useEffect, useMemo, useState, useCallback } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import {
@@ -266,6 +259,13 @@ DeepResearchPanel.displayName = "DeepResearchPanel";
 interface MessageLogProps {
   message: UIMessage;
   sessionId: string;
+  addToolResult: ({
+    toolCallId,
+    result,
+  }: {
+    toolCallId: string;
+    result: any;
+  }) => void;
   onRegenerate?: (model: string) => void;
 }
 
@@ -499,10 +499,11 @@ const MessageControls = memo(
 MessageControls.displayName = "MessageControls";
 
 export const MessageLog: FC<MessageLogProps> = memo(
-  ({ message, sessionId, onRegenerate }) => {
-    const [model, setModel] = useState<string>(
-      "openai/gpt-4.1-2025-04-14"
-    );
+  ({ message, sessionId, addToolResult, onRegenerate }) => {
+    const { getSession, updateSession } = useChatSessions();
+    const t = useTranslations();
+
+    const [model, setModel] = useState<string>("openai/gpt-4.1-2025-04-14");
     const [canvasContent, setCanvasContent] = useState<string | undefined>(
       undefined
     );
@@ -511,6 +512,9 @@ export const MessageLog: FC<MessageLogProps> = memo(
     );
     const [generationTime, setGenerationTime] = useState<number | undefined>(
       undefined
+    );
+    const [session, setSession] = useState<ChatSession | undefined>(
+      getSession(sessionId)
     );
     const [researchProgress, setResearchProgress] = useState<
       messageAnnotation["researchProgress"] | undefined
@@ -533,9 +537,6 @@ export const MessageLog: FC<MessageLogProps> = memo(
     useEffect(() => {
       sessionCanvasDataRef.current = sessionCanvasData;
     }, [sessionCanvasData]);
-
-    const { getSession, updateSession } = useChatSessions();
-    const t = useTranslations();
 
     const toolInvocations = React.useMemo(
       () => message.parts.filter((part) => part.type === "tool-invocation"),
@@ -564,13 +565,6 @@ export const MessageLog: FC<MessageLogProps> = memo(
     );
 
     useEffect(() => {
-      const session = getSession(sessionId);
-      if (session) {
-        setCurrentSession(session);
-      }
-    }, []);
-
-    useEffect(() => {
       const annotations = message.annotations;
       if (!annotations) return;
 
@@ -582,18 +576,6 @@ export const MessageLog: FC<MessageLogProps> = memo(
           (modelAnnotation as messageAnnotation).model ||
             "openai/gpt-4.1-2025-04-14"
         );
-      }
-
-      const titleAnnotation = annotations.find((a) => (a as any).title);
-      if (titleAnnotation) {
-        const session = getSession(sessionId);
-        if (session && session.title !== (titleAnnotation as any).title) {
-          const updatedSession = {
-            ...session,
-            title: (titleAnnotation as any).title,
-          };
-          updateSession(sessionId, updatedSession);
-        }
       }
 
       const canvasAnnotation = annotations.find(
@@ -610,11 +592,16 @@ export const MessageLog: FC<MessageLogProps> = memo(
         });
       }
 
-      const genAnnotation = annotations.find(
-        (a) => (a as messageAnnotation).generationTime
+      // Find all generation time annotations
+      const genAnnotations = annotations.filter(
+        (a) => (a as messageAnnotation).generationTime !== undefined
       );
-      if (genAnnotation) {
-        setGenerationTime((genAnnotation as messageAnnotation).generationTime);
+      
+      // If there are any generation time annotations, use the latest one
+      // (assuming later annotations are more recent)
+      if (genAnnotations.length > 0) {
+        const latestGenAnnotation = genAnnotations[genAnnotations.length - 1];
+        setGenerationTime((latestGenAnnotation as messageAnnotation).generationTime);
       }
 
       const progressAnnotations = annotations.filter(
@@ -627,7 +614,7 @@ export const MessageLog: FC<MessageLogProps> = memo(
         const bTime = (b as messageAnnotation).researchProgress?.timestamp || 0;
         return aTime - bTime;
       });
-      
+
       // 最新の注釈は最後の要素
       const latestProgressAnnotation =
         sortedProgressAnnotations.length > 0
@@ -639,7 +626,15 @@ export const MessageLog: FC<MessageLogProps> = memo(
           (latestProgressAnnotation as messageAnnotation).researchProgress
         );
       }
-    }, [annotationsKey, sessionId, getSession, updateSession, updateCanvas]);
+    }, [
+      annotationsKey,
+      sessionId,
+      getSession,
+      updateSession,
+      updateCanvas,
+      message.id,
+      message.parts,
+    ]);
 
     useEffect(() => {
       const processedInvocations = new Set<string>();
@@ -1238,14 +1233,10 @@ export const MessageLog: FC<MessageLogProps> = memo(
                               {t("messageLog.generatingImage")}
                             </span>
                           );
+
+                        default:
+                          return null;
                       }
-                      if (
-                        part.toolInvocation.toolName === "canvas" ||
-                        part.toolInvocation.toolName === "search"
-                      ) {
-                        return null;
-                      }
-                      return null;
 
                     default:
                       return null;

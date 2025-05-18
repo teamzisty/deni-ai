@@ -11,7 +11,7 @@ import {
   SidebarMenuItem,
   SidebarMenuButton,
 } from "@workspace/ui/components/sidebar";
-import { Folder, FolderPlus, Loader2 } from "lucide-react";
+import { Folder, FolderPlus, LayoutGrid, Loader2 } from "lucide-react";
 import { useHubs } from "@/hooks/use-hubs";
 import { Link } from "@/i18n/navigation";
 import { HubContextMenu } from "./hub-context-menu";
@@ -84,14 +84,11 @@ export function HubSidebar() {
     setIsNewHubDialogOpen(false);
     toast.success(t("Hubs.created"));
   };
-  
 
   if (isLoading) {
     return (
       <SidebarGroup>
-        <SidebarGroupLabel>
-          {t("Hubs.title")}
-        </SidebarGroupLabel>
+        <SidebarGroupLabel>{t("Hubs.title")}</SidebarGroupLabel>
         <SidebarGroupContent>
           <div className="flex items-center justify-center py-4">
             <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
@@ -108,9 +105,7 @@ export function HubSidebar() {
   if (hubs === undefined) {
     return (
       <SidebarGroup>
-        <SidebarGroupLabel>
-          {t("Hubs.title")}
-        </SidebarGroupLabel>
+        <SidebarGroupLabel>{t("Hubs.title")}</SidebarGroupLabel>
         <SidebarGroupContent>
           <SidebarMenu className="flex flex-col gap-2 pl-2">
             <span className="text-muted-foreground">{t("Hubs.error")}</span>
@@ -169,6 +164,22 @@ export function HubSidebar() {
       </SidebarGroupLabel>
       <SidebarGroupContent>
         <SidebarMenu>
+          <SidebarMenuItem>
+            <SidebarMenuButton
+              variant={"default"} // Changed from "ghost" to "default"
+              asChild
+              tooltip={t("sidebar.hubs")}
+              data-sidebar="menu-button"
+              data-size="lg"
+            >
+              <Link href="/hubs" className="flex items-center">
+                <LayoutGrid />
+                <span className="group-data-[collapsible=icon]:hidden ml-2">
+                  {t("sidebar.hubs")}
+                </span>
+              </Link>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
           {hubs.map((hub) => (
             <SidebarMenuItem key={hub.id}>
               <HubContextMenu hub={hub}>

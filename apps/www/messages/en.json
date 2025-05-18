@@ -77,7 +77,8 @@
     "searchFailed": "Search failed",
     "visited": "Visited:",
     "unknownUrl": "Unknown URL",
-    "visitSuccess": "Visit successful",    "visitFailed": "Visit failed",
+    "visitSuccess": "Visit successful",
+    "visitFailed": "Visit failed",
     "visiting": "Visiting",
     "updatedCanvas": "Updated Canvas:",
     "untitledCanvas": "Untitled Canvas",
@@ -124,7 +125,8 @@
     "advancedResearch": "Advanced Research",
     "devNotAvailable": "Not available in Dev Mode",
     "canvas": "Canvas",
-    "translate": "Translate"
+    "translate": "Translate",
+    "botNotice": "You are in the bot \"{botName}\". To leave, Create a new conversations."
   },
   "headerArea": {
     "ready": "Ready",
@@ -450,6 +452,7 @@
     "branchTooltipPrefix": "Branch of {parentTitle}",
     "branchPrefix": "{parentTitle}",
     "hubs": "Hubs",
+    "bots": "Bots",
     "myHubs": "My Hubs",
     "hubsDescription": "Organize your conversations into hubs"
   },
@@ -796,6 +799,21 @@
       "fetchFailed": "Failed to fetch shared conversations",
       "unknown": "An unknown error occurred"
     },
+    "back": "Back",
+    "cancel": "Cancel",
+    "edit": "Edit",
+    "delete": "Delete",
+    "shareLink": "Share Link",
+    "saving": "Saving...",
+    "saveChanges": "Save Changes",
+    "areYouSure": "Are you sure?",
+    "auth": {
+      "loginRequired": "You need to be logged in to view this page."
+    },
+    "clipboard": {
+      "copied": "Link copied to clipboard!",
+      "linkCopied": "Share link copied to clipboard!"
+    },
     "noChats": "No shared conversations yet",
     "noChatsDescription": "Be the first to share a conversation!",
     "startChat": "Start a Chat",
@@ -1035,6 +1053,68 @@
     "experimental": "Experimental",
     "fast": "Fast",
     "image": "Image"
+  },
+  "bots": {
+    "title": "Bots",
+    "subtitle": "Search or Create your bots with Custom interactions.",
+    "createButton": "Create Bots",
+    "createdBy": "Created by",
+    "creatorIdToast": "Creator ID: {id}",
+    "viewButton": "View",
+    "empty": {
+      "title": "No bots in there",
+      "message": "You are first! Create a bot to get started."
+    },
+    "verified": {
+      "label": "This user is email verified.",
+      "disclaimer": "This badge does not guarantee the quality of this Bot.",
+      "domain": "Domain"
+    },
+    "createModal": {
+      "title": "Create a new bot",
+      "description": "Fill in the details below to create your bot.",
+      "nameLabel": "Bot Name",
+      "namePlaceholder": "Enter bot name",
+      "descriptionLabel": "Bot Description",
+      "descriptionPlaceholder": "Enter bot description",
+      "creating": "Creating...",
+      "create": "Create",
+      "error": "Failed to create bot",
+      "successMessage": "Bot created successfully!"
+    },
+    "details": {
+      "fetchError": "Failed to fetch shared chat data",
+      "loginForSession": "You need to be logged in to create a session.",
+      "noChatData": "Chat data is not available.",
+      "sessionCreated": "Session created successfully!",
+      "sessionCreateError": "Failed to create session.",
+      "instructions": "Instructions",
+      "useButton": "Use this Bot"
+    },
+    "editor": {
+      "title": "Edit Bot",
+      "description": "Modify your bot's details and instructions",
+      "nameLabel": "Name",
+      "namePlaceholder": "Bot name",
+      "descriptionLabel": "Description",
+      "descriptionPlaceholder": "Describe what your bot does",
+      "systemInstructionLabel": "System Instruction",
+      "systemInstructionPlaceholder": "Enter system instruction",
+      "instructionsLabel": "Instructions",
+      "addInstruction": "Add Instruction",
+      "instructionPlaceholder": "Enter instruction",
+      "noInstructions": "No instructions added yet. Instructions help the user understand how to interact with the bot.",
+      "maxInstructions": "You can only add up to 4 instructions.",
+      "fetchError": "Failed to fetch bot data",
+      "loginRequired": "You need to be logged in to save changes.",
+      "loginToDelete": "You need to be logged in to delete this bot.",
+      "requiredFields": "Please fill in all required fields.",
+      "updateError": "Failed to update bot",
+      "updateSuccess": "Bot updated successfully!",
+      "deleteError": "Failed to delete bot",
+      "deleteSuccess": "Bot deleted successfully!",
+      "deleteWarning": "This action cannot be undone. This will permanently delete your bot."
+    }
   },
   "chatSessions": {
     "newChat": "New Chat",
@@ -1389,7 +1469,8 @@
       "content": "If you have any questions about these Terms, please contact us via our GitHub repository or through our support channels."
     },
     "lastUpdated": "Last Updated:"
-  },  "canvas": {
+  },
+  "canvas": {
     "tooltip": "Use Canvas",
     "button": "Canvas",
     "saved": "Canvas saved",

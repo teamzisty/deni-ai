@@ -86,7 +86,8 @@
     "searchFailed": "検索失敗",
     "visited": "訪問:",
     "unknownUrl": "不明なURL",
-    "visitSuccess": "訪問成功",    "visitFailed": "訪問失敗",
+    "visitSuccess": "訪問成功",
+    "visitFailed": "訪問失敗",
     "visiting": "訪問中",
     "updatedCanvas": "キャンバス更新:",
     "untitledCanvas": "無題のキャンバス",
@@ -133,7 +134,8 @@
     "advancedResearch": "高度なリサーチ",
     "devNotAvailable": "開発モードでは利用できません",
     "canvas": "キャンバス",
-    "translate": "翻訳"
+    "translate": "翻訳",
+    "botNotice": "あなたは「{botName}」Botにいます。退出するには、新しい会話を作成してください。"
   },
   "headerArea": {
     "ready": "準備完了",
@@ -327,7 +329,7 @@
         "title": "データ収集",
         "description": "サービスの改善のために使用データの収集を許可する"
       },
-      
+
       "reauth": {
         "title": "再認証",
         "description": "データのエクスポートや削除を行うために、パスワードを入力してください。",
@@ -423,6 +425,7 @@
     "branchTooltipPrefix": "{parentTitle} のブランチ",
     "branchPrefix": "{parentTitle}",
     "hubs": "Hub",
+    "bots": "Bot",
     "myHubs": "自分の Hub",
     "hubsDescription": "会話を Hub に整理する"
   },
@@ -550,8 +553,8 @@
       },
       "two": {
         "badge": "カスタマイズ可能",
-        "title": "あなた好みのAIチャットボット",
-        "description": "チャットボットを好みにカスタマイズし、Webに展開できます。"
+        "title": "あなた好みのAIチャットBot",
+        "description": "チャットBotを好みにカスタマイズし、Webに展開できます。"
       },
       "three": {
         "badge": "高速、信頼性",
@@ -1330,7 +1333,8 @@
       "content": "これらの規約に関するご質問がある場合は、GitHubリポジトリまたはサポートチャネルを通じてお問い合わせください。"
     },
     "lastUpdated": "最終更新日："
-  },  "canvas": {
+  },
+  "canvas": {
     "tooltip": "キャンバスを使用",
     "button": "Canvas",
     "saved": "キャンバスを保存しました",
@@ -1474,5 +1478,67 @@
     "openrouter/x-ai/grok-3-mini-beta": "2025年5月10日に廃止予定。",
     "xai/grok-3-beta": "優れた推論と幅広い知識を持つ先進的なモデル。",
     "xai/grok-3-mini-beta": "応答する前に考える軽量モデル。"
+  },
+  "bots": {
+    "title": "Bot",
+    "subtitle": "Bot を検索するか、カスタムインタラクションでBotを作成しましょう。",
+    "createButton": "Bot を作成",
+    "createdBy": "作成者",
+    "creatorIdToast": "作成者ID: {id}",
+    "viewButton": "表示",
+    "empty": {
+      "title": "Bot がありません",
+      "message": "あなたが最初です！Bot を作成して始めましょう。"
+    },
+    "verified": {
+      "label": "このユーザーはメール認証済みです。",
+      "disclaimer": "このバッジはBotの品質を保証するものではありません。",
+      "domain": "ドメイン"
+    },
+    "createModal": {
+      "title": "新しい Bot を作成",
+      "description": "以下の詳細を入力して Bot を作成してください。",
+      "nameLabel": "Bot 名",
+      "namePlaceholder": "Bot名を入力",
+      "descriptionLabel": "Bot の説明",
+      "descriptionPlaceholder": "Bot の説明を入力",
+      "creating": "作成中...",
+      "create": "作成",
+      "error": "Bot の作成に失敗しました",
+      "successMessage": "Bot が正常に作成されました！"
+    },
+    "details": {
+      "fetchError": "共有チャットデータの取得に失敗しました",
+      "loginForSession": "セッションを作成するにはログインが必要です。",
+      "noChatData": "チャットデータが利用できません。",
+      "sessionCreated": "セッションが正常に作成されました！",
+      "sessionCreateError": "セッションの作成に失敗しました。",
+      "instructions": "指示",
+      "useButton": "この Bot を使用"
+    },
+    "editor": {
+      "title": "Bot を編集",
+      "description": "Bot の詳細と指示を修正する",
+      "nameLabel": "名前",
+      "namePlaceholder": "Bot 名",
+      "descriptionLabel": "説明",
+      "descriptionPlaceholder": "Bot の機能について説明",
+      "systemInstructionLabel": "システム指示",
+      "systemInstructionPlaceholder": "システム指示を入力",
+      "instructionsLabel": "指示",
+      "addInstruction": "指示を追加",
+      "instructionPlaceholder": "指示を入力",
+      "noInstructions": "指示がまだ追加されていません。指示はユーザーがBotと対話する方法を理解するのに役立ちます。",
+      "maxInstructions": "指示は最大4つまで追加できます。",
+      "fetchError": "Bot データの取得に失敗しました",
+      "loginRequired": "変更を保存するにはログインが必要です。",
+      "loginToDelete": "この Bot を削除するにはログインが必要です。",
+      "requiredFields": "すべての必須フィールドに入力してください。",
+      "updateError": "Bot の更新に失敗しました",
+      "updateSuccess": "Bot が正常に更新されました！",
+      "deleteError": "Bot の削除に失敗しました",
+      "deleteSuccess": "Bot が正常に削除されました！",
+      "deleteWarning": "この操作は元に戻すことができません。Botは完全に削除されます。"
+    }
   }
 }

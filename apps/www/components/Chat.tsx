@@ -37,13 +37,26 @@ import { useTitle } from "@/hooks/use-title";
 interface MessageListProps {
   messages: UIMessage[];
   sessionId: string;
+  addToolResult: ({
+    toolCallId,
+    result,
+  }: {
+    toolCallId: string;
+    result: any;
+  }) => void;
   error?: Error;
   onRegenerate?: () => void;
 }
 
 // Keep MemoizedMessageList definition here or move to its own file later
 const MemoizedMessageList = memo(
-  ({ messages, sessionId, error, onRegenerate }: MessageListProps) => {
+  ({
+    messages,
+    sessionId,
+    error,
+    addToolResult,
+    onRegenerate,
+  }: MessageListProps) => {
     const t = useTranslations();
     return (
       <>
@@ -51,6 +64,7 @@ const MemoizedMessageList = memo(
           <MessageLog
             sessionId={sessionId}
             key={index}
+            addToolResult={addToolResult}
             message={message}
             onRegenerate={onRegenerate}
           />
@@ -120,7 +134,7 @@ const Chat: React.FC<ChatProps> = ({
   // --- State Variables ---
   const [image, setImage] = useState<string | null>(initialImage || null);
   const [searchEnabled, setSearchEnabled] = useState(false);
-  const [ currentSession ] = useState<ChatSession>(initialSessionData);
+  const [currentSession, setCurrentSession] = useState<ChatSession>(initialSessionData);
   const { settings } = useSettings();
   const [deepResearch, setDeepResearch] = useState(false);
   const [researchDepth, setResearchDepth] = useState<ResearchDepth>("deep");
@@ -141,12 +155,30 @@ const Chat: React.FC<ChatProps> = ({
   const sendButtonRef = useRef<HTMLButtonElement>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
+  let authTokenTemp;
+
+  const handleAuthToken = async () => {
+    if (auth && authToken) {
+      authTokenTemp = authToken;
+    } else if (auth && !authToken && user) {
+      const idToken = await user.getIdToken(true);
+      if (idToken) {
+        authTokenTemp = idToken;
+      } else {
+        throw new Error(t("chat.error.idTokenFailed"));
+      }
+    } else if (auth) {
+      throw new Error(t("chat.error.idTokenFailed"));
+    }
+  }
+
   // --- Hooks ---
   const {
     messages,
     input,
     setInput,
     status,
+    addToolResult,
     setMessages,
     reload,
     stop,
@@ -155,8 +187,26 @@ const Chat: React.FC<ChatProps> = ({
   } = useChat({
     initialMessages: initialSessionData.messages, // Initialize messages
     id: sessionId, // Set chat id to sync with session
+    maxSteps: 50,
     onError: (error) => {
       toast.error(String(error));
+    },
+    headers: {
+      Authorization: auth && authToken ? authToken : "",
+    },
+    async onToolCall({ toolCall }) {
+      if (toolCall.toolName === "setTitle") {
+        updateSession(sessionId, {
+          ...currentSession,
+          title: (toolCall.args as { title: string }).title,
+        });
+        setCurrentSession((prev) => ({
+          ...prev,
+          title: (toolCall.args as { title: string }).title,
+        }));
+        await handleAuthToken();
+        return "OK";
+      }
     },
     body: {
       toolList: availableTools,
@@ -358,13 +408,8 @@ const Chat: React.FC<ChatProps> = ({
       const updatedSessionData = {
         ...currentSession,
         messages: messagesToSave,
-      };
-
-      // Update the session in the parent/storage
-      updateSession(sessionId, updatedSessionData);
-      console.log(
-        "Chat Component: Session updated via debounced call (plain objects, search content removed)."
-      );
+      }; // Update the session in the parent/storage
+      updateSession(sessionId, updatedSessionData); // Pass the updated session data
     },
     1000 // Debounce time
   );
@@ -765,6 +810,7 @@ const Chat: React.FC<ChatProps> = ({
               <MemoizedMessageList
                 messages={messages}
                 sessionId={sessionId} // Pass prop
+                addToolResult={addToolResult}
                 error={error}
                 onRegenerate={handleRegenerate} // Pass handler
               />

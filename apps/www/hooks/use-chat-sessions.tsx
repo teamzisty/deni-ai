@@ -28,7 +28,7 @@ interface ChatSessionsContextValue {
   sessions: ChatSession[];
   createSession: (bot?: BotWithId) => ChatSession;
   addSession: (session: ChatSession) => void;
-  updateSession: (id: string, updatedSession: ChatSession) => void;
+  updateSession: (id: string, updatedSession: ChatSession) => Promise<void>;
   deleteSession: (id: string) => void;
   clearAllSessions: () => Promise<void>; // Make async
   getSession: (id: string) => ChatSession | undefined;
@@ -590,8 +590,7 @@ export function ChatSessionsProvider({ children }: { children: ReactNode }) {
     setModifiedSessionIds((prev) => new Set(prev).add(session.id));
     saveToIndexedDB(updatedSessions);
   }, [sessions, saveToIndexedDB]);
-
-  const updateSession = useCallback((id: string, updatedSession: ChatSession) => {
+  const updateSession = useCallback(async (id: string, updatedSession: ChatSession) => {
     // Validate and ensure createdAt is a Date object before updating state
     const validatedSession = {
       ...updatedSession,
@@ -608,17 +607,15 @@ export function ChatSessionsProvider({ children }: { children: ReactNode }) {
 
     // If not using Firestore, also update IndexedDB immediately for this session
     if (!user) {
-      (async () => {
-        try {
-          const existingSessions = await getSessionsFromIndexedDB();
-          const existingSessionsMap = new Map(existingSessions.map((s: ChatSession) => [s.id, s]));
-          existingSessionsMap.set(id, validatedSession);
-          const mergedSessions = Array.from(existingSessionsMap.values());
-          await saveSessionsToIndexedDB(mergedSessions);
-        } catch (error) {
-          console.error("Failed to immediately update session in IndexedDB:", error);
-        }
-      })();
+      try {
+        const existingSessions = await getSessionsFromIndexedDB();
+        const existingSessionsMap = new Map(existingSessions.map((s: ChatSession) => [s.id, s]));
+        existingSessionsMap.set(id, validatedSession);
+        const mergedSessions = Array.from(existingSessionsMap.values());
+        await saveSessionsToIndexedDB(mergedSessions);
+      } catch (error) {
+        console.error("Failed to immediately update session in IndexedDB:", error);
+      }
     }
   }, [user, setSessions]);
 

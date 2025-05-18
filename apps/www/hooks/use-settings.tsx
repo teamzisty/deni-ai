@@ -13,6 +13,7 @@ export interface Settings {
   autoScroll: boolean;
   privacyMode: boolean;
   hubs: boolean;
+  bots: boolean;
   branch: boolean;
   conversationsPrivacyMode: boolean;
   // Add more settings here as needed
@@ -23,6 +24,7 @@ const DEFAULT_SETTINGS: Settings = {
   advancedSearch: false,
   autoScroll: true,
   privacyMode: false,
+  bots: true,
   hubs: true,
   branch: true,
   conversationsPrivacyMode: false,  

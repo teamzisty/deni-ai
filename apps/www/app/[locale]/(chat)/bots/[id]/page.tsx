@@ -40,7 +40,7 @@ export default function BotsDetailsPage() {
 
   useEffect(() => {
     if (!user && !isLoading && auth) {
-      toast.error("You need to be logged in to view this page.");
+      toast.error(t("shared.auth.loginRequired"));
       return;
     }
 
@@ -64,7 +64,7 @@ export default function BotsDetailsPage() {
         if (!response.ok) {
           const errorData = await response.json();
           throw new Error(
-            errorData.error || "Failed to fetch shared chat data"
+            errorData.error || t("bots.details.fetchError")
           );
         }
 
@@ -73,9 +73,8 @@ export default function BotsDetailsPage() {
       } catch (err) {
         console.error(err);
         setError(
-          err instanceof Error
-            ? err.message
-            : "Failed to fetch shared chat data"
+          err instanceof Error            ? err.message
+            : t("bots.details.fetchError")
         );
       } finally {
         setLoading(false);
@@ -90,7 +89,7 @@ export default function BotsDetailsPage() {
   const handleCopyLink = () => {
     const url = window.location.href;
     navigator.clipboard.writeText(url);
-    toast.success("Link copied to clipboard!");
+    toast.success(t("shared.clipboard.copied"));
   };
 
   if (loading || isLoading) {
@@ -103,26 +102,26 @@ export default function BotsDetailsPage() {
 
   const handleCreateSession = async () => {
     if (!user) {
-      toast.error("You need to be logged in to create a session.");
+      toast.error(t("bots.details.loginForSession"));
       return;
     }
 
     if (!chatData) {
-      toast.error("Chat data is not available.");
+      toast.error(t("bots.details.noChatData"));
       return;
     }
 
     try {
       const session = createSession(chatData);
       if (session) {
-        toast.success("Session created successfully!");
+        toast.success(t("bots.details.sessionCreated"));
         router.push(`/chat/${session.id}`);
       } else {
-        toast.error("Failed to create session.");
+        toast.error(t("bots.details.sessionCreateError"));
       }
     } catch (error) {
       console.error(error);
-      toast.error("Failed to create session.");
+      toast.error(t("bots.details.sessionCreateError"));
     }
   };
 
@@ -131,7 +130,7 @@ export default function BotsDetailsPage() {
       <div className="flex flex-col items-center justify-center min-h-screen w-full p-4">
         <h1 className="text-2xl font-bold mb-4">{t("shared.error.title")}</h1>
         <p className="text-muted-foreground mb-6">{error}</p>
-        <Button onClick={() => window.history.back()}>Back</Button>
+        <Button onClick={() => window.history.back()}>{t("shared.back")}</Button>
       </div>
     );
   }
@@ -146,12 +145,11 @@ export default function BotsDetailsPage() {
         <CardHeader className="text-center">
           <h1 className="text-2xl font-bold">{chatData.name}</h1>
           <div className="text-muted-foreground mt-2 flex items-center justify-center">
-            <span className="text-muted-foreground">Created by: </span>
+            <span className="text-muted-foreground">{t("bots.createdBy")}: </span>
             <div className="bg-primary text-primary-foreground rounded-full px-4 py-1 ml-2 flex items-center">
               <span
-                className="cursor-pointer hover:underline"
-                onClick={() =>
-                  toast.info(`Creator ID: ${chatData.createdBy.id}`)
+                className="cursor-pointer hover:underline"                onClick={() =>
+                  toast.info(t("bots.creatorIdToast", { id: chatData.createdBy.id }))
                 }
               >
                 {chatData.createdBy.name}
@@ -165,19 +163,17 @@ export default function BotsDetailsPage() {
                     <div className="bg-primary text-primary-foreground rounded-full p-1 mr-2">
                       <Verified />
                     </div>
-                    <div>
-                      <span className="text-sm">
-                        This user is email verified.
+                    <div>                      <span className="text-sm">
+                        {t("bots.verified.label")}
                       </span>
 
                       <br />
 
                       <span className="text-sm text-muted-foreground">
-                        This badge does not guarantee the quality of this Bot.
-                        {chatData.createdBy.domain && (
-                          <span>
+                        {t("bots.verified.disclaimer")}
+                        {chatData.createdBy.domain && (                          <span>
                             <br />
-                            Domain: {chatData.createdBy.domain}
+                            {t("bots.verified.domain")}: {chatData.createdBy.domain}
                           </span>
                         )}
                       </span>
@@ -191,7 +187,7 @@ export default function BotsDetailsPage() {
         </CardHeader>
         {chatData.instructions && (
           <div className="w-full max-w-2xl">
-            <h2 className="text-lg font-semibold text-center mb-2">Instructions</h2>
+            <h2 className="text-lg font-semibold text-center mb-2">{t("bots.details.instructions")}</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 items-center justify-center w-full max-w-2xl">
               {chatData.instructions?.map((instruction, index) => (
                 <div
@@ -209,9 +205,8 @@ export default function BotsDetailsPage() {
             variant="secondary"
             className="rounded-full w-full h-full"
             onClick={handleCopyLink}
-          >
-            <Copy className="mr-2 h-4 w-4" />
-            Copy Link
+          >            <Copy className="mr-2 h-4 w-4" />
+            {t("shared.copyLink")}
           </Button>
           {chatData.createdBy.id == user?.uid ? (
             <Button
@@ -222,9 +217,8 @@ export default function BotsDetailsPage() {
               <Link
                 href={`/bots/editor/${chatData.id}`}
                 className="flex items-center justify-center w-full h-full"
-              >
-                <Edit className="mr-2 h-4 w-4" />
-                Edit
+              >                <Edit className="mr-2 h-4 w-4" />
+                {t("shared.edit")}
               </Link>
             </Button>
           ) : null}
@@ -233,9 +227,8 @@ export default function BotsDetailsPage() {
     ${chatData.createdBy.id == user?.uid ? "md:col-span-2" : ""}
   `}
             onClick={handleCreateSession}
-          >
-            <MessageCircleMore className="mr-2 h-4 w-4" />
-            Use this Bot
+          >            <MessageCircleMore className="mr-2 h-4 w-4" />
+            {t("bots.details.useButton")}
           </Button>
         </CardFooter>
       </Card>

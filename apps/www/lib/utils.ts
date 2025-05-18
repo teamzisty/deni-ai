@@ -70,14 +70,7 @@ const setTitle = (dataStream: DataStreamWriter) =>
     description: "Set title for this conversation. (FIRST ONLY, REQUIRED)",
     parameters: z.object({
       title: z.string().describe("Title for this conversation."),
-    }),
-    execute: async ({ title }) => {
-      dataStream.writeMessageAnnotation({
-        title,
-      });
-
-      return "OK";
-    },
+    })
   });
 
 const countChars = (dataStream: DataStreamWriter) =>

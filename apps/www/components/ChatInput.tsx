@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useRef, useCallback, memo } from "react";
+import { useTranslations } from "next-intl";
 import { modelDescriptions } from "@/lib/modelDescriptions";
 import InputBox from "./InputBox";
 import { ImagePreview } from "./ImagePreview";
@@ -44,8 +45,7 @@ interface ChatInputProps {
   fileInputRef: React.RefObject<HTMLInputElement | null>;
 }
 
-const ChatInput = memo(
-  ({
+const ChatInput = memo(  ({
     input,
     image,
     model,
@@ -73,6 +73,7 @@ const ChatInput = memo(
     fileInputRef,
     devMode,
   }: ChatInputProps) => {
+    const t = useTranslations();
     const isMobile = useIsMobile();
     const isBot = !!bot;
 
@@ -137,7 +138,11 @@ const ChatInput = memo(
             />
           )}
         </div>
-        {!isMobile && bot && <span className="text-muted-foreground text-xs">You are in the bot "{bot.name}". To leave, Create a new conversations.</span>}
+        {!isMobile && bot && (
+          <span className="text-muted-foreground text-xs">
+            {t("chatInput.botNotice", { botName: bot.name })}
+          </span>
+        )}
       </div>
     );
   },

@@ -393,21 +393,21 @@ function ChatSidebarMenuSession() {
               </SidebarMenuButton>
             </SidebarMenuItem>
 
-            {settings.hubs && (
+            {settings.bots && (
               <SidebarMenuItem>
                 <SidebarMenuButton
                   variant={"default"} // Changed from "ghost" to "default"
                   size="lg"
                   className="flex items-center justify-center transition-all duration-200 ease-in-out"
                   asChild
-                  tooltip={t("sidebar.hubs")}
+                  tooltip={t("sidebar.bots")}
                   data-sidebar="menu-button"
                   data-size="lg"
                 >
-                  <Link href="/hubs" className="flex items-center">
-                    <LayoutGrid />
+                  <Link href="/bots" className="flex items-center">
+                    <BotMessageSquare />
                     <span className="group-data-[collapsible=icon]:hidden ml-2">
-                      {t("sidebar.hubs")}
+                      {t("sidebar.bots")}
                     </span>
                   </Link>
                 </SidebarMenuButton>
@@ -418,6 +418,8 @@ function ChatSidebarMenuSession() {
           </SidebarMenu>
         </SidebarGroupContent>
       </SidebarGroup>
+
+      <HubSidebar /> {/* Moved HubSidebar here */}
 
       <MemoizedSessionGroup
         sessions={groupedSessions.today}
@@ -555,7 +557,6 @@ export function ChatSidebar() {
           </div>
         </SidebarGroup>
         <ChatSidebarMenuSession />
-        <HubSidebar /> {/* Moved HubSidebar here */}
       </SidebarContent>
       <SidebarFooter>
         <ChatSidebarMenuFooter />
