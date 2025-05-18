@@ -1,26 +1,29 @@
-export type Bot = {
+export interface Bot {
   name: string;
   description: string;
 };
 
-export type ClientBot = Bot & {
+export interface BotWithId extends Bot {
   id: string;
+};
+
+export interface ClientBot extends BotWithId {
   instructions?: Instruction[];
   createdAt: number;
   createdBy: BotAuthor;
 };
 
-export type ServerBot = ClientBot & {
+export interface ServerBot extends ClientBot {
   systemInstruction: string;
 };
 
-export type BotAuthor = {
+export interface BotAuthor {
   name: string;
   verified: boolean;
   domain?: string;
   id: string;
 };
 
-export type Instruction = {
+export interface Instruction {
   content: string;
 };

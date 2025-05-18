@@ -3,7 +3,15 @@
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import { Button } from "@workspace/ui/components/button";
-import { Save, Edit, Trash, PlusCircle, Copy, Loader2, Verified } from "lucide-react";
+import {
+  Save,
+  Edit,
+  Trash,
+  PlusCircle,
+  Copy,
+  Loader2,
+  Verified,
+} from "lucide-react";
 import { toast } from "sonner";
 import { useTranslations } from "next-intl";
 import { Loading } from "@/components/loading";
@@ -32,7 +40,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@workspace/ui/components/alert-dialog";
-import { useRouter } from "@/i18n/navigation";
+import { Link, useRouter } from "@/i18n/navigation";
 
 export default function BotEditorPage() {
   const t = useTranslations();
@@ -48,7 +56,7 @@ export default function BotEditorPage() {
   // Form state
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
-  const [systemInstruction, setSystemInstructions] = useState("");
+  const [systemInstruction, setSystemInstruction] = useState("");
   const [instructions, setInstructions] = useState<Instruction[]>([]);
 
   const secureFetch = new SecureFetch(user);
@@ -78,24 +86,21 @@ export default function BotEditorPage() {
 
         if (!response.ok) {
           const errorData = await response.json();
-          throw new Error(
-            errorData.error || "Failed to fetch bot data"
-          );
+          throw new Error(errorData.error || "Failed to fetch bot data");
         }
 
         const data = await response.json();
         setBot(data.data);
-        
+
         // Initialize form state with bot data
         setName(data.data.name);
         setDescription(data.data.description);
+        setSystemInstruction(data.data.systemInstruction);
         setInstructions(data.data.instructions || []);
       } catch (err) {
         console.error(err);
         setError(
-          err instanceof Error
-            ? err.message
-            : "Failed to fetch bot data"
+          err instanceof Error ? err.message : "Failed to fetch bot data"
         );
       } finally {
         setLoading(false);
@@ -120,7 +125,7 @@ export default function BotEditorPage() {
 
     try {
       setIsSaving(true);
-      
+
       const updatedBot = {
         id: params.id,
         name,
@@ -132,7 +137,7 @@ export default function BotEditorPage() {
           verified: user.emailVerified,
         },
         createdAt: bot?.createdAt,
-        instructions
+        instructions,
       };
 
       const response = await secureFetch.fetch("/api/bots/edit", {
@@ -152,9 +157,7 @@ export default function BotEditorPage() {
     } catch (error) {
       console.error(error);
       toast.error(
-        error instanceof Error 
-          ? error.message 
-          : "Failed to update bot"
+        error instanceof Error ? error.message : "Failed to update bot"
       );
     } finally {
       setIsSaving(false);
@@ -162,14 +165,15 @@ export default function BotEditorPage() {
   };
 
   const handleAddInstruction = () => {
+    if (instructions.length >= 4) {
+      toast.error("You can only add up to 4 instructions.");
+      return;
+    }
+
     setInstructions([...instructions, { content: "" }]);
   };
 
   const handleUpdateInstruction = (index: number, content: string) => {
-    if (instructions.length > 4) {
-      toast.error("You can only add up to 4 instructions.");
-      return;
-    }
     const updatedInstructions = [...instructions];
     updatedInstructions[index] = { content };
     setInstructions(updatedInstructions);
@@ -187,9 +191,12 @@ export default function BotEditorPage() {
     }
 
     try {
-      const response = await secureFetch.fetch(`/api/bots/delete?id=${params.id}`, {
-        method: "DELETE",
-      });
+      const response = await secureFetch.fetch(
+        `/api/bots/delete?id=${params.id}`,
+        {
+          method: "DELETE",
+        }
+      );
 
       if (!response.ok) {
         const errorData = await response.json();
@@ -201,9 +208,7 @@ export default function BotEditorPage() {
     } catch (error) {
       console.error(error);
       toast.error(
-        error instanceof Error 
-          ? error.message 
-          : "Failed to delete bot"
+        error instanceof Error ? error.message : "Failed to delete bot"
       );
     } finally {
       setDeleteDialogOpen(false);
@@ -245,17 +250,13 @@ export default function BotEditorPage() {
           <CardTitle className="flex justify-between items-center">
             <span className="text-lg">Edit Bot</span>
             <div className="flex gap-2">
-              <Button 
-                variant="outline" 
-                size="sm" 
-                onClick={handleCopyShareLink}
-              >
+              <Button variant="outline" size="sm" onClick={handleCopyShareLink}>
                 <Copy className="h-4 w-4 mr-2" />
                 Share Link
               </Button>
-              <Button 
-                variant="destructive" 
-                size="sm" 
+              <Button
+                variant="destructive"
+                size="sm"
                 onClick={() => setDeleteDialogOpen(true)}
               >
                 <Trash className="h-4 w-4 mr-2" />
@@ -267,7 +268,7 @@ export default function BotEditorPage() {
             Modify your bot's details and instructions
           </CardDescription>
         </CardHeader>
-        
+
         <CardContent className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="name">Name *</Label>
@@ -278,7 +279,7 @@ export default function BotEditorPage() {
               placeholder="Bot name"
             />
           </div>
-          
+
           <div className="space-y-2">
             <Label htmlFor="description">Description *</Label>
             <Textarea
@@ -291,12 +292,12 @@ export default function BotEditorPage() {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="systemInstruction">System Instructions *</Label>
+            <Label htmlFor="systemInstruction">System Instruction *</Label>
             <Textarea
               id="systemInstruction"
               value={systemInstruction}
-              onChange={(e) => setSystemInstructions(e.target.value)}
-              placeholder="Enter system instructions"
+              onChange={(e) => setSystemInstruction(e.target.value)}
+              placeholder="Enter system instruction"
               className="min-h-[100px]"
             />
           </div>
@@ -304,9 +305,9 @@ export default function BotEditorPage() {
           <div className="space-y-2">
             <div className="flex justify-between items-center">
               <Label>Instructions</Label>
-              <Button 
-                variant="outline" 
-                size="sm" 
+              <Button
+                variant="outline"
+                size="sm"
                 disabled={instructions.length >= 4}
                 onClick={handleAddInstruction}
               >
@@ -314,13 +315,15 @@ export default function BotEditorPage() {
                 Add Instruction ({instructions.length} / 4)
               </Button>
             </div>
-            
+
             <div className="space-y-3">
               {instructions.map((instruction, index) => (
                 <div key={index} className="flex gap-2">
                   <Textarea
                     value={instruction.content}
-                    onChange={(e) => handleUpdateInstruction(index, e.target.value)}
+                    onChange={(e) =>
+                      handleUpdateInstruction(index, e.target.value)
+                    }
                     placeholder="Enter instruction"
                     className="flex-1"
                   />
@@ -333,33 +336,34 @@ export default function BotEditorPage() {
                   </Button>
                 </div>
               ))}
-              
+
               {instructions.length === 0 && (
                 <p className="text-sm text-muted-foreground">
-                  No instructions added yet. Instructions help the user understand how to interact with the bot.
+                  No instructions added yet. Instructions help the user
+                  understand how to interact with the bot.
                 </p>
               )}
             </div>
           </div>
-          
+
           {bot.createdBy && (
             <div className="pt-2 border-t">
               <p className="text-sm text-muted-foreground inline-flex items-center">
                 Created by: {bot.createdBy.name}
-                {bot.createdBy.verified && <Verified className="ml-1 h-4 w-4 text-primary-foreground rounded-full" />}
+                {bot.createdBy.verified && (
+                  <Verified className="ml-1 h-4 w-4 text-primary-foreground rounded-full" />
+                )}
               </p>
             </div>
           )}
         </CardContent>
-        
-        <CardFooter>
-          <Button 
-            className="w-full"
-            onClick={handleSave}
-            disabled={isSaving}
-          >
+
+        <CardFooter className="grid grid-cols-1 md:grid-cols-2 items-center w-full mt-auto gap-2">
+          <Button className="w-full" onClick={handleSave} disabled={isSaving}>
             {isSaving ? (
-              <>                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+              <>
+                {" "}
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
                 Saving...
               </>
             ) : (
@@ -369,19 +373,29 @@ export default function BotEditorPage() {
               </>
             )}
           </Button>
+          <Button
+            variant="secondary"
+            className="w-full"
+            asChild>
+            <Link href={`/bots/${bot.id}`}>View</Link>
+          </Button>
         </CardFooter>
       </Card>
-        <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Are you sure?</AlertDialogTitle>
             <AlertDialogDescription>
-              This action cannot be undone. This will permanently delete your bot.
+              This action cannot be undone. This will permanently delete your
+              bot.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDeleteBot} className="bg-destructive">
+            <AlertDialogAction
+              onClick={handleDeleteBot}
+              className="bg-destructive"
+            >
               Delete
             </AlertDialogAction>
           </AlertDialogFooter>

@@ -59,7 +59,9 @@ export const DeepResearchButton = memo(
           content={
             devMode
               ? t("chatInput.devNotAvailable")
-              : t("chat.deepResearch.tooltip") || "Use Deep Research"
+              : disabled
+                ? "Not available"
+                : t("chat.deepResearch.tooltip") || "Use Deep Research"
           }
         >
           <Button

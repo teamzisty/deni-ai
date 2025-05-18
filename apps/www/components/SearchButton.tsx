@@ -17,7 +17,7 @@ export const SearchButton = memo(
     const isMobile = useIsMobile();
 
     return (
-      <EasyTip content={t("chatInput.search")}>
+      <EasyTip content={disabled ? "Not available" : t("chatInput.search")}>
         <Button
           variant={searchEnabled ? "default" : "outline"}
           size={isMobile ? "sm" : "default"}

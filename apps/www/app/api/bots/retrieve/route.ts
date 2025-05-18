@@ -72,6 +72,12 @@ export async function GET(req: Request) {
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
+    // Check if the user is the owner of the bot
+    let isOwner = false;
+    if (botUserId == userId) {
+      isOwner = true;
+    }
+
     return NextResponse.json({
       success: true,
       data: {
@@ -79,6 +85,7 @@ export async function GET(req: Request) {
         name: botData.name,
         description: botData.description,
         instructions: botData.instructions,
+        systemInstruction: isOwner ? botData.systemInstruction : null,
         createdBy: {
           name: botUser.displayName,
           verified: botUser.emailVerified,

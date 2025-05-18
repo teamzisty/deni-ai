@@ -22,11 +22,11 @@ import { auth, firestore } from "@workspace/firebase-config/client";
 import { useAuth } from "@/context/AuthContext";
 import { toast } from "sonner";
 import { useTranslations } from "next-intl";
-import { Bot } from "@/types/bot";
+import { Bot, BotWithId } from "@/types/bot";
 
 interface ChatSessionsContextValue {
   sessions: ChatSession[];
-  createSession: (bot?: Bot) => ChatSession;
+  createSession: (bot?: BotWithId) => ChatSession;
   addSession: (session: ChatSession) => void;
   updateSession: (id: string, updatedSession: ChatSession) => void;
   deleteSession: (id: string) => void;
@@ -54,7 +54,7 @@ export interface ChatSession {
   messages: UIMessage[];
   createdAt: Date;
   isBranch?: boolean; // Optional: Indicates if the session is a branch
-  bot?: Bot; // Optional: The bot if associated
+  bot?: BotWithId; // Optional: The bot if associated
   parentSessionId?: string; // Optional: ID of the parent session if it's a branch
   branchName?: string; // Optional: Name of the branch
   hubId?: string; // Optional: ID of the hub if associated
@@ -503,7 +503,7 @@ export function ChatSessionsProvider({ children }: { children: ReactNode }) {
     // Keep dependencies, ensure firestore/auth are stable or handled correctly if they change
   }, [sessions, user, modifiedSessionIds, t, firestore, auth]);
 
-  const createSession = useCallback((bot?: Bot) => {
+  const createSession = useCallback((bot?: BotWithId) => {
     const newSession: ChatSession = {
       id: crypto.randomUUID(),
       title: t("chatSessions.newChat"),

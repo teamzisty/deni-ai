@@ -120,7 +120,7 @@ const Chat: React.FC<ChatProps> = ({
   // --- State Variables ---
   const [image, setImage] = useState<string | null>(initialImage || null);
   const [searchEnabled, setSearchEnabled] = useState(false);
-  const [currentSession] = useState<ChatSession>(initialSessionData);
+  const [ currentSession ] = useState<ChatSession>(initialSessionData);
   const { settings } = useSettings();
   const [deepResearch, setDeepResearch] = useState(false);
   const [researchDepth, setResearchDepth] = useState<ResearchDepth>("deep");
@@ -161,6 +161,7 @@ const Chat: React.FC<ChatProps> = ({
     body: {
       toolList: availableTools,
       language: navigator.language,
+      botId: currentSession.bot?.id,
       model,
       reasoningEffort,
     },
@@ -560,7 +561,7 @@ const Chat: React.FC<ChatProps> = ({
       throw new Error(t("chat.error.idTokenFailed"));
     }
 
-    await new Promise(resolve => setTimeout(resolve, 300));
+    await new Promise((resolve) => setTimeout(resolve, 300));
 
     try {
       reload(submitOptions);

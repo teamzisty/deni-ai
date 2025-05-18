@@ -3,17 +3,36 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "@/i18n/navigation";
 import { Button } from "@workspace/ui/components/button";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@workspace/ui/components/card";
-import { MessageCircle, Eye, Calendar, ArrowRight, Loader2 } from "lucide-react";
+import {
+  Card,
+  CardFooter,
+  CardHeader,
+} from "@workspace/ui/components/card";
+import {
+  MessageCircle,
+  ArrowRight,
+  Loader2,
+  Verified,
+} from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Loading } from "@/components/loading";
 import { useAuth } from "@/context/AuthContext";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@workspace/ui/components/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@workspace/ui/components/dialog";
 import { Label } from "@workspace/ui/components/label";
 import { Input } from "@workspace/ui/components/input";
+import { Link } from "@/i18n/navigation";
 import { toast } from "sonner";
 import { User } from "firebase/auth";
 import { SecureFetch } from "@/lib/secureFetch";
+import { ClientBot } from "@/types/bot";
+import { Popover, PopoverTrigger, PopoverContent } from "@workspace/ui/components/popover";
 
 interface SharedChat {
   id: string;
@@ -27,45 +46,55 @@ type CreateBotModalProps = {
   isOpen: boolean;
   user: User | null;
   setIsOpen: (isOpen: boolean) => void;
-}
+};
 
-export default function SharedChatsPage() {
+export default function PublicBotsPage() {
   const t = useTranslations();
   const router = useRouter();
   const { user, isLoading } = useAuth();
-  const [sharedChats, setSharedChats] = useState<SharedChat[]>([]);
+  const [publicBots, setPublicBots] = useState<ClientBot[]>([]);
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const secureFetch = new SecureFetch(user);
+
   useEffect(() => {
-    const fetchSharedChats = async () => {
+    if (user) {
+      secureFetch.updateUser(user);
+    }
+  }, [user]);
+
+  useEffect(() => {
+    if (isLoading) return;
+
+    const fetchPublicBots = async () => {
       try {
         setLoading(true);
-        const response = await fetch("/api/share/list");
-        
+        const response = await secureFetch.fetch("/api/bots/list");
+
         if (!response.ok) {
           const errorData = await response.json();
           throw new Error(errorData.error || t("shared.error.fetchFailed"));
         }
-        
+
         const data = await response.json();
-        setSharedChats(data.chats || []);
+        setPublicBots(data.data || []);
       } catch (err) {
         console.error(err);
-        setError(err instanceof Error ? err.message : t("shared.error.unknown"));
+        setError(
+          err instanceof Error ? err.message : t("shared.error.unknown")
+        );
       } finally {
         setLoading(false);
       }
     };
 
-    fetchSharedChats();
-  }, [t]);
+    fetchPublicBots();
+  }, [isLoading]);
 
   if (loading || isLoading) {
-    return (
-      <Loading />
-    );
+    return <Loading />;
   }
 
   return (
@@ -73,13 +102,12 @@ export default function SharedChatsPage() {
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8">
         <div>
           <h1 className="text-3xl font-bold">Bots</h1>
-          <p className="text-muted-foreground mt-2">Search or Create your bots. with Custom interactions.</p>
+          <p className="text-muted-foreground mt-2">
+            Search or Create your bots. with Custom interactions.
+          </p>
         </div>
         {user && (
-          <Button
-            className="mt-4 md:mt-0"
-            onClick={() => setIsModalOpen(true)}
-          >
+          <Button className="mt-4 md:mt-0" onClick={() => setIsModalOpen(true)}>
             Create Bots
           </Button>
         )}
@@ -91,11 +119,13 @@ export default function SharedChatsPage() {
         </div>
       ) : null}
 
-      {sharedChats.length === 0 && !error ? (
+      {publicBots.length === 0 && !error ? (
         <div className="text-center py-12">
           <MessageCircle className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
-          <h2 className="text-xl font-semibold mb-2">{t("shared.noChats")}</h2>
-          <p className="text-muted-foreground mb-6">{t("shared.noChatsDescription")}</p>
+          <h2 className="text-xl font-semibold mb-2">No bots in there</h2>
+          <p className="text-muted-foreground mb-6">
+            You are first! Create a bot to get started.
+          </p>
           {user ? (
             <Button onClick={() => router.push("/chat/new")}>
               {t("shared.startChat")}
@@ -108,37 +138,71 @@ export default function SharedChatsPage() {
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {sharedChats.map((chat) => (
-            <Card key={chat.id} className="hover:shadow-md transition-shadow">
-              <CardHeader>
-                <CardTitle className="line-clamp-1">{chat.title}</CardTitle>
-                <CardDescription>
-                  <div className="flex items-center gap-2">
-                    <Calendar className="h-4 w-4" />
-                    <span>{new Date(chat.createdAt).toLocaleDateString()}</span>
-                  </div>
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="flex justify-between text-sm text-muted-foreground">
-                  <div className="flex items-center gap-1">
-                    <MessageCircle className="h-4 w-4" />
-                    <span>{chat.messageCount} {t("shared.messages")}</span>
-                  </div>
-                  <div className="flex items-center gap-1">
-                    <Eye className="h-4 w-4" />
-                    <span>{chat.viewCount} {t("shared.views")}</span>
+          {publicBots.map((bot) => (
+            <Card
+              key={bot.id}
+              className="mb-4 my-auto mx-auto w-full h-full"
+            >
+              <CardHeader className="text-center">
+                <h1 className="text-2xl font-bold">{bot.name}</h1>
+                <div className="text-muted-foreground mt-2 flex items-center justify-center">
+                  <span className="text-muted-foreground">Created by: </span>
+                  <div className="bg-primary text-primary-foreground rounded-full px-4 py-1 ml-2 flex items-center">
+                    <span
+                      className="cursor-pointer hover:underline"
+                      onClick={() =>
+                        toast.info(`Creator ID: ${bot.createdBy.id}`)
+                      }
+                    >
+                      {bot.createdBy.name}
+                    </span>
+                    {bot.createdBy.verified && (
+                      <Popover>
+                        <PopoverTrigger>
+                          <Verified className="ml-1 h-4 w-4" />
+                        </PopoverTrigger>
+                        <PopoverContent className="flex items-center">
+                          <div className="bg-primary text-primary-foreground rounded-full p-1 mr-2">
+                            <Verified />
+                          </div>
+                          <div>
+                            <span className="text-sm">
+                              This user is email verified.
+                            </span>
+
+                            <br />
+
+                            <span className="text-sm text-muted-foreground">
+                              This badge does not guarantee the quality of this
+                              Bot.
+                              {bot.createdBy.domain && (
+                                <span>
+                                  <br />
+                                  Domain: {bot.createdBy.domain}
+                                </span>
+                              )}
+                            </span>
+                          </div>
+                        </PopoverContent>
+                      </Popover>
+                    )}
                   </div>
                 </div>
-              </CardContent>
-              <CardFooter>
-                <Button 
-                  variant="outline" 
-                  className="w-full" 
-                  onClick={() => router.push(`/shared/${chat.id}`)}
+                <p>{bot.description}</p>
+              </CardHeader>
+              <CardFooter className="w-full mt-auto">
+                <Button
+                  variant="secondary"
+                  className="rounded-full w-full h-full"
+                  asChild
                 >
-                  {t("shared.view")}
-                  <ArrowRight className="ml-2 h-4 w-4" />
+                  <Link
+                    href={`/bots/${bot.id}`}
+                    className="flex items-center justify-center w-full h-full"
+                  >
+                    <ArrowRight className="mr-2 h-4 w-4" />
+                    View
+                  </Link>
                 </Button>
               </CardFooter>
             </Card>
@@ -146,7 +210,11 @@ export default function SharedChatsPage() {
         </div>
       )}
 
-      <CreateBotModal isOpen={isModalOpen} setIsOpen={setIsModalOpen} user={user} />
+      <CreateBotModal
+        isOpen={isModalOpen}
+        setIsOpen={setIsModalOpen}
+        user={user}
+      />
     </main>
   );
 }
@@ -198,7 +266,7 @@ function CreateBotModal({ isOpen, setIsOpen, user }: CreateBotModalProps) {
     } finally {
       setIsCreating(false);
     }
-  }
+  };
 
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
@@ -211,10 +279,22 @@ function CreateBotModal({ isOpen, setIsOpen, user }: CreateBotModalProps) {
         </DialogHeader>
         <div className="space-y-2">
           <Label htmlFor="botName">Bot Name</Label>
-          <Input id="botName" placeholder="Enter bot name" value={botName} onChange={(e) => setBotName(e.target.value)} />
+          <Input
+            id="botName"
+            placeholder="Enter bot name"
+            value={botName}
+            onChange={(e) => setBotName(e.target.value)}
+          />
 
-          <Label htmlFor="botDescription" className="mt-4">Bot Description</Label>
-          <Input id="botDescription" placeholder="Enter bot description" value={botDescription} onChange={(e) => setBotDescription(e.target.value)} />
+          <Label htmlFor="botDescription" className="mt-4">
+            Bot Description
+          </Label>
+          <Input
+            id="botDescription"
+            placeholder="Enter bot description"
+            value={botDescription}
+            onChange={(e) => setBotDescription(e.target.value)}
+          />
 
           {error && (
             <div className="bg-destructive/10 p-4 rounded-lg mt-4">
@@ -223,13 +303,20 @@ function CreateBotModal({ isOpen, setIsOpen, user }: CreateBotModalProps) {
           )}
         </div>
         <DialogFooter>
-          <Button variant="outline" onClick={() => setIsOpen(false)}>Cancel</Button>
-          <Button type="submit" onClick={handleCreateBot} disabled={isCreating} className="ml-2">
+          <Button variant="outline" onClick={() => setIsOpen(false)}>
+            Cancel
+          </Button>
+          <Button
+            type="submit"
+            onClick={handleCreateBot}
+            disabled={isCreating}
+            className="ml-2"
+          >
             {isCreating && <Loader2 className="animate-spin" />}
             {isCreating ? "Creating..." : "Create"}
           </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
-  )
+  );
 }

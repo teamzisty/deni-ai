@@ -74,6 +74,7 @@ const ChatInput = memo(
     devMode,
   }: ChatInputProps) => {
     const isMobile = useIsMobile();
+    const isBot = !!bot;
 
     // Callback for ImageAddButton click
     const handleImageAddClick = useCallback(() => {
@@ -110,13 +111,13 @@ const ChatInput = memo(
             onClick={handleImageAddClick}
           />
           <CanvasButton
-            disabled={modelDescriptions[model]?.toolDisabled || false}
+            disabled={modelDescriptions[model]?.toolDisabled || isBot || false}
             canvasEnabled={canvasEnabled}
             devMode={devMode}
             canvasToggle={canvasToggle}
           />
           <SearchButton
-            disabled={modelDescriptions[model]?.toolDisabled || false}
+            disabled={modelDescriptions[model]?.toolDisabled || isBot || false}
             searchEnabled={searchEnabled}
             searchToggle={searchToggle}
           />
@@ -124,6 +125,7 @@ const ChatInput = memo(
             <DeepResearchButton
               disabled={
                 modelDescriptions[model]?.toolDisabled ||
+                isBot ||
                 !searchEnabled ||
                 false
               }

@@ -208,11 +208,12 @@ function SessionGroup({
                         <MessageCircleMore className="mr-2 h-4 w-4" />
                       )}
                       <div className="flex items-center w-full min-w-0">
+                        {" "}
                         {session.hubId && hub && (
                           <div className="flex items-center gap-1 mr-1">
                             <span
                               className={cn(
-                                "text-muted-foreground",
+                                "text-muted-foreground whitespace-nowrap overflow-hidden text-ellipsis",
                                 settings.conversationsPrivacyMode && "blur-sm"
                               )}
                             >
@@ -225,26 +226,27 @@ function SessionGroup({
                               <BotMessageSquare className="h-4 w-4 text-primary" />
                             ) : (
                               <MessageCircleMore className="h-4 w-4" />
-                            )}
+                            )}{" "}
                           </div>
                         )}
                         {isBot && (
                           <div className="flex items-center gap-1 mr-1">
-                            <span className="text-muted-foreground">{bot?.name}</span>
-
+                            <span className="text-muted-foreground whitespace-nowrap overflow-hidden text-ellipsis">
+                              {bot?.name}
+                            </span>
                             <ArrowRight size={12} />
                             {session.isBranch && session.branchName ? (
                               <GitFork className="h-4 w-4 text-primary" />
                             ) : (
                               <MessageCircleMore className="h-4 w-4" />
-                            )}
+                            )}{" "}
                           </div>
                         )}
                         {isBranch && (
                           <div className="flex items-center gap-1 mr-1">
                             <span
                               className={cn(
-                                "text-muted-foreground",
+                                "text-muted-foreground whitespace-nowrap overflow-hidden text-ellipsis",
                                 settings.conversationsPrivacyMode && "blur-sm"
                               )}
                             >
