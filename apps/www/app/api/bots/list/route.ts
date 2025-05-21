@@ -1,5 +1,4 @@
-import { Bot, ClientBot, ServerBot } from "@/types/bot";
-import { auth } from "@webcontainer/api";
+import { ClientBot, ServerBot } from "@/types/bot";
 import {
   authAdmin,
   notAvailable,

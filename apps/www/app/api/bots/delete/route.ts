@@ -6,7 +6,11 @@ import {
 } from "@workspace/firebase-config/server";
 import { NextResponse } from "next/server";
 
-export async function GET(req: Request) {
+interface BotsCreateRequest extends ServerBot {
+  id: string;
+}
+
+export async function DELETE(req: Request) {
   try {
     const authorization = req.headers.get("Authorization")?.replace("Bearer ", "");
 
@@ -36,9 +40,8 @@ export async function GET(req: Request) {
     }
 
     const url = new URL(req.url);
-    const botId = url.searchParams.get("id");
-
-    if (!botId) {
+    const id = url.searchParams.get("id");
+    if (!id) {
       return NextResponse.json(
         { error: "Bot ID is not specified" },
         { status: 400 }
@@ -53,9 +56,8 @@ export async function GET(req: Request) {
     }
 
     // Save bot data to Firestore
-    const botRef = firestoreAdmin.collection("deni-ai-bots").doc(botId);
+    const botRef = firestoreAdmin.collection("deni-ai-bots").doc(id);
     const botDoc = await botRef.get();
-
     if (!botDoc.exists) {
       return NextResponse.json({ error: "Bot not found" }, { status: 404 });
     }
@@ -65,33 +67,14 @@ export async function GET(req: Request) {
       return NextResponse.json({ error: "Bot data not found" }, { status: 404 });
     }
 
-    const botUserId = botData.createdBy.id;
-    const botUser = await authAdmin?.getUser(botUserId);
-    if (!botUser) {
-      return NextResponse.json({ error: "User not found" }, { status: 404 });
+    if (botData.createdBy.id !== userId) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
     }
 
-    // Check if the user is the owner of the bot
-    let isOwner = false;
-    if (botUserId == userId) {
-      isOwner = true;
-    }
+    await botRef.delete();
 
     return NextResponse.json({
-      success: true,
-      data: {
-        id: botId,
-        name: botData.name,
-        description: botData.description,
-        instructions: botData.instructions,
-        systemInstruction: isOwner ? botData.systemInstruction : null,
-        createdBy: {
-          name: botUser.displayName,
-          verified: botUser.emailVerified,
-          id: botUserId,
-        },
-        createdAt: botData.createdAt,
-      }
+      success: true
     });
   } catch (error) {
     console.error(error);
