@@ -259,13 +259,6 @@ DeepResearchPanel.displayName = "DeepResearchPanel";
 interface MessageLogProps {
   message: UIMessage;
   sessionId: string;
-  addToolResult: ({
-    toolCallId,
-    result,
-  }: {
-    toolCallId: string;
-    result: any;
-  }) => void;
   onRegenerate?: (model: string) => void;
 }
 
@@ -499,7 +492,7 @@ const MessageControls = memo(
 MessageControls.displayName = "MessageControls";
 
 export const MessageLog: FC<MessageLogProps> = memo(
-  ({ message, sessionId, addToolResult, onRegenerate }) => {
+  ({ message, sessionId, onRegenerate }) => {
     const { getSession, updateSession } = useChatSessions();
     const t = useTranslations();
 

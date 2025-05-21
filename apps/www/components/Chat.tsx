@@ -37,13 +37,6 @@ import { useTitle } from "@/hooks/use-title";
 interface MessageListProps {
   messages: UIMessage[];
   sessionId: string;
-  addToolResult: ({
-    toolCallId,
-    result,
-  }: {
-    toolCallId: string;
-    result: any;
-  }) => void;
   error?: Error;
   onRegenerate?: () => void;
 }
@@ -54,7 +47,6 @@ const MemoizedMessageList = memo(
     messages,
     sessionId,
     error,
-    addToolResult,
     onRegenerate,
   }: MessageListProps) => {
     const t = useTranslations();
@@ -64,7 +56,6 @@ const MemoizedMessageList = memo(
           <MessageLog
             sessionId={sessionId}
             key={index}
-            addToolResult={addToolResult}
             message={message}
             onRegenerate={onRegenerate}
           />
@@ -178,7 +169,6 @@ const Chat: React.FC<ChatProps> = ({
     input,
     setInput,
     status,
-    addToolResult,
     setMessages,
     reload,
     stop,
@@ -810,7 +800,6 @@ const Chat: React.FC<ChatProps> = ({
               <MemoizedMessageList
                 messages={messages}
                 sessionId={sessionId} // Pass prop
-                addToolResult={addToolResult}
                 error={error}
                 onRegenerate={handleRegenerate} // Pass handler
               />
