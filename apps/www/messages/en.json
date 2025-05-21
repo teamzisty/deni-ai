@@ -3,7 +3,12 @@
     "title": "Deni AI",
     "description": "Deni AI is a completely free chat app that uses AI models such as o1 and Claude 3.5 Sonnet.",
     "ogDescription": "Deni AI is a completely free chat app that uses AI models such as o1 and Claude 3.5 Sonnet.",
-    "locale": "en_US"
+    "locale": "en_US",
+    "updateAlert": {
+      "title": "New Version of Deni AI Available",
+      "description": "A new version of Deni AI is now available. Click the button to access the beta version. You can return at any time.",
+      "button": "Access Beta Version"
+    }
   },
   "header": {
     "home": "Home",

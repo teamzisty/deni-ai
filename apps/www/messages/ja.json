@@ -3,7 +3,12 @@
     "title": "Deni AI",
     "description": "Deni AI は、o1やClaude 3.5 Sonnet などのAIモデルを利用できる完全無料のチャットアプリです。",
     "ogDescription": "Deni AI は、o1やClaude 3.5 Sonnet などのAIモデルを利用できる完全無料のチャットアプリです。",
-    "locale": "ja_JP"
+    "locale": "ja_JP",
+    "updateAlert": {
+      "title": "新しいバージョンの Deni AI が利用可能です",
+      "description": "新しいバージョンの Deni AI のベータ版が利用可能です。ボタンをクリックし、ベータへアクセスしてください。いつでも戻ることが可能です。",
+      "button": "ベータ版にアクセス"
+    }
   },
   "reasoningEffort": {
     "label": "推論努力",
