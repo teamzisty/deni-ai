@@ -1,6 +1,6 @@
-const version = "4.0.0-beta.3";
+const version = "4.0.0-rc.1";
 const codename = "Flea"
-const date = "2025-05-18"
+const date = "2025-05-21"
 
 export const buildInfo = {
     version,
