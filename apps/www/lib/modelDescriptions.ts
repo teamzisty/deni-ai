@@ -263,8 +263,8 @@ export const modelDescriptions: modelDescriptionType = {
     vision: true,
     type: "ChatGPT",
   },
-  "google/gemini-2.5-flash-preview-04-17": {
-    displayName: "Gemini 2.5 Flash Preview",
+  "google/gemini-2.5-flash-preview-05-20": {
+    displayName: "Gemini 2.5 Flash",
     knowledgeCutoff: "2025/01",
     fast: true,
     defaultVisibility: true,
