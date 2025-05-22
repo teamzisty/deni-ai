@@ -1,0 +1,80 @@
+/* Custom CSS for blog */
+
+/* Blog overview page */
+.blog-overview {
+  max-width: 768px;
+  margin: 0 auto;
+}
+
+/* Blog posts */
+.blog-post-list {
+  max-width: 768px;
+  margin: 0 auto;
+}
+
+.blog-post-header {
+  margin-bottom: 2rem;
+  padding-bottom: 1.5rem;
+  border-bottom: 1px solid var(--vp-c-divider);
+}
+
+.blog-post-title {
+  margin-bottom: 0.5rem;
+}
+
+.blog-post-meta {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  font-size: 0.9rem;
+  color: var(--vp-c-text-2);
+}
+
+.blog-post-tags {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 1rem;
+}
+
+.blog-post-tag {
+  display: inline-block;
+  padding: 0.25rem 0.75rem;
+  border-radius: 20px;
+  font-size: 0.8rem;
+  background-color: var(--vp-c-brand-soft);
+  color: var(--vp-c-brand-dark);
+  text-decoration: none;
+  transition: background-color 0.2s, color 0.2s;
+}
+
+.blog-post-tag:hover {
+  background-color: var(--vp-c-brand);
+  color: white;
+}
+
+.blog-post-content {
+  max-width: 768px;
+  margin: 0 auto;
+}
+
+.blog-post-footer {
+  margin-top: 3rem;
+  padding-top: 2rem;
+  border-top: 1px solid var(--vp-c-divider);
+}
+
+/* Blog tags page */
+.tags-overview .tag-badge:hover {
+  background-color: var(--vp-c-brand);
+  color: white;
+  text-decoration: none;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .blog-post-meta {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+}
