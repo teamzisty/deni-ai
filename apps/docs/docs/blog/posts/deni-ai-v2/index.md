@@ -7,9 +7,6 @@ author: rai
 tags: [update]
 ---
 
-Introducing new features, bug fixes, and improvements in version 2.0.
-<!-- more -->
-
 ## Search and Advanced Search
 
 New search feature for quick news searches. Advanced search for detailed inquiries.

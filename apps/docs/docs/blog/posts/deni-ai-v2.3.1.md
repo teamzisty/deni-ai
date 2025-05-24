@@ -7,9 +7,6 @@ author: rai
 tags: [update]
 ---
 
-Introducing new features, bug fixes, and improvements in version 2.3.1.
-
-<!-- more -->
 
 ## Cloud Storage by Default
 

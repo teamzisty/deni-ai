@@ -7,11 +7,8 @@ author: rai
 tags: [update]
 ---
 
-Introducing new features, bug fixes, and improvements in version 3.0.
 
 TLDR; Enhanced Canvas feature, improved message controls, internal changes, and bug fixes.
-
-<!-- more -->
 
 ## Deni AI Canvas
 

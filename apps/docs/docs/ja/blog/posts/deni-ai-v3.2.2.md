@@ -7,10 +7,6 @@ author: rai
 tags: [update]
 ---
 
-バージョン 3.2.2 の新しい機能やバグ修正、改善点をご紹介します。
-
-<!-- more -->
-
 ## 新しい Gemini 2.5 Pro モデルを追加
 
 高性能な新しいモデル Gemini 2.5 Pro (gemini-2.5-pro-preview-05-06) を追加しました。
@@ -50,7 +46,7 @@ tags: [update]
 ## 今後の予定
 
 - **Deni AI CLI**: 開発は一時的に破棄しました。
-- **Deni AI API**: Deni AI の近日登場する API プラットフォームです。[詳細](/blog/deni-ai-api-preview)
+- **Deni AI API**: Deni AI の近日登場する API プラットフォームです。[詳細](/ja/blog/posts/deni-ai-api-preview)
 
 パッチノートに含まれていないすべての変更点は、[GitHub の Pull requests](https://github.com/raicdev/deni-ai/pull/37) をご覧ください。
 

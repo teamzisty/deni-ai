@@ -7,11 +7,8 @@ author: rai
 tags: [update]
 ---
 
-Introducing new features, bug fixes, and improvements in version 2.3.
 
 TLDR; Sharing, Search, Research
-
-<!-- more -->
 
 ## Improved Research and Search Features
 

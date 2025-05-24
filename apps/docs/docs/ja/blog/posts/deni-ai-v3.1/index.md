@@ -7,10 +7,6 @@ author: rai
 tags: [update]
 ---
 
-バージョン 3.1 の新しい機能やバグ修正、改善点をご紹介します。
-
-<!-- more -->
-
 ## Deni AI Dev (Public Preview)
 
 Deni AI Dev は、あなたの新しい開発プラットフォームです。アイデアを得たり、そのままアプリを作ったり。あなたの自由に開発できます。

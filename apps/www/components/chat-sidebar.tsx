@@ -196,15 +196,13 @@ function SessionGroup({
                       href={`/chat/${session.id}`}
                       className={`flex items-center`}
                     >
-                      {isHub && !session.hubId ? (
+                      {isHub ? ( // hub only or hub and branch
+                        <FolderDotIcon className="h-4 w-4 text-primary" />
+                      ) : isBranch ? ( // branch only
                         <GitFork className="h-4 w-4 text-primary" />
-                      ) : isHub && session.isBranch ? (
-                        <FolderDotIcon className="h-4 w-4 text-primary" />
-                      ) : isHub ? (
-                        <FolderDotIcon className="h-4 w-4 text-primary" />
-                      ) : isBot ? (
+                      ) : isBot ? ( // bot only
                         <BotMessageSquare className="h-4 w-4 text-primary" />
-                      ) : (
+                      ) : ( // default
                         <MessageCircleMore className="mr-2 h-4 w-4" />
                       )}
                       <div className="flex items-center w-full min-w-0">
@@ -220,9 +218,9 @@ function SessionGroup({
                               {hub?.name}
                             </span>
                             <ArrowRight size={12} />
-                            {session.isBranch && session.branchName ? (
+                            {isBranch ? (
                               <GitFork className="h-4 w-4 text-primary" />
-                            ) : isBot ? (
+                            ): isBot ? (
                               <BotMessageSquare className="h-4 w-4 text-primary" />
                             ) : (
                               <MessageCircleMore className="h-4 w-4" />

@@ -6,12 +6,6 @@ author: rai
 tags: [update]
 ---
 
-# Deni AI v3.2.1 Release
-
-Introducing new features, bug fixes, and improvements in version 3.2.1.
-
-<!-- more -->
-
 ## Improved Model Selection
 
 We've made several improvements to model selection. Here are the highlights:
@@ -57,7 +51,7 @@ This version includes 1 system change:
 ## What's Next
 
 - **Deni AI CLI**: Development has been temporarily discontinued.
-- **Deni AI API**: Deni AI's upcoming API platform. [Details](/blog/deni-ai-api-preview)
+- **Deni AI API**: Deni AI's upcoming API platform. [Details](/blog/posts/deni-ai-api-preview)
 
 For all changes not included in the patch notes, please see the [Pull requests on GitHub](https://github.com/raicdev/deni-ai/pull/34).
 

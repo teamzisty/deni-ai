@@ -6,11 +6,8 @@ author: rai
 tags: [update]
 ---
 
-Introducing new features, bug fixes, and improvements in version 4.0.
 
 This is the biggest Deni AI release yet.
-
-<!-- more -->
 
 ## Deni AI Branches
 
@@ -71,9 +68,9 @@ This version includes 2 system changes:
 
 - **Deni AI CLI**: Development has been temporarily discontinued.
 - **Intellipulse** NEW: An AI editor powered by Deni AI.
-- **Deni AI API**: Deni AI's upcoming API platform. [Details](/blog/deni-ai-api-preview)
+- **Deni AI API**: Deni AI's upcoming API platform. [Details](/blog/posts/deni-ai-api-preview)
 
-For all changes not included in the patch notes, please see the [GitHub Pull requests](https://github.com/raicdev/deni-ai/pull/33).
+For all changes not included in the patch notes, please see the [GitHub Pull requests](https://github.com/raicdev/deni-ai/pull/39).
 
 ::: info Note
 

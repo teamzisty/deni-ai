@@ -7,9 +7,6 @@ author: rai
 tags: [update]
 ---
 
-Introducing new features, bug fixes, and improvements in version 3.2.
-
-<!-- more -->
 
 We apologize for the delay in the release of Deni AI v3.2.
 
@@ -60,7 +57,7 @@ _Evolved Research Preview (2)_
 ## Future Plans
 
 - **Deni AI CLI**: Development has been temporarily abandoned.
-- **Deni AI API**: Deni AI's upcoming API platform. [Details](/blog/deni-ai-api-preview)
+- **Deni AI API**: Deni AI's upcoming API platform. [Details](/blog/posts/deni-ai-api-preview)
 
 For all changes not included in the patch notes, please see the [GitHub Pull requests](https://github.com/raicdev/deni-ai/pull/33).
 

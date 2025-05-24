@@ -7,9 +7,6 @@ author: rai
 tags: [update]
 ---
 
-Introducing new features, bug fixes, and improvements in version 2.2.
-
-<!-- more -->
 
 ## Localization (English in Beta)
 

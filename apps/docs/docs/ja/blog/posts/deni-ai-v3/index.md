@@ -7,11 +7,7 @@ author: rai
 tags: [update]
 ---
 
-バージョン 3.0 の新しい機能やバグ修正、改善点をご紹介します。
-
 TLDR; Canvas 機能の強化、メッセージコントロールの改善、内部変更とバグ修正
-
-<!-- more -->
 
 ## Deni AI Canvas
 

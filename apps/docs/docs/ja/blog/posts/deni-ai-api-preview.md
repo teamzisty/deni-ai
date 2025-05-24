@@ -7,10 +7,6 @@ author: rai
 tags: [api]
 ---
 
-近日登場する新しい Deni AI API について説明します。
-
-<!-- more -->
-
 ## Deni AI API とは
 
 すべてのサービスが統合された AI の API です。1つのAPIキー、1つのエンドポイントですべてのモデルを利用できます。o3, o4-mini, Gemini 2.5 Flash など。

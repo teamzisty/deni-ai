@@ -7,9 +7,6 @@ author: rai
 tags: [update]
 ---
 
-Introducing new features, bug fixes, and improvements in version 3.1.
-
-<!-- more -->
 
 ## Deni AI Dev (Public Preview)
 

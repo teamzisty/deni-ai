@@ -1,25 +1,34 @@
 ---
 layout: doc
-title: ブログタグ
-description: タグ別にブログ記事を閲覧・検索
+title: ブログのタグ
 ---
 
-# ブログタグ
-
-トピック別にコンテンツを閲覧して、必要な情報を見つけましょう。
+# ブログのタグ
 
 <script setup>
-import { data as posts } from '../blog/posts.data.js'
-import { ref, computed } from 'vue'
+import { data as posts } from './posts.data.js'
+import { ref, computed, onMounted } from 'vue'
+
+// Debug helper - check if posts data is loaded
+onMounted(() => {
+  console.log('Posts loaded:', posts.length)
+  console.log('Posts with tags:', posts.filter(p => p.tags && p.tags.length > 0).length)
+})
 
 // Extract all unique tags from posts
 const allTags = computed(() => {
   const tags = new Set()
-  posts.forEach(post => {
-    if (post.tags) {
-      post.tags.forEach(tag => tags.add(tag))
-    }
-  })
+  if (posts && posts.length) {
+    posts.forEach(post => {
+      if (post.tags && Array.isArray(post.tags)) {
+        post.tags.forEach(tag => {
+          // Handle both string tags and Docusaurus-style tag objects
+          const tagValue = typeof tag === 'object' && tag.label ? tag.label : tag
+          if (tagValue) tags.add(tagValue)
+        })
+      }
+    })
+  }
   return Array.from(tags).sort()
 })
 
@@ -27,7 +36,17 @@ const allTags = computed(() => {
 const postsByTag = computed(() => {
   const result = {}
   allTags.value.forEach(tag => {
-    result[tag] = posts.filter(post => post.tags && post.tags.includes(tag))
+    result[tag] = posts.filter(post => {
+      if (!post.tags || !Array.isArray(post.tags)) return false
+      
+      return post.tags.some(postTag => {
+        // Handle both string tags and Docusaurus-style tag objects
+        if (typeof postTag === 'object' && postTag.label) {
+          return postTag.label === tag
+        }
+        return postTag === tag
+      })
+    })
   })
   return result
 })
@@ -40,7 +59,7 @@ const getPostCount = (tag) => {
 // Format date in locale-aware format
 const formatDate = (date) => {
   if (!date) return ''
-  return new Date(date).toLocaleDateString('ja-JP', {
+  return new Date(date).toLocaleDateString(undefined, {
     year: 'numeric',
     month: 'short', 
     day: 'numeric'
@@ -48,53 +67,60 @@ const formatDate = (date) => {
 }
 
 // Function to generate tag badge colors based on tag name
+// This creates a unique but consistent color for each tag
 const getTagColor = (tag) => {
-  let hash = 0
+  let hash = 0;
   for (let i = 0; i < tag.length; i++) {
-    hash = tag.charCodeAt(i) + ((hash << 5) - hash)
+    hash = tag.charCodeAt(i) + ((hash << 5) - hash);
   }
   
   // Generate hue value between 0 and 360
-  const hue = hash % 360
+  const hue = hash % 360;
   // Use a consistent saturation and lightness
-  return `hsl(${hue}, 70%, 65%)`
+  return `hsl(${hue}, 70%, 65%)`;
 }
 </script>
 
-<div class="tags-overview">
-  <div class="tag-badges">
-    <a 
-      v-for="tag in allTags" 
-      :key="tag" 
-      :href="`#${tag}`" 
-      class="tag-badge"
-      :style="{backgroundColor: getTagColor(tag)}"
-    >
-      {{ tag }} ({{ getPostCount(tag) }})
-    </a>
-  </div>
-</div>
-
-<div class="tags-container">
-  <div v-for="tag in allTags" :key="tag" class="tag-section">
-    <h2 :id="tag" class="tag-heading">
-      <span 
+<div v-if="allTags && allTags.length > 0">
+  <div class="tags-overview">
+    <div class="tag-badges">
+      <a 
+        v-for="tag in allTags" 
+        :key="tag" 
+        :href="`#${tag}`" 
         class="tag-badge"
-        :style="{backgroundColor: getTagColor(tag)}"
-      >{{ tag }}</span>
-      <span class="tag-count">{{ getPostCount(tag) }} 記事</span>
-    </h2>
-    
-    <ul class="post-list">
-      <li v-for="post in postsByTag[tag]" :key="post.url" class="post-item">
-        <div class="post-meta">
-          <span class="post-date">{{ formatDate(post.date) }}</span>
-        </div>
-        <a :href="post.url" class="post-title">{{ post.title }}</a>
-        <p v-if="post.excerpt" class="post-excerpt">{{ post.excerpt }}</p>
-      </li>
-    </ul>
+        :style="{ backgroundColor: getTagColor(tag) }"
+      >
+        {{ tag }} ({{ getPostCount(tag) }})
+      </a>
+    </div>
   </div>
+
+  <div class="tags-container">
+<div v-for="tag in allTags" :key="tag" class="tag-section">
+  <h2 :id="tag" class="tag-heading">
+    <span 
+      class="tag-badge"
+      :style="{ backgroundColor: getTagColor(tag) || '#ccc' }"
+    >{{ tag }}</span>
+    <span class="tag-count">
+      {{ getPostCount(tag) || 0 }} post{{ getPostCount(tag) !== 1 ? 's' : '' }}
+    </span>
+  </h2>
+
+  <ul class="post-list" v-if="postsByTag[tag]">
+    <li v-for="(post, index) in postsByTag[tag]" :key="post.url || index" class="post-item">
+      <div class="post-meta">
+        <span class="post-date">{{ formatDate(post.date) }}</span>
+      </div>
+      <a :href="post.url" class="post-title">{{ post.title }}</a>
+    </li>
+  </ul>
+</div>
+</div>
+</div>
+<div v-else class="no-tags-message">
+  <p>No blog posts with tags found. Tags will appear here once blog posts are properly tagged.</p>
 </div>
 
 <style>
@@ -214,6 +240,16 @@ const getTagColor = (tag) => {
   display: -webkit-box;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
+}
+
+/* No tags message */
+.no-tags-message {
+  margin: 3rem 0;
+  padding: 2rem;
+  text-align: center;
+  background-color: var(--vp-c-bg-soft);
+  border-radius: 8px;
+  color: var(--vp-c-text-2);
 }
 
 /* Responsive adjustments */

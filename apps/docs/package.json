@@ -4,6 +4,7 @@
   "type": "module",
   "private": true,
   "scripts": {
+    "build": "vitepress build docs",
     "dev": "vitepress dev docs",
     "docs:dev": "vitepress dev docs",
     "docs:build": "vitepress build docs",
