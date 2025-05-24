@@ -6,11 +6,7 @@ author: rai
 tags: [update]
 ---
 
-バージョン 4.0 の新しい機能やバグ修正、改善点をご紹介します。
-
 これは、最も大きい Deni AI のリリースです。
-
-<!-- more -->
 
 ## Deni AI ブランチ (Deni AI Branches)
 
@@ -71,9 +67,9 @@ Deni AI Bots は、特定の役割に特化した AI を作成することがで
 
 - **Deni AI CLI**: 開発は一時的に破棄しました。
 - **Intellipulse** NEW: Deni AI が搭載されたAI エディタです。 
-- **Deni AI API**: Deni AI の近日登場する API プラットフォームです。[詳細](/blog/deni-ai-api-preview)
+- **Deni AI API**: Deni AI の近日登場する API プラットフォームです。[詳細](/ja/blog/posts/deni-ai-api-preview)
 
-パッチノートに含まれていないすべての変更点は、[GitHub の Pull requests](https://github.com/raicdev/deni-ai/pull/33) をご覧ください。
+パッチノートに含まれていないすべての変更点は、[GitHub の Pull requests](https://github.com/raicdev/deni-ai/pull/39) をご覧ください。
 
 ::: info Note
 

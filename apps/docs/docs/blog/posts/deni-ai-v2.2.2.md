@@ -7,9 +7,6 @@ author: rai
 tags: [update]
 ---
 
-Introducing new features, bug fixes, and improvements in version 2.2.2.
-
-<!-- more -->
 
 ## Claude is Available Again
 

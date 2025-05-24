@@ -2,9 +2,7 @@ import { createContentLoader } from 'vitepress'
 
 export default createContentLoader(['blog/posts/*.md', 'blog/posts/*/index.md'], {
   excerpt: true,
-  transform(raw) {
-    console.log('Raw posts count:', raw.length)
-    
+  transform(raw) {    
     return raw
       .map(({ url, frontmatter, excerpt, filePath }) => {
         // Extract date from the filename (pattern: YYYY-MM-DD-*)

@@ -22,17 +22,16 @@ Deni AI は、様々なタスクをサポートするために設計された強
 Deni AI を使用するには、いくつかの選択肢があります：
 
 1. **公式インスタンスを使用する**：[公式インスタンス](https://deniai.app/)にアクセス
-2. **自分のインスタンスを作成する**：[セットアップガイド](/docs/setup-guide/create-a-instance)に従って個人インスタンスをセットアップ
+2. **自分のインスタンスを作成する**：[セットアップガイド](/ja/setup-guide/create-a-instance)に従ってインスタンスをセットアップ
 3. **他のインスタンスを使用する**：他の提供者によるインスタンスに接続
 
-開始方法の詳細については、[開始ガイド](/docs/getting-started)をご覧ください。
+開始方法の詳細については、[開始ガイド](/ja/getting-started)をご覧ください。
 
 ## 次のステップ
 
 Deni AI に慣れてきたら、次のことを試してみるとよいでしょう：
 
-- [セットアップガイド](/docs/setup-guide)でカスタマイズオプションを探る
-- インスタンスの[変更方法](/docs/setup-guide/modification)を学ぶ
-- インスタンスの[公開方法](/docs/setup-guide/publish)を発見する
+- インスタンスの[変更方法](/ja/setup-guide/modification)を学ぶ
+- インスタンスの[公開方法](/ja/setup-guide/publish)を発見する
 
 Deni AI をお楽しみください！

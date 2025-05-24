@@ -9,8 +9,6 @@ tags: [update]
 
 Introducing the new features, bug fixes, and improvements in version 3.0.1.
 
-<!-- more -->
-
 ## Bug Fixes
 
 This version fixes three bugs:

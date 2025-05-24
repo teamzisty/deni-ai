@@ -7,10 +7,6 @@ author: rai
 tags: [update]
 ---
 
-バージョン 3.2 の新しい機能やバグ修正、改善点をご紹介します。
-
-<!-- more -->
-
 Deni AI v3.2 のリリースが遅延してしまい申し訳ございません。
 
 ## Deni AI Dev (正式リリース)
@@ -60,7 +56,7 @@ _進化したリサーチ のプレビュー (2)_
 ## 今後の予定
 
 - **Deni AI CLI**: 開発は一時的に破棄しました。
-- **Deni AI API**: Deni AI の近日登場する API プラットフォームです。[詳細](/blog/deni-ai-api-preview)
+- **Deni AI API**: Deni AI の近日登場する API プラットフォームです。[詳細](/ja/blog/posts/deni-ai-api-preview)
 
 パッチノートに含まれていないすべての変更点は、[GitHub の Pull requests](https://github.com/raicdev/deni-ai/pull/33) をご覧ください。
 

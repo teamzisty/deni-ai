@@ -22,17 +22,16 @@ Deni AI is a powerful AI assistant platform designed to help you with various ta
 You have several options to use Deni AI:
 
 1. **Use the Official Instance**: Access the [official instance](https://deniai.app/)
-2. **Create Your Own Instance**: Set up your personal instance by following our [setup guide](/docs/setup-guide/create-a-instance)
+2. **Create Your Own Instance**: Set up your personal instance by following our [setup guide](/setup-guide/create-a-instance)
 3. **Use Other Instances**: Connect to instances provided by others
 
-For more detailed information on getting started, check out our [Getting Started guide](/docs/getting-started).
+For more detailed information on getting started, check out our [Getting Started guide](/getting-started).
 
 ## Next Steps
 
 After getting familiar with Deni AI, you might want to:
 
-- Explore the [setup guide](/docs/setup-guide) for customization options
-- Learn how to [modify your instance](/docs/setup-guide/modification)
-- Discover how to [publish your instance](/docs/setup-guide/publish)
+- Learn how to [modify your instance](/setup-guide/modification)
+- Discover how to [publish your instance](/setup-guide/publish)
 
 We hope you enjoy using Deni AI!

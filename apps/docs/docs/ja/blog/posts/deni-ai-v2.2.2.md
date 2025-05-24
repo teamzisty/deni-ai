@@ -7,10 +7,6 @@ author: rai
 tags: [update]
 ---
 
-バージョン 2.2.2 の新しい機能やバグ修正、改善点をご紹介します。
-
-<!-- more -->
-
 ## Claude が再び利用可能に
 
 一時的に何も出力されていなかった、Claude 3.7 Sonnet の問題とエラーが出る Claude 3.5 Sonnet を修正しました。

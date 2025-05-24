@@ -7,10 +7,6 @@ author: rai
 tags: [update]
 ---
 
-バージョン 3.2.1 の新しい機能やバグ修正、改善点をご紹介します。
-
-<!-- more -->
-
 ## 改善されたモデル選択
 
 モデル選択でたくさんの改善を行いました。以下は改善された点です。
@@ -56,7 +52,7 @@ tags: [update]
 ## 今後の予定
 
 - **Deni AI CLI**: 開発は一時的に破棄しました。
-- **Deni AI API**: Deni AI の近日登場する API プラットフォームです。[詳細](/blog/deni-ai-api-preview)
+- **Deni AI API**: Deni AI の近日登場する API プラットフォームです。[詳細](/ja/blog/posts/deni-ai-api-preview)
 
 パッチノートに含まれていないすべての変更点は、[GitHub の Pull requests](https://github.com/raicdev/deni-ai/pull/34) をご覧ください。
 

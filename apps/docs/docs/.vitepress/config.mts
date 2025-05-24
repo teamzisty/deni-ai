@@ -21,7 +21,7 @@ export default defineConfig({
         ],
 
         sidebar: {
-          "/": [
+          "/ja": [
             {
               text: "ドキュメント",
               items: [
@@ -45,12 +45,12 @@ export default defineConfig({
               ],
             }
           ],
-          "/blog/": [
+          "/ja/blog/": [
             {
-              text: "Blog",
+              text: "ブログ",
               items: [
-                { text: "All Posts", link: "/blog/" },
-                { text: "Tags", link: "/blog/tags" },
+                { text: "すべての投稿", link: "/ja/blog/" },
+                { text: "タグ", link: "/ja/blog/tags" },
               ],
             },
           ],

@@ -11,8 +11,6 @@ Here are the new features, bug fixes, and improvements in version 2.4.
 
 **TLDR;** Account Manager, Chat Synchronization
 
-<!-- more -->
-
 ## New Account Manager
 
 We now have a new way to manage your accounts, including account data management, passwords, and security. Account information that was previously unmanageable is now manageable.

@@ -9,8 +9,6 @@ tags: [update]
 
 Introducing the new features, bug fixes, and improvements in version 2.2.1.
 
-<!-- more -->
-
 ## Improvements for Instances
 
 Firebase projects are no longer required to create instances. Deni AI will automatically detect non-Firebase instances, so no configuration is needed.

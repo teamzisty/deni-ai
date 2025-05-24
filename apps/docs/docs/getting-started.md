@@ -10,10 +10,10 @@ You have several options to use Deni AI: use the official instance, create your 
 
 You can access the official instance [here](https://deniai.app/).
 
-| Feature        | Details                        |
-| -------------- | ------------------------------ |
-| Login Required | ✅                             |
-| Provider       | [voids.top](https://voids.top) |
+| Feature        | Details  |
+| -------------- | -------- |
+| Login Required | ✅       |
+| Provider       | Official |
 
 Currently, login is required for antibot measures, but it will eventually become optional.
 
@@ -23,4 +23,4 @@ If you want to use instances provided by others, please contact the instance pro
 
 ## Creating Your Own Instance
 
-If you want to create your own instance, please refer to [this guide](/docs/setup-guide/create-a-instance).
+If you want to create your own instance, please refer to [this guide](/setup-guide/create-a-instance).
