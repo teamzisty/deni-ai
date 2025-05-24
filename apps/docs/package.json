@@ -1,4 +1,8 @@
 {
+  "name": "docs",
+  "version": "4.0.0",
+  "type": "module",
+  "private": true,
   "scripts": {
     "dev": "vitepress dev docs",
     "docs:dev": "vitepress dev docs",
