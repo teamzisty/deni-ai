@@ -18,6 +18,10 @@
         </span>
       </div>
 
+      <div v-if="post.description" class="blog-post-excerpt">
+        {{ post.description }}
+      </div>
+
       <a :href="post.url" class="blog-post-read-more">Read more →</a>
     </div>
   </div>

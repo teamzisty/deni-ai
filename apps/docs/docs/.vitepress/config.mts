@@ -67,16 +67,30 @@ export default defineConfig({
     ],
 
     sidebar: {
-      "/": [
-        {
-          text: "Documentation",
-          items: [
-            { text: "Getting Started", link: "/getting-started" },
-            { text: "Markdown Examples", link: "/markdown-examples" },
-            { text: "API Examples", link: "/api-examples" },
+          "/": [
+            {
+              text: "Documentation",
+              items: [
+                { text: "Intro", link: "/intro" },
+                { text: "Getting Started", link: "/getting-started" },
+              ],
+            },
+            {
+              text: "Setup",
+              items: [
+                { text: "Create an Instance", link: "/setup-guide/create-a-instance" },
+                { text: "Customization", link: "/setup-guide/modification" },
+                { text: "Publishing", link: "/setup-guide/publish" },
+              ]
+            },
+            {
+              text: "Contribution",
+              items: [
+                { text: "Setup Repository", link: "/contribution/setup-repository" },
+                { text: "Improve and Modify Translations", link: "/contribution/changes-to-translation" },
+              ],
+            }
           ],
-        },
-      ],
       "/blog/": [
         {
           text: "Blog",

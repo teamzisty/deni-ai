@@ -8,6 +8,9 @@ node_modules
 # API (in progress)
 apps/api
 
+# Cache
+.vitepress/cache
+
 # Local env files
 .env
 .env.local
