@@ -1,6 +1,5 @@
 import { Loading } from "@/components/loading";
 import { Suspense } from "react";
-import { ThemeProvider } from "@workspace/ui/components/theme-provider";
 
 import { SidebarProvider } from "@workspace/ui/components/sidebar";
 import { ChatSidebar } from "@/components/chat-sidebar";
@@ -20,6 +19,7 @@ export default async function Layout({
 }) {
   const cookieStore = await cookies();
   const defaultOpen = cookieStore.get("sidebar_state")?.value === "true";
+  const updateAlert = cookieStore.get("update_alert")?.value === "true";
 
   return (
     <div className="w-full h-full">
@@ -33,6 +33,7 @@ export default async function Layout({
                     <div className="w-full flex">
                       <ChatSidebar />
                       <Suspense fallback={<Loading />}>{children}</Suspense>
+
 
                       <SettingsDialog />
                     </div>
