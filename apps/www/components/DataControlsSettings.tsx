@@ -41,6 +41,7 @@ import {
 } from "@workspace/ui/components/input-otp";
 import { firestore } from "@workspace/firebase-config/client";
 import { useChatSessions } from "@/hooks/use-chat-sessions";
+import { useDevSessions } from "@/hooks/use-dev-sessions";
 
 export default function DataControlsSettings() {
   const [dataCollection, setDataCollection] = useState(false);
@@ -54,25 +55,47 @@ export default function DataControlsSettings() {
   const t = useTranslations();
   const NextRouter = nextRouter();
   // Use the chat sessions hook
-  const { clearAllSessions, exportAllSessions, importAllSessions } = useChatSessions();
-  const dialogPromiseRef = useRef<{ resolve: (value: string) => void } | null>(null);
+  const { clearAllSessions, exportAllSessions, importAllSessions } =
+    useChatSessions();
+  const {
+    exportAllSessions: exportAllDevSessions,
+    importAllSessions: importAllDevSessions,
+    clearAllSessions: clearAllDevSessions,
+  } = useDevSessions();
+  const dialogPromiseRef = useRef<{ resolve: (value: string) => void } | null>(
+    null
+  );
 
   useEffect(() => {
-    const dataCollection = localStorage.getItem("dataCollection");
-    if (dataCollection === "true") {
+    // Read the 'analytics-consent' cookie on component mount
+    const cookieValue = document.cookie
+      .split("; ")
+      .find((row) => row.startsWith("analytics-consent="))
+      ?.split("=")[1];
+
+    if (cookieValue === "true") {
       setDataCollection(true);
     } else {
+      // If cookie is "false", not set, or any other value, default dataCollection to false
       setDataCollection(false);
     }
-  }, []);
 
-  useEffect(() => {
-    if (dataCollection) {
-      localStorage.setItem("dataCollection", "true");
-    } else {
-      localStorage.setItem("dataCollection", "false");
-    }
-  }, [dataCollection]);
+    console.log("Cookie value:", cookieValue); // Debugging line
+  }, []); // Runs once on mount
+
+  const saveFile = (jsonData: string, fileName: string) => {
+    const blob = new Blob([jsonData], {
+      type: "application/json",
+    });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = fileName;
+    document.body.appendChild(link); // Append link to body
+    link.click();
+    document.body.removeChild(link); // Remove link after click
+    URL.revokeObjectURL(url);
+  };
 
   // Updated export function
   const exportAllConversations = async () => {
@@ -81,17 +104,8 @@ export default function DataControlsSettings() {
       const parsedSessions = JSON.parse(sessionsJson); // Parse to check if empty
 
       if (parsedSessions && parsedSessions.length > 0) {
-        const blob = new Blob([sessionsJson], {
-          type: "application/json",
-        });
-        const url = URL.createObjectURL(blob);
-        const link = document.createElement("a");
-        link.href = url;
-        link.download = `deni-ai-conversations-${new Date().toISOString()}.json`;
-        document.body.appendChild(link); // Append link to body
-        link.click();
-        document.body.removeChild(link); // Remove link after click
-        URL.revokeObjectURL(url);
+        const fileName = `deni-ai-conversations-${new Date().toISOString()}.json`;
+        saveFile(sessionsJson, fileName); // Save the file
         toast.success(t("settings.popupMessages.exportSuccess"));
       } else {
         toast.error(t("common.error.occurred"), {
@@ -99,10 +113,80 @@ export default function DataControlsSettings() {
         });
       }
     } catch (error) {
-       console.error("Export error:", error);
-       toast.error(t("common.error.occurred"), {
-         description: t("settings.popupMessages.exportError"), // Add a generic export error message
-       });
+      console.error("Export error:", error);
+      toast.error(t("common.error.occurred"), {
+        description: t("settings.popupMessages.exportError"), // Add a generic export error message
+      });
+    }
+  };
+
+  const exportAllDevConversations = async () => {
+    try {
+      const sessionsJson = await exportAllDevSessions(); // Use hook function
+      const parsedSessions = JSON.parse(sessionsJson); // Parse to check if empty
+
+      if (parsedSessions && parsedSessions.length > 0) {
+        const fileName = `deni-ai-dev-conversations-${new Date().toISOString()}.json`;
+        saveFile(sessionsJson, fileName); // Save the file
+        toast.success(t("settings.popupMessages.exportSuccess"));
+      } else {
+        toast.error(t("common.error.occurred"), {
+          description: t("settings.popupMessages.noConversations"),
+        });
+      }
+    } catch (error) {
+      console.error("Export error:", error);
+      toast.error(t("common.error.occurred"), {
+        description: t("settings.popupMessages.exportError"), // Add a generic export error message
+      });
+    }
+  };
+
+  const importAllDevConversations = async () => {
+    try {
+      const input = document.createElement("input");
+      input.type = "file";
+      input.accept = ".json";
+      input.onchange = async (e) => {
+        // Make this async
+        const file = (e.target as HTMLInputElement).files?.[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = async (event) => {
+          // Make this async
+          try {
+            const jsonData = event.target?.result as string;
+            await importAllDevSessions(jsonData); // Use hook function
+            // Success toast is handled within the hook now
+            toast.success(t("settings.popupMessages.importSuccess"), {
+              description: t("settings.popupMessages.importAllSuccess"),
+            });
+          } catch (error) {
+            // Error toast is handled within the hook now
+            toast.error(t("common.error.occurred"), {
+              description: t("settings.popupMessages.invalidFileFormat"), // Or a more specific error from the hook
+            });
+          }
+        };
+        reader.onerror = () => {
+          // Handle reader errors
+          toast.error(t("common.error.occurred"), {
+            description: t("settings.popupMessages.fileReadError"),
+          });
+        };
+        reader.readAsText(file);
+      };
+      input.click();
+    } catch (error: unknown) {
+      // This catch block might be less likely to trigger now,
+      // but keep it for unexpected issues creating the input element.
+      if (error instanceof Error && error.name === "AbortError") {
+        // User cancelled file selection
+        return;
+      }
+      toast.error(t("common.error.occurred"), {
+        description: t("settings.popupMessages.fileReadError"), // Or a generic import error
+      });
     }
   };
 
@@ -112,30 +196,33 @@ export default function DataControlsSettings() {
       const input = document.createElement("input");
       input.type = "file";
       input.accept = ".json";
-      input.onchange = async (e) => { // Make this async
+      input.onchange = async (e) => {
+        // Make this async
         const file = (e.target as HTMLInputElement).files?.[0];
         if (!file) return;
         const reader = new FileReader();
-        reader.onload = async (event) => { // Make this async
+        reader.onload = async (event) => {
+          // Make this async
           try {
             const jsonData = event.target?.result as string;
             await importAllSessions(jsonData); // Use hook function
             // Success toast is handled within the hook now
-            // toast.success(t("settings.popupMessages.importSuccess"), {
-            //   description: t("settings.popupMessages.importAllSuccess"),
-            // });
+            toast.success(t("settings.popupMessages.importSuccess"), {
+              description: t("settings.popupMessages.importAllSuccess"),
+            });
           } catch (error) {
-             // Error toast is handled within the hook now
-            // toast.error(t("common.error.occurred"), {
-            //   description: t("settings.popupMessages.invalidFileFormat"), // Or a more specific error from the hook
-            // });
+            // Error toast is handled within the hook now
+            toast.error(t("common.error.occurred"), {
+              description: t("settings.popupMessages.invalidFileFormat"), // Or a more specific error from the hook
+            });
           }
         };
-         reader.onerror = () => { // Handle reader errors
-           toast.error(t("common.error.occurred"), {
-             description: t("settings.popupMessages.fileReadError"),
-           });
-         };
+        reader.onerror = () => {
+          // Handle reader errors
+          toast.error(t("common.error.occurred"), {
+            description: t("settings.popupMessages.fileReadError"),
+          });
+        };
         reader.readAsText(file);
       };
       input.click();
@@ -157,11 +244,24 @@ export default function DataControlsSettings() {
     try {
       await clearAllSessions(); // Use hook function
     } catch (error) {
-       // Error toast is handled within the hook now
-       console.error("Delete all error:", error);
-       // toast.error(t("common.error.occurred"), {
-       //   description: t("settings.popupMessages.deleteAllError"), // Add a generic delete error message
-       // });
+      // Error toast is handled within the hook now
+      console.error("Delete all error:", error);
+      toast.error(t("common.error.occurred"), {
+        description: t("settings.popupMessages.deleteAllError"), // Add a generic delete error message
+      });
+    }
+  };
+
+  // Updated delete function (now async)
+  const deleteAllDevConversations = async () => {
+    try {
+      await clearAllDevSessions(); // Use hook function
+    } catch (error) {
+      // Error toast is handled within the hook now
+      console.error("Delete all error:", error);
+      toast.error(t("common.error.occurred"), {
+        description: t("settings.popupMessages.deleteAllError"), // Add a generic delete error message
+      });
     }
   };
 
@@ -186,9 +286,13 @@ export default function DataControlsSettings() {
     try {
       const provider = new GoogleAuthProvider();
       await reauthenticateWithPopup(user, provider);
-    } catch (error: unknown) { // Changed any to unknown
+    } catch (error: unknown) {
+      // Changed any to unknown
       console.error("Google reauth error:", error);
-      if (error instanceof Error && (error as AuthError).code === "auth/multi-factor-auth-required") {
+      if (
+        error instanceof Error &&
+        (error as AuthError).code === "auth/multi-factor-auth-required"
+      ) {
         // Cast to MultiFactorError as required by getMultiFactorResolver
         return await handle2FAReauth(error as MultiFactorError);
       }
@@ -208,10 +312,8 @@ export default function DataControlsSettings() {
         const tfaCode = await request2FaCode();
         if (!tfaCode) return false;
 
-        const multiFactorAssertion = TotpMultiFactorGenerator.assertionForSignIn(
-          factor.uid,
-          tfaCode
-        );
+        const multiFactorAssertion =
+          TotpMultiFactorGenerator.assertionForSignIn(factor.uid, tfaCode);
 
         await resolver.resolveSignIn(multiFactorAssertion);
         return true;
@@ -219,7 +321,8 @@ export default function DataControlsSettings() {
 
       setReauthError(t("login.invalidAuthCode"));
       return false;
-    } catch (error: any) { // Changed any to unknown
+    } catch (error: any) {
+      // Changed any to unknown
       console.error("2FA reauth error:", error);
       setReauthError((error as Error).message); // Added type assertion
       return false;
@@ -233,10 +336,14 @@ export default function DataControlsSettings() {
       const credential = EmailAuthProvider.credential(user.email, password);
       await reauthenticateWithCredential(user, credential);
       return true; // Indicate success
-    } catch (error: unknown) { // Changed any to unknown
+    } catch (error: unknown) {
+      // Changed any to unknown
       console.error("Password reauth error:", error);
-      if (error instanceof Error && (error as AuthError).code === "auth/multi-factor-auth-required") {
-         // Cast to MultiFactorError as required by getMultiFactorResolver
+      if (
+        error instanceof Error &&
+        (error as AuthError).code === "auth/multi-factor-auth-required"
+      ) {
+        // Cast to MultiFactorError as required by getMultiFactorResolver
         return await handle2FAReauth(error as MultiFactorError);
       }
       setReauthError((error as Error).message); // Added type assertion
@@ -255,7 +362,7 @@ export default function DataControlsSettings() {
 
     const provider = user.providerData[0]?.providerId;
     // Try password reauth first
-    if (provider === 'password') {
+    if (provider === "password") {
       const success = await reauthenticateWithPassword();
       if (success) {
         setShowReauthDialog(false);
@@ -265,7 +372,7 @@ export default function DataControlsSettings() {
     }
 
     // Check provider and try appropriate reauth method
-    if (provider === 'google.com') {
+    if (provider === "google.com") {
       const success = await reauthenticateWithGoogle();
       if (success) {
         setShowReauthDialog(false);
@@ -274,13 +381,15 @@ export default function DataControlsSettings() {
     }
 
     if (provider === "github.com") {
-      const success = await reauthenticateWithPopup(user, new GithubAuthProvider());
+      const success = await reauthenticateWithPopup(
+        user,
+        new GithubAuthProvider()
+      );
       if (success) {
         setShowReauthDialog(false);
         await deleteAccount();
       }
     }
-
   };
 
   const deleteAccount = async () => {
@@ -292,16 +401,13 @@ export default function DataControlsSettings() {
       // Delete the user's conversations data from Firestore
       if (firestore) {
         try {
-          // Delete all sessions using the hook's logic (covers sessions and active)
-          await clearAllSessions(); // Use the hook to clear Firestore data
-
-          // Delete the user's main document (if it exists separately, though clearing sessions might be enough)
-          // Check if this is still needed or if clearAllSessions covers it.
-          // Let's assume clearAllSessions handles the conversation data entirely.
-          // const userDocRef = doc(firestore, `deni-ai-conversations/${user.uid}`);
-          // await deleteDoc(userDocRef); // This might delete the parent doc if needed
+          // Delete all sessions using the hook's logic
+          await clearAllSessions();
         } catch (error) {
-          console.error("Error deleting user's conversations data via hook:", error);
+          console.error(
+            "Error deleting user's conversations data via hook:",
+            error
+          );
           // Continue with account deletion even if Firestore deletion fails
         }
       }
@@ -316,7 +422,8 @@ export default function DataControlsSettings() {
       // Redirect to home page or show success message
       toast.success(t("settings.popupMessages.accountDeleted"));
       NextRouter.push("/");
-    } catch (error: unknown) { // Changed any to unknown
+    } catch (error: unknown) {
+      // Changed any to unknown
       console.error("Account deletion error:", error);
       toast.error(t("common.error.occurred"), {
         description: t("settings.popupMessages.accountDeletionError"),
@@ -338,10 +445,16 @@ export default function DataControlsSettings() {
     setShowReauthDialog(true);
   };
 
+  const toggleDataCollection = async (checked: boolean) => {
+    setDataCollection(checked);
+    const cookieValue = checked ? "true" : "false";
+    document.cookie = `analytics-consent=${cookieValue}; path=/; max-age=31536000`; // 1 year
+  };
+
   return (
     <div className="space-y-6">
       {/* Data Control Settings */}
-      <div className="bg-card/50 opacity-50 pointer-events-none border border-border/30 rounded-md overflow-hidden">
+      <div className="bg-card/50 border border-border/30 rounded-md overflow-hidden">
         <div className="flex p-5 items-center gap-4">
           <div className="flex-grow">
             <h3 className="text-lg font-bold">
@@ -353,11 +466,10 @@ export default function DataControlsSettings() {
           </div>
           <div>
             <Switch
-              disabled={true}
               className="scale-125"
               name="dataCollection"
               checked={dataCollection}
-              onCheckedChange={setDataCollection}
+              onCheckedChange={toggleDataCollection}
             />
           </div>
         </div>
@@ -374,12 +486,52 @@ export default function DataControlsSettings() {
               {t("settings.dataControls.export.description")}
             </p>
           </div>
-          <div className="flex gap-2">
-            <Button variant="outline" onClick={exportAllConversations} className="gap-2">
+          <div className="flex flex-col md:flex-row gap-2">
+            <Button
+              variant="outline"
+              onClick={exportAllConversations}
+              className="gap-2"
+            >
               <Download className="h-4 w-4" />
               {t("settings.dataControls.export.export")}
             </Button>
-            <Button variant="outline" onClick={importAllConversations} className="gap-2">
+            <Button
+              variant="outline"
+              onClick={importAllConversations}
+              className="gap-2"
+            >
+              <Upload className="h-4 w-4" />
+              {t("settings.dataControls.export.import")}
+            </Button>
+          </div>
+        </div>
+      </div>
+
+      {/* Dev Data Export/Import */}
+      <div className="bg-card/50 border border-border/30 rounded-md overflow-hidden">
+        <div className="flex flex-col p-5 gap-4">
+          <div className="flex-grow">
+            <h3 className="text-lg font-bold">
+              {t("settings.dataControls.devExport.title")}
+            </h3>
+            <p className="text-sm text-muted-foreground">
+              {t("settings.dataControls.devExport.description")}
+            </p>
+          </div>
+          <div className="flex flex-col md:flex-row gap-2">
+            <Button
+              variant="outline"
+              onClick={exportAllDevConversations}
+              className="gap-2"
+            >
+              <Download className="h-4 w-4" />
+              {t("settings.dataControls.export.export")}
+            </Button>
+            <Button
+              variant="outline"
+              onClick={importAllDevConversations}
+              className="gap-2"
+            >
               <Upload className="h-4 w-4" />
               {t("settings.dataControls.export.import")}
             </Button>
@@ -432,6 +584,50 @@ export default function DataControlsSettings() {
         </div>
       </div>
 
+      <div className="bg-card/50 border border-border/30 rounded-md overflow-hidden">
+        <div className="flex p-5 items-center gap-4">
+          <div className="flex-grow">
+            <h3 className="text-lg font-bold text-destructive">
+              {t("settings.dataControls.deleteDevData.title")}
+            </h3>
+            <p className="text-sm text-muted-foreground">
+              {t("settings.dataControls.deleteDevData.description")}
+            </p>
+          </div>
+          <div>
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button variant="destructive" className="gap-2">
+                  <Trash2 className="h-4 w-4" />
+                  {t("settings.dataControls.deleteData.action")}
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>
+                    {t("settings.dataControls.deleteData.confirmTitle")}
+                  </AlertDialogTitle>
+                  <AlertDialogDescription>
+                    {t("settings.dataControls.deleteData.confirmDescription")}
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>
+                    {t("settings.dataControls.deleteData.cancel")}
+                  </AlertDialogCancel>
+                  <AlertDialogAction
+                    onClick={deleteAllDevConversations} // Use updated async function
+                    className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                  >
+                    {t("settings.dataControls.deleteData.confirm")}
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+          </div>
+        </div>
+      </div>
+
       {/* Account Deletion */}
       <div className="bg-card/50 border border-border/30 rounded-md overflow-hidden">
         <div className="flex p-5 items-center gap-4">
@@ -457,7 +653,9 @@ export default function DataControlsSettings() {
                     {t("settings.dataControls.accountDeletion.confirmTitle")}
                   </AlertDialogTitle>
                   <AlertDialogDescription>
-                    {t("settings.dataControls.accountDeletion.confirmDescription")}
+                    {t(
+                      "settings.dataControls.accountDeletion.confirmDescription"
+                    )}
                   </AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter>
@@ -494,13 +692,11 @@ export default function DataControlsSettings() {
 
           <div className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="password">
-                {t("login.password")}
-              </Label>
+              <Label htmlFor="password">{t("login.password")}</Label>
               <Input
                 id="password"
                 type="password"
-                disabled={user?.providerData[0]?.providerId != 'password'}
+                disabled={user?.providerData[0]?.providerId != "password"}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder={t("login.password")}
@@ -512,12 +708,13 @@ export default function DataControlsSettings() {
             )}
 
             <div className="flex flex-col gap-2">
-              {user?.providerData[0]?.providerId === 'password' ? (
+              {user?.providerData[0]?.providerId === "password" ? (
                 <>
-                  <Button onClick={handleReauth}>
-                    {t("login.continue")}
-                  </Button>
-                  <Button variant="outline" onClick={() => setShowReauthDialog(false)}>
+                  <Button onClick={handleReauth}>{t("login.continue")}</Button>
+                  <Button
+                    variant="outline"
+                    onClick={() => setShowReauthDialog(false)}
+                  >
                     {t("login.cancel")}
                   </Button>
                 </>
@@ -526,10 +723,11 @@ export default function DataControlsSettings() {
                   <p className="text-sm text-muted-foreground">
                     {t("settings.dataControls.reauth.providerAuth")}
                   </p>
-                  <Button onClick={handleReauth}>
-                    {t("login.continue")}
-                  </Button>
-                  <Button variant="outline" onClick={() => setShowReauthDialog(false)}>
+                  <Button onClick={handleReauth}>{t("login.continue")}</Button>
+                  <Button
+                    variant="outline"
+                    onClick={() => setShowReauthDialog(false)}
+                  >
                     {t("login.cancel")}
                   </Button>
                 </>

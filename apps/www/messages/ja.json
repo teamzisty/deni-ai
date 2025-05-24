@@ -25,7 +25,31 @@
     "app": "アプリ",
     "sourceCode": "ソースコード",
     "privacyPolicy": "プライバシーポリシー",
-    "termsOfService": "利用規約"
+    "termsOfService": "利用規約",
+    "info": "情報",
+    "createBranch": "ブランチを作成"
+  },
+  "footer": {
+    "disclaimer": "AI モデルは完璧ではなく、不正確または無意味な回答を生成する可能性があります。自己責任でご利用ください。",
+    "pages": "ページ",
+    "resources": {
+      "title": "リソース",
+      "privacyPolicy": "プライバシーポリシー",
+      "termsOfService": "利用規約",
+      "sourceCode": "ソースコード",
+      "donate": "寄付",
+      "blog": "ブログ"
+    },
+    "team": {
+      "title": "チーム",
+      "website": "ウェブサイト",
+      "github": "GitHub",
+      "jobs": "採用情報",
+      "contact": "お問い合わせ",
+      "blog": "ブログ",
+      "support": "サポート"
+    },
+    "social": "ソーシャル"
   },
   "analyticsConsent": {
     "title": "分析を有効にしますか？",
@@ -74,7 +98,13 @@
     "untitledCanvas": "無題のキャンバス",
     "canvasUpdateSuccess": "キャンバス更新成功",
     "canvasUpdateFailed": "キャンバス更新失敗",
-    "updatingCanvas": "キャンバス更新中..."
+    "updatingCanvas": "キャンバス更新中...",
+    "andMore": "他に {count} 件のソース",
+    "research": "リサーチ",
+    "createBranchFromMessage": "ブランチをこのメッセージから作成",
+    "createBranchFromMessageDescription": "このメッセージから作成される新しいブランチの名前を入力してください。",
+    "branchName": "ブランチ名",
+    "branchNamePlaceholder": "例: 私の新しいアイデア"
   },
   "devMessageLog": {
     "writeAction": "ファイル書き込み: {path}",
@@ -109,7 +139,8 @@
     "advancedResearch": "高度なリサーチ",
     "devNotAvailable": "開発モードでは利用できません",
     "canvas": "キャンバス",
-    "translate": "翻訳"
+    "translate": "翻訳",
+    "botNotice": "あなたは「{botName}」Botにいます。退出するには、新しい会話を作成してください。"
   },
   "headerArea": {
     "ready": "準備完了",
@@ -136,10 +167,6 @@
     },
     "general": {
       "tab": "一般",
-      "search": {
-        "title": "詳細な検索",
-        "description": "AI が検索機能を使用する際、ページの内容を詳しく送信するかどうかを選択します。"
-      },
       "theme": {
         "title": "外観テーマ",
         "description": "ライトテーマとダークテーマを切り替えます。",
@@ -154,6 +181,26 @@
         "action": "言語を変更"
       }
     },
+    "customize": {
+      "tab": "カスタマイズ",
+      "title": "カスタマイズと挙動",
+      "search": {
+        "title": "詳細な検索",
+        "description": "AI が検索機能を使用する際、ページの内容を詳しく送信するかどうかを選択します。"
+      },
+      "hubs": {
+        "title": "Hub",
+        "description": "Hub を有効にすることで、会話をグループで整理できます。"
+      },
+      "branch": {
+        "title": "ブランチ",
+        "description": "ブランチを有効にすることで、会話を分岐させることができます。"
+      },
+      "autoScroll": {
+        "title": "自動スクロール",
+        "description": "メッセージの生成中に自動的に下へスクロールします。"
+      }
+    },
     "account": {
       "tab": "アカウント",
       "title": "アカウントの管理",
@@ -166,6 +213,10 @@
       "privacyMode": {
         "title": "プライバシーモード",
         "description": "あなたの名前、メールアドレス、プロフィール画像を非表示にします。"
+      },
+      "conversationsPrivacyMode": {
+        "title": "会話のプライバシーモード",
+        "description": "あなたの会話の名前を非表示にします。カーソルを合わせると名前が表示されます。"
       },
       "authDisabled": "認証は一時的に無効になっているか、あなたのインスタンスでは利用できません。",
       "data": {
@@ -283,16 +334,21 @@
         "title": "データ収集",
         "description": "サービスの改善のために使用データの収集を許可する"
       },
+
       "reauth": {
         "title": "再認証",
         "description": "データのエクスポートや削除を行うために、パスワードを入力してください。",
         "providerAuth": "Google または GitHub で再認証して、削除を続行します。"
       },
       "export": {
-        "title": "データのエクスポート/インポート",
+        "title": "会話データの管理",
         "description": "すべての会話をJSONファイルにエクスポートするか、ファイルからインポートします。",
         "export": "すべてエクスポート",
         "import": "すべてインポート"
+      },
+      "devExport": {
+        "title": "開発モードの会話を管理",
+        "description": "開発モードの会話をJSONファイルにエクスポートするか、ファイルからインポートします。"
       },
       "deleteData": {
         "title": "すべての会話を削除",
@@ -302,6 +358,10 @@
         "confirmDescription": "これにより、アカウント（ログインしている場合）およびローカルストレージからすべての会話データが完全に削除されます。",
         "cancel": "キャンセル",
         "confirm": "はい、すべて削除します"
+      },
+      "deleteDevData": {
+        "title": "開発モードの会話を削除",
+        "description": "開発モードのすべての会話履歴を完全に削除します。この操作は元に戻せません。"
       },
       "accountDeletion": {
         "title": "アカウント削除",
@@ -333,6 +393,20 @@
       "image": "画像"
     }
   },
+  "createBranchModal": {
+    "title": "新しいブランチを作成",
+    "description": "'{parentTitle}' から新しいブランチを作成します。",
+    "label": {
+      "branchName": "ブランチ名"
+    },
+    "placeholder": {
+      "branchName": "ブランチ名を入力"
+    },
+    "error": {
+      "nameRequired": "ブランチ名は必須です。",
+      "creationFailed": "ブランチの作成に失敗しました。"
+    }
+  },
   "modelSelector": {
     "model": "モデル",
     "visionRequired": "この会話には画像を含んでいるため、画像対応モデルのみが利用可能です。",
@@ -352,7 +426,13 @@
     "thisMonth": "今月",
     "older": "それより前",
     "chat": "チャット",
-    "searchChats": "会話を検索..."
+    "searchChats": "会話を検索...",
+    "branchTooltipPrefix": "{parentTitle} のブランチ",
+    "branchPrefix": "{parentTitle}",
+    "hubs": "Hub",
+    "bots": "Bot",
+    "myHubs": "自分の Hub",
+    "hubsDescription": "会話を Hub に整理する"
   },
   "accountMenu": {
     "login": "ログイン",
@@ -361,22 +441,53 @@
     "logout": "ログアウト",
     "version": "Deni AI v{version} ({codename}) ({type})"
   },
-  "footer": {
-    "disclaimer": "AI の回答は必ずしも正しいとは限りません。すべての AI が無制限に利用できます。",
-    "poweredBy": "Powered by voids.top",
-    "and": "and"
+  "Hubs": {
+    "title": "Hub (ベータ)",
+    "createNew": "新しい Hub を作成",
+    "noHubsYet": "Hub はまだありません",
+    "noHubsDescription": "最初の Hub を作成して、会話をコレクションに整理しましょう。Hub は関連するチャットをグループ化するのに役立ちます。",
+    "createDescription": "新しい Hub の名前とオプションの説明を入力してください。",
+    "name": "名前",
+    "description": "説明",
+    "nameRequired": "Hub の名前は必須です。",
+    "chatAddedToHub": "チャットが Hub に追加されました",
+    "created": "Hub が正常に作成されました。",
+    "updated": "Hub が正常に更新されました。",
+    "deleted": "Hub が正常に削除されました。",
+    "editTitle": "Hub を編集",
+    "editDescription": "この Hub の名前と説明を更新します。",
+    "linkedChats": "リンクされたチャットセッション",
+    "removeFromHub": "Hub から削除",
+    "chatRemoved": "チャットが Hub から削除されました",
+    "deleteConfirmDescription": "この Hub を削除してもよろしいですか？この操作は元に戻せません。",
+    "chatSessionsCount": "{count, plural, =0 {チャットセッションなし} one {# 件のチャットセッション} other {# 件のチャットセッション}}",
+    "linkedChatsCaption": "この Hub にリンクされたチャットセッション",
+    "noLinkedChats": "この Hub にリンクされたチャットセッションはありません。",
+    "addNewChat": "新しいチャット",
+    "remove": "削除",
+    "noDescription": "説明はありません",
+    "createdOn": "作成日: {date}",
+    "notFound": "Hub が見つかりません",
+    "delete": "Hub を削除",
+    "addToHub": "Hub に追加",
+    "dragToAdd": "会話をここにドラッグして Hub に追加",
+    "dropToAdd": "ドロップして Hub に追加",
+    "addedToHub": "Hub に追加しました",
+    "removedFromHub": "Hub から削除しました",
+    "cannotAddToHub": "Hub に追加できません",
+    "confirm": "確認"
   },
   "common": {
+    "themes": {
+      "dark": "ダーク",
+      "light": "ライト"
+    },
     "modelFeatures": {
       "reasoning": "推論",
       "experimental": "試験的",
       "fast": "高速",
       "vision": "画像",
       "offline": "オフライン"
-    },
-    "themes": {
-      "dark": "ダーク",
-      "light": "ライト"
     },
     "error": {
       "occurred": "エラーが発生しました",
@@ -389,19 +500,34 @@
       "uploading": "アップロードしています...",
       "uploaded": "アップロードに成功しました！"
     },
+    "name": "名前",
     "delete": "削除",
-    "cancel": "キャンセル"
+    "cancel": "キャンセル",
+    "creating": "作成中...",
+    "success": "成功しました",
+    "view": "表示",
+    "create": "作成",
+    "save": "保存",
+    "confirm": "確認",
+    "errorTitle": "エラー",
+    "backToHubs": "Hub一覧に戻る",
+    "title": "タイトル",
+    "actions": "アクション",
+    "edit": "編集",
+    "deleteConfirmTitle": "削除の確認",
+    "loading": "読み込み中...",
+    "chatLinked": "チャットセッションをリンクしました。",
+    "chatUnlinked": "チャットセッションのリンクを解除しました。",
+    "fileAdded": "ファイルを追加しました。",
+    "fileRemoved": "ファイルを削除しました。"
   },
   "landing": {
     "title": "あなたの20ドルを節約",
     "subtitle": "すべての人のために作られた、無制限・完全無料で安全な AI チャットサービス",
     "features": {
-      "oneTitle": "あなたの20ドルを節約",
-      "oneSubtitle": "AIサービスに料金を支払う必要はありません。",
-      "twoTitle": "安全でプライベート",
-      "twoSubtitle": "第三者にデータを販売することはありません。",
-      "threeTitle": "高速で信頼性あり",
-      "threeSubtitle": "高速で信頼性の高いサービスを提供します。"
+      "oneTitle": "節約",
+      "twoTitle": "安全",
+      "threeTitle": "高速"
     },
     "featuresTab": {
       "one": {
@@ -432,8 +558,8 @@
       },
       "two": {
         "badge": "カスタマイズ可能",
-        "title": "あなた好みのAIチャットボット",
-        "description": "チャットボットを好みにカスタマイズし、Webに展開できます。"
+        "title": "あなた好みのAIチャットBot",
+        "description": "チャットBotを好みにカスタマイズし、Webに展開できます。"
       },
       "three": {
         "badge": "高速、信頼性",
@@ -867,6 +993,7 @@
     "newChat": "新規チャット",
     "loadFailed": "チャットセッションの読み込みに失敗しました。",
     "saveFailed": "チャットセッションの保存に失敗しました。",
+    "branchCreatedSuccess": "ブランチ '{branchName}' が作成されました。",
     "saveCurrentFailed": "現在のチャットセッションの保存に失敗しました。",
     "deleteFailed": "チャットセッションの削除に失敗しました。",
     "deleteAllFailed": "すべてのチャットセッションの削除に失敗しました。",
@@ -1142,10 +1269,6 @@
   "termsOfService": {
     "title": "利用規約",
     "subtitle": "サービスを利用する前に、以下の利用規約をよくお読みください",
-    "voidsComply": {
-      "title": "追加の利用規約",
-      "content": "本サービスの利用には、voids.topの利用規約にも同意したものとみなされます。"
-    },
     "introduction": {
       "title": "はじめに",
       "content": "Deni AIへようこそ。この利用規約は、当社のウェブサイト、製品、およびサービスの利用に適用されます。",
@@ -1225,7 +1348,9 @@
     "save": "保存",
     "title": "キャンバス",
     "copied": "キャンバスの内容をコピーしました",
-    "clickToOpen": "クリックして開く"
+    "clickToOpen": "クリックして開く",
+    "streaming": "ストリーミング中",
+    "streamingWaiting": "コンテンツを待っています..."
   },
   "translation": {
     "tooltip": "翻訳を使用",
@@ -1358,5 +1483,67 @@
     "openrouter/x-ai/grok-3-mini-beta": "2025年5月10日に廃止予定。",
     "xai/grok-3-beta": "優れた推論と幅広い知識を持つ先進的なモデル。",
     "xai/grok-3-mini-beta": "応答する前に考える軽量モデル。"
+  },
+  "bots": {
+    "title": "Bot",
+    "subtitle": "Bot を検索するか、カスタムインタラクションでBotを作成しましょう。",
+    "createButton": "Bot を作成",
+    "createdBy": "作成者",
+    "creatorIdToast": "作成者ID: {id}",
+    "viewButton": "表示",
+    "empty": {
+      "title": "Bot がありません",
+      "message": "あなたが最初です！Bot を作成して始めましょう。"
+    },
+    "verified": {
+      "label": "このユーザーはメール認証済みです。",
+      "disclaimer": "このバッジはBotの品質を保証するものではありません。",
+      "domain": "ドメイン"
+    },
+    "createModal": {
+      "title": "新しい Bot を作成",
+      "description": "以下の詳細を入力して Bot を作成してください。",
+      "nameLabel": "Bot 名",
+      "namePlaceholder": "Bot名を入力",
+      "descriptionLabel": "Bot の説明",
+      "descriptionPlaceholder": "Bot の説明を入力",
+      "creating": "作成中...",
+      "create": "作成",
+      "error": "Bot の作成に失敗しました",
+      "successMessage": "Bot が正常に作成されました！"
+    },
+    "details": {
+      "fetchError": "共有チャットデータの取得に失敗しました",
+      "loginForSession": "セッションを作成するにはログインが必要です。",
+      "noChatData": "チャットデータが利用できません。",
+      "sessionCreated": "セッションが正常に作成されました！",
+      "sessionCreateError": "セッションの作成に失敗しました。",
+      "instructions": "指示",
+      "useButton": "この Bot を使用"
+    },
+    "editor": {
+      "title": "Bot を編集",
+      "description": "Bot の詳細と指示を修正する",
+      "nameLabel": "名前",
+      "namePlaceholder": "Bot 名",
+      "descriptionLabel": "説明",
+      "descriptionPlaceholder": "Bot の機能について説明",
+      "systemInstructionLabel": "システム指示",
+      "systemInstructionPlaceholder": "システム指示を入力",
+      "instructionsLabel": "指示",
+      "addInstruction": "指示を追加",
+      "instructionPlaceholder": "指示を入力",
+      "noInstructions": "指示がまだ追加されていません。指示はユーザーがBotと対話する方法を理解するのに役立ちます。",
+      "maxInstructions": "指示は最大4つまで追加できます。",
+      "fetchError": "Bot データの取得に失敗しました",
+      "loginRequired": "変更を保存するにはログインが必要です。",
+      "loginToDelete": "この Bot を削除するにはログインが必要です。",
+      "requiredFields": "すべての必須フィールドに入力してください。",
+      "updateError": "Bot の更新に失敗しました",
+      "updateSuccess": "Bot が正常に更新されました！",
+      "deleteError": "Bot の削除に失敗しました",
+      "deleteSuccess": "Bot が正常に削除されました！",
+      "deleteWarning": "この操作は元に戻すことができません。Botは完全に削除されます。"
+    }
   }
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { Suspense } from "react";
 import { useSettingsDialog } from "@/context/SettingsDialogContext";
 import { useTranslations } from "next-intl";
 import {
@@ -22,12 +22,15 @@ import {
   TabsList,
   TabsTrigger,
 } from "@workspace/ui/components/tabs";
-import { User, X, Bot, Database, MenuIcon } from "lucide-react";
+import { User, X, Bot, Database, MenuIcon, Settings2 } from "lucide-react";
 import GeneralSettings from "./GeneralSettings";
 import AccountSettings from "./AccountSettings";
 import ModelSettings from "./ModelSettings";
 import DataControlsSettings from "./DataControlsSettings";
 import { Button } from "@workspace/ui/components/button";
+import CustomizeSettings from "./CustomizeSettings";
+import { Loading } from "./loading";
+
 export function SettingsDialog() {
   const { isOpen, closeDialog, dialogType } = useSettingsDialog();
   const t = useTranslations();
@@ -62,6 +65,15 @@ export function SettingsDialog() {
             </TabsTrigger>
             <TabsTrigger
               className="flex-1 justify-start w-full p-4 data-[state=active]:bg-primary"
+              value="customize"
+            >
+              <Settings2 className="md:mr-2" />
+              <span className="hidden md:inline">
+                {t("settings.customize.tab")}
+              </span>
+            </TabsTrigger>
+            <TabsTrigger
+              className="flex-1 justify-start w-full p-4 data-[state=active]:bg-primary"
               value="model"
             >
               <Bot className="md:mr-2" />
@@ -87,8 +99,13 @@ export function SettingsDialog() {
             <TabsContent value="general" className="h-full">
               <GeneralSettings />
             </TabsContent>
+            <TabsContent value="customize" className="h-full">
+              <CustomizeSettings />
+            </TabsContent>
             <TabsContent value="model" className="h-full">
-              <ModelSettings />
+              <Suspense fallback={<Loading />}>
+                <ModelSettings />
+              </Suspense>
             </TabsContent>
             <TabsContent value="dataControls" className="h-full">
               <DataControlsSettings />

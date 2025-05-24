@@ -20,6 +20,11 @@ import {
   Plus,
   Search,
   Settings,
+  GitFork,
+  ArrowRight,
+  LayoutGrid,
+  FolderDotIcon,
+  BotMessageSquare,
 } from "lucide-react";
 import { Link } from "@/i18n/navigation";
 import { Badge } from "@workspace/ui/components/badge";
@@ -43,6 +48,10 @@ import { useTranslations } from "next-intl";
 import { useAuth } from "@/context/AuthContext";
 import { Input } from "@workspace/ui/components/input";
 import LoadingIndicator from "./LoadingIndicator";
+import { HubSidebar } from "./hub-sidebar";
+import { useHubs } from "@/hooks/use-hubs";
+import { useSettings } from "@/hooks/use-settings";
+import { cn } from "@workspace/ui/lib/utils";
 
 interface GroupedSessions {
   today: ChatSession[];
@@ -60,24 +69,45 @@ function groupSessionsByDate(sessions: ChatSession[]): GroupedSessions {
   const oneMonthAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
 
   return {
-    older: sessions.filter(
-      (session) => new Date(session.createdAt) <= oneMonthAgo
-    ),
-    thisMonth: sessions.filter((session) => {
-      const date = new Date(session.createdAt);
-      return date <= oneWeekAgo && date > oneMonthAgo;
-    }),
-    thisWeek: sessions.filter((session) => {
-      const date = new Date(session.createdAt);
-      return date <= twoDaysAgo && date > oneWeekAgo;
-    }),
-    yesterday: sessions.filter((session) => {
-      const date = new Date(session.createdAt);
-      return date <= oneDayAgo && date > twoDaysAgo;
-    }),
-    today: sessions.filter(
-      (session) => new Date(session.createdAt) > oneDayAgo
-    ),
+    today: sessions
+      .filter((session) => new Date(session.createdAt) > oneDayAgo)
+      .sort(
+        (a, b) =>
+          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+      ),
+    yesterday: sessions
+      .filter((session) => {
+        const date = new Date(session.createdAt);
+        return date <= oneDayAgo && date > twoDaysAgo;
+      })
+      .sort(
+        (a, b) =>
+          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+      ),
+    thisWeek: sessions
+      .filter((session) => {
+        const date = new Date(session.createdAt);
+        return date <= twoDaysAgo && date > oneWeekAgo;
+      })
+      .sort(
+        (a, b) =>
+          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+      ),
+    thisMonth: sessions
+      .filter((session) => {
+        const date = new Date(session.createdAt);
+        return date <= oneWeekAgo && date > oneMonthAgo;
+      })
+      .sort(
+        (a, b) =>
+          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+      ),
+    older: sessions
+      .filter((session) => new Date(session.createdAt) <= oneMonthAgo)
+      .sort(
+        (a, b) =>
+          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+      ),
   };
 }
 
@@ -91,33 +121,157 @@ function SessionGroup({
   currentSessionId?: string;
 }) {
   if (sessions.length === 0) return null;
+  const t = useTranslations();
+  const { settings } = useSettings();
+  const { getHub } = useHubs();
+
+  // Setup drag and drop handlers for chat sessions
+  const handleDragStart = (
+    e: React.DragEvent,
+    sessionId: string,
+    sessionTitle: string
+  ) => {
+    e.dataTransfer.setData("text/plain", sessionId);
+    e.dataTransfer.setData(
+      "application/json",
+      JSON.stringify({
+        id: sessionId,
+        title: sessionTitle,
+      })
+    );
+    e.dataTransfer.effectAllowed = "move";
+
+    // Add a class to the dragging element for styling
+    const target = e.currentTarget as HTMLElement;
+    target.classList.add("opacity-50");
+  };
+
+  const handleDragEnd = (e: React.DragEvent) => {
+    // Remove styling class when drag ends
+    const target = e.currentTarget as HTMLElement;
+    target.classList.remove("opacity-50");
+  };
 
   return (
     <SidebarGroup className="pt-1">
       <SidebarGroupLabel>{label}</SidebarGroupLabel>
       <SidebarGroupContent>
-        <SidebarMenu>
-          {sessions
-            .slice()
-            .reverse()
-            .map((session) => (
-              <SidebarMenuItem key={session.id}>
+        <SidebarMenu suppressHydrationWarning>
+          {sessions.slice().map((session) => {
+            const hub = session.hubId ? getHub(session.hubId) : undefined;
+            const bot = session.bot || undefined;
+            const isBranch = session.isBranch && session.branchName;
+            const isHub = session.hubId && hub;
+            const isBot = session.bot;
+
+            return (
+              <SidebarMenuItem
+                key={session.id}
+                draggable
+                onDragStart={(e) =>
+                  handleDragStart(e, session.id, session.title)
+                }
+                onDragEnd={handleDragEnd}
+                className="chat-session-item cursor-grab active:cursor-grabbing"
+                data-chat-id={session.id}
+              >
                 <ChatContextMenu session={session}>
                   <SidebarMenuButton
                     className="flex"
                     isActive={currentSessionId === session.id}
                     asChild
-                    tooltip={session.title}
+                    forceShowTooltip={settings.conversationsPrivacyMode}
+                    tooltip={
+                      isBranch
+                        ? `${t("sidebar.branchTooltipPrefix", {
+                            parentTitle:
+                              sessions.find(
+                                (s) => s.id === session.parentSessionId
+                              )?.title || "Unknown Parent",
+                          })}: ${session.branchName}`
+                        : session.title
+                    }
                   >
-                    <Link href={`/chat/${session.id}`}>
-                      <MessageCircleMore className="mr-2" />
-                      <span className="truncate">{session.title}</span>
+                    <Link
+                      href={`/chat/${session.id}`}
+                      className={`flex items-center`}
+                    >
+                      {isHub && !session.hubId ? (
+                        <GitFork className="h-4 w-4 text-primary" />
+                      ) : isHub && session.isBranch ? (
+                        <FolderDotIcon className="h-4 w-4 text-primary" />
+                      ) : isHub ? (
+                        <FolderDotIcon className="h-4 w-4 text-primary" />
+                      ) : isBot ? (
+                        <BotMessageSquare className="h-4 w-4 text-primary" />
+                      ) : (
+                        <MessageCircleMore className="mr-2 h-4 w-4" />
+                      )}
+                      <div className="flex items-center w-full min-w-0">
+                        {" "}
+                        {session.hubId && hub && (
+                          <div className="flex items-center gap-1 mr-1">
+                            <span
+                              className={cn(
+                                "text-muted-foreground whitespace-nowrap overflow-hidden text-ellipsis",
+                                settings.conversationsPrivacyMode && "blur-sm"
+                              )}
+                            >
+                              {hub?.name}
+                            </span>
+                            <ArrowRight size={12} />
+                            {session.isBranch && session.branchName ? (
+                              <GitFork className="h-4 w-4 text-primary" />
+                            ) : isBot ? (
+                              <BotMessageSquare className="h-4 w-4 text-primary" />
+                            ) : (
+                              <MessageCircleMore className="h-4 w-4" />
+                            )}{" "}
+                          </div>
+                        )}
+                        {isBot && (
+                          <div className="flex items-center gap-1 mr-1">
+                            <span className="text-muted-foreground whitespace-nowrap overflow-hidden text-ellipsis">
+                              {bot?.name}
+                            </span>
+                            <ArrowRight size={12} />
+                            {session.isBranch && session.branchName ? (
+                              <GitFork className="h-4 w-4 text-primary" />
+                            ) : (
+                              <MessageCircleMore className="h-4 w-4" />
+                            )}{" "}
+                          </div>
+                        )}
+                        {isBranch && (
+                          <div className="flex items-center gap-1 mr-1">
+                            <span
+                              className={cn(
+                                "text-muted-foreground whitespace-nowrap overflow-hidden text-ellipsis",
+                                settings.conversationsPrivacyMode && "blur-sm"
+                              )}
+                            >
+                              {session.branchName}
+                            </span>
+                            <ArrowRight size={12} />
+                            <MessageCircleMore className="h-4 w-4" />
+                          </div>
+                        )}
+                        <p
+                          className={cn(
+                            "truncate min-w-0",
+                            settings.conversationsPrivacyMode && "blur-sm"
+                          )}
+                        >
+                          {session.title}
+                        </p>
+                      </div>
                       <LoadingIndicator className="ml-auto" />
                     </Link>
                   </SidebarMenuButton>
                 </ChatContextMenu>
               </SidebarMenuItem>
-            ))}
+            );
+          })}
         </SidebarMenu>
       </SidebarGroupContent>
     </SidebarGroup>
@@ -189,6 +343,7 @@ function ChatSidebarMenuSession() {
   const { sessions, createSession } = useChatSessions();
   const params = useParams<{ id: string }>();
   const [searchQuery, setSearchQuery] = useState("");
+  const { settings } = useSettings();
   const t = useTranslations();
 
   // 検索条件でセッションをフィルタリング（useMemoで最適化）
@@ -212,17 +367,21 @@ function ChatSidebarMenuSession() {
     setSearchQuery(query);
   }, []);
 
+  const handleCreateSession = useCallback(() => {
+    createSession();
+  }, [createSession]);
+
   return (
     <>
       <SidebarGroup className="pb-0">
         <SidebarGroupContent>
-          <SidebarMenu>
+          <SidebarMenu suppressHydrationWarning>
             <SidebarMenuItem>
               <SidebarMenuButton
                 variant={"outline"}
                 size="lg"
                 className="flex items-center justify-center transition-all duration-200 ease-in-out"
-                onClick={createSession}
+                onClick={handleCreateSession}
                 tooltip={t("sidebar.newChat")}
                 data-sidebar="menu-button"
                 data-size="lg"
@@ -234,10 +393,33 @@ function ChatSidebarMenuSession() {
               </SidebarMenuButton>
             </SidebarMenuItem>
 
+            {settings.bots && (
+              <SidebarMenuItem>
+                <SidebarMenuButton
+                  variant={"default"} // Changed from "ghost" to "default"
+                  size="lg"
+                  className="flex items-center justify-center transition-all duration-200 ease-in-out"
+                  asChild
+                  tooltip={t("sidebar.bots")}
+                  data-sidebar="menu-button"
+                  data-size="lg"
+                >
+                  <Link href="/bots" className="flex items-center">
+                    <BotMessageSquare />
+                    <span className="group-data-[collapsible=icon]:hidden ml-2">
+                      {t("sidebar.bots")}
+                    </span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+            )}
+
             <SearchBar onSearch={handleSearch} />
           </SidebarMenu>
         </SidebarGroupContent>
       </SidebarGroup>
+
+      <HubSidebar /> {/* Moved HubSidebar here */}
 
       <MemoizedSessionGroup
         sessions={groupedSessions.today}
@@ -321,6 +503,7 @@ export function ChatSidebar() {
   const isMobile = useIsMobile();
   const t = useTranslations();
 
+  // Include HubSidebar in desktop view
   if (isMobile) {
     return (
       <Drawer>

@@ -35,6 +35,8 @@ import {
   AlertDialogTitle,
 } from "@workspace/ui/components/alert-dialog";
 import { toast } from "sonner";
+import { buildInfo } from "@/lib/version";
+import { usePathname } from "@/i18n/navigation";
 
 export default function Error({
   error,
@@ -44,10 +46,23 @@ export default function Error({
   reset: () => void;
 }) {
   const t = useTranslations();
+  const pathname = usePathname();
   const [isErrorOpen, setIsErrorOpen] = useState(false);
+  const [errorReport, setErrorReport] = useState<string | null>(null);
 
   useEffect(() => {
     console.error(error);
+
+    setErrorReport([
+      `Deni AI Error Report (${buildInfo.version} ${buildInfo.codename})`,
+      `Date: ${new Date().toLocaleString()}`,
+      `Pathname: ${pathname}`,
+      `Error: ${error?.message || "Unknown error"}`,
+      `Stack: ${error?.stack || "No stack trace available"}`,
+      `Digest: ${error?.digest || "No digest available"}`,
+      `User Agent: ${navigator.userAgent}`,
+      `Build Type: ${buildInfo.type}`,
+    ].join("\n"))
   }, [error]);
 
   return (
@@ -140,12 +155,12 @@ export default function Error({
           </AlertDialogHeader>
           <div className="flex flex-col gap-4">
             <Textarea
-              value={String(error)}
+              value={String(errorReport || "Failed to get error report")}
               readOnly
               onClick={(e) => {
                 e.currentTarget.select();
                 navigator.clipboard.writeText(
-                  String(error) || "Failed to get error"
+                  String(errorReport || "Failed to get error report")
                 );
                 toast.success(t("error.copied"));
               }}

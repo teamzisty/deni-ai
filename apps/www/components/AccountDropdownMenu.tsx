@@ -30,6 +30,7 @@ import { buildInfo } from "@/lib/version";
 import { useTranslations } from "next-intl";
 import { useSettingsDialog } from "@/context/SettingsDialogContext";
 import { useRouter } from "next/navigation";
+import { useSettings } from "@/hooks/use-settings";
 
 // Helper functions to truncate email and name
 const truncateEmail = (email: string | null | undefined): string => {
@@ -56,42 +57,9 @@ interface AccountDropdownMenuProps {
 
 export const AccountDropdownMenu = memo(
   ({ user, isDisabled, handleAuth }: AccountDropdownMenuProps) => {
-    const [privacyMode, setPrivacyMode] = useState(false);
+    const { settings } = useSettings();
     const t = useTranslations();
     const { openDialog } = useSettingsDialog();
-    const router = useRouter();
-
-    useEffect(() => {
-      // 初期値の設定
-      const privacyMode = window.localStorage.getItem("privacyMode");
-      setPrivacyMode(privacyMode === "true");
-
-      // 他のタブ/ウィンドウからの変更を監視
-      const handleStorageChange = (e: StorageEvent) => {
-        if (e.key === "privacyMode") {
-          setPrivacyMode(e.newValue === "true");
-        }
-      };
-
-      // 同じウィンドウ内での変更を監視
-      const handlePrivacyModeChange = (e: CustomEvent<boolean>) => {
-        setPrivacyMode(e.detail);
-      };
-
-      window.addEventListener("storage", handleStorageChange);
-      window.addEventListener(
-        "privacyModeChange",
-        handlePrivacyModeChange as EventListener
-      );
-
-      return () => {
-        window.removeEventListener("storage", handleStorageChange);
-        window.removeEventListener(
-          "privacyModeChange",
-          handlePrivacyModeChange as EventListener
-        );
-      };
-    }, []);
 
     if (!user && !isDisabled) {
       return (
@@ -115,19 +83,19 @@ export const AccountDropdownMenu = memo(
                   alt={user.displayName || "User Avatar"}
                   width={40}
                   height={40}
-                  className={`rounded-full ${privacyMode && "blur-sm"}`}
+                  className={`rounded-full ${settings.privacyMode && "blur-sm"}`}
                   priority
                 />
               ) : (
                 <User2 size="16" />
               )}
               <div className="flex flex-col text-left group-data-[collapsible=icon]:hidden">
-                <span className={privacyMode ? "blur-sm" : ""}>
+                <span className={settings.privacyMode ? "blur-sm" : ""}>
                   {truncateName(user?.displayName)}
                 </span>
                 <span
                   className={`text-muted-foreground min-w-0 block truncate ${
-                    privacyMode ? "blur-sm" : ""
+                    settings.privacyMode ? "blur-sm" : ""
                   }`}
                 >
                   {truncateEmail(user?.email)}
@@ -155,19 +123,19 @@ export const AccountDropdownMenu = memo(
                       alt={user.displayName || "User Avatar"}
                       width={40}
                       height={40}
-                      className={`rounded-full ${privacyMode && "blur-sm"}`}
+                      className={`rounded-full ${settings.privacyMode && "blur-sm"}`}
                       priority
                     />
                   ) : (
                     <User2 size="16" />
                   )}
                   <div className="flex flex-col text-left">
-                    <span className={`${privacyMode && "blur-sm"}`}>
+                    <span className={`${settings.privacyMode && "blur-sm"}`}>
                       {truncateName(user?.displayName)}
                     </span>
                     <span
                       className={`text-muted-foreground min-w-0 block truncate ${
-                        privacyMode && "blur-sm"
+                        settings.privacyMode && "blur-sm"
                       }`}
                     >
                       {truncateEmail(user?.email)}

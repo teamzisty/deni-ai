@@ -13,25 +13,25 @@ export async function POST(req: Request) {
     const authorization = req.headers.get("Authorization");
     
     if (!authorization || notAvailable) {
-      return NextResponse.json({ error: "認証に失敗しました" }, { status: 401 });
+      return NextResponse.json({ error: "Authorization Failed" }, { status: 401 });
     }
 
     let userId: string;
     try {
       const decodedToken = await authAdmin?.verifyIdToken(authorization);
       if (!decodedToken) {
-        return NextResponse.json({ error: "認証に失敗しました" }, { status: 401 });
+        return NextResponse.json({ error: "Authorization Failed" }, { status: 401 });
       }
       userId = decodedToken.uid;
     } catch (error) {
       console.error(error);
-      return NextResponse.json({ error: "認証に失敗しました" }, { status: 401 });
+      return NextResponse.json({ error: "Authorization Failed" }, { status: 401 });
     }
 
     const { sessionId, title, messages }: ShareRequest = await req.json();
 
     if (!sessionId || !title || !messages || messages.length === 0) {
-      return NextResponse.json({ error: "無効なリクエストです" }, { status: 400 });
+      return NextResponse.json({ error: "Invalid Request" }, { status: 400 });
     }
 
     // 共有IDを生成（ランダムなID）
@@ -39,7 +39,7 @@ export async function POST(req: Request) {
 
     // Firestoreに共有データを保存
     if (!firestoreAdmin) {
-      return NextResponse.json({ error: "Firebaseが利用できません" }, { status: 500 });
+      return NextResponse.json({ error: "Firebase is not available" }, { status: 500 });
     }
     
     const sharedChatRef = firestoreAdmin.collection("shared-conversations").doc(shareId);
@@ -59,7 +59,7 @@ export async function POST(req: Request) {
     });
   } catch (error) {
     console.error(error);
-    return NextResponse.json({ error: "サーバーエラーが発生しました" }, { status: 500 });
+    return NextResponse.json({ error: "Server Error" }, { status: 500 });
   }
 }
 
@@ -69,19 +69,19 @@ export async function GET(req: Request) {
     const shareId = url.searchParams.get("id");
 
     if (!shareId) {
-      return NextResponse.json({ error: "共有IDが指定されていません" }, { status: 400 });
+      return NextResponse.json({ error: "Share ID is not specified" }, { status: 400 });
     }
 
     // Firestoreから共有データを取得
     if (!firestoreAdmin) {
-      return NextResponse.json({ error: "Firebaseが利用できません" }, { status: 500 });
+      return NextResponse.json({ error: "Firebase is not available" }, { status: 500 });
     }
     
     const sharedChatRef = firestoreAdmin.collection("shared-conversations").doc(shareId);
     const sharedChatDoc = await sharedChatRef.get();
 
     if (!sharedChatDoc.exists) {
-      return NextResponse.json({ error: "指定された共有チャットが見つかりません" }, { status: 404 });
+      return NextResponse.json({ error: "Specified shared chat not found" }, { status: 404 });
     }
 
     const sharedChatData = sharedChatDoc.data();
@@ -109,6 +109,6 @@ export async function GET(req: Request) {
     });
   } catch (error) {
     console.error(error);
-    return NextResponse.json({ error: "サーバーエラーが発生しました" }, { status: 500 });
+    return NextResponse.json({ error: "Server Error" }, { status: 500 });
   }
 }

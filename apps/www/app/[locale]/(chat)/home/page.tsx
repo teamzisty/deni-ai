@@ -9,23 +9,22 @@ import { auth } from "@workspace/firebase-config/client";
 import { Loading } from "@/components/loading";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
+import { AnimatedGradientText } from "@workspace/ui/components/magicui/animated-gradient-text";
 import { modelDescriptions } from "@/lib/modelDescriptions";
 import ChatInput from "@/components/ChatInput";
 import { uploadResponse, useUploadThing } from "@/utils/uploadthing";
 import logger from "@/utils/logger";
 import { useAuth } from "@/context/AuthContext";
 import { ExampleQuestion } from "@/components/ExampleQuestion";
+import { ChevronRight } from "lucide-react";
 
 const ChatApp: React.FC = () => {
   const t = useTranslations();
-  const {
-    createSession,
-    isLoading: isSessionsLoading,
-  } = useChatSessions();
+  const { createSession, isLoading: isSessionsLoading } = useChatSessions();
   const [isLoading, setIsLoading] = useState(true);
   const [inputValue, setInputValue] = useState("");
   const [selectedModel, setSelectedModel] = useState<string>(
-    "openai/gpt-4.1-mini-2025-04-14"
+    "openai/gpt-4.1-2025-04-14"
   );
   const [image, setImage] = useState<string | null>(null);
   const [isUploading, setIsUploading] = useState(false);
@@ -310,6 +309,7 @@ const ChatApp: React.FC = () => {
 
         {/* Input Area */}
         <div className="flex items-center flex-col w-full md:w-7/12 m-auto">
+
           <h1 className="m-auto text-xl lg:text-3xl mb-1 font-bold">
             {t("home.title")}
           </h1>
@@ -320,16 +320,10 @@ const ChatApp: React.FC = () => {
             <ExampleQuestion onClick={() => setInputValue(t("home.example1"))}>
               {t("home.example1")}
             </ExampleQuestion>
-            <ExampleQuestion
-              onClick={() => setInputValue(t("home.example2"))}
-            >
+            <ExampleQuestion onClick={() => setInputValue(t("home.example2"))}>
               {t("home.example2")}
             </ExampleQuestion>
-            <ExampleQuestion
-              onClick={() =>
-                setInputValue(t("home.example3"))
-              }
-            >
+            <ExampleQuestion onClick={() => setInputValue(t("home.example3"))}>
               {t("home.example3")}
             </ExampleQuestion>
           </div>
@@ -358,8 +352,6 @@ const ChatApp: React.FC = () => {
             fileInputRef={fileInputRef}
           />
         </div>
-
-        <Footer />
       </div>
     </main>
   );

@@ -7,9 +7,10 @@ import { AuthProvider } from "@/context/AuthContext";
 import { cookies } from "next/headers";
 import { TooltipProvider } from "@workspace/ui/components/tooltip";
 import { ChatSessionsProvider } from "@/hooks/use-chat-sessions";
+import { HubsProvider } from "@/hooks/use-hubs";
 import { SettingsDialogProvider } from "@/context/SettingsDialogContext";
 import { SettingsDialog } from "@/components/SettingsDialog";
-import UpdateAlert from "@/components/UpdateAlert";
+import { DevSessionsProvider } from "@/hooks/use-dev-sessions";
 
 export default async function Layout({
   children,
@@ -24,21 +25,23 @@ export default async function Layout({
     <div className="w-full h-full">
       <TooltipProvider>
         <ChatSessionsProvider>
-          <SettingsDialogProvider>
-            <SidebarProvider defaultOpen={defaultOpen}>
-              <AuthProvider>
-                <div className="w-full flex">
-                  <ChatSidebar />
-                  <Suspense fallback={<Loading />}>{children}</Suspense>
+          <DevSessionsProvider>
+            <HubsProvider>
+              <SettingsDialogProvider>
+                <SidebarProvider defaultOpen={defaultOpen}>
+                  <AuthProvider>
+                    <div className="w-full flex">
+                      <ChatSidebar />
+                      <Suspense fallback={<Loading />}>{children}</Suspense>
 
-                  <SettingsDialog />
-                  <UpdateAlert
-                    open={!updateAlert}
-                  />
-                </div>
-              </AuthProvider>
-            </SidebarProvider>
-          </SettingsDialogProvider>
+
+                      <SettingsDialog />
+                    </div>
+                  </AuthProvider>
+                </SidebarProvider>
+              </SettingsDialogProvider>
+            </HubsProvider>
+          </DevSessionsProvider>
         </ChatSessionsProvider>
       </TooltipProvider>
     </div>

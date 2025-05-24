@@ -24,10 +24,12 @@ const getInitialVisibility = (): ModelVisibility => {
 
 export const useModelVisibility = () => {
   const [visibility, setVisibility] = useState<ModelVisibility>({});
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     const initial = getInitialVisibility();
     setVisibility(initial);
+    setIsLoading(false);
   }, []);
 
   const setModelVisibility = (modelId: string, isVisible: boolean) => {
@@ -45,5 +47,5 @@ export const useModelVisibility = () => {
     setModelVisibility(modelId, !visibility[modelId]);
   };
 
-  return { visibility, setModelVisibility, toggleModelVisibility };
+  return { visibility, isLoading, setModelVisibility, toggleModelVisibility };
 };

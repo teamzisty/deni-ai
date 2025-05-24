@@ -2,19 +2,27 @@ import {
   modelDescriptions,
   reasoningEffortType,
 } from "@/lib/modelDescriptions";
-import { memo } from "react";
+import { memo, useState } from "react";
 import { ModelSelector } from "./ModelSelector";
 import { ReasoningEffortSelector } from "./ReasoningEffortSelector";
 import { Button } from "@workspace/ui/components/button";
-import { Settings } from "lucide-react";
+import { Settings, GitFork, MenuIcon } from "lucide-react"; // Added GitFork
 import { EasyTip } from "@/components/easytip";
 import { useSettingsDialog } from "@/context/SettingsDialogContext";
 import { useTranslations } from "next-intl";
 import { useIsMobile } from "@workspace/ui/hooks/use-mobile";
 import { cn } from "@workspace/ui/lib/utils";
 import ShareButton from "./ShareButton";
+import { CreateBranchModal } from "./CreateBranchModal"; // Assuming this path
 import { ChatSession } from "@/hooks/use-chat-sessions";
 import { User } from "firebase/auth";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@workspace/ui/components/dropdown-menu";
+import { useSettings } from "@/hooks/use-settings";
 
 interface HeaderAreaProps {
   model: string;
@@ -42,6 +50,8 @@ const HeaderArea: React.FC<HeaderAreaProps> = memo(
     const isMobile = useIsMobile();
     const t = useTranslations();
     const { openDialog } = useSettingsDialog();
+    const { settings } = useSettings();
+    const [createBranchModalOpen, setCreateBranchModalOpen] = useState(false);
 
     return (
       <div
@@ -79,13 +89,43 @@ const HeaderArea: React.FC<HeaderAreaProps> = memo(
             </Button>
           </EasyTip>
           {currentSession && (
-            <ShareButton
-              currentSession={currentSession}
-              user={user}
-              messages={messages}
-            />
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  className={cn("rounded-full", isMobile && "px-2 py-1")}
+                  variant={"secondary"}
+                >
+                  <MenuIcon size={isMobile ? 18 : 24} />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent>
+                <DropdownMenuItem>
+                  <ShareButton
+                    currentSession={currentSession}
+                    user={user}
+                    messages={messages}
+                  />
+                </DropdownMenuItem>
+                {settings.branch && (
+                  <DropdownMenuItem
+                    onClick={() => setCreateBranchModalOpen(true)}
+                  >
+                    <GitFork />
+                    {t("header.createBranch")}
+                  </DropdownMenuItem>
+                )}
+              </DropdownMenuContent>
+            </DropdownMenu>
           )}
         </div>
+        {currentSession && (
+          <CreateBranchModal
+            open={createBranchModalOpen}
+            onOpenChange={setCreateBranchModalOpen}
+            currentSession={currentSession}
+          />
+        )}{" "}
+        {/* Modal rendered here */}
       </div>
     );
   },

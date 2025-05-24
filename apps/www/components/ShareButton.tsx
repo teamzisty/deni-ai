@@ -72,14 +72,10 @@ const ShareButton: FC<ShareButtonProps> = ({
   };
 
   return (
-    <Button
-      variant="secondary"
-      className="ml-2 rounded-full"
-      onClick={handleShare}
-    >
+    <>
       <Share2 />
-      {!isMobile && t("chat.share")}
-    </Button>
+      {t("chat.share")}
+    </>
   );
 };
 

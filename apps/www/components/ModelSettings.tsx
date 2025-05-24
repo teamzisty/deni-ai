@@ -1,13 +1,7 @@
 "use client";
 
 import { Avatar } from "@workspace/ui/components/avatar";
-import {
-  BrainCircuit,
-  Eye,
-  Zap,
-  Filter,
-  DoorOpen,
-} from "lucide-react";
+import { BrainCircuit, Eye, Zap, Filter, DoorOpen } from "lucide-react";
 import { Badge } from "@workspace/ui/components/badge";
 import { useModelVisibility } from "@/hooks/use-model-settings";
 import { modelDescriptions } from "@/lib/modelDescriptions";
@@ -21,7 +15,7 @@ import {
 import { Switch } from "@workspace/ui/components/switch";
 import { cn } from "@workspace/ui/lib/utils";
 import { useTranslations } from "next-intl";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Popover,
   PopoverContent,
@@ -30,9 +24,13 @@ import {
 import { Checkbox } from "@workspace/ui/components/checkbox";
 import { Button } from "@workspace/ui/components/button";
 import { DeepSeekIcon } from "@/components/DeepSeekIcon";
+import Loading from "@/app/[locale]/loading";
 
 export default function ModelSettings() {
-  const { visibility, toggleModelVisibility } = useModelVisibility();
+  const { visibility, toggleModelVisibility, isLoading } = useModelVisibility();
+  const [filteredModels, setFilteredModels] = useState<
+    [string, { type: string; [key: string]: any }][] | null
+  >(null);
   const t = useTranslations();
 
   const [filters, setFilters] = useState({
@@ -45,7 +43,7 @@ export default function ModelSettings() {
     },
     features: {
       reasoning: false,
-      vision: false
+      vision: false,
     },
   });
 
@@ -80,7 +78,7 @@ export default function ModelSettings() {
       },
       features: {
         reasoning: false,
-        vision: false
+        vision: false,
       },
     });
   };
@@ -117,10 +115,13 @@ export default function ModelSettings() {
     });
   };
 
-  const filteredModels = applyFilters(
-    Object.entries(modelDescriptions),
-    filters
-  );
+  useEffect(() => {
+    setFilteredModels(applyFilters(Object.entries(modelDescriptions), filters));
+  }, [filters]);
+
+  if (isLoading && !filteredModels) {
+    return <Loading />;
+  }
 
   return (
     <div className="space-y-6 h-full flex flex-col">
@@ -236,7 +237,7 @@ export default function ModelSettings() {
                   {t("settings.model.reset")}
                 </Button>
                 <p className="text-sm text-muted-foreground self-center">
-                  {filteredModels.length} {t("settings.model.showing")}
+                  {filteredModels?.length} {t("settings.model.showing")}
                 </p>
               </div>
             </div>
@@ -245,23 +246,14 @@ export default function ModelSettings() {
       </div>
 
       <div className="h-full overflow-hidden flex-1">
-        {filteredModels.length === 0 ? (
+        {filteredModels?.length === 0 ? (
           <div className="text-center py-8 text-muted-foreground">
             {t("settings.model.noModels")}
           </div>
         ) : (
           <div className="w-full h-full overflow-y-auto pr-2">
-            {filteredModels.map(
-              ([
-                id,
-                {
-                  displayName,
-                  type,
-                  fast,
-                  reasoning,
-                  vision,
-                },
-              ]) => (
+            {filteredModels?.map(
+              ([id, { displayName, type, fast, reasoning, vision }]) => (
                 <div
                   key={id}
                   className="w-full max-w-full flex flex-col p-3 sm:p-4 gap-3 bg-card/50 hover:bg-card/80 cursor-pointer transition-colors rounded-md border border-border/30 mb-6 overflow-hidden"
@@ -280,9 +272,14 @@ export default function ModelSettings() {
                           {displayName}
                         </h3>
                         <div className="flex items-center gap-1">
-                          {t(`modelDescriptions.${id.replace(".", "-")}`).includes("Leaving") || t(`modelDescriptions.${id.replace(".", "-")}`).includes("廃止予定") && (
-                            <DoorOpen size={16} className="text-red-400" />
-                          )}
+                          {t(
+                            `modelDescriptions.${id.replace(".", "-")}`
+                          ).includes("Leaving") ||
+                            (t(
+                              `modelDescriptions.${id.replace(".", "-")}`
+                            ).includes("廃止予定") && (
+                              <DoorOpen size={16} className="text-red-400" />
+                            ))}
                           <span className="text-xs sm:text-sm text-muted-foreground">
                             {t(`modelDescriptions.${id.replace(".", "-")}`)}
                           </span>
@@ -299,10 +296,7 @@ export default function ModelSettings() {
                   <div
                     className={cn(
                       "flex items-center flex-wrap gap-2 mt-1 max-w-full overflow-hidden",
-                      !reasoning &&
-                        !vision &&
-                        !fast &&
-                        "hidden"
+                      !reasoning && !vision && !fast && "hidden"
                     )}
                   >
                     {reasoning && (

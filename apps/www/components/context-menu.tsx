@@ -3,6 +3,10 @@ import {
   ContextMenu,
   ContextMenuContent,
   ContextMenuItem,
+  ContextMenuSeparator,
+  ContextMenuSub,
+  ContextMenuSubContent,
+  ContextMenuSubTrigger,
   ContextMenuTrigger,
 } from "@workspace/ui/components/context-menu";
 import {
@@ -19,6 +23,9 @@ import { Button } from "@workspace/ui/components/button";
 import { Input } from "@workspace/ui/components/input";
 import { memo, useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
+import { useHubs } from "@/hooks/use-hubs";
+import { FolderPlus, Folder } from "lucide-react";
+import { useSettings } from "@/hooks/use-settings";
 
 interface ChatContextMenuProps {
   session: ChatSession;
@@ -30,44 +37,102 @@ export const ChatContextMenu = memo(({ session, children }: ChatContextMenuProps
   const [nameOpen, setNameOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [chatName, setChatName] = useState(session.title);
+  const { settings } = useSettings();
 
   const { updateSession, deleteSession } = useChatSessions();
-
-  const baseSession: ChatSession = {
-    id: session.id,
-    title: session.title,
-    createdAt: session.createdAt,
-    messages: session.messages,
-  };
+  const { hubs, addChatToHub, removeChatFromHub } = useHubs();
 
   useEffect(() => {
     setChatName(session.title);
-  })
-
-  const handleChatNameChange = () => {
-    baseSession.title = chatName;
-    updateSession(session.id, baseSession);
+  }, [session.title]);
+  const handleChatNameChange = async () => {
+    await updateSession(session.id, { ...session, title: chatName });
+    setNameOpen(false);
+  };
+  const handleDelete = async () => {
+    await deleteSession(session.id);
+    setDeleteOpen(false);
   };
 
-  const handleDelete = () => {
-    deleteSession(session.id);
+  // Find which hubs this conversation belongs to
+  const chatHubs = hubs.filter(hub => 
+    hub.chatSessionIds.includes(session.id)
+  );
+
+  const handleAddToHub = async (hubId: string) => {
+    await addChatToHub(hubId, session.id);
+  };
+
+  const handleRemoveFromHub = async (hubId: string) => {
+    await removeChatFromHub(hubId, session.id);
   };
 
   return (
     <>
       <ContextMenu>
-        <ContextMenuTrigger>{children}</ContextMenuTrigger>
+        <ContextMenuTrigger asChild>{children}</ContextMenuTrigger>
         <ContextMenuContent className="w-64">
           <ContextMenuItem onClick={() => setNameOpen(true)}>
             {t("contextMenu.rename")}
           </ContextMenuItem>
-          <ContextMenuItem onClick={() => setDeleteOpen(true)} className="text-red-500">
+          
+          {/* Hub Management Submenu */}
+          {hubs.length > 0 && settings.hubs && (
+            <>
+              <ContextMenuSeparator />
+              
+              {/* Add to Hub submenu */}
+              <ContextMenuSub>
+                <ContextMenuSubTrigger>
+                  <FolderPlus className="mr-2 h-4 w-4" />
+                  <span>{t("Hubs.addToHub")}</span>
+                </ContextMenuSubTrigger>
+                <ContextMenuSubContent className="w-48">
+                  {hubs.map(hub => {
+                    const isInHub = hub.chatSessionIds.includes(session.id);
+                    return (
+                      <ContextMenuItem
+                        key={hub.id}
+                        onClick={() => handleAddToHub(hub.id)}
+                        disabled={isInHub}
+                        className={isInHub ? "opacity-50 cursor-not-allowed" : ""}
+                      >
+                        <Folder className="mr-2 h-4 w-4" />
+                        <span className="truncate">{hub.name}</span>
+                      </ContextMenuItem>
+                    );
+                  })}
+                </ContextMenuSubContent>
+              </ContextMenuSub>
+              
+              {/* Remove from Hub (only show if in at least one hub) */}
+              {chatHubs.length > 0 && (
+                <ContextMenuSub>
+                  <ContextMenuSubTrigger>
+                    <Folder className="mr-2 h-4 w-4" />
+                    <span>{t("Hubs.removeFromHub")}</span>
+                  </ContextMenuSubTrigger>
+                  <ContextMenuSubContent className="w-48">
+                    {chatHubs.map(hub => (
+                      <ContextMenuItem key={hub.id} onClick={() => handleRemoveFromHub(hub.id)}>
+                        <Folder className="mr-2 h-4 w-4" />
+                        <span className="truncate">{hub.name}</span>
+                      </ContextMenuItem>
+                    ))}
+                  </ContextMenuSubContent>
+                </ContextMenuSub>
+              )}
+            </>
+          )}
+          
+          <ContextMenuSeparator />
+          <ContextMenuItem onClick={() => setDeleteOpen(true)} className="text-destructive">
             {t("common.delete")}
           </ContextMenuItem>
         </ContextMenuContent>
       </ContextMenu>
 
-      <AlertDialog open={nameOpen} onOpenChange={() => setNameOpen(!open)}>
+      <AlertDialog open={nameOpen} onOpenChange={setNameOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>{t("contextMenu.renameTitle")}</AlertDialogTitle>
@@ -90,7 +155,7 @@ export const ChatContextMenu = memo(({ session, children }: ChatContextMenuProps
 
       <AlertDialog
         open={deleteOpen}
-        onOpenChange={() => setDeleteOpen(!deleteOpen)}
+        onOpenChange={setDeleteOpen}
       >
         <AlertDialogContent>
           <AlertDialogHeader>

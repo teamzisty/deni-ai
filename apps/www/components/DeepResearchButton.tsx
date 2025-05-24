@@ -59,7 +59,9 @@ export const DeepResearchButton = memo(
           content={
             devMode
               ? t("chatInput.devNotAvailable")
-              : t("chat.deepResearch.tooltip") || "Use Deep Research"
+              : disabled
+                ? "Not available"
+                : t("chat.deepResearch.tooltip") || "Use Deep Research"
           }
         >
           <Button
@@ -72,12 +74,22 @@ export const DeepResearchButton = memo(
             size={isMobile ? "sm" : "default"}
             onClick={deepResearchToggle}
           >
-            {researchDepth === "shallow" ? <Zap /> : researchDepth === "advanced" ? <PackageSearch /> : <Telescope />}
-            {researchDepth === "shallow"
-              ? t("chatInput.shallowResearch")
-              : researchDepth === "advanced"
-              ? t("chatInput.advancedResearch")
-              : t("chatInput.deepResearch")}
+            {researchDepth === "shallow" ? (
+              <Zap />
+            ) : researchDepth === "advanced" ? (
+              <PackageSearch />
+            ) : (
+              <Telescope />
+            )}
+            {!isMobile && (
+              <>
+                {researchDepth === "shallow"
+                  ? t("chatInput.shallowResearch")
+                  : researchDepth === "advanced"
+                    ? t("chatInput.advancedResearch")
+                    : t("chatInput.deepResearch")}
+              </>
+            )}
           </Button>
         </EasyTip>
 
@@ -163,7 +175,8 @@ export const DeepResearchButton = memo(
                       <div className="flex gap-1 items-center">
                         <PackageSearch />
                         <span className="font-medium text-base">
-                          {t("chat.deepResearch.advanced") || "Advanced Research"}
+                          {t("chat.deepResearch.advanced") ||
+                            "Advanced Research"}
                         </span>
                       </div>
                       <span>

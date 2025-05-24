@@ -29,9 +29,10 @@ import { Loading } from "@/components/loading";
 import HeaderArea from "@/components/HeaderArea";
 import { MessageLog } from "@/components/MessageLog";
 import ChatInput from "@/components/ChatInput";
-import { Footer } from "@/components/footer";
 import { useDebouncedCallback } from "use-debounce"; // Import useDebouncedCallback
 import { ResearchDepth } from "@/components/DeepResearchButton"; // Import the ResearchDepth type
+import { useSettings } from "@/hooks/use-settings";
+import { useTitle } from "@/hooks/use-title";
 
 interface MessageListProps {
   messages: UIMessage[];
@@ -42,7 +43,12 @@ interface MessageListProps {
 
 // Keep MemoizedMessageList definition here or move to its own file later
 const MemoizedMessageList = memo(
-  ({ messages, sessionId, error, onRegenerate }: MessageListProps) => {
+  ({
+    messages,
+    sessionId,
+    error,
+    onRegenerate,
+  }: MessageListProps) => {
     const t = useTranslations();
     return (
       <>
@@ -117,22 +123,17 @@ const Chat: React.FC<ChatProps> = ({
   const isMobile = useIsMobile();
 
   // --- State Variables ---
-  const [currentSession, setCurrentSession] =
-    useState<ChatSession>(initialSessionData);
   const [image, setImage] = useState<string | null>(initialImage || null);
   const [searchEnabled, setSearchEnabled] = useState(false);
-  const [advancedSearch, setAdvancedSearch] = useState(() => {
-    if (typeof window !== "undefined") {
-      return window.localStorage.getItem("advancedSearch") === "true";
-    }
-    return false;
-  });
+  const [currentSession, setCurrentSession] = useState<ChatSession>(initialSessionData);
+  const { settings } = useSettings();
   const [deepResearch, setDeepResearch] = useState(false);
   const [researchDepth, setResearchDepth] = useState<ResearchDepth>("deep");
+  const { setTitle } = useTitle({ defaultTitle: currentSession.title });
   const [visionRequired, setVisionRequired] = useState(!!initialImage);
   const [availableTools, setAvailableTools] = useState<string[]>([]);
-  const [model, setModel] = useState(
-    initialModel || "openai/gpt-4.1-mini-2025-04-14"
+  const [model, setModel] = useState<string>(
+    initialModel || "openai/gpt-4.1-2025-04-14"
   );
   const [reasoningEffort, setReasoningEffort] =
     useState<reasoningEffortType>("medium");
@@ -144,6 +145,23 @@ const Chat: React.FC<ChatProps> = ({
   const chatLogRef = useRef<HTMLDivElement>(null);
   const sendButtonRef = useRef<HTMLButtonElement>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
+
+  let authTokenTemp;
+
+  const handleAuthToken = async () => {
+    if (auth && authToken) {
+      authTokenTemp = authToken;
+    } else if (auth && !authToken && user) {
+      const idToken = await user.getIdToken(true);
+      if (idToken) {
+        authTokenTemp = idToken;
+      } else {
+        throw new Error(t("chat.error.idTokenFailed"));
+      }
+    } else if (auth) {
+      throw new Error(t("chat.error.idTokenFailed"));
+    }
+  }
 
   // --- Hooks ---
   const {
@@ -159,12 +177,31 @@ const Chat: React.FC<ChatProps> = ({
   } = useChat({
     initialMessages: initialSessionData.messages, // Initialize messages
     id: sessionId, // Set chat id to sync with session
+    maxSteps: 50,
     onError: (error) => {
       toast.error(String(error));
+    },
+    headers: {
+      Authorization: auth && authToken ? authToken : "",
+    },
+    async onToolCall({ toolCall }) {
+      if (toolCall.toolName === "setTitle") {
+        updateSession(sessionId, {
+          ...currentSession,
+          title: (toolCall.args as { title: string }).title,
+        });
+        setCurrentSession((prev) => ({
+          ...prev,
+          title: (toolCall.args as { title: string }).title,
+        }));
+        await handleAuthToken();
+        return "OK";
+      }
     },
     body: {
       toolList: availableTools,
       language: navigator.language,
+      botId: currentSession.bot?.id,
       model,
       reasoningEffort,
     },
@@ -219,6 +256,7 @@ const Chat: React.FC<ChatProps> = ({
 
   // Scroll chat log
   useEffect(() => {
+    if (!settings.autoScroll) return; // Check if auto-scroll is enabled
     if (
       (status === "streaming" || status === "submitted") &&
       chatLogRef.current
@@ -230,7 +268,7 @@ const Chat: React.FC<ChatProps> = ({
   // Debounced function to save session data
   const debouncedUpdateSession = useDebouncedCallback(
     (updatedMessages: UIMessage[]) => {
-      if (!currentSession) return;
+      if (!currentSession) return; // Ensure currentSession is defined
 
       // Explicitly create plain objects for Firestore compatibility
       const messagesToSave = updatedMessages.map((message) => {
@@ -360,13 +398,8 @@ const Chat: React.FC<ChatProps> = ({
       const updatedSessionData = {
         ...currentSession,
         messages: messagesToSave,
-      };
-
-      // Update the session in the parent/storage
-      updateSession(sessionId, updatedSessionData);
-      console.log(
-        "Chat Component: Session updated via debounced call (plain objects, search content removed)."
-      );
+      }; // Update the session in the parent/storage
+      updateSession(sessionId, updatedSessionData); // Pass the updated session data
     },
     1000 // Debounce time
   );
@@ -483,7 +516,7 @@ const Chat: React.FC<ChatProps> = ({
 
     const newAvailableTools = [];
     if (searchEnabled) newAvailableTools.push("search");
-    if (advancedSearch) newAvailableTools.push("advancedSearch");
+    if (settings.advancedSearch) newAvailableTools.push("advancedSearch");
     if (deepResearch) {
       if (researchDepth === "shallow") {
         newAvailableTools.push("shallowResearch"); // Add tool for shallow research
@@ -552,6 +585,7 @@ const Chat: React.FC<ChatProps> = ({
       );
     }
 
+    // Wait for 1 second before reloading
     if (auth && authToken) {
       submitOptions.headers = { Authorization: authToken };
     } else if (auth && !authToken && user) {
@@ -561,6 +595,8 @@ const Chat: React.FC<ChatProps> = ({
     } else if (auth) {
       throw new Error(t("chat.error.idTokenFailed"));
     }
+
+    await new Promise((resolve) => setTimeout(resolve, 300));
 
     try {
       reload(submitOptions);
@@ -767,17 +803,19 @@ const Chat: React.FC<ChatProps> = ({
                 error={error}
                 onRegenerate={handleRegenerate} // Pass handler
               />
-              {status === "submitted" || status === "streaming" && !messages[messages.length - 1]?.content && (
-                <div className="flex w-full message-log visible">
-                  <div className="p-2 my-2 rounded-lg text-muted-foreground w-full">
-                    <span className="animate-pulse">
-                      {modelDescriptions[model]?.reasoning
-                        ? t("messageLog.reasoning")
-                        : t("messageLog.thinking")}
-                    </span>
-                  </div>
-                </div>
-              )}
+              {status === "submitted" ||
+                (status === "streaming" &&
+                  !messages[messages.length - 1]?.content && (
+                    <div className="flex w-full message-log visible">
+                      <div className="p-2 my-2 rounded-lg text-muted-foreground w-full">
+                        <span className="animate-pulse">
+                          {modelDescriptions[model]?.reasoning
+                            ? t("messageLog.reasoning")
+                            : t("messageLog.thinking")}
+                        </span>
+                      </div>
+                    </div>
+                  ))}
               {error && (
                 <div className="flex w-full message-log visible">
                   <div className="p-2 my-2 rounded-lg text-muted-foreground w-full">
@@ -819,6 +857,7 @@ const Chat: React.FC<ChatProps> = ({
           sendButtonRef={sendButtonRef}
           canvasEnabled={canvasEnabled}
           modelDescriptions={modelDescriptions}
+          bot={currentSession.bot}
           deepResearchToggle={deepResearchToggle}
           onResearchDepthChange={handleResearchDepthChange}
           searchToggle={searchToggle}
@@ -831,7 +870,6 @@ const Chat: React.FC<ChatProps> = ({
           setImage={setImage}
           fileInputRef={fileInputRef}
         />
-        <Footer />
       </div>
     </>
   );

@@ -220,7 +220,6 @@ export const modelDescriptions: modelDescriptionType = {
   "openai/gpt-4.1-mini-2025-04-14": {
     displayName: "GPT-4.1 mini",
     knowledgeCutoff: "2024/06",
-    defaultVisibility: true,
     fast: true,
     vision: true,
     type: "ChatGPT",
@@ -228,7 +227,6 @@ export const modelDescriptions: modelDescriptionType = {
   "openai/gpt-4.1-nano-2025-04-14": {
     displayName: "GPT-4.1 nano",
     knowledgeCutoff: "2024/06",
-    defaultVisibility: true,
     fast: true,
     vision: true,
     type: "ChatGPT",
@@ -265,8 +263,8 @@ export const modelDescriptions: modelDescriptionType = {
     vision: true,
     type: "ChatGPT",
   },
-  "google/gemini-2.5-flash-preview-04-17": {
-    displayName: "Gemini 2.5 Flash Preview",
+  "google/gemini-2.5-flash-preview-05-20": {
+    displayName: "Gemini 2.5 Flash",
     knowledgeCutoff: "2025/01",
     fast: true,
     defaultVisibility: true,
@@ -287,17 +285,29 @@ export const modelDescriptions: modelDescriptionType = {
     vision: true,
     type: "Gemini",
   },
+  "anthropic/claude-opus-4-20250514": {
+    displayName: "Claude 4 Opus",
+    knowledgeCutoff: "2025/03",
+    defaultVisibility: true,
+    vision: true,
+    type: "Claude",
+  },
+  "anthropic/claude-sonnet-4-20250514": {
+    displayName: "Claude 4 Sonnet",
+    knowledgeCutoff: "2025/03",
+    defaultVisibility: true,
+    vision: true,
+    type: "Claude",
+  },
   "anthropic/claude-3-7-sonnet-20250219": {
     displayName: "Claude 3.7 Sonnet",
     knowledgeCutoff: "2024/10",
-    defaultVisibility: true,
     vision: true,
     type: "Claude",
   },
   "anthropic/claude-3-7-sonnet-20250219-reasoning": {
     displayName: "Claude 3.7 Sonnet (Reasoning)",
     knowledgeCutoff: "2024/10",
-    defaultVisibility: true,
     vision: true,
     type: "Claude",
   },
@@ -326,7 +336,6 @@ export const modelDescriptions: modelDescriptionType = {
     displayName: "Grok 3 Mini Beta",
     vision: true,
     reasoning: true,
-    defaultVisibility: true,
     type: "Grok",
   },
 };

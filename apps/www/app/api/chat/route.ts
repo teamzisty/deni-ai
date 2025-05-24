@@ -15,11 +15,12 @@ import {
   OpenRouterProviderOptions,
 } from "@openrouter/ai-sdk-provider";
 import { createGroq } from "@ai-sdk/groq";
-import { authAdmin, notAvailable } from "@workspace/firebase-config/server";
+import { authAdmin, firestoreAdmin, notAvailable } from "@workspace/firebase-config/server";
 import { createVoidsOAI } from "@workspace/voids-oai-provider/index";
 import { createVoidsAP } from "@workspace/voids-ap-provider/index";
 import {
   convertToCoreMessages,
+  CoreMessage,
   createDataStreamResponse,
   extractReasoningMiddleware,
   generateText,
@@ -31,8 +32,9 @@ import {
   wrapLanguageModel,
 } from "ai";
 import { NextResponse } from "next/server";
-import { auth } from "@workspace/firebase-config/client";
+import { auth, firestore } from "@workspace/firebase-config/client";
 import { getTools } from "@/lib/utils";
+import { Bot, ServerBot } from "@/types/bot";
 
 export async function POST(req: Request) {
   try {
@@ -42,6 +44,7 @@ export async function POST(req: Request) {
       messages,
       model,
       toolList,
+      botId,
       // eslint-disable-next-line prefer-const
       reasoningEffort,
       language,
@@ -49,6 +52,7 @@ export async function POST(req: Request) {
       messages: UIMessage[];
       model: string;
       reasoningEffort: reasoningEffortType;
+      botId?: string;
       toolList?: string[];
       language?: string;
     } = await req.json();
@@ -73,6 +77,19 @@ export async function POST(req: Request) {
           console.error(error);
           return new NextResponse("Authorization failed", { status: 401 });
         });
+    }
+
+    let bot: ServerBot | null = null;
+    if (botId) {
+      const botRef = firestoreAdmin?.collection("deni-ai-bots").doc(botId);
+      const botDoc = await botRef?.get();
+
+      if (botDoc?.exists) {
+        bot = botDoc.data() as ServerBot;
+        bot.id = botId;
+      } else {
+        return new NextResponse("Bot not found", { status: 404 });
+      }
     }
 
     const modelDescription = modelDescriptions[model];
@@ -120,6 +137,7 @@ export async function POST(req: Request) {
     });
 
     const coreMessage = convertToCoreMessages(messages);
+    // const coreMessage = messages as CoreMessage[]; // temporary fix for the new API
 
     if (modelDescription?.toolDisabled) {
       toolList = ["tooldisabled"];
@@ -127,7 +145,7 @@ export async function POST(req: Request) {
 
     coreMessage.unshift({
       role: "system",
-      content: getSystemPrompt(toolList || []),
+      content: getSystemPrompt(toolList || [], bot),
     });
 
     const startTime = Date.now();
@@ -218,7 +236,6 @@ export async function POST(req: Request) {
         } else {
           tools = getTools(dataStream, toolList, modelDescription, language);
         }
-        
 
         const response = streamText({
           model:
@@ -227,11 +244,10 @@ export async function POST(req: Request) {
               : newModel,
           messages: coreMessage,
           tools: tools,
-          maxSteps: 15,
+          maxSteps: 50,
           experimental_transform: smoothStream({
             chunking: /[\u3040-\u309F\u30A0-\u30FF]|\S+\s+/,
           }),
-          toolCallStreaming: true,
           temperature: 1,
 
           providerOptions: {
@@ -243,7 +259,7 @@ export async function POST(req: Request) {
             }),
             google: {
               thinkingConfig: {
-                thinkingBudget: 2048,
+                thinkingBudget: 8192,
               },
             } as GoogleGenerativeAIProviderOptions,
             openrouter: {

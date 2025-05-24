@@ -7,10 +7,11 @@ import { Locale, NextIntlClientProvider, hasLocale } from "next-intl";
 import { notFound } from "next/navigation";
 import { routing } from "@/i18n/routing";
 import { CanvasProvider } from "../../context/CanvasContext";
-import { Analytics } from "@vercel/analytics/react";
+import { Analytics } from "@vercel/analytics/next";
 import AnalyticsConsent from "@/components/AnalyticsConsent";
 import { getAnalytics } from "@/lib/getAnalytics";
 import { cookies } from "next/headers";
+import { SettingsProvider } from "@/hooks/use-settings";
 
 type Props = {
   children: React.ReactNode;
@@ -50,12 +51,12 @@ export async function generateMetadata() {
 export async function getAnalyticsConsent() {
   const cookieStore = await cookies();
   const consentCookie = cookieStore.get("analytics-consent");
-  
+
   // Return undefined if cookie doesn't exist (first visit)
   if (!consentCookie) {
     return undefined;
   }
-  
+
   return consentCookie.value === "true";
 }
 
@@ -79,13 +80,15 @@ export default async function LocaleLayout({ children, params }: Props) {
   return (
     <NextIntlClientProvider locale={locale} messages={messages}>
       <AuthProvider>
-        <CanvasProvider>
-          <DevelopmentBanner>{children}</DevelopmentBanner>
-          <Toaster richColors position="bottom-right" />
+        <SettingsProvider>
+          <CanvasProvider>
+            <DevelopmentBanner>{children}</DevelopmentBanner>
+            <Toaster richColors position="bottom-right" />
 
-          <AnalyticsConsent initialConsent={isAnalyticsEnabled} />
-          {isAnalyticsEnabled && <Analytics />}
-        </CanvasProvider>
+            <AnalyticsConsent initialConsent={isAnalyticsEnabled} />
+            {isAnalyticsEnabled && <Analytics />}
+          </CanvasProvider>
+        </SettingsProvider>
       </AuthProvider>
     </NextIntlClientProvider>
   );

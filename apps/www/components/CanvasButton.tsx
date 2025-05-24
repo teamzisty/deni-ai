@@ -16,9 +16,17 @@ interface CanvasButtonProps {
 const CanvasButton = memo(
   ({ disabled, canvasEnabled, canvasToggle, devMode }: CanvasButtonProps) => {
     const t = useTranslations();
-    
+
     return (
-      <EasyTip content={devMode ? t("chatInput.devNotAvailable") : t("canvas.tooltip") || "Use Canvas"}>
+      <EasyTip
+        content={
+          devMode
+            ? t("chatInput.devNotAvailable")
+            : disabled
+              ? "Not available"
+              : t("canvas.tooltip") || "Use Canvas"
+        }
+      >
         <Button
           variant={canvasEnabled ? "default" : "outline"}
           className="rounded-full"
@@ -34,4 +42,4 @@ const CanvasButton = memo(
 
 CanvasButton.displayName = "CanvasButton";
 
-export default CanvasButton; 
+export default CanvasButton;

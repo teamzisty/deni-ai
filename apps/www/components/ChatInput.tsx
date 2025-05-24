@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useRef, useCallback, memo } from "react";
+import { useTranslations } from "next-intl";
 import { modelDescriptions } from "@/lib/modelDescriptions";
 import InputBox from "./InputBox";
 import { ImagePreview } from "./ImagePreview";
@@ -10,6 +11,7 @@ import { DeepResearchButton, ResearchDepth } from "./DeepResearchButton";
 import CanvasButton from "./CanvasButton";
 import { useIsMobile } from "@workspace/ui/hooks/use-mobile";
 import { cn } from "@workspace/ui/lib/utils";
+import { Bot } from "@/types/bot";
 
 type ModelDescription =
   (typeof modelDescriptions)[keyof typeof modelDescriptions];
@@ -26,6 +28,7 @@ interface ChatInputProps {
   researchDepth?: ResearchDepth;
   canvasEnabled: boolean;
   className?: string;
+  bot?: Bot;
   sendButtonRef?: React.RefObject<HTMLButtonElement | null>;
   modelDescriptions: Record<string, ModelDescription>;
   devMode?: boolean;
@@ -42,8 +45,7 @@ interface ChatInputProps {
   fileInputRef: React.RefObject<HTMLInputElement | null>;
 }
 
-const ChatInput = memo(
-  ({
+const ChatInput = memo(  ({
     input,
     image,
     model,
@@ -56,6 +58,7 @@ const ChatInput = memo(
     researchDepth,
     canvasEnabled,
     className,
+    bot,
     deepResearchToggle,
     onResearchDepthChange,
     canvasToggle,
@@ -70,7 +73,9 @@ const ChatInput = memo(
     fileInputRef,
     devMode,
   }: ChatInputProps) => {
+    const t = useTranslations();
     const isMobile = useIsMobile();
+    const isBot = !!bot;
 
     // Callback for ImageAddButton click
     const handleImageAddClick = useCallback(() => {
@@ -107,13 +112,13 @@ const ChatInput = memo(
             onClick={handleImageAddClick}
           />
           <CanvasButton
-            disabled={modelDescriptions[model]?.toolDisabled || false}
+            disabled={modelDescriptions[model]?.toolDisabled || isBot || false}
             canvasEnabled={canvasEnabled}
             devMode={devMode}
             canvasToggle={canvasToggle}
           />
           <SearchButton
-            disabled={modelDescriptions[model]?.toolDisabled || false}
+            disabled={modelDescriptions[model]?.toolDisabled || isBot || false}
             searchEnabled={searchEnabled}
             searchToggle={searchToggle}
           />
@@ -121,6 +126,7 @@ const ChatInput = memo(
             <DeepResearchButton
               disabled={
                 modelDescriptions[model]?.toolDisabled ||
+                isBot ||
                 !searchEnabled ||
                 false
               }
@@ -132,6 +138,11 @@ const ChatInput = memo(
             />
           )}
         </div>
+        {!isMobile && bot && (
+          <span className="text-muted-foreground text-xs">
+            {t("chatInput.botNotice", { botName: bot.name })}
+          </span>
+        )}
       </div>
     );
   },

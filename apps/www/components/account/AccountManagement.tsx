@@ -2,13 +2,57 @@
 
 import React from "react";
 import { useAuth } from "@/context/AuthContext";
-import { AccountDropdownMenu } from "../AccountDropdownMenu";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { Skeleton } from "@workspace/ui/components/skeleton";
+
+import { Button } from "@workspace/ui/components/button";
+import {
+  Code2,
+  CrownIcon,
+  Earth,
+  FolderSync,
+  LogOut,
+  Notebook,
+  Settings,
+  User2,
+} from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuGroup,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@workspace/ui/components/dropdown-menu";
+import Image from "next/image";
+import { memo, useEffect, useState } from "react";
+import { User } from "firebase/auth";
+import { Link } from "@/i18n/navigation";
+import { useChatSessions } from "@/hooks/use-chat-sessions";
+import { toast } from "sonner";
+import { buildInfo } from "@/lib/version";
+import { useTranslations } from "next-intl";
+import { useSettingsDialog } from "@/context/SettingsDialogContext";
+import { useRouter } from "next/navigation";
+import { useSettings } from "@/hooks/use-settings";
 
 export const AccountManagement = () => {
-  const { user, auth } = useAuth();
-  const isMobile = typeof window !== "undefined" ? require("@/hooks/use-mobile").useIsMobile() : false;
+  const { user, auth, isLoading } = useAuth();
+  const isMobile =
+    typeof window !== "undefined"
+      ? require("@/hooks/use-mobile").useIsMobile()
+      : false;
   if (isMobile) return null;
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center mt-2 gap-2">
+        <Skeleton className="h-12 w-12 rounded-full" />
+      </div>
+    );
+  }
+
   return (
     <div>
       <AccountDropdownMenu
@@ -20,3 +64,98 @@ export const AccountManagement = () => {
     </div>
   );
 };
+const truncateName = (name: string | null | undefined): string => {
+  if (!name) return "";
+  return name.length > 15 ? `${name.substring(0, 15)}...` : name;
+};
+
+interface AccountDropdownMenuProps {
+  user: User | null;
+  isDisabled?: boolean;
+  handleAuth: () => void;
+}
+
+export const AccountDropdownMenu = memo(
+  ({ user, isDisabled, handleAuth }: AccountDropdownMenuProps) => {
+    const { settings } = useSettings();
+    const t = useTranslations();
+    const { openDialog } = useSettingsDialog();
+
+    if (!user && !isDisabled) {
+      return (
+        <Button variant="outline" className="rounded-full">
+          <User2 size="16" />
+          <span className="group-data-[collapsible=icon]:hidden">
+            {t("accountMenu.login")}
+          </span>
+        </Button>
+      );
+    }
+
+    return (
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          {!isDisabled ? (
+            <Button variant="ghost" className="h-16 p-2 ml-1 justify-start">
+              {user?.photoURL ? (
+                <Image
+                  src={user.photoURL}
+                  alt={user.displayName || "User Avatar"}
+                  width={40}
+                  height={40}
+                  className={`rounded-full ${settings.privacyMode && "blur-sm"}`}
+                  priority
+                />
+              ) : (
+                <User2 size="16" />
+              )}
+            </Button>
+          ) : (
+            <Button variant="outline" className="rounded-full">
+              <User2 size="16" />
+              <span className="group-data-[collapsible=icon]:hidden">User</span>
+            </Button>
+          )}
+        </DropdownMenuTrigger>
+        <DropdownMenuContent
+          className="w-(--radix-dropdown-menu-trigger-width) min-w-56"
+          align="start"
+        >
+          <DropdownMenuGroup>
+            {!isDisabled && (
+              <DropdownMenuLabel>
+                <div className="h-16 justify-start flex items-center gap-2 md:max-w-[210px]">
+                  {user?.photoURL ? (
+                    <Image
+                      src={user.photoURL}
+                      alt={user.displayName || "User Avatar"}
+                      width={40}
+                      height={40}
+                      className={`rounded-full ${settings.privacyMode && "blur-sm"}`}
+                      priority
+                    />
+                  ) : (
+                    <User2 size="16" />
+                  )}
+                  <div className="flex flex-col text-left">
+                    <span className={`${settings.privacyMode && "blur-sm"}`}>
+                      {truncateName(user?.displayName)}
+                    </span>
+                  </div>
+                </div>
+              </DropdownMenuLabel>
+            )}
+          </DropdownMenuGroup>
+          <DropdownMenuSeparator />
+          <DropdownMenuGroup>
+            <DropdownMenuItem onClick={handleAuth}>
+              <LogOut /> {t("accountMenu.logout")}
+            </DropdownMenuItem>
+          </DropdownMenuGroup>
+        </DropdownMenuContent>
+      </DropdownMenu>
+    );
+  }
+);
+
+AccountDropdownMenu.displayName = "AccountDropdownMenu";

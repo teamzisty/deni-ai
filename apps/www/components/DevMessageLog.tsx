@@ -647,7 +647,7 @@ export const DevMessageLog: FC<DevMessageLogProps> = memo(
   ({ message, onRegenerate, isExecuting, allowExecution, onExecuteSteps }) => {
     // 初期状態を一度だけセットアップ
     const [model, setModel] = useState<string>(
-      "openai/gpt-4.1-mini-2025-04-14"
+      "openai/gpt-4.1-2025-04-14"
     );
     const [generationTime, setGenerationTime] = useState<number | undefined>(
       undefined

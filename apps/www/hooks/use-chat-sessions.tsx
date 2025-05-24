@@ -22,18 +22,28 @@ import { auth, firestore } from "@workspace/firebase-config/client";
 import { useAuth } from "@/context/AuthContext";
 import { toast } from "sonner";
 import { useTranslations } from "next-intl";
+import { Bot, BotWithId } from "@/types/bot";
 
 interface ChatSessionsContextValue {
   sessions: ChatSession[];
-  createSession: () => ChatSession;
+  createSession: (bot?: BotWithId) => ChatSession;
   addSession: (session: ChatSession) => void;
-  updateSession: (id: string, updatedSession: ChatSession) => void;
+  updateSession: (id: string, updatedSession: ChatSession) => Promise<void>;
   deleteSession: (id: string) => void;
   clearAllSessions: () => Promise<void>; // Make async
   getSession: (id: string) => ChatSession | undefined;
   syncSessions: () => Promise<void>;
   exportAllSessions: () => Promise<string>; // Add export function
   importAllSessions: (jsonData: string) => Promise<void>; // Add import function
+  createBranchSession: (
+    parentSession: ChatSession,
+    branchName: string
+  ) => ChatSession;
+  createBranchFromMessage: ( // Add this function
+    parentSession: ChatSession,
+    messageId: string,
+    branchName: string
+  ) => ChatSession | undefined;
   isLoading: boolean;
   isFirestoreLoaded: boolean; // Add this
 }
@@ -43,6 +53,11 @@ export interface ChatSession {
   title: string;
   messages: UIMessage[];
   createdAt: Date;
+  isBranch?: boolean; // Optional: Indicates if the session is a branch
+  bot?: BotWithId; // Optional: The bot if associated
+  parentSessionId?: string; // Optional: ID of the parent session if it's a branch
+  branchName?: string; // Optional: Name of the branch
+  hubId?: string; // Optional: ID of the hub if associated
 }
 
 const ChatSessionsContext = createContext<ChatSessionsContextValue | undefined>(
@@ -53,6 +68,15 @@ const ChatSessionsContext = createContext<ChatSessionsContextValue | undefined>(
 const DB_NAME = "deni-ai-chat-db";
 const DB_VERSION = 1;
 const CHAT_SESSIONS_STORE = "chatSessions";
+const FIRESTORE_TIMEOUT_MS = 15000; // 15 seconds timeout for Firestore operations
+
+// Helper function for Firestore getDocs with timeout
+const getDocsWithTimeout = async (query: any, timeoutMs: number) => {
+  const timeoutPromise = new Promise((_, reject) =>
+    setTimeout(() => reject(new Error('Firestore operation timed out')), timeoutMs)
+  );
+  return Promise.race([getDocs(query), timeoutPromise]);
+};
 
 // Helper functions for IndexedDB operations
 const initDatabase = async (): Promise<IDBDatabase> => {
@@ -286,19 +310,24 @@ export function ChatSessionsProvider({ children }: { children: ReactNode }) {
           firestore,
           `deni-ai-conversations/${user.uid}/sessions`
         );
-        const snapshot = await getDocs(sessionsRef);
-        const loadedSessions = snapshot.docs.map((doc) => ({
+        // const snapshot = await getDocs(sessionsRef); // Original call
+        const snapshot = await getDocsWithTimeout(sessionsRef, FIRESTORE_TIMEOUT_MS) as any; // Using timeout
+
+        const loadedSessions = snapshot.docs.map((doc: any) => ({ // Added type for doc
           id: doc.id,
           ...doc.data(),
           createdAt: doc.data().createdAt?.toDate() || new Date(),
         })) as ChatSession[];
 
         setSessions(loadedSessions);
-      } catch (error) {
+      } catch (error: any) {
         console.error("Failed to load sessions from Firestore:", error);
-        toast.error(t("chatSessions.loadFailed"));
+        const errorMessage = error.message && error.message.includes('timed out')
+          ? t("chatSessions.loadFailedTimeout")
+          : t("chatSessions.loadFailed");
+        toast.error(errorMessage);
 
-        // On Firestore error, try to fall back to IndexedDB
+        // On Firestore error (including timeout), try to fall back to IndexedDB
         try {
           const savedSessions = await getSessionsFromIndexedDB();
           if (savedSessions && savedSessions.length > 0) {
@@ -369,7 +398,12 @@ export function ChatSessionsProvider({ children }: { children: ReactNode }) {
                 id: session.id || null,
                 title: session.title || t("chatSessions.newChat"),
                 messages: Array.isArray(session.messages) ? session.messages : [],
-                createdAt: Timestamp.fromDate(createdAt)
+                createdAt: Timestamp.fromDate(createdAt),
+                isBranch: session.isBranch || false,
+                hubId: session.hubId || null,
+                bot: session.bot || null,
+                parentSessionId: session.parentSessionId || null,
+                branchName: session.branchName || null,
               };
 
               // Clear large tool invocation results before saving to prevent exceeding size limits
@@ -469,13 +503,17 @@ export function ChatSessionsProvider({ children }: { children: ReactNode }) {
     // Keep dependencies, ensure firestore/auth are stable or handled correctly if they change
   }, [sessions, user, modifiedSessionIds, t, firestore, auth]);
 
-  const createSession = useCallback(() => {
+  const createSession = useCallback((bot?: BotWithId) => {
     const newSession: ChatSession = {
       id: crypto.randomUUID(),
       title: t("chatSessions.newChat"),
       messages: [],
       createdAt: new Date(),
     };
+
+    if (bot) {
+      newSession.bot = bot;
+    }
 
     const updatedSessions = [...sessions, newSession];
     setSessions(updatedSessions);
@@ -486,14 +524,73 @@ export function ChatSessionsProvider({ children }: { children: ReactNode }) {
     return newSession;
   }, [sessions, t, saveToIndexedDB]);
 
+  const createBranchSession = useCallback((parentSession: ChatSession, branchName: string) => {
+    const newBranchSession: ChatSession = {
+      ...parentSession, // Copy all properties from parent
+      id: crypto.randomUUID(), // Generate a new unique ID for the branch
+      title: `${parentSession.title} (${branchName})`, // Or a more sophisticated naming
+      isBranch: true,
+      parentSessionId: parentSession.id,
+      branchName: branchName,
+      createdAt: new Date(), // Set new creation date for the branch
+      messages: parentSession.messages.map(msg => ({ ...msg })), // Deep copy messages
+    };
+
+    const updatedSessions = [...sessions, newBranchSession];
+    setSessions(updatedSessions);
+    setModifiedSessionIds((prev) => new Set(prev).add(newBranchSession.id));
+    saveToIndexedDB(updatedSessions);
+
+    toast.success(t("chatSessions.branchCreatedSuccess", { branchName })); // Add translation
+    return newBranchSession;
+  }, [sessions, t, saveToIndexedDB]);
+
+  const createBranchFromMessage = useCallback(
+    (parentSession: ChatSession, messageId: string, branchName: string) => {
+      const messageIndex = parentSession.messages.findIndex(
+        (msg) => msg.id === messageId
+      );
+
+      if (messageIndex === -1) {
+        toast.error(t("chatSessions.messageNotFoundForBranch"));
+        return undefined;
+      }
+
+      // Create a new session with messages up to the selected message
+      const messagesForBranch = parentSession.messages
+        .slice(0, messageIndex + 1)
+        .map((msg) => ({ ...msg })); // Deep copy messages
+
+      const newBranchSession: ChatSession = {
+        id: crypto.randomUUID(),
+        title: `${parentSession.title} (${branchName} - branched from message)`,
+        messages: messagesForBranch,
+        createdAt: new Date(),
+        isBranch: true,
+        parentSessionId: parentSession.id,
+        branchName: branchName,
+      };
+
+      const updatedSessions = [...sessions, newBranchSession];
+      setSessions(updatedSessions);
+      setModifiedSessionIds((prev) => new Set(prev).add(newBranchSession.id));
+      saveToIndexedDB(updatedSessions);
+
+      toast.success(
+        t("chatSessions.branchFromMessageCreatedSuccess", { branchName })
+      );
+      return newBranchSession;
+    },
+    [sessions, t, saveToIndexedDB]
+  );
+
   const addSession = useCallback((session: ChatSession) => {
     const updatedSessions = [...sessions, session];
     setSessions(updatedSessions);
     setModifiedSessionIds((prev) => new Set(prev).add(session.id));
     saveToIndexedDB(updatedSessions);
   }, [sessions, saveToIndexedDB]);
-
-  const updateSession = useCallback((id: string, updatedSession: ChatSession) => {
+  const updateSession = useCallback(async (id: string, updatedSession: ChatSession) => {
     // Validate and ensure createdAt is a Date object before updating state
     const validatedSession = {
       ...updatedSession,
@@ -510,17 +607,15 @@ export function ChatSessionsProvider({ children }: { children: ReactNode }) {
 
     // If not using Firestore, also update IndexedDB immediately for this session
     if (!user) {
-      (async () => {
-        try {
-          const existingSessions = await getSessionsFromIndexedDB();
-          const existingSessionsMap = new Map(existingSessions.map((s: ChatSession) => [s.id, s]));
-          existingSessionsMap.set(id, validatedSession);
-          const mergedSessions = Array.from(existingSessionsMap.values());
-          await saveSessionsToIndexedDB(mergedSessions);
-        } catch (error) {
-          console.error("Failed to immediately update session in IndexedDB:", error);
-        }
-      })();
+      try {
+        const existingSessions = await getSessionsFromIndexedDB();
+        const existingSessionsMap = new Map(existingSessions.map((s: ChatSession) => [s.id, s]));
+        existingSessionsMap.set(id, validatedSession);
+        const mergedSessions = Array.from(existingSessionsMap.values());
+        await saveSessionsToIndexedDB(mergedSessions);
+      } catch (error) {
+        console.error("Failed to immediately update session in IndexedDB:", error);
+      }
     }
   }, [user, setSessions]);
 
@@ -713,9 +808,11 @@ export function ChatSessionsProvider({ children }: { children: ReactNode }) {
       }
 
       // Firestoreからセッションを読み込む
-      const snapshot = await getDocs(sessionsRef);
+      // const snapshot = await getDocs(sessionsRef); // Original call
+      const snapshot = await getDocsWithTimeout(sessionsRef, FIRESTORE_TIMEOUT_MS) as any; // Using timeout
 
-      const loadedSessions = snapshot.docs.map((doc) => {
+
+      const loadedSessions = snapshot.docs.map((doc: any) => { // Added type for doc
         const data = doc.data();
         // createdAtフィールドの変換を安全に行う
         let createdAt: Date;
@@ -749,10 +846,12 @@ export function ChatSessionsProvider({ children }: { children: ReactNode }) {
       }
 
       toast.success(t("chatSessions.syncSuccess"));
-    } catch (error) {
+    } catch (error: any) { // Added type for error
       console.error("Failed to sync sessions:", error);
-      let errorMessage = t("chatSessions.syncFailed");
-      if (error instanceof Error) {
+      let errorMessage = error.message && error.message.includes('timed out')
+        ? t("chatSessions.syncFailedTimeout")
+        : t("chatSessions.syncFailed");
+      if (error instanceof Error && !(error.message && error.message.includes('timed out'))) {
         errorMessage += `: ${error.message}`;
       }
       toast.error(errorMessage);
@@ -769,16 +868,20 @@ export function ChatSessionsProvider({ children }: { children: ReactNode }) {
           firestore,
           `deni-ai-conversations/${user.uid}/sessions`
         );
-        const snapshot = await getDocs(sessionsRef);
-        sessionsToExport = snapshot.docs.map((doc) => ({
+        // const snapshot = await getDocs(sessionsRef); // Original call
+        const snapshot = await getDocsWithTimeout(sessionsRef, FIRESTORE_TIMEOUT_MS) as any; // Using timeout
+        sessionsToExport = snapshot.docs.map((doc: any) => ({ // Added type for doc
           id: doc.id,
           ...doc.data(),
           // Convert Timestamp to ISO string for JSON compatibility
           createdAt: (doc.data().createdAt?.toDate() || new Date()).toISOString(),
         })) as unknown as ChatSession[]; // Adjust type assertion as needed
-      } catch (error) {
+      } catch (error: any) {
         console.error("Failed to fetch sessions from Firestore for export:", error);
-        toast.error(t("chatSessions.exportFirestoreFailed"));
+        const errorMessage = error.message && error.message.includes('timed out')
+          ? t("chatSessions.exportFirestoreFailedTimeout")
+          : t("chatSessions.exportFirestoreFailed");
+        toast.error(errorMessage);
         // Fallback to IndexedDB on Firestore error
         try {
           const savedSessions = await getSessionsFromIndexedDB();
@@ -842,8 +945,9 @@ export function ChatSessionsProvider({ children }: { children: ReactNode }) {
         );
 
         // Optional: Delete existing sessions before importing (clean slate)
-        const existingSnapshot = await getDocs(sessionsRef);
-        existingSnapshot.docs.forEach(doc => batch.delete(doc.ref));
+        // const existingSnapshot = await getDocs(sessionsRef); // Original call
+        const existingSnapshot = await getDocsWithTimeout(sessionsRef, FIRESTORE_TIMEOUT_MS) as any; // Using timeout
+        existingSnapshot.docs.forEach((doc: any) => batch.delete(doc.ref)); // Added type for doc
 
         // Add imported sessions
         importedSessions.forEach((session) => {
@@ -869,9 +973,12 @@ export function ChatSessionsProvider({ children }: { children: ReactNode }) {
         // Reload sessions from Firestore to update UI state
         await syncSessions(); // Use syncSessions to reload and update state
 
-      } catch (error) {
+      } catch (error: any) { // Added type for error
         console.error("Failed to import sessions to Firestore:", error);
-        toast.error(t("chatSessions.importFirestoreFailed"), {
+        const errorMessage = error.message && error.message.includes('timed out')
+          ? t("chatSessions.importFirestoreFailedTimeout")
+          : t("chatSessions.importFirestoreFailed");
+        toast.error(errorMessage, {
           description: error instanceof Error ? error.message : String(error),
         });
       }
@@ -904,6 +1011,8 @@ export function ChatSessionsProvider({ children }: { children: ReactNode }) {
     importAllSessions,
     isLoading,
     isFirestoreLoaded,
+    createBranchSession,
+    createBranchFromMessage, // Add this
   };
 
   return (
