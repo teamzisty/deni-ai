@@ -2,7 +2,7 @@
 
 - Use the below format for commit messages:
   ```
-  [Type]([Scope]): [Short description of the change]
+  [Type] ([Scope]): [Short description of the change]
   
   [Detailed description of the change, if necessary]
   

@@ -398,7 +398,7 @@ export default function IntellipulseChatPage() {
       <div className="flex-1 flex flex-col">
         <HeaderArea
         model={model}
-        user={user!!}
+        user={user!}
           handleModelChange={model => setModel(model)}
           messages={messages}
         />        <IntellipulseChat

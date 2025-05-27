@@ -5,7 +5,6 @@ import { useParams } from "next/navigation";
 import { Button } from "@workspace/ui/components/button";
 import {
   Save,
-  Edit,
   Trash,
   PlusCircle,
   Copy,
@@ -37,8 +36,7 @@ import {
   AlertDialogDescription,
   AlertDialogFooter,
   AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
+  AlertDialogTitle
 } from "@workspace/ui/components/alert-dialog";
 import { Link, useRouter } from "@/i18n/navigation";
 
@@ -110,7 +108,7 @@ export default function BotEditorPage() {
     if (params.id) {
       fetchBotData();
     }
-  }, [params.id, t, isLoading]);
+  }, [params.id, t, isLoading, secureFetch, t]);
 
   const handleSave = async () => {
     if (!user) {

@@ -2,7 +2,7 @@ import {
   modelDescriptions,
   reasoningEffortType,
 } from "@/lib/modelDescriptions";
-import { getSystemPrompt, systemPromptDev } from "@/lib/systemPrompt";
+import { systemPromptDev } from "@/lib/systemPrompt";
 import { createOpenAI } from "@ai-sdk/openai";
 import { createAnthropic } from "@ai-sdk/anthropic";
 import { createXai } from "@ai-sdk/xai";
@@ -10,8 +10,6 @@ import { createGoogleGenerativeAI, GoogleGenerativeAIProviderOptions } from "@ai
 import { createOpenRouter, OpenRouterProviderOptions } from "@openrouter/ai-sdk-provider";
 import { createGroq } from "@ai-sdk/groq";
 import { createSupabaseServerClient, notAvailable } from "@workspace/supabase-config/server";
-import { createVoidsOAI } from "@workspace/voids-oai-provider/index";
-import { createVoidsAP } from "@workspace/voids-ap-provider/index";
 import {
   convertToCoreMessages,
   createDataStreamResponse,

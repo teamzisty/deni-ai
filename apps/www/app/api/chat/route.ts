@@ -16,24 +16,19 @@ import {
 } from "@openrouter/ai-sdk-provider";
 import { createGroq } from "@ai-sdk/groq";
 import { createSupabaseServerClient } from "@workspace/supabase-config/server";
-import { createVoidsOAI } from "@workspace/voids-oai-provider/index";
-import { createVoidsAP } from "@workspace/voids-ap-provider/index";
 import {
   convertToCoreMessages,
-  CoreMessage,
   createDataStreamResponse,
   extractReasoningMiddleware,
-  generateText,
   smoothStream,
   streamText,
   Tool,
-  tool,
   UIMessage,
   wrapLanguageModel,
 } from "ai";
 import { NextResponse } from "next/server";
 import { getTools } from "@/lib/utils";
-import { Bot, RowServerBot, ServerBot } from "@/types/bot";
+import { RowServerBot } from "@/types/bot";
 
 export async function POST(req: Request) {
   try {

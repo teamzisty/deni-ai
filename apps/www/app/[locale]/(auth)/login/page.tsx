@@ -63,15 +63,15 @@ const Login: React.FC = () => {
 
     try {
       const { error } = await supabase.auth.signInWithOAuth({
-        provider: 'google',
+        provider: "google",
         options: {
-          redirectTo: `${window.location.origin}/home`
-        }
+          redirectTo: `${window.location.origin}/home`,
+        },
       });
 
       if (error) throw error;
-    } catch (error: any) {
-      if (noticeRef.current) {
+    } catch (error: unknown) {
+      if (noticeRef.current && error instanceof Error) {
         noticeRef.current.textContent = error.message;
       }
     }
@@ -82,16 +82,16 @@ const Login: React.FC = () => {
 
     try {
       const { error } = await supabase.auth.signInWithOAuth({
-        provider: 'github',
+        provider: "github",
         options: {
-          scopes: 'read:user repo',
-          redirectTo: `${window.location.origin}/home`
-        }
+          scopes: "read:user repo",
+          redirectTo: `${window.location.origin}/home`,
+        },
       });
 
       if (error) throw error;
-    } catch (error: any) {
-      if (noticeRef.current) {
+    } catch (error: unknown) {
+      if (noticeRef.current && error instanceof Error) {
         noticeRef.current.textContent = error.message;
       }
     }
@@ -102,7 +102,7 @@ const Login: React.FC = () => {
 
     if (!noticeRef.current) return;
     const notice = noticeRef.current;
-    
+
     try {
       const { error } = await supabase.auth.signInWithPassword({
         email: accountEmail,
@@ -110,9 +110,10 @@ const Login: React.FC = () => {
       });
 
       if (error) throw error;
-      
+
       router.push("/home");
-    } catch (error: any) {
+    } catch (error: unknown) {
+      if (!(error instanceof Error)) return;
       if (error.message.includes("Invalid login credentials")) {
         notice.textContent = t("login.invalidCredentials");
       } else if (error.message.includes("Email not confirmed")) {
@@ -120,7 +121,8 @@ const Login: React.FC = () => {
       } else {
         notice.textContent = error.message;
       }
-    }  };
+    }
+  };
 
   return (
     <div className="h-screen w-full">

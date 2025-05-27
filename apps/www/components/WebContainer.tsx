@@ -55,7 +55,7 @@ let isBooting = false; // 起動中フラグを追加
 // Use a WeakMap to track if we've set up listeners for a WebContainer instance
 const listenersSetupMap = new WeakMap<WebContainerAPI, boolean>();
 // Track if we've shown the ready message
-let readyMessageShown = false;
+const readyMessageShown = false;
 
 // Add this function to handle WebContainer instance acquisition
 export const getOrCreateWebContainer = async (

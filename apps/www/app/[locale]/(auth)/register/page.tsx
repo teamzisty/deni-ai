@@ -46,8 +46,8 @@ const Register: React.FC = () => {
       });
 
       if (error) throw error;
-    } catch (error: any) {
-      if (noticeRef.current) {
+    } catch (error: unknown) {
+      if (noticeRef.current && error instanceof Error) {
         noticeRef.current.textContent = error.message;
       }
     }
@@ -65,8 +65,8 @@ const Register: React.FC = () => {
       });
 
       if (error) throw error;
-    } catch (error: any) {
-      if (noticeRef.current) {
+    } catch (error: unknown) {
+      if (noticeRef.current && error instanceof Error) {
         noticeRef.current.textContent = error.message;
       }
     }  };
@@ -91,7 +91,9 @@ const Register: React.FC = () => {
       toast.success(t("register.checkEmail"), {
         description: t("register.confirmationSent"),
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
+      if (!(error instanceof Error)) return;
+      
       if (error.message.includes("User already registered")) {
         notice.textContent = t("register.emailInUse");
       } else if (error.message.includes("Invalid email")) {

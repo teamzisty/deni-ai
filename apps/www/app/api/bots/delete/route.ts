@@ -2,10 +2,6 @@ import { ServerBot } from "@/types/bot";
 import { createSupabaseServerClient } from "@workspace/supabase-config/server";
 import { NextResponse } from "next/server";
 
-interface BotsCreateRequest extends ServerBot {
-  id: string;
-}
-
 export async function DELETE(req: Request) {
   try {
     const authorization = req.headers.get("Authorization")?.replace("Bearer ", "");
