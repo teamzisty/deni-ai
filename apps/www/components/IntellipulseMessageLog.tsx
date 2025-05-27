@@ -51,7 +51,7 @@ interface StepStatusEventDetail {
   output?: string;
 }
 
-interface DevMessageLogProps {
+interface IntellipulseMessageLogProps {
   message: UIMessage;
   onRegenerate?: (model: string) => void;
   isExecuting?: boolean;
@@ -100,6 +100,10 @@ export const MemoizedMarkdown = memo(
     // コンテンツが長い場合、スクロールするとより多くのブロックを表示
     useEffect(() => {
       if (blocks.length <= 5) return;
+
+      console.log(
+        `MemoizedMarkdown: Initializing scroll listener for ${id} with ${blocks.length} blocks`
+      );
 
       const handleScroll = () => {
         setVisibleBlocks((prevVisible) =>
@@ -165,13 +169,15 @@ const CommandExecution = memo(({ action }: { action: any }) => {
     if (action.action === "run") {
       return `$ ${action.command}`;
     } else if (action.action === "write") {
-      return t("devMessageLog.writeAction", { path: action.path });
+      return t("intellipulseMessageLog.writeAction", { path: action.path });
     } else if (action.action === "read") {
-      return t("devMessageLog.readAction", { path: action.path });
+      return t("intellipulseMessageLog.readAction", { path: action.path });
     } else if (action.action === "list") {
-      return t("devMessageLog.listAction", { path: action.path || "/" });
+      return t("intellipulseMessageLog.listAction", {
+        path: action.path || "/",
+      });
     }
-    return t("devMessageLog.genericAction", { action: action.action });
+    return t("intellipulseMessageLog.genericAction", { action: action.action });
   };
 
   return (
@@ -190,23 +196,23 @@ const CommandExecution = memo(({ action }: { action: any }) => {
       {expanded && (
         <div className="p-2 bg-background border-t border-border">
           <div className="text-sm text-muted-foreground">
-            {t("devMessageLog.actionLabel")}:{" "}
+            {t("intellipulseMessageLog.actionLabel")}:{" "}
             <span className="font-semibold">{action.action}</span>
             {action.command && (
               <div>
-                {t("devMessageLog.commandLabel")}:{" "}
+                {t("intellipulseMessageLog.commandLabel")}:{" "}
                 <span className="font-mono">{action.command}</span>
               </div>
             )}
             {action.path && (
               <div>
-                {t("devMessageLog.pathLabel")}:{" "}
+                {t("intellipulseMessageLog.pathLabel")}:{" "}
                 <span className="font-mono">{action.path}</span>
               </div>
             )}
             {action.dependsOn && (
               <div>
-                {t("devMessageLog.dependsOnLabel")}:{" "}
+                {t("intellipulseMessageLog.dependsOnLabel")}:{" "}
                 <span className="font-mono">{action.dependsOn}</span>
               </div>
             )}
@@ -220,144 +226,196 @@ CommandExecution.displayName = "CommandExecution";
 
 // ステップ実行計画を表示するコンポーネント
 const StepsExecution = memo(
-  ({ steps: initialSteps }: { steps: any[] }) => {
+  ({ steps: initialSteps, onExecuteSteps }: { steps: any[]; onExecuteSteps: (steps: any[]) => void }) => {
     const [expanded, setExpanded] = useState(true); // デフォルトで開いた状態にする
     const [isExecuting, setIsExecuting] = useState(false);
     const [steps, setSteps] = useState<any[]>(initialSteps);
     const t = useTranslations();
-    const ansiConverter = new AnsiToHtml()
+    const ansiConverter = new AnsiToHtml();
 
     // 親コンポーネントからのsteps更新時の同期
+    const initialStepsStringified = useMemo(
+      () => JSON.stringify(initialSteps),
+      [initialSteps]
+    );
+
     useEffect(() => {
       // 実行中でない場合のみ初期値を設定
       if (!isExecuting) {
-        // 初回表示または新しいデータが来た場合に初期化
-        const newStepIds = new Set(initialSteps.map(step => step.id));
-        const currentStepIds = new Set(steps.map(step => step.id));
-        
-        // IDセットが同じでない場合に更新
-        const shouldUpdate = initialSteps.length !== steps.length || 
-          ![...newStepIds].every(id => currentStepIds.has(id));
-        
-        if (shouldUpdate) {          
-          // 既存のステップのIDとステータスをマップ
-          const existingStatuses = steps.reduce((acc, step) => {
-            if (step.id && (step.status === "completed" || step.status === "failed")) {
-              acc[step.id] = step.status;
-            }
-            return acc;
-          }, {} as Record<string, string>);
-          
-          // 新しいステップリストを作成し、完了したステップのステータスを保持
-          const updatedSteps = initialSteps.map(step => {
-            const existingStatus = step.id && existingStatuses[step.id];
-            return {
-              ...step,
-              status: existingStatus || step.status || "waiting"
-            };
-          });
-          
-          setSteps(updatedSteps);
-        }
-      }
-    }, [initialSteps, isExecuting]);
+        console.log(
+          "StepsExecution: Initializing steps",
+          initialStepsStringified
+        );
+        setSteps((prevSteps) => {
+          // 初回表示または新しいデータが来た場合に初期化
+          const newStepIds = new Set(initialSteps.map((step) => step.id));
+          const currentStepIds = new Set(prevSteps.map((step) => step.id));
 
-    // デバッグ用にステップの状態変化をログ出力
+          // IDセットが同じでない場合に更新
+          const shouldUpdate =
+            initialSteps.length !== prevSteps.length ||
+            ![...newStepIds].every((id) => currentStepIds.has(id));
+
+          if (shouldUpdate) {
+            // 既存のステップのIDとステータスをマップ
+            const existingStatuses = prevSteps.reduce(
+              (acc, step) => {
+                if (
+                  step.id &&
+                  (step.status === "completed" || step.status === "failed")
+                ) {
+                  acc[step.id] = step.status;
+                }
+                return acc;
+              },
+              {} as Record<string, string>
+            );
+
+            // 新しいステップリストを作成し、完了したステップのステータスを保持
+            const updatedSteps = initialSteps.map((step) => {
+              const existingStatus = step.id && existingStatuses[step.id];
+              return {
+                ...step,
+                status: existingStatus || step.status || "waiting",
+              };
+            });
+
+            return updatedSteps;
+          }
+
+          return prevSteps;
+        });
+      }
+    }, [initialStepsStringified, isExecuting]); // デバッグ用にステップの状態変化をログ出力
     useEffect(() => {
       // 実行中かどうかを判定
       const executing = steps.some((step) => step.status === "running");
-      
-      // 実行状態が変わった場合のみ更新（全てのステップが完了/失敗した場合も実行中フラグは更新）
-      setIsExecuting(executing);
+
+      // 実行状態が変わった場合のみ更新（無限ループを防ぐため条件付き更新）
+      setIsExecuting((prev) => {
+        if (prev !== executing) {
+          return executing;
+        }
+        return prev;
+      });
     }, [steps]);
 
     // 実行ボタンクリック時のハンドラー（メモ化して不要な再生成を防止）
     const handleExecuteClick = useCallback(
       (e: React.MouseEvent) => {
         e.stopPropagation();
-        
+
         // 既に実行中の場合は何もしない
         if (isExecuting) {
           return;
         }
-
+        
         // すべてのステップのステータスを初期化
+        console.log(
+          "StepsExecution: Initializing steps for execution",
+          initialStepsStringified
+        );
         const initializedSteps = steps.map((step, index) => ({
           ...step,
-          id: step.id || `step-${index+1}`, // IDがない場合は生成（1から始まる）
-          title: step.title || `Step ${index+1}`, // タイトルがない場合は生成
+          id: step.id || `step-${index + 1}`, // IDがない場合は生成（1から始まる）
+          title: step.title || `Step ${index + 1}`, // タイトルがない場合は生成
           status: index === 0 ? "running" : "waiting", // 最初のステップは実行中、他は待機中
-          output: ""
+          output: "",
         }));
 
-        // ステップのステータスを更新
-        setSteps(initializedSteps);
-        
+        // ステップのステータスを更新（関数型更新で無限ループを防止）
+        setSteps(() => initializedSteps);
+
         // 実行中状態に設定
         setIsExecuting(true);
-        
-        // カスタムイベントを発生させて実行を開始
-        const event = new CustomEvent("executeSteps", { 
-          detail: { 
-            steps: initializedSteps 
-          } 
+
+        // 親コンポーネントに実行を通知
+        if (onExecuteSteps) {
+          onExecuteSteps(initializedSteps);
+        }
+
+        // カスタムイベントも発生させて実行を開始（後方互換性のため）
+        const event = new CustomEvent("executeSteps", {
+          detail: {
+            steps: initializedSteps,
+          },
         });
         window.dispatchEvent(event);
-        
+
         // 実行ボタンクリック時にステップリストを展開
         setExpanded(true);
       },
-      [steps, isExecuting]
+      [steps, isExecuting, onExecuteSteps, initialStepsStringified]
     );
 
     // ステップのステータス更新イベントリスナー
     useEffect(() => {
-      const handleStepStatusUpdate = (event: CustomEvent<StepStatusEventDetail>) => {
+      const handleStepStatusUpdate = (
+        event: CustomEvent<StepStatusEventDetail>
+      ) => {
         const { stepId, status, output } = event.detail;
         if (!stepId) return;
-                
-        setSteps(currentSteps => {
+
+        console.log(
+          `StepsExecution: Updating step ${stepId} status to ${status}`,
+          output
+        );
+
+        setSteps((currentSteps) => {
           // IDで該当するステップを探す
-          const stepIndex = currentSteps.findIndex(step => step.id === stepId);
+          const stepIndex = currentSteps.findIndex(
+            (step) => step.id === stepId
+          );
           if (stepIndex === -1) {
-            console.warn(`StepsExecution: Could not find step with ID ${stepId}`);
+            console.warn(
+              `StepsExecution: Could not find step with ID ${stepId}`
+            );
             return currentSteps;
           }
-          
+
           // ステップの状態を更新した新しい配列を作成
           const updatedSteps = [...currentSteps];
           updatedSteps[stepIndex] = {
             ...updatedSteps[stepIndex],
             status,
-            ...(output !== undefined ? { output } : {})
+            ...(output !== undefined ? { output } : {}),
           };
-          
+
           // 次のステップを自動実行
-          if ((status === "completed" || status === "failed") && stepIndex < updatedSteps.length - 1) {
+          if (
+            (status === "completed" || status === "failed") &&
+            stepIndex < updatedSteps.length - 1
+          ) {
             const nextStep = updatedSteps[stepIndex + 1];
             if (nextStep.status === "waiting" && status === "completed") {
               updatedSteps[stepIndex + 1] = {
                 ...nextStep,
-                status: "running"
+                status: "running",
               };
             }
           }
-          
+
           // すべてのステップが完了または失敗したかチェック
-          const allDone = updatedSteps.every(step => 
-            step.status === "completed" || step.status === "failed"
+          const allDone = updatedSteps.every(
+            (step) => step.status === "completed" || step.status === "failed"
           );
-          
+
           return updatedSteps;
         });
       };
-      
+
       // イベントリスナーの登録
-      window.addEventListener("stepStatusUpdate", handleStepStatusUpdate as EventListener);
-      
+      window.addEventListener(
+        "stepStatusUpdate",
+        handleStepStatusUpdate as EventListener
+      );
+
       // クリーンアップ
       return () => {
-        window.removeEventListener("stepStatusUpdate", handleStepStatusUpdate as EventListener);
+        window.removeEventListener(
+          "stepStatusUpdate",
+          handleStepStatusUpdate as EventListener
+        );
       };
     }, []);
 
@@ -376,24 +434,23 @@ const StepsExecution = memo(
         >
           {isExecuting ? (
             <Loader2 size={16} className="mr-2 text-primary animate-spin" />
+          ) : steps.some((step) => step.status === "failed") ? (
+            <XCircle size={16} className="mr-2 text-destructive" />
+          ) : steps.every((step) => step.status === "completed") ? (
+            <CheckCircle size={16} className="mr-2 text-success" />
           ) : (
-            steps.some(step => step.status === "failed") ? 
-              <XCircle size={16} className="mr-2 text-destructive" /> :
-              steps.every(step => step.status === "completed") ?
-                <CheckCircle size={16} className="mr-2 text-success" /> :
-                <Terminal size={16} className="mr-2 text-primary" />
+            <Terminal size={16} className="mr-2 text-primary" />
           )}
           <span className="font-medium">
-            {t("devMessageLog.executionPlan")}
+            {t("intellipulseMessageLog.executionPlan")}
           </span>
           <span className="ml-2 text-xs text-muted-foreground">
-            {t("devMessageLog.stepsCount", { count: steps.length })}
+            {t("intellipulseMessageLog.stepsCount", { count: steps.length })}
           </span>
 
           <div className="ml-auto flex items-center gap-2">
             <Button
               size="sm"
-              variant="outline"
               className="h-7 px-2 py-1"
               disabled={isExecuting}
               onClick={handleExecuteClick}
@@ -401,12 +458,12 @@ const StepsExecution = memo(
               {isExecuting ? (
                 <>
                   <Loader2 size={14} className="mr-1 animate-spin" />
-                  {t("devMessageLog.executing")}
+                  {t("intellipulseMessageLog.executing")}
                 </>
               ) : (
                 <>
                   <Play size={14} className="mr-1" />
-                  {t("devMessageLog.executeSequence")}
+                  {t("intellipulseMessageLog.executeSequence")}
                 </>
               )}
             </Button>
@@ -451,19 +508,19 @@ const StepsExecution = memo(
                         {step.status === "running" && (
                           <span className="ml-2 text-primary">
                             {" "}
-                            {t("devMessageLog.statusRunning")}
+                            {t("intellipulseMessageLog.statusRunning")}
                           </span>
                         )}
                         {step.status === "completed" && (
                           <span className="ml-2 text-success">
                             {" "}
-                            {t("devMessageLog.statusCompleted")}
+                            {t("intellipulseMessageLog.statusCompleted")}
                           </span>
                         )}
                         {step.status === "failed" && (
                           <span className="ml-2 text-destructive">
                             {" "}
-                            {t("devMessageLog.statusFailed")}
+                            {t("intellipulseMessageLog.statusFailed")}
                           </span>
                         )}
                       </span>
@@ -477,7 +534,7 @@ const StepsExecution = memo(
                       {step.output && step.output.length > 0 && (
                         <Collapsible>
                           <CollapsibleTrigger className="text-xs text-muted-foreground hover:text-foreground">
-                            {t("devMessageLog.toggleOutput")}
+                            {t("intellipulseMessageLog.toggleOutput")}
                           </CollapsibleTrigger>
                           <CollapsibleContent>
                             <div
@@ -497,7 +554,7 @@ const StepsExecution = memo(
             </ol>
 
             <div className="mt-2 text-xs text-muted-foreground">
-              {t("devMessageLog.executionNote")}
+              {t("intellipulseMessageLog.executionNote")}
             </div>
           </div>
         )}
@@ -643,12 +700,10 @@ const MessageControls = memo(
 );
 MessageControls.displayName = "MessageControls";
 
-export const DevMessageLog: FC<DevMessageLogProps> = memo(
+export const IntellipulseMessageLog: FC<IntellipulseMessageLogProps> = memo(
   ({ message, onRegenerate, isExecuting, allowExecution, onExecuteSteps }) => {
     // 初期状態を一度だけセットアップ
-    const [model, setModel] = useState<string>(
-      "openai/gpt-4.1-2025-04-14"
-    );
+    const [model, setModel] = useState<string>("openai/gpt-4.1-2025-04-14");
     const [generationTime, setGenerationTime] = useState<number | undefined>(
       undefined
     );
@@ -673,12 +728,15 @@ export const DevMessageLog: FC<DevMessageLogProps> = memo(
       const annotations = message.annotations;
       if (!annotations || annotations.length === 0) return;
 
+      console.log(
+        `IntellipulseMessageLog: Processing annotations for message ${message.id}`
+      );
+
       // コンポーネントのアンマウント時にキャンセルできるようにする
       let isMounted = true;
 
       // 非同期処理を1回のみ実行し、処理中に他の再レンダリングの影響を受けないようにする
       const processAnnotations = async () => {
-
         // モデル情報とタイトル情報の処理
         const newWebcontainerActions: any[] = [];
         let newSteps: any[] | null = null;
@@ -786,14 +844,14 @@ export const DevMessageLog: FC<DevMessageLogProps> = memo(
 
             {/* ステップとアクションの表示 */}
             {(steps.length > 0 || webcontainerActions.length > 0) && (
-              <div className="mt-2 bg-primary/10 p-2 rounded-md">
+              <div className="mt-2 bg-primary/50 text-primary-foreground p-2 rounded-md">
                 <span className="text-sm font-medium">
-                  {t("devMessageLog.executionPlan")}
+                  {t("intellipulseMessageLog.executionPlan")}
                 </span>
                 {webcontainerActions.length > 0 && (
                   <>
                     <div className="mt-1 text-xs text-muted-foreground">
-                      {t("devMessageLog.webContainerActions", {
+                      {t("intellipulseMessageLog.webContainerActions", {
                         count: webcontainerActions.length,
                       })}
                     </div>
@@ -806,9 +864,11 @@ export const DevMessageLog: FC<DevMessageLogProps> = memo(
                 {steps && steps.length > 0 && (
                   <>
                     <div className="mt-1 text-xs text-muted-foreground">
-                      {t("devMessageLog.commandSteps", { count: steps.length })}
+                      {t("intellipulseMessageLog.commandSteps", {
+                        count: steps.length,
+                      })}
                     </div>
-                    <StepsExecution steps={steps} />
+                    <StepsExecution steps={steps} onExecuteSteps={onExecuteSteps} />
                   </>
                 )}
               </div>
@@ -843,6 +903,6 @@ export const DevMessageLog: FC<DevMessageLogProps> = memo(
     );
   }
 );
-DevMessageLog.displayName = "DevMessageLog";
+IntellipulseMessageLog.displayName = "IntellipulseMessageLog";
 
-export default DevMessageLog;
+export default IntellipulseMessageLog;

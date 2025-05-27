@@ -1,4 +1,4 @@
-import { authAdmin, notAvailable, firestoreAdmin } from "@workspace/firebase-config/server";
+import { createSupabaseServerClient } from "@workspace/supabase-config/server";
 import { NextResponse } from "next/server";
 import { UIMessage } from "ai";
 
@@ -10,21 +10,18 @@ interface ShareRequest {
 
 export async function POST(req: Request) {
   try {
-    const authorization = req.headers.get("Authorization");
+    const authorization = req.headers.get("Authorization")?.replace("Bearer ", "");
     
-    if (!authorization || notAvailable) {
+    if (!authorization) {
       return NextResponse.json({ error: "Authorization Failed" }, { status: 401 });
     }
 
-    let userId: string;
-    try {
-      const decodedToken = await authAdmin?.verifyIdToken(authorization);
-      if (!decodedToken) {
-        return NextResponse.json({ error: "Authorization Failed" }, { status: 401 });
-      }
-      userId = decodedToken.uid;
-    } catch (error) {
-      console.error(error);
+    const supabase = createSupabaseServerClient();
+    
+    // Verify the JWT token
+    const { data: { user }, error: authError } = await supabase.auth.getUser(authorization);
+    
+    if (authError || !user) {
       return NextResponse.json({ error: "Authorization Failed" }, { status: 401 });
     }
 
@@ -37,20 +34,26 @@ export async function POST(req: Request) {
     // 共有IDを生成（ランダムなID）
     const shareId = crypto.randomUUID();
 
-    // Firestoreに共有データを保存
-    if (!firestoreAdmin) {
-      return NextResponse.json({ error: "Firebase is not available" }, { status: 500 });
+    // Supabaseに共有データを保存
+    const { error } = await supabase
+      .from('shared_conversations')
+      .insert({
+        id: shareId,
+        session_id: sessionId,
+        title,
+        messages,
+        uid: user.id,
+        created_at: new Date().toISOString(),
+        view_count: 0,
+      });
+
+    if (error) {
+      console.error("Supabase error:", error);
+      return NextResponse.json(
+        { error: "Database Error" },
+        { status: 500 }
+      );
     }
-    
-    const sharedChatRef = firestoreAdmin.collection("shared-conversations").doc(shareId);
-    await sharedChatRef.set({
-      sessionId,
-      title,
-      messages,
-      userId,
-      createdAt: new Date(),
-      viewCount: 0,
-    });
 
     return NextResponse.json({ 
       success: true, 
@@ -72,39 +75,38 @@ export async function GET(req: Request) {
       return NextResponse.json({ error: "Share ID is not specified" }, { status: 400 });
     }
 
-    // Firestoreから共有データを取得
-    if (!firestoreAdmin) {
-      return NextResponse.json({ error: "Firebase is not available" }, { status: 500 });
-    }
-    
-    const sharedChatRef = firestoreAdmin.collection("shared-conversations").doc(shareId);
-    const sharedChatDoc = await sharedChatRef.get();
+    const supabase = createSupabaseServerClient();
 
-    if (!sharedChatDoc.exists) {
+    // Supabaseから共有データを取得
+    const { data: sharedChatData, error: fetchError } = await supabase
+      .from('shared_conversations')
+      .select('*')
+      .eq('id', shareId)
+      .single();
+
+    if (fetchError || !sharedChatData) {
       return NextResponse.json({ error: "Specified shared chat not found" }, { status: 404 });
     }
 
-    const sharedChatData = sharedChatDoc.data();
-
     // 閲覧数をインクリメント
-    await sharedChatRef.set({
-      ...sharedChatData,
-      viewCount: (sharedChatData?.viewCount || 0) + 1,
-    }, { merge: true });
+    const { error: updateError } = await supabase
+      .from('shared_conversations')
+      .update({
+        view_count: (sharedChatData.view_count || 0) + 1,
+      })
+      .eq('id', shareId);
 
-    // Firestoreのタイムスタンプをシリアライズ可能な形式に変換
-    const createdAt = sharedChatData?.createdAt;
-    const createdAtDate = createdAt && typeof createdAt.toDate === 'function'
-      ? createdAt.toDate().toISOString()
-      : new Date().toISOString();
+    if (updateError) {
+      console.error("Error updating view count:", updateError);
+    }
 
     return NextResponse.json({
       success: true,
       data: {
-        title: sharedChatData?.title,
-        messages: sharedChatData?.messages,
-        createdAt: createdAtDate,
-        viewCount: (sharedChatData?.viewCount || 0) + 1,
+        title: sharedChatData.title,
+        messages: sharedChatData.messages,
+        createdAt: sharedChatData.created_at,
+        viewCount: (sharedChatData.view_count || 0) + 1,
       }
     });
   } catch (error) {

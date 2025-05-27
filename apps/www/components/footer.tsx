@@ -20,7 +20,7 @@ const Footer = memo(() => {
           className="hover:text-neutral-400 transition-colors flex items-center"
         >
           <TeamIcon size={32} />
-          <span className="font-semibold">UpLauncher</span>
+          <span className="font-semibold">Veltrix</span>
         </Link>
       </div>
       <div className="container mx-auto px-6 relative z-10">
@@ -71,7 +71,7 @@ const Footer = memo(() => {
                 </li>
                 <li>
                   <Link
-                    href="/dev"
+                    href="/intellipulse"
                     className="text-neutral-400 text-sm hover:text-white transition-colors"
                   >
                     Dev Mode
@@ -158,7 +158,7 @@ const Footer = memo(() => {
                 </li>
                 <li>
                   <Link
-                    href="https://patreon.com/uplauncherteam"
+                    href="https://patreon.com/Veltrixteam"
                     target="_blank"
                     className="text-neutral-400 text-sm hover:text-white transition-colors inline-flex items-center gap-1"
                   >
@@ -174,7 +174,7 @@ const Footer = memo(() => {
         {/* Copyright Bar */}
         <div className="pt-6 border-t border-neutral-800 text-center md:text-left md:flex md:justify-between md:items-center">
           <p className="text-xs text-neutral-500">
-            © {new Date().getFullYear()} UpLauncher Team. All rights reserved.
+            © {new Date().getFullYear()} Veltrix Team. All rights reserved.
           </p>
           <p className="text-xs text-neutral-500 mt-2 md:mt-0">
             v{buildInfo.version}

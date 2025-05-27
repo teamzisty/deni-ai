@@ -9,7 +9,7 @@ import { Loading } from "@/components/loading";
 import { Switch } from "@workspace/ui/components/switch";
 import { useChatSessions } from "@/hooks/use-chat-sessions";
 import { useTranslations } from "next-intl";
-import { auth, firestore } from "@workspace/firebase-config/client";
+import { supabase } from "@workspace/supabase-config/client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@workspace/ui/components/card";
 import { ArrowRight } from "lucide-react";
 import { useSettings } from "@/hooks/use-settings";
@@ -21,18 +21,8 @@ export default function AccountSettings() {
   const t = useTranslations();
   const router = useRouter();
   const { settings, updateSetting } = useSettings();
-
   useEffect(() => {
-    // 初期値の設定
-    if (!auth && !isLoading) {
-      toast.error(t("account.error"), {
-        description: t("account.authDisabled"),
-      });
-
-      router.push("/home");
-      return;
-    }
-
+    // For Supabase, we don't need to check for auth object existence
     if (!user && !isLoading) {
       router.push("/");
     }

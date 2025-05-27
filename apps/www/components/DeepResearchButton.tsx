@@ -32,7 +32,7 @@ interface DeepResearchButtonProps {
   disabled: boolean;
   deepResearchToggle: () => void;
   onResearchDepthChange: (depth: ResearchDepth) => void;
-  devMode?: boolean;
+  intellipulseMode?: boolean;
 }
 
 export const DeepResearchButton = memo(
@@ -42,7 +42,7 @@ export const DeepResearchButton = memo(
     deepResearchToggle,
     onResearchDepthChange,
     disabled,
-    devMode,
+    intellipulseMode,
   }: DeepResearchButtonProps) => {
     const t = useTranslations();
     const isMobile = useIsMobile();
@@ -57,8 +57,8 @@ export const DeepResearchButton = memo(
       <div className="flex items-center">
         <EasyTip
           content={
-            devMode
-              ? t("chatInput.devNotAvailable")
+            intellipulseMode
+              ? t("chatInput.intellipulseNotAvailable")
               : disabled
                 ? "Not available"
                 : t("chat.deepResearch.tooltip") || "Use Deep Research"
@@ -66,7 +66,7 @@ export const DeepResearchButton = memo(
         >
           <Button
             variant={deepResearch ? "default" : "outline"}
-            disabled={devMode || disabled}
+            disabled={intellipulseMode || disabled}
             className={cn(
               "rounded-l-full mr-0 transition-all duration-200",
               deepResearch ? "rounded-r-none" : "rounded-full"
@@ -107,7 +107,7 @@ export const DeepResearchButton = memo(
                     variant={deepResearch ? "default" : "outline"}
                     className="rounded-l-none rounded-r-full ml-0 px-2"
                     size={isMobile ? "sm" : "default"}
-                    disabled={devMode || disabled}
+                    disabled={intellipulseMode || disabled}
                   >
                     <ChevronDown className="h-4 w-4" />
                   </Button>

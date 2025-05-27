@@ -1,4 +1,4 @@
-const version = "4.0.1";
+const version = "4.1.0-beta.1";
 const codename = "Flea"
 const date = "2025-05-24"
 

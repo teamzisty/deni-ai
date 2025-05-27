@@ -22,12 +22,12 @@ import { Button } from "@workspace/ui/components/button";
 import { toast } from "sonner";
 import { useTranslations } from "next-intl";
 import { UIMessage, ChatRequestOptions, CreateMessage } from "ai";
-import { User } from "firebase/auth";
+import { User } from "@supabase/supabase-js";
 
 import logger from "@/utils/logger";
 import { useIsMobile } from "@workspace/ui/hooks/use-mobile";
 import { Loading } from "@/components/loading";
-import DevMessageLog from "@/components/DevMessageLog";
+import IntellipulseMessageLog from "@/components/IntellipulseMessageLog";
 import ChatInput from "@/components/ChatInput";
 import { useAuth } from "@/context/AuthContext";
 import { useDebouncedCallback } from "use-debounce";
@@ -46,7 +46,7 @@ const MemoizedMessageLog = memo(
     const t = useTranslations();
     return (
       <>
-        <DevMessageLog
+        <IntellipulseMessageLog
           message={message}
           onRegenerate={onRegenerate}
           isExecuting={isExecuting}
@@ -72,58 +72,75 @@ const VirtualizedMessageList = memo(({ messages, sessionId, onRegenerate, handle
   });
   const containerRef = useRef<HTMLDivElement>(null);
   
-  // スクロール位置に基づいて表示するメッセージ範囲を計算
+  // Debounced scroll handler to prevent excessive state updates
+  const handleScroll = useDebouncedCallback(() => {
+    const container = containerRef.current;
+    if (!container) return;
+
+    const scrollTop = container.scrollTop;
+    const viewportHeight = container.clientHeight;
+
+    // --- 推定高さとバッファ ---
+    const estimatedItemHeight = 200;
+    const bufferItems = 3;
+
+    const startIndex = Math.max(
+      0,
+      Math.floor(scrollTop / estimatedItemHeight) - bufferItems
+    );
+    const endIndex = Math.min(
+      messages.length,
+      Math.ceil((scrollTop + viewportHeight) / estimatedItemHeight) +
+        bufferItems
+    );
+
+    // Only update if there's an actual change
+    setVisibleRange(prev => {
+      if (prev.start === startIndex && prev.end === endIndex) {
+        return prev;
+      }
+      return { start: startIndex, end: endIndex };
+    });
+  }, 100); // 100ms debounce
+  
+  // Set up scroll listener
   useEffect(() => {
-    if (!containerRef.current) return;
+    const container = containerRef.current;
+    if (!container) return;
 
-    const handleScroll = () => {
-      const container = containerRef.current;
-      if (!container) return;
-
-      const scrollTop = container.scrollTop;
-      const viewportHeight = container.clientHeight;
-
-      // --- 推定高さとバッファ ---
-      const estimatedItemHeight = 200;
-      const bufferItems = 3;
-
-      const startIndex = Math.max(
-        0,
-        Math.floor(scrollTop / estimatedItemHeight) - bufferItems
-      );
-      const endIndex = Math.min(
-        messages.length,
-        Math.ceil((scrollTop + viewportHeight) / estimatedItemHeight) +
-          bufferItems
-      );
-
-      // 変更がある時だけ state を更新
-      setVisibleRange(prev =>
-        prev.start === startIndex && prev.end === endIndex
-          ? prev
-          : { start: startIndex, end: endIndex }
-      );
-    };
+    console.log("VirtualizedMessageList mounted, setting up scroll listener");
     
-    // 初期設定
+    // Initial calculation
     handleScroll();
     
-    const container = containerRef.current;
     container.addEventListener('scroll', handleScroll);
-    return () => container.removeEventListener('scroll', handleScroll);
-  }, [messages.length]);
+    return () => {
+      container.removeEventListener('scroll', handleScroll);
+      handleScroll.cancel(); // Cancel any pending debounced calls
+    };
+  }, [handleScroll]);
   
-  // メッセージ数が変わったときに範囲を更新
+  // Reset range when messages change significantly
   useEffect(() => {
-    setVisibleRange(prev => ({
-      start: 0,
-      end: Math.min(messages.length, 10)
-    }));
+    // Only reset if the message count has changed
+    console.log("Messages length changed, resetting visible range");
+    setVisibleRange(prev => {
+      const newEnd = Math.min(messages.length, 10);
+      if (prev.end > messages.length || messages.length <= 10) {
+        return { start: 0, end: newEnd };
+      }
+      return prev;
+    });
   }, [messages.length]);
   
-  // 表示領域のサイズを計算（非表示メッセージの高さを確保するため）
-  const totalHeight = messages.length * 200; // 推定高さを使用
-  const visibleMessages = messages.slice(visibleRange.start, visibleRange.end);
+  // Memoize visible messages to prevent unnecessary recalculations
+  const visibleMessages = useMemo(() => 
+    messages.slice(visibleRange.start, visibleRange.end),
+    [messages, visibleRange.start, visibleRange.end]
+  );
+  
+  // Calculate total height
+  const totalHeight = messages.length * 200;
   
   return (
     <div 
@@ -138,7 +155,7 @@ const VirtualizedMessageList = memo(({ messages, sessionId, onRegenerate, handle
           width: '100%' 
         }}>
           {visibleMessages.map((message, index) => (
-            <DevMessageLog
+            <IntellipulseMessageLog
               key={`${message.id || index + visibleRange.start}`}
               message={message}
               onRegenerate={onRegenerate}
@@ -153,13 +170,12 @@ const VirtualizedMessageList = memo(({ messages, sessionId, onRegenerate, handle
 });
 VirtualizedMessageList.displayName = "VirtualizedMessageList";
 
-interface DevChatProps {
+interface IntellipulseChatProps {
   sessionId: string;
   authToken: string | null;
   initialModel?: string;
   initialImage?: string;
   initialMessage?: string;
-  auth: any;
   onAnnotation?: (annotation: any) => void;
   updateSession: (id: string, updatedSession: ChatSession) => void;
   messages: UIMessage[];
@@ -180,13 +196,12 @@ interface DevChatProps {
   isUploading: boolean;
 }
 
-const DevChat: React.FC<DevChatProps> = memo(({
+const IntellipulseChat: React.FC<IntellipulseChatProps> = memo(({
   sessionId,
   authToken,
   initialModel,
   initialImage,
   initialMessage,
-  auth,
   onAnnotation,
   updateSession,
   messages,
@@ -232,15 +247,65 @@ const DevChat: React.FC<DevChatProps> = memo(({
   const sendButtonRef = useRef<HTMLButtonElement>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
+  // セッションを保存するデバウンス関数（一時的に無効化）
+  /*
+  const debouncedSaveSession = useDebouncedCallback(
+    useCallback(() => {
+      if (!sessionId || !updateSession) return;
+      
+      try {
+        // 更新するフィールドのみを含むオブジェクトを作成
+        const updates = {
+          model,
+          reasoningEffort,
+          searchEnabled,
+          advancedSearch,
+          deepResearch,
+          canvasEnabled,
+          updatedAt: Date.now(),
+        };
+        
+        // updateSessionには完全なChatSessionオブジェクトが必要な場合、
+        // 親コンポーネントで既存のセッションとマージする必要があります
+        updateSession(sessionId, updates as any);
+        logger.info("Session saved", `Session ${sessionId} updated successfully`);
+      } catch (error) {
+        logger.error("Session save failed", error);
+        console.error("Failed to save session:", error);
+      }
+    }, [sessionId, updateSession, model, reasoningEffort, searchEnabled, advancedSearch, deepResearch, canvasEnabled]),
+    1000 // 1秒のデバウンス
+  );
+  */
+
+  // メッセージが更新されたときにセッションを保存（無効化）
+  /*
+  useEffect(() => {
+    // メッセージの保存は親コンポーネントで管理されるべきなので、
+    // ここではモデルや設定の変更のみを保存
+    return;
+  }, [messages, debouncedSaveSession, sessionId]);
+  */
+
+  // モデルや設定が変更されたときにセッションを保存（無効化）
+  /*
+  useEffect(() => {
+    if (sessionId) {
+      debouncedSaveSession();
+    }
+  }, [model, reasoningEffort, searchEnabled, advancedSearch, deepResearch, canvasEnabled, debouncedSaveSession, sessionId]);
+  */
+
   useEffect(() => {
     if (
       initialMessage &&
       messages.length === 0 
     ) {
+      console.log("IntellipulseChat: Initial message set", initialMessage);
       setInput(initialMessage);
       setTimeout(() => {
         sendButtonRef.current?.click();
-        logger.info("Chat Component", t('devChat.initialMessageSent'));
+        logger.info("Chat Component", t('intellipulseChat.initialMessageSent'));
       }, 100);
     }
   }, [
@@ -249,14 +314,6 @@ const DevChat: React.FC<DevChatProps> = memo(({
     messages.length,
   ]);
 
-  useEffect(() => {
-    if (
-      (status === "streaming" || status === "submitted") &&
-      chatLogRef.current
-    ) {
-      chatLogRef.current.scrollTop = chatLogRef.current.scrollHeight;
-    }
-  }, [messages, status]);
 
   // ──────────────────────────────────────────────
   // Each assistant message should be annotated once only
@@ -271,15 +328,18 @@ const DevChat: React.FC<DevChatProps> = memo(({
         (message) => message.role === "user" && message.experimental_attachments
       )
     ) {
+      console.log("IntellipulseChat: Vision required due to user attachments");
       setVisionRequired(true);
     }
   }, [messages, visionRequired]);
 
   useEffect(() => {
     if (initialModel && model !== initialModel) {
+      console.log("IntellipulseChat: Initial model set", initialModel);
       handleModelChange(initialModel);
     }
     if (initialImage && image !== initialImage) {
+      console.log("IntellipulseChat: Initial image set", initialImage);
       setImage(initialImage);
       setVisionRequired(true);
     }
@@ -297,6 +357,12 @@ const DevChat: React.FC<DevChatProps> = memo(({
         lastMsg.annotations &&
         !processedMessagesRef.current.has(lastMsgId) // already handled?
       ) {
+
+        console.log(
+          "IntellipulseChat: Processing annotations for message",
+          lastMsgId
+        );
+
         processedMessagesRef.current.add(lastMsgId);
 
         lastMsg.annotations.forEach((annotation: any) => {
@@ -315,7 +381,7 @@ const DevChat: React.FC<DevChatProps> = memo(({
             Array.isArray(annotation.webcontainerAction.steps)
           ) {
             console.debug(
-              "DevChat: steps annotation received. Execution is disabled until user clicks the run‑all button."
+              "IntellipulseChat: steps annotation received. Execution is disabled until user clicks the run‑all button."
             );
           }
         });
@@ -326,6 +392,7 @@ const DevChat: React.FC<DevChatProps> = memo(({
   useEffect(() => {
     // Set available tools on mount - make sure webcontainer tool is always available
     setAvailableTools(prevTools => {
+      console.log("IntellipulseChat: Setting available tools", prevTools);
       if (!prevTools.includes('webcontainer')) {
         return [...prevTools, 'webcontainer'];
       }
@@ -380,31 +447,28 @@ const DevChat: React.FC<DevChatProps> = memo(({
         experimental_attachments: image
           ? [{ url: image, contentType: "image/png" }]
           : undefined,
-      };
-
-      if (auth && authToken) {
+      };      if (authToken) {
         submitOptions.headers = { Authorization: authToken };
-      } else if (auth && !authToken && user) {
-        const idToken = await user.getIdToken(true);
-        if (idToken) submitOptions.headers = { Authorization: idToken };
-        else {
-          console.error("idToken", idToken);
-          throw new Error(t("chat.error.idTokenFailed"));
-        }
-      } else if (auth) {
-        console.error("authaas", user);
-        throw new Error(t("chat.error.idTokenFailed"));
+      } else if (user) {
+        // For Supabase, we use session tokens handled at the API level
+        // Just pass user ID for authentication
+        submitOptions.headers = { 'x-user-id': user.id };
       }
 
       logger.info(
         "Send message",
-        t('devChat.sendMessageLog', { message: input.substring(0, 30) })
+        t('intellipulseChat.sendMessageLog', { message: input.substring(0, 30) })
       );
-      if (image) logger.info("Send message", t('devChat.sendImageLog'));
+      if (image) logger.info("Send message", t('intellipulseChat.sendImageLog'));
 
       handleSubmit(event as any, submitOptions);
       setImage(null);
       setRetryCount(0);
+
+      // メッセージ送信後にセッションを即座に保存（無効化）
+      // debouncedSaveSession.flush();
+
+      console.log("a")
     } catch (error) {
       console.error("Error sending message:", error);
       toast.error(t("chat.error.messageSendFailed"), {
@@ -412,7 +476,7 @@ const DevChat: React.FC<DevChatProps> = memo(({
           error instanceof Error ? error.message : t("common.error.unknown"),
       });
     }
-  }, [handleSubmit, model, reasoningEffort, image, user, auth, authToken, append, availableTools, t]);
+  }, [handleSubmit, model, reasoningEffort, image, user, authToken, append, availableTools, t]);
 
   const authReload = useCallback(async (options?: { regenerateWithModel?: string }) => {
     const submitOptions: ChatRequestOptions = {
@@ -423,18 +487,14 @@ const DevChat: React.FC<DevChatProps> = memo(({
     if (options?.regenerateWithModel) {
       handleModelChange(options.regenerateWithModel);
       console.warn(
-        t('devChat.regenerateWarning')
+        t('intellipulseChat.regenerateWarning')
       );
-    }
-
-    if (auth && authToken) {
+    }    if (authToken) {
       submitOptions.headers = { Authorization: authToken };
-    } else if (auth && !authToken && user) {
-      const idToken = await user.getIdToken();
-      if (idToken) submitOptions.headers = { Authorization: idToken };
-      else throw new Error(t("chat.error.idTokenFailed"));
-    } else if (auth) {
-      throw new Error(t("chat.error.idTokenFailed"));
+    } else if (user) {
+      // For Supabase, we use session tokens handled at the API level
+      // Just pass user ID for authentication
+      submitOptions.headers = { 'x-user-id': user.id };
     }
 
     try {
@@ -445,7 +505,7 @@ const DevChat: React.FC<DevChatProps> = memo(({
           error instanceof Error ? error.message : t("common.error.unknown"),
       });
     }
-  }, [reload, model, reasoningEffort, append, availableTools, auth, authToken, handleModelChange, t]);
+  }, [reload, model, reasoningEffort, append, availableTools, authToken, handleModelChange, t]);
 
   const handleRegenerate = useCallback(
     (modelOverride?: string) => {
@@ -490,8 +550,7 @@ const DevChat: React.FC<DevChatProps> = memo(({
             },
           });
           return;
-        }
-        if (!auth && authToken) {
+        }        if (!user) {
           resolve({
             status: "error",
             error: {
@@ -530,7 +589,7 @@ const DevChat: React.FC<DevChatProps> = memo(({
           });
       });
     },
-    [startUpload, auth, authToken, t]
+    [startUpload, user, authToken, t]
   );
 
   const handleImagePaste = useCallback(async (
@@ -611,8 +670,8 @@ const DevChat: React.FC<DevChatProps> = memo(({
         <div className="p-2 my-2 rounded-lg text-muted-foreground w-full">
           <div className="ml-3 animate-pulse">
             {modelDescriptions[model]?.reasoning
-              ? t("devChat.reasoning")
-              : t("devChat.thinking")}
+              ? t("messageLog.reasoning")
+              : t("messageLog.thinking")}
           </div>
         </div>
       </div>
@@ -647,9 +706,10 @@ const DevChat: React.FC<DevChatProps> = memo(({
   });
   ErrorMessage.displayName = "ErrorMessage";
 
-  // DevChat 本体内 (Hooks 定義より下に追加) ----------------------------
+  // IntellipulseChat 本体内 (Hooks 定義より下に追加) ----------------------------
   /** 「順番に実行」ボタンから渡ってきた steps を実行 */
   const handleExecuteSteps = useCallback((steps: any[]) => {
+    console.debug("IntellipulseChat: handleExecuteSteps called with steps:", steps);
     const event = new CustomEvent("executeSteps", { detail: { steps } });
     window.dispatchEvent(event);
   }, []);
@@ -675,7 +735,7 @@ const DevChat: React.FC<DevChatProps> = memo(({
             />
           ) : (
             messages.map((message, index) => (
-              <DevMessageLog
+              <IntellipulseMessageLog
                 key={`${message.id || index}`}
                 message={message}
                 onRegenerate={handleRegenerate}
@@ -705,7 +765,7 @@ const DevChat: React.FC<DevChatProps> = memo(({
             model={model}
             generating={memoizedStatus.isThinking || memoizedStatus.isStreaming}
             stop={stop}
-            devMode={true}
+            intellipulseMode={true}
             isUploading={isUploading}
             searchEnabled={searchEnabled}
             deepResearch={deepResearch}
@@ -729,6 +789,6 @@ const DevChat: React.FC<DevChatProps> = memo(({
   );
 });
 
-DevChat.displayName = "DevChat";
+IntellipulseChat.displayName = "IntellipulseChat";
 
-export default DevChat;
+export default IntellipulseChat;

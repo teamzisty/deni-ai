@@ -18,7 +18,6 @@ import { Button } from "@workspace/ui/components/button";
 import { useChatSessions } from "@/hooks/use-chat-sessions";
 import { Link, useRouter } from "@/i18n/navigation";
 import { Footer } from "@/components/footer";
-import { auth } from "@workspace/firebase-config/client";
 import { Loading } from "@/components/loading";
 import { useTranslations } from "next-intl";
 import { useTheme } from "next-themes";
@@ -29,13 +28,13 @@ import {
   AvatarFallback,
   AvatarImage,
 } from "@workspace/ui/components/avatar";
-import { updateProfile, sendEmailVerification } from "firebase/auth";
 import { useParams } from "next/navigation";
 import { toast } from "sonner";
 import { Alert, AlertDescription, AlertTitle } from "@workspace/ui/components/alert";
 import { useUploadThing } from "@/utils/uploadthing";
 import { useAuth } from "@/context/AuthContext";
 import { StatusAlert } from "@/components/StatusAlert";
+import { supabase } from "@workspace/supabase-config/client";
 
 // ウィザードのステップを定義
 enum WizardStep {
@@ -75,11 +74,10 @@ const GettingStartedWizard: React.FC = () => {
   // プロフィール更新中の状態
   const [isUpdatingProfile, setIsUpdatingProfile] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
-
   // uploadthing フックの設定
   const { startUpload } = useUploadThing("imageUploader", {
     headers: {
-      Authorization: auth ? currentAuthToken || "" : "",
+      Authorization: user ? currentAuthToken || "" : "",
     },
     onClientUploadComplete: (res) => {
       setPhotoURL(res[0]?.ufsUrl || "");
@@ -156,17 +154,16 @@ const GettingStartedWizard: React.FC = () => {
       setSendingVerification(false);
     }
   };
-
   // メール確認状態をチェックする
   const checkEmailVerification = async () => {
-    if (!auth || !auth.currentUser) return;
+    if (!user) return;
 
     try {
-      // リロードしてユーザーの最新状態を取得
-      await auth.currentUser.reload();
-      setEmailVerified(auth.currentUser.emailVerified);
+      // Supabase では user.email_confirmed_at で確認済みかどうかを判定
+      const isVerified = !!user.email_confirmed_at;
+      setEmailVerified(isVerified);
 
-      if (auth.currentUser.emailVerified) {
+      if (isVerified) {
         // メール確認済みの場合、次のステップへ
         toast.success(t("wizard.email.verified"));
         goToNextStep();
@@ -186,11 +183,9 @@ const GettingStartedWizard: React.FC = () => {
       return;
     }
 
-    setIsUploading(true);
-
-    try {
-      if (auth && auth.currentUser) {
-        const idToken = await auth.currentUser.getIdToken();
+    setIsUploading(true);    try {
+      if (user) {
+        const idToken = user.id;
         if (idToken) {
           setCurrentAuthToken(idToken);
         }
@@ -217,17 +212,21 @@ const GettingStartedWizard: React.FC = () => {
 
     await uploadImage(files[0]);
   };
-
   // プロフィールを更新する
   const updateUserProfile = async () => {
-    if (!auth || !auth.currentUser) return;
+    if (!user || !supabase) return;
 
     setIsUpdatingProfile(true);
     try {
-      await updateProfile(auth.currentUser, {
-        displayName: displayName,
-        photoURL: photoURL || null,
+      const { error } = await supabase.auth.updateUser({
+        data: {
+          display_name: displayName,
+          avatar_url: photoURL || null,
+        }
       });
+      
+      if (error) throw error;
+      
       toast.success(t("profile.updateSuccess"));
       goToNextStep();
     } catch (error) {
@@ -254,44 +253,33 @@ const GettingStartedWizard: React.FC = () => {
       router.push(`/chat/${session.id}`);
     }, randomNumber);
   };
-
   // 認証状態の確認
   useEffect(() => {
-    if (!auth) {
-      setIsLoading(false);
+    if (!user) {
+      router.push("/login");
       return;
     }
 
-    const event = auth.onAuthStateChanged((user) => {
-      if (!user) {
-        router.push("/login");
-        return;
-      }
+    // メール確認状態を設定
+    setEmailVerified(!!user.email_confirmed_at);
 
-      // メール確認状態を設定
-      setEmailVerified(user.emailVerified);
+    // ユーザー情報を初期値として設定
+    if (user.user_metadata?.display_name) {
+      setDisplayName(user.user_metadata.display_name);
+    }
+    if (user.user_metadata?.avatar_url) {
+      setPhotoURL(user.user_metadata.avatar_url);
+    }
 
-      // ユーザー情報を初期値として設定
-      if (user.displayName) {
-        setDisplayName(user.displayName);
-      }
-      if (user.photoURL) {
-        setPhotoURL(user.photoURL);
-      }
+    // メール確認が必要なステップを決定
+    if (!user.email_confirmed_at) {
+      setCurrentStep(WizardStep.Language);
+    } else if (!user.user_metadata?.display_name) {
+      setCurrentStep(WizardStep.Profile);
+    }
 
-      // メール確認が必要なステップを決定
-      if (!user.emailVerified) {
-        setCurrentStep(WizardStep.Language);
-      } else if (!user.displayName) {
-        setCurrentStep(WizardStep.Profile);
-      }
-
-      setIsLoading(false);
-    });
-    return () => {
-      event();
-    };
-  }, [router]);
+    setIsLoading(false);
+  }, [router, user]);
 
   if (isLoading) {
     return <Loading />;
@@ -416,12 +404,10 @@ const GettingStartedWizard: React.FC = () => {
               >
                 <Check className="mr-2 h-4 w-4" />
                 {t("wizard.email.checkButton")}
-              </Button>
-
-              <Button
+              </Button>              <Button
                 variant="link"
                 className="w-full"
-                onClick={() => auth?.signOut()}
+                onClick={() => supabase?.auth.signOut()}
               >
                 <LogOut className="mr-2 h-4 w-4" />
                 {t("accountMenu.logout")}

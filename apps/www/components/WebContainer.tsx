@@ -19,8 +19,10 @@ import {
   FileText as FileIcon,
   Trash2 as Trash2Icon,
   TerminalIcon,
+  Github,
 } from "lucide-react";
 import { MemoizedTerminal } from "@/components/MemoizedTerminal";
+import GitHubIntegration from "@/components/GitHubIntegration";
 
 // Add TypeScript interface for step status event data
 export interface StepStatusEventDetail {
@@ -1416,8 +1418,7 @@ export const WebContainerUI: React.FC<WebContainerUIProps> = memo(
             </div>
           </div>
 
-          <div className="flex-1 flex flex-col overflow-hidden">
-            <div className="px-2 py-1 bg-muted border-b border-border">
+          <div className="flex-1 flex flex-col overflow-hidden">            <div className="px-2 py-1 bg-muted border-b border-border">
               <div className="flex items-center justify-between">
                 <div className="flex items-center">
                   <button
@@ -1449,14 +1450,42 @@ export const WebContainerUI: React.FC<WebContainerUIProps> = memo(
                     </div>
                   )}
                 </div>
-                {editorTab === "code" && fileContent && (
-                  <button
-                    className="text-sm text-primary hover:text-primary/90"
-                    onClick={handleSave}
-                  >
-                    Save
-                  </button>
-                )}
+                <div className="flex items-center space-x-2">
+                  {/* GitHub Integration Button */}
+                  <GitHubIntegration
+                    chatId={chatId}
+                    onActionComplete={(success, pullRequestUrl, error) => {
+                      if (success && pullRequestUrl) {
+                        console.log('Pull request created:', pullRequestUrl);
+                        // Show success message to user
+                        alert(`Pull request created successfully!\n${pullRequestUrl}`);
+                      } else if (error) {
+                        console.error('Failed to create pull request:', error);
+                        // Show detailed error to user
+                        const errorMessage = error?.message || 'Unknown error';
+                        const errorDetails = error?.response?.data?.message || '';
+                        alert(`Failed to create pull request:\n${errorMessage}\n${errorDetails}`);
+                      }
+                    }}
+                    triggerButton={
+                      <button
+                        className="flex items-center px-2 py-1 text-xs bg-primary/10 hover:bg-primary/20 text-primary rounded border border-primary/20"
+                        title="Create GitHub Pull Request"
+                      >
+                        <Github size={12} className="mr-1" />
+                        GitHub PR
+                      </button>
+                    }
+                  />
+                  {editorTab === "code" && fileContent && (
+                    <button
+                      className="text-sm text-primary hover:text-primary/90"
+                      onClick={handleSave}
+                    >
+                      Save
+                    </button>
+                  )}
+                </div>
               </div>
             </div>
             <div className="flex-1 relative overflow-hidden">

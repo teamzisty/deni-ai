@@ -46,7 +46,7 @@ export default function BotEditorPage() {
   const t = useTranslations();
   const params = useParams<{ id: string }>();
   const router = useRouter();
-  const { auth, user, isLoading } = useAuth();
+  const { user, isLoading, supabase } = useAuth();
   const [bot, setBot] = useState<ClientBot | null>(null);
   const [loading, setLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
@@ -62,7 +62,7 @@ export default function BotEditorPage() {
   const secureFetch = new SecureFetch(user);
 
   useEffect(() => {
-    if (!user && !isLoading && auth) {
+    if (!user && !isLoading && supabase) {
       toast.error(t("shared.auth.loginRequired"));
       return;
     }
@@ -70,7 +70,7 @@ export default function BotEditorPage() {
     if (user && !isLoading) {
       secureFetch.updateUser(user);
     }
-  }, [user, isLoading, auth]);
+  }, [user, isLoading, supabase]);
 
   useEffect(() => {
     if (isLoading) return;
@@ -132,9 +132,9 @@ export default function BotEditorPage() {
         description,
         systemInstruction,
         createdBy: {
-          id: user.uid,
-          name: user.displayName,
-          verified: user.emailVerified,
+          id: user.id,
+          name: user.app_metadata.full_name,
+          verified: user.email_confirmed_at ? true : false,
         },
         createdAt: bot?.createdAt,
         instructions,

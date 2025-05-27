@@ -97,7 +97,7 @@
     "branchName": "Branch Name",
     "branchNamePlaceholder": "e.g., My New Idea"
   },
-  "devMessageLog": {
+  "intellipulseMessageLog": {
     "writeAction": "File write: {path}",
     "readAction": "File read: {path}",
     "listAction": "List directory: {path}",
@@ -128,7 +128,7 @@
     "deepResearch": "Deep Research",
     "shallowResearch": "Shallow Research",
     "advancedResearch": "Advanced Research",
-    "devNotAvailable": "Not available in Dev Mode",
+    "intellipulseNotAvailable": "Not available in Intellipulse",
     "canvas": "Canvas",
     "translate": "Translate",
     "botNotice": "You are in the bot \"{botName}\". To leave, Create a new conversations."
@@ -295,42 +295,43 @@
       "security": {
         "title": "Security",
         "description": "Manage your account security settings.",
+        "cancel": "Cancel",
         "notLoggedIn": "You must be logged in to change security settings.",
         "setupError": "Failed to set up 2FA. Please try again.",
+        "qrCodeTooLarge": "QR code is too large to display. Please use the manual entry method.",
+        "qrCode": {
+          "title": "QR Code",
+          "description": "Scan this QR code with your authenticator app to set up two-factor authentication."
+        },
         "twoFactor": {
           "title": "Two-factor Authentication",
           "description": "Add an extra layer of security to your account.",
           "label": "Two-factor Authentication",
           "sublabel": "Add an extra layer of security to your account"
         },
-        "sessions": {
-          "label": "Manage Active Sessions",
-          "sublabel": "See all devices where you're currently logged in",
-          "viewButton": "View Sessions"
-        },
-        "reauth": {
-          "title": "Confirm Your Password",
-          "description": "For security reasons, please enter your password to continue.",
-          "providerMessage": "For security reasons, you'll need to reauthenticate with {provider} to continue."
-        },
-        "qrCode": {
-          "title": "Set Up Two-factor Authentication",
-          "description": "Scan this QR code with an authenticator app like Google Authenticator or Authy.",
-          "manualEntry": "Or enter this code manually if you can't scan the QR code:",
-          "next": "Next"
-        },
-        "verify": {
-          "title": "Verify Authentication Code",
-          "description": "Enter the 6-digit code from your authenticator app to confirm setup.",
-          "verifyButton": "Verify"
-        },
-        "enabled2FA": "Two-factor authentication has been enabled",
-        "disabled2FA": "Two-factor authentication has been disabled",
-        "invalidPassword": "Incorrect password. Please try again.",
-        "errorAuth": "Incorrect password. Please try again.",
-        "errorVerifying": "Invalid authentication code. Please try again.",
-        "cancel": "Cancel",
-        "continue": "Continue"
+        "enabled": "Enabled",
+        "disabled": "Disabled",
+        "enabledStatus": "Two-factor authentication is enabled",
+        "enabledDescription": "Your account is protected with two-factor authentication.",
+        "disabledStatus": "Two-factor authentication is disabled",
+        "disabledDescription": "Your account is not protected with two-factor authentication. Enable it for better security.",
+        "activeAuthenticators": "Active Authenticators",
+        "totpAuthenticator": "TOTP Authenticator",
+        "addedOn": "Added on {date}",
+        "disable": "Disable",
+        "setupButton": "Set Up Two-Factor Authentication",
+        "settingUp": "Setting up two-factor authentication...",
+        "scanQrCode": "Scan QR Code with Authenticator App",
+        "scanQrDescription": "Scan this QR code with an authenticator app like Google Authenticator, Authy, or 1Password.",
+        "enterCodeManually": "Or enter this secret manually:",
+        "secretCopied": "Secret copied to clipboard",
+        "secretCopyFailed": "Failed to copy secret",
+        "enterVerificationCode": "Enter the 6-digit code from your app:",
+        "codePlaceholder": "000000",
+        "verifying": "Verifying...",
+        "enable2FA": "Enable 2FA",
+        "duplicateFactorError": "A two-factor authentication method already exists. Please disable the existing one before adding a new one.",
+        "enrollmentFailed": "Failed to set up two-factor authentication. Please try again."
       },
       "sidebarNav": {
         "account": "Account",
@@ -354,7 +355,7 @@
         "import": "Import All"
       },
       "devExport": {
-        "title": "Management Dev Mode Data",
+        "title": "Management Intellipulse Data",
         "description": "Export all your dev conversations to a JSON file or import them from a file."
       },
       "reauth": {
@@ -370,10 +371,6 @@
         "confirmDescription": "This will permanently delete all your conversation data from your account (if logged in) and local storage.",
         "cancel": "Cancel",
         "confirm": "Yes, delete all"
-      },
-      "deleteDevData": {
-        "title": "Delete All Dev Conversations",
-        "description": "Permanently delete all your dev conversation history. This action cannot be undone."
       },
       "accountDeletion": {
         "title": "Delete Account",
@@ -652,6 +649,7 @@
     "errorOccurred": "An error occurred: {errorContent}"
   },
   "chat": {
+    "sessionNotFound": "Chat session not found",
     "error": {
       "occurred": "An issue has occurred. If the problem persists after clearing cache and cookies, this model might be offline.",
       "imageUpload": "Cannot upload image",
@@ -876,10 +874,11 @@
       "deleting": "Deleting...",
       "success": "Account deleted successfully",
       "error": "Failed to delete account",
+      "confirm": "Confirm",
       "reauth": {
         "title": "Confirm Your Password",
         "description": "For security reasons, please enter your password to continue.",
-        "providerMessage": "For security reasons, you'll need to reauthenticate with {provider} to continue."
+        "confirmMessage": "Your data will be permanently deleted. This action cannot be undone."
       }
     },
     "password": {
@@ -931,40 +930,43 @@
       "description": "Manage your account security settings.",
       "notLoggedIn": "You must be logged in to change security settings.",
       "setupError": "Failed to set up 2FA. Please try again.",
+      "cancel": "Cancel",
+      "qrCodeTooLarge": "QR code is too large to display. Please use the manual entry method.",
+      "qrCode": {
+        "title": "QR Code",
+        "description": "Scan this QR code with your authenticator app to set up two-factor authentication."
+      },
+      "disabled2FA": "Disabled Two-factor Authentication",
+      "enabled2FA": "Enabled Two-factor Authentication",
       "twoFactor": {
         "title": "Two-factor Authentication",
         "description": "Add an extra layer of security to your account.",
         "label": "Two-factor Authentication",
         "sublabel": "Add an extra layer of security to your account"
       },
-      "sessions": {
-        "label": "Manage Active Sessions",
-        "sublabel": "See all devices where you're currently logged in",
-        "viewButton": "View Sessions"
-      },
-      "reauth": {
-        "title": "Confirm Your Password",
-        "description": "For security reasons, please enter your password to continue.",
-        "providerMessage": "For security reasons, you'll need to reauthenticate with {provider} to continue."
-      },
-      "qrCode": {
-        "title": "Set Up Two-factor Authentication",
-        "description": "Scan this QR code with an authenticator app like Google Authenticator or Authy.",
-        "manualEntry": "Or enter this code manually if you can't scan the QR code:",
-        "next": "Next"
-      },
-      "verify": {
-        "title": "Verify Authentication Code",
-        "description": "Enter the 6-digit code from your authenticator app to confirm setup.",
-        "verifyButton": "Verify"
-      },
-      "enabled2FA": "Two-factor authentication has been enabled",
-      "disabled2FA": "Two-factor authentication has been disabled",
-      "invalidPassword": "Incorrect password. Please try again.",
-      "errorAuth": "Incorrect password. Please try again.",
-      "errorVerifying": "Invalid authentication code. Please try again.",
-      "cancel": "Cancel",
-      "continue": "Continue"
+      "enabled": "Enabled",
+      "disabled": "Disabled",
+      "enabledStatus": "Two-factor authentication is enabled",
+      "enabledDescription": "Your account is protected with two-factor authentication.",
+      "disabledStatus": "Two-factor authentication is disabled",
+      "disabledDescription": "Your account is not protected with two-factor authentication. Enable it for better security.",
+      "activeAuthenticators": "Active Authenticators",
+      "totpAuthenticator": "TOTP Authenticator",
+      "addedOn": "Added on {date}",
+      "disable": "Disable",
+      "setupButton": "Set Up Two-Factor Authentication",
+      "settingUp": "Setting up two-factor authentication...",
+      "scanQrCode": "Scan QR Code with Authenticator App",
+      "scanQrDescription": "Scan this QR code with an authenticator app like Google Authenticator, Authy, or 1Password.",
+      "enterCodeManually": "Or enter this secret manually:",
+      "secretCopied": "Secret copied to clipboard",
+      "secretCopyFailed": "Failed to copy secret",
+      "enterVerificationCode": "Enter the 6-digit code from your app:",
+      "codePlaceholder": "000000",
+      "verifying": "Verifying...",
+      "enable2FA": "Enable 2FA",
+      "duplicateFactorError": "A two-factor authentication method already exists. Please disable the existing one before adding a new one.",
+      "enrollmentFailed": "Failed to set up two-factor authentication. Please try again."
     },
     "sidebarNav": {
       "account": "Account",
@@ -1494,7 +1496,7 @@
     "copied": "Translation copied to clipboard",
     "clickToOpen": "Click to view translation"
   },
-  "devSessions": {
+  "intellipulseSessions": {
     "newSession": "New Dev Session",
     "localStorageSaveFailed": "Failed to save dev sessions",
     "sessionDeletedSuccess": "Dev session deleted",
@@ -1518,9 +1520,9 @@
     "retry": "Retry",
     "retryWithError": "Retry ({count}/{max})"
   },
-  "devSidebar": {
-    "devMode": "Dev Mode",
-    "newDevChat": "New Dev Chat",
+  "intellipulseSidebar": {
+    "intellipulseMode": "Intellipulse",
+    "newIntellipulseChat": "New Chat",
     "delete": "Delete",
     "confirm": "Confirm",
     "cancel": "Cancel",
@@ -1533,8 +1535,8 @@
     "uploadImage": "Upload Image",
     "delete": "Delete"
   },
-  "devHomePage": {
-    "title": "WebContainer Dev Home",
+  "intellipulseHomePage": {
+    "title": "Getting started",
     "button": "Start New Dev Session"
   },
   "devChatPage": {

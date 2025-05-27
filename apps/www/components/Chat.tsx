@@ -21,7 +21,7 @@ import { Button } from "@workspace/ui/components/button";
 import { toast } from "sonner";
 import { useTranslations } from "next-intl";
 import { UIMessage, ChatRequestOptions } from "ai";
-import { User } from "firebase/auth"; // Import User type
+import { User } from "@supabase/supabase-js"; // Import User type
 
 import logger from "@/utils/logger";
 import { useIsMobile } from "@workspace/ui/hooks/use-mobile";
@@ -105,7 +105,6 @@ interface ChatProps {
   initialImage?: string;
   initialMessage?: string;
   updateSession: (id: string, updatedSession: ChatSession) => void;
-  auth: any; // Pass auth object if needed by useUploadThing headers
 }
 
 const Chat: React.FC<ChatProps> = ({
@@ -117,7 +116,6 @@ const Chat: React.FC<ChatProps> = ({
   initialImage,
   initialMessage,
   updateSession,
-  auth,
 }) => {
   const t = useTranslations();
   const isMobile = useIsMobile();
@@ -145,20 +143,12 @@ const Chat: React.FC<ChatProps> = ({
   const chatLogRef = useRef<HTMLDivElement>(null);
   const sendButtonRef = useRef<HTMLButtonElement>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
-
   let authTokenTemp;
 
   const handleAuthToken = async () => {
-    if (auth && authToken) {
+    if (authToken) {
       authTokenTemp = authToken;
-    } else if (auth && !authToken && user) {
-      const idToken = await user.getIdToken(true);
-      if (idToken) {
-        authTokenTemp = idToken;
-      } else {
-        throw new Error(t("chat.error.idTokenFailed"));
-      }
-    } else if (auth) {
+    } else {
       throw new Error(t("chat.error.idTokenFailed"));
     }
   }
@@ -180,9 +170,8 @@ const Chat: React.FC<ChatProps> = ({
     maxSteps: 50,
     onError: (error) => {
       toast.error(String(error));
-    },
-    headers: {
-      Authorization: auth && authToken ? authToken : "",
+    },    headers: {
+      Authorization: authToken || "",
     },
     async onToolCall({ toolCall }) {
       if (toolCall.toolName === "setTitle") {
@@ -211,9 +200,8 @@ const Chat: React.FC<ChatProps> = ({
   // const prevStatusRef = useRef(status); // No longer needed for saving logic
 
   const { isUploading, startUpload } = useUploadThing("imageUploader", {
-    headers: {
-      // Use authToken prop
-      Authorization: auth && authToken ? authToken : "",
+    headers: {        // Use authToken prop
+        Authorization: authToken || "",
     },
     onClientUploadComplete: (res) => {
       setImage(res[0]?.ufsUrl || null);
@@ -537,17 +525,8 @@ const Chat: React.FC<ChatProps> = ({
         experimental_attachments: image
           ? [{ url: image, contentType: "image/png" }] // Assume png for now
           : undefined,
-      };
-
-      if (auth && authToken) {
+      };      if (authToken) {
         submitOptions.headers = { Authorization: authToken };
-      } else if (auth && !authToken && user) {
-        // Fallback: try to get token if prop is missing but user exists
-        const idToken = await user.getIdToken(true);
-        if (idToken) submitOptions.headers = { Authorization: idToken };
-        else throw new Error(t("chat.error.idTokenFailed"));
-      } else if (auth) {
-        throw new Error(t("chat.error.idTokenFailed"));
       }
 
       logger.info(
@@ -583,17 +562,9 @@ const Chat: React.FC<ChatProps> = ({
       console.warn(
         "Regenerating with a specific model might not update API call body immediately."
       );
-    }
-
-    // Wait for 1 second before reloading
-    if (auth && authToken) {
+    }    // Wait for 1 second before reloading
+    if (authToken) {
       submitOptions.headers = { Authorization: authToken };
-    } else if (auth && !authToken && user) {
-      const idToken = await user.getIdToken();
-      if (idToken) submitOptions.headers = { Authorization: idToken };
-      else throw new Error(t("chat.error.idTokenFailed"));
-    } else if (auth) {
-      throw new Error(t("chat.error.idTokenFailed"));
     }
 
     await new Promise((resolve) => setTimeout(resolve, 300));
@@ -653,8 +624,7 @@ const Chat: React.FC<ChatProps> = ({
             },
           });
           return;
-        }
-        if (!auth && authToken) {
+        }        if (!authToken) {
           // Need auth token for upload
           resolve({
             status: "error",
@@ -693,9 +663,8 @@ const Chat: React.FC<ChatProps> = ({
               },
             });
           });
-      });
-    },
-    [startUpload, auth, authToken, t]
+      });    },
+    [startUpload, authToken, t]
   ); // Dependencies for uploadImage
 
   const handleImagePaste = async (
@@ -785,7 +754,6 @@ const Chat: React.FC<ChatProps> = ({
         currentSession={currentSession}
         user={user as User} // Use type assertion
         messages={messages}
-        chatId={sessionId} // Pass sessionId prop
       />
 
       <div

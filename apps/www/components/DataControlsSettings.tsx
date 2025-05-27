@@ -19,18 +19,7 @@ import {
   AlertDialogTrigger,
 } from "@workspace/ui/components/alert-dialog";
 import { useAuth } from "@/context/AuthContext";
-import {
-  reauthenticateWithCredential,
-  EmailAuthProvider,
-  GoogleAuthProvider,
-  reauthenticateWithPopup,
-  getMultiFactorResolver,
-  TotpMultiFactorGenerator,
-  deleteUser,
-  GithubAuthProvider,
-  AuthError, // Import AuthError type
-  MultiFactorError, // Import MultiFactorError type
-} from "firebase/auth";
+import { supabase } from "@workspace/supabase-config/client";
 import { Input } from "@workspace/ui/components/input";
 import { Label } from "@workspace/ui/components/label";
 import {
@@ -39,9 +28,8 @@ import {
   InputOTPSeparator,
   InputOTPSlot,
 } from "@workspace/ui/components/input-otp";
-import { firestore } from "@workspace/firebase-config/client";
 import { useChatSessions } from "@/hooks/use-chat-sessions";
-import { useDevSessions } from "@/hooks/use-dev-sessions";
+import { useIntellipulseSessions } from "@/hooks/use-intellipulse-sessions";
 
 export default function DataControlsSettings() {
   const [dataCollection, setDataCollection] = useState(false);
@@ -49,9 +37,8 @@ export default function DataControlsSettings() {
   const [showReauthDialog, setShowReauthDialog] = useState(false);
   const [show2FADialog, setShow2FADialog] = useState(false);
   const [password, setPassword] = useState("");
-  const [twoFaCode, setTwoFaCode] = useState("");
-  const [reauthError, setReauthError] = useState("");
-  const { user, auth } = useAuth();
+  const [twoFaCode, setTwoFaCode] = useState("");  const [reauthError, setReauthError] = useState("");
+  const { user } = useAuth();
   const t = useTranslations();
   const NextRouter = nextRouter();
   // Use the chat sessions hook
@@ -61,7 +48,7 @@ export default function DataControlsSettings() {
     exportAllSessions: exportAllDevSessions,
     importAllSessions: importAllDevSessions,
     clearAllSessions: clearAllDevSessions,
-  } = useDevSessions();
+  } = useIntellipulseSessions();
   const dialogPromiseRef = useRef<{ resolve: (value: string) => void } | null>(
     null
   );
@@ -271,7 +258,6 @@ export default function DataControlsSettings() {
       dialogPromiseRef.current = { resolve };
     });
   };
-
   const close2FADialog = () => {
     setShow2FADialog(false);
     if (dialogPromiseRef.current) {
@@ -279,74 +265,51 @@ export default function DataControlsSettings() {
       dialogPromiseRef.current = null;
     }
   };
-
-  const reauthenticateWithGoogle = async () => {
-    if (!auth || !user) return;
-
-    try {
-      const provider = new GoogleAuthProvider();
-      await reauthenticateWithPopup(user, provider);
-    } catch (error: unknown) {
-      // Changed any to unknown
-      console.error("Google reauth error:", error);
-      if (
-        error instanceof Error &&
-        (error as AuthError).code === "auth/multi-factor-auth-required"
-      ) {
-        // Cast to MultiFactorError as required by getMultiFactorResolver
-        return await handle2FAReauth(error as MultiFactorError);
-      }
-      setReauthError((error as Error).message); // Added type assertion
-    }
-  };
-
-  // Ensure the error type is MultiFactorError as expected by getMultiFactorResolver
-  const handle2FAReauth = async (error: MultiFactorError) => {
-    if (!auth) return false;
-
-    try {
-      const resolver = getMultiFactorResolver(auth, error);
-      const factor = resolver.hints[0];
-
-      if (factor && factor.factorId === TotpMultiFactorGenerator.FACTOR_ID) {
-        const tfaCode = await request2FaCode();
-        if (!tfaCode) return false;
-
-        const multiFactorAssertion =
-          TotpMultiFactorGenerator.assertionForSignIn(factor.uid, tfaCode);
-
-        await resolver.resolveSignIn(multiFactorAssertion);
-        return true;
-      }
-
-      setReauthError(t("login.invalidAuthCode"));
-      return false;
-    } catch (error: any) {
-      // Changed any to unknown
-      console.error("2FA reauth error:", error);
-      setReauthError((error as Error).message); // Added type assertion
-      return false;
-    }
-  };
-
   const reauthenticateWithPassword = async () => {
-    if (!auth || !user || !user.email) return false;
+    if (!user || !user.email || !supabase) return false;
 
     try {
-      const credential = EmailAuthProvider.credential(user.email, password);
-      await reauthenticateWithCredential(user, credential);
-      return true; // Indicate success
-    } catch (error: unknown) {
-      // Changed any to unknown
-      console.error("Password reauth error:", error);
-      if (
-        error instanceof Error &&
-        (error as AuthError).code === "auth/multi-factor-auth-required"
-      ) {
-        // Cast to MultiFactorError as required by getMultiFactorResolver
-        return await handle2FAReauth(error as MultiFactorError);
+      // For Supabase, we use signInWithPassword for reauthentication
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email: user.email,
+        password: password,
+      });
+
+      if (error) {
+        console.error("Password reauth error:", error);
+        setReauthError(error.message);
+        return false;
       }
-      setReauthError((error as Error).message); // Added type assertion
+
+      return true;
+    } catch (error: unknown) {
+      console.error("Password reauth error:", error);
+      setReauthError((error as Error).message);
+      return false;
+    }
+  };
+
+  const reauthenticateWithProvider = async (provider: 'google' | 'github') => {
+    if (!supabase) return false;
+
+    try {
+      const { data, error } = await supabase.auth.signInWithOAuth({
+        provider: provider,
+        options: {
+          redirectTo: window.location.origin,
+        },
+      });
+
+      if (error) {
+        console.error(`${provider} reauth error:`, error);
+        setReauthError(error.message);
+        return false;
+      }
+
+      return true;
+    } catch (error: unknown) {
+      console.error(`${provider} reauth error:`, error);
+      setReauthError((error as Error).message);
       return false;
     }
   };
@@ -354,15 +317,16 @@ export default function DataControlsSettings() {
   const handleReauth = async () => {
     setReauthError("");
 
-    // Check if auth and provider are available
-    if (!auth || !user) {
+    if (!user) {
       setReauthError(t("login.authRequired"));
       return;
     }
 
-    const provider = user.providerData[0]?.providerId;
+    // For Supabase, we check the app_metadata for the provider
+    const provider = user.app_metadata?.provider;
+
     // Try password reauth first
-    if (provider === "password") {
+    if (provider === "email") {
       const success = await reauthenticateWithPassword();
       if (success) {
         setShowReauthDialog(false);
@@ -372,58 +336,60 @@ export default function DataControlsSettings() {
     }
 
     // Check provider and try appropriate reauth method
-    if (provider === "google.com") {
-      const success = await reauthenticateWithGoogle();
+    if (provider === "google") {
+      const success = await reauthenticateWithProvider('google');
       if (success) {
         setShowReauthDialog(false);
         await deleteAccount();
       }
     }
 
-    if (provider === "github.com") {
-      const success = await reauthenticateWithPopup(
-        user,
-        new GithubAuthProvider()
-      );
+    if (provider === "github") {
+      const success = await reauthenticateWithProvider('github');
       if (success) {
         setShowReauthDialog(false);
         await deleteAccount();
       }
     }
   };
-
   const deleteAccount = async () => {
-    if (!user || !auth) return;
+    if (!user || !supabase) return;
 
     try {
       setIsDeleting(true);
 
-      // Delete the user's conversations data from Firestore
-      if (firestore) {
-        try {
-          // Delete all sessions using the hook's logic
-          await clearAllSessions();
-        } catch (error) {
-          console.error(
-            "Error deleting user's conversations data via hook:",
-            error
-          );
-          // Continue with account deletion even if Firestore deletion fails
-        }
+      // Delete the user's conversations data
+      try {
+        // Delete all sessions using the hook's logic
+        await clearAllSessions();
+        await clearAllDevSessions();
+      } catch (error) {
+        console.error(
+          "Error deleting user's conversations data via hook:",
+          error
+        );
+        // Continue with account deletion even if data deletion fails
       }
 
-      // Delete the user account
-      await deleteUser(user);
+      // Delete the user account using Supabase admin API
+      // Note: This would typically be done on the server side
+      const { error } = await supabase.auth.admin.deleteUser(user.id);
 
-      // Clear all local storage data (redundant if clearAllSessions worked, but safe)
+      if (error) {
+        throw new Error(error.message);
+      }
+
+      // Clear all local storage data
       localStorage.clear();
       sessionStorage.clear();
+
+      // Sign out
+      await supabase.auth.signOut();
 
       // Redirect to home page or show success message
       toast.success(t("settings.popupMessages.accountDeleted"));
       NextRouter.push("/");
     } catch (error: unknown) {
-      // Changed any to unknown
       console.error("Account deletion error:", error);
       toast.error(t("common.error.occurred"), {
         description: t("settings.popupMessages.accountDeletionError"),
@@ -690,13 +656,12 @@ export default function DataControlsSettings() {
             </AlertDialogDescription>
           </AlertDialogHeader>
 
-          <div className="space-y-4">
-            <div className="space-y-2">
+          <div className="space-y-4">            <div className="space-y-2">
               <Label htmlFor="password">{t("login.password")}</Label>
               <Input
                 id="password"
                 type="password"
-                disabled={user?.providerData[0]?.providerId != "password"}
+                disabled={user?.app_metadata?.provider !== "email"}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder={t("login.password")}
@@ -708,7 +673,7 @@ export default function DataControlsSettings() {
             )}
 
             <div className="flex flex-col gap-2">
-              {user?.providerData[0]?.providerId === "password" ? (
+              {user?.app_metadata?.provider === "email" ? (
                 <>
                   <Button onClick={handleReauth}>{t("login.continue")}</Button>
                   <Button

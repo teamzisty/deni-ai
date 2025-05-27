@@ -106,7 +106,7 @@
     "branchName": "ブランチ名",
     "branchNamePlaceholder": "例: 私の新しいアイデア"
   },
-  "devMessageLog": {
+  "intellipulseMessageLog": {
     "writeAction": "ファイル書き込み: {path}",
     "readAction": "ファイル読み込み: {path}",
     "listAction": "ディレクトリ一覧: {path}",
@@ -137,7 +137,7 @@
     "deepResearch": "詳細なリサーチ",
     "shallowResearch": "浅いリサーチ",
     "advancedResearch": "高度なリサーチ",
-    "devNotAvailable": "開発モードでは利用できません",
+    "intellipulseNotAvailable": "Intellipulseモードでは利用できません",
     "canvas": "キャンバス",
     "translate": "翻訳",
     "botNotice": "あなたは「{botName}」Botにいます。退出するには、新しい会話を作成してください。"
@@ -290,6 +290,29 @@
           "label": "二段階認証",
           "sublabel": "アカウントにセキュリティの追加レイヤーを追加"
         },
+        "enabled": "有効",
+        "disabled": "無効",
+        "enabledStatus": "二段階認証が有効になっています",
+        "enabledDescription": "アカウントは二段階認証で保護されています。",
+        "disabledStatus": "二段階認証が無効になっています",
+        "disabledDescription": "アカウントは二段階認証で保護されていません。セキュリティを向上させるために有効にしてください。",
+        "activeAuthenticators": "アクティブな認証アプリ",
+        "totpAuthenticator": "TOTP認証アプリ",
+        "addedOn": "{date}に追加",
+        "disable": "無効にする",
+        "setupButton": "二段階認証を設定",
+        "settingUp": "二段階認証を設定しています...",
+        "scanQrCode": "認証アプリでQRコードをスキャン",
+        "scanQrDescription": "Google認証システム、Authy、1Passwordなどの認証アプリでこのQRコードをスキャンしてください。",
+        "enterCodeManually": "または、この秘密鍵を手動で入力してください:",
+        "secretCopied": "秘密鍵をクリップボードにコピーしました",
+        "secretCopyFailed": "秘密鍵のコピーに失敗しました",
+        "enterVerificationCode": "アプリから6桁のコードを入力してください:",
+        "codePlaceholder": "000000",
+        "verifying": "確認中...",
+        "enable2FA": "二段階認証を有効にする",
+        "duplicateFactorError": "二段階認証方法が既に存在します。新しいものを追加する前に、既存のものを無効にしてください。",
+        "enrollmentFailed": "二段階認証の設定に失敗しました。もう一度お試しください。",
         "sessions": {
           "label": "アクティブなセッションを管理",
           "sublabel": "現在ログインしているすべてのデバイスを表示",
@@ -346,9 +369,9 @@
         "export": "すべてエクスポート",
         "import": "すべてインポート"
       },
-      "devExport": {
-        "title": "開発モードの会話を管理",
-        "description": "開発モードの会話をJSONファイルにエクスポートするか、ファイルからインポートします。"
+      "intellipulseExport": {
+        "title": "Intellipulseモードの会話を管理",
+        "description": "Intellipulseモードの会話をJSONファイルにエクスポートするか、ファイルからインポートします。"
       },
       "deleteData": {
         "title": "すべての会話を削除",
@@ -829,16 +852,17 @@
       "downloadError": "データのダウンロードに失敗しました"
     },
     "delete": {
-      "title": "アカウント削除",
+      "title": "アカウントの削除",
       "description": "アカウントとそれに関連するすべてのデータを完全に削除します。",
-      "button": "アカウント削除",
+      "button": "アカウントを削除",
+      "confirm": "確認",
       "deleting": "削除中...",
       "success": "アカウントの削除に成功しました",
       "error": "アカウントの削除に失敗しました",
       "reauth": {
         "title": "パスワードを確認",
         "description": "セキュリティ上の理由から、続行するにはパスワードを入力してください。",
-        "providerMessage": "セキュリティ上の理由から、続行するには{provider}で再認証する必要があります。"
+        "confirmMessage": "あなたのアカウントは、完全に削除されます。この操作は元に戻せません。"
       }
     },
     "password": {
@@ -896,6 +920,29 @@
         "label": "二段階認証",
         "sublabel": "アカウントにセキュリティの追加レイヤーを追加"
       },
+      "enabled": "有効",
+      "disabled": "無効",
+      "enabledStatus": "二段階認証が有効になっています",
+      "enabledDescription": "アカウントは二段階認証で保護されています。",
+      "disabledStatus": "二段階認証が無効になっています",
+      "disabledDescription": "アカウントは二段階認証で保護されていません。セキュリティを向上させるために有効にしてください。",
+      "activeAuthenticators": "アクティブな認証アプリ",
+      "totpAuthenticator": "TOTP認証アプリ",
+      "addedOn": "{date}に追加",
+      "disable": "無効にする",
+      "setupButton": "二段階認証を設定",
+      "settingUp": "二段階認証を設定しています...",
+      "scanQrCode": "認証アプリでQRコードをスキャン",
+      "scanQrDescription": "Google認証システム、Authy、1Passwordなどの認証アプリでこのQRコードをスキャンしてください。",
+      "enterCodeManually": "または、この秘密鍵を手動で入力してください:",
+      "secretCopied": "秘密鍵をクリップボードにコピーしました",
+      "secretCopyFailed": "秘密鍵のコピーに失敗しました",
+      "enterVerificationCode": "アプリから6桁のコードを入力してください:",
+      "codePlaceholder": "000000",
+      "verifying": "確認中...",
+      "enable2FA": "二段階認証を有効にする",
+      "duplicateFactorError": "二段階認証方法が既に存在します。新しいものを追加する前に、既存のものを無効にしてください。",
+      "enrollmentFailed": "二段階認証の設定に失敗しました。もう一度お試しください。",
       "sessions": {
         "label": "アクティブなセッションを管理",
         "sublabel": "現在ログインしているすべてのデバイスを表示",
@@ -1208,7 +1255,7 @@
     "introduction": {
       "title": "はじめに",
       "content": "このプライバシーポリシーは、Deni AIサービスをご利用いただく際に、お客様の個人情報がどのように収集、使用、共有されるかについて説明しています。",
-      "operatedBy": "Deni AIはUpLauncherチームによって運営されています。"
+      "operatedBy": "Deni AIはVeltrixチームによって運営されています。"
     },
     "informationCollection": {
       "title": "収集する情報",
@@ -1272,7 +1319,7 @@
     "introduction": {
       "title": "はじめに",
       "content": "Deni AIへようこそ。この利用規約は、当社のウェブサイト、製品、およびサービスの利用に適用されます。",
-      "operatedBy": "Deni AIはUpLauncherチームによって運営されています。"
+      "operatedBy": "Deni AIはVeltrixチームによって運営されています。"
     },
     "acceptance": {
       "title": "規約の承認",
@@ -1358,14 +1405,14 @@
     "copied": "翻訳をコピーしました",
     "clickToOpen": "クリックして開く"
   },
-  "devSessions": {
-    "newSession": "新しい開発セッション",
-    "localStorageSaveFailed": "開発セッションの保存に失敗しました",
-    "sessionDeletedSuccess": "開発セッションを削除しました",
-    "clearAllSuccess": "すべての開発セッションをクリアしました",
+  "intellipulseSessions": {
+    "newSession": "新しいIntellipulseセッション",
+    "localStorageSaveFailed": "Intellipulseセッションの保存に失敗しました",
+    "sessionDeletedSuccess": "Intellipulseセッションを削除しました",
+    "clearAllSuccess": "すべてのIntellipulseセッションをクリアしました",
     "viewInBrowser": "ブラウザで表示"
   },
-  "devChat": {
+  "intellipulseChat": {
     "initialMessageSent": "プロパティから初期メッセージを送信中",
     "sessionUpdated": "セッションを更新しました。",
     "visionWarning": "モデルはビジョンをサポートしていません。画像を削除します。",
@@ -1382,18 +1429,18 @@
     "retry": "再試行",
     "retryWithError": "再試行 ({count}/{max})"
   },
-  "devSidebar": {
-    "devMode": "開発モード",
-    "newDevChat": "新しい開発チャット",
+  "intellipulseSidebar": {
+    "intellipulseMode": "Intellipulseモード",
+    "newIntellipulseChat": "新しいIntellipulseチャット",
     "delete": "削除",
     "confirm": "確認",
     "cancel": "キャンセル",
     "backToHome": "ホームに戻る",
     "deleteTooltip": "セッションを削除"
   },
-  "devHomePage": {
-    "title": "WebContainer 開発ホーム",
-    "button": "新しい開発セッションを開始"
+  "intellipulseHomePage": {
+    "title": "WebContainer Intellipulseホーム",
+    "button": "新しいIntellipulseセッションを開始"
   },
   "webContainer": {
     "newFile": "新しいファイル",

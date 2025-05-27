@@ -1,9 +1,4 @@
-import {
-  authAdmin,
-  notAvailable,
-  firestoreAdmin,
-} from "@workspace/firebase-config/server";
-import { DecodedIdToken } from "firebase-admin/auth";
+import { createSupabaseServerClient } from "@workspace/supabase-config/server";
 import { NextResponse } from "next/server";
 
 interface BotsCreateRequest {
@@ -15,25 +10,19 @@ export async function POST(req: Request) {
   try {
     const authorization = req.headers.get("Authorization")?.replace("Bearer ", "");
 
-    if (!authorization || notAvailable) {
+    if (!authorization) {
       return NextResponse.json(
         { error: "Authorization Failed" },
         { status: 401 }
       );
     }
 
-    let user: DecodedIdToken;
-    try {
-      const decodedToken = await authAdmin?.verifyIdToken(authorization);
-      if (!decodedToken) {
-        return NextResponse.json(
-          { error: "Authorization Failed" },
-          { status: 401 }
-        );
-      }
-      user = decodedToken;
-    } catch (error) {
-      console.error(error);
+    const supabase = createSupabaseServerClient();
+    
+    // Verify the JWT token
+    const { data: { user }, error: authError } = await supabase.auth.getUser(authorization);
+    
+    if (authError || !user) {
       return NextResponse.json(
         { error: "Authorization Failed" },
         { status: 401 }
@@ -44,30 +33,27 @@ export async function POST(req: Request) {
 
     if (!name || !description) {
       return NextResponse.json({ error: "Invalid Request" }, { status: 400 });
-    }
-
-    // Create bot id (random UUID)
+    }    // Create bot id (random UUID)
     const botId = crypto.randomUUID();
 
-    if (!firestoreAdmin) {
+    // Save bot data to Supabase
+    const { error } = await supabase
+      .from('bots')
+      .insert({
+        id: botId,
+        name,
+        description,
+        user_id: user.id,
+        created_at: new Date().toISOString(),
+      });
+
+    if (error) {
+      console.error("Supabase error:", error);
       return NextResponse.json(
-        { error: "Firebase is not available" },
+        { error: "Database Error" },
         { status: 500 }
       );
     }
-
-    // Save bot data to Firestore
-    const botRef = firestoreAdmin.collection("deni-ai-bots").doc(botId);
-    await botRef.set({
-      name,
-      description,
-      createdBy: {
-        name: user.name,
-        id: user.uid,
-        verified: user.email_verified,
-      },
-      createdAt: Date.now(), // Timestamp,
-    });
 
     return NextResponse.json({
       success: true,

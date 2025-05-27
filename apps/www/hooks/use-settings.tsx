@@ -1,9 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback, createContext, useContext, ReactNode } from "react";
-import { firestore } from "@workspace/firebase-config/client";
 import { useAuth } from "@/context/AuthContext";
-import { doc, getDoc, setDoc } from "firebase/firestore";
 import { toast } from "sonner";
 import { useTranslations } from "next-intl";
 
@@ -30,7 +28,7 @@ const DEFAULT_SETTINGS: Settings = {
   conversationsPrivacyMode: false,  
 };
 
-const FIRESTORE_COLLECTION = "deni-ai-settings";
+const SUPABASE_TABLE = "user_settings";
 const LOCAL_STORAGE_KEY = "settings";
 
 // Define context interface
@@ -46,31 +44,31 @@ const SettingsContext = createContext<SettingsContextValue | undefined>(undefine
 
 // Provider component
 export function SettingsProvider({ children }: { children: ReactNode }) {
-  const { user } = useAuth();
+  const { user, supabase } = useAuth();
   const [settings, setSettings] = useState<Settings>(DEFAULT_SETTINGS);
-  const [isLoading, setIsLoading] = useState(true);
-  const t = useTranslations();
-
-  // Load settings from Firestore or localStorage
+  const [isLoading, setIsLoading] = useState(true);  const t = useTranslations();
+  // Load settings from Supabase or localStorage
   useEffect(() => {
     const loadSettings = async () => {
       setIsLoading(true);
       
-      try {
-        if (user && firestore) {
-          // Try to load from Firestore
-          const settingsDocRef = doc(firestore, FIRESTORE_COLLECTION, user.uid);
-          const settingsDoc = await getDoc(settingsDocRef);
+      try {        if (user && user.id && supabase) {
+          // Try to load from Supabase
+          const { data, error } = await supabase
+            .from(SUPABASE_TABLE)
+            .select('settings')
+            .eq('user_id', user.id)
+            .single();
           
-          if (settingsDoc.exists()) {
+          if (!error && data) {
             // Merge with defaults to ensure all properties exist
             const loadedSettings = {
               ...DEFAULT_SETTINGS,
-              ...settingsDoc.data() as Settings
+              ...data.settings as Settings
             };
             setSettings(loadedSettings);
           } else {
-            // No settings in Firestore yet, use defaults
+            // No settings in Supabase yet, use defaults
             setSettings(DEFAULT_SETTINGS);
           }
         } else {
@@ -96,11 +94,8 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
       } finally {
         setIsLoading(false);
       }
-    };
-
-    loadSettings();
-  }, [user]);
-
+    };    loadSettings();
+  }, [user, supabase]);
   // Update a single setting
   const updateSetting = useCallback(async <K extends keyof Settings>(
     key: K,
@@ -113,12 +108,18 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
       };
       
       // Save to the appropriate storage
-      (async () => {
-        try {
-          if (user && firestore) {
-            // Save to Firestore
-            const settingsDocRef = doc(firestore, FIRESTORE_COLLECTION, user.uid);
-            await setDoc(settingsDocRef, newSettings, { merge: true });
+      (async () => {        try {
+          if (user && user.id && supabase) {
+            // Save to Supabase
+            const { error } = await supabase
+              .from(SUPABASE_TABLE)
+              .upsert({ 
+                uid: user.id, 
+                settings: newSettings,
+                updated_at: new Date().toISOString()
+              });
+            
+            if (error) throw error;
           } else {
             // Save to localStorage
             localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(newSettings));
@@ -128,18 +129,23 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
           toast.error(t("settings.saveFailed") || "Failed to save settings");
         }
       })();
-      
-      return newSettings;
+        return newSettings;
     });
-  }, [user, t]);
-  
-  // Reset settings to defaults
+  }, [user, supabase, t]);
+    // Reset settings to defaults
   const resetSettings = useCallback(async () => {
     try {
-      if (user && firestore) {
-        // Reset in Firestore
-        const settingsDocRef = doc(firestore, FIRESTORE_COLLECTION, user.uid);
-        await setDoc(settingsDocRef, DEFAULT_SETTINGS);
+      if (user && user.id && supabase) {
+        // Reset in Supabase
+        const { error } = await supabase
+          .from(SUPABASE_TABLE)
+          .upsert({ 
+            uid: user.id, 
+            settings: DEFAULT_SETTINGS,
+            updated_at: new Date().toISOString()
+          });
+        
+        if (error) throw error;
       } else {
         // Reset in localStorage
         localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(DEFAULT_SETTINGS));
@@ -151,7 +157,7 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
       console.error("Failed to reset settings:", error);
       toast.error(t("settings.resetFailed") || "Failed to reset settings");
     }
-  }, [user, t]);
+  }, [user, supabase, t]);
 
   // Create context value
   const value: SettingsContextValue = {

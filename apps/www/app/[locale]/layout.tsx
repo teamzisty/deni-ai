@@ -12,6 +12,7 @@ import AnalyticsConsent from "@/components/AnalyticsConsent";
 import { getAnalytics } from "@/lib/getAnalytics";
 import { cookies } from "next/headers";
 import { SettingsProvider } from "@/hooks/use-settings";
+import { UpdateAlertProvider } from "@/components/UpdateAlertProvider";
 
 type Props = {
   children: React.ReactNode;
@@ -76,7 +77,6 @@ export default async function LocaleLayout({ children, params }: Props) {
   }
 
   const isAnalyticsEnabled = await getAnalyticsConsent();
-
   return (
     <NextIntlClientProvider locale={locale} messages={messages}>
       <AuthProvider>

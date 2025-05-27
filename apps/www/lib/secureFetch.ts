@@ -1,4 +1,5 @@
-import { User } from "firebase/auth";
+import { User } from "@supabase/supabase-js";
+import { supabase } from "@workspace/supabase-config/client";
 
 export class SecureFetch {
     user: User | null;
@@ -7,19 +8,23 @@ export class SecureFetch {
     }
     async fetch(url: string, options: RequestInit = {}): Promise<Response> {
         const headers = new Headers(options.headers);
-        const idToken = await this.getIdToken();
-        console.log("ID Token:", idToken);
-        headers.set("Authorization", `Bearer ${idToken}`);
+        const authToken = await this.getAuthToken();
+        console.log("Auth Token:", authToken);
+        headers.set("Authorization", `Bearer ${authToken}`);
         const response = await fetch(url, {
             ...options,
             headers
         });
         return response;
     }
-    async getIdToken(): Promise<string> {
-        if (this.user) {
-            const idToken = await this.user.getIdToken();
-            return idToken;
+    async getAuthToken(): Promise<string> {
+        if (this.user && supabase) {
+            // Get the session to access the access_token
+            const { data: { session }, error } = await supabase.auth.getSession();
+            if (error || !session) {
+                throw new Error("Failed to get session");
+            }
+            return session.access_token;
         }
         throw new Error("User is not authenticated");
     }

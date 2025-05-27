@@ -7,7 +7,7 @@ import { Input } from "@workspace/ui/components/input";
 import { Label } from "@workspace/ui/components/label";
 import { FormEvent, useState } from "react";
 import { useAuth } from "@/context/AuthContext";
-import { EmailAuthProvider, reauthenticateWithCredential, updatePassword } from "firebase/auth";
+import { supabase } from "@workspace/supabase-config/client";
 import { toast } from "sonner";
 
 export default function PasswordPage() {
@@ -45,21 +45,22 @@ export default function PasswordPage() {
     if (!user || !user.email) {
       setError(t("password.errorNoUser"));
       return;
-    }
-    
-    try {
+    }    try {
       setIsLoading(true);
       
-      // Re-authenticate user before changing password
-      const credential = EmailAuthProvider.credential(
-        user.email,
-        currentPassword
-      );
+      // Check if supabase is available
+      if (!supabase) {
+        throw new Error("Authentication service unavailable");
+      }
       
-      await reauthenticateWithCredential(user, credential);
+      // Update password using Supabase
+      const { error } = await supabase.auth.updateUser({
+        password: newPassword
+      });
       
-      // Update password
-      await updatePassword(user, newPassword);
+      if (error) {
+        throw error;
+      }
       
       // Clear form
       setCurrentPassword("");
@@ -71,12 +72,8 @@ export default function PasswordPage() {
       });
     } catch (error: any) {
       console.error("Error updating password:", error);
-      if (error.code === "auth/wrong-password") {
-        setError(t("password.errorWrongPassword"));
-      } else if (error.code === "auth/weak-password") {
+      if (error.message?.includes("Password should be at least")) {
         setError(t("password.errorWeakPassword"));
-      } else if (error.code === "auth/requires-recent-login") {
-        setError(t("password.errorRecentLogin"));
       } else {
         setError(t("password.errorGeneric"));
       }
@@ -84,11 +81,8 @@ export default function PasswordPage() {
       setIsLoading(false);
     }
   };
-
   // Check if user is signed in with a password provider
-  const isPasswordProvider = user?.providerData?.some(
-    provider => provider.providerId === "password"
-  );
+  const isPasswordProvider = user?.app_metadata?.provider === "email";
 
   return (
     <div className="space-y-6">
@@ -97,18 +91,18 @@ export default function PasswordPage() {
         <p className="text-muted-foreground">{t("password.description")}</p>
       </div>
       
-      <Card>
+      <Card className="bg-secondary/80">
         <CardHeader>
           <CardTitle>{t("password.cardTitle")}</CardTitle>
           <CardDescription>{t("password.cardDescription")}</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           {!user && (
-            <p className="text-sm text-destructive">{t("password.notLoggedIn")}</p>
+            <p className="text-sm text-yellow-500">{t("password.notLoggedIn")}</p>
           )}
           
           {user && !isPasswordProvider && (
-            <p className="text-sm text-destructive">{t("password.notPasswordProvider")}</p>
+            <p className="text-sm text-yellow-500">{t("password.notPasswordProvider")}</p>
           )}
           
           {user && isPasswordProvider && (

@@ -22,7 +22,7 @@ import {
 } from "@workspace/ui/components/dropdown-menu";
 import Image from "next/image";
 import { memo, useEffect, useState } from "react";
-import { User } from "firebase/auth";
+import { User } from "@supabase/supabase-js";
 import { Link } from "@/i18n/navigation";
 import { useChatSessions } from "@/hooks/use-chat-sessions";
 import { toast } from "sonner";
@@ -75,12 +75,11 @@ export const AccountDropdownMenu = memo(
     return (
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          {!isDisabled ? (
-            <Button variant="ghost" className="h-16 p-2 ml-1 justify-start">
-              {user?.photoURL ? (
+          {!isDisabled ? (            <Button variant="ghost" className="h-16 p-2 ml-1 justify-start">
+              {user?.user_metadata?.avatar_url ? (
                 <Image
-                  src={user.photoURL}
-                  alt={user.displayName || "User Avatar"}
+                  src={user.user_metadata.avatar_url}
+                  alt={user.user_metadata?.full_name || user.user_metadata?.name || "User Avatar"}
                   width={40}
                   height={40}
                   className={`rounded-full ${settings.privacyMode && "blur-sm"}`}
@@ -91,7 +90,7 @@ export const AccountDropdownMenu = memo(
               )}
               <div className="flex flex-col text-left group-data-[collapsible=icon]:hidden">
                 <span className={settings.privacyMode ? "blur-sm" : ""}>
-                  {truncateName(user?.displayName)}
+                  {truncateName(user?.user_metadata?.full_name || user?.user_metadata?.name)}
                 </span>
                 <span
                   className={`text-muted-foreground min-w-0 block truncate ${
@@ -116,11 +115,10 @@ export const AccountDropdownMenu = memo(
           <DropdownMenuGroup>
             {!isDisabled && (
               <DropdownMenuLabel>
-                <div className="h-16 justify-start flex items-center gap-2 md:max-w-[210px]">
-                  {user?.photoURL ? (
+                <div className="h-16 justify-start flex items-center gap-2 md:max-w-[210px]">                  {user?.user_metadata?.avatar_url ? (
                     <Image
-                      src={user.photoURL}
-                      alt={user.displayName || "User Avatar"}
+                      src={user.user_metadata.avatar_url}
+                      alt={user.user_metadata?.full_name || user.user_metadata?.name || "User Avatar"}
                       width={40}
                       height={40}
                       className={`rounded-full ${settings.privacyMode && "blur-sm"}`}
@@ -131,7 +129,7 @@ export const AccountDropdownMenu = memo(
                   )}
                   <div className="flex flex-col text-left">
                     <span className={`${settings.privacyMode && "blur-sm"}`}>
-                      {truncateName(user?.displayName)}
+                      {truncateName(user?.user_metadata?.full_name || user?.user_metadata?.name)}
                     </span>
                     <span
                       className={`text-muted-foreground min-w-0 block truncate ${
@@ -159,9 +157,9 @@ export const AccountDropdownMenu = memo(
           <DropdownMenuSeparator />
           <DropdownMenuGroup>
             <DropdownMenuItem asChild>
-              <Link href="/dev" className="w-full">
+              <Link href="/intellipulse" className="w-full">
                 <Code2 />
-                {t("devSidebar.devMode")}
+                {t("intellipulseSidebar.intellipulseMode")}
               </Link>
             </DropdownMenuItem>
           </DropdownMenuGroup>

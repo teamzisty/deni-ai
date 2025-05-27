@@ -10,7 +10,7 @@ import { ChatSessionsProvider } from "@/hooks/use-chat-sessions";
 import { HubsProvider } from "@/hooks/use-hubs";
 import { SettingsDialogProvider } from "@/context/SettingsDialogContext";
 import { SettingsDialog } from "@/components/SettingsDialog";
-import { DevSessionsProvider } from "@/hooks/use-dev-sessions";
+import { IntellipulseSessionsProvider } from "@/hooks/use-intellipulse-sessions";
 
 export default async function Layout({
   children,
@@ -25,7 +25,7 @@ export default async function Layout({
     <div className="w-full h-full">
       <TooltipProvider>
         <ChatSessionsProvider>
-          <DevSessionsProvider>
+          <IntellipulseSessionsProvider>
             <HubsProvider>
               <SettingsDialogProvider>
                 <SidebarProvider defaultOpen={defaultOpen}>
@@ -41,7 +41,7 @@ export default async function Layout({
                 </SidebarProvider>
               </SettingsDialogProvider>
             </HubsProvider>
-          </DevSessionsProvider>
+          </IntellipulseSessionsProvider>
         </ChatSessionsProvider>
       </TooltipProvider>
     </div>

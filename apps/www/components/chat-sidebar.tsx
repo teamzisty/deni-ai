@@ -449,31 +449,30 @@ function ChatSidebarMenuSession() {
 }
 
 function ChatSidebarMenuFooter() {
-  const { user, isLoading, auth } = useAuth();
+  const { user, isLoading, supabase } = useAuth();
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [isDisabled, setIsDisabled] = useState(false);
   const router = useRouter();
   const t = useTranslations();
-
   useEffect(() => {
-    if (!auth && !isLoading) {
+    if (!user && !isLoading) {
       setIsLoggedIn(false);
       setIsDisabled(true);
       return;
     }
 
-    if (auth && !isLoading) {
+    if (user && !isLoading) {
       setIsLoggedIn(!!user);
       setIsDisabled(false);
     }
-  }, [isLoading, auth, user]);
+  }, [isLoading, user]);
 
   const handleAuth = async () => {
-    if (isLoggedIn && auth) {
-      await auth.signOut();
+    if (isLoggedIn && supabase) {
+      await supabase.auth.signOut();
     } else {
       if (isDisabled) {
-        toast.error(t("account.error"), {
+        toast.error(t("common.error.occurred"), {
           description: t("account.authDisabled"),
         });
         return;

@@ -9,7 +9,7 @@ import { createXai } from "@ai-sdk/xai";
 import { createGoogleGenerativeAI, GoogleGenerativeAIProviderOptions } from "@ai-sdk/google";
 import { createOpenRouter, OpenRouterProviderOptions } from "@openrouter/ai-sdk-provider";
 import { createGroq } from "@ai-sdk/groq";
-import { authAdmin, notAvailable } from "@workspace/firebase-config/server";
+import { createSupabaseServerClient, notAvailable } from "@workspace/supabase-config/server";
 import { createVoidsOAI } from "@workspace/voids-oai-provider/index";
 import { createVoidsAP } from "@workspace/voids-ap-provider/index";
 import {
@@ -27,7 +27,7 @@ import { JSDOM } from "jsdom";
 import { VirtualConsole } from "jsdom";
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { auth } from "@workspace/firebase-config/client";
+import { supabase } from "@workspace/supabase-config/client";
 
 export async function POST(req: Request) {
   try {
@@ -48,24 +48,23 @@ export async function POST(req: Request) {
 
     if (!model || messages.length === 0) {
       return new NextResponse("Invalid request", { status: 400 });
-    }
-
-    if (auth && (!authorization || notAvailable)) {
+    }    if (supabase && (!authorization || notAvailable)) {
       return new NextResponse("Authorization failed", { status: 401 });
     }
 
-    if (auth && authorization) {
-      authAdmin
-        ?.verifyIdToken(authorization)
-        .then((decodedToken) => {
-          if (!decodedToken) {
-            return new NextResponse("Authorization failed", { status: 401 });
-          }
-        })
-        .catch((error) => {
-          console.error(error);
+    if (supabase && authorization) {
+      try {
+        const token = authorization.replace('Bearer ', '');
+        const supabaseServer = createSupabaseServerClient();
+        const { data: { user }, error } = await supabaseServer.auth.getUser(token);
+        
+        if (error || !user) {
           return new NextResponse("Authorization failed", { status: 401 });
-        });
+        }
+      } catch (error) {
+        console.error(error);
+        return new NextResponse("Authorization failed", { status: 401 });
+      }
     }
 
     const modelDescription = modelDescriptions[model];

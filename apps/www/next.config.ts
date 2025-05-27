@@ -30,7 +30,7 @@ const nextConfig: NextConfig = {
   async headers() {
     return [
       {
-        source: '/:locale/dev/:path*',
+        source: '/:locale/intellipulse/:path*',
         headers: [
           { key: 'Cross-Origin-Opener-Policy', value: 'same-origin' },
           { key: 'Cross-Origin-Embedder-Policy', value: 'require-corp' },

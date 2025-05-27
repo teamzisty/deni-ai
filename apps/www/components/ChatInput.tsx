@@ -31,7 +31,7 @@ interface ChatInputProps {
   bot?: Bot;
   sendButtonRef?: React.RefObject<HTMLButtonElement | null>;
   modelDescriptions: Record<string, ModelDescription>;
-  devMode?: boolean;
+  intellipulseMode?: boolean;
   handleInputChange: (e: React.ChangeEvent<HTMLTextAreaElement>) => void;
   deepResearchToggle: () => void;
   onResearchDepthChange?: (depth: ResearchDepth) => void;
@@ -71,7 +71,7 @@ const ChatInput = memo(  ({
     handleImageUpload,
     setImage,
     fileInputRef,
-    devMode,
+    intellipulseMode,
   }: ChatInputProps) => {
     const t = useTranslations();
     const isMobile = useIsMobile();
@@ -114,7 +114,7 @@ const ChatInput = memo(  ({
           <CanvasButton
             disabled={modelDescriptions[model]?.toolDisabled || isBot || false}
             canvasEnabled={canvasEnabled}
-            devMode={devMode}
+            intellipulseMode={intellipulseMode}
             canvasToggle={canvasToggle}
           />
           <SearchButton
@@ -130,7 +130,7 @@ const ChatInput = memo(  ({
                 !searchEnabled ||
                 false
               }
-              devMode={devMode}
+              intellipulseMode={intellipulseMode}
               deepResearch={deepResearch}
               researchDepth={researchDepth}
               deepResearchToggle={deepResearchToggle}
