@@ -120,6 +120,7 @@ export function GitHubIntegration({
   }, [supabase]);
 
   useEffect(() => {
+    if (step != "auth") return;
     const getToken = async () => {
       if (!user || !supabase) return;
 
@@ -294,7 +295,7 @@ export function GitHubIntegration({
         owner,
         repoName,
         {
-          title: settings.pullRequestTitle,
+          title: "[Intellipulse] " + settings.pullRequestTitle,
           body: settings.pullRequestDescription,
           head: settings.branchName,
           base: repo.default_branch,
@@ -424,7 +425,11 @@ export function GitHubIntegration({
                     {user.user_metadata.display_name || user.email}
                   </span>
                 </div>
-                <Button variant="ghost" size="sm" onClick={() => supabase?.auth.signOut()}>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => supabase?.auth.signOut()}
+                >
                   Sign out
                 </Button>
               </div>

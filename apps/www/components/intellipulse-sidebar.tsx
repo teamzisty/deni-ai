@@ -27,7 +27,14 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@workspace/ui/components/alert-dialog";
-import { Code2, HomeIcon, MoreHorizontal, Plus, Trash2 } from "lucide-react";
+import {
+  Code2,
+  GitBranch,
+  HomeIcon,
+  MoreHorizontal,
+  Plus,
+  Trash2,
+} from "lucide-react";
 import { Link } from "@/i18n/navigation";
 import { Badge } from "@workspace/ui/components/badge";
 import { useParams } from "next/navigation";
@@ -58,6 +65,7 @@ import {
   ContextMenuTrigger,
 } from "@workspace/ui/components/context-menu";
 import { useState } from "react";
+import { GitCloneDialog } from "./GitCloneDialog";
 
 interface GroupedSessions {
   today: IntellipulseSession[];
@@ -197,6 +205,7 @@ function IntellipulseSidebarMenuSession() {
   const groupedSessions = groupSessionsByDate(sessions);
   const t = useTranslations();
   const router = useRouter();
+  const [isGitCloneOpen, setIsGitCloneOpen] = useState(false);
 
   const handleCreate = () => {
     const session = createSession();
@@ -205,14 +214,18 @@ function IntellipulseSidebarMenuSession() {
 
   return (
     <>
+      {" "}
       <SidebarGroup>
+        <SidebarGroupLabel className="text-xs text-muted-foreground font-medium mb-2">
+          Quick Actions
+        </SidebarGroupLabel>
         <SidebarGroupContent>
           <SidebarMenu>
             <SidebarMenuItem>
               <SidebarMenuButton
                 variant={"outline"}
                 size="lg"
-                className="flex items-center justify-center"
+                className="flex items-center justify-center gap-2 h-10"
                 onClick={handleCreate}
                 tooltip={
                   t("intellipulseSidebar.newIntellipulseChat") ||
@@ -221,7 +234,7 @@ function IntellipulseSidebarMenuSession() {
                 data-sidebar="menu-button"
                 data-size="lg"
               >
-                <Plus />
+                <Plus className="h-4 w-4" />
                 <span className="group-data-[collapsible=icon]:hidden">
                   {t("intellipulseSidebar.newIntellipulseChat") ||
                     "New Intellipulse Chat"}
@@ -231,6 +244,17 @@ function IntellipulseSidebarMenuSession() {
           </SidebarMenu>
         </SidebarGroupContent>
       </SidebarGroup>
+      {(groupedSessions.today.length > 0 ||
+        groupedSessions.yesterday.length > 0 ||
+        groupedSessions.thisWeek.length > 0 ||
+        groupedSessions.thisMonth.length > 0 ||
+        groupedSessions.older.length > 0) && (
+        <SidebarGroup>
+          <SidebarGroupLabel className="text-xs text-muted-foreground font-medium">
+            Recent Sessions
+          </SidebarGroupLabel>
+        </SidebarGroup>
+      )}
       <SessionGroup
         sessions={groupedSessions.today}
         label={t("sidebar.today")}
@@ -289,11 +313,10 @@ export function IntellipulseSidebar() {
       </Drawer>
     );
   }
-
   return (
     <Sidebar collapsible="icon">
       <SidebarContent>
-        <SidebarGroup className="pt-6 pl-4 pb-0 relative mb-2">
+        <SidebarGroup className="pt-6 pl-4 pb-0 relative mb-4">
           <div className="flex items-center gap-2">
             <div className="flex items-center gap-2">
               <Link
@@ -325,7 +348,7 @@ export function IntellipulseSidebar() {
               <Button variant="outline" size="sm" className="w-full">
                 <HomeIcon className="mr-2 h-4 w-4 hidden group-data-[collapsible=icon]:block" />
                 <span className="group-data-[collapsible=icon]:hidden">
-                {t("intellipulseSidebar.backToHome") || "Back to Home"}
+                  {t("intellipulseSidebar.backToHome") || "Back to Home"}
                 </span>
               </Button>
             </Link>

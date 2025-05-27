@@ -23,6 +23,7 @@ import {
 } from "lucide-react";
 import { MemoizedTerminal } from "@/components/MemoizedTerminal";
 import GitHubIntegration from "@/components/GitHubIntegration";
+import GitCloneDialog from "./GitCloneDialog";
 
 // Add TypeScript interface for step status event data
 export interface StepStatusEventDetail {
@@ -52,6 +53,7 @@ const normalizePathUtil = (path: string): string => {
 // グローバルWebContainerインスタンスを保持
 let globalWebContainerInstance: WebContainerAPI | null = null;
 let isBooting = false; // 起動中フラグを追加
+let currentConversationId: string | null = null; // Track current conversation ID
 // Use a WeakMap to track if we've set up listeners for a WebContainer instance
 const listenersSetupMap = new WeakMap<WebContainerAPI, boolean>();
 // Track if we've shown the ready message
@@ -59,12 +61,30 @@ const readyMessageShown = false;
 
 // Add this function to handle WebContainer instance acquisition
 export const getOrCreateWebContainer = async (
-  workdirName: string
+  workdirName: string,
+  conversationId?: string
 ): Promise<WebContainerAPI> => {
+  // If conversation ID is provided and it's different from current, reset the instance
+  if (
+    conversationId &&
+    currentConversationId &&
+    conversationId !== currentConversationId
+  ) {
+    console.log(
+      `Conversation changed from ${currentConversationId} to ${conversationId}, resetting WebContainer`
+    );
+    await resetWebContainerInstance();
+  }
+
+  // Update current conversation ID
+  if (conversationId) {
+    currentConversationId = conversationId;
+  }
+
   // If there's already a global instance, return it immediately
   if (globalWebContainerInstance) {
     console.log("Reusing existing WebContainer instance");
-    return globalWebContainerInstance;
+    globalWebContainerInstance.teardown(); // Ensure the instance is ready for reuse
   }
 
   // If we're already trying to boot a container, wait for it
@@ -112,8 +132,42 @@ export const cleanupWebContainer = () => {
   }
 };
 
+// Reset WebContainer instance function for conversation switching
+export const resetWebContainerInstance = async () => {
+  if (globalWebContainerInstance) {
+    try {
+      console.log("Resetting WebContainer instance for conversation switch");
+
+      globalWebContainerInstance.teardown(); // Ensure we clean up the instance properly
+
+      // Clear the global instance and conversation tracking
+      globalWebContainerInstance = null;
+      currentConversationId = null;
+      isBooting = false;
+
+      console.log("WebContainer instance reset completed");
+    } catch (error) {
+      console.error("Error during WebContainer reset:", error);
+      // Force clear the instance even if cleanup failed
+      globalWebContainerInstance = null;
+      currentConversationId = null;
+      isBooting = false;
+    }
+  } else {
+    console.log("No WebContainer instance to reset");
+  }
+};
+
+// Get current conversation ID
+export const getCurrentConversationId = () => {
+  return currentConversationId;
+};
+
 // Get the global WebContainer instance
 export const getWebContainerInstance = () => {
+  if (!globalWebContainerInstance) {
+    return null;
+  }
   return globalWebContainerInstance;
 };
 
@@ -385,7 +439,7 @@ export const updateFileList = async () => {
 export const useWebContainer = (
   chatId: string,
   onServerReady?: (url: string) => void,
-  onError?: (message: string) => void,
+  onError?: (message: string) => void
 ) => {
   const [instance, setInstance] = React.useState<WebContainerAPI | null>(null);
   const [isLoading, setIsLoading] = React.useState(false);
@@ -473,7 +527,6 @@ export const useWebContainer = (
     },
     [expandedDirs, setFileStructure]
   );
-
   // Initialize WebContainer
   React.useEffect(() => {
     const initWebContainer = async () => {
@@ -481,7 +534,8 @@ export const useWebContainer = (
       setError(null);
       try {
         const container = await getOrCreateWebContainer(
-          "web-container-" + chatId
+          "web-container-" + chatId,
+          chatId // Pass conversation ID for reset detection
         );
         if (!listenersSetupMap.has(container)) {
           listenersSetupMap.set(container, true);
@@ -668,11 +722,7 @@ export const WebContainer: React.FC<WebContainerProps> = ({
   onError,
   children,
 }) => {
-  const webContainer = useWebContainer(
-    chatId,
-    onServerReady,
-    onError
-  );
+  const webContainer = useWebContainer(chatId, onServerReady, onError);
 
   return <>{children(webContainer)}</>;
 };
@@ -784,13 +834,13 @@ export const TerminalDisplay = memo(
           <span className="text-sm">Terminal</span>
         </div>
 
-          <MemoizedTerminal
-            logs={logs}
-            showTerminal={showTerminal}
-            terminalRef={terminalRef}
-            onInput={handleTerminalInput}
-            webContainerProcess={realWebContainerProcess}
-          />
+        <MemoizedTerminal
+          logs={logs}
+          showTerminal={showTerminal}
+          terminalRef={terminalRef}
+          onInput={handleTerminalInput}
+          webContainerProcess={realWebContainerProcess}
+        />
 
         {showTerminal && (
           <div
@@ -845,6 +895,8 @@ export const WebContainerUI: React.FC<WebContainerUIProps> = memo(
     const [editor, setEditor] = useState<any>(null);
     const [selectedFile, setSelectedFile] = useState<string | null>(null);
     const [showTerminal, setShowTerminal] = useState<boolean>(true);
+    const [showGitCloneDialog, setShowGitCloneDialog] =
+      useState<boolean>(false);
 
     // Context menu state
     const [contextMenuPath, setContextMenuPath] = useState<string | null>(null);
@@ -993,7 +1045,10 @@ export const WebContainerUI: React.FC<WebContainerUIProps> = memo(
           }
           await refreshFileStructure();
         } catch (error) {
-          console.error(`Error deleting ${isDir ? "directory" : "file"}:`, error);
+          console.error(
+            `Error deleting ${isDir ? "directory" : "file"}:`,
+            error
+          );
         }
       },
       [instance, refreshFileStructure, selectedFile, t]
@@ -1019,12 +1074,7 @@ export const WebContainerUI: React.FC<WebContainerUIProps> = memo(
           console.error(`Error creating file:`, error);
         }
       },
-      [
-        instance,
-        refreshFileStructure,
-        t,
-        setLastWebContainerAction,
-      ]
+      [instance, refreshFileStructure, t, setLastWebContainerAction]
     ); // Use original name
 
     // handleCreateNewDirectory - uses refreshFileStructure, toggleDir from hook
@@ -1406,7 +1456,7 @@ export const WebContainerUI: React.FC<WebContainerUIProps> = memo(
                   </button>
                 </div>
               </div>
-            </div>
+            </div>{" "}
             <div className="overflow-auto flex-1 min-h-0">
               {isLoading ? (
                 <div className="flex items-center justify-center h-full">
@@ -1416,9 +1466,37 @@ export const WebContainerUI: React.FC<WebContainerUIProps> = memo(
                 <div>{renderFileTree(fileStructure)}</div>
               )}
             </div>
+            {/* Clone Repository Button at the bottom */}
+            <div className="p-2 border-t border-border">
+              <GitCloneDialog
+                open={showGitCloneDialog}
+                onOpenChange={setShowGitCloneDialog}
+                onCloneComplete={async (repoUrl) => {
+                  console.log("[GitCloneDialog] Cloning repository:", repoUrl);
+                  setLastWebContainerAction({
+                    action: "gitClone",
+                    repoUrl,
+                  });
+                  setShowGitCloneDialog(false);
+                  // Optionally refresh file structure after cloning
+                  await refreshFileStructure();
+                }}
+                triggerButton={
+                  <button
+                    className="w-full flex items-center justify-center px-3 py-2 text-sm bg-primary/10 hover:bg-primary/20 text-primary rounded border border-primary/20 transition-colors"
+                    title="Clone Repository"
+                  >
+                    <Github size={14} className="mr-2" />
+                    {t("gitClone.button") || "Clone Repository"}
+                  </button>
+                }
+              />
+            </div>
           </div>
 
-          <div className="flex-1 flex flex-col overflow-hidden">            <div className="px-2 py-1 bg-muted border-b border-border">
+          <div className="flex-1 flex flex-col overflow-hidden">
+            {" "}
+            <div className="px-2 py-1 bg-muted border-b border-border">
               <div className="flex items-center justify-between">
                 <div className="flex items-center">
                   <button
@@ -1456,15 +1534,20 @@ export const WebContainerUI: React.FC<WebContainerUIProps> = memo(
                     chatId={chatId}
                     onActionComplete={(success, pullRequestUrl, error) => {
                       if (success && pullRequestUrl) {
-                        console.log('Pull request created:', pullRequestUrl);
+                        console.log("Pull request created:", pullRequestUrl);
                         // Show success message to user
-                        alert(`Pull request created successfully!\n${pullRequestUrl}`);
+                        alert(
+                          `Pull request created successfully!\n${pullRequestUrl}`
+                        );
                       } else if (error) {
-                        console.error('Failed to create pull request:', error);
+                        console.error("Failed to create pull request:", error);
                         // Show detailed error to user
-                        const errorMessage = error?.message || 'Unknown error';
-                        const errorDetails = error?.response?.data?.message || '';
-                        alert(`Failed to create pull request:\n${errorMessage}\n${errorDetails}`);
+                        const errorMessage = error?.message || "Unknown error";
+                        const errorDetails =
+                          error?.response?.data?.message || "";
+                        alert(
+                          `Failed to create pull request:\n${errorMessage}\n${errorDetails}`
+                        );
                       }
                     }}
                     triggerButton={

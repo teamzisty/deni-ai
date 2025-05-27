@@ -837,7 +837,7 @@ export const IntellipulseMessageLog: FC<IntellipulseMessageLogProps> = memo(
       <div
         className={`w-full message-log rounded-lg relative p-3 ${messageStyle}`}
       >
-        <div className="flex items-start mb-2">
+        <div className="flex items-start">
           <div className="mr-2 mt-1">{messageIcon}</div>
           <div className="flex-1">
             <MemoizedMarkdown content={messageContent} id={message.id} />

@@ -1594,5 +1594,24 @@
       "deleteSuccess": "Bot が正常に削除されました！",
       "deleteWarning": "この操作は元に戻すことができません。Botは完全に削除されます。"
     }
+  },
+  "gitClone": {
+    "title": "Gitリポジトリをクローン",
+    "description": "Gitリポジトリをワークスペースにクローンします",
+    "repositoryUrl": "リポジトリURL",
+    "repositoryUrlPlaceholder": "https://github.com/user/repository.git",
+    "urlHint": "GitHub、GitLab、BitbucketのURLをサポート",
+    "clone": "クローン",
+    "cancel": "キャンセル",
+    "cloning": "クローン中...",
+    "cloningRepository": "リポジトリをクローン中...",
+    "success": "リポジトリのクローンが完了しました！",
+    "errors": {
+      "invalidUrl": "有効なGitリポジトリのURLを入力してください",
+      "emptyUrl": "リポジトリURLは必須です",
+      "cloneFailed": "リポジトリのクローンに失敗しました",
+      "dependencyInstallFailed": "必要な依存関係のインストールに失敗しました"
+    },
+    "button": "リポジトリをクローン"
   }
 }

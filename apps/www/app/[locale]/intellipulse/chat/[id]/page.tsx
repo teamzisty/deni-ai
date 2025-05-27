@@ -23,6 +23,9 @@ import {
   webContainerProcess,
   webContainerFS,
   getWebContainerInstance,
+  getOrCreateWebContainer,
+  resetWebContainerInstance,
+  getCurrentConversationId,
   TerminalLogEntry,
 } from "@/components/WebContainer";
 import { WebContainer } from "@webcontainer/api";
@@ -97,7 +100,6 @@ export default function IntellipulseChatPage() {
       console.error("Chat error:", error);
     },
   });
-
   // Load session and its data
   useEffect(() => {
     const currentSession = getSession(id);
@@ -111,7 +113,35 @@ export default function IntellipulseChatPage() {
       }
       setIsSessionLoaded(true);
     }
-  }, [id, getSession, setMessages]);
+  }, [id, getSession, setMessages]);  // Reset WebContainer instance when conversation ID changes
+  useEffect(() => {
+    const resetWebContainer = async () => {
+      try {
+        const currentConversationId = getCurrentConversationId();
+        if (currentConversationId && currentConversationId !== id) {
+          console.log(`Conversation switching detected: ${currentConversationId} -> ${id}`);
+          
+          // Clear terminal logs when switching conversations
+          setTerminalLogs([]);
+          setActiveProcess(null);
+          setIsWaitingForInput(false);
+          
+          await resetWebContainerInstance();
+          console.log(`WebContainer reset completed for conversation: ${id}`);
+        } else if (!currentConversationId) {
+          console.log(`First conversation load: ${id}`);
+        } else {
+          console.log(`Same conversation reloaded: ${id}`);
+        }
+      } catch (error) {
+        console.error("Failed to reset WebContainer:", error);
+      }
+    };
+
+    // Reset WebContainer when switching to a different conversation
+    resetWebContainer();
+  }, [id]); // This effect runs whenever the conversation ID changes
+
   // Load messages from session when session is loaded
   useEffect(() => {
     if (session?.messages && session.messages.length > 0) {
@@ -651,7 +681,7 @@ export default function IntellipulseChatPage() {
       <style>{spinnerStyle}</style>
 
       {/* Main Chat Area */}
-      <div className="flex-1 flex flex-col">
+      <div className="flex-1 flex flex-col pb-2 pt-2 h-full">
         <HeaderArea
           model={model}
           user={user!}

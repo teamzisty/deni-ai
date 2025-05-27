@@ -1633,5 +1633,24 @@
     "openrouter/x-ai/grok-3-mini-beta": "Leaving in May 10, 2025.",
     "xai/grok-3-beta": "Advanced model with superior reasoning and extensive knowledge.",
     "xai/grok-3-mini-beta": "A lightweight model that thinks before responding."
+  },
+  "gitClone": {
+    "title": "Clone Git Repository",
+    "description": "Clone a Git repository into your workspace",
+    "repositoryUrl": "Repository URL",
+    "repositoryUrlPlaceholder": "https://github.com/user/repository.git",
+    "urlHint": "Supports GitHub, GitLab, and Bitbucket URLs",
+    "clone": "Clone",
+    "cancel": "Cancel",
+    "cloning": "Cloning...",
+    "cloningRepository": "Cloning repository...",
+    "success": "Repository cloned successfully!",
+    "errors": {
+      "invalidUrl": "Please enter a valid Git repository URL",
+      "emptyUrl": "Repository URL is required",
+      "cloneFailed": "Failed to clone repository",
+      "dependencyInstallFailed": "Failed to install required dependencies"
+    },
+    "button": "Clone Repository"
   }
 }

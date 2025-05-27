@@ -716,7 +716,7 @@ const IntellipulseChat: React.FC<IntellipulseChatProps> = memo(({
   // ---------------------------------------------------------------------
 
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex flex-col h-[95%]">
       <div
         ref={chatLogRef}
         className={cn(
