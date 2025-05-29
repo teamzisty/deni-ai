@@ -45,9 +45,9 @@ export default function DataControlsSettings() {
   const { clearAllSessions, exportAllSessions, importAllSessions } =
     useChatSessions();
   const {
-    exportAllSessions: exportAllDevSessions,
-    importAllSessions: importAllDevSessions,
-    clearAllSessions: clearAllDevSessions,
+    exportAllSessions: exportAllIntellipulseSessions,
+    importAllSessions: importAllIntellipulseSessions,
+    clearAllSessions: clearAllIntellipulseSessions,
   } = useIntellipulseSessions();
   const dialogPromiseRef = useRef<{ resolve: (value: string) => void } | null>(
     null
@@ -109,7 +109,7 @@ export default function DataControlsSettings() {
 
   const exportAllDevConversations = async () => {
     try {
-      const sessionsJson = await exportAllDevSessions(); // Use hook function
+      const sessionsJson = await exportAllIntellipulseSessions(); // Use hook function
       const parsedSessions = JSON.parse(sessionsJson); // Parse to check if empty
 
       if (parsedSessions && parsedSessions.length > 0) {
@@ -143,7 +143,7 @@ export default function DataControlsSettings() {
           // Make this async
           try {
             const jsonData = event.target?.result as string;
-            await importAllDevSessions(jsonData); // Use hook function
+            await importAllIntellipulseSessions(jsonData); // Use hook function
             // Success toast is handled within the hook now
             toast.success(t("settings.popupMessages.importSuccess"), {
               description: t("settings.popupMessages.importAllSuccess"),
@@ -242,7 +242,7 @@ export default function DataControlsSettings() {
   // Updated delete function (now async)
   const deleteAllDevConversations = async () => {
     try {
-      await clearAllDevSessions(); // Use hook function
+      await clearAllIntellipulseSessions(); // Use hook function
     } catch (error) {
       // Error toast is handled within the hook now
       console.error("Delete all error:", error);
@@ -362,7 +362,7 @@ export default function DataControlsSettings() {
       try {
         // Delete all sessions using the hook's logic
         await clearAllSessions();
-        await clearAllDevSessions();
+        await clearAllIntellipulseSessions();
       } catch (error) {
         console.error(
           "Error deleting user's conversations data via hook:",
@@ -478,10 +478,10 @@ export default function DataControlsSettings() {
         <div className="flex flex-col p-5 gap-4">
           <div className="flex-grow">
             <h3 className="text-lg font-bold">
-              {t("settings.dataControls.devExport.title")}
+              {t("settings.dataControls.intellipulseExport.title")}
             </h3>
             <p className="text-sm text-muted-foreground">
-              {t("settings.dataControls.devExport.description")}
+              {t("settings.dataControls.intellipulseExport.description")}
             </p>
           </div>
           <div className="flex flex-col md:flex-row gap-2">

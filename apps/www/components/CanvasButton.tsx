@@ -9,18 +9,18 @@ import { memo } from "react";
 interface CanvasButtonProps {
   disabled: boolean;
   canvasEnabled: boolean;
-  intellipulseMode?: boolean;
+  intellipulse?: boolean;
   canvasToggle: () => void;
 }
 
 const CanvasButton = memo(
-  ({ disabled, canvasEnabled, canvasToggle, intellipulseMode }: CanvasButtonProps) => {
+  ({ disabled, canvasEnabled, canvasToggle, intellipulse }: CanvasButtonProps) => {
     const t = useTranslations();
 
     return (
       <EasyTip
         content={
-          intellipulseMode
+          intellipulse
             ? t("chatInput.intellipulseNotAvailable")
             : disabled
               ? "Not available"
@@ -31,7 +31,7 @@ const CanvasButton = memo(
           variant={canvasEnabled ? "default" : "outline"}
           className="rounded-full"
           onClick={canvasToggle}
-          disabled={intellipulseMode || disabled}
+          disabled={intellipulse || disabled}
         >
           <Paintbrush />
         </Button>

@@ -354,7 +354,7 @@
         "export": "Export All",
         "import": "Import All"
       },
-      "devExport": {
+      "intellipulseExport": {
         "title": "Management Intellipulse Data",
         "description": "Export all your dev conversations to a JSON file or import them from a file."
       },
@@ -1521,7 +1521,7 @@
     "retryWithError": "Retry ({count}/{max})"
   },
   "intellipulseSidebar": {
-    "intellipulseMode": "Intellipulse",
+    "intellipulse": "Intellipulse",
     "newIntellipulseChat": "New Chat",
     "delete": "Delete",
     "confirm": "Confirm",
@@ -1611,8 +1611,8 @@
   },
   "modelDescriptions": {
     "openai/gpt-4-1-2025-04-14": "OpenAI's flagship model for complex tasks.",
-    "openai/gpt-4-1-mini-2025-04-14": "A smaller GPT-4-1 model with good balance.",
-    "openai/gpt-4-1-nano-2025-04-14": "The fastest, most cost-effective GPT-4-1 model.",
+    "openai/gpt-4-1-mini-2025-04-14": "A smaller GPT-4.1 model with good balance.",
+    "openai/gpt-4-1-nano-2025-04-14": "The fastest, most cost-effective GPT-4.1 model.",
     "openai/gpt-4o-2024-11-20": "Versatile, high-intelligence flagship model.",
     "openai/gpt-4o-mini-2024-07-18": "A fast, affordable small model for focused tasks.",
     "openai/o4-mini-2025-04-16": "Optimized for fast, efficient reasoning.",

@@ -305,7 +305,7 @@ export function IntellipulseSidebar() {
               </Badge>
             </DrawerTitle>
             <DrawerDescription>
-              {t("intellipulseSidebar.intellipulseMode") || "Intellipulse Mode"}
+              {t("intellipulseSidebar.intellipulse") || "Intellipulse"}
             </DrawerDescription>
             <IntellipulseSidebarMenuSession />
           </div>

@@ -137,7 +137,7 @@
     "deepResearch": "詳細なリサーチ",
     "shallowResearch": "浅いリサーチ",
     "advancedResearch": "高度なリサーチ",
-    "intellipulseNotAvailable": "Intellipulseモードでは利用できません",
+    "intellipulseNotAvailable": "Intellipulse では利用できません",
     "canvas": "キャンバス",
     "translate": "翻訳",
     "botNotice": "あなたは「{botName}」Botにいます。退出するには、新しい会話を作成してください。"
@@ -370,8 +370,8 @@
         "import": "すべてインポート"
       },
       "intellipulseExport": {
-        "title": "Intellipulseモードの会話を管理",
-        "description": "Intellipulseモードの会話をJSONファイルにエクスポートするか、ファイルからインポートします。"
+        "title": "Intellipulse の会話を管理",
+        "description": "Intellipulse の会話をJSONファイルにエクスポートするか、ファイルからインポートします。"
       },
       "deleteData": {
         "title": "すべての会話を削除",
@@ -1430,7 +1430,7 @@
     "retryWithError": "再試行 ({count}/{max})"
   },
   "intellipulseSidebar": {
-    "intellipulseMode": "Intellipulseモード",
+    "intellipulse": "Intellipulse ",
     "newIntellipulseChat": "新しいIntellipulseチャット",
     "delete": "削除",
     "confirm": "確認",
@@ -1510,8 +1510,8 @@
   },
   "modelDescriptions": {
     "openai/gpt-4-1-2025-04-14": "OpenAIの複雑なタスク向け主力モデル。",
-    "openai/gpt-4-1-mini-2025-04-14": "バランスの取れたより小型のGPT-4-1モデル。",
-    "openai/gpt-4-1-nano-2025-04-14": "最速かつ最もコスト効率の高いGPT-4-1モデル。",
+    "openai/gpt-4-1-mini-2025-04-14": "バランスの取れたより小型のGPT-4.1モデル。",
+    "openai/gpt-4-1-nano-2025-04-14": "最速かつ最もコスト効率の高いGPT-4.1モデル。",
     "openai/gpt-4o-2024-11-20": "多用途で高知能な主力モデル。",
     "openai/gpt-4o-mini-2024-07-18": "特定のタスクに適した高速で手頃な小型モデル。",
     "openai/o4-mini-2025-04-16": "高速で効率的な推論に最適化されたモデル。",

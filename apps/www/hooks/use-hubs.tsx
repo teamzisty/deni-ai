@@ -126,7 +126,7 @@ export function HubsProvider({ children }: { children: ReactNode }) {
   const hubToSupabaseData = (hub: Hub): any => {
     const data = {
       ...hub,
-      uid: user?.id || '',
+      user_id: user?.id || '',
       created_at: new Date(hub.createdAt).toISOString(),
       updated_at: new Date(hub.updatedAt).toISOString(),
       file_references: hub.fileReferences.map(fr => ({

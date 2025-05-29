@@ -238,7 +238,7 @@ export function AccountSettings() {
       const sessions = await exportAllSessions();
       const userData = {
         user: {
-          uid: user?.id,
+          user_id: user?.id,
           email: user?.email,
           displayName: user?.user_metadata?.display_name,
           photoURL: user?.user_metadata?.avatar_url,

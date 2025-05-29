@@ -159,7 +159,7 @@ export const AccountDropdownMenu = memo(
             <DropdownMenuItem asChild>
               <Link href="/intellipulse" className="w-full">
                 <Code2 />
-                {t("intellipulseSidebar.intellipulseMode")}
+                {t("intellipulseSidebar.intellipulse")}
               </Link>
             </DropdownMenuItem>
           </DropdownMenuGroup>

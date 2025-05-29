@@ -42,7 +42,7 @@ export async function POST(req: Request) {
         session_id: sessionId,
         title,
         messages,
-        uid: user.id,
+        user_id: user.id,
         created_at: new Date().toISOString(),
         view_count: 0,
       });
