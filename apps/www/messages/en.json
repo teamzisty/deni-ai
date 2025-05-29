@@ -1654,5 +1654,64 @@
       "dependencyInstallFailed": "Failed to install required dependencies"
     },
     "button": "Clone Repository"
+  },
+  "githubIntegration": {
+    "title": "GitHub Integration",
+    "description": "Create a pull request from your WebContainer changes",
+    "button": "Create Pull Request",
+    "auth": {
+      "linkRequired": "GitHub Link Required",
+      "linkMessage": "You must to link your GitHub account to create a pull request.",
+      "linkSubMessage": "You can link your account in Account Manager.",
+      "accountManager": "Account Manager",
+      "reauthorizationRequired": "Reauthorization Required",
+      "reauthorizationMessage": "Your GitHub access token has expired. Please reauthorize to continue.",
+      "reauthorizeButton": "Reauthorize GitHub",
+      "accountLinked": "Account Linked",
+      "proceed": "Proceed"
+    },
+    "setup": {
+      "signOut": "Sign out",
+      "repository": "Repository",
+      "selectRepository": "Select a repository",
+      "private": "Private",
+      "noRepositories": "No repositories found or token is invalid"
+    },
+    "review": {
+      "filesToChange": "Files to be changed",
+      "noChanges": "No file changes detected in WebContainer",
+      "branchName": "Branch Name",
+      "commitMessage": "Commit Message",
+      "pullRequestTitle": "Pull Request Title",
+      "pullRequestDescription": "Pull Request Description"
+    },
+    "creating": {
+      "title": "Creating pull request...",
+      "subtitle": "This may take a few moments"
+    },
+    "operations": {
+      "create": "CREATE",
+      "update": "UPDATE",
+      "delete": "DELETE"
+    },
+    "buttons": {
+      "cancel": "Cancel",
+      "continueToSetup": "Continue to Setup",
+      "next": "Next",
+      "createPullRequest": "Create Pull Request"
+    },
+    "errors": {
+      "selectRepository": "Please select a repository",
+      "missingSettings": "Missing required settings for pull request creation",
+      "branchExists": "Branch '{branchName}' already exists. Please choose a different name.",
+      "createFailed": "Failed to create pull request",
+      "extractFailed": "Failed to extract file changes",
+      "loadRepositoriesFailed": "Failed to load repositories",
+      "initializeFailed": "Failed to initialize GitHub service",
+      "reauthorizationFailed": "Failed to reauthorize GitHub account"
+    },
+    "success": {
+      "pullRequestCreated": "Pull request created successfully!"
+    }
   }
 }

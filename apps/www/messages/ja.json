@@ -1594,8 +1594,7 @@
       "deleteSuccess": "Bot が正常に削除されました！",
       "deleteWarning": "この操作は元に戻すことができません。Botは完全に削除されます。"
     }
-  },
-  "gitClone": {
+  },  "gitClone": {
     "title": "Gitリポジトリをクローン",
     "description": "Gitリポジトリをワークスペースにクローンします",
     "repositoryUrl": "リポジトリURL",
@@ -1613,5 +1612,64 @@
       "dependencyInstallFailed": "必要な依存関係のインストールに失敗しました"
     },
     "button": "リポジトリをクローン"
+  },
+  "githubIntegration": {
+    "title": "GitHub統合",
+    "description": "WebContainerの変更からプルリクエストを作成します",
+    "button": "プルリクエストを作成",
+    "auth": {
+      "linkRequired": "GitHubアカウントのリンクが必要",
+      "linkMessage": "プルリクエストを作成するには、GitHubアカウントをリンクする必要があります。",
+      "linkSubMessage": "アカウントマネージャーでアカウントをリンクできます。",
+      "accountManager": "アカウントマネージャー",
+      "reauthorizationRequired": "再認証が必要",
+      "reauthorizationMessage": "GitHubアクセストークンの有効期限が切れています。続行するには再認証してください。",
+      "reauthorizeButton": "GitHubを再認証",
+      "accountLinked": "アカウントがリンクされました",
+      "proceed": "続行"
+    },
+    "setup": {
+      "signOut": "サインアウト",
+      "repository": "リポジトリ",
+      "selectRepository": "リポジトリを選択",
+      "private": "プライベート",
+      "noRepositories": "リポジトリが見つからないか、トークンが無効です"
+    },
+    "review": {
+      "filesToChange": "変更されるファイル",
+      "noChanges": "WebContainerでファイルの変更が検出されませんでした",
+      "branchName": "ブランチ名",
+      "commitMessage": "コミットメッセージ",
+      "pullRequestTitle": "プルリクエストタイトル",
+      "pullRequestDescription": "プルリクエスト説明"
+    },
+    "creating": {
+      "title": "プルリクエストを作成中...",
+      "subtitle": "数分かかる場合があります"
+    },
+    "operations": {
+      "create": "作成",
+      "update": "更新",
+      "delete": "削除"
+    },
+    "buttons": {
+      "cancel": "キャンセル",
+      "continueToSetup": "セットアップに進む",
+      "next": "次へ",
+      "createPullRequest": "プルリクエストを作成"
+    },
+    "errors": {
+      "selectRepository": "リポジトリを選択してください",
+      "missingSettings": "プルリクエスト作成に必要な設定が不足しています",
+      "branchExists": "ブランチ '{branchName}' は既に存在します。別の名前を選択してください。",
+      "createFailed": "プルリクエストの作成に失敗しました",
+      "extractFailed": "ファイル変更の抽出に失敗しました",
+      "loadRepositoriesFailed": "リポジトリの読み込みに失敗しました",
+      "initializeFailed": "GitHubサービスの初期化に失敗しました",
+      "reauthorizationFailed": "GitHubアカウントの再認証に失敗しました"
+    },
+    "success": {
+      "pullRequestCreated": "プルリクエストが正常に作成されました！"
+    }
   }
 }

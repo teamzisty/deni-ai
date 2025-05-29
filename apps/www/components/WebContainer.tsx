@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState, useCallback, memo } from "react";
 import { WebContainer as WebContainerAPI } from "@webcontainer/api";
 import { useTranslations } from "next-intl";
 import Editor from "@monaco-editor/react";
-import "xterm/css/xterm.css";
+import "@xterm/xterm/css/xterm.css";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -788,9 +788,9 @@ export const TerminalDisplay = memo(
     const initializeTerminal = useCallback(async (tab: TerminalTab) => {
       if (!realWebContainerProcess || tab.terminal) return;
 
-      const { Terminal } = await import("xterm");
-      const { FitAddon } = await import("xterm-addon-fit");
-      const { WebLinksAddon } = await import("xterm-addon-web-links");
+      const { Terminal } = await import("@xterm/xterm");
+      const { FitAddon } = await import("@xterm/addon-fit");
+      const { WebLinksAddon } = await import("@xterm/addon-web-links");
 
       const terminal = new Terminal({
         cursorBlink: true,

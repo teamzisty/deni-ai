@@ -71,7 +71,7 @@ export function GitHubIntegration({
   onActionComplete,
   triggerButton,
 }: GitHubIntegrationProps) {
-  const t = useTranslations();
+  const t = useTranslations("githubIntegration");
   const [isOpen, setIsOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [step, setStep] = useState<"auth" | "setup" | "review" | "creating">(
@@ -145,10 +145,9 @@ export function GitHubIntegration({
         } else {
           // If not linked, prompt to link GitHub account
           setStep("auth");
-        }
-      } catch (err: any) {
+        }      } catch (err: any) {
         console.error("Error initializing GitHub service:", err);
-        setError(`Failed to initialize GitHub service: ${err.message}`);
+        setError(`${t("errors.initializeFailed")}: ${err.message}`);
       }
     };
 
@@ -169,9 +168,8 @@ export function GitHubIntegration({
       const repos = await gitHubService.getUserRepositories();
       // Ensure repos is always an array
       setRepositories(Array.isArray(repos) ? repos : []);
-      setError(null);
-    } catch (err: any) {
-      setError(`Failed to load repositories: ${err.message}`);
+      setError(null);    } catch (err: any) {
+      setError(`${t("errors.loadRepositoriesFailed")}: ${err.message}`);
       setRepositories([]);
     } finally {
       setIsLoading(false);
@@ -199,11 +197,9 @@ export function GitHubIntegration({
         commitMessage: generatedCommitMessage,
         pullRequestTitle: `WebContainer changes (${files.length} files)`,
         pullRequestDescription: generatedPRDescription,
-      }));
-
-      setError(null);
+      }));      setError(null);
     } catch (err: any) {
-      setError(`Failed to extract file changes: ${err.message}`);
+      setError(`${t("errors.extractFailed")}: ${err.message}`);
       setFileChanges([]);
     } finally {
       setIsLoading(false);
@@ -221,9 +217,8 @@ export function GitHubIntegration({
     }));
   };
   const handleNextStep = async () => {
-    if (step === "setup") {
-      if (!settings.selectedRepository) {
-        setError("Please select a repository");
+    if (step === "setup") {      if (!settings.selectedRepository) {
+        setError(t("errors.selectRepository"));
         return;
       }
 
@@ -249,9 +244,8 @@ export function GitHubIntegration({
         !repoName ||
         !settings.branchName ||
         !settings.commitMessage ||
-        !settings.pullRequestTitle
-      ) {
-        throw new Error("Missing required settings for pull request creation");
+        !settings.pullRequestTitle      ) {
+        throw new Error(t("errors.missingSettings"));
       }
 
       // Check if branch already exists
@@ -259,11 +253,9 @@ export function GitHubIntegration({
         owner,
         repoName,
         settings.branchName
-      );
-
-      if (branchExists) {
+      );      if (branchExists) {
         throw new Error(
-          `Branch '${settings.branchName}' already exists. Please choose a different name.`
+          t("errors.branchExists", { branchName: settings.branchName })
         );
       }
 
@@ -296,16 +288,14 @@ export function GitHubIntegration({
           head: settings.branchName,
           base: repo.default_branch,
         }
-      );
-
-      toast.success("Pull request created successfully!");
+      );      toast.success(t("success.pullRequestCreated"));
       onActionComplete?.(true, pullRequest.html_url);
       setIsOpen(false);
       resetState();
     } catch (err: any) {
       console.error("Error creating pull request:", err);
-      setError(`Failed to create pull request: ${err.message}`);
-      toast.error("Failed to create pull request");
+      setError(`${t("errors.createFailed")}: ${err.message}`);
+      toast.error(t("errors.createFailed"));
       onActionComplete?.(false);
     } finally {
       setIsLoading(false);
@@ -350,23 +340,21 @@ export function GitHubIntegration({
 
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
-      <DialogTrigger asChild>
-        {triggerButton || (
+      <DialogTrigger asChild>        {triggerButton || (
           <Button variant="outline" size="sm">
             <Github className="w-4 h-4 mr-2" />
-            Create Pull Request
+            {t("button")}
           </Button>
         )}
       </DialogTrigger>
 
-      <DialogContent className="sm:max-w-[600px] max-h-[80vh] overflow-y-auto">
-        <DialogHeader>
+      <DialogContent className="sm:max-w-[600px] max-h-[80vh] overflow-y-auto">        <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Github className="w-5 h-5" />
-            GitHub Integration
+            {t("title")}
           </DialogTitle>
           <DialogDescription>
-            Create a pull request from your WebContainer changes
+            {t("description")}
           </DialogDescription>
         </DialogHeader>
         {error && (
@@ -377,21 +365,20 @@ export function GitHubIntegration({
         )}{" "}
         {/* Authentication Step */}
         {step === "auth" &&
-          !identities.find((identity) => identity.provider === "github") && (
-            <div className="space-y-6 text-center">
+          !identities.find((identity) => identity.provider === "github") && (            <div className="space-y-6 text-center">
               <div className="space-y-2">
-                <h3 className="text-lg font-semibold">GitHub Link Required</h3>
+                <h3 className="text-lg font-semibold">{t("auth.linkRequired")}</h3>
                 <p className="text-muted-foreground">
-                  You must to link your GitHub account to create a pull request.
+                  {t("auth.linkMessage")}
                   <br />
-                  You can link your account in Account Manager.
+                  {t("auth.linkSubMessage")}
                 </p>
               </div>
 
               <Button asChild>
                 <Link href="/account" onClick={() => setIsOpen(false)}>
                   <ShieldCheck className="w-4 h-4" />
-                  Account Manager
+                  {t("auth.accountManager")}
                 </Link>
               </Button>
             </div>
@@ -399,12 +386,11 @@ export function GitHubIntegration({
         {/* Reauthorization Step */}
         {step === "auth" && 
           identities.find((identity) => identity.provider === "github") &&
-          reauthorizeRequired && (
-            <div className="space-y-6 text-center">
+          reauthorizeRequired && (            <div className="space-y-6 text-center">
               <div className="space-y-2">
-                <h3 className="text-lg font-semibold">Reauthorization Required</h3>
+                <h3 className="text-lg font-semibold">{t("auth.reauthorizationRequired")}</h3>
                 <p className="text-muted-foreground">
-                  Your GitHub access token has expired. Please reauthorize to continue.
+                  {t("auth.reauthorizationMessage")}
                 </p>
               </div>
 
@@ -419,23 +405,22 @@ export function GitHubIntegration({
                     }
                   } catch (error) {
                     console.error("Reauthorization failed:", error);
-                    toast.error("Failed to reauthorize GitHub account");
+                    toast.error(t("errors.reauthorizationFailed"));
                   }
                 }}
               >
-                Reauthorize GitHub
+                {t("auth.reauthorizeButton")}
               </Button>
             </div>
           )
           }
         {step === "auth" &&
-          identities.find((identity) => identity.provider === "github") && !reauthorizeRequired && (
-            <div className="space-y-6 text-center">
+          identities.find((identity) => identity.provider === "github") && !reauthorizeRequired && (            <div className="space-y-6 text-center">
               <div className="space-y-2">
-                <h3 className="text-lg font-semibold">Account Linked</h3>
+                <h3 className="text-lg font-semibold">{t("auth.accountLinked")}</h3>
               </div>
 
-              <Button onClick={() => setStep("setup")}>Proceed</Button>
+              <Button onClick={() => setStep("setup")}>{t("auth.proceed")}</Button>
             </div>
           )}
         {/* Setup Step */}
@@ -452,20 +437,17 @@ export function GitHubIntegration({
                   <span className="text-sm font-medium">
                     {user.user_metadata.display_name || user.email}
                   </span>
-                </div>
-                <Button
+                </div>                <Button
                   variant="ghost"
                   size="sm"
                   onClick={() => supabase?.auth.signOut()}
                 >
-                  Sign out
+                  {t("setup.signOut")}
                 </Button>
               </div>
-            )}
-
-            {gitHubService && (
+            )}            {gitHubService && (
               <div className="space-y-2">
-                <Label htmlFor="repository">Repository</Label>
+                <Label htmlFor="repository">{t("setup.repository")}</Label>
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <Button
@@ -474,7 +456,7 @@ export function GitHubIntegration({
                     >
                       {settings.selectedRepository
                         ? settings.selectedRepository.full_name
-                        : "Select a repository"}
+                        : t("setup.selectRepository")}
                       <ChevronDown className="h-4 w-4 opacity-50" />
                     </Button>
                   </DropdownMenuTrigger>
@@ -486,22 +468,20 @@ export function GitHubIntegration({
                           onClick={() => handleRepositorySelect(repo.full_name)}
                         >
                           <div className="flex items-center gap-2">
-                            <span>{repo.full_name}</span>
-                            {repo.private && (
+                            <span>{repo.full_name}</span>                            {repo.private && (
                               <span className="text-xs bg-muted px-1 rounded">
-                                Private
+                                {t("setup.private")}
                               </span>
                             )}
                           </div>
                         </DropdownMenuItem>
                       ))}
                   </DropdownMenuContent>{" "}
-                </DropdownMenu>
-                {Array.isArray(repositories) &&
+                </DropdownMenu>                {Array.isArray(repositories) &&
                   repositories.length === 0 &&
                   !isLoading && (
                     <p className="text-xs text-muted-foreground">
-                      No repositories found or token is invalid
+                      {t("setup.noRepositories")}
                     </p>
                   )}
               </div>
@@ -510,10 +490,9 @@ export function GitHubIntegration({
         )}
         {/* Review Step */}
         {step === "review" && (
-          <div className="space-y-4">
-            {fileChanges.length > 0 ? (
+          <div className="space-y-4">            {fileChanges.length > 0 ? (
               <div className="space-y-2">
-                <Label>Files to be changed ({fileChanges.length})</Label>
+                <Label>{t("review.filesToChange")} ({fileChanges.length})</Label>
                 <div className="max-h-32 overflow-y-auto border rounded p-2 bg-muted/20">
                   {fileChanges.map((file, index) => (
                     <div
@@ -529,7 +508,7 @@ export function GitHubIntegration({
                               : "bg-red-100 text-red-800"
                         }`}
                       >
-                        {file.operation.toUpperCase()}
+                        {t(`operations.${file.operation}`)}
                       </span>
                       <span className="font-mono">{file.path}</span>
                     </div>
@@ -540,13 +519,11 @@ export function GitHubIntegration({
               <Alert>
                 <AlertCircle className="h-4 w-4" />
                 <AlertDescription>
-                  No file changes detected in WebContainer
+                  {t("review.noChanges")}
                 </AlertDescription>
               </Alert>
-            )}
-
-            <div className="space-y-2">
-              <Label htmlFor="branch-name">Branch Name</Label>
+            )}            <div className="space-y-2">
+              <Label htmlFor="branch-name">{t("review.branchName")}</Label>
               <Input
                 id="branch-name"
                 value={settings.branchName}
@@ -560,7 +537,7 @@ export function GitHubIntegration({
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="commit-message">Commit Message</Label>
+              <Label htmlFor="commit-message">{t("review.commitMessage")}</Label>
               <Input
                 id="commit-message"
                 value={settings.commitMessage}
@@ -574,7 +551,7 @@ export function GitHubIntegration({
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="pr-title">Pull Request Title</Label>
+              <Label htmlFor="pr-title">{t("review.pullRequestTitle")}</Label>
               <Input
                 id="pr-title"
                 value={settings.pullRequestTitle}
@@ -588,7 +565,7 @@ export function GitHubIntegration({
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="pr-description">Pull Request Description</Label>
+              <Label htmlFor="pr-description">{t("review.pullRequestDescription")}</Label>
               <Textarea
                 id="pr-description"
                 rows={4}
@@ -603,37 +580,35 @@ export function GitHubIntegration({
             </div>
           </div>
         )}
-        {/* Creating Step */}
-        {step === "creating" && (
+        {/* Creating Step */}        {step === "creating" && (
           <div className="text-center py-8 space-y-4">
             <Loader2 className="w-8 h-8 animate-spin mx-auto" />
             <div>
-              <p className="font-medium">Creating pull request...</p>
+              <p className="font-medium">{t("creating.title")}</p>
               <p className="text-sm text-muted-foreground">
-                This may take a few moments
+                {t("creating.subtitle")}
               </p>
             </div>
           </div>
-        )}{" "}
-        <DialogFooter>
+        )}{" "}        <DialogFooter>
           <Button variant="outline" onClick={handleClose} disabled={isLoading}>
-            Cancel
+            {t("buttons.cancel")}
           </Button>
           {step === "auth" && (
             <Button onClick={() => setStep("setup")} disabled={isLoading}>
-              Continue to Setup
+              {t("buttons.continueToSetup")}
             </Button>
           )}
           {step === "setup" && (
             <Button onClick={handleNextStep} disabled={!canProceed()}>
               {isLoading && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-              Next
+              {t("buttons.next")}
             </Button>
           )}
           {step === "review" && (
             <Button onClick={handleNextStep} disabled={!canProceed()}>
               {isLoading && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-              Create Pull Request
+              {t("buttons.createPullRequest")}
             </Button>
           )}
         </DialogFooter>
