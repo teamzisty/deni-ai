@@ -66,6 +66,7 @@ export default function IntellipulseChatPage() {
     IntellipulseSession | null | undefined
   >(null);
   const [isSessionLoaded, setIsSessionLoaded] = useState(false);
+  const [iframeUrl, setIframeUrl] = useState<string | null>(null);
 
   // Model selection state
   const [model, setModel] = useState("anthropic/claude-sonnet-4-20250514");
@@ -95,6 +96,26 @@ export default function IntellipulseChatPage() {
     api: "/api/intellipulse/chat",
     body: {
       model,
+    },
+    async onToolCall({ toolCall }) {
+        if (toolCall.toolName === "read_file") {
+          const { path } = toolCall.args as { path: string };
+          const instance = getWebContainerInstance();
+          if (!instance) {
+            throw new Error("WebContainer instance is not available");
+          }
+
+          try {
+            const content = await instance.fs.readFile(path, "utf-8");
+            return {
+              type: "text",
+              text: content,
+            };
+          } catch (error) {
+            console.error("Error reading file:", error);
+            throw new Error(`Failed to read file at ${path}`);
+          }
+        }
     },
     onError: (error) => {
       console.error("Chat error:", error);
@@ -289,72 +310,6 @@ export default function IntellipulseChatPage() {
       });
 
       try {
-        // Special handling for common file operations
-        if (command.startsWith("touch ")) {
-          // Handle file creation
-          const filePath = command.substring(6).trim();
-          if (filePath) {
-            await instance.fs.writeFile(filePath, "");
-            handleLogMessage({
-              text: `File created: ${filePath}`,
-              className: "text-green-500",
-            });
-            return 0;
-          }
-        } else if (command.startsWith("mkdir ")) {
-          // Handle directory creation
-          const dirPath = command.substring(6).trim();
-          if (dirPath) {
-            // Check if parent directory exists and create if needed
-            const parts = dirPath.split("/").filter((p) => p);
-            let currentPath = "";
-            for (const part of parts) {
-              currentPath = currentPath ? `${currentPath}/${part}` : part;
-              try {
-                await instance.fs.mkdir(currentPath);
-              } catch (e) {
-                // Directory might already exist, which is fine
-              }
-            }
-            handleLogMessage({
-              text: `Directory created: ${dirPath}`,
-              className: "text-green-500",
-            });
-            return 0;
-          }
-        } else if (command.startsWith("echo ") && command.includes(" > ")) {
-          // Handle echo with file redirection
-          const match = command.match(/echo\s+["']?(.+?)["']?\s+>\s+(.+)/);
-          if (match) {
-            const content = match[1];
-            const filePath = match[2]?.trim();
-
-            if (!filePath) {
-              handleLogMessage({
-                text: "Error: No file path specified",
-                className: "text-red-500",
-              });
-              return 1;
-            }
-
-            // Ensure parent directory exists
-            const dir = filePath.substring(0, filePath.lastIndexOf("/"));
-            if (dir) {
-              try {
-                await instance.fs.mkdir(dir);
-              } catch (e) {
-                // Directory might already exist
-              }
-            }
-
-            await instance.fs.writeFile(filePath, content + "\n");
-            handleLogMessage({
-              text: `File written: ${filePath}`,
-              className: "text-green-500",
-            });
-            return 0;
-          }
-        }
 
         // Parse command and arguments for regular commands
         const parts = command.trim().split(/\s+/);
@@ -389,6 +344,19 @@ export default function IntellipulseChatPage() {
             },
           })
         );
+
+        if (args.includes("dev")) {
+          // if dev server, continue
+          handleLogMessage({
+            text: `Starting development server with command: ${command}`,
+            className: "text-blue-500",
+          });
+
+          setActiveProcess(process);
+          setIsWaitingForInput(false);
+
+          return 0;
+        }
 
         // Wait for process to exit
         const exitCode = await process.exit;
@@ -439,50 +407,102 @@ export default function IntellipulseChatPage() {
         setIsWebContainerOpen(true);
         // Wait for WebContainer to initialize
         await new Promise((resolve) => setTimeout(resolve, 1000));
-      }
-
-      // Execute each step sequentially
+      }      // Execute each step sequentially
       for (const step of steps) {
-        if (step.command) {
-          // Update step status via custom event
-          const statusEvent = new CustomEvent("stepStatusUpdate", {
-            detail: {
-              stepId: step.id,
-              status: "running",
-            },
-          });
-          window.dispatchEvent(statusEvent);
+        // Update step status to running
+        const statusEvent = new CustomEvent("stepStatusUpdate", {
+          detail: {
+            stepId: step.id,
+            status: "running",
+          },
+        });
+        window.dispatchEvent(statusEvent);
 
-          try {
-            // Execute the command directly
+        try {          // Handle different step actions
+          if (step.action === "write" && step.path && step.content !== undefined) {
+            // Handle file write operations
+            console.log("Executing step file write:", step.path);
+            
+            // Get WebContainer instance directly for immediate file write
+            const instance = getWebContainerInstance();
+            if (instance) {
+              try {
+                // Create directory if it doesn't exist
+                const dirPath = step.path.substring(0, step.path.lastIndexOf("/"));
+                if (dirPath) {
+                  await instance.fs.mkdir(dirPath, { recursive: true }).catch(() => {});
+                }
+                
+                // Write file directly
+                await instance.fs.writeFile(step.path, step.content);
+                
+                handleLogMessage({
+                  text: `File written successfully: ${step.path}`,
+                  className: "text-green-500",
+                });
+                
+                // Trigger file structure refresh through WebContainer action
+                setLastWebContainerAction({
+                  action: "refreshFileStructure",
+                  timestamp: Date.now(),
+                });
+              } catch (error) {
+                console.error("Error writing file:", error);
+                handleLogMessage({
+                  text: `Error writing file ${step.path}: ${error}`,
+                  className: "text-red-500",
+                });
+                throw error;
+              }
+            } else {
+              console.error("WebContainer instance not available");
+              handleLogMessage({
+                text: "WebContainer instance not available",
+                className: "text-red-500",
+              });
+              throw new Error("WebContainer instance not available");
+            }
+          } else if (step.action === "run" && step.command) {
+            // Handle command execution
             console.log("Executing step command:", step.command);
             await executeCommand(step.command);
 
             // Wait for command to complete
             await new Promise((resolve) => setTimeout(resolve, 2000));
+          } else if (step.command) {
+            // Backward compatibility for steps with only command (no action field)
+            console.log("Executing step command (legacy):", step.command);
+            await executeCommand(step.command);
 
-            // Update step status to completed
-            const completeEvent = new CustomEvent("stepStatusUpdate", {
-              detail: {
-                stepId: step.id,
-                status: "completed",
-                output: "Command executed successfully",
-              },
-            });
-            window.dispatchEvent(completeEvent);
-          } catch (error) {
-            console.error("Error executing step:", error);
-            // Update step status to failed
-            const failEvent = new CustomEvent("stepStatusUpdate", {
-              detail: {
-                stepId: step.id,
-                status: "failed",
-                output:
-                  error instanceof Error ? error.message : "Unknown error",
-              },
-            });
-            window.dispatchEvent(failEvent);
+            // Wait for command to complete
+            await new Promise((resolve) => setTimeout(resolve, 2000));
+          } else {
+            console.warn("Step has no valid action or command:", step);
           }
+
+          // Update step status to completed
+          const completeEvent = new CustomEvent("stepStatusUpdate", {
+            detail: {
+              stepId: step.id,
+              status: "completed",
+              output: step.action === "write" 
+                ? `File written successfully: ${step.path}`
+                : "Command executed successfully",
+            },
+          });
+          window.dispatchEvent(completeEvent);
+        } catch (error) {
+          console.error("Error executing step:", error);
+          // Update step status to failed
+          const failEvent = new CustomEvent("stepStatusUpdate", {
+            detail: {
+              stepId: step.id,
+              status: "failed",
+              output:
+                error instanceof Error ? error.message : "Unknown error",
+            },
+          });
+          window.dispatchEvent(failEvent);
         }
       }
     };
@@ -530,12 +550,11 @@ export default function IntellipulseChatPage() {
         };
 
         updateSession(id, updatedSession);
-        console.log("Session saved successfully:", id);
-      } catch (error) {
+        console.log("Session saved successfully:", id);      } catch (error) {
         console.error("Error saving session:", error);
       }
     }, [id, session, messages, getSession, updateSession, isSessionLoaded]),
-    2000 // 2秒のデバウンス
+    2000 // 2-second debounce
   );
 
   // Save session when messages change (only after session is loaded)
@@ -579,6 +598,7 @@ export default function IntellipulseChatPage() {
   const handleServerReady = useCallback(
     (url: string) => {
       console.log("Server ready:", url);
+      setIframeUrl(url);
       handleLogMessage({
         text: `Server ready at: ${url}`,
         className: "text-green-500",
@@ -736,6 +756,7 @@ export default function IntellipulseChatPage() {
           <div className="flex-1 overflow-hidden">
             <MemoizedWebContainerUI
               chatId={id}
+              iframeUrl={iframeUrl!}
               onServerReady={handleServerReady}
               onError={handleWebContainerError}
             />

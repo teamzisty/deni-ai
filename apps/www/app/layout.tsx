@@ -8,8 +8,12 @@ import { Inter } from "next/font/google";
 import Script from "next/script";
 
 const notoSansJP = Noto_Sans_JP({
-  subsets: ["latin"],
-  variable: "--font-noto-sans-jp",
+  subsets: ['latin'],
+  weight: ['400', '700'],
+  preload: false,
+  variable: '--font-noto-sans-jp',
+  display: 'swap',
+  fallback: ['Hiragino Sans', 'Hiragino Kaku Gothic ProN', 'sans-serif'],
 });
 
 const inter = Inter({
@@ -59,7 +63,7 @@ export default async function RootLayout({
         />
       </head>
       <body
-        className={`${inter.variable} ${jetbrainsMono.variable} ${notoSansJP.variable} bg-background font-sans antialiased text-foreground`}
+        className={`${jetbrainsMono.variable} ${inter.variable} ${notoSansJP.variable} overflow-hidden bg-background font-sans --font-noto-sans-jp antialiased text-foreground`}
       >
         {" "}
         <ThemeProvider

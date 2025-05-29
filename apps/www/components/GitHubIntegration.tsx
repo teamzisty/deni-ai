@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect } from "react";
 import { Button } from "@workspace/ui/components/button";
 import {
   Dialog,
@@ -21,11 +21,8 @@ import { Input } from "@workspace/ui/components/input";
 import { Label } from "@workspace/ui/components/label";
 import { Textarea } from "@workspace/ui/components/textarea";
 import {
-  GitBranch,
   Github,
-  ExternalLink,
   AlertCircle,
-  CheckCircle2,
   Loader2,
   ChevronDown,
   ShieldCheck,
@@ -38,11 +35,9 @@ import GitHubService, {
 } from "@/lib/github-service";
 import type { User, UserIdentity } from "@supabase/supabase-js";
 import { Alert, AlertDescription } from "@workspace/ui/components/alert";
-import { getWebContainerInstance } from "./WebContainer";
 
 // Import from absolute path instead of relative path
 import { githubOAuth } from "@/lib/github-oauth";
-import { supabase } from "@workspace/supabase-config/client";
 import Link from "next/link";
 import { useAuth } from "@/context/AuthContext";
 
@@ -95,6 +90,7 @@ export function GitHubIntegration({
   const [gitHubService, setGitHubService] = useState<GitHubService | null>(
     null
   );
+  const [reauthorizeRequired, setReauthorizeRequired] = useState(true);
   const [fileChanges, setFileChanges] = useState<FileChange[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [identities, setIdentities] = useState<UserIdentity[]>([]);
@@ -127,7 +123,7 @@ export function GitHubIntegration({
       const session = await supabase.auth.getSession();
       const accessToken = session.data.session?.provider_token;
       if (!accessToken) {
-        console.error("No access token found for user");
+        setReauthorizeRequired(true);
         return;
       }
 
@@ -400,8 +396,40 @@ export function GitHubIntegration({
               </Button>
             </div>
           )}
+        {/* Reauthorization Step */}
+        {step === "auth" && 
+          identities.find((identity) => identity.provider === "github") &&
+          reauthorizeRequired && (
+            <div className="space-y-6 text-center">
+              <div className="space-y-2">
+                <h3 className="text-lg font-semibold">Reauthorization Required</h3>
+                <p className="text-muted-foreground">
+                  Your GitHub access token has expired. Please reauthorize to continue.
+                </p>
+              </div>
+
+              <Button
+                onClick={async () => {
+                  try {
+                    const result = await githubOAuth.signInWithGitHubPopup();
+
+                    if (result) {
+                      setGitHubService(new GitHubService(result.accessToken));
+                      setReauthorizeRequired(false);
+                    }
+                  } catch (error) {
+                    console.error("Reauthorization failed:", error);
+                    toast.error("Failed to reauthorize GitHub account");
+                  }
+                }}
+              >
+                Reauthorize GitHub
+              </Button>
+            </div>
+          )
+          }
         {step === "auth" &&
-          identities.find((identity) => identity.provider === "github") && (
+          identities.find((identity) => identity.provider === "github") && !reauthorizeRequired && (
             <div className="space-y-6 text-center">
               <div className="space-y-2">
                 <h3 className="text-lg font-semibold">Account Linked</h3>

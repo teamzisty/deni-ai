@@ -1645,6 +1645,8 @@
     "cloning": "Cloning...",
     "cloningRepository": "Cloning repository...",
     "success": "Repository cloned successfully!",
+    "installDependencies": "Install the dependencies (pnpm)",
+    "installingDependencies": "Installing dependencies...",
     "errors": {
       "invalidUrl": "Please enter a valid Git repository URL",
       "emptyUrl": "Repository URL is required",

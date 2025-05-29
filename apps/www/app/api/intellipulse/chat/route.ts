@@ -6,8 +6,14 @@ import { systemPromptDev } from "@/lib/systemPrompt";
 import { createOpenAI } from "@ai-sdk/openai";
 import { createAnthropic } from "@ai-sdk/anthropic";
 import { createXai } from "@ai-sdk/xai";
-import { createGoogleGenerativeAI, GoogleGenerativeAIProviderOptions } from "@ai-sdk/google";
-import { createOpenRouter, OpenRouterProviderOptions } from "@openrouter/ai-sdk-provider";
+import {
+  createGoogleGenerativeAI,
+  GoogleGenerativeAIProviderOptions,
+} from "@ai-sdk/google";
+import {
+  createOpenRouter,
+  OpenRouterProviderOptions,
+} from "@openrouter/ai-sdk-provider";
 import { createGroq } from "@ai-sdk/groq";
 import { createSupabaseServerClient } from "@workspace/supabase-config/server";
 import {
@@ -25,6 +31,7 @@ import { JSDOM } from "jsdom";
 import { VirtualConsole } from "jsdom";
 import { NextResponse } from "next/server";
 import { z } from "zod";
+import path from "path";
 
 export async function POST(req: Request) {
   try {
@@ -41,15 +48,19 @@ export async function POST(req: Request) {
       model: string;
       reasoningEffort: reasoningEffortType;
       toolList?: string[];
-    } = await req.json();    if (!model || messages.length === 0) {
+    } = await req.json();
+    if (!model || messages.length === 0) {
       return new NextResponse("Invalid request", { status: 400 });
     }
 
     // Handle authentication if authorization header is present
     if (authorization) {
       const supabase = createSupabaseServerClient();
-      const { data: { user }, error: authError } = await supabase.auth.getUser(authorization.replace("Bearer ", ""));
-      
+      const {
+        data: { user },
+        error: authError,
+      } = await supabase.auth.getUser(authorization.replace("Bearer ", ""));
+
       if (authError || !user) {
         return new NextResponse("Authorization failed", { status: 401 });
       }
@@ -59,7 +70,9 @@ export async function POST(req: Request) {
     const isReasoning = model.endsWith("-reasoning");
 
     if (modelDescription?.toolDisabled) {
-      return new NextResponse("This model is not available on dev mode.", { status: 400 });
+      return new NextResponse("This model is not available on dev mode.", {
+        status: 400,
+      });
     }
 
     model = model.replace("-reasoning", "");
@@ -80,7 +93,7 @@ export async function POST(req: Request) {
 
     // Official Provider
     const openai = createOpenAI({
-      apiKey: process.env.OPENAI_API_KEY
+      apiKey: process.env.OPENAI_API_KEY,
     });
 
     const anthropic = createAnthropic({
@@ -111,7 +124,7 @@ export async function POST(req: Request) {
 
     coreMessage.unshift({
       role: "system",
-      content: systemPromptDev
+      content: systemPromptDev,
     });
 
     const startTime = Date.now();
@@ -167,35 +180,68 @@ export async function POST(req: Request) {
                 return "OK";
               },
             }),
+            read_file: tool({
+              description: "Read a file from the virtual filesystem.",
+              parameters: z.object({
+                path: z.string().describe("File path to read from."),
+              }),
+            }),
+
             webcontainer: tool({
-              description: "Execute commands in WebContainer or manage files in the virtual filesystem.",
-              parameters: z.object({  
-                steps: z.array(z.object({
-                  id: z.string().describe("Unique identifier for this step"),
-                  title: z.string().describe("Human-readable title for this step"),
-                  command: z.string().describe("Command to execute (only for 'run' action, MAKE NULL TO OTHER ACTIONS, IF NOT, IT WILL ERROR)").nullable(),
-                  action: z.enum(["run", "write", "read"]).describe("Action type").nullable(),
-                  path: z.string().describe("File path for file operations").nullable(),
-                  content: z.string().describe("Content for write operations").nullable(),
-                })).describe("Sequence of steps to execute").nullable(),
+              description:
+                "Execute commands in WebContainer or manage files in the virtual filesystem.",
+              parameters: z.object({
+                steps: z
+                  .array(
+                    z.object({
+                      id: z
+                        .string()
+                        .describe("Unique identifier for this step"),
+                      title: z
+                        .string()
+                        .describe("Human-readable title for this step"),
+                      command: z
+                        .string()
+                        .describe(
+                          "Command to execute (only for 'run' action, MAKE NULL TO OTHER ACTIONS, IF NOT, IT WILL ERROR)"
+                        )
+                        .nullable(),
+                      action: z
+                        .enum(["run", "write"])
+                        .describe("Action type")
+                        .nullable(),
+                      path: z
+                        .string()
+                        .describe("File path for file operations")
+                        .nullable(),
+                      content: z
+                        .string()
+                        .describe("Content for write operations")
+                        .nullable(),
+                    })
+                  )
+                  .describe("Sequence of steps to execute")
+                  .nullable(),
               }),
               execute: async ({ steps }) => {
                 // この関数はフロントエンド側でWebContainerインスタンスを管理しているため
                 // 実際の処理はフロントエンドで行われます。このツールはAIに情報を提供するためのものです。
-                
+
                 if (steps && steps.length > 0) {
                   // 手順のシーケンスをクライアントに送信
                   dataStream.writeMessageAnnotation({
                     webcontainerAction: {
                       action: "steps",
-                      steps: steps
-                    }
+                      steps: steps,
+                    },
                   });
-                  
+
                   // 手順の概要を返す
-                  const stepTitles = steps.map((step, index) => `${index + 1}. ${step.title}`).join('\n');
+                  const stepTitles = steps
+                    .map((step, index) => `${index + 1}. ${step.title}`)
+                    .join("\n");
                   return `STEPS ARE SENDED, BUT NOT COMPLETED, WAIT FOR NEXT USER MESSAGE:\n${stepTitles}`;
-                } else { 
+                } else {
                   // 従来の単一アクション
                   // タイムスタンプを追加して同じコマンドの連続実行を防止
                   const timestamp = Date.now();
@@ -203,8 +249,8 @@ export async function POST(req: Request) {
                     webcontainerAction: {
                       action: "steps",
                       steps: steps,
-                      timestamp: timestamp  // タイムスタンプを追加
-                    } 
+                      timestamp: timestamp, // タイムスタンプを追加
+                    },
                   });
                 }
               },
@@ -230,9 +276,9 @@ export async function POST(req: Request) {
                     }),
                   }
                 ).then((res) => res.json());
-    
+
                 const totalCount = toolList?.includes("deepResearch") ? 10 : 5;
-    
+
                 const searchResults = await Promise.all(
                   results.web.results
                     .slice(0, totalCount)
@@ -244,27 +290,30 @@ export async function POST(req: Request) {
                       }) => {
                         const { title, url, description } = result;
                         let content = description;
-    
+
                         try {
                           const pageResponse = await fetch(url);
                           const pageText = await pageResponse.text();
                           const dom = new JSDOM(pageText, {
-                            virtualConsole: new VirtualConsole().sendTo(console, { omitJSDOMErrors: true })
+                            virtualConsole: new VirtualConsole().sendTo(
+                              console,
+                              { omitJSDOMErrors: true }
+                            ),
                           });
                           const doc = dom.window.document;
-    
+
                           // Remove script and style tags
                           const scripts = doc.getElementsByTagName("script");
                           const styles = doc.getElementsByTagName("style");
                           while (scripts.length > 0) scripts[0]?.remove();
                           while (styles.length > 0) styles[0]?.remove();
-    
+
                           // Extract main content
                           const mainContent =
                             doc.querySelector("main") ||
                             doc.querySelector("article") ||
                             doc.body;
-    
+
                           if (mainContent) {
                             // メタディスクリプションを取得
                             if (
@@ -292,7 +341,7 @@ export async function POST(req: Request) {
                         } catch (error) {
                           console.error(`Error fetching ${url}:`, error);
                         }
-    
+
                         return {
                           title,
                           url,
@@ -302,15 +351,15 @@ export async function POST(req: Request) {
                       }
                     )
                 );
-    
+
                 dataStream.writeMessageAnnotation({
                   searchResults,
                   searchQuery: query,
                 });
-    
+
                 return JSON.stringify(searchResults);
               },
-            })
+            }),
           };
         }
 
@@ -363,7 +412,10 @@ export async function POST(req: Request) {
         });
 
         const response = streamText({
-          model: modelDescription?.type == "ChatGPT" ? openai.responses(modelName) : newModel,
+          model:
+            modelDescription?.type == "ChatGPT"
+              ? openai.responses(modelName)
+              : newModel,
           messages: coreMessage,
           tools: tools,
           maxSteps: 15,
@@ -377,13 +429,13 @@ export async function POST(req: Request) {
             ...(modelDescription?.reasoningEffort && {
               openai: {
                 reasoningEffort: reasoningEffort,
-                reasoningSummary: "detailed"
+                reasoningSummary: "detailed",
               },
             }),
             google: {
               thinkingConfig: {
-                thinkingBudget: 2048
-              }
+                thinkingBudget: 2048,
+              },
             } as GoogleGenerativeAIProviderOptions,
             openrouter: {
               reasoning: { effort: "medium" },
@@ -409,7 +461,7 @@ export async function POST(req: Request) {
             dataStream.writeMessageAnnotation({
               generationTime,
             });
-          }
+          },
         });
 
         response.mergeIntoDataStream(dataStream, {
@@ -420,6 +472,9 @@ export async function POST(req: Request) {
     });
   } catch (error) {
     console.error(error);
-    return new NextResponse("An error occurred while processing your request. Please try again later.", { status: 500 });
+    return new NextResponse(
+      "An error occurred while processing your request. Please try again later.",
+      { status: 500 }
+    );
   }
 }

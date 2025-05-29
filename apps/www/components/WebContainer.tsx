@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState, useCallback, memo } from "react";
 import { WebContainer as WebContainerAPI } from "@webcontainer/api";
 import { useTranslations } from "next-intl";
 import Editor from "@monaco-editor/react";
+import "xterm/css/xterm.css";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -20,8 +21,9 @@ import {
   Trash2 as Trash2Icon,
   TerminalIcon,
   Github,
+  Plus,
+  X,
 } from "lucide-react";
-import { MemoizedTerminal } from "@/components/MemoizedTerminal";
 import GitHubIntegration from "@/components/GitHubIntegration";
 import GitCloneDialog from "./GitCloneDialog";
 
@@ -38,6 +40,18 @@ export interface TerminalLogEntry {
   className?: string;
   html?: boolean;
   isSpinner?: boolean;
+}
+
+// Add terminal tab interface
+export interface TerminalTab {
+  id: string;
+  name: string;
+  logs: TerminalLogEntry[];
+  isActive: boolean;
+  process?: any;
+  terminal?: any;
+  jshProcess?: any;
+  fitAddon?: any;
 }
 
 // Add this at the top of the file, after any imports but before the component definition
@@ -84,7 +98,7 @@ export const getOrCreateWebContainer = async (
   // If there's already a global instance, return it immediately
   if (globalWebContainerInstance) {
     console.log("Reusing existing WebContainer instance");
-    globalWebContainerInstance.teardown(); // Ensure the instance is ready for reuse
+    return globalWebContainerInstance;
   }
 
   // If we're already trying to boot a container, wait for it
@@ -580,83 +594,76 @@ export const useWebContainer = (
       console.error("Error refreshing file structure:", error);
       return null;
     }
-  }, [setFileStructure, expandedDirs]); // Keep expandedDirs dependency
-
-  // WebContainerアクションを処理する関数をメモ化
-  const handleWebContainerAction = React.useCallback(async () => {
-    if (!instance || !lastWebContainerAction) return;
-    const { action, path, content, isImage, tab } = lastWebContainerAction;
-    console.log(
-      `[handleWebContainerAction] Processing action: ${action}`,
-      lastWebContainerAction
-    );
-    try {
-      if (action === "read" && path) {
-        console.log(`[handleWebContainerAction] Reading file: ${path}`);
-        if (isImage) {
-          console.log(
-            `[handleWebContainerAction] It's an image. Setting tab to preview.`
-          );
-          setEditorTab("preview");
-          // setFileContent(null); // Clear content for image preview?
-        } else {
-          try {
-            const fileContentData = await instance.fs.readFile(path, "utf-8");
+  }, [setFileStructure, expandedDirs]); // Keep expandedDirs dependency  // WebContainerアクションが更新されたときの副作用
+  useEffect(() => {
+    const processAction = async () => {
+      if (!instance || !lastWebContainerAction) return;
+      const { action, path, content, isImage, tab } = lastWebContainerAction;
+      console.log(
+        `[processAction] Processing action: ${action}`,
+        lastWebContainerAction
+      );
+      
+      // Clear the action *before* processing to prevent infinite loops
+      setLastWebContainerAction(null);
+      
+      try {
+        if (action === "read" && path) {
+          console.log(`[processAction] Reading file: ${path}`);
+          if (isImage) {
             console.log(
-              `[handleWebContainerAction] File read success. Content length: ${fileContentData.length}. Setting content and tab.`
+              `[processAction] It's an image. Setting tab to preview.`
             );
-            setFileContent({ content: fileContentData, path });
-            setEditorTab("code");
-          } catch (readError) {
-            console.error(
-              `[handleWebContainerAction] Error reading file ${path}:`,
-              readError
-            );
+            setEditorTab("preview");
+          } else {
+            try {
+              const fileContentData = await instance.fs.readFile(path, "utf-8");
+              console.log(
+                `[processAction] File read success. Content length: ${fileContentData.length}. Setting content and tab.`
+              );
+              setFileContent({ content: fileContentData, path });
+              setEditorTab("code");
+            } catch (readError) {
+              console.error(
+                `[processAction] Error reading file ${path}:`,
+                readError
+              );
+            }
+          }        } else if (action === "write" && path && content !== undefined) {
+          console.log(`[processAction] Writing file: ${path}`);
+          const dirPath = path.substring(0, path.lastIndexOf("/"));
+          if (dirPath) {
+            await instance.fs.mkdir(dirPath, { recursive: true }).catch(() => {});
           }
+          await instance.fs.writeFile(path, content);
+          console.log(`[processAction] File write success.`);
+          await memoizedRefreshFileStructure();
+        } else if (action === "refreshFileStructure") {
+          console.log(`[processAction] Refreshing file structure...`);
+          await memoizedRefreshFileStructure();
+          console.log(`[processAction] File structure refresh completed.`);
+        } else if (action === "setTab" && (tab === "code" || tab === "preview")) {
+          console.log(`[processAction] Setting editor tab to: ${tab}`);
+          setEditorTab(tab);
+        } else {
+          console.warn(
+            "[processAction] Unhandled or invalid action:",
+            { action, path, content, isImage, tab }
+          );
         }
-      } else if (action === "write" && path && content !== undefined) {
-        console.log(`[handleWebContainerAction] Writing file: ${path}`);
-        const dirPath = path.substring(0, path.lastIndexOf("/"));
-        if (dirPath) {
-          await instance.fs.mkdir(dirPath, { recursive: true }).catch(() => {});
-        }
-        await instance.fs.writeFile(path, content);
-        console.log(`[handleWebContainerAction] File write success.`);
-        await memoizedRefreshFileStructure();
-      } else if (action === "setTab" && (tab === "code" || tab === "preview")) {
-        console.log(`[handleWebContainerAction] Setting editor tab to: ${tab}`);
-        setEditorTab(tab);
-      } else {
-        console.warn(
-          "[handleWebContainerAction] Unhandled or invalid action:",
-          lastWebContainerAction
+      } catch (error) {
+        console.error(
+          `[processAction] Error processing action ${action}:`,
+          error
         );
       }
-    } catch (error) {
-      console.error(
-        `[handleWebContainerAction] Error processing action ${action}:`,
-        error
-      );
-    }
-    // Clear the action *after* processing
-    console.log(
-      `[handleWebContainerAction] Action processing finished. Clearing action.`
-    );
-    setLastWebContainerAction(null);
-  }, [
-    instance,
-    lastWebContainerAction,
-    memoizedRefreshFileStructure,
-    setEditorTab,
-    setFileContent,
-  ]); // Added setFileContent dependency
+      console.log(`[processAction] Action processing finished.`);
+    };
 
-  // WebContainerアクションが更新されたときの副作用
-  useEffect(() => {
     if (lastWebContainerAction) {
-      handleWebContainerAction();
+      processAction();
     }
-  }, [lastWebContainerAction, handleWebContainerAction]);
+  }, [lastWebContainerAction, instance, memoizedRefreshFileStructure, setEditorTab, setFileContent]);
 
   // Removed the problematic useEffect syncing fileStructure to expandedUIMap
 
@@ -742,7 +749,10 @@ export interface WebContainerUIProps {
 export interface TerminalDisplayProps {
   showTerminal: boolean;
   setShowTerminal: React.Dispatch<React.SetStateAction<boolean>>;
-  logs: TerminalLogEntry[];
+  terminalTabs: TerminalTab[];
+  setTerminalTabs: React.Dispatch<React.SetStateAction<TerminalTab[]>>;
+  activeTabId: string;
+  setActiveTabId: React.Dispatch<React.SetStateAction<string>>;
   terminalRef: React.RefObject<HTMLDivElement | null>;
   webContainerProcess: WebContainerAPI | null;
 }
@@ -752,11 +762,14 @@ export const TerminalDisplay = memo(
   ({
     showTerminal,
     setShowTerminal,
-    logs,
+    terminalTabs,
+    setTerminalTabs,
+    activeTabId,
+    setActiveTabId,
     terminalRef,
     webContainerProcess,
   }: TerminalDisplayProps) => {
-    const [terminalInput, setTerminalInput] = useState("");
+    const terminalContainerRef = useRef<HTMLDivElement>(null);
     const [realWebContainerProcess, setRealWebContainerProcess] =
       useState<WebContainerAPI | null>(null);
 
@@ -768,50 +781,155 @@ export const TerminalDisplay = memo(
       initWebContainer();
     }, [webContainerProcess]);
 
-    // Auto-scroll when logs change
-    useEffect(() => {
-      if (terminalRef.current && showTerminal) {
-        setTimeout(() => {
-          if (terminalRef.current) {
-            terminalRef.current.scrollTop = terminalRef.current.scrollHeight;
+    // Get active tab
+    const activeTab = terminalTabs.find((tab) => tab.id === activeTabId);
+
+    // Initialize terminal for a tab
+    const initializeTerminal = useCallback(async (tab: TerminalTab) => {
+      if (!realWebContainerProcess || tab.terminal) return;
+
+      const { Terminal } = await import("xterm");
+      const { FitAddon } = await import("xterm-addon-fit");
+      const { WebLinksAddon } = await import("xterm-addon-web-links");
+
+      const terminal = new Terminal({
+        cursorBlink: true,
+        fontSize: 14,
+        fontFamily: 'Menlo, Monaco, "Courier New", monospace',
+        theme: {
+          background: '#000000',
+          foreground: '#ffffff',
+          cursor: '#ffffff',
+        },
+        convertEol: true,
+      });
+
+      const fitAddon = new FitAddon();
+      const webLinksAddon = new WebLinksAddon();
+      
+      terminal.loadAddon(fitAddon);
+      terminal.loadAddon(webLinksAddon);
+
+      try {
+        // Start jsh process for this terminal
+        const jshProcess = await realWebContainerProcess.spawn('jsh', [], {
+          terminal: {
+            cols: terminal.cols,
+            rows: terminal.rows,
+          },
+        });
+
+        // Connect terminal to process
+        jshProcess.output.pipeTo(
+          new WritableStream({
+            write(data) {
+              terminal.write(data);
+            },
+          })
+        );
+
+        const input = jshProcess.input.getWriter();
+        terminal.onData((data) => {
+          input.write(data);
+        });        // Update tab with terminal and process
+        setTerminalTabs(prev =>
+          prev.map(t =>
+            t.id === tab.id
+              ? { ...t, terminal, jshProcess, process: jshProcess, fitAddon }
+              : t
+          )
+        );
+
+        // Mount terminal if this is the active tab
+        if (tab.id === activeTabId && terminalContainerRef.current) {
+          const terminalElement = terminalContainerRef.current.querySelector(`[data-terminal-id="${tab.id}"]`);
+          if (terminalElement) {
+            terminal.open(terminalElement as HTMLElement);
+            fitAddon.fit();
           }
-        }, 10);
-      }
-    }, [logs, showTerminal]);
-
-    const handleInputSubmit = async (e: React.FormEvent) => {
-      e.preventDefault();
-      if (!terminalInput.trim()) return;
-
-      // Execute the command
-      if (webContainerProcess) {
-        await webContainerProcess.spawn(terminalInput, []);
-      }
-
-      // Clear the input
-      setTerminalInput("");
-    };
-
-    // Handle terminal input directly from xterm.js
-    const handleTerminalInput = useCallback(
-      (data: string) => {
-        // Check if it's a special character (enter, backspace, etc.)
-        if (data === "\r" || data === "\n") {
-          // Enter key - submit command
-          if (terminalInput.trim() && webContainerProcess) {
-            webContainerProcess.spawn(terminalInput, []);
-            setTerminalInput("");
-          }
-        } else if (data === "\x7f" || data === "\b") {
-          // Backspace - remove last character
-          setTerminalInput((prev) => prev.slice(0, -1));
-        } else {
-          // Regular character - add to input
-          setTerminalInput((prev) => prev + data);
         }
-      },
-      [terminalInput, webContainerProcess]
-    );
+
+      } catch (error) {
+        console.error('Failed to initialize terminal:', error);
+        terminal.write('\r\n\x1b[31mFailed to start jsh process\x1b[0m\r\n');
+      }
+    }, [realWebContainerProcess, activeTabId, setTerminalTabs]);
+
+    // Initialize terminals for all tabs
+    useEffect(() => {
+      if (!realWebContainerProcess) return;
+
+      terminalTabs.forEach(tab => {
+        if (!tab.terminal) {
+          initializeTerminal(tab);
+        }
+      });
+    }, [terminalTabs, realWebContainerProcess, initializeTerminal]);
+
+    // Handle terminal mounting/unmounting when switching tabs
+    useEffect(() => {
+      if (!activeTab?.terminal || !terminalContainerRef.current) return;
+
+      const terminalElement = terminalContainerRef.current.querySelector(`[data-terminal-id="${activeTabId}"]`);
+      if (terminalElement && !terminalElement.hasChildNodes()) {
+        activeTab.terminal.open(terminalElement as HTMLElement);
+        // Fit the terminal to its container
+      if (activeTab.fitAddon) {
+        setTimeout(() => activeTab.fitAddon?.fit(), 0);
+      }
+      }
+    }, [activeTabId, activeTab, showTerminal]);
+
+    // Create new terminal tab
+    const createNewTab = useCallback(() => {
+      const newTabId = `terminal-${Date.now()}`;
+      const newTab: TerminalTab = {
+        id: newTabId,
+        name: `Terminal ${terminalTabs.length + 1}`,
+        logs: [],
+        isActive: true,
+      };
+      
+      setTerminalTabs(prev => [
+        ...prev.map(tab => ({ ...tab, isActive: false })),
+        newTab
+      ]);
+      setActiveTabId(newTabId);
+    }, [terminalTabs.length, setTerminalTabs, setActiveTabId]);
+
+    // Close terminal tab
+    const closeTab = useCallback((tabId: string) => {
+      if (terminalTabs.length === 1) return; // Don't close last tab
+      
+      setTerminalTabs(prev => {
+        const tabToClose = prev.find(tab => tab.id === tabId);
+        
+        // Clean up terminal and process
+        if (tabToClose?.terminal) {
+          tabToClose.terminal.dispose();
+        }
+        if (tabToClose?.jshProcess) {
+          tabToClose.jshProcess.kill();
+        }
+        
+        const filtered = prev.filter(tab => tab.id !== tabId);
+        if (activeTabId === tabId && filtered.length > 0) {
+          setActiveTabId(filtered[0]?.id || "");
+        }
+        return filtered;
+      });
+    }, [terminalTabs.length, activeTabId, setTerminalTabs, setActiveTabId]);
+
+    // Switch to tab
+    const switchToTab = useCallback((tabId: string) => {
+      setActiveTabId(tabId);
+      setTerminalTabs(prev => 
+        prev.map(tab => ({ 
+          ...tab, 
+          isActive: tab.id === tabId 
+        }))
+      );
+    }, [setActiveTabId, setTerminalTabs]);
 
     if (!realWebContainerProcess) {
       return null;
@@ -819,58 +937,122 @@ export const TerminalDisplay = memo(
 
     return (
       <div
-        className={`border-t border-border bg-black relative ${showTerminal ? "h-48" : "h-6"}`}
+        className={`border-t border-border relative w-full bg-background ${showTerminal ? "h-48" : "h-6"}`}
         style={{
           resize: showTerminal ? "vertical" : "none",
           overflow: "auto",
         }}
         id="terminal-container"
       >
-        <div
-          className="flex items-center px-2 py-1 bg-muted hover:bg-accent cursor-pointer border-b border-border"
-          onClick={() => setShowTerminal(!showTerminal)}
-        >
-          <TerminalIcon size={14} className="mr-2" />
-          <span className="text-sm">Terminal</span>
+        {/* Terminal Header with Tabs */}
+        <div className="flex items-center bg-muted w-full border-b border-border">
+          {/* Terminal Title and Toggle */}
+          <div
+            className="flex items-center px-3 py-2 hover:bg-accent cursor-pointer"
+            onClick={() => setShowTerminal(!showTerminal)}
+          >
+            <TerminalIcon size={14} className="mr-2" />
+            <span className="text-sm font-medium">Terminal</span>
+          </div>
+
+          {showTerminal && (
+            <>
+              {/* Terminal Tabs */}
+              <div className="flex-1 flex w-full items-center overflow-x-auto">
+                {terminalTabs.map((tab) => (
+                  <div
+                    key={tab.id}
+                    className={`flex items-center px-3 py-2 cursor-pointer border-r border-border group ${
+                      tab.id === activeTabId
+                        ? "bg-background text-foreground"
+                        : "hover:bg-accent"
+                    }`}
+                    onClick={() => switchToTab(tab.id)}
+                  >
+                    <span className="text-sm truncate max-w-24">
+                      {tab.name}
+                    </span>
+                    {terminalTabs.length > 1 && (
+                      <button
+                        className="ml-2 opacity-0 group-hover:opacity-100 hover:bg-destructive/20 rounded p-1"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          closeTab(tab.id);
+                        }}
+                      >
+                        <X size={12} />
+                      </button>
+                    )}
+                  </div>
+                ))}
+              </div>
+
+              {/* Add New Tab Button */}
+              <button
+                className="px-3 py-2 hover:bg-accent text-muted-foreground"
+                onClick={createNewTab}
+                title="New Terminal"
+              >
+                <Plus size={14} />
+              </button>
+            </>
+          )}
         </div>
 
-        <MemoizedTerminal
-          logs={logs}
-          showTerminal={showTerminal}
-          terminalRef={terminalRef}
-          onInput={handleTerminalInput}
-          webContainerProcess={realWebContainerProcess}
-        />
-
         {showTerminal && (
-          <div
-            className="absolute top-0 left-0 w-full h-1 cursor-ns-resize hover:bg-primary/50"
-            onMouseDown={(e) => {
-              const terminalContainer =
-                document.getElementById("terminal-container");
-              if (!terminalContainer) return;
+          <>
+            {/* Terminal Content */}
+            <div className="flex-1 relative h-full w-full" ref={terminalContainerRef}>
+              {terminalTabs.map((tab) => (
+                <div
+                  key={tab.id}
+                  data-terminal-id={tab.id}
+                  className={`absolute inset-0 h-full w-full ${
+                    tab.id === activeTabId ? "block" : "hidden"
+                  }`}
+                  style={{
+                    height: "calc(100% - 1px)", // Account for border
+                  }}
+                />
+              ))}
+            </div>
 
-              const startY = e.clientY;
-              const startHeight = terminalContainer.offsetHeight;
+            {/* Resize Handle */}
+            <div
+              className="absolute top-0 left-0 h-1 cursor-ns-resize hover:bg-primary/50 w-full"
+              onMouseDown={(e) => {
+                const terminalContainer =
+                  document.getElementById("terminal-container");
+                if (!terminalContainer) return;
 
-              const onMouseMove = (moveEvent: MouseEvent) => {
-                if (terminalContainer) {
-                  const newHeight = startHeight - (moveEvent.clientY - startY);
-                  if (newHeight > 30) {
-                    terminalContainer.style.height = `${newHeight}px`;
+                const startY = e.clientY;
+                const startHeight = terminalContainer.offsetHeight;
+
+                const onMouseMove = (moveEvent: MouseEvent) => {
+                  if (terminalContainer) {
+                    const newHeight =
+                      startHeight - (moveEvent.clientY - startY);
+                    if (newHeight > 30) {
+                      terminalContainer.style.height = `${newHeight}px`;
+                        // Resize active terminal
+                      const activeTab = terminalTabs.find(t => t.id === activeTabId);
+                      if (activeTab?.fitAddon) {
+                        setTimeout(() => activeTab.fitAddon?.fit(), 0);
+                      }
+                    }
                   }
-                }
-              };
+                };
 
-              const onMouseUp = () => {
-                document.removeEventListener("mousemove", onMouseMove);
-                document.removeEventListener("mouseup", onMouseUp);
-              };
+                const onMouseUp = () => {
+                  document.removeEventListener("mousemove", onMouseMove);
+                  document.removeEventListener("mouseup", onMouseUp);
+                };
 
-              document.addEventListener("mousemove", onMouseMove);
-              document.addEventListener("mouseup", onMouseUp);
-            }}
-          />
+                document.addEventListener("mousemove", onMouseMove);
+                document.addEventListener("mouseup", onMouseUp);
+              }}
+            />
+          </>
         )}
       </div>
     );
@@ -897,6 +1079,17 @@ export const WebContainerUI: React.FC<WebContainerUIProps> = memo(
     const [showTerminal, setShowTerminal] = useState<boolean>(true);
     const [showGitCloneDialog, setShowGitCloneDialog] =
       useState<boolean>(false);
+
+    // Terminal tabs state
+    const [terminalTabs, setTerminalTabs] = useState<TerminalTab[]>([
+      {
+        id: "terminal-1",
+        name: "Terminal 1",
+        logs: [],
+        isActive: true,
+      },
+    ]);
+    const [activeTabId, setActiveTabId] = useState<string>("terminal-1");
 
     // Context menu state
     const [contextMenuPath, setContextMenuPath] = useState<string | null>(null);
@@ -1432,9 +1625,9 @@ export const WebContainerUI: React.FC<WebContainerUIProps> = memo(
     );
 
     return (
-      <div className="h-full flex flex-col bg-background text-foreground">
+      <div className="h-full flex flex-col bg-background w-full text-foreground">
         {/* Main file explorer + code editor container */}
-        <div className="flex h-full">
+        <div className="flex h-full w-full">
           <div className="w-64 border-r border-border flex flex-col h-full overflow-hidden">
             <div className="px-2 py-1 border-b border-border bg-muted">
               <div className="flex items-center justify-between">
@@ -1605,14 +1798,16 @@ export const WebContainerUI: React.FC<WebContainerUIProps> = memo(
               )}
             </div>
           </div>
-        </div>
-
+        </div>{" "}
         {/* Terminal Component */}
         <TerminalDisplay
           showTerminal={showTerminal}
           setShowTerminal={setShowTerminal}
           webContainerProcess={instance}
-          logs={logs}
+          terminalTabs={terminalTabs}
+          setTerminalTabs={setTerminalTabs}
+          activeTabId={activeTabId}
+          setActiveTabId={setActiveTabId}
           terminalRef={terminalRef}
         />
       </div>

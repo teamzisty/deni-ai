@@ -24,6 +24,7 @@ import {
 import { Alert, AlertDescription } from "@workspace/ui/components/alert";
 import { useTranslations } from "next-intl";
 import { getWebContainerInstance } from "@/components/WebContainer";
+import { Checkbox } from "@workspace/ui/components/checkbox";
 
 interface GitCloneDialogProps {
   open?: boolean;
@@ -43,6 +44,7 @@ export function GitCloneDialog({
   const [isCloning, setIsCloning] = useState(false);
   const [cloneStep, setCloneStep] = useState<string>("");
   const [repoUrl, setRepoUrl] = useState("");
+  const [installDependencies, setInstallDependencies] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
 
@@ -116,9 +118,33 @@ export function GitCloneDialog({
       const exitCode = await cloneProcess.exit;
 
       if (exitCode === 0) {
+        // Reset form after successful clone
+        try {
+          await webContainer.fs.rm("pnpm-lock.yaml");
+        } catch (err) {
+          console.warn("pnpm-lock.yaml not found, skipping removal");
+        }
+
+        if (installDependencies) {
+          setCloneStep(
+            t("gitClone.installingDependencies") ||
+              "Installing dependencies..."
+          );
+          const installProcess = await webContainer.spawn("pnpm", [
+            "install",
+          ]);
+          const installExitCode = await installProcess.exit;
+          if (installExitCode !== 0) {
+            throw new Error(
+              t("gitClone.errors.installFailed") ||
+                "Failed to install dependencies"
+            );
+          }
+        }
+
         setSuccess(true);
         onCloneComplete?.(true);
-        // Reset form after successful clone
+
         setTimeout(() => {
           setRepoUrl("");
           setDialogOpen(false);
@@ -216,14 +242,31 @@ export function GitCloneDialog({
                 "Supports GitHub, GitLab, and Bitbucket URLs"}
             </p>
           </div>
+
+          <div className="flex items-center space-x-2">
+            <Checkbox
+              id="install-dependencies"
+              checked={installDependencies}
+              onCheckedChange={(checked) =>
+                setInstallDependencies(Boolean(checked))
+              }
+            />
+            <Label htmlFor="install-dependencies">
+              {t("gitClone.installDependencies") || "Install Dependencies"}
+            </Label>
+          </div>
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={handleClose} disabled={isCloning}>
             {t("common.cancel") || "Cancel"}
           </Button>{" "}
           <Button onClick={handleClone} disabled={!isValidUrl || isCloning}>
-            {isCloning && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-            <Download className="w-4 h-4 mr-2" />
+            {isCloning ? (
+              <Loader2 className="w-4 h-4 animate-spin" />
+            ) : (
+              <Download className="w-4 h-4" />
+            )}
+
             {isCloning
               ? cloneStep || t("gitClone.cloning") || "Cloning..."
               : t("gitClone.clone") || "Clone"}

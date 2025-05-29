@@ -74,6 +74,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setIsLoading(false);
       clearTimeout(authTimeout);
 
+      if (supabase) {
+        supabase.auth.stopAutoRefresh();
+      }
+
       // Check email verification
       if (session?.user && !session.user.email_confirmed_at) {
         // Exempt getting-started page from verification requirement
