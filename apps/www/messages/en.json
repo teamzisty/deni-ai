@@ -606,9 +606,9 @@
   },
   "login": {
     "title": "Login",
-    "description": "Enter your account information to log in.",
-    "email": "Email",
+    "description": "Enter your account information to log in.",    "email": "Email",
     "password": "Password",
+    "forgotPassword": "Forgot your password?",
     "loginButton": "Login",
     "continueWith": "Or continue with",
     "googleSignIn": "Sign in with Google",
@@ -628,7 +628,49 @@
     "tooManyRequests": "Too many requests. Please wait and try again later",
     "invalidEmail": "Invalid email address",
     "accountDisabled": "This account has been disabled",
-    "otherError": "Other error: {errorContent}"
+    "otherError": "Other error: {errorContent}",
+    "passwordReset": {
+      "title": "Password Reset",
+      "description": "To reset password, please enter your email address below. A password reset link will be sent to your email.",
+      "email": "Email",
+      "emailPlaceholder": "Enter your email address",
+      "sending": "Sending...",
+      "sent": "Password reset link sent to your email. Please check your inbox.",
+      "sendResetLink": "Send Password Reset Link",
+      "resetLinkSent": "A password reset link has been sent to your email. Please check your inbox.",
+      "resetLinkError": "Failed to send password reset link. Please try again.",
+      "backToLogin": "Back to Login"
+    },    "passwordResetWarning": {
+      "title": "Password Reset Maybe Required",
+      "content": "If you have been using Deni AI since before v4.1.0 and are using password login, you may need to reset your password."
+    },
+    "passwordResetConfirm": {
+      "title": "Set New Password",
+      "description": "Enter your new password below",
+      "newPassword": "New Password",
+      "newPasswordPlaceholder": "Enter new password",
+      "confirmPassword": "Confirm Password",
+      "confirmPasswordPlaceholder": "Confirm new password",
+      "updatePassword": "Update Password",
+      "updatingPassword": "Updating Password...",
+      "backToLogin": "Back to Login",
+      "invalidLink": {
+        "title": "Invalid Reset Link",
+        "description": "This password reset link is invalid or has expired. Please request a new one.",
+        "requestNewLink": "Request New Reset Link"
+      },
+      "errors": {
+        "fillAllFields": "Please fill in all fields",
+        "passwordsDontMatch": "Passwords don't match",
+        "passwordTooShort": "Password must be at least 8 characters long",
+        "authUnavailable": "Authentication service unavailable",
+        "passwordTooWeak": "Password is too weak. Please use a stronger password.",
+        "updateFailed": "Failed to update password. Please try again."
+      },
+      "success": {
+        "message": "Password updated successfully"
+      }
+    }
   },
   "register": {
     "title": "Create Account",

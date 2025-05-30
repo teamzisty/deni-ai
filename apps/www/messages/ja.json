@@ -607,9 +607,9 @@
   },
   "login": {
     "title": "ログイン",
-    "description": "アカウント情報を入力して、ログインします。",
-    "email": "メールアドレス",
+    "description": "アカウント情報を入力して、ログインします。",    "email": "メールアドレス",
     "password": "パスワード",
+    "forgotPassword": "パスワードを忘れましたか？",
     "loginButton": "ログイン",
     "continueWith": "次で続ける",
     "googleSignIn": "Google でサインイン",
@@ -629,7 +629,49 @@
     "tooManyRequests": "短時間にリクエストを送信しすぎています。しばらく待ってからお試しください",
     "invalidEmail": "メールアドレスが無効です",
     "accountDisabled": "このアカウントは無効になっています",
-    "otherError": "その他のエラー: {errorContent}"
+    "otherError": "その他のエラー: {errorContent}",
+    "passwordReset": {
+      "title": "パスワードリセット",
+      "description": "パスワードをリセットするには、メールアドレスを入力してください。",
+      "email": "メールアドレス",
+      "emailPlaceholder": "登録したメールアドレスを入力",
+      "sending": "送信中...",
+      "sent": "パスワードリセットリンクを送信しました。メールボックスを確認してください。",
+      "sendResetLink": "パスワードリセットリンクを送信",
+      "resetLinkSent": "パスワードリセットリンクが送信されました。メールを確認してください。",
+      "resetLinkError": "パスワードリセットリンクの送信に失敗しました。もう一度お試しください。",
+      "backToLogin": "ログイン画面に戻る"
+    },    "passwordResetWarning": {
+      "title": "パスワードリセットが必要な場合",
+      "content": "v4.1.0 以前からDeni AI を使用している場合で、パスワードログインを使用している場合は、パスワードをリセットする必要があります。"
+    },
+    "passwordResetConfirm": {
+      "title": "新しいパスワードを設定",
+      "description": "新しいパスワードを入力してください",
+      "newPassword": "新しいパスワード",
+      "newPasswordPlaceholder": "新しいパスワードを入力",
+      "confirmPassword": "パスワードの確認",
+      "confirmPasswordPlaceholder": "新しいパスワードを再入力",
+      "updatePassword": "パスワードを更新",
+      "updatingPassword": "パスワード更新中...",
+      "backToLogin": "ログイン画面に戻る",
+      "invalidLink": {
+        "title": "無効なリセットリンク",
+        "description": "このパスワードリセットリンクは無効または期限切れです。新しいリンクをリクエストしてください。",
+        "requestNewLink": "新しいリセットリンクをリクエスト"
+      },
+      "errors": {
+        "fillAllFields": "すべてのフィールドを入力してください",
+        "passwordsDontMatch": "パスワードが一致しません",
+        "passwordTooShort": "パスワードは8文字以上である必要があります",
+        "authUnavailable": "認証サービスが利用できません",
+        "passwordTooWeak": "パスワードが弱すぎます。より強力なパスワードを使用してください。",
+        "updateFailed": "パスワードの更新に失敗しました。もう一度お試しください。"
+      },
+      "success": {
+        "message": "パスワードが正常に更新されました"
+      }
+    }
   },
   "register": {
     "title": "アカウントの登録",
@@ -1594,7 +1636,8 @@
       "deleteSuccess": "Bot が正常に削除されました！",
       "deleteWarning": "この操作は元に戻すことができません。Botは完全に削除されます。"
     }
-  },  "gitClone": {
+  },
+  "gitClone": {
     "title": "Gitリポジトリをクローン",
     "description": "Gitリポジトリをワークスペースにクローンします",
     "repositoryUrl": "リポジトリURL",

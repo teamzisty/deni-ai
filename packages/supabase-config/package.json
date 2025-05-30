@@ -10,6 +10,6 @@
     "typescript": "^5.8.3"
   },
   "dependencies": {
-    "@supabase/supabase-js": "^2.45.4"
+    "@supabase/supabase-js": "^2.49.8"
   }
 }

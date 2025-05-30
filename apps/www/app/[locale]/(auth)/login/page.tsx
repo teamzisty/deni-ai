@@ -27,6 +27,19 @@ import {
   InputOTPSeparator,
   InputOTPSlot,
 } from "@workspace/ui/components/input-otp";
+import {
+  Card,
+  CardHeader,
+  CardTitle,
+  CardContent,
+  CardDescription,
+} from "@workspace/ui/components/card";
+import { AlertCircle } from "lucide-react";
+import {
+  Alert,
+  AlertDescription,
+  AlertTitle,
+} from "@workspace/ui/components/alert";
 
 const Login: React.FC = () => {
   const t = useTranslations();
@@ -174,6 +187,25 @@ const Login: React.FC = () => {
             <Button type="submit" className="w-full" onClick={loginClicked}>
               {t("login.loginButton")}
             </Button>
+
+            {/* Password Reset Warning Card */}
+            <Alert>
+              <AlertCircle className="w-5 h-5 text-yellow-600 dark:text-yellow-400" />
+              <AlertTitle>{t("login.passwordResetWarning.title")}</AlertTitle>
+              <AlertDescription>
+                {t("login.passwordResetWarning.content")}
+              </AlertDescription>
+            </Alert>
+
+            {/* Password Reset Link */}
+            <div className="text-center">
+              <Link
+                href="/password-reset"
+                className="text-sm text-muted-foreground hover:text-primary underline"
+              >
+                {t("login.forgotPassword")}
+              </Link>
+            </div>
 
             <div className="relative mb-2">
               <div className="absolute inset-0 flex items-center">
