@@ -75,7 +75,7 @@ export const AccountDropdownMenu = memo(
     return (
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          {!isDisabled ? (            <Button variant="ghost" className="h-16 justify-start">
+          {!isDisabled ? (            <Button variant="ghost" className="mb-3 justify-start">
               {user?.user_metadata?.avatar_url ? (
                 <Image
                   src={user.user_metadata.avatar_url}
