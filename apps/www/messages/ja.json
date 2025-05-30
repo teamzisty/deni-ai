@@ -218,136 +218,7 @@
         "title": "会話のプライバシーモード",
         "description": "あなたの会話の名前を非表示にします。カーソルを合わせると名前が表示されます。"
       },
-      "authDisabled": "認証は一時的に無効になっているか、あなたのインスタンスでは利用できません。",
-      "data": {
-        "title": "アカウントデータのダウンロード",
-        "description": "あなたのアカウントに関連するすべてのデータをダウンロードできます。",
-        "download": "データをダウンロード",
-        "downloading": "ダウンロード中...",
-        "downloadSuccess": "データのダウンロードに成功しました",
-        "downloadError": "データのダウンロードに失敗しました"
-      },
-      "delete": {
-        "title": "アカウント削除",
-        "description": "アカウントとそれに関連するすべてのデータを完全に削除します。",
-        "button": "アカウント削除",
-        "deleting": "削除中...",
-        "success": "アカウントの削除に成功しました",
-        "error": "アカウントの削除に失敗しました"
-      },
-      "password": {
-        "title": "パスワード",
-        "description": "アカウントのセキュリティを保つためにパスワードを変更してください。",
-        "cardTitle": "パスワード変更",
-        "cardDescription": "新しい安全な組み合わせにパスワードを更新します。",
-        "currentPassword": "現在のパスワード",
-        "newPassword": "新しいパスワード",
-        "confirmPassword": "新しいパスワード（確認）",
-        "updateButton": "パスワードを更新",
-        "updating": "更新中...",
-        "successTitle": "パスワード更新完了",
-        "successDescription": "パスワードが正常に更新されました。",
-        "errorAllFields": "すべてのパスワードフィールドに入力してください。",
-        "errorPasswordMatch": "新しいパスワードが一致しません。",
-        "errorPasswordLength": "パスワードは8文字以上である必要があります。",
-        "errorNoUser": "パスワードを変更するにはログインする必要があります。",
-        "errorWrongPassword": "現在のパスワードが正しくありません。",
-        "errorWeakPassword": "新しいパスワードが弱すぎます。より強力なパスワードを使用してください。",
-        "errorRecentLogin": "セキュリティ上の理由から、パスワードを変更する前に再ログインする必要があります。",
-        "errorGeneric": "パスワードの更新に失敗しました。もう一度お試しください。",
-        "notLoggedIn": "パスワードを変更するにはログインする必要があります。",
-        "notPasswordProvider": "サードパーティのプロバイダーでサインインしたため、パスワードを変更できません。"
-      },
-      "sessions": {
-        "title": "セッション",
-        "description": "アクティブなセッションとデバイスを管理します。",
-        "activeSessions": "アクティブなセッション",
-        "activeSessionsDescription": "これらは現在ログインしているデバイスです。",
-        "current": "現在のセッション",
-        "nowActive": "現在アクティブ",
-        "lastActive": "最終アクティブ",
-        "terminate": "ログアウト",
-        "terminateAll": "すべてのデバイスからログアウト",
-        "terminating": "ログアウト中...",
-        "terminateSuccess": "セッションを正常に終了しました",
-        "terminateError": "セッションの終了に失敗しました",
-        "terminateAllSuccess": "他のすべてのセッションを正常に終了しました",
-        "terminateAllError": "すべてのセッションの終了に失敗しました",
-        "loading": "セッションを読み込み中...",
-        "noSessions": "アクティブなセッションが見つかりません",
-        "justNow": "たった今",
-        "hoursAgo": "{hours}時間前",
-        "fetchError": "セッションの取得に失敗しました"
-      },
-      "security": {
-        "title": "セキュリティ",
-        "description": "アカウントのセキュリティ設定を管理します。",
-        "notLoggedIn": "セキュリティ設定を変更するにはログインする必要があります。",
-        "setupError": "二段階認証の設定に失敗しました。もう一度お試しください。",
-        "twoFactor": {
-          "title": "二段階認証",
-          "description": "アカウントにセキュリティの追加レイヤーを追加します。",
-          "label": "二段階認証",
-          "sublabel": "アカウントにセキュリティの追加レイヤーを追加"
-        },
-        "enabled": "有効",
-        "disabled": "無効",
-        "enabledStatus": "二段階認証が有効になっています",
-        "enabledDescription": "アカウントは二段階認証で保護されています。",
-        "disabledStatus": "二段階認証が無効になっています",
-        "disabledDescription": "アカウントは二段階認証で保護されていません。セキュリティを向上させるために有効にしてください。",
-        "activeAuthenticators": "アクティブな認証アプリ",
-        "totpAuthenticator": "TOTP認証アプリ",
-        "addedOn": "{date}に追加",
-        "disable": "無効にする",
-        "setupButton": "二段階認証を設定",
-        "settingUp": "二段階認証を設定しています...",
-        "scanQrCode": "認証アプリでQRコードをスキャン",
-        "scanQrDescription": "Google認証システム、Authy、1Passwordなどの認証アプリでこのQRコードをスキャンしてください。",
-        "enterCodeManually": "または、この秘密鍵を手動で入力してください:",
-        "secretCopied": "秘密鍵をクリップボードにコピーしました",
-        "secretCopyFailed": "秘密鍵のコピーに失敗しました",
-        "enterVerificationCode": "アプリから6桁のコードを入力してください:",
-        "codePlaceholder": "000000",
-        "verifying": "確認中...",
-        "enable2FA": "二段階認証を有効にする",
-        "duplicateFactorError": "二段階認証方法が既に存在します。新しいものを追加する前に、既存のものを無効にしてください。",
-        "enrollmentFailed": "二段階認証の設定に失敗しました。もう一度お試しください。",
-        "sessions": {
-          "label": "アクティブなセッションを管理",
-          "sublabel": "現在ログインしているすべてのデバイスを表示",
-          "viewButton": "セッションを表示"
-        },
-        "reauth": {
-          "title": "パスワードを確認",
-          "description": "セキュリティ上の理由から、続行するにはパスワードを入力してください。",
-          "providerMessage": "セキュリティ上の理由から、続行するには{provider}で再認証する必要があります。"
-        },
-        "qrCode": {
-          "title": "二段階認証の設定",
-          "description": "Google認証システムやAuthyなどの認証アプリでこのQRコードをスキャンしてください。",
-          "manualEntry": "QRコードをスキャンできない場合は、このコードを手動で入力してください:",
-          "next": "次へ"
-        },
-        "verify": {
-          "title": "認証コードを確認",
-          "description": "設定を確認するために、認証アプリから6桁のコードを入力してください。",
-          "verifyButton": "確認"
-        },
-        "enabled2FA": "二段階認証が有効になりました",
-        "disabled2FA": "二段階認証が無効になりました",
-        "invalidPassword": "パスワードが間違っています。もう一度お試しください。",
-        "errorAuth": "パスワードが間違っています。もう一度お試しください。",
-        "errorVerifying": "無効な認証コードです。もう一度お試しください。",
-        "cancel": "キャンセル",
-        "continue": "続行"
-      },
-      "sidebarNav": {
-        "account": "アカウント",
-        "sessions": "セッション",
-        "password": "パスワード",
-        "security": "セキュリティ"
-      }
+      "authDisabled": "認証は一時的に無効になっているか、あなたのインスタンスでは利用できません。"
     },
     "dataControls": {
       "tab": "データ管理",
@@ -357,7 +228,6 @@
         "title": "データ収集",
         "description": "サービスの改善のために使用データの収集を許可する"
       },
-
       "reauth": {
         "title": "再認証",
         "description": "データのエクスポートや削除を行うために、パスワードを入力してください。",
@@ -607,7 +477,8 @@
   },
   "login": {
     "title": "ログイン",
-    "description": "アカウント情報を入力して、ログインします。",    "email": "メールアドレス",
+    "description": "アカウント情報を入力して、ログインします。",
+    "email": "メールアドレス",
     "password": "パスワード",
     "forgotPassword": "パスワードを忘れましたか？",
     "loginButton": "ログイン",
@@ -641,7 +512,8 @@
       "resetLinkSent": "パスワードリセットリンクが送信されました。メールを確認してください。",
       "resetLinkError": "パスワードリセットリンクの送信に失敗しました。もう一度お試しください。",
       "backToLogin": "ログイン画面に戻る"
-    },    "passwordResetWarning": {
+    },
+    "passwordResetWarning": {
       "title": "パスワードリセットが必要な場合",
       "content": "v4.1.0 以前からDeni AI を使用している場合で、パスワードログインを使用している場合は、パスワードをリセットする必要があります。"
     },
@@ -1012,7 +884,63 @@
       "errorAuth": "パスワードが間違っています。もう一度お試しください。",
       "errorVerifying": "無効な認証コードです。もう一度お試しください。",
       "cancel": "キャンセル",
-      "continue": "続行"
+      "continue": "続行",
+      "intellipulseActionKeys": {
+        "title": "Intellipulseアクションキー",
+        "description": "Intellipulseアクションと統合のためのAPIキーを管理",
+        "loading": "アクションキーを読み込み中...",
+        "keyCount": "{count}個の{count, plural, one {キー} other {キー}}",
+        "explanatoryText": "アクションキーはIntellipulse機能への安全なアクセスを可能にし、自動化や統合に使用できます。",
+        "createKey": "キーを作成",
+        "createDialog": {
+          "title": "新しいアクションキーを作成",
+          "description": "アクションキーの目的を識別できるよう、分かりやすい名前を付けてください。",
+          "keyNameLabel": "キー名",
+          "keyNamePlaceholder": "例：本番API、開発ボット",
+          "cancel": "キャンセル",
+          "create": "キーを作成",
+          "creating": "作成中..."
+        },
+        "noKeys": {
+          "title": "アクションキーなし",
+          "description": "Intellipulse機能を使い始めるために、最初のアクションキーを作成してください。"
+        },
+        "keyStatus": {
+          "active": "アクティブ",
+          "inactive": "非アクティブ",
+          "expired": "期限切れ"
+        },
+        "actions": {
+          "validate": "検証",
+          "delete": "削除",
+          "show": "キーを表示",
+          "hide": "キーを非表示",
+          "copy": "キーをコピー"
+        },
+        "keyDetails": {
+          "keyLabel": "キー:",
+          "created": "作成日:",
+          "usage": "使用回数:",
+          "expires": "有効期限:",
+          "lastUsed": "最終使用:",
+          "usageTimes": "{count}回"
+        },
+        "toasts": {
+          "created": "アクションキーが正常に作成されました",
+          "deleted": "アクションキーが正常に削除されました",
+          "copied": "アクションキーをクリップボードにコピーしました",
+          "copyFailed": "クリップボードへのコピーに失敗しました",
+          "validationSuccess": "アクションキーは有効で効果的です",
+          "validationFailed": "アクションキーの検証に失敗しました：{reason}"
+        },
+        "errors": {
+          "loadFailed": "アクションキーの読み込みに失敗しました",
+          "createFailed": "アクションキーの作成に失敗しました",
+          "deleteFailed": "アクションキーの削除に失敗しました",
+          "validateFailed": "アクションキーの検証に失敗しました",
+          "unknownReason": "不明な理由"
+        }
+      }
     },
     "sidebarNav": {
       "account": "アカウント",

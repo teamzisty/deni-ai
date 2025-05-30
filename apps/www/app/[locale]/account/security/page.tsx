@@ -10,6 +10,7 @@ import {
 } from "@workspace/ui/components/card";
 import { useAuth } from "@/context/AuthContext";
 import { MFAManager } from "@/components/MFAManager";
+import { IntellipulseActionKeyManager } from "@/components/IntellipulseActionKeyManager";
 
 export default function SecurityPage() {
   const { user } = useAuth();
@@ -44,6 +45,8 @@ export default function SecurityPage() {
               </div>
               
               <MFAManager />
+              
+              <IntellipulseActionKeyManager />
             </div>
           )}
         </CardContent>

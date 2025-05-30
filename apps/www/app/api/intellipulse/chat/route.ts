@@ -64,6 +64,8 @@ export async function POST(req: Request) {
       if (authError || !user) {
         return new NextResponse("Authorization failed", { status: 401 });
       }
+    } else {
+      return new NextResponse("Authorization failed", { status: 401 });
     }
 
     const modelDescription = modelDescriptions[model];
