@@ -10,16 +10,16 @@ import React, { useState, useEffect, useCallback } from "react";
 import { modelDescriptions } from "@/lib/modelDescriptions";
 import logger from "@/utils/logger";
 import Chat from "@/components/Chat";
+import { supabase } from "@workspace/supabase-config/client";
 
-const ChatPage: React.FC = () => {
-  const {
+const ChatPage: React.FC = () => {  const {
     updateSession,
     getSession,
     isLoading: isSessionsLoading,
-    isFirestoreLoaded,
+    isSupabaseLoaded,
     sessions,
   } = useChatSessions();
-  const { user, isLoading: isAuthLoading, auth } = useAuth();
+  const { user, isLoading: isAuthLoading } = useAuth();
 
   const t = useTranslations();
   const params = useParams<{ id: string }>();
@@ -37,16 +37,25 @@ const ChatPage: React.FC = () => {
     }
     const session = getSession(params.id);
     return session;
-  }, [getSession, params.id, isSessionsLoading, sessions?.length]);
-
-  useEffect(() => {
-    if (user) {
-      user.getIdToken().then(setAuthToken);
+  }, [getSession, params.id, isSessionsLoading, sessions?.length]);  useEffect(() => {
+    if (user && supabase) {
+      // Get Supabase session token instead of user.id
+      const getAuthToken = async () => {
+        try {
+          const { data: { session } } = await supabase!.auth.getSession();
+          if (session?.access_token) {
+            setAuthToken(`Bearer ${session.access_token}`);
+          }
+        } catch (error) {
+          console.error('Failed to get session token:', error);
+        }
+      };
+      getAuthToken();
     }
   }, [user]);
 
   useEffect(() => {
-    if (isAuthLoading || isSessionsLoading || !isFirestoreLoaded || sessionChecked || isRedirecting) {
+    if (isAuthLoading || isSessionsLoading || !isSupabaseLoaded || sessionChecked || isRedirecting) {
       return;
     }
 
@@ -62,35 +71,31 @@ const ChatPage: React.FC = () => {
       setCurrentSessionData(session);
       setSessionChecked(true);
       logger.info("ChatPage Init", "Loaded Session Data");
-    }, 500);
-
-    return () => clearTimeout(timer);
+    }, 500);    return () => clearTimeout(timer);
   }, [
     isAuthLoading,
     isSessionsLoading,
-    isFirestoreLoaded,
+    isSupabaseLoaded,
     getCurrentSession,
     router,
     params.id,
     isRedirecting,
     sessionChecked,
   ]);
-
+  
   useEffect(() => {
-    if (!auth) return;
-
     if (!isAuthLoading && !user) {
       router.push("/login");
       return;
     }
 
     if (!isAuthLoading && user) {
-      if (!user.displayName) {
+      if (!user.user_metadata?.display_name && !user.email) {
         router.push("/getting-started");
         return;
       }
     }
-  }, [isAuthLoading, user, router, auth]);
+  }, [isAuthLoading, user, router]);
 
   const initialModelParam = searchParams.get("model");
   const initialImageParam = searchParams.get("img");
@@ -112,10 +117,8 @@ const ChatPage: React.FC = () => {
         user={user}
         authToken={authToken}
         initialModel={validatedInitialModel}
-        initialImage={initialImageParam || undefined}
-        initialMessage={initialMessageParam || undefined}
+        initialImage={initialImageParam || undefined}        initialMessage={initialMessageParam || undefined}
         updateSession={updateSession}
-        auth={auth}
       />
     </main>
   );

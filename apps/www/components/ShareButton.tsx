@@ -5,7 +5,7 @@ import { toast } from "sonner";
 import { useTranslations } from "next-intl";
 import { useIsMobile } from "@workspace/ui/hooks/use-mobile";
 import { ChatSession } from "@/hooks/use-chat-sessions";
-import { User } from "firebase/auth";
+import { User } from "@supabase/supabase-js";
 import { Message } from "ai";
 
 interface ShareButtonProps {
@@ -31,15 +31,12 @@ const ShareButton: FC<ShareButtonProps> = ({
     if (messages.length === 0) {
       toast.error(t("chat.error.shareNoMessages"));
       return;
-    }
-
-    try {
-      const idToken = await user.getIdToken();
+    }    try {
       const response = await fetch("/api/share", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: idToken,
+          Authorization: `Bearer ${user.id}`,
         },
         body: JSON.stringify({
           sessionId: currentSession.id,

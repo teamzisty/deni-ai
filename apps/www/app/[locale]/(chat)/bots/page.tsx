@@ -29,7 +29,7 @@ import { Label } from "@workspace/ui/components/label";
 import { Input } from "@workspace/ui/components/input";
 import { Link } from "@/i18n/navigation";
 import { toast } from "sonner";
-import { User } from "firebase/auth";
+import { User } from "@supabase/supabase-js";
 import { SecureFetch } from "@/lib/secureFetch";
 import { ClientBot } from "@/types/bot";
 import { Popover, PopoverTrigger, PopoverContent } from "@workspace/ui/components/popover";

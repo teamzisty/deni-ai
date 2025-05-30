@@ -265,14 +265,12 @@ interface MessageLogProps {
 export const MemoMarkdown = memo(
   ({ content }: { content: string }) => {
     return (
-      <div className="text-sm md:text-base">
-        <ReactMarkdown
-          remarkPlugins={[remarkGfm]}
-          components={{ pre: Pre, a: MarkdownLink }}
-        >
-          {content}
-        </ReactMarkdown>
-      </div>
+      <ReactMarkdown
+        remarkPlugins={[remarkGfm]}
+        components={{ pre: Pre, a: MarkdownLink }}
+      >
+        {content}
+      </ReactMarkdown>
     );
   },
   (prevProps, nextProps) => {
@@ -389,23 +387,30 @@ const MessageControls = memo(
           <div className="p-1 text-gray-400 hover:text-foreground">
             <EasyTip content={t("messageLog.copy")}>
               <Button
-                className="p-0 mx-1 rounded-full"
+                className="p-0 mx-0.5 md:mx-1 rounded-full"
                 variant={"ghost"}
-                onClick={handleCopy}
+                size="sm"
               >
-                <Copy size="16" />
+                <Copy size={14} className="md:size-4" />
               </Button>
             </EasyTip>
           </div>
           {generationTime && (
-            <div className="flex items-center p-2 text-sm cursor-default text-muted-foreground">
-              <Clock size={16} className="mr-1" />
-              <span>{formatTime(generationTime)}</span>
+            <div className="flex items-center gap-1 p-1 md:p-2 text-xs md:text-sm cursor-default text-muted-foreground">
+              <Clock size={14} className="mr-0.5 md:mr-1 md:size-4" />
+              <span className="hidden sm:inline">
+                {formatTime(generationTime)}
+              </span>
+              <span className="sm:hidden">
+                {generationTime < 1000
+                  ? `${generationTime}ms`
+                  : `${Math.floor(generationTime / 1000)}s`}
+              </span>
             </div>
           )}
           {onRegenerate && (
             <div className="flex items-center">
-              <div className="p-1 text-gray-400 hover:text-foreground">
+              <div className="p-0.5 md:p-1 text-gray-400 text-xs md:text-sm hover:text-foreground">
                 <EasyTip content={t("messageLog.regenerate")}>
                   <RefreshModelSelector
                     modelDescriptions={modelDescriptions}
@@ -421,10 +426,10 @@ const MessageControls = memo(
               <DropdownMenuTrigger asChild>
                 <Button
                   variant="ghost"
-                  size="icon"
-                  className="rounded-full text-gray-400 hover:text-foreground"
+                  size="sm"
+                  className="rounded-full text-gray-400 hover:text-foreground p-1 md:p-2"
                 >
-                  <MoreVertical size={18} />
+                  <MoreVertical size={14} className="md:size-[18px]" />
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent>
@@ -589,12 +594,14 @@ export const MessageLog: FC<MessageLogProps> = memo(
       const genAnnotations = annotations.filter(
         (a) => (a as messageAnnotation).generationTime !== undefined
       );
-      
+
       // If there are any generation time annotations, use the latest one
       // (assuming later annotations are more recent)
       if (genAnnotations.length > 0) {
         const latestGenAnnotation = genAnnotations[genAnnotations.length - 1];
-        setGenerationTime((latestGenAnnotation as messageAnnotation).generationTime);
+        setGenerationTime(
+          (latestGenAnnotation as messageAnnotation).generationTime
+        );
       }
 
       const progressAnnotations = annotations.filter(

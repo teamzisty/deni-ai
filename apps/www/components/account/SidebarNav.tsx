@@ -79,12 +79,11 @@ export const SidebarNav = () => {
       ) : (
         <>
           {user && (
-            <div className="flex items-center gap-4 mb-4">
-              <Avatar className="h-12 w-12">
-                <AvatarImage src={user.photoURL || ""} />
-                <AvatarFallback>{user.displayName?.charAt(0)}</AvatarFallback>
+            <div className="flex items-center gap-4 mb-4">              <Avatar className="h-12 w-12">
+                <AvatarImage src={user.user_metadata?.avatar_url || ""} />
+                <AvatarFallback>{user.user_metadata?.full_name?.charAt(0) || user.user_metadata?.name?.charAt(0) || user.email?.charAt(0)}</AvatarFallback>
               </Avatar>
-              <p>{user.displayName}</p>
+              <p>{user.user_metadata?.full_name || user.user_metadata?.name || user.email}</p>
             </div>
           )}
           <Tabs

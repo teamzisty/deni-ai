@@ -1,39 +1,33 @@
-import { authAdmin, notAvailable, firestoreAdmin } from "@workspace/firebase-config/server";
+import { createSupabaseServerClient } from "@workspace/supabase-config/server";
 import { NextResponse } from "next/server";
 
 export async function GET(req: Request) {
   try {
-    if (!firestoreAdmin) {
-      return NextResponse.json({ error: "Firebaseが利用できません" }, { status: 500 });
-    }
+    const supabase = createSupabaseServerClient();
     
     // 共有チャットの一覧を取得（最新の50件）
-    const snapshot = await firestoreAdmin
-      .collection("shared-conversations")
-      .orderBy("createdAt", "desc")
-      .limit(50)
-      .get();
+    const { data: chats, error } = await supabase
+      .from('shared_conversations')
+      .select('id, title, created_at, view_count, messages')
+      .order('created_at', { ascending: false })
+      .limit(50);
+
+    if (error) {
+      console.error("Supabase error:", error);
+      return NextResponse.json({ error: "Database Error" }, { status: 500 });
+    }
     
-    const chats = snapshot.docs.map((doc) => {
-      const data = doc.data();
-      // Firestoreのタイムスタンプをシリアライズ可能な形式に変換
-      const createdAt = data.createdAt;
-      const createdAtDate = createdAt && typeof createdAt.toDate === 'function'
-        ? createdAt.toDate().toISOString()
-        : new Date().toISOString();
-        
-      return {
-        id: doc.id,
-        title: data.title || "無題の会話",
-        createdAt: createdAtDate,
-        viewCount: data.viewCount || 0,
-        messageCount: data.messages?.length || 0,
-      };
-    });
+    const formattedChats = chats?.map((chat) => ({
+      id: chat.id,
+      title: chat.title || "無題の会話",
+      createdAt: chat.created_at,
+      viewCount: chat.view_count || 0,
+      messageCount: chat.messages?.length || 0,
+    })) || [];
 
     return NextResponse.json({ 
       success: true, 
-      chats
+      chats: formattedChats
     });
   } catch (error) {
     console.error(error);

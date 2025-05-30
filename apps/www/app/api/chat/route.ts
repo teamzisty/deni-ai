@@ -15,26 +15,20 @@ import {
   OpenRouterProviderOptions,
 } from "@openrouter/ai-sdk-provider";
 import { createGroq } from "@ai-sdk/groq";
-import { authAdmin, firestoreAdmin, notAvailable } from "@workspace/firebase-config/server";
-import { createVoidsOAI } from "@workspace/voids-oai-provider/index";
-import { createVoidsAP } from "@workspace/voids-ap-provider/index";
+import { createSupabaseServerClient } from "@workspace/supabase-config/server";
 import {
   convertToCoreMessages,
-  CoreMessage,
   createDataStreamResponse,
   extractReasoningMiddleware,
-  generateText,
   smoothStream,
   streamText,
   Tool,
-  tool,
   UIMessage,
   wrapLanguageModel,
 } from "ai";
 import { NextResponse } from "next/server";
-import { auth, firestore } from "@workspace/firebase-config/client";
 import { getTools } from "@/lib/utils";
-import { Bot, ServerBot } from "@/types/bot";
+import { RowServerBot } from "@/types/bot";
 
 export async function POST(req: Request) {
   try {
@@ -55,41 +49,44 @@ export async function POST(req: Request) {
       botId?: string;
       toolList?: string[];
       language?: string;
-    } = await req.json();
-
-    if (!model || messages.length === 0) {
+    } = await req.json();    if (!model || messages.length === 0) {
       return new NextResponse("Invalid request", { status: 400 });
-    }
+    }    // Supabase authentication
+    const supabase = createSupabaseServerClient();
+    let userId = null;
 
-    if (auth && (!authorization || notAvailable)) {
-      return new NextResponse("Authorization failed", { status: 401 });
-    }
-
-    if (auth && authorization) {
-      authAdmin
-        ?.verifyIdToken(authorization)
-        .then((decodedToken) => {
-          if (!decodedToken) {
-            return new NextResponse("Authorization failed", { status: 401 });
-          }
-        })
-        .catch((error) => {
-          console.error(error);
+    if (authorization) {
+      try {
+        // Extract token from Bearer format
+        const token = authorization.replace('Bearer ', '');
+        const { data: { user }, error } = await supabase.auth.getUser(token);
+        if (error || !user) {
           return new NextResponse("Authorization failed", { status: 401 });
-        });
+        }
+        userId = user.id;
+      } catch (error) {
+        console.error(error);
+        return new NextResponse("Authorization failed", { status: 401 });
+      }
     }
 
-    let bot: ServerBot | null = null;
+    let bot: RowServerBot | null = null;
     if (botId) {
-      const botRef = firestoreAdmin?.collection("deni-ai-bots").doc(botId);
-      const botDoc = await botRef?.get();
+      console.log("Bot ID provided:", botId);
+      const { data: botData, error } = await supabase
+        .from('bots')
+        .select('*')
+        .eq('id', botId)
+        .single();
 
-      if (botDoc?.exists) {
-        bot = botDoc.data() as ServerBot;
-        bot.id = botId;
-      } else {
+        console.log("Fetched bot data:", botData);
+
+      if (error || !botData) {
         return new NextResponse("Bot not found", { status: 404 });
       }
+
+      bot = botData as RowServerBot;
+      bot.id = botId;
     }
 
     const modelDescription = modelDescriptions[model];

@@ -1,9 +1,5 @@
-import { ClientBot, ServerBot } from "@/types/bot";
-import {
-  authAdmin,
-  notAvailable,
-  firestoreAdmin,
-} from "@workspace/firebase-config/server";
+import { ClientBot } from "@/types/bot";
+import { createSupabaseServerClient } from "@workspace/supabase-config/server";
 import { NextResponse } from "next/server";
 
 export async function GET(req: Request) {
@@ -12,72 +8,63 @@ export async function GET(req: Request) {
       .get("Authorization")
       ?.replace("Bearer ", "");
 
-    if (!authorization || notAvailable) {
+    if (!authorization) {
       return NextResponse.json(
         { error: "Authorization Failed" },
         { status: 401 }
       );
     }
 
-    let userId: string;
-    try {
-      const decodedToken = await authAdmin?.verifyIdToken(authorization);
-      if (!decodedToken) {
-        return NextResponse.json(
-          { error: "Authorization Failed" },
-          { status: 401 }
-        );
-      }
-      userId = decodedToken.uid;
-    } catch (error) {
-      console.error(error);
+    const supabase = createSupabaseServerClient();
+
+    // Verify the JWT token
+    const {
+      data: { user },
+      error: authError,
+    } = await supabase.auth.getUser(authorization);
+
+    if (authError || !user) {
       return NextResponse.json(
         { error: "Authorization Failed" },
         { status: 401 }
       );
     }
 
-    if (!firestoreAdmin) {
-      return NextResponse.json(
-        { error: "Firebase is not available" },
-        { status: 500 }
-      );
-    }
+    // Get bots from Supabase (limit to 20)
+    const { data: botsData, error } = await supabase
+      .from("bots")
+      .select("*")
+      .order("created_at", { ascending: false })
+      .limit(20);
 
-    // Save bot data to Firestore
-    const botRef = firestoreAdmin.collection("deni-ai-bots");
-    const botDoc = await botRef.get();
+    if (error) {
+      console.error("Supabase error:", error);
+      return NextResponse.json({ error: "Database Error" }, { status: 500 });
+    }
 
     const bots: ClientBot[] = [];
 
-    // Limit to 20 bot documents
-    const botDocs = botDoc.docs.slice(0, 20);
-
-    // Process each bot document
-    for (const doc of botDocs) {
-      const botData = doc.data() as ServerBot;
-      if (!botData) continue;
-
-      try {
-        const botUserId = botData.createdBy.id;
-        const botUser = await authAdmin?.getUser(botUserId);
-
-        bots.push({
-          id: doc.id,
-          name: botData.name,
-          description: botData.description,
-          instructions: botData.instructions,
-          createdBy: {
-            name: botUser?.displayName || "Unknown User",
-            verified: botUser?.emailVerified || false,
-            id: botUserId,
-          },
-          createdAt: botData.createdAt,
-        });
-      } catch (error) {
-        console.error(`Error processing bot document ${doc.id}:`, error);
-        // Continue with next bot if one fails
+    for (const bot of botsData || []) {
+      const botUserData = await supabase.auth.admin.getUserById(bot.user_id);
+      if (!botUserData.data.user) {
+        return;
       }
+
+      const botUser = botUserData.data.user;
+
+      bots.push({
+        id: bot.id,
+        name: bot.name,
+        description: bot.description,
+        instructions: bot.instructions,
+        createdBy: {
+          name:
+            botUser.user_metadata?.full_name || botUser.email || "Unknown User",
+          verified: botUser.email_confirmed_at !== null,
+          id: botUser.id,
+        },
+        createdAt: new Date(bot.created_at).getTime(),
+      });
     }
 
     return NextResponse.json({

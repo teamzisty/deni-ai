@@ -130,7 +130,7 @@ export function HubSidebar() {
             <FolderPlus className="h-4 w-4" />
           </Button>
         </SidebarGroupLabel>
-        <SidebarGroupContent>
+        <SidebarGroupContent className="group-data-[collapsible=icon]:hidden">
           <SidebarMenu className="flex flex-col gap-2 pl-2">
             <span className="text-muted-foreground">{t("Hubs.noHubsYet")}</span>
           </SidebarMenu>

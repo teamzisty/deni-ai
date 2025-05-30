@@ -27,7 +27,7 @@ import {
 } from "@workspace/ui/components/dropdown-menu";
 import Image from "next/image";
 import { memo, useEffect, useState } from "react";
-import { User } from "firebase/auth";
+import { User } from "@supabase/supabase-js";
 import { Link } from "@/i18n/navigation";
 import { useChatSessions } from "@/hooks/use-chat-sessions";
 import { toast } from "sonner";
@@ -38,14 +38,14 @@ import { useRouter } from "next/navigation";
 import { useSettings } from "@/hooks/use-settings";
 
 export const AccountManagement = () => {
-  const { user, auth, isLoading } = useAuth();
+  const { user, isLoading, supabase } = useAuth();
   const isMobile =
     typeof window !== "undefined"
       ? require("@/hooks/use-mobile").useIsMobile()
       : false;
   if (isMobile) return null;
 
-  if (isLoading) {
+  if (isLoading && !supabase) {
     return (
       <div className="flex items-center mt-2 gap-2">
         <Skeleton className="h-12 w-12 rounded-full" />
@@ -58,7 +58,7 @@ export const AccountManagement = () => {
       <AccountDropdownMenu
         user={user}
         handleAuth={async () => {
-          await auth?.signOut();
+          await supabase?.auth.signOut();
         }}
       />
     </div>
@@ -97,10 +97,10 @@ export const AccountDropdownMenu = memo(
         <DropdownMenuTrigger asChild>
           {!isDisabled ? (
             <Button variant="ghost" className="h-16 p-2 ml-1 justify-start">
-              {user?.photoURL ? (
+              {user?.user_metadata.avatar_url ? (
                 <Image
-                  src={user.photoURL}
-                  alt={user.displayName || "User Avatar"}
+                  src={user.user_metadata.avatar_url}
+                  alt={user.user_metadata.full_name || "User Avatar"}
                   width={40}
                   height={40}
                   className={`rounded-full ${settings.privacyMode && "blur-sm"}`}
@@ -125,10 +125,10 @@ export const AccountDropdownMenu = memo(
             {!isDisabled && (
               <DropdownMenuLabel>
                 <div className="h-16 justify-start flex items-center gap-2 md:max-w-[210px]">
-                  {user?.photoURL ? (
+                  {user?.user_metadata.avatar_url ? (
                     <Image
-                      src={user.photoURL}
-                      alt={user.displayName || "User Avatar"}
+                      src={user?.user_metadata.avatar_url}
+                      alt={user?.user_metadata.full_name || "User Avatar"}
                       width={40}
                       height={40}
                       className={`rounded-full ${settings.privacyMode && "blur-sm"}`}
@@ -139,7 +139,7 @@ export const AccountDropdownMenu = memo(
                   )}
                   <div className="flex flex-col text-left">
                     <span className={`${settings.privacyMode && "blur-sm"}`}>
-                      {truncateName(user?.displayName)}
+                      {truncateName(user?.user_metadata.full_name)}
                     </span>
                   </div>
                 </div>

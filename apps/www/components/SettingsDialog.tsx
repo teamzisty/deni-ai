@@ -44,7 +44,7 @@ export function SettingsDialog() {
     <div className="flex flex-col gap-5">
       <Tabs defaultValue={initialTab} className="w-full">
         <div className="flex flex-col md:flex-row w-full h-full gap-4">
-          <TabsList className="flex md:flex-col md:items-start mt-15 gap-2 bg-transparent">
+          <TabsList className="flex md:flex-col md:items-start sm:mt-15 gap-2 bg-transparent">
             <TabsTrigger
               className="flex-1 justify-start w-full p-4 data-[state=active]:bg-primary"
               value="general"

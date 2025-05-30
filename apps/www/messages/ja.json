@@ -106,7 +106,7 @@
     "branchName": "ブランチ名",
     "branchNamePlaceholder": "例: 私の新しいアイデア"
   },
-  "devMessageLog": {
+  "intellipulseMessageLog": {
     "writeAction": "ファイル書き込み: {path}",
     "readAction": "ファイル読み込み: {path}",
     "listAction": "ディレクトリ一覧: {path}",
@@ -137,7 +137,7 @@
     "deepResearch": "詳細なリサーチ",
     "shallowResearch": "浅いリサーチ",
     "advancedResearch": "高度なリサーチ",
-    "devNotAvailable": "開発モードでは利用できません",
+    "intellipulseNotAvailable": "Intellipulse では利用できません",
     "canvas": "キャンバス",
     "translate": "翻訳",
     "botNotice": "あなたは「{botName}」Botにいます。退出するには、新しい会話を作成してください。"
@@ -290,6 +290,29 @@
           "label": "二段階認証",
           "sublabel": "アカウントにセキュリティの追加レイヤーを追加"
         },
+        "enabled": "有効",
+        "disabled": "無効",
+        "enabledStatus": "二段階認証が有効になっています",
+        "enabledDescription": "アカウントは二段階認証で保護されています。",
+        "disabledStatus": "二段階認証が無効になっています",
+        "disabledDescription": "アカウントは二段階認証で保護されていません。セキュリティを向上させるために有効にしてください。",
+        "activeAuthenticators": "アクティブな認証アプリ",
+        "totpAuthenticator": "TOTP認証アプリ",
+        "addedOn": "{date}に追加",
+        "disable": "無効にする",
+        "setupButton": "二段階認証を設定",
+        "settingUp": "二段階認証を設定しています...",
+        "scanQrCode": "認証アプリでQRコードをスキャン",
+        "scanQrDescription": "Google認証システム、Authy、1Passwordなどの認証アプリでこのQRコードをスキャンしてください。",
+        "enterCodeManually": "または、この秘密鍵を手動で入力してください:",
+        "secretCopied": "秘密鍵をクリップボードにコピーしました",
+        "secretCopyFailed": "秘密鍵のコピーに失敗しました",
+        "enterVerificationCode": "アプリから6桁のコードを入力してください:",
+        "codePlaceholder": "000000",
+        "verifying": "確認中...",
+        "enable2FA": "二段階認証を有効にする",
+        "duplicateFactorError": "二段階認証方法が既に存在します。新しいものを追加する前に、既存のものを無効にしてください。",
+        "enrollmentFailed": "二段階認証の設定に失敗しました。もう一度お試しください。",
         "sessions": {
           "label": "アクティブなセッションを管理",
           "sublabel": "現在ログインしているすべてのデバイスを表示",
@@ -346,9 +369,9 @@
         "export": "すべてエクスポート",
         "import": "すべてインポート"
       },
-      "devExport": {
-        "title": "開発モードの会話を管理",
-        "description": "開発モードの会話をJSONファイルにエクスポートするか、ファイルからインポートします。"
+      "intellipulseExport": {
+        "title": "Intellipulse の会話を管理",
+        "description": "Intellipulse の会話をJSONファイルにエクスポートするか、ファイルからインポートします。"
       },
       "deleteData": {
         "title": "すべての会話を削除",
@@ -584,9 +607,9 @@
   },
   "login": {
     "title": "ログイン",
-    "description": "アカウント情報を入力して、ログインします。",
-    "email": "メールアドレス",
+    "description": "アカウント情報を入力して、ログインします。",    "email": "メールアドレス",
     "password": "パスワード",
+    "forgotPassword": "パスワードを忘れましたか？",
     "loginButton": "ログイン",
     "continueWith": "次で続ける",
     "googleSignIn": "Google でサインイン",
@@ -606,7 +629,49 @@
     "tooManyRequests": "短時間にリクエストを送信しすぎています。しばらく待ってからお試しください",
     "invalidEmail": "メールアドレスが無効です",
     "accountDisabled": "このアカウントは無効になっています",
-    "otherError": "その他のエラー: {errorContent}"
+    "otherError": "その他のエラー: {errorContent}",
+    "passwordReset": {
+      "title": "パスワードリセット",
+      "description": "パスワードをリセットするには、メールアドレスを入力してください。",
+      "email": "メールアドレス",
+      "emailPlaceholder": "登録したメールアドレスを入力",
+      "sending": "送信中...",
+      "sent": "パスワードリセットリンクを送信しました。メールボックスを確認してください。",
+      "sendResetLink": "パスワードリセットリンクを送信",
+      "resetLinkSent": "パスワードリセットリンクが送信されました。メールを確認してください。",
+      "resetLinkError": "パスワードリセットリンクの送信に失敗しました。もう一度お試しください。",
+      "backToLogin": "ログイン画面に戻る"
+    },    "passwordResetWarning": {
+      "title": "パスワードリセットが必要な場合",
+      "content": "v4.1.0 以前からDeni AI を使用している場合で、パスワードログインを使用している場合は、パスワードをリセットする必要があります。"
+    },
+    "passwordResetConfirm": {
+      "title": "新しいパスワードを設定",
+      "description": "新しいパスワードを入力してください",
+      "newPassword": "新しいパスワード",
+      "newPasswordPlaceholder": "新しいパスワードを入力",
+      "confirmPassword": "パスワードの確認",
+      "confirmPasswordPlaceholder": "新しいパスワードを再入力",
+      "updatePassword": "パスワードを更新",
+      "updatingPassword": "パスワード更新中...",
+      "backToLogin": "ログイン画面に戻る",
+      "invalidLink": {
+        "title": "無効なリセットリンク",
+        "description": "このパスワードリセットリンクは無効または期限切れです。新しいリンクをリクエストしてください。",
+        "requestNewLink": "新しいリセットリンクをリクエスト"
+      },
+      "errors": {
+        "fillAllFields": "すべてのフィールドを入力してください",
+        "passwordsDontMatch": "パスワードが一致しません",
+        "passwordTooShort": "パスワードは8文字以上である必要があります",
+        "authUnavailable": "認証サービスが利用できません",
+        "passwordTooWeak": "パスワードが弱すぎます。より強力なパスワードを使用してください。",
+        "updateFailed": "パスワードの更新に失敗しました。もう一度お試しください。"
+      },
+      "success": {
+        "message": "パスワードが正常に更新されました"
+      }
+    }
   },
   "register": {
     "title": "アカウントの登録",
@@ -829,16 +894,17 @@
       "downloadError": "データのダウンロードに失敗しました"
     },
     "delete": {
-      "title": "アカウント削除",
+      "title": "アカウントの削除",
       "description": "アカウントとそれに関連するすべてのデータを完全に削除します。",
-      "button": "アカウント削除",
+      "button": "アカウントを削除",
+      "confirm": "確認",
       "deleting": "削除中...",
       "success": "アカウントの削除に成功しました",
       "error": "アカウントの削除に失敗しました",
       "reauth": {
         "title": "パスワードを確認",
         "description": "セキュリティ上の理由から、続行するにはパスワードを入力してください。",
-        "providerMessage": "セキュリティ上の理由から、続行するには{provider}で再認証する必要があります。"
+        "confirmMessage": "あなたのアカウントは、完全に削除されます。この操作は元に戻せません。"
       }
     },
     "password": {
@@ -896,6 +962,29 @@
         "label": "二段階認証",
         "sublabel": "アカウントにセキュリティの追加レイヤーを追加"
       },
+      "enabled": "有効",
+      "disabled": "無効",
+      "enabledStatus": "二段階認証が有効になっています",
+      "enabledDescription": "アカウントは二段階認証で保護されています。",
+      "disabledStatus": "二段階認証が無効になっています",
+      "disabledDescription": "アカウントは二段階認証で保護されていません。セキュリティを向上させるために有効にしてください。",
+      "activeAuthenticators": "アクティブな認証アプリ",
+      "totpAuthenticator": "TOTP認証アプリ",
+      "addedOn": "{date}に追加",
+      "disable": "無効にする",
+      "setupButton": "二段階認証を設定",
+      "settingUp": "二段階認証を設定しています...",
+      "scanQrCode": "認証アプリでQRコードをスキャン",
+      "scanQrDescription": "Google認証システム、Authy、1Passwordなどの認証アプリでこのQRコードをスキャンしてください。",
+      "enterCodeManually": "または、この秘密鍵を手動で入力してください:",
+      "secretCopied": "秘密鍵をクリップボードにコピーしました",
+      "secretCopyFailed": "秘密鍵のコピーに失敗しました",
+      "enterVerificationCode": "アプリから6桁のコードを入力してください:",
+      "codePlaceholder": "000000",
+      "verifying": "確認中...",
+      "enable2FA": "二段階認証を有効にする",
+      "duplicateFactorError": "二段階認証方法が既に存在します。新しいものを追加する前に、既存のものを無効にしてください。",
+      "enrollmentFailed": "二段階認証の設定に失敗しました。もう一度お試しください。",
       "sessions": {
         "label": "アクティブなセッションを管理",
         "sublabel": "現在ログインしているすべてのデバイスを表示",
@@ -1208,7 +1297,7 @@
     "introduction": {
       "title": "はじめに",
       "content": "このプライバシーポリシーは、Deni AIサービスをご利用いただく際に、お客様の個人情報がどのように収集、使用、共有されるかについて説明しています。",
-      "operatedBy": "Deni AIはUpLauncherチームによって運営されています。"
+      "operatedBy": "Deni AIはVeltrixチームによって運営されています。"
     },
     "informationCollection": {
       "title": "収集する情報",
@@ -1272,7 +1361,7 @@
     "introduction": {
       "title": "はじめに",
       "content": "Deni AIへようこそ。この利用規約は、当社のウェブサイト、製品、およびサービスの利用に適用されます。",
-      "operatedBy": "Deni AIはUpLauncherチームによって運営されています。"
+      "operatedBy": "Deni AIはVeltrixチームによって運営されています。"
     },
     "acceptance": {
       "title": "規約の承認",
@@ -1358,14 +1447,14 @@
     "copied": "翻訳をコピーしました",
     "clickToOpen": "クリックして開く"
   },
-  "devSessions": {
-    "newSession": "新しい開発セッション",
-    "localStorageSaveFailed": "開発セッションの保存に失敗しました",
-    "sessionDeletedSuccess": "開発セッションを削除しました",
-    "clearAllSuccess": "すべての開発セッションをクリアしました",
+  "intellipulseSessions": {
+    "newSession": "新しいIntellipulseセッション",
+    "localStorageSaveFailed": "Intellipulseセッションの保存に失敗しました",
+    "sessionDeletedSuccess": "Intellipulseセッションを削除しました",
+    "clearAllSuccess": "すべてのIntellipulseセッションをクリアしました",
     "viewInBrowser": "ブラウザで表示"
   },
-  "devChat": {
+  "intellipulseChat": {
     "initialMessageSent": "プロパティから初期メッセージを送信中",
     "sessionUpdated": "セッションを更新しました。",
     "visionWarning": "モデルはビジョンをサポートしていません。画像を削除します。",
@@ -1382,18 +1471,18 @@
     "retry": "再試行",
     "retryWithError": "再試行 ({count}/{max})"
   },
-  "devSidebar": {
-    "devMode": "開発モード",
-    "newDevChat": "新しい開発チャット",
+  "intellipulseSidebar": {
+    "intellipulse": "Intellipulse ",
+    "newIntellipulseChat": "新しいIntellipulseチャット",
     "delete": "削除",
     "confirm": "確認",
     "cancel": "キャンセル",
     "backToHome": "ホームに戻る",
     "deleteTooltip": "セッションを削除"
   },
-  "devHomePage": {
-    "title": "WebContainer 開発ホーム",
-    "button": "新しい開発セッションを開始"
+  "intellipulseHomePage": {
+    "title": "WebContainer Intellipulseホーム",
+    "button": "新しいIntellipulseセッションを開始"
   },
   "webContainer": {
     "newFile": "新しいファイル",
@@ -1463,8 +1552,8 @@
   },
   "modelDescriptions": {
     "openai/gpt-4-1-2025-04-14": "OpenAIの複雑なタスク向け主力モデル。",
-    "openai/gpt-4-1-mini-2025-04-14": "バランスの取れたより小型のGPT-4-1モデル。",
-    "openai/gpt-4-1-nano-2025-04-14": "最速かつ最もコスト効率の高いGPT-4-1モデル。",
+    "openai/gpt-4-1-mini-2025-04-14": "バランスの取れたより小型のGPT-4.1モデル。",
+    "openai/gpt-4-1-nano-2025-04-14": "最速かつ最もコスト効率の高いGPT-4.1モデル。",
     "openai/gpt-4o-2024-11-20": "多用途で高知能な主力モデル。",
     "openai/gpt-4o-mini-2024-07-18": "特定のタスクに適した高速で手頃な小型モデル。",
     "openai/o4-mini-2025-04-16": "高速で効率的な推論に最適化されたモデル。",
@@ -1546,6 +1635,84 @@
       "deleteError": "Bot の削除に失敗しました",
       "deleteSuccess": "Bot が正常に削除されました！",
       "deleteWarning": "この操作は元に戻すことができません。Botは完全に削除されます。"
+    }
+  },
+  "gitClone": {
+    "title": "Gitリポジトリをクローン",
+    "description": "Gitリポジトリをワークスペースにクローンします",
+    "repositoryUrl": "リポジトリURL",
+    "repositoryUrlPlaceholder": "https://github.com/user/repository.git",
+    "urlHint": "GitHub、GitLab、BitbucketのURLをサポート",
+    "clone": "クローン",
+    "cancel": "キャンセル",
+    "cloning": "クローン中...",
+    "cloningRepository": "リポジトリをクローン中...",
+    "success": "リポジトリのクローンが完了しました！",
+    "errors": {
+      "invalidUrl": "有効なGitリポジトリのURLを入力してください",
+      "emptyUrl": "リポジトリURLは必須です",
+      "cloneFailed": "リポジトリのクローンに失敗しました",
+      "dependencyInstallFailed": "必要な依存関係のインストールに失敗しました"
+    },
+    "button": "リポジトリをクローン"
+  },
+  "githubIntegration": {
+    "title": "GitHub統合",
+    "description": "WebContainerの変更からプルリクエストを作成します",
+    "button": "プルリクエストを作成",
+    "auth": {
+      "linkRequired": "GitHubアカウントのリンクが必要",
+      "linkMessage": "プルリクエストを作成するには、GitHubアカウントをリンクする必要があります。",
+      "linkSubMessage": "アカウントマネージャーでアカウントをリンクできます。",
+      "accountManager": "アカウントマネージャー",
+      "reauthorizationRequired": "再認証が必要",
+      "reauthorizationMessage": "GitHubアクセストークンの有効期限が切れています。続行するには再認証してください。",
+      "reauthorizeButton": "GitHubを再認証",
+      "accountLinked": "アカウントがリンクされました",
+      "proceed": "続行"
+    },
+    "setup": {
+      "signOut": "サインアウト",
+      "repository": "リポジトリ",
+      "selectRepository": "リポジトリを選択",
+      "private": "プライベート",
+      "noRepositories": "リポジトリが見つからないか、トークンが無効です"
+    },
+    "review": {
+      "filesToChange": "変更されるファイル",
+      "noChanges": "WebContainerでファイルの変更が検出されませんでした",
+      "branchName": "ブランチ名",
+      "commitMessage": "コミットメッセージ",
+      "pullRequestTitle": "プルリクエストタイトル",
+      "pullRequestDescription": "プルリクエスト説明"
+    },
+    "creating": {
+      "title": "プルリクエストを作成中...",
+      "subtitle": "数分かかる場合があります"
+    },
+    "operations": {
+      "create": "作成",
+      "update": "更新",
+      "delete": "削除"
+    },
+    "buttons": {
+      "cancel": "キャンセル",
+      "continueToSetup": "セットアップに進む",
+      "next": "次へ",
+      "createPullRequest": "プルリクエストを作成"
+    },
+    "errors": {
+      "selectRepository": "リポジトリを選択してください",
+      "missingSettings": "プルリクエスト作成に必要な設定が不足しています",
+      "branchExists": "ブランチ '{branchName}' は既に存在します。別の名前を選択してください。",
+      "createFailed": "プルリクエストの作成に失敗しました",
+      "extractFailed": "ファイル変更の抽出に失敗しました",
+      "loadRepositoriesFailed": "リポジトリの読み込みに失敗しました",
+      "initializeFailed": "GitHubサービスの初期化に失敗しました",
+      "reauthorizationFailed": "GitHubアカウントの再認証に失敗しました"
+    },
+    "success": {
+      "pullRequestCreated": "プルリクエストが正常に作成されました！"
     }
   }
 }

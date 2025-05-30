@@ -5,7 +5,6 @@ import { cn } from "@workspace/ui/lib/utils";
 import { useChatSessions } from "@/hooks/use-chat-sessions";
 import { useRouter } from "@/i18n/navigation";
 import { Footer } from "@/components/footer";
-import { auth } from "@workspace/firebase-config/client";
 import { Loading } from "@/components/loading";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
@@ -33,16 +32,15 @@ const ChatApp: React.FC = () => {
   const [canvasEnabled, setCanvasEnabled] = useState(false);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const [currentAuthToken, setCurrentAuthToken] = useState<string | null>(null);
-  const { user } = useAuth();
+  const { user, isLoading: isAuthLoading } = useAuth();
 
   const router = useRouter();
-
   // Setup uploadthing for image uploads
   const { isUploading: uploading, startUpload } = useUploadThing(
     "imageUploader",
     {
       headers: {
-        Authorization: auth ? currentAuthToken || "" : "",
+        Authorization: user ? currentAuthToken || "" : "",
       },
       onClientUploadComplete: (res) => {
         setImage(res[0]?.ufsUrl || null);
@@ -64,6 +62,13 @@ const ChatApp: React.FC = () => {
       setIsUploading(false);
     }
   }, [uploading]);
+
+  useEffect(() => {
+    if (!isAuthLoading && !user) {
+      router.push("/login");
+      return;
+    }
+  }, [isAuthLoading, user, router]);
 
   const handleNewSession = () => {
     // Create new session
@@ -136,8 +141,8 @@ const ChatApp: React.FC = () => {
 
         let idToken;
 
-        if (auth && user) {
-          idToken = await user.getIdToken();
+        if (user) {
+          idToken = user.id;
         }
 
         if (idToken) {
@@ -273,24 +278,8 @@ const ChatApp: React.FC = () => {
   const canvasToggle = useCallback(() => {
     setCanvasEnabled((prev) => !prev);
   }, []);
-
   useEffect(() => {
-    if (!auth) {
-      setIsLoading(false);
-      return;
-    }
-
-    const event = auth.onAuthStateChanged((user) => {
-      if (!user) {
-        router.push("/login");
-        return;
-      }
-
-      setIsLoading(false);
-    });
-    return () => {
-      event();
-    };
+    setIsLoading(false);
   }, [router]);
 
   if (isLoading || isSessionsLoading) {
@@ -309,7 +298,6 @@ const ChatApp: React.FC = () => {
 
         {/* Input Area */}
         <div className="flex items-center flex-col w-full md:w-7/12 m-auto">
-
           <h1 className="m-auto text-xl lg:text-3xl mb-1 font-bold">
             {t("home.title")}
           </h1>

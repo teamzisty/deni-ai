@@ -50,7 +50,7 @@ const InputBox: React.FC<InputBoxProps> = memo(
                 handleSendMessageKey(e);
               }
             }}
-            className="w-full resize-none bg-transparent border-none shadow-none !outline-none focus:ring-0 focus:ring-offset-0 disabled:opacity-0 px-2 py-1.5 md:px-3 md:py-2 text-sm md:text-base"
+            className="w-full resize-none field-sizing-content bg-transparent border-none shadow-none !outline-none focus:ring-0 focus:ring-offset-0 disabled:opacity-0 px-2 py-1.5 md:px-3 md:py-2 text-sm md:text-base"
           />
           <Button
             aria-label={t("inputBox.send")}

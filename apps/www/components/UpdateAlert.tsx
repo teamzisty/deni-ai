@@ -10,7 +10,6 @@ import {
   DialogTitle,
 } from "@workspace/ui/components/dialog";
 import { Button } from "@workspace/ui/components/button";
-import { getTranslations } from "next-intl/server";
 import { setCookie } from 'cookies-next';
 import { useTranslations } from "next-intl";
 
@@ -33,10 +32,9 @@ export function UpdateAlert({ open }: UpdateAlertProps) {
         <DialogHeader>
           <DialogTitle>{t("layout.updateAlert.title")}</DialogTitle>
           <DialogDescription>{t("layout.updateAlert.description")}</DialogDescription>
-        </DialogHeader>
-        <DialogFooter>
+        </DialogHeader>        <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>
-            {t("common.cancel")}
+            {t("cancel")}
           </Button>
           <Button asChild>
             <a href="https://canary.deniai.app/home">{t("layout.updateAlert.button")}</a>

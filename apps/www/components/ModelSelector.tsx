@@ -232,10 +232,11 @@ export const RefreshModelSelector = memo(function ModelSelector({
         <Button
           ref={triggerRef}
           variant={"ghost"}
+          size={isMobile ? "sm" : "default"}
           className={cn("!p-1 rounded-full")}
         >
           {ModelIcon}
-          <span className="inline-flex items-center justify-center">
+          <span className="inline-flex items-center justify-center text-xs md:text-sm">
             {isMobile
               ? getShrinkedName(modelDescriptions[model]?.displayName)
               : modelDescriptions[model]?.displayName}
@@ -245,7 +246,7 @@ export const RefreshModelSelector = memo(function ModelSelector({
       </DropdownMenuTrigger>
 
       <DropdownMenuContent
-        className="w-96"
+        className="md:w-96 w-48 align-start"
         onCloseAutoFocus={(e) => e.preventDefault()}
       >
         <DropdownMenuLabel className="pb-0">
@@ -308,7 +309,7 @@ export const RefreshModelSelector = memo(function ModelSelector({
                           {type === "DeepSeek" && <DeepSeekIcon size={16} />}
                           <span className="text-base">{type}</span>
                         </DropdownMenuSubTrigger>
-                        <DropdownMenuSubContent className="w-96">
+                        <DropdownMenuSubContent className="md:w-96 w-48">
                           {groupedModels[type]?.map((modelKey) => (
                             <ModelItem
                               key={modelKey}

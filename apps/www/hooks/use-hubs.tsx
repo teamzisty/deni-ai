@@ -8,45 +8,16 @@ import { useTranslations } from "next-intl";
 import { useLocalStorage } from "./use-local-storage";
 import { useChatSessions } from "./use-chat-sessions";
 import { useAuth } from "@/context/AuthContext";
-import {
-  collection,
-  doc,
-  getDocs,
-  setDoc,
-  deleteDoc,
-  Timestamp,
-  writeBatch,
-  serverTimestamp, // Import serverTimestamp
-  QueryDocumentSnapshot,
-  DocumentData,
-} from "firebase/firestore";
-import { firestore } from "@workspace/firebase-config/client";
+import { supabase } from "@workspace/supabase-config/client";
 
 const LOCAL_STORAGE_KEY = "deni-ai-hubs";
-const FIRESTORE_COLLECTION = "deni-ai-hubs";
-const FIRESTORE_TIMEOUT_MS = 15000; // 15 seconds timeout for Firestore operations
-const FIRESTORE_WRITE_TIMEOUT_MS = 20000; // 20 seconds timeout for Firestore write operations
-
-// Helper function for Firestore getDocs with timeout
-const getDocsWithTimeout = async (query: any, timeoutMs: number) => {
-  const timeoutPromise = new Promise((_, reject) =>
-    setTimeout(() => reject(new Error('Firestore operation timed out')), timeoutMs)
-  );
-  return Promise.race([getDocs(query), timeoutPromise]);
-};
-
-// Helper function for Firestore batch commit with timeout
-const commitBatchWithTimeout = async (batch: any, timeoutMs: number) => {
-  const timeoutPromise = new Promise((_, reject) =>
-    setTimeout(() => reject(new Error('Firestore batch commit operation timed out')), timeoutMs)
-  );
-  return Promise.race([batch.commit(), timeoutPromise]);
-};
+const SUPABASE_TABLE = "hubs";
+const DB_TIMEOUT_MS = 15000; // 15 seconds timeout for database operations
 
 interface HubsContextProps {
   hubs: Hub[];
   isLoading: boolean;
-  isFirestoreLoaded: boolean;
+  isSupabaseLoaded: boolean;
   getHub: (id: string) => Hub | undefined;
   createHub: (
     name: string,
@@ -66,7 +37,7 @@ interface HubsContextProps {
   ) => Promise<void>;
   removeFileReferenceFromHub: (hubId: string, fileReferenceId: string) => Promise<void>;
   syncHubs: () => Promise<void>;
-  syncLocalHubsToFirestore: () => Promise<void>; // Added for explicit local to Firestore sync
+  syncLocalHubsToSupabase: () => Promise<void>;
 }
 
 const HubsContext = createContext<HubsContextProps | undefined>(undefined);
@@ -82,7 +53,7 @@ export function useHubs() {
 export function HubsProvider({ children }: { children: ReactNode }) {
   const [hubs, setInternalHubs] = useLocalStorage<Hub[]>(LOCAL_STORAGE_KEY, []);
   const [isLoading, setIsLoading] = useState(true);
-  const [isFirestoreLoaded, setIsFirestoreLoaded] = useState(false);
+  const [isSupabaseLoaded, setIsSupabaseLoaded] = useState(false);
   const { getSession, updateSession: updateChatSession } = useChatSessions();
   const t = useTranslations();
   const { user } = useAuth();
@@ -115,7 +86,6 @@ export function HubsProvider({ children }: { children: ReactNode }) {
     });
   }, [setInternalHubs]);
 
-
   const normalizeHubTimestampProperties = (hubData: any, ensureCurrentTime = false): Hub => {
     const now = new Date().getTime();
     const id = hubData.id || uuidv4(); // Ensure ID exists
@@ -131,15 +101,15 @@ export function HubsProvider({ children }: { children: ReactNode }) {
       ...defaults, // Apply defaults first
       ...hubData,    // Spread potentially incomplete hubData
       id,            // Ensure id is correctly set
-      createdAt: hubData.createdAt?.toDate ? hubData.createdAt.toDate().getTime() : (typeof hubData.createdAt === 'string' || typeof hubData.createdAt === 'number' ? new Date(hubData.createdAt).getTime() : (ensureCurrentTime ? now : undefined as any)),
-      updatedAt: hubData.updatedAt?.toDate ? hubData.updatedAt.toDate().getTime() : (typeof hubData.updatedAt === 'string' || typeof hubData.updatedAt === 'number' ? new Date(hubData.updatedAt).getTime() : (ensureCurrentTime ? now : undefined as any)),
+      createdAt: typeof hubData.createdAt === 'string' || typeof hubData.createdAt === 'number' ? new Date(hubData.createdAt).getTime() : (ensureCurrentTime ? now : now),
+      updatedAt: typeof hubData.updatedAt === 'string' || typeof hubData.updatedAt === 'number' ? new Date(hubData.updatedAt).getTime() : (ensureCurrentTime ? now : now),
       fileReferences: Array.isArray(hubData.fileReferences) ? hubData.fileReferences.map((fr: any) => ({
         id: fr.id || uuidv4(),
         name: fr.name || '',
         type: fr.type || '',
         path: fr.path || '',
         size: fr.size || 0,
-        createdAt: fr.createdAt?.toDate ? fr.createdAt.toDate().getTime() : (typeof fr.createdAt === 'string' || typeof fr.createdAt === 'number' ? new Date(fr.createdAt).getTime() : (ensureCurrentTime ? now : undefined as any)),
+        createdAt: typeof fr.createdAt === 'string' || typeof fr.createdAt === 'number' ? new Date(fr.createdAt).getTime() : (ensureCurrentTime ? now : now),
       })) : [],
       chatSessionIds: Array.isArray(hubData.chatSessionIds) ? hubData.chatSessionIds : [],
     };
@@ -150,20 +120,21 @@ export function HubsProvider({ children }: { children: ReactNode }) {
     if (!Array.isArray(normalized.chatSessionIds)) normalized.chatSessionIds = [];
     if (!Array.isArray(normalized.fileReferences)) normalized.fileReferences = [];
 
-
     return normalized as Hub;
   };
   
-  const hubToFirestoreData = (hub: Hub): any => {
+  const hubToSupabaseData = (hub: Hub): any => {
     const data = {
       ...hub,
-      // Use serverTimestamp() for new documents, or convert existing number to Timestamp
-      createdAt: hub.createdAt ? Timestamp.fromMillis(hub.createdAt) : serverTimestamp(),
-      updatedAt: serverTimestamp(), // Always update with server timestamp
-      fileReferences: hub.fileReferences.map(fr => ({
+      user_id: user?.id || '',
+      created_at: new Date(hub.createdAt).toISOString(),
+      updated_at: new Date(hub.updatedAt).toISOString(),
+      file_references: hub.fileReferences.map(fr => ({
         ...fr,
-        createdAt: fr.createdAt ? Timestamp.fromMillis(fr.createdAt) : serverTimestamp(),
+        created_at: new Date(fr.createdAt).toISOString(),
       })),
+      chat_session_ids: hub.chatSessionIds,
+      custom_instructions: hub.customInstructions,
     };
     // Remove undefined properties
     Object.keys(data).forEach(key => {
@@ -172,72 +143,93 @@ export function HubsProvider({ children }: { children: ReactNode }) {
       }
     });
     return data;
-  };
-
-
-  const loadHubsFromFirestore = useCallback(async () => {
-    if (!user || !firestore) {
-      setIsFirestoreLoaded(true);
+  };  const loadHubsFromSupabase = useCallback(async () => {
+    if (!user || !supabase) {
+      setIsSupabaseLoaded(true);
       setLoadingState(false);
       return;
     }
     setLoadingState(true);
     try {
-      const hubsRef = collection(firestore, FIRESTORE_COLLECTION, user.uid, "hubs");
-      const snapshot = await getDocsWithTimeout(hubsRef, FIRESTORE_TIMEOUT_MS) as { docs: QueryDocumentSnapshot<DocumentData>[] };
-      const loadedHubs: Hub[] = snapshot.docs.map((doc: QueryDocumentSnapshot<DocumentData>) => normalizeHubTimestampProperties({ id: doc.id, ...doc.data() }, true));
+      const { data, error } = await supabase
+        .from(SUPABASE_TABLE)
+        .select('*')
+        .eq('user_id', user.id);
+
+      if (error) {
+        throw error;
+      }
+
+      const loadedHubs: Hub[] = (data || []).map((item: any) => normalizeHubTimestampProperties({
+        id: item.id,
+        name: item.name,
+        description: item.description,
+        customInstructions: item.custom_instructions,
+        chatSessionIds: item.chat_session_ids || [],
+        fileReferences: (item.file_references || []).map((fr: any) => ({
+          id: fr.id,
+          name: fr.name,
+          type: fr.type,
+          path: fr.path,
+          size: fr.size,
+          createdAt: fr.created_at,
+        })),
+        createdAt: item.created_at,
+        updatedAt: item.updated_at,
+      }, true));
+      
       setHubs(loadedHubs);
-      setIsFirestoreLoaded(true);
+      setIsSupabaseLoaded(true);
     } catch (error: any) {
-      console.error("Failed to load hubs from Firestore:", error);
+      console.error("Failed to load hubs from Supabase:", error);
       const errorMessage = error.message && error.message.includes('timed out')
         ? t("Hubs.Error.loadFailedTimeout")
         : t("Hubs.Error.loadFailed");
       toast.error(errorMessage);
-      // Fallback to local storage if Firestore fails but user is logged in
+      // Fallback to local storage if Supabase fails but user is logged in
       const localHubsRaw = localStorage.getItem(LOCAL_STORAGE_KEY);
       const localHubs = localHubsRaw ? (JSON.parse(localHubsRaw) as Hub[]).map(h => normalizeHubTimestampProperties(h, true)) : [];
       setHubs(localHubs);
-      setIsFirestoreLoaded(true); // Still set to true as we attempted
+      setIsSupabaseLoaded(true); // Still set to true as we attempted
     } finally {
       setLoadingState(false);
     }
-  }, [user, t, setHubs]); // setLoadingState を依存配列から削除
-
+  }, [user, t, setHubs]);
   useEffect(() => {
     if (user) {
-      // If user is logged in, prioritize Firestore, then sync local changes if any.
-      loadHubsFromFirestore()
+      // If user is logged in, prioritize Supabase, then sync local changes if any.
+      loadHubsFromSupabase()
     } else {
       // User logged out or not yet loaded, use local storage
       const localHubsRaw = localStorage.getItem(LOCAL_STORAGE_KEY);
       const localHubs = localHubsRaw ? (JSON.parse(localHubsRaw) as Hub[]).map(h => normalizeHubTimestampProperties(h, true)) : [];
       setHubs(localHubs);
       setLoadingState(false);
-      setIsFirestoreLoaded(true); // Considered "loaded" from local
+      setIsSupabaseLoaded(true); // Considered "loaded" from local
     }
-  }, [user]); // setLoadingState を依存配列から削除
-
-
-  const saveHubsToStorage = useCallback(async (hubsToSave: Hub[], specificIds?: Set<string>) => {
+  }, [user]);  const saveHubsToStorage = useCallback(async (hubsToSave: Hub[], specificIds?: Set<string>) => {
     const idsToSave = specificIds || modifiedHubIds;
     if (idsToSave.size === 0 && !specificIds) return; // Nothing to save unless specific IDs are provided
-
-    if (user && firestore) {
-      // Save to Firestore
-      console.log("Saving hubs to Firestore...");
-      setLoadingState(true); // Changed from setIsLoading
-      try {
-        const batch = writeBatch(firestore);
-        const hubsCollectionRef = collection(firestore, FIRESTORE_COLLECTION, user.uid, "hubs");
-
-        hubsToSave.forEach(hub => {
+    
+    if (user && supabase) {
+      // Save to Supabase
+      console.log("Saving hubs to Supabase...");
+      setLoadingState(true);      try {
+        for (const hub of hubsToSave) {
           if (idsToSave.has(hub.id)) {
-            const hubRef = doc(hubsCollectionRef, hub.id);
-            batch.set(hubRef, hubToFirestoreData(normalizeHubTimestampProperties(hub, true)));
+            const hubData = hubToSupabaseData(normalizeHubTimestampProperties(hub, true));
+            if (!supabase) {
+              throw new Error('Supabase client not available');
+            }
+            const { error } = await supabase
+              .from(SUPABASE_TABLE)
+              .upsert(hubData, { onConflict: 'id' });
+            
+            if (error) {
+              throw error;
+            }
           }
-        });
-        await commitBatchWithTimeout(batch, FIRESTORE_WRITE_TIMEOUT_MS); // Using timeout
+        }
         
         // 成功した場合だけmodifiedHubIdsを更新
         setModifiedHubIds(prev => {
@@ -246,21 +238,21 @@ export function HubsProvider({ children }: { children: ReactNode }) {
           return next;
         });
       } catch (error: any) {
-        console.error("Failed to save hubs to Firestore:", error);
+        console.error("Failed to save hubs to Supabase:", error);
         const errorMessage = error.message && error.message.includes('timed out')
         ? t("Hubs.Error.saveFailedTimeout")
         : t("Hubs.Error.saveFailed");
         toast.error(errorMessage);
-        // Fallback to local storage if Firestore save fails
+        // Fallback to local storage if Supabase save fails
         localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(hubsToSave.map(h => normalizeHubTimestampProperties(h, true))));
       } finally {
-        setLoadingState(false); // Changed from setIsLoading
+        setLoadingState(false);
       }
     } else {
       // Save to Local Storage
       localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(hubsToSave.map(h => normalizeHubTimestampProperties(h, true))));
     }
-  }, [user, firestore, t, modifiedHubIds, setLoadingState]); // Added setLoadingState
+  }, [user, t, modifiedHubIds, setLoadingState]);
 
 
   useEffect(() => {
@@ -273,116 +265,185 @@ export function HubsProvider({ children }: { children: ReactNode }) {
     return () => clearTimeout(debounceTimeout);
   }, [hubs, modifiedHubIds, saveHubsToStorage]);
 
-
-  const syncLocalHubsToFirestore = useCallback(async (localHubsToSync?: Hub[]) => {
-    if (!user || !firestore) {
-      // toast.error(t("Hubs.Error.syncNoUser")); // Potentially too noisy if called automatically
-      setLoadingState(false); // Changed from setIsLoading
+  const syncLocalHubsToSupabase = useCallback(async (localHubsToSync?: Hub[]) => {
+    if (!user) {
+      setLoadingState(false);
       return;
     }
     const hubsToProcess = localHubsToSync || (JSON.parse(localStorage.getItem(LOCAL_STORAGE_KEY) || "[]") as Hub[]).map(h => normalizeHubTimestampProperties(h,true));
 
     if (hubsToProcess.length === 0) {
-      // toast.info(t("Hubs.noLocalToSync"));
-      setLoadingState(false); // Changed from setIsLoading
+      setLoadingState(false);
       return;
     }
 
-    console.log("Syncing local hubs to Firestore...");
-    setLoadingState(true); // Changed from setIsLoading
-    try {
-      const hubsCollectionRef = collection(firestore, FIRESTORE_COLLECTION, user.uid, "hubs");
-      const batch = writeBatch(firestore);
-      let changesMade = false;
+    console.log("Syncing local hubs to Supabase...");
+    setLoadingState(true);    try {
+      // Get current Supabase hubs to avoid overwriting newer data or creating duplicates by ID
+      if (!supabase) {
+        throw new Error('Supabase client not available');
+      }
+      const { data: supabaseHubs, error: fetchError } = await supabase
+        .from(SUPABASE_TABLE)
+        .select('*')
+        .eq('user_id', user.id);
 
-      // Get current Firestore hubs to avoid overwriting newer data or creating duplicates by ID
-      const firestoreSnapshot = await getDocsWithTimeout(hubsCollectionRef, FIRESTORE_TIMEOUT_MS) as { docs: QueryDocumentSnapshot<DocumentData>[] };
-      const firestoreHubsMap = new Map(
-        firestoreSnapshot.docs.map((doc: QueryDocumentSnapshot<DocumentData>) => 
-          [doc.id, normalizeHubTimestampProperties({ id: doc.id, ...doc.data() }, true)] as [string, Hub]
+      if (fetchError) {
+        throw fetchError;
+      }
+
+      const supabaseHubsMap = new Map(
+        (supabaseHubs || []).map((item: any) => 
+          [item.id, normalizeHubTimestampProperties({
+            id: item.id,
+            name: item.name,
+            description: item.description,
+            customInstructions: item.custom_instructions,
+            chatSessionIds: item.chat_session_ids || [],
+            fileReferences: (item.file_references || []).map((fr: any) => ({
+              id: fr.id,
+              name: fr.name,
+              type: fr.type,
+              path: fr.path,
+              size: fr.size,
+              createdAt: fr.created_at,
+            })),
+            createdAt: item.created_at,
+            updatedAt: item.updated_at,
+          }, true)] as [string, Hub]
         )
       );
 
-      hubsToProcess.forEach(localHub => {
-        const firestoreHub = firestoreHubsMap.get(localHub.id);
-        if (firestoreHub) {
-          // Hub exists in Firestore, only update if local is newer
-          if (localHub.updatedAt > firestoreHub.updatedAt) {
-            batch.set(doc(hubsCollectionRef, localHub.id), hubToFirestoreData(localHub));
+      let changesMade = false;
+      for (const localHub of hubsToProcess) {
+        const supabaseHub = supabaseHubsMap.get(localHub.id);
+        if (supabaseHub) {          // Hub exists in Supabase, only update if local is newer
+          if (localHub.updatedAt > supabaseHub.updatedAt) {
+            const hubData = hubToSupabaseData(localHub);
+            if (!supabase) {
+              throw new Error('Supabase client not available');
+            }
+            const { error } = await supabase
+              .from(SUPABASE_TABLE)
+              .upsert(hubData, { onConflict: 'id' });
+            
+            if (error) throw error;
             changesMade = true;
+          }        } else {
+          // Hub does not exist in Supabase, add it
+          const hubData = hubToSupabaseData(localHub);
+          if (!supabase) {
+            throw new Error('Supabase client not available');
           }
-        } else {
-          // Hub does not exist in Firestore, add it
-          batch.set(doc(hubsCollectionRef, localHub.id), hubToFirestoreData(localHub));
+          const { error } = await supabase
+            .from(SUPABASE_TABLE)
+            .insert(hubData);
+          
+          if (error) throw error;
           changesMade = true;
         }
-      });
-
-      if (changesMade) {
-        await commitBatchWithTimeout(batch, FIRESTORE_WRITE_TIMEOUT_MS); // Using timeout
       }
       
       // 読み込み成功したらリロード
-      await loadHubsFromFirestore();
+      if (changesMade) {
+        await loadHubsFromSupabase();
+      }
     } catch (error: any) {
-      console.error("Failed to sync local hubs to Firestore:", error);
+      console.error("Failed to sync local hubs to Supabase:", error);
       const errorMessage = error.message && error.message.includes('timed out')
         ? t("Hubs.Error.syncFailedTimeout")
         : t("Hubs.Error.syncFailed");
       toast.error(errorMessage);
     } finally {
-      setLoadingState(false); // Changed from setIsLoading
+      setLoadingState(false);
     }
-  }, [user, firestore, t, loadHubsFromFirestore, setLoadingState]); // Added setLoadingState
+  }, [user, t, loadHubsFromSupabase, setLoadingState]);
 
   const syncHubs = useCallback(async () => {
-    if (!user || !firestore) {
+    if (!user) {
       toast.error(t("Hubs.Error.syncNoUser"));
-      setLoadingState(false); // Changed from setIsLoading
+      setLoadingState(false);
       return;
     }
 
     console.log("Syncing hubs...");
-    setLoadingState(true); // Changed from setIsLoading
+    setLoadingState(true);
     try {
       // 1. Get local hubs
       const localHubsRaw = localStorage.getItem(LOCAL_STORAGE_KEY);
-      const localHubs: Hub[] = localHubsRaw ? (JSON.parse(localHubsRaw) as Hub[]).map(h => normalizeHubTimestampProperties(h, true)) : [];
+      const localHubs: Hub[] = localHubsRaw ? (JSON.parse(localHubsRaw) as Hub[]).map(h => normalizeHubTimestampProperties(h, true)) : [];      // 2. Get Supabase hubs
+      if (!supabase) {
+        throw new Error('Supabase client not available');
+      }
+      const { data: supabaseData, error: fetchError } = await supabase
+        .from(SUPABASE_TABLE)
+        .select('*')
+        .eq('user_id', user.id);
 
-      // 2. Get Firestore hubs
-      const hubsCollectionRef = collection(firestore, FIRESTORE_COLLECTION, user.uid, "hubs");
-      const snapshot = await getDocsWithTimeout(hubsCollectionRef, FIRESTORE_TIMEOUT_MS) as { docs: QueryDocumentSnapshot<DocumentData>[] }; // Using timeout and types
-      const firestoreHubs: Hub[] = snapshot.docs.map((doc: QueryDocumentSnapshot<DocumentData>) => normalizeHubTimestampProperties({ id: doc.id, ...doc.data() }, true));
-      const firestoreHubsMap = new Map(firestoreHubs.map((h: Hub) => [h.id, h]));
+      if (fetchError) {
+        throw fetchError;
+      }
+
+      const supabaseHubs: Hub[] = (supabaseData || []).map((item: any) => normalizeHubTimestampProperties({
+        id: item.id,
+        name: item.name,
+        description: item.description,
+        customInstructions: item.custom_instructions,
+        chatSessionIds: item.chat_session_ids || [],
+        fileReferences: (item.file_references || []).map((fr: any) => ({
+          id: fr.id,
+          name: fr.name,
+          type: fr.type,
+          path: fr.path,
+          size: fr.size,
+          createdAt: fr.created_at,
+        })),
+        createdAt: item.created_at,
+        updatedAt: item.updated_at,
+      }, true));
+
+      const supabaseHubsMap = new Map(supabaseHubs.map((h: Hub) => [h.id, h]));
 
       // 3. Merge and Sync
-      const batch = writeBatch(firestore);
       const finalHubs: Hub[] = [];
-      const allHubIds = new Set([...localHubs.map((h: Hub) => h.id), ...firestoreHubs.map((h: Hub) => h.id)]);
+      const allHubIds = new Set([...localHubs.map((h: Hub) => h.id), ...supabaseHubs.map((h: Hub) => h.id)]);
 
-      allHubIds.forEach(id => {
+      for (const id of allHubIds) {
         const localHub = localHubs.find(h => h.id === id);
-        const firestoreHub = firestoreHubsMap.get(id);
+        const supabaseHub = supabaseHubsMap.get(id);
 
-        if (localHub && firestoreHub) {
+        if (localHub && supabaseHub) {
           // Hub exists in both: use the one with the later updatedAt timestamp
-          const hubToKeep = localHub.updatedAt >= firestoreHub.updatedAt ? localHub : firestoreHub;
-          finalHubs.push(normalizeHubTimestampProperties(hubToKeep, true));
-          // If the chosen hub is different from what's in Firestore or needs an update
-          if (hubToKeep.updatedAt > (firestoreHub.updatedAt || 0) || hubToKeep !== firestoreHub ) {
-            batch.set(doc(hubsCollectionRef, id), hubToFirestoreData(normalizeHubTimestampProperties(hubToKeep, true)));
-          }
-        } else if (localHub) {
-          // Hub only in local: add to Firestore
+          const hubToKeep = localHub.updatedAt >= supabaseHub.updatedAt ? localHub : supabaseHub;
+          finalHubs.push(normalizeHubTimestampProperties(hubToKeep, true));          // If the chosen hub is different from what's in Supabase or needs an update
+          if (hubToKeep.updatedAt > (supabaseHub.updatedAt || 0) || hubToKeep !== supabaseHub) {
+            const hubData = hubToSupabaseData(normalizeHubTimestampProperties(hubToKeep, true));
+            if (!supabase) {
+              throw new Error('Supabase client not available');
+            }
+            const { error } = await supabase
+              .from(SUPABASE_TABLE)
+              .upsert(hubData, { onConflict: 'id' });
+            
+            if (error) throw error;
+          }        } else if (localHub) {
+          // Hub only in local: add to Supabase
           finalHubs.push(normalizeHubTimestampProperties(localHub, true));
-          batch.set(doc(hubsCollectionRef, id), hubToFirestoreData(normalizeHubTimestampProperties(localHub, true)));
-        } else if (firestoreHub) {
-          // Hub only in Firestore: add to local list (already fetched)
-          finalHubs.push(normalizeHubTimestampProperties(firestoreHub, true));
+          const hubData = hubToSupabaseData(normalizeHubTimestampProperties(localHub, true));
+          if (!supabase) {
+            throw new Error('Supabase client not available');
+          }
+          const { error } = await supabase
+            .from(SUPABASE_TABLE)
+            .upsert(hubData, { onConflict: 'id' });
+          
+          if (error) throw error;
+        } else if (supabaseHub) {
+          // Hub only in Supabase: add to local list (already fetched)
+          finalHubs.push(normalizeHubTimestampProperties(supabaseHub, true));
         }
-      });
+      }
       
-      await commitBatchWithTimeout(batch, FIRESTORE_WRITE_TIMEOUT_MS); // Using timeout
       const normalizedFinalHubs = finalHubs.map(h => normalizeHubTimestampProperties(h, true));
       setHubs(normalizedFinalHubs);
       localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(normalizedFinalHubs)); // Update local storage with merged
@@ -396,9 +457,9 @@ export function HubsProvider({ children }: { children: ReactNode }) {
         : t("Hubs.Error.syncFailed");
       toast.error(errorMessage);
     } finally {
-      setLoadingState(false); // Changed from setIsLoading
+      setLoadingState(false);
     }
-  }, [user, t, setHubs, firestore, setLoadingState]); // Added setLoadingState
+  }, [user, t, setHubs, setLoadingState]);
 
   // Sync on login
   useEffect(() => {
@@ -460,7 +521,6 @@ export function HubsProvider({ children }: { children: ReactNode }) {
     setHubs(updatedHubs);
     setModifiedHubIds(prev => new Set(prev).add(id));
   };
-
   // Delete a hub
   const deleteHub = async (id: string): Promise<void> => {
     const hubToDelete = hubs.find(hub => hub.id === id);
@@ -468,17 +528,21 @@ export function HubsProvider({ children }: { children: ReactNode }) {
 
     const updatedHubs = hubs.filter((hub: Hub) => hub.id !== id).map(h => normalizeHubTimestampProperties(h, true));
     setHubs(updatedHubs);
-    // No setModifiedHubIds for delete, as it's a removal.
-    // Firestore specific delete:
-    if (user && firestore) {
+    // No setModifiedHubIds for delete, as it's a removal.    // Supabase specific delete:
+    if (user && supabase) {
       try {
-        const hubRef = doc(firestore, FIRESTORE_COLLECTION, user.uid, "hubs", id);
-        await deleteDoc(hubRef);
+        const { error } = await supabase
+          .from(SUPABASE_TABLE)
+          .delete()
+          .eq('id', id)
+          .eq('user_id', user.id);
+        
+        if (error) throw error;
         toast.success(t("Hubs.deleted"));
       } catch (error) {
-        console.error("Failed to delete hub from Firestore:", error);
+        console.error("Failed to delete hub from Supabase:", error);
         toast.error(t("Hubs.Error.deleteFailed"));
-        // If Firestore delete fails, re-add to local state to maintain consistency with potential backend state
+        // If Supabase delete fails, re-add to local state to maintain consistency with potential backend state
         setHubs(prevHubs => [...prevHubs, normalizeHubTimestampProperties(hubToDelete, true)].sort((a, b) => b.updatedAt - a.updatedAt));
       }
     } else {
@@ -604,11 +668,10 @@ export function HubsProvider({ children }: { children: ReactNode }) {
     setModifiedHubIds(prev => new Set(prev).add(hubId));
     toast.success(t("common.fileRemoved"));
   };
-
   const value: HubsContextProps = {
     hubs,
     isLoading,
-    isFirestoreLoaded,
+    isSupabaseLoaded,
     getHub,
     createHub,
     updateHub,
@@ -618,7 +681,7 @@ export function HubsProvider({ children }: { children: ReactNode }) {
     addFileReferenceToHub,
     removeFileReferenceFromHub,
     syncHubs,
-    syncLocalHubsToFirestore,
+    syncLocalHubsToSupabase,
   };
 
   return <HubsContext.Provider value={value}>{children}</HubsContext.Provider>;

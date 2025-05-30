@@ -39,7 +39,7 @@ const genericItems: NavigationItem[] = [
 
 export function SearchBox() {
     const t = useTranslations("account.searchBox");
-    const { auth } = useAuth();
+    const { supabase } = useAuth();
     const [open, setOpen] = React.useState(false);
     const [searchQuery, setSearchQuery] = React.useState("");
     const [filteredNavItems, setFilteredNavItems] = React.useState(navigationItems);
@@ -74,7 +74,7 @@ export function SearchBox() {
 
     // Handle logout action
     const handleLogout = () => {
-        auth?.signOut();
+        supabase?.auth.signOut();
         setOpen(false);
     };
 

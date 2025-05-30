@@ -30,16 +30,15 @@ export default function BotsDetailsPage() {
   const t = useTranslations();
   const params = useParams<{ id: string }>();
   const router = useRouter();
-  const { auth, user, isLoading } = useAuth();
+  const { user, isLoading } = useAuth();
   const [chatData, setChatData] = useState<ClientBot | null>(null);
   const [loading, setLoading] = useState(true);
   const { createSession } = useChatSessions();
   const [error, setError] = useState<string | null>(null);
 
   const secureFetch = new SecureFetch(user);
-
   useEffect(() => {
-    if (!user && !isLoading && auth) {
+    if (!user && !isLoading) {
       toast.error(t("shared.auth.loginRequired"));
       return;
     }
@@ -63,9 +62,7 @@ export default function BotsDetailsPage() {
 
         if (!response.ok) {
           const errorData = await response.json();
-          throw new Error(
-            errorData.error || t("bots.details.fetchError")
-          );
+          throw new Error(errorData.error || t("bots.details.fetchError"));
         }
 
         const data = await response.json();
@@ -73,8 +70,7 @@ export default function BotsDetailsPage() {
       } catch (err) {
         console.error(err);
         setError(
-          err instanceof Error            ? err.message
-            : t("bots.details.fetchError")
+          err instanceof Error ? err.message : t("bots.details.fetchError")
         );
       } finally {
         setLoading(false);
@@ -115,7 +111,6 @@ export default function BotsDetailsPage() {
       const session = createSession(chatData);
       if (session) {
         toast.success(t("bots.details.sessionCreated"));
-        router.push(`/chat/${session.id}`);
       } else {
         toast.error(t("bots.details.sessionCreateError"));
       }
@@ -130,7 +125,9 @@ export default function BotsDetailsPage() {
       <div className="flex flex-col items-center justify-center min-h-screen w-full p-4">
         <h1 className="text-2xl font-bold mb-4">{t("shared.error.title")}</h1>
         <p className="text-muted-foreground mb-6">{error}</p>
-        <Button onClick={() => window.history.back()}>{t("shared.back")}</Button>
+        <Button onClick={() => window.history.back()}>
+          {t("shared.back")}
+        </Button>
       </div>
     );
   }
@@ -145,11 +142,16 @@ export default function BotsDetailsPage() {
         <CardHeader className="text-center">
           <h1 className="text-2xl font-bold">{chatData.name}</h1>
           <div className="text-muted-foreground mt-2 flex items-center justify-center">
-            <span className="text-muted-foreground">{t("bots.createdBy")}: </span>
+            <span className="text-muted-foreground">
+              {t("bots.createdBy")}:{" "}
+            </span>
             <div className="bg-primary text-primary-foreground rounded-full px-4 py-1 ml-2 flex items-center">
               <span
-                className="cursor-pointer hover:underline"                onClick={() =>
-                  toast.info(t("bots.creatorIdToast", { id: chatData.createdBy.id }))
+                className="cursor-pointer hover:underline"
+                onClick={() =>
+                  toast.info(
+                    t("bots.creatorIdToast", { id: chatData.createdBy.id })
+                  )
                 }
               >
                 {chatData.createdBy.name}
@@ -163,17 +165,19 @@ export default function BotsDetailsPage() {
                     <div className="bg-primary text-primary-foreground rounded-full p-1 mr-2">
                       <Verified />
                     </div>
-                    <div>                      <span className="text-sm">
+                    <div>
+                      {" "}
+                      <span className="text-sm">
                         {t("bots.verified.label")}
                       </span>
-
                       <br />
-
                       <span className="text-sm text-muted-foreground">
                         {t("bots.verified.disclaimer")}
-                        {chatData.createdBy.domain && (                          <span>
+                        {chatData.createdBy.domain && (
+                          <span>
                             <br />
-                            {t("bots.verified.domain")}: {chatData.createdBy.domain}
+                            {t("bots.verified.domain")}:{" "}
+                            {chatData.createdBy.domain}
                           </span>
                         )}
                       </span>
@@ -187,7 +191,9 @@ export default function BotsDetailsPage() {
         </CardHeader>
         {chatData.instructions && (
           <div className="w-full max-w-2xl">
-            <h2 className="text-lg font-semibold text-center mb-2">{t("bots.details.instructions")}</h2>
+            <h2 className="text-lg font-semibold text-center mb-2">
+              {t("bots.details.instructions")}
+            </h2>
             <div className="grid grid-cols-1 md:grid-cols-2 items-center justify-center w-full max-w-2xl">
               {chatData.instructions?.map((instruction, index) => (
                 <div
@@ -205,10 +211,12 @@ export default function BotsDetailsPage() {
             variant="secondary"
             className="rounded-full w-full h-full"
             onClick={handleCopyLink}
-          >            <Copy className="mr-2 h-4 w-4" />
+          >
+            {" "}
+            <Copy className="mr-2 h-4 w-4" />
             {t("shared.copyLink")}
           </Button>
-          {chatData.createdBy.id == user?.uid ? (
+          {chatData.createdBy.id == user?.id ? (
             <Button
               className="rounded-full w-full h-full"
               variant="secondary"
@@ -217,17 +225,21 @@ export default function BotsDetailsPage() {
               <Link
                 href={`/bots/editor/${chatData.id}`}
                 className="flex items-center justify-center w-full h-full"
-              >                <Edit className="mr-2 h-4 w-4" />
+              >
+                {" "}
+                <Edit className="mr-2 h-4 w-4" />
                 {t("shared.edit")}
               </Link>
             </Button>
           ) : null}
           <Button
             className={`rounded-full w-full h-full
-    ${chatData.createdBy.id == user?.uid ? "md:col-span-2" : ""}
+    ${chatData.createdBy.id == user?.id ? "md:col-span-2" : ""}
   `}
             onClick={handleCreateSession}
-          >            <MessageCircleMore className="mr-2 h-4 w-4" />
+          >
+            {" "}
+            <MessageCircleMore className="mr-2 h-4 w-4" />
             {t("bots.details.useButton")}
           </Button>
         </CardFooter>

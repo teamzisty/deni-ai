@@ -1,19 +1,16 @@
 "use client";
 
 import React, { useEffect, useRef, useState } from "react";
-import { auth } from "@workspace/firebase-config/client";
 import { useTranslations } from "next-intl";
-import {
-  signInWithEmailAndPassword,
-  getMultiFactorResolver,
-  TotpMultiFactorGenerator,
-  signInWithPopup,
-  GoogleAuthProvider,
-  GithubAuthProvider,
-} from "firebase/auth";
 import { Button } from "@workspace/ui/components/button";
 import { Label } from "@workspace/ui/components/label";
 import { Input } from "@workspace/ui/components/input";
+import { Link, useRouter } from "@/i18n/navigation";
+import { cn } from "@workspace/ui/lib/utils";
+import { SiGithub, SiGoogle } from "@icons-pack/react-simple-icons";
+import { useParams } from "next/navigation";
+import { toast } from "sonner";
+import { useAuth } from "@/context/AuthContext";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -30,32 +27,35 @@ import {
   InputOTPSeparator,
   InputOTPSlot,
 } from "@workspace/ui/components/input-otp";
-import { Link, useRouter } from "@/i18n/navigation";
-import { cn } from "@workspace/ui/lib/utils";
-import { SiGithub, SiGoogle } from "@icons-pack/react-simple-icons";
-import { useParams } from "next/navigation";
-import { toast } from "sonner";
-import { useAuth } from "@/context/AuthContext";
+import {
+  Card,
+  CardHeader,
+  CardTitle,
+  CardContent,
+  CardDescription,
+} from "@workspace/ui/components/card";
+import { AlertCircle } from "lucide-react";
+import {
+  Alert,
+  AlertDescription,
+  AlertTitle,
+} from "@workspace/ui/components/alert";
 
 const Login: React.FC = () => {
   const t = useTranslations();
   const noticeRef = useRef<HTMLLabelElement | null>(null);
-  const { user, isLoading } = useAuth();
-  const dialogPromiseRef = useRef<{ resolve: (value: string) => void } | null>(
-    null
-  );
+  const { user, isLoading, supabase } = useAuth();
   const params = useParams();
-
   const router = useRouter();
 
-  const [twoFaCode, setTwoFaCode] = useState(""); // 2FAコードの状態
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [accountEmail, setEmail] = useState("");
   const [accountPassword, setPassword] = useState("");
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [twoFaCode, setTwoFaCode] = useState("");
 
   useEffect(() => {
-    if (!auth && !isLoading) {
-      toast.error(t("account.error"), {
+    if (!supabase && !isLoading) {
+      toast.error(t("common.error.occurred"), {
         description: t("account.authDisabled"),
       });
       router.push("/home");
@@ -64,130 +64,77 @@ const Login: React.FC = () => {
     if (user && !isLoading) {
       router.push("/home");
     }
-  }, [user, isLoading, router, t]);
+  }, [user, isLoading, router, t, supabase]);
 
-  const request2FaCode = () => {
-    return new Promise<string>((resolve) => {
-      // ダイアログを開く
-      setIsDialogOpen(true);
-      // ダイアログを閉じたときに resolve する
-      dialogPromiseRef.current = { resolve };
-    });
-  };
-
-  // ダイアログを閉じる処理
   const closeDialog = () => {
     setIsDialogOpen(false);
-    if (dialogPromiseRef.current) {
-      // ダイアログが閉じたら入力された2FAコードをresolveで返す
-      dialogPromiseRef.current.resolve(twoFaCode);
-      dialogPromiseRef.current = null;
+    setTwoFaCode("");
+  };
+
+  const signInWithGoogle = async () => {
+    if (!supabase) return;
+
+    try {
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: "google",
+        options: {
+          redirectTo: `${window.location.origin}/home`,
+        },
+      });
+
+      if (error) throw error;
+    } catch (error: unknown) {
+      if (noticeRef.current && error instanceof Error) {
+        noticeRef.current.textContent = error.message;
+      }
     }
   };
 
-  const signInWithGoogle = () => {
-    if (!auth) return;
+  const signInWithGitHub = async () => {
+    if (!supabase) return;
 
-    const provider = new GoogleAuthProvider();
-    signInWithPopup(auth, provider)
-      .then(() => {
-        router.push("/home")
-      })
-      .catch((error) => {
-        const errorCode = error.code;
-        const errorContent = error.message;
-        if (noticeRef.current) {
-          noticeRef.current.textContent =
-            errorContent + " (エラーコード: " + errorCode + ")";
-        }
+    try {
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: "github",
+        options: {
+          scopes: "read:user repo",
+          redirectTo: `${window.location.origin}/home`,
+        },
       });
-  };
 
-  const signInWithGitHub = () => {
-    if (!auth) return;
-
-    const provider = new GithubAuthProvider();
-    signInWithPopup(auth, provider)
-      .then(() => {
-        router.push("/home")
-      })
-      .catch((error) => {
-        const errorCode = error.code;
-        const errorContent = error.message;
-        if (noticeRef.current) {
-          noticeRef.current.textContent =
-            errorContent + " (エラーコード: " + errorCode + ")";
-        }
-      });
+      if (error) throw error;
+    } catch (error: unknown) {
+      if (noticeRef.current && error instanceof Error) {
+        noticeRef.current.textContent = error.message;
+      }
+    }
   };
 
   const loginClicked = async () => {
-    if (!auth) return;
+    if (!supabase) return;
 
     if (!noticeRef.current) return;
     const notice = noticeRef.current;
-    signInWithEmailAndPassword(auth, accountEmail, accountPassword)
-      .then(() => {
-        router.push("/home");
-      })
-      .catch(async (error) => {
-        if (!auth) return;
 
-        const errorCode = error.code;
-        const errorContent = error.message;
-
-        if (errorCode == "auth/user-not-found") {
-          notice.textContent = t("login.userNotFound");
-        } else if (
-          errorCode == "auth/invalid-password" ||
-          errorCode == "auth/invalid-credential"
-        ) {
-          notice.textContent = t("login.invalidCredentials");
-        } else if (errorCode == "auth/multi-factor-auth-required") {
-          const mfaResolver = getMultiFactorResolver(auth, error);
-
-          const resolver = getMultiFactorResolver(auth, error);
-
-          // Ask user which second factor to use.
-          const factor = resolver.hints[0];
-          if (factor) {
-            if (factor.factorId === TotpMultiFactorGenerator.FACTOR_ID) {
-              const tfaCode = await request2FaCode();
-              if (!tfaCode) return;
-              const multiFactorAssertion =
-                TotpMultiFactorGenerator.assertionForSignIn(
-                  factor.uid,
-                  tfaCode
-                );
-              try {
-                await mfaResolver
-                  .resolveSignIn(multiFactorAssertion)
-                  .then(() => {
-                    window.location.pathname = "/home";
-                  });
-              } catch (e) {
-                console.error(
-                  "An error occurred while resolving multi-factor sign-in: ",
-                  e
-                );
-                notice.textContent = t("login.invalidAuthCode");
-              }
-            }
-          } else {
-            notice.textContent = t("login.invalidAuthCode");
-          }
-        } else if (errorCode == "auth/too-many-requests") {
-          notice.textContent = t("login.tooManyRequests");
-        } else if (errorCode == "auth/invalid-email") {
-          notice.textContent = t("login.invalidEmail");
-        } else if (errorCode == "auth/user-disabled") {
-          notice.textContent = t("login.accountDisabled");
-        } else {
-          notice.textContent = t("login.otherError.replace", {
-            errorContent: errorContent,
-          });
-        }
+    try {
+      const { error } = await supabase.auth.signInWithPassword({
+        email: accountEmail,
+        password: accountPassword,
       });
+
+      if (error) throw error;
+
+      router.push("/home");
+    } catch (error: unknown) {
+      if (!(error instanceof Error)) return;
+      if (error.message.includes("Invalid login credentials")) {
+        notice.textContent = t("login.invalidCredentials");
+      } else if (error.message.includes("Email not confirmed")) {
+        notice.textContent = t("login.emailNotConfirmed");
+      } else {
+        notice.textContent = error.message;
+      }
+    }
   };
 
   return (
@@ -240,6 +187,25 @@ const Login: React.FC = () => {
             <Button type="submit" className="w-full" onClick={loginClicked}>
               {t("login.loginButton")}
             </Button>
+
+            {/* Password Reset Warning Card */}
+            <Alert>
+              <AlertCircle className="w-5 h-5 text-yellow-600 dark:text-yellow-400" />
+              <AlertTitle>{t("login.passwordResetWarning.title")}</AlertTitle>
+              <AlertDescription>
+                {t("login.passwordResetWarning.content")}
+              </AlertDescription>
+            </Alert>
+
+            {/* Password Reset Link */}
+            <div className="text-center">
+              <Link
+                href="/password-reset"
+                className="text-sm text-muted-foreground hover:text-primary underline"
+              >
+                {t("login.forgotPassword")}
+              </Link>
+            </div>
 
             <div className="relative mb-2">
               <div className="absolute inset-0 flex items-center">

@@ -10,9 +10,17 @@
 
 Deni AI is a versatile chat application that allows interaction with multiple AI models. Built with Next.js and Firebase, it provides an intuitive user interface.
 
+## ! DONT FORK THE THIS BRANCH !
+
+Cloning this branch to create an instance or update a Deni AI instance is currently not recommended.
+
+Instead, we recommend using the `master` branch.
+
+The reason and other details will be announced in a later announcement.
+
 ## Getting Started
 
-To getting started, visit [Docs](https://docs.deniai.app/docs/getting-started).
+To getting started, visit [Docs](https://docs.deniai.app/getting-started.html).
 
 ## Key Features
 

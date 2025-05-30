@@ -1,45 +1,35 @@
 import { createUploadthing, type FileRouter } from "uploadthing/next";
 import { UploadThingError } from "uploadthing/server";
-import { authAdmin, notAvailable } from "@workspace/firebase-config/server";
-import { DecodedIdToken } from "firebase-admin/auth";
+import { createSupabaseServerClient, notAvailable } from "@workspace/supabase-config/server";
+import { User } from "@supabase/supabase-js";
 
 const f = createUploadthing();
-
-export class AuthAdminError extends Error {
-  code: string;
-  constructor(code: string, message: string) {
-    super(message);
-    this.code = code;
-    this.name = "AuthAdminError";
-  }
-}
 
 async function auth(req: Request) {
   const authHeader = req.headers.get("authorization");
   if (!authHeader) throw new UploadThingError("No authorization header");
-  if (notAvailable || !authAdmin)
+  if (notAvailable) {
     throw new UploadThingError("Auth not available");
+  }
+  
   try {
-    const verifiedId = await authAdmin.verifyIdToken(authHeader);
-    return verifiedId;
+    const token = authHeader.replace('Bearer ', '');
+    const supabase = createSupabaseServerClient();
+    const { data: { user }, error } = await supabase.auth.getUser(token);
+    
+    if (error || !user) {
+      throw new UploadThingError("Invalid token");
+    }
+    
+    return user;
   } catch (e: unknown) {
-    if (e instanceof AuthAdminError == false) {
-      throw new UploadThingError("Something went wrong" + e,);
+    if (e instanceof UploadThingError) {
+      throw e;
     }
-
-    if (e instanceof AuthAdminError) {
-      if (e.code === "auth/id-token-expired") {
-        throw new UploadThingError("Token expired");
-      } else if (e.code === "auth/id-token-revoked") {
-        throw new UploadThingError("Token revoked");
-      } else if (e.code === "auth/invalid-id-token") {
-        throw new UploadThingError("Token invalid");
-      } else {
-        throw new UploadThingError("Something went wrong" + e);
-      }
-    }
+    throw new UploadThingError("Something went wrong: " + String(e));
   }
 }
+
 // FileRouter for your app, can contain multiple FileRoutes
 export const ourFileRouter: FileRouter = {
   // Define as many FileRoutes as you like, each with a unique routeSlug
@@ -57,17 +47,17 @@ export const ourFileRouter: FileRouter = {
     .middleware(async ({ req }) => {
       // This code runs on your server before upload
       try {
-        const user = (await auth(req)) as DecodedIdToken;
+        const user = (await auth(req)) as User;
         return { userId: user.id };
       } catch (e) {
         if (e instanceof UploadThingError) {
-          if (e.message.includes("Token")) {
+          if (e.message.includes("Token") || e.message.includes("Invalid") || e.message.includes("authorization")) {
             throw new UploadThingError("Unauthorized");
           } else {
-            throw new UploadThingError("Something went wrong" + e);
+            throw new UploadThingError("Something went wrong: " + String(e));
           }
         } else {
-          throw new UploadThingError("Something went wrong" + e);
+          throw new UploadThingError("Something went wrong: " + String(e));
         }
       }
 

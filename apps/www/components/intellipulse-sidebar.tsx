@@ -1,6 +1,9 @@
 "use client";
 
-import { DevSession, useDevSessions } from "@/hooks/use-dev-sessions";
+import {
+  IntellipulseSession,
+  useIntellipulseSessions,
+} from "@/hooks/use-intellipulse-sessions";
 import {
   Sidebar,
   SidebarContent,
@@ -24,7 +27,14 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@workspace/ui/components/alert-dialog";
-import { Code2, MoreHorizontal, Plus, Trash2 } from "lucide-react";
+import {
+  Code2,
+  GitBranch,
+  HomeIcon,
+  MoreHorizontal,
+  Plus,
+  Trash2,
+} from "lucide-react";
 import { Link } from "@/i18n/navigation";
 import { Badge } from "@workspace/ui/components/badge";
 import { useParams } from "next/navigation";
@@ -55,16 +65,17 @@ import {
   ContextMenuTrigger,
 } from "@workspace/ui/components/context-menu";
 import { useState } from "react";
+import { GitCloneDialog } from "./GitCloneDialog";
 
 interface GroupedSessions {
-  today: DevSession[];
-  yesterday: DevSession[];
-  thisWeek: DevSession[];
-  thisMonth: DevSession[];
-  older: DevSession[];
+  today: IntellipulseSession[];
+  yesterday: IntellipulseSession[];
+  thisWeek: IntellipulseSession[];
+  thisMonth: IntellipulseSession[];
+  older: IntellipulseSession[];
 }
 
-function groupSessionsByDate(sessions: DevSession[]): GroupedSessions {
+function groupSessionsByDate(sessions: IntellipulseSession[]): GroupedSessions {
   const now = new Date();
   const oneDayAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
   const twoDaysAgo = new Date(now.getTime() - 2 * 24 * 60 * 60 * 1000);
@@ -93,14 +104,14 @@ function groupSessionsByDate(sessions: DevSession[]): GroupedSessions {
   };
 }
 
-function DevContextMenu({
+function IntellipulseContextMenu({
   session,
   children,
 }: {
-  session: DevSession;
+  session: IntellipulseSession;
   children: React.ReactNode;
 }) {
-  const { deleteSession } = useDevSessions();
+  const { deleteSession } = useIntellipulseSessions();
   const t = useTranslations();
 
   const handleDelete = (e: React.MouseEvent) => {
@@ -125,9 +136,7 @@ function DevContextMenu({
       </ContextMenu>
       <AlertDialogContent>
         <AlertDialogHeader>
-          <AlertDialogTitle>
-            {t("contextMenu.deleteTitle")}
-          </AlertDialogTitle>
+          <AlertDialogTitle>{t("contextMenu.deleteTitle")}</AlertDialogTitle>
           <AlertDialogDescription>
             {t("contextMenu.deleteDescription", {
               title: session.title,
@@ -153,7 +162,7 @@ function SessionGroup({
   label,
   currentSessionId,
 }: {
-  sessions: DevSession[];
+  sessions: IntellipulseSession[];
   label: string;
   currentSessionId?: string;
 }) {
@@ -169,19 +178,19 @@ function SessionGroup({
             .reverse()
             .map((session) => (
               <SidebarMenuItem key={session.id}>
-                <DevContextMenu session={session}>
+                <IntellipulseContextMenu session={session}>
                   <SidebarMenuButton
                     className="flex"
                     isActive={currentSessionId === session.id}
                     asChild
                     tooltip={session.title}
                   >
-                    <Link href={`/dev/chat/${session.id}`}>
+                    <Link href={`/intellipulse/chat/${session.id}`}>
                       <Code2 className="mr-2" />
                       <span className="truncate">{session.title}</span>
                     </Link>
                   </SidebarMenuButton>
-                </DevContextMenu>
+                </IntellipulseContextMenu>
               </SidebarMenuItem>
             ))}
         </SidebarMenu>
@@ -190,42 +199,62 @@ function SessionGroup({
   );
 }
 
-function DevSidebarMenuSession() {
-  const { sessions, createSession } = useDevSessions();
+function IntellipulseSidebarMenuSession() {
+  const { sessions, createSession } = useIntellipulseSessions();
   const params = useParams<{ id: string }>();
   const groupedSessions = groupSessionsByDate(sessions);
   const t = useTranslations();
   const router = useRouter();
+  const [isGitCloneOpen, setIsGitCloneOpen] = useState(false);
 
   const handleCreate = () => {
     const session = createSession();
-    router.push(`/dev/chat/${session.id}`);
+    router.push(`/intellipulse/chat/${session.id}`);
   };
 
   return (
     <>
+      {" "}
       <SidebarGroup>
+        <SidebarGroupLabel className="text-xs text-muted-foreground font-medium mb-2">
+          Quick Actions
+        </SidebarGroupLabel>
         <SidebarGroupContent>
           <SidebarMenu>
             <SidebarMenuItem>
               <SidebarMenuButton
                 variant={"outline"}
                 size="lg"
-                className="flex items-center justify-center"
+                className="flex items-center justify-center gap-2 h-10"
                 onClick={handleCreate}
-                tooltip={t("devSidebar.newDevChat") || "New Dev Chat"}
+                tooltip={
+                  t("intellipulseSidebar.newIntellipulseChat") ||
+                  "New Intellipulse Chat"
+                }
                 data-sidebar="menu-button"
                 data-size="lg"
               >
-                <Plus />
+                <Plus className="h-4 w-4" />
                 <span className="group-data-[collapsible=icon]:hidden">
-                  {t("devSidebar.newDevChat") || "New Dev Chat"}
+                  {t("intellipulseSidebar.newIntellipulseChat") ||
+                    "New Intellipulse Chat"}
                 </span>
               </SidebarMenuButton>
             </SidebarMenuItem>
           </SidebarMenu>
         </SidebarGroupContent>
       </SidebarGroup>
+      {(groupedSessions.today.length > 0 ||
+        groupedSessions.yesterday.length > 0 ||
+        groupedSessions.thisWeek.length > 0 ||
+        groupedSessions.thisMonth.length > 0 ||
+        groupedSessions.older.length > 0) && (
+        <SidebarGroup>
+          <SidebarGroupLabel className="text-xs text-muted-foreground font-medium">
+            Recent Sessions
+          </SidebarGroupLabel>
+        </SidebarGroup>
+      )}
       <SessionGroup
         sessions={groupedSessions.today}
         label={t("sidebar.today")}
@@ -255,7 +284,7 @@ function DevSidebarMenuSession() {
   );
 }
 
-export function DevSidebar() {
+export function IntellipulseSidebar() {
   const isMobile = useIsMobile();
   const t = useTranslations();
 
@@ -270,29 +299,28 @@ export function DevSidebar() {
         <DrawerContent className="text-center">
           <div className="h-[calc(100vh-8rem)] overflow-y-auto">
             <DrawerTitle className="inline-flex mt-3 justify-center">
-              Deni AI Dev
+              Deni AI Intellipulse
               <Badge className="ml-2" variant="secondary">
                 {buildInfo.version}
               </Badge>
             </DrawerTitle>
             <DrawerDescription>
-              {t("devSidebar.devMode") || "Development Mode"}
+              {t("intellipulseSidebar.intellipulse") || "Intellipulse"}
             </DrawerDescription>
-            <DevSidebarMenuSession />
+            <IntellipulseSidebarMenuSession />
           </div>
         </DrawerContent>
       </Drawer>
     );
   }
-
   return (
     <Sidebar collapsible="icon">
       <SidebarContent>
-        <SidebarGroup className="pt-6 pl-4 pb-0 relative mb-2">
+        <SidebarGroup className="pt-6 pl-4 pb-0 relative mb-4">
           <div className="flex items-center gap-2">
             <div className="flex items-center gap-2">
               <Link
-                href="/dev"
+                href="/intellipulse"
                 className="text-xl font-bold transition-all hover:text-muted-foreground group-data-[collapsible=icon]:hidden flex items-center"
               >
                 <Image
@@ -302,29 +330,26 @@ export function DevSidebar() {
                   width={20}
                   height={20}
                 />
-                Deni AI{" "}
-                <Badge
-                  className="group-data-[collapsible=icon]:hidden ml-2 flex items-center"
-                  variant="secondary"
-                >
-                  {t("devSidebar.devMode")}
-                </Badge>
+                Intellipulse
               </Link>
             </div>
             <SidebarTrigger className="ml-auto group-data-[collapsible=icon]:absolute group-data-[collapsible=icon]:left-1/2 group-data-[collapsible=icon]:-translate-x-1/2 group-data-[collapsible=icon]:top-4" />
           </div>
         </SidebarGroup>
-        <DevSidebarMenuSession />
+        <IntellipulseSidebarMenuSession />
       </SidebarContent>
       <SidebarFooter>
         <SidebarMenu className="mt-auto mb-3 gap-3">
-          <span className="text-xs mx-auto text-muted-foreground">
+          <span className="text-xs mx-auto text-muted-foreground group-data-[collapsible=icon]:hidden">
             Public Beta: May not work as expected
           </span>
           <SidebarMenuItem>
             <Link href="/home">
               <Button variant="outline" size="sm" className="w-full">
-                {t("devSidebar.backToHome") || "Back to Home"}
+                <HomeIcon className="mr-2 h-4 w-4 hidden group-data-[collapsible=icon]:block" />
+                <span className="group-data-[collapsible=icon]:hidden">
+                  {t("intellipulseSidebar.backToHome") || "Back to Home"}
+                </span>
               </Button>
             </Link>
           </SidebarMenuItem>

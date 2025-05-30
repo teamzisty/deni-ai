@@ -97,7 +97,7 @@
     "branchName": "Branch Name",
     "branchNamePlaceholder": "e.g., My New Idea"
   },
-  "devMessageLog": {
+  "intellipulseMessageLog": {
     "writeAction": "File write: {path}",
     "readAction": "File read: {path}",
     "listAction": "List directory: {path}",
@@ -128,7 +128,7 @@
     "deepResearch": "Deep Research",
     "shallowResearch": "Shallow Research",
     "advancedResearch": "Advanced Research",
-    "devNotAvailable": "Not available in Dev Mode",
+    "intellipulseNotAvailable": "Not available in Intellipulse",
     "canvas": "Canvas",
     "translate": "Translate",
     "botNotice": "You are in the bot \"{botName}\". To leave, Create a new conversations."
@@ -295,42 +295,43 @@
       "security": {
         "title": "Security",
         "description": "Manage your account security settings.",
+        "cancel": "Cancel",
         "notLoggedIn": "You must be logged in to change security settings.",
         "setupError": "Failed to set up 2FA. Please try again.",
+        "qrCodeTooLarge": "QR code is too large to display. Please use the manual entry method.",
+        "qrCode": {
+          "title": "QR Code",
+          "description": "Scan this QR code with your authenticator app to set up two-factor authentication."
+        },
         "twoFactor": {
           "title": "Two-factor Authentication",
           "description": "Add an extra layer of security to your account.",
           "label": "Two-factor Authentication",
           "sublabel": "Add an extra layer of security to your account"
         },
-        "sessions": {
-          "label": "Manage Active Sessions",
-          "sublabel": "See all devices where you're currently logged in",
-          "viewButton": "View Sessions"
-        },
-        "reauth": {
-          "title": "Confirm Your Password",
-          "description": "For security reasons, please enter your password to continue.",
-          "providerMessage": "For security reasons, you'll need to reauthenticate with {provider} to continue."
-        },
-        "qrCode": {
-          "title": "Set Up Two-factor Authentication",
-          "description": "Scan this QR code with an authenticator app like Google Authenticator or Authy.",
-          "manualEntry": "Or enter this code manually if you can't scan the QR code:",
-          "next": "Next"
-        },
-        "verify": {
-          "title": "Verify Authentication Code",
-          "description": "Enter the 6-digit code from your authenticator app to confirm setup.",
-          "verifyButton": "Verify"
-        },
-        "enabled2FA": "Two-factor authentication has been enabled",
-        "disabled2FA": "Two-factor authentication has been disabled",
-        "invalidPassword": "Incorrect password. Please try again.",
-        "errorAuth": "Incorrect password. Please try again.",
-        "errorVerifying": "Invalid authentication code. Please try again.",
-        "cancel": "Cancel",
-        "continue": "Continue"
+        "enabled": "Enabled",
+        "disabled": "Disabled",
+        "enabledStatus": "Two-factor authentication is enabled",
+        "enabledDescription": "Your account is protected with two-factor authentication.",
+        "disabledStatus": "Two-factor authentication is disabled",
+        "disabledDescription": "Your account is not protected with two-factor authentication. Enable it for better security.",
+        "activeAuthenticators": "Active Authenticators",
+        "totpAuthenticator": "TOTP Authenticator",
+        "addedOn": "Added on {date}",
+        "disable": "Disable",
+        "setupButton": "Set Up Two-Factor Authentication",
+        "settingUp": "Setting up two-factor authentication...",
+        "scanQrCode": "Scan QR Code with Authenticator App",
+        "scanQrDescription": "Scan this QR code with an authenticator app like Google Authenticator, Authy, or 1Password.",
+        "enterCodeManually": "Or enter this secret manually:",
+        "secretCopied": "Secret copied to clipboard",
+        "secretCopyFailed": "Failed to copy secret",
+        "enterVerificationCode": "Enter the 6-digit code from your app:",
+        "codePlaceholder": "000000",
+        "verifying": "Verifying...",
+        "enable2FA": "Enable 2FA",
+        "duplicateFactorError": "A two-factor authentication method already exists. Please disable the existing one before adding a new one.",
+        "enrollmentFailed": "Failed to set up two-factor authentication. Please try again."
       },
       "sidebarNav": {
         "account": "Account",
@@ -353,8 +354,8 @@
         "export": "Export All",
         "import": "Import All"
       },
-      "devExport": {
-        "title": "Management Dev Mode Data",
+      "intellipulseExport": {
+        "title": "Management Intellipulse Data",
         "description": "Export all your dev conversations to a JSON file or import them from a file."
       },
       "reauth": {
@@ -370,10 +371,6 @@
         "confirmDescription": "This will permanently delete all your conversation data from your account (if logged in) and local storage.",
         "cancel": "Cancel",
         "confirm": "Yes, delete all"
-      },
-      "deleteDevData": {
-        "title": "Delete All Dev Conversations",
-        "description": "Permanently delete all your dev conversation history. This action cannot be undone."
       },
       "accountDeletion": {
         "title": "Delete Account",
@@ -609,9 +606,9 @@
   },
   "login": {
     "title": "Login",
-    "description": "Enter your account information to log in.",
-    "email": "Email",
+    "description": "Enter your account information to log in.",    "email": "Email",
     "password": "Password",
+    "forgotPassword": "Forgot your password?",
     "loginButton": "Login",
     "continueWith": "Or continue with",
     "googleSignIn": "Sign in with Google",
@@ -631,7 +628,49 @@
     "tooManyRequests": "Too many requests. Please wait and try again later",
     "invalidEmail": "Invalid email address",
     "accountDisabled": "This account has been disabled",
-    "otherError": "Other error: {errorContent}"
+    "otherError": "Other error: {errorContent}",
+    "passwordReset": {
+      "title": "Password Reset",
+      "description": "To reset password, please enter your email address below. A password reset link will be sent to your email.",
+      "email": "Email",
+      "emailPlaceholder": "Enter your email address",
+      "sending": "Sending...",
+      "sent": "Password reset link sent to your email. Please check your inbox.",
+      "sendResetLink": "Send Password Reset Link",
+      "resetLinkSent": "A password reset link has been sent to your email. Please check your inbox.",
+      "resetLinkError": "Failed to send password reset link. Please try again.",
+      "backToLogin": "Back to Login"
+    },    "passwordResetWarning": {
+      "title": "Password Reset Maybe Required",
+      "content": "If you have been using Deni AI since before v4.1.0 and are using password login, you may need to reset your password."
+    },
+    "passwordResetConfirm": {
+      "title": "Set New Password",
+      "description": "Enter your new password below",
+      "newPassword": "New Password",
+      "newPasswordPlaceholder": "Enter new password",
+      "confirmPassword": "Confirm Password",
+      "confirmPasswordPlaceholder": "Confirm new password",
+      "updatePassword": "Update Password",
+      "updatingPassword": "Updating Password...",
+      "backToLogin": "Back to Login",
+      "invalidLink": {
+        "title": "Invalid Reset Link",
+        "description": "This password reset link is invalid or has expired. Please request a new one.",
+        "requestNewLink": "Request New Reset Link"
+      },
+      "errors": {
+        "fillAllFields": "Please fill in all fields",
+        "passwordsDontMatch": "Passwords don't match",
+        "passwordTooShort": "Password must be at least 8 characters long",
+        "authUnavailable": "Authentication service unavailable",
+        "passwordTooWeak": "Password is too weak. Please use a stronger password.",
+        "updateFailed": "Failed to update password. Please try again."
+      },
+      "success": {
+        "message": "Password updated successfully"
+      }
+    }
   },
   "register": {
     "title": "Create Account",
@@ -652,6 +691,7 @@
     "errorOccurred": "An error occurred: {errorContent}"
   },
   "chat": {
+    "sessionNotFound": "Chat session not found",
     "error": {
       "occurred": "An issue has occurred. If the problem persists after clearing cache and cookies, this model might be offline.",
       "imageUpload": "Cannot upload image",
@@ -876,10 +916,11 @@
       "deleting": "Deleting...",
       "success": "Account deleted successfully",
       "error": "Failed to delete account",
+      "confirm": "Confirm",
       "reauth": {
         "title": "Confirm Your Password",
         "description": "For security reasons, please enter your password to continue.",
-        "providerMessage": "For security reasons, you'll need to reauthenticate with {provider} to continue."
+        "confirmMessage": "Your data will be permanently deleted. This action cannot be undone."
       }
     },
     "password": {
@@ -931,40 +972,43 @@
       "description": "Manage your account security settings.",
       "notLoggedIn": "You must be logged in to change security settings.",
       "setupError": "Failed to set up 2FA. Please try again.",
+      "cancel": "Cancel",
+      "qrCodeTooLarge": "QR code is too large to display. Please use the manual entry method.",
+      "qrCode": {
+        "title": "QR Code",
+        "description": "Scan this QR code with your authenticator app to set up two-factor authentication."
+      },
+      "disabled2FA": "Disabled Two-factor Authentication",
+      "enabled2FA": "Enabled Two-factor Authentication",
       "twoFactor": {
         "title": "Two-factor Authentication",
         "description": "Add an extra layer of security to your account.",
         "label": "Two-factor Authentication",
         "sublabel": "Add an extra layer of security to your account"
       },
-      "sessions": {
-        "label": "Manage Active Sessions",
-        "sublabel": "See all devices where you're currently logged in",
-        "viewButton": "View Sessions"
-      },
-      "reauth": {
-        "title": "Confirm Your Password",
-        "description": "For security reasons, please enter your password to continue.",
-        "providerMessage": "For security reasons, you'll need to reauthenticate with {provider} to continue."
-      },
-      "qrCode": {
-        "title": "Set Up Two-factor Authentication",
-        "description": "Scan this QR code with an authenticator app like Google Authenticator or Authy.",
-        "manualEntry": "Or enter this code manually if you can't scan the QR code:",
-        "next": "Next"
-      },
-      "verify": {
-        "title": "Verify Authentication Code",
-        "description": "Enter the 6-digit code from your authenticator app to confirm setup.",
-        "verifyButton": "Verify"
-      },
-      "enabled2FA": "Two-factor authentication has been enabled",
-      "disabled2FA": "Two-factor authentication has been disabled",
-      "invalidPassword": "Incorrect password. Please try again.",
-      "errorAuth": "Incorrect password. Please try again.",
-      "errorVerifying": "Invalid authentication code. Please try again.",
-      "cancel": "Cancel",
-      "continue": "Continue"
+      "enabled": "Enabled",
+      "disabled": "Disabled",
+      "enabledStatus": "Two-factor authentication is enabled",
+      "enabledDescription": "Your account is protected with two-factor authentication.",
+      "disabledStatus": "Two-factor authentication is disabled",
+      "disabledDescription": "Your account is not protected with two-factor authentication. Enable it for better security.",
+      "activeAuthenticators": "Active Authenticators",
+      "totpAuthenticator": "TOTP Authenticator",
+      "addedOn": "Added on {date}",
+      "disable": "Disable",
+      "setupButton": "Set Up Two-Factor Authentication",
+      "settingUp": "Setting up two-factor authentication...",
+      "scanQrCode": "Scan QR Code with Authenticator App",
+      "scanQrDescription": "Scan this QR code with an authenticator app like Google Authenticator, Authy, or 1Password.",
+      "enterCodeManually": "Or enter this secret manually:",
+      "secretCopied": "Secret copied to clipboard",
+      "secretCopyFailed": "Failed to copy secret",
+      "enterVerificationCode": "Enter the 6-digit code from your app:",
+      "codePlaceholder": "000000",
+      "verifying": "Verifying...",
+      "enable2FA": "Enable 2FA",
+      "duplicateFactorError": "A two-factor authentication method already exists. Please disable the existing one before adding a new one.",
+      "enrollmentFailed": "Failed to set up two-factor authentication. Please try again."
     },
     "sidebarNav": {
       "account": "Account",
@@ -1344,7 +1388,7 @@
     "introduction": {
       "title": "Introduction",
       "content": "This Privacy Policy describes how your personal information is collected, used, and shared when you use our Deni AI service.",
-      "operatedBy": "Deni AI is operated by the UpLauncher team."
+      "operatedBy": "Deni AI is operated by the Veltrix team."
     },
     "informationCollection": {
       "title": "Information We Collect",
@@ -1408,7 +1452,7 @@
     "introduction": {
       "title": "Introduction",
       "content": "Welcome to Deni AI. These Terms of Service govern your use of our website, products, and services.",
-      "operatedBy": "Deni AI is operated by the UpLauncher team."
+      "operatedBy": "Deni AI is operated by the Veltrix team."
     },
     "acceptance": {
       "title": "Acceptance of Terms",
@@ -1494,7 +1538,7 @@
     "copied": "Translation copied to clipboard",
     "clickToOpen": "Click to view translation"
   },
-  "devSessions": {
+  "intellipulseSessions": {
     "newSession": "New Dev Session",
     "localStorageSaveFailed": "Failed to save dev sessions",
     "sessionDeletedSuccess": "Dev session deleted",
@@ -1518,9 +1562,9 @@
     "retry": "Retry",
     "retryWithError": "Retry ({count}/{max})"
   },
-  "devSidebar": {
-    "devMode": "Dev Mode",
-    "newDevChat": "New Dev Chat",
+  "intellipulseSidebar": {
+    "intellipulse": "Intellipulse",
+    "newIntellipulseChat": "New Chat",
     "delete": "Delete",
     "confirm": "Confirm",
     "cancel": "Cancel",
@@ -1533,8 +1577,8 @@
     "uploadImage": "Upload Image",
     "delete": "Delete"
   },
-  "devHomePage": {
-    "title": "WebContainer Dev Home",
+  "intellipulseHomePage": {
+    "title": "Getting started",
     "button": "Start New Dev Session"
   },
   "devChatPage": {
@@ -1609,8 +1653,8 @@
   },
   "modelDescriptions": {
     "openai/gpt-4-1-2025-04-14": "OpenAI's flagship model for complex tasks.",
-    "openai/gpt-4-1-mini-2025-04-14": "A smaller GPT-4-1 model with good balance.",
-    "openai/gpt-4-1-nano-2025-04-14": "The fastest, most cost-effective GPT-4-1 model.",
+    "openai/gpt-4-1-mini-2025-04-14": "A smaller GPT-4.1 model with good balance.",
+    "openai/gpt-4-1-nano-2025-04-14": "The fastest, most cost-effective GPT-4.1 model.",
     "openai/gpt-4o-2024-11-20": "Versatile, high-intelligence flagship model.",
     "openai/gpt-4o-mini-2024-07-18": "A fast, affordable small model for focused tasks.",
     "openai/o4-mini-2025-04-16": "Optimized for fast, efficient reasoning.",
@@ -1631,5 +1675,85 @@
     "openrouter/x-ai/grok-3-mini-beta": "Leaving in May 10, 2025.",
     "xai/grok-3-beta": "Advanced model with superior reasoning and extensive knowledge.",
     "xai/grok-3-mini-beta": "A lightweight model that thinks before responding."
+  },
+  "gitClone": {
+    "title": "Clone Git Repository",
+    "description": "Clone a Git repository into your workspace",
+    "repositoryUrl": "Repository URL",
+    "repositoryUrlPlaceholder": "https://github.com/user/repository.git",
+    "urlHint": "Supports GitHub, GitLab, and Bitbucket URLs",
+    "clone": "Clone",
+    "cancel": "Cancel",
+    "cloning": "Cloning...",
+    "cloningRepository": "Cloning repository...",
+    "success": "Repository cloned successfully!",
+    "installDependencies": "Install the dependencies (pnpm)",
+    "installingDependencies": "Installing dependencies...",
+    "errors": {
+      "invalidUrl": "Please enter a valid Git repository URL",
+      "emptyUrl": "Repository URL is required",
+      "cloneFailed": "Failed to clone repository",
+      "dependencyInstallFailed": "Failed to install required dependencies"
+    },
+    "button": "Clone Repository"
+  },
+  "githubIntegration": {
+    "title": "GitHub Integration",
+    "description": "Create a pull request from your WebContainer changes",
+    "button": "Create Pull Request",
+    "auth": {
+      "linkRequired": "GitHub Link Required",
+      "linkMessage": "You must to link your GitHub account to create a pull request.",
+      "linkSubMessage": "You can link your account in Account Manager.",
+      "accountManager": "Account Manager",
+      "reauthorizationRequired": "Reauthorization Required",
+      "reauthorizationMessage": "Your GitHub access token has expired. Please reauthorize to continue.",
+      "reauthorizeButton": "Reauthorize GitHub",
+      "accountLinked": "Account Linked",
+      "proceed": "Proceed"
+    },
+    "setup": {
+      "signOut": "Sign out",
+      "repository": "Repository",
+      "selectRepository": "Select a repository",
+      "private": "Private",
+      "noRepositories": "No repositories found or token is invalid"
+    },
+    "review": {
+      "filesToChange": "Files to be changed",
+      "noChanges": "No file changes detected in WebContainer",
+      "branchName": "Branch Name",
+      "commitMessage": "Commit Message",
+      "pullRequestTitle": "Pull Request Title",
+      "pullRequestDescription": "Pull Request Description"
+    },
+    "creating": {
+      "title": "Creating pull request...",
+      "subtitle": "This may take a few moments"
+    },
+    "operations": {
+      "create": "CREATE",
+      "update": "UPDATE",
+      "delete": "DELETE"
+    },
+    "buttons": {
+      "cancel": "Cancel",
+      "continueToSetup": "Continue to Setup",
+      "next": "Next",
+      "createPullRequest": "Create Pull Request"
+    },
+    "errors": {
+      "selectRepository": "Please select a repository",
+      "missingSettings": "Missing required settings for pull request creation",
+      "branchExists": "Branch '{branchName}' already exists. Please choose a different name.",
+      "createFailed": "Failed to create pull request",
+      "extractFailed": "Failed to extract file changes",
+      "loadRepositoriesFailed": "Failed to load repositories",
+      "initializeFailed": "Failed to initialize GitHub service",
+      "reauthorizationFailed": "Failed to reauthorize GitHub account"
+    },
+    "success": {
+      "pullRequestCreated": "Pull request created successfully!"
+    }
   }
 }

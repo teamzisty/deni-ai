@@ -1,14 +1,7 @@
 "use client";
 
 import React, { useEffect, useRef, useState } from "react";
-import { auth } from "@workspace/firebase-config/client";
 import { useTranslations } from "next-intl";
-import {
-  createUserWithEmailAndPassword,
-  signInWithPopup,
-  GoogleAuthProvider,
-  GithubAuthProvider,
-} from "firebase/auth";
 import { Button } from "@workspace/ui/components/button";
 import { Label } from "@workspace/ui/components/label";
 import { Input } from "@workspace/ui/components/input";
@@ -23,13 +16,13 @@ const Register: React.FC = () => {
   const t = useTranslations();
   const params = useParams();
   const router = useRouter();
-  const { auth, user, isLoading } = useAuth();
+  const { supabase, user, isLoading } = useAuth();
   const noticeRef = useRef<HTMLLabelElement | null>(null);
   const [accountEmail, setEmail] = useState("");
   const [accountPassword, setPassword] = useState("");
 
   useEffect(() => {
-    if (!auth && !isLoading) {
+    if (!supabase && !isLoading) {
       toast.error(t("login.authError"), {
         description: t("login.authErrorDescription"),
       });
@@ -39,70 +32,78 @@ const Register: React.FC = () => {
     if (user && !isLoading) {
       router.push("/home");
     }
-  }, [user, isLoading, router, t, auth]);
+  }, [user, isLoading, router, t, supabase]);
 
-  const registerWithGoogle = () => {
-    if (!auth) return;
+  const registerWithGoogle = async () => {
+    if (!supabase) return;
 
-    const provider = new GoogleAuthProvider();
-    signInWithPopup(auth, provider)
-      .then(() => {
-        router.push("/home")
-      })
-      .catch((error) => {
-        const errorCode = error.code;
-        const errorContent = error.message;
-        if (noticeRef.current) {
-          noticeRef.current.textContent =
-            errorContent + " (エラーコード: " + errorCode + ")";
+    try {
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: `${window.location.origin}/home`
         }
       });
+
+      if (error) throw error;
+    } catch (error: unknown) {
+      if (noticeRef.current && error instanceof Error) {
+        noticeRef.current.textContent = error.message;
+      }
+    }
   };
 
-  const registerWithGitHub = () => {
-    if (!auth) return;
+  const registerWithGitHub = async () => {
+    if (!supabase) return;
 
-    const provider = new GithubAuthProvider();
-    signInWithPopup(auth, provider)
-      .then(() => {
-        router.push("/home")
-      })
-      .catch((error) => {
-        const errorCode = error.code;
-        const errorContent = error.message;
-        if (noticeRef.current) {
-          noticeRef.current.textContent =
-            errorContent + " (エラーコード: " + errorCode + ")";
+    try {
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: 'github',
+        options: {
+          redirectTo: `${window.location.origin}/home`
         }
       });
-  };
+
+      if (error) throw error;
+    } catch (error: unknown) {
+      if (noticeRef.current && error instanceof Error) {
+        noticeRef.current.textContent = error.message;
+      }
+    }  };
 
   const registerClicked = async () => {
-    if (!auth) return;
+    if (!supabase) return;
 
     if (!noticeRef.current) return;
     const notice = noticeRef.current;
 
-    createUserWithEmailAndPassword(auth, accountEmail, accountPassword)
-      .then(() => {
-        router.push("/home")
-      })
-      .catch((error) => {
-        const errorCode = error.code;
-        const errorContent = error.message;
-
-        if (errorCode === "auth/email-already-in-use") {
-          notice.textContent = t("register.emailInUse");
-        } else if (errorCode === "auth/invalid-email") {
-          notice.textContent = t("register.invalidEmail");
-        } else if (errorCode === "auth/weak-password") {
-          notice.textContent = t("register.weakPassword");
-        } else {
-          notice.textContent = t("register.errorOccurred.replace", {
-            errorContent: errorContent,
-          });
+    try {
+      const { error } = await supabase.auth.signUp({
+        email: accountEmail,
+        password: accountPassword,
+        options: {
+          emailRedirectTo: `${window.location.origin}/home`
         }
       });
+
+      if (error) throw error;
+
+      toast.success(t("register.checkEmail"), {
+        description: t("register.confirmationSent"),
+      });
+    } catch (error: unknown) {
+      if (!(error instanceof Error)) return;
+      
+      if (error.message.includes("User already registered")) {
+        notice.textContent = t("register.emailInUse");
+      } else if (error.message.includes("Invalid email")) {
+        notice.textContent = t("register.invalidEmail");
+      } else if (error.message.includes("Password")) {
+        notice.textContent = t("register.weakPassword");
+      } else {
+        notice.textContent = error.message;
+      }
+    }
   };
 
   return (

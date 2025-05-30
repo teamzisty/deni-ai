@@ -1,9 +1,8 @@
 {
   "extends": "@workspace/typescript-config/base.json",
   "compilerOptions": {
-    "baseUrl": ".",
-    "paths": {
-      "@workspace/firebase-config/*": ["./src/*"]
+    "baseUrl": ".",    "paths": {
+      "@workspace/supabase-config/*": ["./src/*"]
     },
     "module": "node16",
     "moduleResolution": "node16"

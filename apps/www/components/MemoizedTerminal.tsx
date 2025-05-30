@@ -89,7 +89,7 @@ export const MemoizedTerminal = memo(
           return;
         }
 
-        const shellProcess = await webContainerProcess?.spawn("jsh");
+        const shellProcess = await webContainerProcess?.spawn("sh");
         shellProcess?.output.pipeTo(
           new WritableStream({
             write(chunk) {

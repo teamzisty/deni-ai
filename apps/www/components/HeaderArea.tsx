@@ -15,7 +15,7 @@ import { cn } from "@workspace/ui/lib/utils";
 import ShareButton from "./ShareButton";
 import { CreateBranchModal } from "./CreateBranchModal"; // Assuming this path
 import { ChatSession } from "@/hooks/use-chat-sessions";
-import { User } from "firebase/auth";
+import { User } from "@supabase/supabase-js";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -26,20 +26,21 @@ import { useSettings } from "@/hooks/use-settings";
 
 interface HeaderAreaProps {
   model: string;
-  generating: boolean;
-  stop: () => void;
+  stop?: () => void;
+  generating?: boolean;
   handleModelChange: (model: string) => void;
   reasoningEffort?: reasoningEffortType;
   handleReasoningEffortChange?: (effort: reasoningEffortType) => void;
   currentSession?: ChatSession;
   user: User;
   messages: any[];
-  chatId: string;
 }
 
 const HeaderArea: React.FC<HeaderAreaProps> = memo(
   ({
     model,
+    stop,
+    generating,
     handleModelChange,
     reasoningEffort,
     handleReasoningEffortChange,
@@ -132,7 +133,6 @@ const HeaderArea: React.FC<HeaderAreaProps> = memo(
   (prevProps, nextProps) => {
     return (
       prevProps.model === nextProps.model &&
-      prevProps.generating === nextProps.generating &&
       prevProps.reasoningEffort === nextProps.reasoningEffort &&
       prevProps.handleModelChange === nextProps.handleModelChange
     );

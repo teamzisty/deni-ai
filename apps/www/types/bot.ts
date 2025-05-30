@@ -17,6 +17,17 @@ export interface ServerBot extends ClientBot {
   systemInstruction: string;
 };
 
+export interface RowServerBot {
+  id: string;
+  name: string;
+  description: string;
+  system_instruction: string;
+  instructions: Instruction[];
+  user_id: string;
+  created_at: string;
+  updated_at: string;
+}
+
 export interface BotAuthor {
   name: string;
   verified: boolean;
