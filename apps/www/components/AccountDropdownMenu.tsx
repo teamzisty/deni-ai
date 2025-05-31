@@ -75,11 +75,16 @@ export const AccountDropdownMenu = memo(
     return (
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          {!isDisabled ? (            <Button variant="ghost" className="h-16 p-2 ml-1 justify-start">
+          {!isDisabled ? (
+            <Button variant="ghost" className="mb-3 group-data-[collapsible=offcanvas]:p-4 justify-start p-0.5">
               {user?.user_metadata?.avatar_url ? (
                 <Image
                   src={user.user_metadata.avatar_url}
-                  alt={user.user_metadata?.full_name || user.user_metadata?.name || "User Avatar"}
+                  alt={
+                    user.user_metadata?.full_name ||
+                    user.user_metadata?.display_name ||
+                    "User Avatar"
+                  }
                   width={40}
                   height={40}
                   className={`rounded-full ${settings.privacyMode && "blur-sm"}`}
@@ -88,9 +93,11 @@ export const AccountDropdownMenu = memo(
               ) : (
                 <User2 size="16" />
               )}
-              <div className="flex flex-col text-left group-data-[collapsible=icon]:hidden">
+              <div className="flex flex-col text-left group-data-[collapsible=icon]:hidden ml-2">
                 <span className={settings.privacyMode ? "blur-sm" : ""}>
-                  {truncateName(user?.user_metadata?.full_name || user?.user_metadata?.name)}
+                  {truncateName(
+                    user?.user_metadata?.full_name || user?.user_metadata?.display_name
+                  )}
                 </span>
                 <span
                   className={`text-muted-foreground min-w-0 block truncate ${
@@ -115,10 +122,16 @@ export const AccountDropdownMenu = memo(
           <DropdownMenuGroup>
             {!isDisabled && (
               <DropdownMenuLabel>
-                <div className="h-16 justify-start flex items-center gap-2 md:max-w-[210px]">                  {user?.user_metadata?.avatar_url ? (
+                <div className="h-16 justify-start flex items-center gap-2 md:max-w-[210px]">
+                  {" "}
+                  {user?.user_metadata?.avatar_url ? (
                     <Image
                       src={user.user_metadata.avatar_url}
-                      alt={user.user_metadata?.full_name || user.user_metadata?.name || "User Avatar"}
+                      alt={
+                        user.user_metadata?.full_name ||
+                        user.user_metadata?.name ||
+                        "User Avatar"
+                      }
                       width={40}
                       height={40}
                       className={`rounded-full ${settings.privacyMode && "blur-sm"}`}
@@ -129,7 +142,10 @@ export const AccountDropdownMenu = memo(
                   )}
                   <div className="flex flex-col text-left">
                     <span className={`${settings.privacyMode && "blur-sm"}`}>
-                      {truncateName(user?.user_metadata?.full_name || user?.user_metadata?.name)}
+                      {truncateName(
+                        user?.user_metadata?.full_name ||
+                          user?.user_metadata?.name
+                      )}
                     </span>
                     <span
                       className={`text-muted-foreground min-w-0 block truncate ${

@@ -49,17 +49,21 @@ export async function POST(req: Request) {
       botId?: string;
       toolList?: string[];
       language?: string;
-    } = await req.json();    if (!model || messages.length === 0) {
+    } = await req.json();
+    if (!model || messages.length === 0) {
       return new NextResponse("Invalid request", { status: 400 });
-    }    // Supabase authentication
+    } // Supabase authentication
     const supabase = createSupabaseServerClient();
     let userId = null;
 
     if (authorization) {
       try {
         // Extract token from Bearer format
-        const token = authorization.replace('Bearer ', '');
-        const { data: { user }, error } = await supabase.auth.getUser(token);
+        const token = authorization.replace("Bearer ", "");
+        const {
+          data: { user },
+          error,
+        } = await supabase.auth.getUser(token);
         if (error || !user) {
           return new NextResponse("Authorization failed", { status: 401 });
         }
@@ -68,18 +72,20 @@ export async function POST(req: Request) {
         console.error(error);
         return new NextResponse("Authorization failed", { status: 401 });
       }
+    } else {
+      return new NextResponse("Authorization failed", { status: 401 });
     }
 
     let bot: RowServerBot | null = null;
     if (botId) {
       console.log("Bot ID provided:", botId);
       const { data: botData, error } = await supabase
-        .from('bots')
-        .select('*')
-        .eq('id', botId)
+        .from("bots")
+        .select("*")
+        .eq("id", botId)
         .single();
 
-        console.log("Fetched bot data:", botData);
+      console.log("Fetched bot data:", botData);
 
       if (error || !botData) {
         return new NextResponse("Bot not found", { status: 404 });

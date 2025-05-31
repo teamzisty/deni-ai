@@ -226,119 +226,7 @@
         "title": "Conversations Privacy Mode",
         "description": "Hide your conversations name. hover to see the conversation name."
       },
-      "authDisabled": "Authentication is temporarily disabled or not available in your instance.",
-      "data": {
-        "title": "Download Account Data",
-        "description": "You can download all data associated with your account below.",
-        "download": "Download Data",
-        "downloading": "Downloading...",
-        "downloadSuccess": "Data downloaded successfully",
-        "downloadError": "Failed to download data"
-      },
-      "delete": {
-        "title": "Delete Account",
-        "description": "Permanently delete your account and all associated data.",
-        "button": "Delete Account",
-        "deleting": "Deleting...",
-        "success": "Account deleted successfully",
-        "error": "Failed to delete account",
-        "reauth": {
-          "title": "Confirm Your Password",
-          "description": "For security reasons, please enter your password to continue.",
-          "providerMessage": "For security reasons, you'll need to reauthenticate with {provider} to continue."
-        }
-      },
-      "password": {
-        "title": "Password",
-        "description": "Change your password to keep your account secure.",
-        "cardTitle": "Change Password",
-        "cardDescription": "Update your password to a new secure combination.",
-        "currentPassword": "Current Password",
-        "newPassword": "New Password",
-        "confirmPassword": "Confirm New Password",
-        "updateButton": "Update Password",
-        "updating": "Updating...",
-        "successTitle": "Password Updated",
-        "successDescription": "Your password has been successfully updated.",
-        "errorAllFields": "Please fill in all password fields.",
-        "errorPasswordMatch": "New passwords don't match.",
-        "errorPasswordLength": "Password must be at least 8 characters long.",
-        "errorNoUser": "You must be logged in to change your password.",
-        "errorWrongPassword": "Current password is incorrect.",
-        "errorWeakPassword": "New password is too weak. Use a stronger password.",
-        "errorRecentLogin": "For security reasons, you need to re-login before changing your password.",
-        "errorGeneric": "Failed to update password. Please try again.",
-        "notLoggedIn": "You must be logged in to change your password.",
-        "notPasswordProvider": "You cannot change your password because you signed in with a third-party provider."
-      },
-      "sessions": {
-        "title": "Sessions",
-        "description": "Manage your active sessions and devices.",
-        "activeSessions": "Active Sessions",
-        "activeSessionsDescription": "These are the devices where you're currently logged in.",
-        "current": "Current",
-        "nowActive": "Now active",
-        "lastActive": "Last active",
-        "terminate": "Log Out",
-        "terminateAll": "Log Out All Devices",
-        "terminating": "Logging out...",
-        "terminateSuccess": "Session terminated successfully",
-        "terminateError": "Failed to terminate session",
-        "terminateAllSuccess": "All other sessions terminated successfully",
-        "terminateAllError": "Failed to terminate all sessions",
-        "loading": "Loading sessions...",
-        "noSessions": "No active sessions found",
-        "justNow": "Just now",
-        "hoursAgo": "{hours} hours ago",
-        "fetchError": "Failed to fetch sessions"
-      },
-      "security": {
-        "title": "Security",
-        "description": "Manage your account security settings.",
-        "cancel": "Cancel",
-        "notLoggedIn": "You must be logged in to change security settings.",
-        "setupError": "Failed to set up 2FA. Please try again.",
-        "qrCodeTooLarge": "QR code is too large to display. Please use the manual entry method.",
-        "qrCode": {
-          "title": "QR Code",
-          "description": "Scan this QR code with your authenticator app to set up two-factor authentication."
-        },
-        "twoFactor": {
-          "title": "Two-factor Authentication",
-          "description": "Add an extra layer of security to your account.",
-          "label": "Two-factor Authentication",
-          "sublabel": "Add an extra layer of security to your account"
-        },
-        "enabled": "Enabled",
-        "disabled": "Disabled",
-        "enabledStatus": "Two-factor authentication is enabled",
-        "enabledDescription": "Your account is protected with two-factor authentication.",
-        "disabledStatus": "Two-factor authentication is disabled",
-        "disabledDescription": "Your account is not protected with two-factor authentication. Enable it for better security.",
-        "activeAuthenticators": "Active Authenticators",
-        "totpAuthenticator": "TOTP Authenticator",
-        "addedOn": "Added on {date}",
-        "disable": "Disable",
-        "setupButton": "Set Up Two-Factor Authentication",
-        "settingUp": "Setting up two-factor authentication...",
-        "scanQrCode": "Scan QR Code with Authenticator App",
-        "scanQrDescription": "Scan this QR code with an authenticator app like Google Authenticator, Authy, or 1Password.",
-        "enterCodeManually": "Or enter this secret manually:",
-        "secretCopied": "Secret copied to clipboard",
-        "secretCopyFailed": "Failed to copy secret",
-        "enterVerificationCode": "Enter the 6-digit code from your app:",
-        "codePlaceholder": "000000",
-        "verifying": "Verifying...",
-        "enable2FA": "Enable 2FA",
-        "duplicateFactorError": "A two-factor authentication method already exists. Please disable the existing one before adding a new one.",
-        "enrollmentFailed": "Failed to set up two-factor authentication. Please try again."
-      },
-      "sidebarNav": {
-        "account": "Account",
-        "sessions": "Sessions",
-        "password": "Password",
-        "security": "Security"
-      }
+      "authDisabled": "Authentication is temporarily disabled or not available in your instance."
     },
     "dataControls": {
       "tab": "Data Controls",
@@ -606,7 +494,8 @@
   },
   "login": {
     "title": "Login",
-    "description": "Enter your account information to log in.",    "email": "Email",
+    "description": "Enter your account information to log in.",
+    "email": "Email",
     "password": "Password",
     "forgotPassword": "Forgot your password?",
     "loginButton": "Login",
@@ -640,7 +529,8 @@
       "resetLinkSent": "A password reset link has been sent to your email. Please check your inbox.",
       "resetLinkError": "Failed to send password reset link. Please try again.",
       "backToLogin": "Back to Login"
-    },    "passwordResetWarning": {
+    },
+    "passwordResetWarning": {
       "title": "Password Reset Maybe Required",
       "content": "If you have been using Deni AI since before v4.1.0 and are using password login, you may need to reset your password."
     },
@@ -1008,7 +898,63 @@
       "verifying": "Verifying...",
       "enable2FA": "Enable 2FA",
       "duplicateFactorError": "A two-factor authentication method already exists. Please disable the existing one before adding a new one.",
-      "enrollmentFailed": "Failed to set up two-factor authentication. Please try again."
+      "enrollmentFailed": "Failed to set up two-factor authentication. Please try again.",
+      "intellipulseActionKeys": {
+        "title": "Intellipulse Action Keys",
+        "description": "Manage API keys for Intellipulse actions and integrations",
+        "loading": "Loading Action Keys...",
+        "keyCount": "{count} {count, plural, one {key} other {keys}}",
+        "explanatoryText": "Action keys allow secure access to Intellipulse features and can be used for automation and integrations.",
+        "createKey": "Create Key",
+        "createDialog": {
+          "title": "Create New Action Key",
+          "description": "Give your action key a descriptive name to help you identify its purpose.",
+          "keyNameLabel": "Key Name",
+          "keyNamePlaceholder": "e.g., Production API, Development Bot",
+          "cancel": "Cancel",
+          "create": "Create Key",
+          "creating": "Creating..."
+        },
+        "noKeys": {
+          "title": "No Action Keys",
+          "description": "Create your first action key to start using Intellipulse features."
+        },
+        "keyStatus": {
+          "active": "Active",
+          "inactive": "Inactive",
+          "expired": "Expired"
+        },
+        "actions": {
+          "validate": "Validate",
+          "delete": "Delete",
+          "show": "Show key",
+          "hide": "Hide key",
+          "copy": "Copy key"
+        },
+        "keyDetails": {
+          "keyLabel": "Key:",
+          "created": "Created:",
+          "usage": "Usage:",
+          "expires": "Expires:",
+          "lastUsed": "Last Used:",
+          "usageTimes": "{count} times"
+        },
+        "toasts": {
+          "created": "Action key created successfully",
+          "deleted": "Action key deleted successfully",
+          "copied": "Action key copied to clipboard",
+          "copyFailed": "Failed to copy to clipboard",
+          "validationSuccess": "Action key is valid and effective",
+          "validationFailed": "Action key validation failed: {reason}"
+        },
+        "errors": {
+          "loadFailed": "Failed to load action keys",
+          "createFailed": "Failed to create action key",
+          "deleteFailed": "Failed to delete action key",
+          "validateFailed": "Failed to validate action key",
+          "unknownReason": "Unknown reason"
+        }
+      }
     },
     "sidebarNav": {
       "account": "Account",

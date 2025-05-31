@@ -138,31 +138,16 @@ const Login: React.FC = () => {
   };
 
   return (
-    <div className="h-screen w-full">
-      <div className="md:hidden"></div>
-      <div className="container w-full h-screen m-auto lg:max-w-none lg:grid-cols-2 lg:px-0">
-        <Button
-          variant={"ghost"}
-          asChild
-          className={cn("absolute right-4 top-4 md:right-8 md:top-8")}
-        >
-          <Link href="/register">{t("login.createAccount")}</Link>
-        </Button>
-
-        <div className="m-auto h-screen flex flex-col justify-center space-y-6 w-[96%] md:w-[50%] lg:w-[33%]">
-          <div className="bg-sidebar p-8 rounded-sm flex flex-col gap-5">
-            <div className="flex flex-col space-y-2 text-center">
-              <h1 className="text-2xl font-bold tracking-tight">
-                {t("login.title")}
-              </h1>
-              <p className="text-sm text-muted-foreground">
-                {t("login.description")}
-              </p>
-            </div>
+    <main className="overflow-y-auto max-h-screen">
+      <div className="min-h-screen flex items-center justify-center p-4">
+        <Card className="w-full max-w-md">
+          <CardHeader className="text-center">
+            <CardTitle>{t("login.title")}</CardTitle>
+            <CardDescription>{t("login.description")}</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
             <div className="space-y-2">
-              <Label className="text-muted-foreground" htmlFor="email">
-                {t("login.email")}
-              </Label>
+              <Label htmlFor="email">{t("login.email")}</Label>
               <Input
                 id="email"
                 type="email"
@@ -172,9 +157,7 @@ const Login: React.FC = () => {
               />
             </div>
             <div className="space-y-2">
-              <Label className="text-muted-foreground" htmlFor="password">
-                {t("login.password")}
-              </Label>
+              <Label htmlFor="password">{t("login.password")}</Label>
               <Input
                 id="password"
                 type="password"
@@ -184,7 +167,7 @@ const Login: React.FC = () => {
               />
             </div>
             <Label ref={noticeRef} className="text-red-500"></Label>
-            <Button type="submit" className="w-full" onClick={loginClicked}>
+            <Button className="w-full" onClick={loginClicked}>
               {t("login.loginButton")}
             </Button>
 
@@ -197,17 +180,25 @@ const Login: React.FC = () => {
               </AlertDescription>
             </Alert>
 
-            {/* Password Reset Link */}
             <div className="text-center">
               <Link
                 href="/password-reset"
-                className="text-sm text-muted-foreground hover:text-primary underline"
+                className="text-sm text-muted-foreground hover:text-primary transition-all duration-300 underline"
               >
                 {t("login.forgotPassword")}
               </Link>
             </div>
 
-            <div className="relative mb-2">
+            <div className="text-center">
+              <Link
+                href={`/register`}
+                className="text-sm text-muted-foreground hover:text-primary transition-all duration-300 underline"
+              >
+                {t("login.createAccount")}
+              </Link>
+            </div>
+
+            <div className="relative">
               <div className="absolute inset-0 flex items-center">
                 <span className="w-full border-t" />
               </div>
@@ -218,106 +209,105 @@ const Login: React.FC = () => {
               </div>
             </div>
 
-            <div className="flex flex-col space-y-2 text-center">
+            <div className="space-y-2">
               <Button
-                type="submit"
+                variant="outline"
                 className="w-full"
-                onClick={() => signInWithGoogle()}
+                onClick={signInWithGoogle}
               >
-                <SiGoogle /> {t("login.googleSignIn")}
+                <SiGoogle className="mr-2 h-4 w-4" />
+                {t("login.googleSignIn")}
               </Button>
               <Button
-                type="submit"
+                variant="outline"
                 className="w-full"
-                onClick={() => signInWithGitHub()}
+                onClick={signInWithGitHub}
               >
-                <SiGithub /> {t("login.githubSignIn")}
+                <SiGithub className="mr-2 h-4 w-4" />
+                {t("login.githubSignIn")}
               </Button>
-            </div>
-            <p className="px-2 text-center text-sm text-muted-foreground">
-              {params.locale === "ja" ? (
-                <>
-                  このサイトにログインすると、
-                  <Link
-                    href="/infomation/terms"
-                    className="underline underline-offset-4 hover:text-primary"
-                  >
-                    {t("login.terms")}
-                  </Link>{" "}
-                  と{" "}
-                  <Link
-                    href="/infomation/privacy"
-                    className="underline underline-offset-4 hover:text-primary"
-                  >
-                    {t("login.privacy")}
-                  </Link>{" "}
-                  に同意したことになります。
-                </>
-              ) : (
-                <>
-                  By logging in to this site, you agree to the{" "}
-                  <Link
-                    href="/infomation/terms"
-                    className="underline underline-offset-4 hover:text-primary"
-                  >
-                    {t("login.terms")}
-                  </Link>{" "}
-                  and{" "}
-                  <Link
-                    href="/infomation/privacy"
-                    className="underline underline-offset-4 hover:text-primary"
-                  >
-                    {t("login.privacy")}
-                  </Link>
-                  .
-                </>
-              )}
-            </p>
-          </div>
-        </div>
-      </div>
 
-      <AlertDialog open={isDialogOpen}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>{t("login.twoFactorRequired")}</AlertDialogTitle>
-            <AlertDialogDescription>
-              {t("login.twoFactorDescription")}
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <Label className="text-muted-foreground" htmlFor="twoFaCode">
-            {t("login.twoFactorCode")}
-          </Label>
-          <InputOTP
-            maxLength={6}
-            value={twoFaCode}
-            onChange={(e) => setTwoFaCode(e)}
-            required
-            placeholder="123456"
-          >
-            <InputOTPGroup>
-              <InputOTPSlot index={0} />
-              <InputOTPSlot index={1} />
-              <InputOTPSlot index={2} />
-            </InputOTPGroup>
-            <InputOTPSeparator />
-            <InputOTPGroup>
-              <InputOTPSlot index={3} />
-              <InputOTPSlot index={4} />
-              <InputOTPSlot index={5} />
-            </InputOTPGroup>
-          </InputOTP>
-          <AlertDialogFooter>
-            <AlertDialogCancel onClick={closeDialog}>
-              {t("login.cancel")}
-            </AlertDialogCancel>
-            <AlertDialogAction onClick={closeDialog}>
-              {t("login.continue")}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-    </div>
+              <p className="text-center text-sm text-muted-foreground">
+                {params.language === "ja" ? (
+                  <>
+                    このサイトにログインすると、
+                    <Link
+                      href="/infomation/terms"
+                      className="underline underline-offset-4 hover:text-primary"
+                    >
+                      {t("register.terms")}
+                    </Link>{" "}
+                    と{" "}
+                    <Link
+                      href="/infomation/privacy"
+                      className="underline underline-offset-4 hover:text-primary"
+                    >
+                      {t("register.privacy")}
+                    </Link>{" "}
+                    に同意したことになります。
+                  </>
+                ) : (
+                  <>
+                    By logging in to this site, you agree to the{" "}
+                    <Link
+                      href="/infomation/terms"
+                      className="underline underline-offset-4 hover:text-primary"
+                    >
+                      {t("register.terms")}
+                    </Link>{" "}
+                    and{" "}
+                    <Link
+                      href="/infomation/privacy"
+                      className="underline underline-offset-4 hover:text-primary"
+                    >
+                      {t("register.privacy")}
+                    </Link>
+                    .
+                  </>
+                )}
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+
+        <AlertDialog open={isDialogOpen}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>
+                {t("login.twoFactorRequired")}
+              </AlertDialogTitle>
+              <AlertDialogDescription>
+                {t("login.twoFactorDescription")}
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <div className="space-y-2">
+              <Label htmlFor="twoFaCode">{t("login.twoFactorCode")}</Label>
+              <InputOTP maxLength={6} value={twoFaCode} onChange={setTwoFaCode}>
+                <InputOTPGroup>
+                  <InputOTPSlot index={0} />
+                  <InputOTPSlot index={1} />
+                  <InputOTPSlot index={2} />
+                </InputOTPGroup>
+                <InputOTPSeparator />
+                <InputOTPGroup>
+                  <InputOTPSlot index={3} />
+                  <InputOTPSlot index={4} />
+                  <InputOTPSlot index={5} />
+                </InputOTPGroup>
+              </InputOTP>
+            </div>
+            <AlertDialogFooter>
+              <AlertDialogCancel onClick={closeDialog}>
+                {t("login.cancel")}
+              </AlertDialogCancel>
+              <AlertDialogAction onClick={closeDialog}>
+                {t("login.continue")}
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+      </div>
+    </main>
   );
 };
 

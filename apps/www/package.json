@@ -5,10 +5,10 @@
   "private": true,
   "scripts": {
     "dev": "next dev --turbopack",
-    "build": "next build --no-lint",
+    "build": "next build --no-lint --turbopack",
     "build:full": "next build",
     "build:turbopack": "next build --turbopack",
-    "build:quick": "next build --no-lint --turbopack",
+    "build:nolint": "next build --no-lint",
     "start": "next start",
     "lint": "next lint",
     "lint:fix": "next lint --fix",
