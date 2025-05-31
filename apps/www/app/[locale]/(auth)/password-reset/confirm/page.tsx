@@ -76,8 +76,8 @@ const PasswordResetConfirm: React.FC = () => {
   };
 
   return (
-    <div className="h-screen w-full">
-      <div className="container w-full h-screen m-auto lg:max-w-none lg:grid-cols-2 lg:px-0">
+    <div className="min-h-screen w-full">
+      <div className="container w-full min-h-screen m-auto lg:max-w-none lg:grid-cols-2 lg:px-0">
         {" "}
         <Button
           variant={"ghost"}
@@ -88,7 +88,7 @@ const PasswordResetConfirm: React.FC = () => {
             {t("login.passwordResetConfirm.backToLogin")}
           </Link>
         </Button>
-        <div className="m-auto h-screen flex flex-col justify-center space-y-6 w-[96%] md:w-[50%] lg:w-[33%]">
+        <div className="m-auto min-h-screen flex flex-col md:justify-center py-8 md:py-0 space-y-6 w-[96%] md:w-[50%] lg:w-[33%]">
           <Card className="border border-border/30">
             <CardHeader className="text-center">
               <div className="flex justify-center mb-4">
