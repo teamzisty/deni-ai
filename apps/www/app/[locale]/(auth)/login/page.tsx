@@ -138,9 +138,9 @@ const Login: React.FC = () => {
   };
 
   return (
-    <div className="h-screen w-full">
+    <div className="min-h-screen w-full">
       <div className="md:hidden"></div>
-      <div className="container w-full h-screen m-auto lg:max-w-none lg:grid-cols-2 lg:px-0">
+      <div className="container w-full min-h-screen m-auto lg:max-w-none lg:grid-cols-2 lg:px-0">
         <Button
           variant={"ghost"}
           asChild
@@ -149,7 +149,7 @@ const Login: React.FC = () => {
           <Link href="/register">{t("login.createAccount")}</Link>
         </Button>
 
-        <div className="m-auto h-screen flex flex-col justify-center space-y-6 w-[96%] md:w-[50%] lg:w-[33%]">
+        <div className="m-auto min-h-screen flex flex-col md:justify-center py-8 md:py-0 space-y-6 w-[96%] md:w-[50%] lg:w-[33%]">
           <div className="bg-sidebar p-8 rounded-sm flex flex-col gap-5">
             <div className="flex flex-col space-y-2 text-center">
               <h1 className="text-2xl font-bold tracking-tight">
