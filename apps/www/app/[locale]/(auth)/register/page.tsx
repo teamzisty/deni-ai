@@ -11,6 +11,13 @@ import { toast } from "sonner";
 import { SiGithub, SiGoogle } from "@icons-pack/react-simple-icons";
 import { useParams } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
+import {
+  Card,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+  CardContent,
+} from "@workspace/ui/components/card";
 
 const Register: React.FC = () => {
   const t = useTranslations();
@@ -39,10 +46,10 @@ const Register: React.FC = () => {
 
     try {
       const { error } = await supabase.auth.signInWithOAuth({
-        provider: 'google',
+        provider: "google",
         options: {
-          redirectTo: `${window.location.origin}/home`
-        }
+          redirectTo: `${window.location.origin}/home`,
+        },
       });
 
       if (error) throw error;
@@ -58,10 +65,10 @@ const Register: React.FC = () => {
 
     try {
       const { error } = await supabase.auth.signInWithOAuth({
-        provider: 'github',
+        provider: "github",
         options: {
-          redirectTo: `${window.location.origin}/home`
-        }
+          redirectTo: `${window.location.origin}/home`,
+        },
       });
 
       if (error) throw error;
@@ -69,7 +76,8 @@ const Register: React.FC = () => {
       if (noticeRef.current && error instanceof Error) {
         noticeRef.current.textContent = error.message;
       }
-    }  };
+    }
+  };
 
   const registerClicked = async () => {
     if (!supabase) return;
@@ -82,8 +90,8 @@ const Register: React.FC = () => {
         email: accountEmail,
         password: accountPassword,
         options: {
-          emailRedirectTo: `${window.location.origin}/home`
-        }
+          emailRedirectTo: `${window.location.origin}/home`,
+        },
       });
 
       if (error) throw error;
@@ -93,7 +101,7 @@ const Register: React.FC = () => {
       });
     } catch (error: unknown) {
       if (!(error instanceof Error)) return;
-      
+
       if (error.message.includes("User already registered")) {
         notice.textContent = t("register.emailInUse");
       } else if (error.message.includes("Invalid email")) {
@@ -107,30 +115,16 @@ const Register: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen w-full">
-      <div className="md:hidden"></div>
-      <div className="container w-full min-h-screen m-auto lg:max-w-none lg:grid-cols-2 lg:px-0">
-        <Button
-          variant={"ghost"}
-          asChild
-          className={cn("absolute right-4 top-4 md:right-8 md:top-8")}
-        >
-          <Link href="/login">{t("register.signIn")}</Link>
-        </Button>
-        <div className="m-auto min-h-screen flex flex-col md:justify-center py-8 md:py-0 space-y-6 w-[96%] md:w-[50%] lg:w-[33%]">
-          <div className="bg-sidebar p-8 rounded-sm flex flex-col gap-5">
-            <div className="flex flex-col space-y-2 text-center">
-              <h1 className="text-2xl font-bold tracking-tight">
-                {t("register.title")}
-              </h1>
-              <p className="text-sm text-muted-foreground">
-                {t("register.description")}
-              </p>
-            </div>
+    <main className="overflow-y-auto max-h-screen">
+      <div className="min-h-screen flex items-center justify-center p-4">
+        <Card className="w-full max-w-md">
+          <CardHeader className="text-center">
+            <CardTitle>{t("register.title")}</CardTitle>
+            <CardDescription>{t("register.description")}</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
             <div className="space-y-2">
-              <Label className="text-muted-foreground" htmlFor="email">
-                {t("register.email")}
-              </Label>
+              <Label htmlFor="email">{t("register.email")}</Label>
               <Input
                 id="email"
                 type="email"
@@ -140,9 +134,7 @@ const Register: React.FC = () => {
               />
             </div>
             <div className="space-y-2">
-              <Label className="text-muted-foreground" htmlFor="password">
-                {t("register.password")}
-              </Label>
+              <Label htmlFor="password">{t("register.password")}</Label>
               <Input
                 id="password"
                 type="password"
@@ -152,10 +144,20 @@ const Register: React.FC = () => {
               />
             </div>
             <Label ref={noticeRef} className="text-red-500"></Label>
-            <Button type="submit" className="w-full" onClick={registerClicked}>
+            <Button className="w-full" onClick={registerClicked}>
               {t("register.registerButton")}
             </Button>
-            <div className="relative mb-2">
+
+            <div className="text-center">
+              <Link
+                href="/login"
+                className="text-sm text-muted-foreground hover:text-primary transition-all duration-300 underline"
+              >
+                {t("register.signIn")}
+              </Link>
+            </div>
+
+            <div className="relative">
               <div className="absolute inset-0 flex items-center">
                 <span className="w-full border-t" />
               </div>
@@ -165,23 +167,27 @@ const Register: React.FC = () => {
                 </span>
               </div>
             </div>
-            <div className="flex flex-col space-y-2 text-center">
+
+            <div className="space-y-2">
               <Button
-                type="submit"
+                variant="outline"
                 className="w-full"
-                onClick={() => registerWithGoogle()}
+                onClick={registerWithGoogle}
               >
-                <SiGoogle /> {t("register.googleSignIn")}
+                <SiGoogle className="mr-2 h-4 w-4" />
+                {t("register.googleSignIn")}
               </Button>
               <Button
-                type="submit"
+                variant="outline"
                 className="w-full"
-                onClick={() => registerWithGitHub()}
+                onClick={registerWithGitHub}
               >
-                <SiGithub /> {t("register.githubSignIn")}
+                <SiGithub className="mr-2 h-4 w-4" />
+                {t("register.githubSignIn")}
               </Button>
             </div>
-            <p className="px-2 text-center text-sm text-muted-foreground">
+
+            <p className="text-center text-sm text-muted-foreground">
               {params.language === "ja" ? (
                 <>
                   このサイトにログインすると、
@@ -220,10 +226,10 @@ const Register: React.FC = () => {
                 </>
               )}
             </p>
-          </div>
-        </div>
+          </CardContent>
+        </Card>
       </div>
-    </div>
+    </main>
   );
 };
 
