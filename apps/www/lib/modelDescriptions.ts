@@ -286,14 +286,14 @@ export const modelDescriptions: modelDescriptionType = {
     type: "Gemini",
   },
   "anthropic/claude-opus-4-20250514": {
-    displayName: "Claude 4 Opus",
+    displayName: "Claude Opus 4",
     knowledgeCutoff: "2025/03",
     defaultVisibility: true,
     vision: true,
     type: "Claude",
   },
   "anthropic/claude-sonnet-4-20250514": {
-    displayName: "Claude 4 Sonnet",
+    displayName: "Claude Sonnet 4",
     knowledgeCutoff: "2025/03",
     defaultVisibility: true,
     vision: true,
