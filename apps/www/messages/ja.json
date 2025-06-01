@@ -1,8 +1,8 @@
 {
   "layout": {
     "title": "Deni AI",
-    "description": "Deni AI は、o1やClaude 3.5 Sonnet などのAIモデルを利用できる完全無料のチャットアプリです。",
-    "ogDescription": "Deni AI は、o1やClaude 3.5 Sonnet などのAIモデルを利用できる完全無料のチャットアプリです。",
+    "description": "Deni AI は、o3やClaude Sonnet 4 などのAIモデルを利用できる完全無料のチャットアプリです。",
+    "ogDescription": "Deni AI は、o3やClaude Sonnet 4 などのAIモデルを利用できる完全無料のチャットアプリです。",
     "locale": "ja_JP",
     "updateAlert": {
       "title": "新しいバージョンの Deni AI が利用可能です",
@@ -1152,9 +1152,9 @@
       "models": {
         "title": "利用可能な最高モデル",
         "tooltip": "プラットフォームで利用可能な最も高度なモデル",
-        "deniAI": "GPT-4.5, Claude 3.7 など",
+        "deniAI": "o3, Claude 4 など",
         "chatGPT": "GPT-4.5, o1-pro",
-        "claude": "Claude 3.7 Sonnet",
+        "claude": "Claude Sonnet 4",
         "gemini": "Gemini 2.5 Pro"
       },
       "messageLimits": {
@@ -1204,7 +1204,7 @@
       },
       "models": {
         "question": "Deni AIはどのようなモデルをサポートしていますか？",
-        "answer": "Deni AIは、Claude 3.7 Sonnet、GPT-4.5、Gemini 2.5 Pro、o1など、すべての主要なAIモデルへのアクセスを提供しています。追加費用なしで自由にモデルを切り替えることができます。"
+        "answer": "Deni AIは、Claude Sonnet 4、Gemini 2.5 Pro、o3など、すべての主要なAIモデルへのアクセスを提供しています。追加費用なしで自由にモデルを切り替えることができます。"
       },
       "limitations": {
         "question": "Deni AIを使用する上で制限はありますか？",
@@ -1493,8 +1493,8 @@
     "google/gemini-2-0-flash-001": "知性、速度、コスト、コンテキストウィンドウのバランスが取れたモデル。",
     "google/gemini-2-0-flash-lite-001": "2025年5月10日に廃止予定。",
     "google/gemini-1-5-pro": "2025年5月10日に廃止予定。",
-    "anthropic/claude-opus-4-20250514": "Claude 4 Opus、最も強力な推論モデル。",
-    "anthropic/claude-sonnet-4-20250514": "Claude 4 Sonnet、強力な推論モデル。",
+    "anthropic/claude-opus-4-20250514": "Claude Opus 4、最も強力な推論モデル。",
+    "anthropic/claude-sonnet-4-20250514": "Claude Sonnet 4、強力な推論モデル。",
     "anthropic/claude-3-7-sonnet-20250219": "現在最も高知能なモデルであり、初のハイブリッド推論モデル。",
     "anthropic/claude-3-7-sonnet-20250219-reasoning": "拡張された推論能力を持つClaude 3.7 Sonnet。",
     "groq/deepseek-r1-distill-llama-70b": "第一世代の推論モデル。",

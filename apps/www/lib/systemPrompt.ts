@@ -1,4 +1,4 @@
-import { RowServerBot, ServerBot } from "@/types/bot";
+import { RowServerBot } from "@/types/bot";
 
 const current_date = new Date().toLocaleDateString();
 

@@ -1,8 +1,8 @@
 {
   "layout": {
     "title": "Deni AI",
-    "description": "Deni AI is a completely free chat app that uses AI models such as o1 and Claude 3.5 Sonnet.",
-    "ogDescription": "Deni AI is a completely free chat app that uses AI models such as o1 and Claude 3.5 Sonnet.",
+    "description": "Deni AI is a completely free chat app that uses AI models such as o3 and Claude Sonnet 4.",
+    "ogDescription": "Deni AI is a completely free chat app that uses AI models such as o3 and Claude Sonnet 4.",
     "locale": "en_US",
     "updateAlert": {
       "title": "New Version of Deni AI Available",
@@ -1259,9 +1259,9 @@
       "models": {
         "title": "Best Available Models",
         "tooltip": "The most advanced models available on the platform",
-        "deniAI": "GPT-4.5, Claude 3.7, etc.",
+        "deniAI": "o3, Claude 4, etc.",
         "chatGPT": "GPT-4.5, o1-pro",
-        "claude": "Claude 3.7 Sonnet",
+        "claude": "Claude Sonnet 4",
         "gemini": "Gemini 2.5 Pro"
       },
       "messageLimits": {
@@ -1311,7 +1311,7 @@
       },
       "models": {
         "question": "What models does Deni AI support?",
-        "answer": "Deni AI provides access to all major AI models including Claude 3.7 Sonnet, GPT-4.5, Gemini 2.5 Pro, o1, and many others. You can switch between models freely without any additional costs."
+        "answer": "Deni AI provides access to all major AI models including Claude Sonnet 4, GPT-4.5, Gemini 2.5 Pro, o3, and many others. You can switch between models freely without any additional costs."
       },
       "limitations": {
         "question": "Are there any limitations to using Deni AI?",
@@ -1610,8 +1610,8 @@
     "google/gemini-2-0-flash-001": "A good model at intelligence, speed, cost, and context window.",
     "google/gemini-2-0-flash-lite-001": "Leaving in May 10, 2025.",
     "google/gemini-1-5-pro": "Leaving in May 10, 2025.",
-    "anthropic/claude-opus-4-20250514": "Claude 4 Opus, a most intelligent model.",
-    "anthropic/claude-sonnet-4-20250514": "Claude 4 Sonnet, a powerful reasoning model.",
+    "anthropic/claude-opus-4-20250514": "Claude Opus 4, a most intelligent model.",
+    "anthropic/claude-sonnet-4-20250514": "Claude Sonnet 4, a powerful reasoning model.",
     "anthropic/claude-3-7-sonnet-20250219": "Most intelligent model to date, first hybrid reasoning model.",
     "anthropic/claude-3-7-sonnet-20250219-reasoning": "Claude 3.7 Sonnet with extended reasoning ability.",
     "groq/deepseek-r1-distill-llama-70b": "A first-generation reasoning model.",
