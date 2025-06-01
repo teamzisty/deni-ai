@@ -57,7 +57,7 @@
     "react-markdown": "^10.1.0",
     "react-syntax-highlighter": "^15.6.1",
     "remark-gfm": "^4.0.1",
-    "sonner": "^2.0.3",
+    "sonner": "^2.0.4",
     "strip-ansi": "^7.1.0",
     "uploadthing": "^7.7.2",
     "use-debounce": "^10.0.4",
@@ -67,7 +67,7 @@
   "devDependencies": {
     "@types/ansi-html": "^0.0.0",
     "@types/jsdom": "^21.1.7",
-    "@types/node": "^22.15.27",
+    "@types/node": "^22.15.29",
     "@types/react": "^19.1.6",
     "@types/react-dom": "^19.1.5",
     "@types/react-syntax-highlighter": "^15.5.13",

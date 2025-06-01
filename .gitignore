@@ -5,6 +5,9 @@ node_modules
 .pnp
 .pnp.js
 
+# Supabase temp
+supabase/.temp
+
 # API (in progress)
 apps/api
 

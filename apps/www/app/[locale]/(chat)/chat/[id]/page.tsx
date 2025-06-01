@@ -12,7 +12,8 @@ import logger from "@/utils/logger";
 import Chat from "@/components/Chat";
 import { supabase } from "@workspace/supabase-config/client";
 
-const ChatPage: React.FC = () => {  const {
+const ChatPage: React.FC = () => {
+  const {
     updateSession,
     getSession,
     isLoading: isSessionsLoading,
@@ -26,9 +27,10 @@ const ChatPage: React.FC = () => {  const {
   const searchParams = useSearchParams();
   const router = useRouter();
 
-  const [currentSessionData, setCurrentSessionData] = useState<ChatSession | undefined>(undefined);
+  const [currentSessionData, setCurrentSessionData] = useState<
+    ChatSession | undefined
+  >(undefined);
   const [isRedirecting, setIsRedirecting] = useState(false);
-  const [sessionChecked, setSessionChecked] = useState(false);
   const [authToken, setAuthToken] = useState<string | null>(null);
 
   const getCurrentSession = useCallback(() => {
@@ -37,17 +39,21 @@ const ChatPage: React.FC = () => {  const {
     }
     const session = getSession(params.id);
     return session;
-  }, [getSession, params.id, isSessionsLoading, sessions?.length]);  useEffect(() => {
+  }, [getSession, params.id, isSessionsLoading, sessions?.length]);
+
+  useEffect(() => {
     if (user && supabase) {
       // Get Supabase session token instead of user.id
       const getAuthToken = async () => {
         try {
-          const { data: { session } } = await supabase!.auth.getSession();
+          const {
+            data: { session },
+          } = await supabase!.auth.getSession();
           if (session?.access_token) {
             setAuthToken(`Bearer ${session.access_token}`);
           }
         } catch (error) {
-          console.error('Failed to get session token:', error);
+          console.error("Failed to get session token:", error);
         }
       };
       getAuthToken();
@@ -55,23 +61,25 @@ const ChatPage: React.FC = () => {  const {
   }, [user]);
 
   useEffect(() => {
-    if (isAuthLoading || isSessionsLoading || !isSupabaseLoaded || sessionChecked || isRedirecting) {
+    if (
+      isAuthLoading ||
+      isSessionsLoading ||
+      !isSupabaseLoaded ||
+      isRedirecting
+    ) {
       return;
     }
 
-    const timer = setTimeout(() => {
-      const session = getCurrentSession();
+    const session = getCurrentSession();
 
-      if (!session) {
-        setIsRedirecting(true);
-        router.push("/home");
-        return;
-      }
+    if (!session) {
+      setIsRedirecting(true);
+      router.push("/home");
+      return;
+    }
 
-      setCurrentSessionData(session);
-      setSessionChecked(true);
-      logger.info("ChatPage Init", "Loaded Session Data");
-    }, 500);    return () => clearTimeout(timer);
+    setCurrentSessionData(session);
+    logger.info("ChatPage Init", "Loaded Session Data");
   }, [
     isAuthLoading,
     isSessionsLoading,
@@ -80,9 +88,8 @@ const ChatPage: React.FC = () => {  const {
     router,
     params.id,
     isRedirecting,
-    sessionChecked,
   ]);
-  
+
   useEffect(() => {
     if (!isAuthLoading && !user) {
       router.push("/login");
@@ -101,12 +108,19 @@ const ChatPage: React.FC = () => {  const {
   const initialImageParam = searchParams.get("img");
   const initialMessageParam = searchParams.get("i");
 
-  const validatedInitialModel = initialModelParam && modelDescriptions[initialModelParam]
-    ? initialModelParam
-    : undefined;
+  const validatedInitialModel =
+    initialModelParam && modelDescriptions[initialModelParam]
+      ? initialModelParam
+      : undefined;
 
-  if (isAuthLoading || isSessionsLoading || !sessionChecked || !currentSessionData) {
-    return <Loading />;
+  if (
+    isAuthLoading ||
+    isSessionsLoading ||
+    !currentSessionData
+  ) {
+    return (
+      <Loading />
+    );
   }
 
   return (
@@ -117,7 +131,8 @@ const ChatPage: React.FC = () => {  const {
         user={user}
         authToken={authToken}
         initialModel={validatedInitialModel}
-        initialImage={initialImageParam || undefined}        initialMessage={initialMessageParam || undefined}
+        initialImage={initialImageParam || undefined}
+        initialMessage={initialMessageParam || undefined}
         updateSession={updateSession}
       />
     </main>

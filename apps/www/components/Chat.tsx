@@ -736,10 +736,6 @@ const Chat: React.FC<ChatProps> = ({
     }
   };
 
-  useEffect(() => {
-    console.log(status, "Status changed to: ", status);
-  }, [status]); // Add status as dependency
-
   // --- Render ---
   return (
     <>

@@ -1,0 +1,88 @@
+---
+title: "Setup Repository"
+description: "Learn how to set up the repository to contribute to Deni AI"
+category: "contribution"
+---
+
+## Repository Structure
+
+This repository uses a monorepo structure.
+
+- Uses [pnpm](https://pnpm.io/) and its [Workspaces](https://pnpm.io/docs/install/workspaces) feature for development
+- Uses [Turborepo](https://turbo.build/repo/) as the build system
+- Uses [Next.js](https://nextjs.org/) as the framework for the main app (apps/www)
+- Uses [Docusaurus](https://docusaurus.io/) as the framework for documentation (apps/docs)
+
+The repository has the following structure:
+
+```
+├── apps
+│   ├── docs                # Documentation
+│   └── www                 # Main Next.js web application
+└── packages
+    ├── eslint-config       # Shared ESLint Configuration
+    ├── firebase-config     # Firebase configuration
+    ├── typescript-config   # Shared TypeScript Configuration
+    ├── ui                  # Shared UI component library
+    ├── voids-ap-provider   # Anthropic provider for voids.top
+    └── voids-oai-provider  # OpenAI provider for voids.top
+```
+
+## Setup
+
+### Fork the Repository
+
+Visit the GitHub repository page and click the "Fork" button in the top right to fork it.
+
+### Clone Locally
+
+```bash
+git clone https://github.com/<your-username>/deni-ai.git
+```
+
+### Navigate to Project Directory
+
+```bash
+cd deni-ai
+```
+
+### Create a New Branch
+
+```bash
+git checkout -b <your-branch-name>
+```
+
+### Install Dependencies
+
+```bash
+pnpm install
+```
+
+### Run Locally
+
+To run only the Deni AI application, use the following command:
+
+```bash
+pnpm --filter=www dev
+```
+
+### Commit Requirements
+
+Before creating a pull request, ensure that:
+
+- The build works without issues and runs in any environment
+- Commit messages are written in English following these rules
+
+#### Commit Message Rules
+
+Use the format `category(scope): message`. The category should be one of the following:
+
+- `feat`: Add new features
+- `fix`: Fix bugs
+- `docs`: Update documentation
+- `style`: Change code style
+- `refactor`: Refactor code
+- `ci`: Change CI configuration
+- `chore`: Change build process or auxiliary tools
+
+> Example: `fix(www): Fixes a bug in the login page`

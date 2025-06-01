@@ -10,35 +10,17 @@
 
 Deni AI is a versatile chat application that allows interaction with multiple AI models. Built with Next.js and Firebase, it provides an intuitive user interface.
 
-## ! DONT FORK THE THIS BRANCH !
-
-Cloning this branch to create an instance or update a Deni AI instance is currently not recommended.
-
-Instead, we recommend using the `master` branch.
-
-The reason and other details will be announced in a later announcement.
-
 ## Getting Started
 
 To getting started, visit [Docs](https://docs.deniai.app/getting-started.html).
 
-## Key Features
+## Contributors
 
-- 🤖 **Multiple AI Model Support**: Interact with various AI models
-- 🌐 **Internationalization**: English and Japanese interface
-- 🔒 **Firebase Authentication**: Secure user authentication
-- 📝 **Markdown Rendering**: Rich text format display
-- 🖼️ **Image Upload**: Share images during chat
-- 📱 **Responsive Design**: Optimized for mobile and desktop
+<a href="https://github.com/raicdev/deni-ai/graphs/contributors">
+  <img src="https://contrib.rocks/image?repo=raicdev/deni-ai" />
+</a>
 
-## Tech Stack
-
-- **Frontend**: Next.js, React, TypeScript, Vercel AI SDK
-- **Styling**: Tailwind CSS
-- **Backend**: Next.js API Routes
-- **Authentication**: Firebase Authentication
-- **Database**: Firebase Firestore
-- **Deployment**: Vercel (recommended)
+Made with [contrib.rocks](https://contrib.rocks).
 
 ## Q&A
 

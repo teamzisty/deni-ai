@@ -282,10 +282,14 @@ export async function POST(req: Request) {
               });
             }
           },
-          onFinish() {
+          async onFinish() {
             // Calculate generation time and send it as an annotation
             const endTime = Date.now();
             const generationTime = endTime - startTime;
+            const textContent = await response.text;
+            if (textContent.length === 0) {
+              return;
+            }
             dataStream.writeMessageAnnotation({
               generationTime,
             });
