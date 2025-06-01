@@ -1,6 +1,6 @@
 ---
 title: Deni AI v4.1.0 Beta 4 Release
-date: 2025-05-24
+date: 2025-05-31
 description: Introducing new features, bug fixes, and improvements in version 4.1.0 Beta 4.
 author: rai
 tags: [update]
