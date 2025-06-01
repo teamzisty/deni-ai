@@ -7,9 +7,7 @@
     "updateAlert": {
       "title": "New Version of Deni AI Available",
       "description": "A new version of Deni AI is now available. Click the button to access the beta version. You can return at any time.",
-      "button": "Access Beta Version"
-    }
-  },
+      "button": "Access Beta Version"    }  },
   "header": {
     "home": "Home",
     "app": "App",
@@ -561,8 +559,7 @@
         "message": "Password updated successfully"
       }
     }
-  },
-  "register": {
+  },  "register": {
     "title": "Create Account",
     "description": "Enter your account information to register an account.",
     "email": "Email",
@@ -575,6 +572,8 @@
     "termsAndPrivacy": "By logging in to this site, you agree to the Terms of Service and Privacy Policy.",
     "terms": "Terms of Service",
     "privacy": "Privacy Policy",
+    "checkEmail": "Check your email",
+    "confirmationSent": "A confirmation link has been sent to your email address.",
     "emailInUse": "This email is already in use",
     "invalidEmail": "Invalid email format",
     "weakPassword": "Password is too weak",

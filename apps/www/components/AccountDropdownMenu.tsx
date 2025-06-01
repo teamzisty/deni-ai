@@ -76,7 +76,10 @@ export const AccountDropdownMenu = memo(
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           {!isDisabled ? (
-            <Button variant="ghost" className="mb-3 group-data-[collapsible=offcanvas]:p-4 justify-start p-0.5">
+            <Button
+              variant="ghost"
+              className="mb-3 transition-all duration-300 px-4 py-4 group-data-[collapsible=icon]:px-0.5 group-data-[collapsible=icon]:py-2 group-data-[collapsible=icon]:mx-0 justify-start"
+            >
               {user?.user_metadata?.avatar_url ? (
                 <Image
                   src={user.user_metadata.avatar_url}
@@ -93,10 +96,11 @@ export const AccountDropdownMenu = memo(
               ) : (
                 <User2 size="16" />
               )}
-              <div className="flex flex-col text-left group-data-[collapsible=icon]:hidden ml-2">
+              <div className="flex flex-col text-left group-data-[collapsible=icon]:hidden ml-1">
                 <span className={settings.privacyMode ? "blur-sm" : ""}>
                   {truncateName(
-                    user?.user_metadata?.full_name || user?.user_metadata?.display_name
+                    user?.user_metadata?.full_name ||
+                      user?.user_metadata?.display_name
                   )}
                 </span>
                 <span

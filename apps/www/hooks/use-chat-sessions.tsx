@@ -134,6 +134,7 @@ export function ChatSessionsProvider({ children }: { children: ReactNode }) {
   const t = useTranslations();
   const [sessions, setSessions] = useState<ChatSession[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [isFirstLoad, setIsFirstLoad] = useState(true);
   const [isSupabaseLoaded, setIsSupabaseLoaded] = useState(false);
 
   // Load sessions on component mount and when user changes
@@ -143,6 +144,13 @@ export function ChatSessionsProvider({ children }: { children: ReactNode }) {
       setIsSupabaseLoaded(false);
 
       try {
+        if (!isFirstLoad) {
+          // Clear sessions on first load
+          setIsLoading(false);  
+          setIsSupabaseLoaded(true);
+          return;
+        }
+
         if (user) {
           // Load from Supabase for authenticated users
           if (!supabase) {
@@ -186,12 +194,20 @@ export function ChatSessionsProvider({ children }: { children: ReactNode }) {
         const localSessions = await loadSessionsFromIndexedDB();
         setSessions(localSessions);
       } finally {
+        if (isFirstLoad) {
+          setIsFirstLoad(false);
+        }
         setIsLoading(false);
       }
     };
 
     loadSessions();
   }, [user]);
+
+  useEffect(() => {
+    console.log("Loading state changed:", isLoading);
+  }, [isLoading]);
+
   const createSession = useCallback(
     (bot?: BotWithId): ChatSession => {
       const newSession: ChatSession = {

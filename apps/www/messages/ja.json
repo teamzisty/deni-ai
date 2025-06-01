@@ -63,9 +63,9 @@
     "searchWord": "検索ワード:",
     "searching": "検索中...",
     "visitedWebsites": "閲覧したウェブサイト",
-    "urlNotFound": "URLがありません",
-    "reasoning": "推論中...",
+    "urlNotFound": "URLがありません",    "reasoning": "推論中...",
     "generatingImage": "画像を生成しています...",
+    "reasoningCompleted": "推論が完了しました",
     "reasoned": "推論が完了しました",
     "summaryWith": "{model} を使用して要約しました",
     "hour": "時間",
@@ -544,8 +544,7 @@
         "message": "パスワードが正常に更新されました"
       }
     }
-  },
-  "register": {
+  },  "register": {
     "title": "アカウントの登録",
     "description": "アカウント情報を入力して、アカウントを登録します。",
     "email": "メールアドレス",
@@ -558,6 +557,8 @@
     "termsAndPrivacy": "このサイトにログインすると、利用規約とプライバシーポリシーに同意したことになります。",
     "terms": "利用規約",
     "privacy": "プライバシーポリシー",
+    "checkEmail": "メールを確認してください",
+    "confirmationSent": "確認リンクがメールアドレスに送信されました。",
     "emailInUse": "このメールアドレスは既に使用されています",
     "invalidEmail": "メールアドレスの形式が正しくありません",
     "weakPassword": "パスワードが弱すぎます",

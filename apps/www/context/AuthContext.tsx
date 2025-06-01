@@ -34,6 +34,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const pathname = usePathname();
   const t = useTranslations('auth');
 
+  useEffect(() => {
+    console.log('Loading state changed:', isLoading);
+  }, [isLoading]);
+
   const sendVerificationEmail = async () => {
     if (!supabase || !user?.email) return;
     
