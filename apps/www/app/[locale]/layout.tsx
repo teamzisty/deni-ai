@@ -9,10 +9,8 @@ import { routing } from "@/i18n/routing";
 import { CanvasProvider } from "../../context/CanvasContext";
 import { Analytics } from "@vercel/analytics/next";
 import AnalyticsConsent from "@/components/AnalyticsConsent";
-import { getAnalytics } from "@/lib/getAnalytics";
 import { cookies } from "next/headers";
 import { SettingsProvider } from "@/hooks/use-settings";
-import { UpdateAlertProvider } from "@/components/UpdateAlertProvider";
 
 type Props = {
   children: React.ReactNode;
@@ -76,20 +74,19 @@ export default async function LocaleLayout({ children, params }: Props) {
     console.error(`Failed to load messages for locale: ${locale}`, error);
   }
 
-  const isAnalyticsEnabled = await getAnalyticsConsent();
-  return (
+  const isAnalyticsEnabled = await getAnalyticsConsent();  return (
     <NextIntlClientProvider locale={locale} messages={messages}>
-      <AuthProvider>
-        <SettingsProvider>
-          <CanvasProvider>
-            <DevelopmentBanner>{children}</DevelopmentBanner>
-            <Toaster richColors position="bottom-right" />
+        <AuthProvider>
+          <SettingsProvider>
+            <CanvasProvider>
+              <DevelopmentBanner>{children}</DevelopmentBanner>
+              <Toaster richColors position="bottom-right" />
 
-            <AnalyticsConsent initialConsent={isAnalyticsEnabled} />
-            {isAnalyticsEnabled && <Analytics />}
-          </CanvasProvider>
-        </SettingsProvider>
-      </AuthProvider>
+              <AnalyticsConsent initialConsent={isAnalyticsEnabled} />
+              {isAnalyticsEnabled && <Analytics />}
+            </CanvasProvider>
+          </SettingsProvider>
+        </AuthProvider>
     </NextIntlClientProvider>
   );
 }

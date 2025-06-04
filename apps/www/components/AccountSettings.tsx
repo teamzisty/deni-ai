@@ -9,7 +9,7 @@ import { Loading } from "@/components/loading";
 import { Switch } from "@workspace/ui/components/switch";
 import { useChatSessions } from "@/hooks/use-chat-sessions";
 import { useTranslations } from "next-intl";
-import { supabase } from "@workspace/supabase-config/client";
+import { createClient } from "@/lib/supabase/client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@workspace/ui/components/card";
 import { ArrowRight } from "lucide-react";
 import { useSettings } from "@/hooks/use-settings";

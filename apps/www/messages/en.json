@@ -119,8 +119,7 @@
   "inputBox": {
     "placeholder": "Send a message to AI",
     "send": "Send"
-  },
-  "chatInput": {
+  },  "chatInput": {
     "imageAdd": "Add Image",
     "search": "Search",
     "deepResearch": "Deep Research",
@@ -130,6 +129,31 @@
     "canvas": "Canvas",
     "translate": "Translate",
     "botNotice": "You are in the bot \"{botName}\". To leave, Create a new conversations."
+  },
+  "chatHomepage": {
+    "greeting": "Welcome, {name}!",
+    "placeholder": "Message Deni AI",
+    "promptCards": {
+      "creative": {
+        "title": "Creative Writing",
+        "description": "Help me write a story or poem"
+      },
+      "research": {
+        "title": "Research Assistant",
+        "description": "Find and summarize information on any topic"
+      },
+      "coding": {
+        "title": "Coding Help",
+        "description": "Debug code or explain programming concepts"
+      },
+      "planning": {
+        "title": "Planning & Organization",
+        "description": "Create schedules, plans, or organize ideas"
+      }
+    },
+    "footer": {
+      "privacy": "Your privacy is important to us. Learn how your data is protected."
+    }
   },
   "headerArea": {
     "ready": "Ready",
@@ -257,6 +281,10 @@
         "confirmDescription": "This will permanently delete all your conversation data from your account (if logged in) and local storage.",
         "cancel": "Cancel",
         "confirm": "Yes, delete all"
+      },
+      "deleteIntellipulseData": {
+        "title": "Delete All Intellipulse Conversations",
+        "description": "Permanently delete all your Intellipulse conversation history. This action cannot be undone."
       },
       "accountDeletion": {
         "title": "Delete Account",
@@ -1490,7 +1518,7 @@
     "clearAllSuccess": "All dev sessions cleared",
     "viewInBrowser": "View in Browser"
   },
-  "devChat": {
+  "intellipulseChat": {
     "initialMessageSent": "Sending initial message from prop",
     "sessionUpdated": "Session updated.",
     "visionWarning": "Model doesn't support vision, removing image.",
@@ -1526,7 +1554,7 @@
     "title": "Getting started",
     "button": "Start New Dev Session"
   },
-  "devChatPage": {
+  "intellipulseChatPage": {
     "webContainerLoading": "Loading WebContainer...",
     "webContainerReady": "WebContainer Ready",
     "terminalOutput": "Terminal Output",

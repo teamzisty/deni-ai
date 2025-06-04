@@ -6,11 +6,11 @@ import { useRouter } from "@/i18n/navigation";
 import { Loading } from "@/components/loading";
 import { useAuth } from "@/context/AuthContext";
 import { useTranslations } from "next-intl";
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect } from "react";
 import { modelDescriptions } from "@/lib/modelDescriptions";
 import logger from "@/utils/logger";
 import Chat from "@/components/Chat";
-import { supabase } from "@workspace/supabase-config/client";
+import { createClient } from "@/lib/supabase/client";
 
 const ChatPage: React.FC = () => {
   const {
@@ -26,21 +26,15 @@ const ChatPage: React.FC = () => {
   const params = useParams<{ id: string }>();
   const searchParams = useSearchParams();
   const router = useRouter();
-
   const [currentSessionData, setCurrentSessionData] = useState<
     ChatSession | undefined
   >(undefined);
   const [isRedirecting, setIsRedirecting] = useState(false);
   const [authToken, setAuthToken] = useState<string | null>(null);
+  const [initialMessage, setInitialMessage] = useState<string | null>(null);
 
-  const getCurrentSession = useCallback(() => {
-    if (isSessionsLoading) {
-      return null;
-    }
-    const session = getSession(params.id);
-    return session;
-  }, [getSession, params.id, isSessionsLoading, sessions?.length]);
-
+  // Create Supabase client instance
+  const supabase = createClient();
   useEffect(() => {
     if (user && supabase) {
       // Get Supabase session token instead of user.id
@@ -48,7 +42,7 @@ const ChatPage: React.FC = () => {
         try {
           const {
             data: { session },
-          } = await supabase!.auth.getSession();
+          } = await supabase.auth.getSession();
           if (session?.access_token) {
             setAuthToken(`Bearer ${session.access_token}`);
           }
@@ -60,6 +54,14 @@ const ChatPage: React.FC = () => {
     }
   }, [user]);
 
+  // Extract initial message from URL parameters
+  useEffect(() => {
+    const messageParam = searchParams.get("message");
+    if (messageParam) {
+      setInitialMessage(decodeURIComponent(messageParam));
+    }
+  }, [searchParams]);
+
   useEffect(() => {
     if (
       isAuthLoading ||
@@ -70,24 +72,27 @@ const ChatPage: React.FC = () => {
       return;
     }
 
-    const session = getCurrentSession();
+    const session = getSession(params.id);
 
     if (!session) {
       setIsRedirecting(true);
-      router.push("/home");
+      router.push("/");
       return;
     }
 
-    setCurrentSessionData(session);
-    logger.info("ChatPage Init", "Loaded Session Data");
+    // Avoid unnecessary re-renders & requests
+    if (currentSessionData?.id !== session.id) {
+      setCurrentSessionData(session);
+      logger.info("ChatPage Init", "Loaded Session Data");
+    }
   }, [
     isAuthLoading,
     isSessionsLoading,
     isSupabaseLoaded,
-    getCurrentSession,
     router,
     params.id,
     isRedirecting,
+    currentSessionData?.id,
   ]);
 
   useEffect(() => {
@@ -104,23 +109,8 @@ const ChatPage: React.FC = () => {
     }
   }, [isAuthLoading, user, router]);
 
-  const initialModelParam = searchParams.get("model");
-  const initialImageParam = searchParams.get("img");
-  const initialMessageParam = searchParams.get("i");
-
-  const validatedInitialModel =
-    initialModelParam && modelDescriptions[initialModelParam]
-      ? initialModelParam
-      : undefined;
-
-  if (
-    isAuthLoading ||
-    isSessionsLoading ||
-    !currentSessionData
-  ) {
-    return (
-      <Loading />
-    );
+  if (isAuthLoading || isSessionsLoading || !currentSessionData) {
+    return <Loading />;
   }
 
   return (
@@ -130,10 +120,8 @@ const ChatPage: React.FC = () => {
         initialSessionData={currentSessionData}
         user={user}
         authToken={authToken}
-        initialModel={validatedInitialModel}
-        initialImage={initialImageParam || undefined}
-        initialMessage={initialMessageParam || undefined}
         updateSession={updateSession}
+        initialMessage={initialMessage}
       />
     </main>
   );

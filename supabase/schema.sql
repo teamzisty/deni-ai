@@ -173,6 +173,17 @@ CREATE TABLE IF NOT EXISTS "public"."user_settings" (
 ALTER TABLE "public"."user_settings" OWNER TO "postgres";
 
 
+CREATE TABLE IF NOT EXISTS "public"."chat_streams" (
+    "id" "uuid" DEFAULT "extensions"."uuid_generate_v4"() NOT NULL,
+    "chat_id" "text" NOT NULL,
+    "stream_id" "text" NOT NULL,
+    "created_at" timestamp with time zone DEFAULT "now"()
+);
+
+
+ALTER TABLE "public"."chat_streams" OWNER TO "postgres";
+
+
 ALTER TABLE ONLY "public"."bots"
     ADD CONSTRAINT "bots_pkey" PRIMARY KEY ("id");
 
@@ -180,6 +191,16 @@ ALTER TABLE ONLY "public"."bots"
 
 ALTER TABLE ONLY "public"."chat_sessions"
     ADD CONSTRAINT "chat_sessions_pkey" PRIMARY KEY ("id");
+
+
+
+ALTER TABLE ONLY "public"."chat_streams"
+    ADD CONSTRAINT "chat_streams_pkey" PRIMARY KEY ("id");
+
+
+
+ALTER TABLE ONLY "public"."chat_streams"
+    ADD CONSTRAINT "chat_streams_stream_id_key" UNIQUE ("stream_id");
 
 
 
@@ -737,6 +758,15 @@ ALTER DEFAULT PRIVILEGES FOR ROLE "postgres" IN SCHEMA "public" GRANT ALL ON TAB
 
 
 
+
+
+--
+-- Indexes for chat_streams table for better performance
+--
+
+CREATE INDEX IF NOT EXISTS "idx_chat_streams_chat_id" ON "public"."chat_streams" USING "btree" ("chat_id");
+
+CREATE INDEX IF NOT EXISTS "idx_chat_streams_created_at" ON "public"."chat_streams" USING "btree" ("created_at");
 
 
 RESET ALL;

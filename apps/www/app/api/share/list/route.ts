@@ -1,9 +1,9 @@
-import { createSupabaseServerClient } from "@workspace/supabase-config/server";
+import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
 
 export async function GET(req: Request) {
   try {
-    const supabase = createSupabaseServerClient();
+    const supabase = await createSupabaseServerClient();
     
     // 共有チャットの一覧を取得（最新の50件）
     const { data: chats, error } = await supabase

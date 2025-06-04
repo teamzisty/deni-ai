@@ -1,5 +1,5 @@
-import { User, AuthError, Session } from "@supabase/supabase-js";
-import { supabase } from "@workspace/supabase-config/client";
+import { User, AuthError, Session, SupabaseClient } from "@supabase/supabase-js";
+import { createClient } from "@/lib/supabase/client";
 
 export interface GitHubOAuthResult {
   user: User;
@@ -12,11 +12,12 @@ export class GitHubOAuthService {
     (user: User | null, accessToken?: string) => void
   > = [];
   private redirectResultChecked: boolean = false;
+  private supabase: SupabaseClient = createClient();
 
   constructor() {
-    if (supabase) {
+    if (this.supabase) {
       // Listen for auth state changes
-      supabase.auth.onAuthStateChange(async (event, session) => {
+      this.supabase.auth.onAuthStateChange(async (event: string, session: Session | null) => {
         const user = session?.user || null;
         let accessToken: string | undefined;
 
@@ -63,13 +64,13 @@ export class GitHubOAuthService {
   }
 
   async signInWithGitHubOptimized(): Promise<GitHubOAuthResult> {
-    if (!supabase) {
+    if (!this.supabase) {
       throw new Error("Supabase client not initialized");
     }
 
     const {
       data: { session },
-    } = await supabase.auth.getSession();
+    } = await this.supabase.auth.getSession();
     if (!session?.user) {
       return this.signInWithGitHub();
     }
@@ -99,13 +100,13 @@ export class GitHubOAuthService {
   }
 
   async signInWithGitHub(): Promise<GitHubOAuthResult> {
-    if (!supabase) {
+    if (!this.supabase) {
       throw new Error("Supabase client not initialized");
     }
 
     const {
       data: { session },
-    } = await supabase.auth.getSession();
+    } = await this.supabase.auth.getSession();
     if (!session?.user) {
       throw new Error("User must be authenticated to link GitHub");
     }
@@ -125,7 +126,7 @@ export class GitHubOAuthService {
         }
       }
 
-      const { data, error } = await supabase.auth.signInWithOAuth({
+      const { data, error } = await this.supabase.auth.signInWithOAuth({
         provider: "github",
         options: {
           scopes: "user repo",
@@ -153,26 +154,12 @@ export class GitHubOAuthService {
   }
 
   async signInWithGitHubPopup(): Promise<GitHubOAuthResult | null | undefined> {
-    if (!supabase) {
+    if (!this.supabase) {
       throw new Error("Supabase client not initialized");
     }
 
     try {
-      // const storedToken = this.getStoredAccessToken();
-      // if (storedToken) {
-      //   const isValid = await this.isAccessTokenValid(storedToken);
-      //   if (isValid) {
-      //     return {
-      //       user: session.user,
-      //       accessToken: storedToken,
-      //       refreshToken: undefined,
-      //     };
-      //   } else {
-      //     this.clearStoredAccessToken();
-      //   }
-      // }
-
-      const { data, error } = await supabase.auth.signInWithOAuth({
+      const { data, error } = await this.supabase.auth.signInWithOAuth({
         provider: "github",
         options: {
           scopes: "user repo",
@@ -181,7 +168,7 @@ export class GitHubOAuthService {
         },
       });
 
-      if (data?.url && supabase) {
+      if (data?.url && this.supabase) {
         const popup = window.open(
           data.url,
           "github-oauth",
@@ -191,10 +178,10 @@ export class GitHubOAuthService {
         // Wait for popup to close
         return new Promise((resolve, reject) => {
           const checkClosed = setInterval(async () => {
-            if (popup?.closed && supabase) {
+            if (popup?.closed && this.supabase) {
               clearInterval(checkClosed);
               // Check for session after popup closes
-              const { data: sessionData } = await supabase.auth.getSession();
+              const { data: sessionData } = await this.supabase.auth.getSession();
               if (sessionData.session) {
                 resolve({
                   user: sessionData.session.user,
@@ -215,13 +202,13 @@ export class GitHubOAuthService {
   }
 
   async signInWithGitHubRedirect(): Promise<void> {
-    if (!supabase) {
+    if (!this.supabase) {
       throw new Error("Supabase client not initialized");
     }
 
     const {
       data: { session },
-    } = await supabase.auth.getSession();
+    } = await this.supabase.auth.getSession();
     if (!session?.user) {
       throw new Error("User must be authenticated to link GitHub");
     }
@@ -235,7 +222,7 @@ export class GitHubOAuthService {
         await this.signInWithGitHub();
       } else {
         // Use OAuth to link GitHub account
-        const { data, error } = await supabase.auth.signInWithOAuth({
+        const { data, error } = await this.supabase.auth.signInWithOAuth({
           provider: "github",
           options: {
             scopes: "user repo",
@@ -254,14 +241,14 @@ export class GitHubOAuthService {
   }
 
   async getRedirectResult(): Promise<GitHubOAuthResult | null> {
-    if (!supabase) {
+    if (!this.supabase) {
       return null;
     }
 
     try {
       const {
         data: { session },
-      } = await supabase.auth.getSession();
+      } = await this.supabase.auth.getSession();
       if (!session) {
         return null;
       }
@@ -285,12 +272,12 @@ export class GitHubOAuthService {
   }
 
   async signOut(): Promise<void> {
-    if (!supabase) {
+    if (!this.supabase) {
       return;
     }
 
     try {
-      await supabase.auth.signOut();
+      await this.supabase.auth.signOut();
       this.clearStoredAccessToken();
     } catch (error) {
       console.error("Error signing out:", error);
@@ -303,7 +290,7 @@ export class GitHubOAuthService {
   }
 
   isGitHubLinked(): boolean {
-    // This is async in Supabase, should use auth context
+    // This is async in supabase, should use auth context
     return false;
   }
 

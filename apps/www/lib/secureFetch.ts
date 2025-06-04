@@ -1,5 +1,5 @@
 import { User } from "@supabase/supabase-js";
-import { supabase } from "@workspace/supabase-config/client";
+import { createClient } from "@/lib/supabase/client";
 
 export class SecureFetch {
     user: User | null;
@@ -16,8 +16,8 @@ export class SecureFetch {
             headers
         });
         return response;
-    }
-    async getAuthToken(): Promise<string> {
+    }    async getAuthToken(): Promise<string> {
+        const supabase = createClient();
         if (this.user && supabase) {
             // Get the session to access the access_token
             const { data: { session }, error } = await supabase.auth.getSession();

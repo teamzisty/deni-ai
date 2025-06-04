@@ -65,7 +65,7 @@ export default function SharedChatsPage() {
         {user && (
           <Button 
             className="mt-4 md:mt-0" 
-            onClick={() => router.push("/home")}
+            onClick={() => router.push("/")}
           >
             {t("shared.myChats")}
           </Button>

@@ -40,6 +40,7 @@ import {
   AlertDescription,
   AlertTitle,
 } from "@workspace/ui/components/alert";
+import { authService } from "@/lib/auth/client";
 
 const Login: React.FC = () => {
   const t = useTranslations();
@@ -58,11 +59,11 @@ const Login: React.FC = () => {
       toast.error(t("common.error.occurred"), {
         description: t("account.authDisabled"),
       });
-      router.push("/home");
+      router.push("/");
     }
 
     if (user && !isLoading) {
-      router.push("/home");
+      router.push("/");
     }
   }, [user, isLoading, router, t, supabase]);
 
@@ -78,7 +79,7 @@ const Login: React.FC = () => {
       const { error } = await supabase.auth.signInWithOAuth({
         provider: "google",
         options: {
-          redirectTo: `${window.location.origin}/home`,
+          redirectTo: `${window.location.origin}`,
         },
       });
 
@@ -98,7 +99,7 @@ const Login: React.FC = () => {
         provider: "github",
         options: {
           scopes: "read:user repo",
-          redirectTo: `${window.location.origin}/home`,
+          redirectTo: `${window.location.origin}`,
         },
       });
 
@@ -106,6 +107,25 @@ const Login: React.FC = () => {
     } catch (error: unknown) {
       if (noticeRef.current && error instanceof Error) {
         noticeRef.current.textContent = error.message;
+      }
+    }
+  };
+
+  const loginWithForm = async (formData: FormData) => {
+    if (!noticeRef.current) return;
+    const notice = noticeRef.current;
+
+    try {
+      await authService.loginWithForm(formData);
+      router.push("/");
+    } catch (error: unknown) {
+      if (!(error instanceof Error)) return;
+      if (error.message.includes("Invalid login credentials")) {
+        notice.textContent = t("login.invalidCredentials");
+      } else if (error.message.includes("Email not confirmed")) {
+        notice.textContent = t("login.emailNotConfirmed");
+      } else {
+        notice.textContent = error.message;
       }
     }
   };
@@ -124,7 +144,7 @@ const Login: React.FC = () => {
 
       if (error) throw error;
 
-      router.push("/home");
+      router.push("/");
     } catch (error: unknown) {
       if (!(error instanceof Error)) return;
       if (error.message.includes("Invalid login credentials")) {
@@ -146,30 +166,35 @@ const Login: React.FC = () => {
             <CardDescription>{t("login.description")}</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="email">{t("login.email")}</Label>
-              <Input
-                id="email"
-                type="email"
-                placeholder="mail@example.com"
-                onChange={(e) => setEmail(e.target.value)}
-                required
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="password">{t("login.password")}</Label>
-              <Input
-                id="password"
-                type="password"
-                placeholder={t("login.password")}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-              />
-            </div>
-            <Label ref={noticeRef} className="text-red-500"></Label>
-            <Button className="w-full" onClick={loginClicked}>
-              {t("login.loginButton")}
-            </Button>
+            <form className="space-y-4" action={loginWithForm}>
+              <div className="space-y-2">
+                <Label htmlFor="email">{t("login.email")}</Label>
+                <Input
+                  id="email"
+                  name="email"
+                  type="email"
+                  placeholder="mail@example.com"
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="password">{t("login.password")}</Label>
+                <Input
+                  id="password"
+                  name="password"
+                  type="password"
+                  placeholder={t("login.password")}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                />
+              </div>
+              <Label ref={noticeRef} className="text-red-500"></Label>              <Button className="w-full" type="submit">
+                {t("login.loginButton")}
+              </Button>
+            </form>
+
+            {/* Two-Factor Authentication Dialog */}
 
             {/* Password Reset Warning Card */}
             <Alert>

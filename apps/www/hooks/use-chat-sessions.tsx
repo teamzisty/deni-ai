@@ -14,7 +14,7 @@ import { useAuth } from "@/context/AuthContext";
 import { toast } from "sonner";
 import { useTranslations } from "next-intl";
 import { Bot, BotWithId } from "@/types/bot";
-import { supabase } from "@workspace/supabase-config/client";
+import { createClient } from "@/lib/supabase/client";
 
 interface ChatSessionsContextValue {
   sessions: ChatSession[];
@@ -137,16 +137,24 @@ export function ChatSessionsProvider({ children }: { children: ReactNode }) {
   const [isFirstLoad, setIsFirstLoad] = useState(true);
   const [isSupabaseLoaded, setIsSupabaseLoaded] = useState(false);
 
+  // Create Supabase client instance
+  const supabase = createClient();
+
+  console.log("ChatSessionsProvider initialized with user:", user?.id);
+
   // Load sessions on component mount and when user changes
   useEffect(() => {
+    console.log("Loading chat sessions for user:", user?.id);
     const loadSessions = async () => {
       setIsLoading(true);
       setIsSupabaseLoaded(false);
+      console.log("Loading sessions from Supabase or IndexedDB...");
 
       try {
         if (!isFirstLoad) {
           // Clear sessions on first load
-          setIsLoading(false);  
+          console.log("Clearing sessions on first load");
+          setIsLoading(false);
           setIsSupabaseLoaded(true);
           return;
         }
@@ -183,30 +191,25 @@ export function ChatSessionsProvider({ children }: { children: ReactNode }) {
             );
             setSessions(supabaseSessions);
             setIsSupabaseLoaded(true);
+            setIsFirstLoad(false);
           }
-        } else {
+        } else if (!supabase) {
           // Load from IndexedDB for non-authenticated users
           const localSessions = await loadSessionsFromIndexedDB();
           setSessions(localSessions);
+          setIsFirstLoad(false);
         }
       } catch (error) {
         console.error("Error loading sessions:", error);
         const localSessions = await loadSessionsFromIndexedDB();
         setSessions(localSessions);
       } finally {
-        if (isFirstLoad) {
-          setIsFirstLoad(false);
-        }
         setIsLoading(false);
       }
     };
 
     loadSessions();
-  }, [user]);
-
-  useEffect(() => {
-    console.log("Loading state changed:", isLoading);
-  }, [isLoading]);
+  }, [user, supabase, isFirstLoad]);
 
   const createSession = useCallback(
     (bot?: BotWithId): ChatSession => {

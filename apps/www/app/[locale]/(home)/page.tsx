@@ -59,7 +59,7 @@ const ChatApp: React.FC = () => {
                     size="lg"
                     className="h-12 px-8 font-medium rounded-full"
                   >
-                    <Link href="/home">
+                    <Link href="/">
                       <span className="flex items-center">
                         <span>{t("startButton")}</span>
                         <ArrowUpRight className="ml-2 h-4 w-4" />
@@ -649,7 +649,7 @@ Generating code...`}</code>
                   transition={{ duration: 0.6, delay: 0.2 }}
                 >
                   <Button asChild size="lg" className="h-12 px-8 font-medium">
-                    <Link href="/home">{t("startButton")}</Link>
+                    <Link href="/">{t("startButton")}</Link>
                   </Button>
                 </motion.div>
               </div>

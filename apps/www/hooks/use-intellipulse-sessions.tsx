@@ -12,9 +12,7 @@ import {
 import { useAuth } from "@/context/AuthContext";
 import { toast } from "sonner";
 import { useTranslations } from "next-intl";
-import {
-  supabase,
-} from "@workspace/supabase-config/client";
+import { createClient } from "@/lib/supabase/client";
 
 interface IntellipulseSessionsContextValue {
   sessions: IntellipulseSession[];
@@ -139,6 +137,7 @@ export function IntellipulseSessionsProvider({
   const [isSupabaseLoaded, setIsSupabaseLoaded] = useState(false);
   const { user } = useAuth();
   const t = useTranslations("intellipulseSessions");
+  const supabase = createClient();
 
   // Generate a new session ID
   const generateSessionId = () => {

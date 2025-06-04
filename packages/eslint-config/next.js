@@ -1,5 +1,6 @@
 import js from "@eslint/js"
 import pluginNext from "@next/eslint-plugin-next"
+import pluginReactYouMightNotNeedAnEffect from "eslint-plugin-react-you-might-not-need-an-effect"
 import eslintConfigPrettier from "eslint-config-prettier"
 import pluginReact from "eslint-plugin-react"
 import pluginReactHooks from "eslint-plugin-react-hooks"
@@ -39,11 +40,13 @@ export const nextJsConfig = [
   {
     plugins: {
       "react-hooks": pluginReactHooks,
+      "react-you-might-not-need-an-effect": pluginReactYouMightNotNeedAnEffect,
     },
     settings: { react: { version: "detect" } },
     rules: {
       ...pluginReactHooks.configs.recommended.rules,
       // React scope no longer necessary with new JSX transform.
+      "react-you-might-not-need-an-effect/no-use-in-use-effect": "warn",
       "react/react-in-jsx-scope": "off",
       "react/prop-types": "off",
     },

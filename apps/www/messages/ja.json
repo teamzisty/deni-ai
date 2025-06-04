@@ -130,8 +130,7 @@
   "inputBox": {
     "placeholder": "AI にメッセージを送信する",
     "send": "送信"
-  },
-  "chatInput": {
+  },  "chatInput": {
     "imageAdd": "画像を追加",
     "search": "検索",
     "deepResearch": "詳細なリサーチ",
@@ -141,6 +140,31 @@
     "canvas": "キャンバス",
     "translate": "翻訳",
     "botNotice": "あなたは「{botName}」Botにいます。退出するには、新しい会話を作成してください。"
+  },
+  "chatHomepage": {
+    "greeting": "ようこそ、{name} さん！",
+    "placeholder": "Deni AI にメッセージ",
+    "promptCards": {
+      "creative": {
+        "title": "クリエイティブライティング",
+        "description": "ストーリーや詩の作成をお手伝いします"
+      },
+      "research": {
+        "title": "リサーチアシスタント",
+        "description": "あらゆるトピックの情報を検索・要約します"
+      },
+      "coding": {
+        "title": "コーディングヘルプ",
+        "description": "コードのデバッグやプログラミング概念の説明"
+      },
+      "planning": {
+        "title": "計画・整理",
+        "description": "スケジュール、計画の作成やアイデアの整理"
+      }
+    },
+    "footer": {
+      "privacy": "プライバシーを重視しています。データの保護方法をご確認ください。"
+    }
   },
   "headerArea": {
     "ready": "準備完了",
@@ -252,7 +276,7 @@
         "cancel": "キャンセル",
         "confirm": "はい、すべて削除します"
       },
-      "deleteDevData": {
+      "deleteIntellipulseData": {
         "title": "開発モードの会話を削除",
         "description": "開発モードのすべての会話履歴を完全に削除します。この操作は元に戻せません。"
       },
@@ -1419,7 +1443,7 @@
     "uploadImage": "画像をアップロード",
     "delete": "削除"
   },
-  "devChatPage": {
+  "intellipulseChatPage": {
     "webContainerLoading": "WebContainer を読み込み中...",
     "webContainerReady": "WebContainer の準備完了",
     "terminalOutput": "ターミナル出力",

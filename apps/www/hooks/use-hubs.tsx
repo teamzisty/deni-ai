@@ -16,7 +16,7 @@ import { useTranslations } from "next-intl";
 import { useLocalStorage } from "./use-local-storage";
 import { useChatSessions } from "./use-chat-sessions";
 import { useAuth } from "@/context/AuthContext";
-import { supabase } from "@workspace/supabase-config/client";
+import { createClient } from "@/lib/supabase/client";
 
 const LOCAL_STORAGE_KEY = "deni-ai-hubs";
 const SUPABASE_TABLE = "hubs";
@@ -71,6 +71,9 @@ export function HubsProvider({ children }: { children: ReactNode }) {
   const [modifiedHubIds, setModifiedHubIds] = useState<Set<string>>(new Set());
   const [prevAuthState, setPrevAuthState] = useState<boolean | null>(null); // 初期状態をnullに変更
   const [isInitialized, setIsInitialized] = useState(false); // 初期化フラグを追加
+
+  // Create Supabase client instance
+  const supabase = createClient();
 
   // シンプルなローディング状態管理
   const setLoadingState = useCallback((loading: boolean) => {

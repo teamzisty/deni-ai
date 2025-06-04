@@ -1,5 +1,5 @@
 import { ServerBot } from "@/types/bot";
-import { createSupabaseServerClient } from "@workspace/supabase-config/server";
+import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
 
 export async function DELETE(req: Request) {
@@ -13,7 +13,7 @@ export async function DELETE(req: Request) {
       );
     }
 
-    const supabase = createSupabaseServerClient();
+    const supabase = await createSupabaseServerClient();
     
     // Verify the JWT token
     const { data: { user }, error: authError } = await supabase.auth.getUser(authorization);

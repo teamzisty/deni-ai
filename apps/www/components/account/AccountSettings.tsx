@@ -15,7 +15,7 @@ import {
   AvatarImage,
 } from "@workspace/ui/components/avatar";
 import { useAuth } from "@/context/AuthContext";
-import { supabase } from "@workspace/supabase-config/client";
+import { createClient } from "@/lib/supabase/client";
 import { useRef, useState } from "react";
 import { toast } from "sonner";
 import { Badge } from "@workspace/ui/components/badge";
@@ -77,6 +77,8 @@ export function AccountSettings() {
       });
     },
   });
+
+  const supabase = createClient();
 
   const uploadImage = (file?: File) => {
     return new Promise<uploadResponse>((resolve) => {

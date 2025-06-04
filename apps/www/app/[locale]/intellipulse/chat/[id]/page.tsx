@@ -16,6 +16,7 @@ import { useTranslations } from "next-intl";
 import { useUploadThing, uploadResponse } from "@/utils/uploadthing";
 import { toast } from "sonner";
 import { useDebouncedCallback } from "use-debounce";
+import { useResumableChat } from "@/hooks/use-resumable-chat";
 
 // Import WebContainerUI component
 import {
@@ -116,11 +117,21 @@ export default function IntellipulseChatPage() {
             throw new Error(`Failed to read file at ${path}`);
           }
         }
-    },
-    onError: (error) => {
+    },    onError: (error) => {
       console.error("Chat error:", error);
     },
   });
+  // Enable resumable streams for Intellipulse chat
+  useResumableChat({
+    chatId: id,
+    enabled: true,
+    initialMessages: session?.messages || [],
+    experimental_resume: () => {}, // Intellipulse uses different API endpoint
+    setMessages,
+    authToken,
+    apiEndpoint: '/api/intellipulse/chat', // Use Intellipulse API endpoint
+  });
+
   // Load session and its data
   useEffect(() => {
     const currentSession = getSession(id);

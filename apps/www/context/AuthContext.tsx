@@ -2,7 +2,7 @@
 "use client";
 
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import { supabase } from '@workspace/supabase-config/client';
+import { createClient } from '@/lib/supabase/client';
 import { User, Session, AuthChangeEvent } from '@supabase/supabase-js';
 import { useRouter, usePathname } from 'next/navigation';
 import { toast } from 'sonner';
@@ -12,9 +12,11 @@ interface AuthContextType {
   user: User | null;
   session: Session | null;
   isLoading: boolean;
-  supabase: typeof supabase;
+  supabase: ReturnType<typeof createClient>;
   sendVerificationEmail: () => Promise<void>;
 }
+
+const supabase = createClient();
 
 const AuthContext = createContext<AuthContextType>({
   user: null,
@@ -69,10 +71,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         console.warn(`Authentication state did not resolve within ${AUTH_TIMEOUT_MS / 1000} seconds. Forcing isLoading to false.`);
         setIsLoading(false);
       }
-    }, AUTH_TIMEOUT_MS);
-
-    // Get initial session
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    }, AUTH_TIMEOUT_MS);    // Get initial session
+    supabase.auth.getSession().then(({ data: { session } }: { data: { session: Session | null } }) => {
       setSession(session);
       setUser(session?.user ?? null);
       setIsLoading(false);
@@ -91,9 +91,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           router.push('/getting-started');
         }
       }
-    });
-
-    // Listen for auth changes
+    });// Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event: AuthChangeEvent, session: Session | null) => {
       clearTimeout(authTimeout);
       setSession(session);

@@ -1,4 +1,4 @@
-import { createSupabaseServerClient } from "@workspace/supabase-config/server";
+import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 
@@ -11,16 +11,14 @@ const CreateActionKeySchema = z.object({
 
 export async function GET(req: Request) {
   try {
-    const authorization = req.headers.get("Authorization")?.replace("Bearer ", "");
-
-    if (!authorization) {
+    const authorization = req.headers.get("Authorization")?.replace("Bearer ", "");    if (!authorization) {
       return NextResponse.json(
         { error: "Authorization Failed" },
         { status: 401 }
       );
     }
 
-    const supabase = createSupabaseServerClient();
+    const supabase = await createSupabaseServerClient();
     
     // Verify the JWT token
     const { data: { user }, error: authError } = await supabase.auth.getUser(authorization);
@@ -74,11 +72,10 @@ export async function POST(req: Request) {
     if (!authorization) {
       return NextResponse.json(
         { error: "Authorization Failed" },
-        { status: 401 }
-      );
+        { status: 401 }    );
     }
 
-    const supabase = createSupabaseServerClient();
+    const supabase = await createSupabaseServerClient();
     
     // Verify the JWT token
     const { data: { user }, error: authError } = await supabase.auth.getUser(authorization);
