@@ -113,9 +113,11 @@ export async function getMessagesByChatId({
  */
 export async function saveChat({
   id,
+  title,
   messages,
 }: {
   id: string;
+  title?: string;
   messages: any[];
 }): Promise<void> {
   try {
@@ -123,6 +125,7 @@ export async function saveChat({
 
     const { error } = await supabase.from("chat_sessions").upsert({
       id,
+      title,
       messages,
       updated_at: new Date().toISOString(),
     });

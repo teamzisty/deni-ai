@@ -34,39 +34,46 @@ import { VirtualConsole } from "jsdom";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import path from "path";
-import { loadStreams, appendStreamId, saveChat, getMessagesByChatId } from "@/utils/chat-store";
+import {
+  loadStreams,
+  appendStreamId,
+  saveChat,
+  getMessagesByChatId,
+} from "@/utils/chat-store";
 import { after } from "next/server";
 import { createResumableStreamContext } from "resumable-stream";
 
 // Only enable resumable streams when Redis is available
 const isRedisAvailable = !!process.env.REDIS_URL;
-const streamContext = isRedisAvailable ? createResumableStreamContext({
-  waitUntil: after,
-}) : null;
+const streamContext = isRedisAvailable
+  ? createResumableStreamContext({
+      waitUntil: after,
+    })
+  : null;
 
 export async function GET(request: Request) {
   // Only handle resumable streams if Redis is available
   if (!isRedisAvailable || !streamContext) {
-    return new Response('Resumable streams not available', { status: 503 });
+    return new Response("Resumable streams not available", { status: 503 });
   }
 
   const { searchParams } = new URL(request.url);
-  const chatId = searchParams.get('chatId');
+  const chatId = searchParams.get("chatId");
 
   if (!chatId) {
-    return new Response('chatId is required', { status: 400 });
+    return new Response("chatId is required", { status: 400 });
   }
 
   const streamIds = await loadStreams(chatId);
 
   if (!streamIds.length) {
-    return new Response('No streams found', { status: 404 });
+    return new Response("No streams found", { status: 404 });
   }
 
   const recentStreamId = streamIds.at(-1);
 
   if (!recentStreamId) {
-    return new Response('No recent stream found', { status: 404 });
+    return new Response("No recent stream found", { status: 404 });
   }
 
   const emptyDataStream = createDataStream({
@@ -75,7 +82,7 @@ export async function GET(request: Request) {
 
   const stream = await streamContext.resumableStream(
     recentStreamId,
-    () => emptyDataStream,
+    () => emptyDataStream
   );
 
   if (stream) {
@@ -91,7 +98,7 @@ export async function GET(request: Request) {
     execute: (dataStream) => {
       recentMessages.forEach((message) => {
         dataStream.writeData({
-          type: 'append-message',
+          type: "append-message",
           message: JSON.stringify(message),
         });
       });
@@ -115,7 +122,7 @@ export async function POST(req: Request) {
       reasoningEffort: reasoningEffortType;
       toolList?: string[];
     } = await req.json();
-    
+
     if (!model || messages.length === 0) {
       return new NextResponse("Invalid request", { status: 400 });
     }
@@ -134,11 +141,11 @@ export async function POST(req: Request) {
       if (authError || !user) {
         return new NextResponse("Authorization failed", { status: 401 });
       }
-      
+
       userId = user.id;
       // Extract sessionId from request URL or body
       const url = new URL(req.url);
-      sessionId = url.searchParams.get('id') || undefined;
+      sessionId = url.searchParams.get("id") || undefined;
     } else {
       return new NextResponse("Authorization failed", { status: 401 });
     }
@@ -233,7 +240,8 @@ export async function POST(req: Request) {
       } else {
         // hide error details in production
         return "An error occurred while processing your request. Please try again later.";
-      }    }
+      }
+    }
 
     // Generate unique stream ID only if Redis is available
     const streamId = isRedisAvailable ? generateId() : null;
@@ -243,7 +251,7 @@ export async function POST(req: Request) {
       try {
         await appendStreamId({ chatId: sessionId, streamId });
       } catch (error) {
-        console.error('Failed to record stream ID:', error);
+        console.error("Failed to record stream ID:", error);
         // Continue without recording - not critical for stream execution
       }
     }
@@ -550,17 +558,19 @@ export async function POST(req: Request) {
             dataStream.writeMessageAnnotation({
               generationTime,
             });
-          },        });
+          },
+        });
 
         response.mergeIntoDataStream(dataStream, {
           sendReasoning: true,
         });
-      },    });
+      },
+    });
 
     // Return a resumable stream to the client if Redis is available, otherwise return regular stream
     if (isRedisAvailable && streamContext && streamId) {
       return new Response(
-        await streamContext.resumableStream(streamId, () => stream),
+        await streamContext.resumableStream(streamId, () => stream)
       );
     } else {
       // Fallback to regular stream when Redis is not available

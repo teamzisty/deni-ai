@@ -7,7 +7,9 @@
     "updateAlert": {
       "title": "New Version of Deni AI Available",
       "description": "A new version of Deni AI is now available. Click the button to access the beta version. You can return at any time.",
-      "button": "Access Beta Version"    }  },
+      "button": "Access Beta Version"
+    }
+  },
   "header": {
     "home": "Home",
     "app": "App",
@@ -16,6 +18,16 @@
     "termsOfService": "Terms of Service",
     "info": "Info",
     "createBranch": "Create Branch"
+  },
+  "features": {
+    "contextWindow": {
+      "usage": "Context Window Usage",
+      "used": "Used",
+      "max": "Max",
+      "percentage": "Usage",
+      "nearLimit": "⚠️ Approaching context limit",
+      "tokens": "tokens"
+    }
   },
   "footer": {
     "disclaimer": "AI models are not perfect and may produce incorrect or nonsensical answers. Use at your own risk.",
@@ -119,7 +131,8 @@
   "inputBox": {
     "placeholder": "Send a message to AI",
     "send": "Send"
-  },  "chatInput": {
+  },
+  "chatInput": {
     "imageAdd": "Add Image",
     "search": "Search",
     "deepResearch": "Deep Research",
@@ -538,6 +551,8 @@
     "twoFactorRequired": "Two-factor authentication is required",
     "twoFactorDescription": "This account has additional protection with two-factor authentication.",
     "twoFactorCode": "Two-factor authentication code",
+    "invalidTwoFactorCode": "Invalid two-factor authentication code. Please try again.",
+    "verifying": "Verifying...",
     "continue": "Continue",
     "cancel": "Cancel",
     "tooManyRequests": "Too many requests. Please wait and try again later",
@@ -587,7 +602,8 @@
         "message": "Password updated successfully"
       }
     }
-  },  "register": {
+  },
+  "register": {
     "title": "Create Account",
     "description": "Enter your account information to register an account.",
     "email": "Email",
@@ -1633,7 +1649,7 @@
     "openai/o4-mini-2025-04-16": "Optimized for fast, efficient reasoning.",
     "openai/o3-2025-04-16": "High-performance model for complex reasoning tasks.",
     "google/gemini-2-5-flash-preview-05-20": "Best model for fast performance on complex tasks.",
-    "google/gemini-2-5-pro-preview-05-06": "Best model for coding and complex prompts.",
+    "google/gemini-2-5-pro-preview-06-05": "Best model for coding and complex prompts.",
     "google/gemini-2-5-pro-preview-03-25": "Leaving in May 10, 2025.",
     "google/gemini-2-0-flash-001": "A good model at intelligence, speed, cost, and context window.",
     "google/gemini-2-0-flash-lite-001": "Leaving in May 10, 2025.",

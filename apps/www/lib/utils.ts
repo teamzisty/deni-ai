@@ -1,4 +1,4 @@
-import { DataStreamWriter, LanguageModelV1, tool, Tool } from "ai";
+import { CoreAssistantMessage, CoreToolMessage, DataStreamWriter, LanguageModelV1, tool, Tool } from "ai";
 import { ImodelDescriptionType } from "./modelDescriptions";
 import { generateText, experimental_generateImage } from "ai";
 import { openai } from "@ai-sdk/openai";
@@ -47,6 +47,21 @@ export function generateUUID(): string {
   });
 }
 
+type ResponseMessageWithoutId = CoreToolMessage | CoreAssistantMessage;
+type ResponseMessage = ResponseMessageWithoutId & { id: string };
+
+export function getTrailingMessageId({
+  messages,
+}: {
+  messages: Array<ResponseMessage>;
+}): string | null {
+  const trailingMessage = messages.at(-1);
+
+  if (!trailingMessage) return null;
+
+  return trailingMessage.id;
+}
+
 const fetchSearchResults = async (query: string) => {
   if (!process.env.BRAVE_SEARCH_API_KEY) {
     return "Search is temporarily disabled or not available in your instance.";
@@ -65,46 +80,6 @@ const fetchSearchResults = async (query: string) => {
 
   return results;
 };
-
-const setTitle = (
-  dataStream: DataStreamWriter,
-  sessionId: string,
-  userId: string
-) =>
-  tool({
-    description: "Set the title of the current chat session",
-    parameters: z.object({
-      title: z
-        .string()
-        .describe("The new title for the chat session.")
-        .min(1, "Title must be at least 1 character long."),
-    }),
-    execute: async ({ title }: { title: string }) => {
-      if (sessionId && userId) {
-        try {
-          const supabase = createClient();
-          const { error: updateError } = await supabase
-            .from("chat_sessions")
-            .update({
-              title: title,
-              updated_at: new Date().toISOString(),
-            })
-            .eq("id", sessionId)
-            .eq("user_id", userId);
-
-          if (updateError) {
-            console.error("Error updating session title:", updateError);
-            return "Failed to update title";
-          }
-          return "OK";
-        } catch (error) {
-          console.error("Title update error:", error);
-          return "Failed to update title";
-        }
-      }
-      return "Session not available";
-    },
-  });
 
 const countChars = (dataStream: DataStreamWriter) =>
   tool({
@@ -401,7 +376,6 @@ export function getTools(
   const deepResearchModel = openai.responses("gpt-4.1-nano-2025-04-14");
 
   tools = {
-    setTitle: setTitle(dataStream, sessionId || "", userId || ""),
     countChars: countChars(dataStream),
     canvas: canvas(dataStream),
     search: search(dataStream, deepResearchModel, toolList, language),

@@ -10,6 +10,16 @@
       "button": "ベータ版にアクセス"
     }
   },
+  "features": {
+    "contextWindow": {
+      "usage": "コンテキストウィンドウ使用状況",
+      "used": "使用量",
+      "max": "最大",
+      "percentage": "使用率",
+      "nearLimit": "⚠️ コンテキスト制限に近づいています",
+      "tokens": "トークン"
+    }
+  },
   "reasoningEffort": {
     "label": "推論努力",
     "description": "AIが問題解決に費やす思考の深さを選択します",
@@ -63,7 +73,8 @@
     "searchWord": "検索ワード:",
     "searching": "検索中...",
     "visitedWebsites": "閲覧したウェブサイト",
-    "urlNotFound": "URLがありません",    "reasoning": "推論中...",
+    "urlNotFound": "URLがありません",
+    "reasoning": "推論中...",
     "generatingImage": "画像を生成しています...",
     "reasoningCompleted": "推論が完了しました",
     "reasoned": "推論が完了しました",
@@ -130,7 +141,8 @@
   "inputBox": {
     "placeholder": "AI にメッセージを送信する",
     "send": "送信"
-  },  "chatInput": {
+  },
+  "chatInput": {
     "imageAdd": "画像を追加",
     "search": "検索",
     "deepResearch": "詳細なリサーチ",
@@ -519,6 +531,8 @@
     "twoFactorRequired": "二段階認証が必要です",
     "twoFactorDescription": "このアカウントは、2段階認証による追加の保護が付与されています。",
     "twoFactorCode": "二段階認証のコード",
+    "invalidTwoFactorCode": "無効な二段階認証コードです。もう一度お試しください。",
+    "verifying": "認証中...",
     "continue": "続行",
     "cancel": "キャンセル",
     "tooManyRequests": "短時間にリクエストを送信しすぎています。しばらく待ってからお試しください",
@@ -568,7 +582,8 @@
         "message": "パスワードが正常に更新されました"
       }
     }
-  },  "register": {
+  },
+  "register": {
     "title": "アカウントの登録",
     "description": "アカウント情報を入力して、アカウントを登録します。",
     "email": "メールアドレス",
@@ -1512,7 +1527,7 @@
     "openai/o4-mini-2025-04-16": "高速で効率的な推論に最適化されたモデル。",
     "openai/o3-2025-04-16": "複雑な推論タスクに対応する高性能モデル。",
     "google/gemini-2-5-flash-preview-05-20": "複雑なタスクでも高速処理に最適なモデル。",
-    "google/gemini-2-5-pro-preview-05-06": "コーディングや複雑なプロンプトに最適なモデル。",
+    "google/gemini-2-5-pro-preview-06-05": "コーディングや複雑なプロンプトに最適なモデル。",
     "google/gemini-2-5-pro-preview-03-25": "2025年5月10日に廃止予定。",
     "google/gemini-2-0-flash-001": "知性、速度、コスト、コンテキストウィンドウのバランスが取れたモデル。",
     "google/gemini-2-0-flash-lite-001": "2025年5月10日に廃止予定。",

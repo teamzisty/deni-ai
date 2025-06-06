@@ -10,7 +10,7 @@ import React, {
 } from "react";
 import { useChat } from "@ai-sdk/react";
 import { useUploadThing, uploadResponse } from "@/utils/uploadthing";
-import { ChatSession } from "@/hooks/use-chat-sessions"; // Assuming needed, adjust later
+import { ChatSession, useChatSessions } from "@/hooks/use-chat-sessions"; // Assuming needed, adjust later
 import {
   modelDescriptions,
   reasoningEffortType,
@@ -21,7 +21,7 @@ import { Button } from "@workspace/ui/components/button";
 import { toast } from "sonner";
 import { useTranslations } from "next-intl";
 import { UIMessage, ChatRequestOptions } from "ai";
-import { User } from "@supabase/supabase-js"; // Import User type
+import { SupabaseClient, User } from "@supabase/supabase-js"; // Import User type
 
 import logger from "@/utils/logger";
 import { useIsMobile } from "@workspace/ui/hooks/use-mobile";
@@ -117,6 +117,8 @@ const Chat: React.FC<ChatProps> = ({
 }) => {
   const t = useTranslations();
   const isMobile = useIsMobile();
+
+  const { getSession } = useChatSessions();
 
   // --- State Variables ---
   const [image, setImage] = useState<string | null>(null);
@@ -232,17 +234,6 @@ const Chat: React.FC<ChatProps> = ({
       setVisionRequired(true);
     }
   }, [messages, visionRequired]);
-  // Periodic refresh for annotation updates (e.g., generationTime)
-  useEffect(() => {
-    const interval = setInterval(() => {
-      if (messages.length > 0) {
-        const lastMsg = messages[messages.length - 1];
-        // Trigger re-render by replacing last message with a shallow clone
-      }
-    }, 1000);
-
-    return () => clearInterval(interval);
-  }, [messages, setMessages]);
 
   // --- Handler Functions ---
 
@@ -297,15 +288,6 @@ const Chat: React.FC<ChatProps> = ({
       | React.MouseEvent<HTMLButtonElement>
       | React.KeyboardEvent<HTMLTextAreaElement>
   ) => {
-    console.log("baseSendMessage called with:", {
-      input,
-      model,
-      reasoningEffort,
-      status,
-      availableTools,
-      currentSession: !!currentSession,
-    });
-
     // Use component state/props
     if (!currentSession || !input) {
       console.log("Early return: missing currentSession or input");
@@ -560,6 +542,17 @@ const Chat: React.FC<ChatProps> = ({
       fileInputRef.current.value = "";
     }
   };
+
+  useEffect(() => {
+    if (!currentSession) return;
+    if (status === "streaming" || status === "submitted") return;
+
+    updateSession(sessionId, {
+      ...currentSession,
+      messages: messages,
+    });
+  }, [messages, status]);
+
   useAutoResume({
     autoResume: true,
     initialMessages: messages,
@@ -665,6 +658,7 @@ const Chat: React.FC<ChatProps> = ({
           handleImageUpload={handleImageUpload}
           setImage={setImage}
           fileInputRef={fileInputRef}
+          messages={messages}
         />
       </div>
     </>

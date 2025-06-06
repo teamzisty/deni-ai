@@ -90,7 +90,8 @@ export default async function middleware(
     if (adjustedPathname === "/") {
       // / へのアクセスは /chat/home の内容を表示 (URLは / のまま)
       // next-intlが生成したresponseをベースにrewriteする
-      const rewriteUrl = new URL(`/${locale}/chat/home`, request.url);
+      const rewriteUrl = request.nextUrl.clone();
+      rewriteUrl.pathname = `/chat/home`; // /chat/home にリライト
       response = NextResponse.rewrite(rewriteUrl); // `response` オブジェクトを直接操作
     } else if (adjustedPathname === "/home") {
       const rewriteUrl = request.nextUrl.clone();
@@ -109,7 +110,8 @@ export default async function middleware(
       // /home または /dashboard へのアクセスは / (Hero) にリダイレクト
       // next-intlが生成したresponseをベースにredirectする
       return NextResponse.redirect(new URL(`/${locale}/`, request.url)); // 新しいNextResponseを返すため return
-    }  }
+    }
+  }
 
   // 最後に、intlMiddlewareから得られたレスポンス（または変更されたレスポンス）を返す
   return response;

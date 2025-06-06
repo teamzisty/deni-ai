@@ -19,6 +19,8 @@ import { createSupabaseServerClient } from "@/lib/supabase/server";
 import {
   appendResponseMessages,
   convertToCoreMessages,
+  CoreAssistantMessage,
+  CoreMessage,
   createDataStream,
   extractReasoningMiddleware,
   generateId,
@@ -29,7 +31,7 @@ import {
   wrapLanguageModel,
 } from "ai";
 import { NextResponse } from "next/server";
-import { getTools } from "@/lib/utils";
+import { getTools, getTrailingMessageId } from "@/lib/utils";
 import { RowServerBot } from "@/types/bot";
 import {
   loadStreams,
@@ -39,6 +41,7 @@ import {
 } from "@/utils/chat-store";
 import { after } from "next/server";
 import { createResumableStreamContext } from "resumable-stream";
+import { generateTitleFromUserMessage } from "@/lib/actions";
 
 // Only enable resumable streams when Redis is available
 const isRedisAvailable = !!process.env.REDIS_URL;
@@ -58,7 +61,7 @@ export async function GET(request: Request) {
   const chatId = searchParams.get("chatId");
 
   if (!chatId) {
-    return new Response("chatId is required", { status: 400 });
+    return new Response("id is required", { status: 400 });
   }
 
   const streamIds = await loadStreams(chatId);
@@ -82,9 +85,34 @@ export async function GET(request: Request) {
     () => emptyDataStream
   );
 
-  console.log(stream);
+  if (stream) {
+    return new Response(stream, { status: 200 });
+  }
 
-  return new Response(stream, { status: 200 });
+  /*
+   * For when the generation is "active" during SSR but the
+   * resumable stream has concluded after reaching this point.
+   */
+
+  const messages = await getMessagesByChatId({ id: chatId });
+  const mostRecentMessage = messages.at(-1);
+
+  if (!mostRecentMessage || mostRecentMessage.role !== "assistant") {
+    return new Response(emptyDataStream, { status: 200 });
+  }
+
+  const messageCreatedAt = new Date(mostRecentMessage.createdAt);
+
+  const streamWithMessage = createDataStream({
+    execute: (buffer) => {
+      buffer.writeData({
+        type: "append-message",
+        message: JSON.stringify(mostRecentMessage),
+      });
+    },
+  });
+
+  return new Response(streamWithMessage, { status: 200 });
 }
 
 export async function POST(req: Request) {
@@ -331,6 +359,25 @@ export async function POST(req: Request) {
       messages: coreMessage,
     });
 
+    const lastMsg = messages[messages.length - 1];
+    if (lastMsg) {
+      const title = await generateTitleFromUserMessage({ message: lastMsg });
+
+      const { error: updateError } = await supabase
+        .from("chat_sessions")
+        .update({
+          title: title,
+          updated_at: new Date().toISOString(),
+        })
+        .eq("id", sessionId)
+        .eq("user_id", userId);
+
+      if (updateError) {
+        console.error("Error updating session title:", updateError);
+        return "Failed to update title";
+      }
+    }
+
     const stream = createDataStream({
       execute: (dataStream) => {
         try {
@@ -348,7 +395,11 @@ export async function POST(req: Request) {
             );
           }
 
-          const response = streamText({
+          dataStream.writeMessageAnnotation({
+            model,
+          });
+
+          const result = streamText({
             model:
               modelDescription?.type == "ChatGPT"
                 ? openai.responses(modelName)
@@ -382,46 +433,25 @@ export async function POST(req: Request) {
                 },
               }),
             },
-            onChunk() {
-              if (!firstChunk) {
-                firstChunk = true;
-                dataStream.writeMessageAnnotation({
-                  model,
-                });
-              }
-            },
-            async onFinish({ response }) {
-              // Calculate generation time and send it as an annotation
+            onFinish: async ({ response }) => {
               const endTime = Date.now();
-              const generationTime = endTime - startTime;
-              if (response.messages.length === 0) {
-                return;
-              }
+              const duration = endTime - startTime;
+
               dataStream.writeMessageAnnotation({
-                generationTime,
+                generationTime: duration,
               });
 
-              // Save chat with updated messages
-              if (sessionId) {
-                try {
-                  await saveChat({
-                    id: sessionId,
-                    messages: appendResponseMessages({
-                      messages,
-                      responseMessages: response.messages,
-                    }),
-                  });
-                  console.log("Chat saved successfully with new messages");
-                } catch (saveError) {
-                  console.error("Error saving chat:", saveError);
-                }
-              }
+              await saveChat({
+                id: sessionId || crypto.randomUUID(),
+                messages: appendResponseMessages({
+                  messages,
+                  responseMessages: response.messages,
+                }),
+              });
             },
           });
 
-          response.consumeStream();
-
-          response.mergeIntoDataStream(dataStream, {
+          result.mergeIntoDataStream(dataStream, {
             sendReasoning: true,
           });
         } catch (streamError) {

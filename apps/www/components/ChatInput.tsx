@@ -43,9 +43,11 @@ interface ChatInputProps {
   handleImageUpload: (e: React.ChangeEvent<HTMLInputElement>) => void;
   setImage: (image: string | null) => void;
   fileInputRef: React.RefObject<HTMLInputElement | null>;
+  messages?: any[];
 }
 
-const ChatInput = memo(  ({
+const ChatInput = memo(
+  ({
     input,
     image,
     model,
@@ -72,6 +74,7 @@ const ChatInput = memo(  ({
     setImage,
     fileInputRef,
     intellipulse,
+    messages = [],
   }: ChatInputProps) => {
     const t = useTranslations();
     const isMobile = useIsMobile();
@@ -88,7 +91,7 @@ const ChatInput = memo(  ({
           image={image}
           isUploading={isUploading}
           setImage={setImage}
-        />
+        />{" "}
         <InputBox
           input={input}
           stop={stop}
@@ -98,6 +101,8 @@ const ChatInput = memo(  ({
           handleSendMessage={handleSendMessage}
           handleSendMessageKey={handleSendMessageKey}
           handleImagePaste={handleImagePaste}
+          messages={messages}
+          maxContextWindow={modelDescriptions[model]?.maxContextWindow}
         />
         <div className={cn("flex items-center", "gap-1 md:gap-2")}>
           <input
@@ -157,6 +162,7 @@ const ChatInput = memo(  ({
       prevProps.model === nextProps.model &&
       prevProps.canvasEnabled === nextProps.canvasEnabled &&
       prevProps.generating === nextProps.generating &&
+      prevProps.messages?.length === nextProps.messages?.length &&
       JSON.stringify(prevProps.modelDescriptions) ===
         JSON.stringify(nextProps.modelDescriptions)
     );

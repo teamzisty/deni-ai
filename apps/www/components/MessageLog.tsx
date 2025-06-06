@@ -396,6 +396,7 @@ const MessageControls = memo(
               <Button
                 className="p-0 mx-0.5 md:mx-1 rounded-full"
                 variant={"ghost"}
+                onClick={handleCopy}
                 size="sm"
               >
                 <Copy size={14} className="md:size-4" />

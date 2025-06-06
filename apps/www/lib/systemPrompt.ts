@@ -126,7 +126,7 @@ export const getSystemPrompt = (enabledModules: string[], bot?: RowServerBot | n
     // If the bot is a bot, add the bot-specific instructions.
     systemPrompt = systemPromptBots(bot) + "\n" + bot.system_instruction + "\n" + systemPromptToolPart;
     systemPrompt += "\n";
-    systemPrompt += `Enforced Tools: SetTitle`
+    systemPrompt += `Enforced Tools: None`
     systemPrompt += `No other tools are enabled.`;
     return systemPrompt;
   }
@@ -153,13 +153,12 @@ export const getSystemPrompt = (enabledModules: string[], bot?: RowServerBot | n
   );
 
   // Add a section listing the enforced tools, if any are enabled.
-  // Note: SetTitle is described in systemPromptToolPart and implicitly always active
   // when tools are enabled, so it's not listed based on enabledModules here.
   // Add newline separator before listing tools
 
   const ifEnforcedTools = enforcedTools.length > 0
   const enforcedToolsString = ifEnforcedTools ? `, ${enforcedTools.join(", ")}` : "";
-  systemPrompt += "\nEnforced Tools: SetTitle" + enforcedToolsString;
+  systemPrompt += "\nEnforced Tools: " + enforcedToolsString;
 
   // Add a section listing the other enabled tools/features, if any exist.
   // Add a newline separator before this section, regardless of whether
