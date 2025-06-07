@@ -1,20 +1,19 @@
 import { createUploadthing, type FileRouter } from "uploadthing/next";
 import { UploadThingError } from "uploadthing/server";
-import { createSupabaseServerClient, notAvailable } from "@workspace/supabase-config/server";
+import { createSupabaseServerClient, notAvailable } from "@/lib/supabase/server";
 import { User } from "@supabase/supabase-js";
 
 const f = createUploadthing();
 
 async function auth(req: Request) {
   const authHeader = req.headers.get("authorization");
-  if (!authHeader) throw new UploadThingError("No authorization header");
-  if (notAvailable) {
+  if (!authHeader) throw new UploadThingError("No authorization header");  if (notAvailable()) {
     throw new UploadThingError("Auth not available");
   }
   
   try {
     const token = authHeader.replace('Bearer ', '');
-    const supabase = createSupabaseServerClient();
+    const supabase = await createSupabaseServerClient();
     const { data: { user }, error } = await supabase.auth.getUser(token);
     
     if (error || !user) {

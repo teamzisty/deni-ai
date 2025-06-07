@@ -202,7 +202,8 @@ function SessionGroup({
                         <GitFork className="h-4 w-4 text-primary" />
                       ) : isBot ? ( // bot only
                         <BotMessageSquare className="h-4 w-4 text-primary" />
-                      ) : ( // default
+                      ) : (
+                        // default
                         <MessageCircleMore className="mr-2 h-4 w-4" />
                       )}
                       <div className="flex items-center w-full min-w-0">
@@ -220,7 +221,7 @@ function SessionGroup({
                             <ArrowRight size={12} />
                             {isBranch ? (
                               <GitFork className="h-4 w-4 text-primary" />
-                            ): isBot ? (
+                            ) : isBot ? (
                               <BotMessageSquare className="h-4 w-4 text-primary" />
                             ) : (
                               <MessageCircleMore className="h-4 w-4" />
@@ -344,6 +345,11 @@ function ChatSidebarMenuSession() {
   const { settings } = useSettings();
   const t = useTranslations();
 
+  useEffect(() => {
+    // log sessions
+    console.log("Current sessions:", sessions);
+  }, [sessions]);
+
   // 検索条件でセッションをフィルタリング（useMemoで最適化）
   const filteredSessions = useMemo(() => {
     if (searchQuery.trim() === "") {
@@ -416,9 +422,7 @@ function ChatSidebarMenuSession() {
           </SidebarMenu>
         </SidebarGroupContent>
       </SidebarGroup>
-
       <HubSidebar /> {/* Moved HubSidebar here */}
-
       <MemoizedSessionGroup
         sessions={groupedSessions.today}
         label={t("sidebar.today")}
@@ -538,7 +542,7 @@ export function ChatSidebar() {
           <div className="flex items-center gap-2">
             <div className="flex items-center gap-2">
               <Link
-                href="/home"
+                href="/"
                 className="text-xl font-bold transition-all hover:text-muted-foreground group-data-[collapsible=icon]:hidden flex items-center"
               >
                 Deni AI

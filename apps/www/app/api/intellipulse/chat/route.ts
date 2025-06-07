@@ -15,11 +15,13 @@ import {
   OpenRouterProviderOptions,
 } from "@openrouter/ai-sdk-provider";
 import { createGroq } from "@ai-sdk/groq";
-import { createSupabaseServerClient } from "@workspace/supabase-config/server";
+import { createSupabaseServerClient } from "@/lib/supabase/server";
 import {
   convertToCoreMessages,
+  createDataStream,
   createDataStreamResponse,
   extractReasoningMiddleware,
+  generateId,
   smoothStream,
   streamText,
   Tool,
@@ -32,6 +34,77 @@ import { VirtualConsole } from "jsdom";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import path from "path";
+import {
+  loadStreams,
+  appendStreamId,
+  saveChat,
+  getMessagesByChatId,
+} from "@/utils/chat-store";
+import { after } from "next/server";
+import { createResumableStreamContext } from "resumable-stream";
+
+// Only enable resumable streams when Redis is available
+const isRedisAvailable = !!process.env.REDIS_URL;
+const streamContext = isRedisAvailable
+  ? createResumableStreamContext({
+      waitUntil: after,
+    })
+  : null;
+
+export async function GET(request: Request) {
+  // Only handle resumable streams if Redis is available
+  if (!isRedisAvailable || !streamContext) {
+    return new Response("Resumable streams not available", { status: 503 });
+  }
+
+  const { searchParams } = new URL(request.url);
+  const chatId = searchParams.get("chatId");
+
+  if (!chatId) {
+    return new Response("chatId is required", { status: 400 });
+  }
+
+  const streamIds = await loadStreams(chatId);
+
+  if (!streamIds.length) {
+    return new Response("No streams found", { status: 404 });
+  }
+
+  const recentStreamId = streamIds.at(-1);
+
+  if (!recentStreamId) {
+    return new Response("No recent stream found", { status: 404 });
+  }
+
+  const emptyDataStream = createDataStream({
+    execute: () => {},
+  });
+
+  const stream = await streamContext.resumableStream(
+    recentStreamId,
+    () => emptyDataStream
+  );
+
+  if (stream) {
+    return new Response(stream, { status: 200 });
+  }
+  /*
+   * For when the generation is "active" during SSR but the
+   * resumable stream has concluded after reaching this point.
+   */
+  const recentMessages = await getMessagesByChatId({ id: chatId });
+
+  return createDataStreamResponse({
+    execute: (dataStream) => {
+      recentMessages.forEach((message) => {
+        dataStream.writeData({
+          type: "append-message",
+          message: JSON.stringify(message),
+        });
+      });
+    },
+  });
+}
 
 export async function POST(req: Request) {
   try {
@@ -49,13 +122,17 @@ export async function POST(req: Request) {
       reasoningEffort: reasoningEffortType;
       toolList?: string[];
     } = await req.json();
+
     if (!model || messages.length === 0) {
       return new NextResponse("Invalid request", { status: 400 });
     }
 
+    let userId: string | undefined;
+    let sessionId: string | undefined;
+
     // Handle authentication if authorization header is present
     if (authorization) {
-      const supabase = createSupabaseServerClient();
+      const supabase = await createSupabaseServerClient();
       const {
         data: { user },
         error: authError,
@@ -64,6 +141,11 @@ export async function POST(req: Request) {
       if (authError || !user) {
         return new NextResponse("Authorization failed", { status: 401 });
       }
+
+      userId = user.id;
+      // Extract sessionId from request URL or body
+      const url = new URL(req.url);
+      sessionId = url.searchParams.get("id") || undefined;
     } else {
       return new NextResponse("Authorization failed", { status: 401 });
     }
@@ -161,8 +243,21 @@ export async function POST(req: Request) {
       }
     }
 
-    return createDataStreamResponse({
-      execute: (dataStream) => {
+    // Generate unique stream ID only if Redis is available
+    const streamId = isRedisAvailable ? generateId() : null;
+
+    // Record the stream ID if we have a sessionId and Redis is available
+    if (sessionId && isRedisAvailable && streamId) {
+      try {
+        await appendStreamId({ chatId: sessionId, streamId });
+      } catch (error) {
+        console.error("Failed to record stream ID:", error);
+        // Continue without recording - not critical for stream execution
+      }
+    }
+
+    const stream = createDataStream({
+      execute: async (dataStream) => {
         let tools: { [key: string]: Tool } | undefined = {};
         if (modelDescription?.toolDisabled) {
           tools = undefined;
@@ -470,8 +565,17 @@ export async function POST(req: Request) {
           sendReasoning: true,
         });
       },
-      onError: errorHandler,
     });
+
+    // Return a resumable stream to the client if Redis is available, otherwise return regular stream
+    if (isRedisAvailable && streamContext && streamId) {
+      return new Response(
+        await streamContext.resumableStream(streamId, () => stream)
+      );
+    } else {
+      // Fallback to regular stream when Redis is not available
+      return new Response(stream);
+    }
   } catch (error) {
     console.error(error);
     return new NextResponse(

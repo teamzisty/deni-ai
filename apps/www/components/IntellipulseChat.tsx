@@ -778,10 +778,10 @@ const IntellipulseChat: React.FC<IntellipulseChatProps> = memo(({
             handleSendMessage={handleSendMessage}
             handleSendMessageKey={handleSendMessageKey}
             handleInputChange={handleInputChange}
-            handleImagePaste={handleImagePaste}
-            handleImageUpload={handleImageUpload}
+            handleImagePaste={handleImagePaste}            handleImageUpload={handleImageUpload}
             setImage={setImage}
             fileInputRef={fileInputRef}
+            messages={messages}
           />
         </div>
       </div>

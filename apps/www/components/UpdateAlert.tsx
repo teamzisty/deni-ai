@@ -37,7 +37,7 @@ export function UpdateAlert({ open }: UpdateAlertProps) {
             {t("cancel")}
           </Button>
           <Button asChild>
-            <a href="https://canary.deniai.app/home">{t("layout.updateAlert.button")}</a>
+            <a href="https://canary.deniai.app">{t("layout.updateAlert.button")}</a>
           </Button>
         </DialogFooter>
       </DialogContent>

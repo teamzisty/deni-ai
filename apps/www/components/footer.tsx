@@ -63,7 +63,7 @@ const Footer = memo(() => {
               <ul className="space-y-3">
                 <li>
                   <Link
-                    href="/home"
+                    href="/"
                     className="text-neutral-400 text-sm hover:text-white transition-colors"
                   >
                     Home

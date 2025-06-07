@@ -14,13 +14,17 @@ import { useAuth } from "@/context/AuthContext";
 import { toast } from "sonner";
 import { useTranslations } from "next-intl";
 import { Bot, BotWithId } from "@/types/bot";
-import { supabase } from "@workspace/supabase-config/client";
+import { createClient } from "@/lib/supabase/client";
 
 interface ChatSessionsContextValue {
   sessions: ChatSession[];
   createSession: (bot?: BotWithId) => ChatSession;
   addSession: (session: ChatSession) => void;
   updateSession: (id: string, updatedSession: ChatSession) => Promise<void>;
+  updateSessionPartial: (
+    id: string,
+    updatedFields: Partial<ChatSession>
+  ) => Promise<void>;
   deleteSession: (id: string) => void;
   clearAllSessions: () => Promise<void>;
   getSession: (id: string) => ChatSession | undefined;
@@ -137,16 +141,24 @@ export function ChatSessionsProvider({ children }: { children: ReactNode }) {
   const [isFirstLoad, setIsFirstLoad] = useState(true);
   const [isSupabaseLoaded, setIsSupabaseLoaded] = useState(false);
 
+  // Create Supabase client instance
+  const supabase = createClient();
+
+  console.log("ChatSessionsProvider initialized with user:", user?.id);
+
   // Load sessions on component mount and when user changes
   useEffect(() => {
+    console.log("Loading chat sessions for user:", user?.id);
     const loadSessions = async () => {
       setIsLoading(true);
       setIsSupabaseLoaded(false);
+      console.log("Loading sessions from Supabase or IndexedDB...");
 
       try {
         if (!isFirstLoad) {
           // Clear sessions on first load
-          setIsLoading(false);  
+          console.log("Clearing sessions on first load");
+          setIsLoading(false);
           setIsSupabaseLoaded(true);
           return;
         }
@@ -183,30 +195,25 @@ export function ChatSessionsProvider({ children }: { children: ReactNode }) {
             );
             setSessions(supabaseSessions);
             setIsSupabaseLoaded(true);
+            setIsFirstLoad(false);
           }
-        } else {
+        } else if (!supabase) {
           // Load from IndexedDB for non-authenticated users
           const localSessions = await loadSessionsFromIndexedDB();
           setSessions(localSessions);
+          setIsFirstLoad(false);
         }
       } catch (error) {
         console.error("Error loading sessions:", error);
         const localSessions = await loadSessionsFromIndexedDB();
         setSessions(localSessions);
       } finally {
-        if (isFirstLoad) {
-          setIsFirstLoad(false);
-        }
         setIsLoading(false);
       }
     };
 
     loadSessions();
-  }, [user]);
-
-  useEffect(() => {
-    console.log("Loading state changed:", isLoading);
-  }, [isLoading]);
+  }, [user, supabase, isFirstLoad]);
 
   const createSession = useCallback(
     (bot?: BotWithId): ChatSession => {
@@ -431,6 +438,7 @@ export function ChatSessionsProvider({ children }: { children: ReactNode }) {
     },
     [user]
   );
+
   const deleteSession = useCallback(
     async (id: string) => {
       setSessions((prev) => prev.filter((session) => session.id !== id));
@@ -498,6 +506,82 @@ export function ChatSessionsProvider({ children }: { children: ReactNode }) {
   const getSession = useCallback(
     (id: string) => sessions.find((session) => session.id === id),
     [sessions]
+  );
+
+  const getLatestSession = useCallback(
+    async (id: string) => {
+      if (!supabase) {
+        console.error("Supabase client not initialized");
+        return getSession(id);
+      }
+
+      const { data, error } = await supabase
+        .from("chat_sessions")
+        .select("*")
+        .eq("id", id)
+        .single();
+      if (error) {
+        console.error("Error fetching latest session:", error);
+        return getSession(id);
+      }
+
+      return data;
+    },
+    [supabase]
+  );
+
+  const updateSessionPartial = useCallback(
+    async (id: string, updatedFields: Partial<ChatSession>) => {
+      setSessions((prev) =>
+        prev.map((session) =>
+          session.id === id ? { ...session, ...updatedFields } : session
+        )
+      );
+
+      // Save to appropriate storage based on authentication status
+      if (user && supabase) {
+        // Save to Supabase for authenticated users
+        try {
+          const { error } = await supabase
+            .from("chat_sessions")
+            .update(updatedFields)
+            .eq("id", id)
+            .eq("user_id", user.id);
+
+          if (error) {
+            console.error("Error updating session in Supabase:", error);
+            // Fallback to IndexedDB on error
+            const currentSession = await getLatestSession(id);
+            if (currentSession) {
+              await saveSessionToIndexedDB({
+                ...currentSession,
+                ...updatedFields,
+              });
+            }
+          }
+        } catch (error) {
+          console.error("Error updating session in Supabase:", error);
+          // Fallback to IndexedDB on error
+          const currentSession = await getLatestSession(id);
+          if (currentSession) {
+            await saveSessionToIndexedDB({
+              ...currentSession,
+              ...updatedFields,
+            });
+          }
+        }
+      } else {
+        // Save to IndexedDB for non-authenticated users
+        const currentSession = getSession(id);
+        if (currentSession) {
+          await saveSessionToIndexedDB({
+            ...currentSession,
+            ...updatedFields,
+          });
+        }
+      }
+    },
+    [user, getSession]
   );
 
   const syncSessions = useCallback(async () => {
@@ -654,6 +738,7 @@ export function ChatSessionsProvider({ children }: { children: ReactNode }) {
     createSession,
     addSession,
     updateSession,
+    updateSessionPartial,
     deleteSession,
     clearAllSessions,
     getSession,

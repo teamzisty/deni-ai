@@ -1,4 +1,4 @@
-import { createSupabaseServerClient } from "@workspace/supabase-config/server";
+import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
 
 interface BotsCreateRequest {
@@ -15,9 +15,7 @@ export async function POST(req: Request) {
         { error: "Authorization Failed" },
         { status: 401 }
       );
-    }
-
-    const supabase = createSupabaseServerClient();
+    }    const supabase = await createSupabaseServerClient();
     
     // Verify the JWT token
     const { data: { user }, error: authError } = await supabase.auth.getUser(authorization);

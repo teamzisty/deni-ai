@@ -10,6 +10,16 @@
       "button": "ベータ版にアクセス"
     }
   },
+  "features": {
+    "contextWindow": {
+      "usage": "コンテキストウィンドウ使用状況",
+      "used": "使用量",
+      "max": "最大",
+      "percentage": "使用率",
+      "nearLimit": "⚠️ コンテキスト制限に近づいています",
+      "tokens": "トークン"
+    }
+  },
   "reasoningEffort": {
     "label": "推論努力",
     "description": "AIが問題解決に費やす思考の深さを選択します",
@@ -63,7 +73,8 @@
     "searchWord": "検索ワード:",
     "searching": "検索中...",
     "visitedWebsites": "閲覧したウェブサイト",
-    "urlNotFound": "URLがありません",    "reasoning": "推論中...",
+    "urlNotFound": "URLがありません",
+    "reasoning": "推論中...",
     "generatingImage": "画像を生成しています...",
     "reasoningCompleted": "推論が完了しました",
     "reasoned": "推論が完了しました",
@@ -141,6 +152,31 @@
     "canvas": "キャンバス",
     "translate": "翻訳",
     "botNotice": "あなたは「{botName}」Botにいます。退出するには、新しい会話を作成してください。"
+  },
+  "chatHomepage": {
+    "greeting": "ようこそ、{name} さん！",
+    "placeholder": "Deni AI にメッセージ",
+    "promptCards": {
+      "creative": {
+        "title": "クリエイティブライティング",
+        "description": "ストーリーや詩の作成をお手伝いします"
+      },
+      "research": {
+        "title": "リサーチアシスタント",
+        "description": "あらゆるトピックの情報を検索・要約します"
+      },
+      "coding": {
+        "title": "コーディングヘルプ",
+        "description": "コードのデバッグやプログラミング概念の説明"
+      },
+      "planning": {
+        "title": "計画・整理",
+        "description": "スケジュール、計画の作成やアイデアの整理"
+      }
+    },
+    "footer": {
+      "privacy": "プライバシーを重視しています。データの保護方法をご確認ください。"
+    }
   },
   "headerArea": {
     "ready": "準備完了",
@@ -252,7 +288,7 @@
         "cancel": "キャンセル",
         "confirm": "はい、すべて削除します"
       },
-      "deleteDevData": {
+      "deleteIntellipulseData": {
         "title": "開発モードの会話を削除",
         "description": "開発モードのすべての会話履歴を完全に削除します。この操作は元に戻せません。"
       },
@@ -495,6 +531,8 @@
     "twoFactorRequired": "二段階認証が必要です",
     "twoFactorDescription": "このアカウントは、2段階認証による追加の保護が付与されています。",
     "twoFactorCode": "二段階認証のコード",
+    "invalidTwoFactorCode": "無効な二段階認証コードです。もう一度お試しください。",
+    "verifying": "認証中...",
     "continue": "続行",
     "cancel": "キャンセル",
     "tooManyRequests": "短時間にリクエストを送信しすぎています。しばらく待ってからお試しください",
@@ -544,7 +582,8 @@
         "message": "パスワードが正常に更新されました"
       }
     }
-  },  "register": {
+  },
+  "register": {
     "title": "アカウントの登録",
     "description": "アカウント情報を入力して、アカウントを登録します。",
     "email": "メールアドレス",
@@ -1419,7 +1458,7 @@
     "uploadImage": "画像をアップロード",
     "delete": "削除"
   },
-  "devChatPage": {
+  "intellipulseChatPage": {
     "webContainerLoading": "WebContainer を読み込み中...",
     "webContainerReady": "WebContainer の準備完了",
     "terminalOutput": "ターミナル出力",
@@ -1488,7 +1527,7 @@
     "openai/o4-mini-2025-04-16": "高速で効率的な推論に最適化されたモデル。",
     "openai/o3-2025-04-16": "複雑な推論タスクに対応する高性能モデル。",
     "google/gemini-2-5-flash-preview-05-20": "複雑なタスクでも高速処理に最適なモデル。",
-    "google/gemini-2-5-pro-preview-05-06": "コーディングや複雑なプロンプトに最適なモデル。",
+    "google/gemini-2-5-pro-preview-06-05": "コーディングや複雑なプロンプトに最適なモデル。",
     "google/gemini-2-5-pro-preview-03-25": "2025年5月10日に廃止予定。",
     "google/gemini-2-0-flash-001": "知性、速度、コスト、コンテキストウィンドウのバランスが取れたモデル。",
     "google/gemini-2-0-flash-lite-001": "2025年5月10日に廃止予定。",

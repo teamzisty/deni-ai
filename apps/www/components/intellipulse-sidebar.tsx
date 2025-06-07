@@ -344,7 +344,7 @@ export function IntellipulseSidebar() {
             Public Beta: May not work as expected
           </span>
           <SidebarMenuItem>
-            <Link href="/home">
+            <Link href="/">
               <Button variant="outline" size="sm" className="w-full">
                 <HomeIcon className="mr-2 h-4 w-4 hidden group-data-[collapsible=icon]:block" />
                 <span className="group-data-[collapsible=icon]:hidden">

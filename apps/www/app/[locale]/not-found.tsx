@@ -30,7 +30,7 @@ export default function NotFound() {
         </CardContent>
         <CardFooter className="gap-3">
           <Button asChild>
-            <Link href="/home">{t("chatButton")}</Link>
+            <Link href="/">{t("chatButton")}</Link>
           </Button>
           <Button variant={"secondary"} onClick={() => window.history.back()}>
             {t("backButton")}

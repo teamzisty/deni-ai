@@ -9,8 +9,6 @@ import {
   User,
   Plus,
   XIcon,
-  CheckCircle2,
-  AlertTriangle,
   Mail,
   LogOut,
 } from "lucide-react";
@@ -30,11 +28,10 @@ import {
 } from "@workspace/ui/components/avatar";
 import { useParams } from "next/navigation";
 import { toast } from "sonner";
-import { Alert, AlertDescription, AlertTitle } from "@workspace/ui/components/alert";
 import { useUploadThing } from "@/utils/uploadthing";
 import { useAuth } from "@/context/AuthContext";
 import { StatusAlert } from "@/components/StatusAlert";
-import { supabase } from "@workspace/supabase-config/client";
+import { createClient } from "@/lib/supabase/client";
 
 // ウィザードのステップを定義
 enum WizardStep {
@@ -90,6 +87,9 @@ const GettingStartedWizard: React.FC = () => {
       setIsUploading(false);
     },
   });
+
+  // Create Supabase client instance
+  const supabase = createClient();
 
   // 次のステップに進む
   const goToNextStep = () => {
@@ -183,7 +183,8 @@ const GettingStartedWizard: React.FC = () => {
       return;
     }
 
-    setIsUploading(true);    try {
+    setIsUploading(true);
+    try {
       if (user) {
         const idToken = user.id;
         if (idToken) {
@@ -222,11 +223,11 @@ const GettingStartedWizard: React.FC = () => {
         data: {
           display_name: displayName,
           avatar_url: photoURL || null,
-        }
+        },
       });
-      
+
       if (error) throw error;
-      
+
       toast.success(t("profile.updateSuccess"));
       goToNextStep();
     } catch (error) {
@@ -329,7 +330,7 @@ const GettingStartedWizard: React.FC = () => {
                     {t("wizard.already.description")}
                     <div className="flex mt-2">
                       <Button>
-                        <Link href="/home">{t("wizard.start.button")}</Link>
+                        <Link href="/">{t("wizard.start.button")}</Link>
                       </Button>
                       <Button
                         variant="outline"
@@ -396,7 +397,6 @@ const GettingStartedWizard: React.FC = () => {
                   </>
                 )}
               </Button>
-
               <Button
                 variant="outline"
                 className="w-full"
@@ -404,7 +404,8 @@ const GettingStartedWizard: React.FC = () => {
               >
                 <Check className="mr-2 h-4 w-4" />
                 {t("wizard.email.checkButton")}
-              </Button>              <Button
+              </Button>{" "}
+              <Button
                 variant="link"
                 className="w-full"
                 onClick={() => supabase?.auth.signOut()}
@@ -412,7 +413,6 @@ const GettingStartedWizard: React.FC = () => {
                 <LogOut className="mr-2 h-4 w-4" />
                 {t("accountMenu.logout")}
               </Button>
-
               <Button
                 variant="link"
                 className="text-muted-foreground"

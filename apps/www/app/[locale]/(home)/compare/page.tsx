@@ -103,7 +103,7 @@ const ComparePage = () => {
       ],
       cons: [],
       buttonText: t("services.deniAI.buttonText"),
-      buttonLink: "/home",
+      buttonLink: "",
       highlight: true,
     },
     {
@@ -650,7 +650,7 @@ const ComparePage = () => {
               transition={{ duration: 0.6, delay: 0.2 }}
             >
               <Button asChild size="lg" className="h-12 px-8 font-medium">
-                <Link href="/home">
+                <Link href="/">
                   <span className="flex items-center">
                     <span>{t("getStarted")}</span>
                     <ArrowRight className="ml-2 h-4 w-4" />

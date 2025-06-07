@@ -8,10 +8,10 @@ type Props = {
 
 export default async function LocaleLayout({ children }: Props) {
   return (
-    <>
+    <div className="flex flex-col min-h-screen bg-background">
       {children}
 
       <Footer />
-    </>
+    </div>
   );
 }

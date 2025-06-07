@@ -15,11 +15,15 @@ import {
   OpenRouterProviderOptions,
 } from "@openrouter/ai-sdk-provider";
 import { createGroq } from "@ai-sdk/groq";
-import { createSupabaseServerClient } from "@workspace/supabase-config/server";
+import { createSupabaseServerClient } from "@/lib/supabase/server";
 import {
+  appendResponseMessages,
   convertToCoreMessages,
-  createDataStreamResponse,
+  CoreAssistantMessage,
+  CoreMessage,
+  createDataStream,
   extractReasoningMiddleware,
+  generateId,
   smoothStream,
   streamText,
   Tool,
@@ -27,12 +31,119 @@ import {
   wrapLanguageModel,
 } from "ai";
 import { NextResponse } from "next/server";
-import { getTools } from "@/lib/utils";
+import { getTools, getTrailingMessageId } from "@/lib/utils";
 import { RowServerBot } from "@/types/bot";
+import {
+  loadStreams,
+  appendStreamId,
+  saveChat,
+  getMessagesByChatId,
+} from "@/utils/chat-store";
+import { after } from "next/server";
+import { createResumableStreamContext } from "resumable-stream";
+import { generateTitleFromUserMessage } from "@/lib/actions";
+
+// Only enable resumable streams when Redis is available
+const isRedisAvailable = !!process.env.REDIS_URL;
+const streamContext = isRedisAvailable
+  ? createResumableStreamContext({
+      waitUntil: after,
+    })
+  : null;
+
+export async function GET(request: Request) {
+  // Only handle resumable streams if Redis is available
+  if (!isRedisAvailable || !streamContext) {
+    return new Response("Resumable streams not available", { status: 503 });
+  }
+
+  const { searchParams } = new URL(request.url);
+  const chatId = searchParams.get("chatId");
+
+  if (!chatId) {
+    return new Response("id is required", { status: 400 });
+  }
+
+  const streamIds = await loadStreams(chatId);
+
+  if (!streamIds.length) {
+    return new Response("No streams found", { status: 404 });
+  }
+
+  const recentStreamId = streamIds.at(-1);
+
+  if (!recentStreamId) {
+    return new Response("No recent stream found", { status: 404 });
+  }
+
+  const emptyDataStream = createDataStream({
+    execute: () => {},
+  });
+
+  const stream = await streamContext.resumableStream(
+    recentStreamId,
+    () => emptyDataStream
+  );
+
+  if (stream) {
+    return new Response(stream, { status: 200 });
+  }
+
+  /*
+   * For when the generation is "active" during SSR but the
+   * resumable stream has concluded after reaching this point.
+   */
+
+  const messages = await getMessagesByChatId({ id: chatId });
+  const mostRecentMessage = messages.at(-1);
+
+  if (!mostRecentMessage || mostRecentMessage.role !== "assistant") {
+    return new Response(emptyDataStream, { status: 200 });
+  }
+
+  const messageCreatedAt = new Date(mostRecentMessage.createdAt);
+
+  const streamWithMessage = createDataStream({
+    execute: (buffer) => {
+      buffer.writeData({
+        type: "append-message",
+        message: JSON.stringify(mostRecentMessage),
+      });
+    },
+  });
+
+  return new Response(streamWithMessage, { status: 200 });
+}
 
 export async function POST(req: Request) {
   try {
     const authorization = req.headers.get("Authorization");
+
+    // Log the request details for debugging
+    console.log("Request Content-Type:", req.headers.get("Content-Type"));
+    console.log("Request Content-Length:", req.headers.get("Content-Length"));
+    console.log("Request URL:", req.url);
+    console.log("Request method:", req.method);
+
+    // Gracefully handle non-JSON Content-Types
+    let requestBody: any;
+    const contentType = req.headers.get("Content-Type") || "";
+    try {
+      if (contentType.includes("application/json")) {
+        requestBody = await req.json();
+      } else {
+        const rawText = await req.text();
+        requestBody = JSON.parse(rawText);
+      }
+      console.log(
+        "Successfully parsed request body:",
+        JSON.stringify(requestBody, null, 2)
+      );
+    } catch (parseError) {
+      console.error("Body parse error:", parseError);
+      return new NextResponse("Invalid JSON in request body", { status: 400 });
+    }
+
     let {
       // eslint-disable-next-line prefer-const
       messages,
@@ -42,6 +153,7 @@ export async function POST(req: Request) {
       // eslint-disable-next-line prefer-const
       reasoningEffort,
       language,
+      sessionId,
     }: {
       messages: UIMessage[];
       model: string;
@@ -49,11 +161,12 @@ export async function POST(req: Request) {
       botId?: string;
       toolList?: string[];
       language?: string;
-    } = await req.json();
+      sessionId?: string;
+    } = requestBody;
     if (!model || messages.length === 0) {
       return new NextResponse("Invalid request", { status: 400 });
     } // Supabase authentication
-    const supabase = createSupabaseServerClient();
+    const supabase = await createSupabaseServerClient();
     let userId = null;
 
     if (authorization) {
@@ -225,83 +338,142 @@ export async function POST(req: Request) {
         selectedModel = openai(modelName);
         break;
     }
-
     const newModel = wrapLanguageModel({
       model: selectedModel,
       middleware: extractReasoningMiddleware({ tagName: "think" }),
+    }); // Generate a fresh streamId for resumable streams only if Redis is available
+    const streamId = isRedisAvailable ? generateId() : null;
+
+    // Record this new stream so we can resume later (only if Redis is available)
+    if (sessionId && isRedisAvailable && streamId) {
+      try {
+        await appendStreamId({ chatId: sessionId, streamId });
+      } catch (error) {
+        console.error("Failed to record stream ID:", error);
+        // Continue without recording - not critical for stream execution
+      }
+    } // Build the data stream that will emit tokens
+
+    await saveChat({
+      id: sessionId || crypto.randomUUID(),
+      messages: coreMessage,
     });
 
-    return createDataStreamResponse({
+    const lastMsg = messages[messages.length - 1];
+    if (lastMsg) {
+      const title = await generateTitleFromUserMessage({ message: lastMsg });
+
+      const { error: updateError } = await supabase
+        .from("chat_sessions")
+        .update({
+          title: title,
+          updated_at: new Date().toISOString(),
+        })
+        .eq("id", sessionId)
+        .eq("user_id", userId);
+
+      if (updateError) {
+        console.error("Error updating session title:", updateError);
+        return "Failed to update title";
+      }
+    }
+
+    const stream = createDataStream({
       execute: (dataStream) => {
-        let tools: { [key: string]: Tool } | undefined = {};
-        if (modelDescription?.toolDisabled) {
-          tools = undefined;
-        } else {
-          tools = getTools(dataStream, toolList, modelDescription, language);
-        }
+        try {
+          let tools: { [key: string]: Tool } | undefined = {};
+          if (modelDescription?.toolDisabled) {
+            tools = undefined;
+          } else {
+            tools = getTools(
+              dataStream,
+              toolList,
+              sessionId,
+              userId,
+              modelDescription,
+              language
+            );
+          }
 
-        const response = streamText({
-          model:
-            modelDescription?.type == "ChatGPT"
-              ? openai.responses(modelName)
-              : newModel,
-          messages: coreMessage,
-          tools: tools,
-          maxSteps: 50,
-          experimental_transform: smoothStream({
-            chunking: /[\u3040-\u309F\u30A0-\u30FF]|\S+\s+/,
-          }),
-          temperature: 1,
+          dataStream.writeMessageAnnotation({
+            model,
+          });
 
-          providerOptions: {
-            ...(modelDescription?.reasoning && {
-              openai: {
-                reasoningEffort: reasoningEffort,
-                reasoningSummary: "auto",
-              },
+          const result = streamText({
+            model:
+              modelDescription?.type == "ChatGPT"
+                ? openai.responses(modelName)
+                : newModel,
+            messages: coreMessage,
+            tools: tools,
+            maxSteps: 50,
+            experimental_transform: smoothStream({
+              chunking: /[\u3040-\u309F\u30A0-\u30FF]|\S+\s+/,
             }),
-            google: {
-              thinkingConfig: {
-                thinkingBudget: 8192,
-              },
-            } as GoogleGenerativeAIProviderOptions,
-            openrouter: {
-              reasoning: { effort: "medium" },
-            } as OpenRouterProviderOptions,
-            ...(isReasoning && {
-              anthropic: {
-                thinking: { type: "enabled", budgetTokens: 8192 },
-              },
-            }),
-          },
-          onChunk() {
-            if (!firstChunk) {
-              firstChunk = true;
+            temperature: 1,
+
+            providerOptions: {
+              ...(modelDescription?.reasoning && {
+                openai: {
+                  reasoningEffort: reasoningEffort,
+                  reasoningSummary: "auto",
+                },
+              }),
+              google: {
+                thinkingConfig: {
+                  thinkingBudget: 8192,
+                },
+              } as GoogleGenerativeAIProviderOptions,
+              openrouter: {
+                reasoning: { effort: "medium" },
+              } as OpenRouterProviderOptions,
+              ...(isReasoning && {
+                anthropic: {
+                  thinking: { type: "enabled", budgetTokens: 8192 },
+                },
+              }),
+            },
+            onFinish: async ({ response }) => {
+              const endTime = Date.now();
+              const duration = endTime - startTime;
+
               dataStream.writeMessageAnnotation({
-                model,
+                generationTime: duration,
               });
-            }
-          },
-          async onFinish() {
-            // Calculate generation time and send it as an annotation
-            const endTime = Date.now();
-            const generationTime = endTime - startTime;
-            const textContent = await response.text;
-            if (textContent.length === 0) {
-              return;
-            }
-            dataStream.writeMessageAnnotation({
-              generationTime,
-            });
-          },
-        });
 
-        response.mergeIntoDataStream(dataStream, {
-          sendReasoning: true,
-        });
+              await saveChat({
+                id: sessionId || crypto.randomUUID(),
+                messages: appendResponseMessages({
+                  messages,
+                  responseMessages: response.messages,
+                }),
+              });
+            },
+          });
+
+          result.mergeIntoDataStream(dataStream, {
+            sendReasoning: true,
+          });
+        } catch (streamError) {
+          console.error("Error in stream execution:", streamError);
+          // Handle error by writing error message to stream
+          const errorMessage = errorHandler(streamError);
+          dataStream.writeData({
+            type: "error",
+            content: errorMessage,
+          });
+        }
       },
-      onError: errorHandler,
-    });
+    }); // Return a resumable stream to the client if Redis is available, otherwise return regular stream
+    if (isRedisAvailable && streamContext && streamId) {
+      console.log("Using resumable stream with ID:", streamId);
+      return new Response(
+        await streamContext.resumableStream(streamId, () => stream)
+      );
+    } else {
+      // Fallback to regular stream when Redis is not available
+      return new Response(stream);
+    }
   } catch (error) {
     console.error(error);
     return new NextResponse(error as string, { status: 500 });

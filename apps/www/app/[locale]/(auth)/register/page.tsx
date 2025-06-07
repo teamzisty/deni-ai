@@ -33,11 +33,11 @@ const Register: React.FC = () => {
       toast.error(t("login.authError"), {
         description: t("login.authErrorDescription"),
       });
-      router.push("/home");
+      router.push("/");
     }
 
     if (user && !isLoading) {
-      router.push("/home");
+      router.push("/");
     }
   }, [user, isLoading, router, t, supabase]);
 
@@ -48,7 +48,7 @@ const Register: React.FC = () => {
       const { error } = await supabase.auth.signInWithOAuth({
         provider: "google",
         options: {
-          redirectTo: `${window.location.origin}/home`,
+          redirectTo: `${window.location.origin}`,
         },
       });
 
@@ -67,7 +67,7 @@ const Register: React.FC = () => {
       const { error } = await supabase.auth.signInWithOAuth({
         provider: "github",
         options: {
-          redirectTo: `${window.location.origin}/home`,
+          redirectTo: `${window.location.origin}`,
         },
       });
 
@@ -90,7 +90,7 @@ const Register: React.FC = () => {
         email: accountEmail,
         password: accountPassword,
         options: {
-          emailRedirectTo: `${window.location.origin}/home`,
+          emailRedirectTo: `${window.location.origin}`,
         },
       });
 

@@ -29,7 +29,7 @@ type NavigationItem = {
 }
 
 const navigationItems: NavigationItem[] = [
-    { id: "home", href: "/home", icon: ArrowLeft, translationKey: "returnToDeniAI" },
+    { id: "home", href: "", icon: ArrowLeft, translationKey: "returnToDeniAI" },
     { id: "docs", href: "https://voids.top/docs", icon: Notebook, label: "Voids API Docs" },
 ];
 

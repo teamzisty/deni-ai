@@ -14,7 +14,7 @@ import {
   CardTitle,
 } from "@workspace/ui/components/card";
 import { Alert, AlertDescription } from "@workspace/ui/components/alert";
-import { supabase } from "@workspace/supabase-config/client";
+import { createClient } from "@/lib/supabase/client";
 import { toast } from "sonner";
 import { Loader2, Copy, Check } from "lucide-react";
 
@@ -33,6 +33,9 @@ export function MFAEnrollment({ onSuccess, onCancel }: MFAEnrollmentProps) {
   const [isVerifying, setIsVerifying] = useState(false);
   const [error, setError] = useState<string>("");
   const [secretCopied, setSecretCopied] = useState(false);
+
+  // Create Supabase client instance
+  const supabase = createClient();
 
   useEffect(() => {
     enrollMFA();

@@ -4,6 +4,7 @@ import { memo, useCallback } from "react";
 import { useTranslations } from "next-intl";
 import { useIsMobile } from "@workspace/ui/hooks/use-mobile";
 import { cn } from "@workspace/ui/lib/utils";
+import ContextProgressBar from "./ContextProgressBar";
 
 interface InputBoxProps {
   input: string;
@@ -14,6 +15,8 @@ interface InputBoxProps {
   handleSendMessageKey: (e: React.KeyboardEvent<HTMLTextAreaElement>) => void;
   handleImagePaste: (e: React.ClipboardEvent<HTMLDivElement>) => void;
   sendButtonRef?: React.RefObject<HTMLButtonElement | null>;
+  messages?: any[];
+  maxContextWindow?: number;
 }
 
 const InputBox: React.FC<InputBoxProps> = memo(
@@ -26,6 +29,8 @@ const InputBox: React.FC<InputBoxProps> = memo(
     handleSendMessageKey,
     handleImagePaste,
     sendButtonRef,
+    messages = [],
+    maxContextWindow,
   }) => {
     const t = useTranslations();
     const isMobile = useIsMobile();
@@ -52,6 +57,14 @@ const InputBox: React.FC<InputBoxProps> = memo(
             }}
             className="w-full resize-none field-sizing-content bg-transparent border-none shadow-none !outline-none focus:ring-0 focus:ring-offset-0 disabled:opacity-0 px-2 py-1.5 md:px-3 md:py-2 text-sm md:text-base"
           />
+          {/* Context Progress Bar */}
+          {maxContextWindow && messages.length > 0 && (
+            <ContextProgressBar 
+              messages={messages}
+              maxContextWindow={maxContextWindow}
+              className="mr-2 md:mr-3"
+            />
+          )}
           <Button
             aria-label={t("inputBox.send")}
             className="mr-2 md:mr-3"

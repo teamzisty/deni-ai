@@ -1,9 +1,8 @@
 "use client";
 
-import React, { useEffect, useRef, useState, useCallback, memo } from "react";
+import React, { useEffect, useState, useCallback, memo } from "react";
 import { useParams } from "next/navigation";
 import IntellipulseChat from "@/components/IntellipulseChat";
-import type { ChatSession } from "@/hooks/use-chat-sessions";
 import HeaderArea from "@/components/HeaderArea";
 import { useAuth } from "@/context/AuthContext";
 import { reasoningEffortType } from "@/lib/modelDescriptions";
@@ -11,25 +10,20 @@ import {
   useIntellipulseSessions,
   IntellipulseSession,
 } from "@/hooks/use-intellipulse-sessions";
-import { CreateMessage, Message, useChat } from "@ai-sdk/react";
+import { useChat } from "@ai-sdk/react";
 import { useTranslations } from "next-intl";
-import { useUploadThing, uploadResponse } from "@/utils/uploadthing";
+import { useUploadThing } from "@/utils/uploadthing";
 import { toast } from "sonner";
 import { useDebouncedCallback } from "use-debounce";
 
 // Import WebContainerUI component
 import {
   WebContainerUI,
-  webContainerProcess,
-  webContainerFS,
   getWebContainerInstance,
-  getOrCreateWebContainer,
   resetWebContainerInstance,
   getCurrentConversationId,
   TerminalLogEntry,
 } from "@/components/WebContainer";
-import { WebContainer } from "@webcontainer/api";
-import { UIMessage, ChatRequestOptions } from "ai";
 
 // Add a custom animation style
 const spinnerStyle = `
@@ -116,8 +110,7 @@ export default function IntellipulseChatPage() {
             throw new Error(`Failed to read file at ${path}`);
           }
         }
-    },
-    onError: (error) => {
+    },    onError: (error) => {
       console.error("Chat error:", error);
     },
   });

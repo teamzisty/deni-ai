@@ -1,4 +1,4 @@
-import { DataStreamWriter, LanguageModelV1, tool, Tool } from "ai";
+import { CoreAssistantMessage, CoreToolMessage, DataStreamWriter, LanguageModelV1, tool, Tool } from "ai";
 import { ImodelDescriptionType } from "./modelDescriptions";
 import { generateText, experimental_generateImage } from "ai";
 import { openai } from "@ai-sdk/openai";
@@ -8,6 +8,7 @@ import { z } from "zod";
 import { ourFileRouter } from "@/app/api/uploadthing/core";
 import { UTApi } from "uploadthing/server";
 import { UTFile } from "uploadthing/server";
+import { createClient } from "./supabase/client";
 
 const utapi = new UTApi();
 
@@ -46,6 +47,21 @@ export function generateUUID(): string {
   });
 }
 
+type ResponseMessageWithoutId = CoreToolMessage | CoreAssistantMessage;
+type ResponseMessage = ResponseMessageWithoutId & { id: string };
+
+export function getTrailingMessageId({
+  messages,
+}: {
+  messages: Array<ResponseMessage>;
+}): string | null {
+  const trailingMessage = messages.at(-1);
+
+  if (!trailingMessage) return null;
+
+  return trailingMessage.id;
+}
+
 const fetchSearchResults = async (query: string) => {
   if (!process.env.BRAVE_SEARCH_API_KEY) {
     return "Search is temporarily disabled or not available in your instance.";
@@ -64,14 +80,6 @@ const fetchSearchResults = async (query: string) => {
 
   return results;
 };
-
-const setTitle = (dataStream: DataStreamWriter) =>
-  tool({
-    description: "Set title for this conversation. (FIRST ONLY, REQUIRED)",
-    parameters: z.object({
-      title: z.string().describe("Title for this conversation."),
-    })
-  });
 
 const countChars = (dataStream: DataStreamWriter) =>
   tool({
@@ -355,6 +363,8 @@ const generateImage = (dataStream: DataStreamWriter) =>
 export function getTools(
   dataStream: DataStreamWriter,
   toolList?: string[],
+  sessionId?: string,
+  userId?: string,
   modelDescription?: ImodelDescriptionType,
   language?: string
 ) {
@@ -366,7 +376,6 @@ export function getTools(
   const deepResearchModel = openai.responses("gpt-4.1-nano-2025-04-14");
 
   tools = {
-    setTitle: setTitle(dataStream),
     countChars: countChars(dataStream),
     canvas: canvas(dataStream),
     search: search(dataStream, deepResearchModel, toolList, language),

@@ -19,7 +19,7 @@ import {
   AlertDialogTrigger,
 } from "@workspace/ui/components/alert-dialog";
 import { useAuth } from "@/context/AuthContext";
-import { supabase } from "@workspace/supabase-config/client";
+import { createClient } from "@/lib/supabase/client";
 import { Input } from "@workspace/ui/components/input";
 import { Label } from "@workspace/ui/components/label";
 import {
@@ -37,7 +37,8 @@ export default function DataControlsSettings() {
   const [showReauthDialog, setShowReauthDialog] = useState(false);
   const [show2FADialog, setShow2FADialog] = useState(false);
   const [password, setPassword] = useState("");
-  const [twoFaCode, setTwoFaCode] = useState("");  const [reauthError, setReauthError] = useState("");
+  const [twoFaCode, setTwoFaCode] = useState("");
+  const [reauthError, setReauthError] = useState("");
   const { user } = useAuth();
   const t = useTranslations();
   const NextRouter = nextRouter();
@@ -52,6 +53,9 @@ export default function DataControlsSettings() {
   const dialogPromiseRef = useRef<{ resolve: (value: string) => void } | null>(
     null
   );
+
+  // Create Supabase client instance
+  const supabase = createClient();
 
   useEffect(() => {
     // Read the 'analytics-consent' cookie on component mount
@@ -289,7 +293,7 @@ export default function DataControlsSettings() {
     }
   };
 
-  const reauthenticateWithProvider = async (provider: 'google' | 'github') => {
+  const reauthenticateWithProvider = async (provider: "google" | "github") => {
     if (!supabase) return false;
 
     try {
@@ -337,7 +341,7 @@ export default function DataControlsSettings() {
 
     // Check provider and try appropriate reauth method
     if (provider === "google") {
-      const success = await reauthenticateWithProvider('google');
+      const success = await reauthenticateWithProvider("google");
       if (success) {
         setShowReauthDialog(false);
         await deleteAccount();
@@ -345,7 +349,7 @@ export default function DataControlsSettings() {
     }
 
     if (provider === "github") {
-      const success = await reauthenticateWithProvider('github');
+      const success = await reauthenticateWithProvider("github");
       if (success) {
         setShowReauthDialog(false);
         await deleteAccount();
@@ -554,10 +558,10 @@ export default function DataControlsSettings() {
         <div className="flex p-5 items-center gap-4">
           <div className="flex-grow">
             <h3 className="text-lg font-bold text-destructive">
-              {t("settings.dataControls.deleteDevData.title")}
+              {t("settings.dataControls.deleteIntellipulseData.title")}
             </h3>
             <p className="text-sm text-muted-foreground">
-              {t("settings.dataControls.deleteDevData.description")}
+              {t("settings.dataControls.deleteIntellipulseData.description")}
             </p>
           </div>
           <div>
@@ -656,7 +660,9 @@ export default function DataControlsSettings() {
             </AlertDialogDescription>
           </AlertDialogHeader>
 
-          <div className="space-y-4">            <div className="space-y-2">
+          <div className="space-y-4">
+            {" "}
+            <div className="space-y-2">
               <Label htmlFor="password">{t("login.password")}</Label>
               <Input
                 id="password"
@@ -667,11 +673,9 @@ export default function DataControlsSettings() {
                 placeholder={t("login.password")}
               />
             </div>
-
             {reauthError && (
               <p className="text-sm text-destructive">{reauthError}</p>
             )}
-
             <div className="flex flex-col gap-2">
               {user?.app_metadata?.provider === "email" ? (
                 <>

@@ -281,13 +281,20 @@ export const MemoMarkdown = memo(
 MemoMarkdown.displayName = "MemoMarkdown";
 
 function parseMarkdownIntoBlocks(markdown: string): string[] {
+  if (typeof markdown !== "string") {
+    return [];
+  }
   const tokens = marked.lexer(markdown);
   return tokens.map((token) => token.raw);
 }
 
 export const MemoizedMarkdown = memo(
-  ({ content, id }: { content: string; id: string }) => {
-    const blocks = useMemo(() => parseMarkdownIntoBlocks(content), [content]);
+  ({ content, id }: { content: string | { text: string; type: string }[]; id: string }) => {
+    let realContent = content;
+    if (Array.isArray(content)) {
+      realContent = content.map((block) => block.text).join("\n");
+    }
+    const blocks = useMemo(() => parseMarkdownIntoBlocks(realContent as string), [realContent]);
 
     return blocks.map((block, index) => (
       <MemoMarkdown content={block} key={`${id}-block_${index}`} />
@@ -389,6 +396,7 @@ const MessageControls = memo(
               <Button
                 className="p-0 mx-0.5 md:mx-1 rounded-full"
                 variant={"ghost"}
+                onClick={handleCopy}
                 size="sm"
               >
                 <Copy size={14} className="md:size-4" />
@@ -974,7 +982,9 @@ export const MessageLog: FC<MessageLogProps> = memo(
           className={`p-2 my-2 rounded-lg ${
             message.role == "assistant"
               ? "text-white w-full"
-              : "bg-secondary ml-auto p-3"
+              : message.role === "user"
+                ? "bg-secondary ml-auto p-3"
+                : "hidden"
           }`}
         >
           {message.role === "assistant" ? (
@@ -1177,7 +1187,32 @@ export const MessageLog: FC<MessageLogProps> = memo(
                                       id={`${message.id}_assistant_reasoning_${index}`}
                                       content={
                                         part.type === "reasoning"
-                                          ? part.reasoning || ""
+                                          ? (() => {
+                                              const reasoning =
+                                                part.reasoning as any;
+                                              if (
+                                                typeof reasoning === "string"
+                                              ) {
+                                                return reasoning;
+                                              }
+                                              if (Array.isArray(reasoning)) {
+                                                return reasoning
+                                                  .filter(
+                                                    (item: any) =>
+                                                      item.type === "text"
+                                                  )
+                                                  .map((item: any) => item.text)
+                                                  .join("");
+                                              }
+                                              if (
+                                                reasoning &&
+                                                typeof reasoning === "object" &&
+                                                "text" in reasoning
+                                              ) {
+                                                return (reasoning as any).text;
+                                              }
+                                              return "";
+                                            })()
                                           : ""
                                       }
                                     />
@@ -1197,7 +1232,7 @@ export const MessageLog: FC<MessageLogProps> = memo(
                       return null;
 
                     case "text":
-                      if (part.text && part.text.trim().length > 0) {
+                      if (part.text) {
                         return (
                           <MemoizedMarkdown
                             key={`${message.id}_text_${index}`}
@@ -1252,21 +1287,22 @@ export const MessageLog: FC<MessageLogProps> = memo(
                 generationTime={generationTime}
               />
             </div>
-          ) : (
-            <>
-              {message.experimental_attachments && (
-                <Image
-                  alt={t("messageLog.image")}
-                  src={message.experimental_attachments[0]?.url || ""}
-                  width="300"
-                  height="300"
-                ></Image>
-              )}
-              <p className="prose dark:prose-invert text-sm md:text-base">
-                {message.content}
-              </p>
-            </>
-          )}
+          ) : message.role === "user" ? (
+            <div className="prose dark:prose-invert whitespace-pre-wrap break-words">
+              {message.parts.map((part, index) => {
+                switch (part.type) {
+                  case "text":
+                    return <MemoizedMarkdown
+                      key={`${message.id}_user_text_${index}`}
+                      id={`${message.id}_user_text_${index}`}
+                      content={part.text}
+                    />;
+                  default:
+                    return null;
+                }
+              })}
+            </div>
+          ) : null}
         </div>
         <DeepResearchPanel
           isOpen={isDeepResearchPanelOpen}
