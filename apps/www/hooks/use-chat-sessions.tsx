@@ -21,6 +21,10 @@ interface ChatSessionsContextValue {
   createSession: (bot?: BotWithId) => ChatSession;
   addSession: (session: ChatSession) => void;
   updateSession: (id: string, updatedSession: ChatSession) => Promise<void>;
+  updateSessionPartial: (
+    id: string,
+    updatedFields: Partial<ChatSession>
+  ) => Promise<void>;
   deleteSession: (id: string) => void;
   clearAllSessions: () => Promise<void>;
   getSession: (id: string) => ChatSession | undefined;
@@ -434,6 +438,7 @@ export function ChatSessionsProvider({ children }: { children: ReactNode }) {
     },
     [user]
   );
+
   const deleteSession = useCallback(
     async (id: string) => {
       setSessions((prev) => prev.filter((session) => session.id !== id));
@@ -501,6 +506,82 @@ export function ChatSessionsProvider({ children }: { children: ReactNode }) {
   const getSession = useCallback(
     (id: string) => sessions.find((session) => session.id === id),
     [sessions]
+  );
+
+  const getLatestSession = useCallback(
+    async (id: string) => {
+      if (!supabase) {
+        console.error("Supabase client not initialized");
+        return getSession(id);
+      }
+
+      const { data, error } = await supabase
+        .from("chat_sessions")
+        .select("*")
+        .eq("id", id)
+        .single();
+      if (error) {
+        console.error("Error fetching latest session:", error);
+        return getSession(id);
+      }
+
+      return data;
+    },
+    [supabase]
+  );
+
+  const updateSessionPartial = useCallback(
+    async (id: string, updatedFields: Partial<ChatSession>) => {
+      setSessions((prev) =>
+        prev.map((session) =>
+          session.id === id ? { ...session, ...updatedFields } : session
+        )
+      );
+
+      // Save to appropriate storage based on authentication status
+      if (user && supabase) {
+        // Save to Supabase for authenticated users
+        try {
+          const { error } = await supabase
+            .from("chat_sessions")
+            .update(updatedFields)
+            .eq("id", id)
+            .eq("user_id", user.id);
+
+          if (error) {
+            console.error("Error updating session in Supabase:", error);
+            // Fallback to IndexedDB on error
+            const currentSession = await getLatestSession(id);
+            if (currentSession) {
+              await saveSessionToIndexedDB({
+                ...currentSession,
+                ...updatedFields,
+              });
+            }
+          }
+        } catch (error) {
+          console.error("Error updating session in Supabase:", error);
+          // Fallback to IndexedDB on error
+          const currentSession = await getLatestSession(id);
+          if (currentSession) {
+            await saveSessionToIndexedDB({
+              ...currentSession,
+              ...updatedFields,
+            });
+          }
+        }
+      } else {
+        // Save to IndexedDB for non-authenticated users
+        const currentSession = getSession(id);
+        if (currentSession) {
+          await saveSessionToIndexedDB({
+            ...currentSession,
+            ...updatedFields,
+          });
+        }
+      }
+    },
+    [user, getSession]
   );
 
   const syncSessions = useCallback(async () => {
@@ -657,6 +738,7 @@ export function ChatSessionsProvider({ children }: { children: ReactNode }) {
     createSession,
     addSession,
     updateSession,
+    updateSessionPartial,
     deleteSession,
     clearAllSessions,
     getSession,

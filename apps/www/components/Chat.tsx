@@ -104,7 +104,6 @@ interface ChatProps {
   initialModel?: string;
   initialImage?: string;
   initialMessage?: string | null;
-  updateSession: (id: string, updatedSession: ChatSession) => void;
 }
 
 const Chat: React.FC<ChatProps> = ({
@@ -112,13 +111,12 @@ const Chat: React.FC<ChatProps> = ({
   initialSessionData,
   user,
   authToken,
-  updateSession,
   initialMessage,
 }) => {
   const t = useTranslations();
   const isMobile = useIsMobile();
 
-  const { getSession } = useChatSessions();
+  const { getSession, updateSessionPartial } = useChatSessions();
 
   // --- State Variables ---
   const [image, setImage] = useState<string | null>(null);
@@ -547,8 +545,7 @@ const Chat: React.FC<ChatProps> = ({
     if (!currentSession) return;
     if (status === "streaming" || status === "submitted") return;
 
-    updateSession(sessionId, {
-      ...currentSession,
+    updateSessionPartial(sessionId, {
       messages: messages,
     });
   }, [messages, status]);

@@ -74,8 +74,6 @@ export const systemPromptDev = [
 export const systemPromptToolPart = [
   "## Tools",
   "if user enabled the tool, you can use it.",
-  "### Set Title",
-  "(NO CONFIRM REQUIRED) You must set title (summary) to the conversation for first message.",
   "### Count Characters",
   "You can count the number of characters in the message.",
   "### Search",
