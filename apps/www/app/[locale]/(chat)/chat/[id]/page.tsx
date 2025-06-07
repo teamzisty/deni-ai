@@ -7,22 +7,18 @@ import { Loading } from "@/components/loading";
 import { useAuth } from "@/context/AuthContext";
 import { useTranslations } from "next-intl";
 import React, { useState, useEffect } from "react";
-import { modelDescriptions } from "@/lib/modelDescriptions";
 import logger from "@/utils/logger";
 import Chat from "@/components/Chat";
 import { createClient } from "@/lib/supabase/client";
 
 const ChatPage: React.FC = () => {
   const {
-    updateSession,
     getSession,
     isLoading: isSessionsLoading,
     isSupabaseLoaded,
-    sessions,
   } = useChatSessions();
   const { user, isLoading: isAuthLoading } = useAuth();
 
-  const t = useTranslations();
   const params = useParams<{ id: string }>();
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -120,7 +116,6 @@ const ChatPage: React.FC = () => {
         initialSessionData={currentSessionData}
         user={user}
         authToken={authToken}
-        updateSession={updateSession}
         initialMessage={initialMessage}
       />
     </main>
