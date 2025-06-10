@@ -28,38 +28,34 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     }
   )
 
-  const formData = await request.formData()
-  const email = formData.get('email') as string
-  const password = formData.get('password') as string
+  const { factorId, code } = await request.json()
 
-  if (!email || !password) {
+  if (!factorId || !code) {
     return NextResponse.json(
-      { error: 'Email and password are required' },
-      { status: 400 }
-    )
-  }
-  const { data: { user }, error } = await supabase.auth.signUp({
-    email,
-    password,
-  })
-
-  if (error) {
-    return NextResponse.json(
-      { error: error.message },
+      { error: 'Factor ID and code are required' },
       { status: 400 }
     )
   }
 
-  if (!user) {
+  try {
+    const { data, error } = await supabase.auth.mfa.challengeAndVerify({
+      factorId,
+      code,
+    })
+
+    if (error) {
+      return NextResponse.json(
+        { error: error.message },
+        { status: 401 }
+      )
+    }    return NextResponse.json({ 
+      success: true,
+      user: data.user
+    })
+  } catch (error: any) {
     return NextResponse.json(
-      { error: 'Registration failed' },
-      { status: 400 }
+      { error: error.message || 'MFA verification failed' },
+      { status: 500 }
     )
   }
-  // After successful signup, user can optionally set up MFA later
-  return NextResponse.json({ 
-    user,
-    success: true,
-    message: 'Account created successfully.'
-  })
 }

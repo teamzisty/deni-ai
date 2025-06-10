@@ -612,10 +612,11 @@
       "messageSendFailed": "メッセージの送信に失敗しました",
       "shareNotLoggedIn": "会話を共有するにはログインが必要です",
       "shareNoMessages": "共有するメッセージがありません",
-      "shareFailed": "会話の共有に失敗しました",
-      "retryMessage": "メッセージの送信に失敗しました。再試行しますか？",
+      "shareFailed": "会話の共有に失敗しました",      "retryMessage": "メッセージの送信に失敗しました。再試行しますか？",
       "retry": "再試行",
-      "maxRetriesReached": "最大再試行回数に達しました"
+      "maxRetriesReached": "最大再試行回数に達しました",
+      "captchaRequired": "続行するには、キャプチャ認証を完了してください",
+      "captchaFailed": "キャプチャ認証に失敗しました。もう一度お試しください"
     },
     "deepResearch": {
       "info": "詳細なリサーチについて",
@@ -626,7 +627,10 @@
       "deep": "深いリサーチ",
       "deepDescription": "より詳細なリサーチ。時間がかかります。",
       "advanced": "高度なリサーチ",
-      "advancedDescription": "より高度なリサーチ。より時間がかかります。"
+      "advancedDescription": "より高度なリサーチ。より時間がかかります。"    },    "captcha": {
+      "verificationRequired": "続行するには、以下の認証を完了してください",
+      "verified": "認証が正常に完了しました",
+      "expired": "認証の有効期限が切れました。もう一度完了してください"
     },
     "image": {
       "uploading": "画像をアップロード中...",

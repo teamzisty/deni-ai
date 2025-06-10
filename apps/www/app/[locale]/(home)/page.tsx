@@ -5,18 +5,10 @@ import { motion } from "framer-motion";
 import { cn } from "@workspace/ui/lib/utils";
 import {
   ArrowUpRight,
-  DollarSignIcon,
   Edit,
-  EyeOff,
-  InfinityIcon,
   KeyboardIcon,
-  LockIcon,
-  ServerIcon,
   Shield,
-  ShieldCheck,
-  ShieldCheckIcon,
   Sparkles,
-  Zap,
 } from "lucide-react";
 import { Button } from "@workspace/ui/components/button";
 import { Header } from "@/components/header";
@@ -38,7 +30,7 @@ const ChatApp: React.FC = () => {
     <main className="flex flex-col min-h-screen bg-gradient-to-b from-background to-background/80">
       <Header />
       <div className={cn("w-full")}>
-        <div className="w-full md:max-w-3/4 my-8 mx-auto">
+        <div className="w-full lg:max-w-3/4 lg:my-8 mx-auto">
           {/* Hero Section */}
           <div className="w-full border">
             <div className="relative overflow-hidden bg-black border-b border-neutral-800 mb-5">
@@ -59,7 +51,7 @@ const ChatApp: React.FC = () => {
                     size="lg"
                     className="h-12 px-8 font-medium rounded-full"
                   >
-                    <Link href="/">
+                    <Link href="/login">
                       <span className="flex items-center">
                         <span>{t("startButton")}</span>
                         <ArrowUpRight className="ml-2 h-4 w-4" />
@@ -102,13 +94,12 @@ const ChatApp: React.FC = () => {
                 <TabsContent value="one" className="mt-0">
                   <div className="flex flex-col md:flex-row items-center justify-between gap-8">
                     <motion.div
-                      className="md:w-1/2"
+                      className="md:max-w-1/2 w-full"
                       initial={{ opacity: 0, y: 20 }}
                       whileInView={{ opacity: 1, y: 0 }}
                       transition={{ duration: 0.5 }}
                       viewport={{ once: true }}
                     >
-                      {" "}
                       <h3 className="text-2xl font-bold mb-4">
                         {t("featuresTab.one.title")}
                       </h3>
@@ -124,15 +115,15 @@ const ChatApp: React.FC = () => {
                         </Link>
                       </Button>
                     </motion.div>
-                    <div className="md:w-1/2">
+                    <div className="w-full md:max-w-1/2">
                       <motion.div
                         initial={{ opacity: 0, scale: 0.95 }}
                         whileInView={{ opacity: 1, scale: 1 }}
                         transition={{ duration: 0.5 }}
                         viewport={{ once: true }}
-                        className="flex-1 relative"
+                        className="flex-1 relative w-full"
                       >
-                        <div className="relative bg-card rounded-xl overflow-hidden shadow-2xl border border-border/40">
+                        <div className="w-fullrelative bg-card rounded-xl overflow-hidden shadow-2xl border border-border/40">
                           <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-primary/80 via-primary to-primary/80" />
                           <div className="p-6 sm:p-8">
                             <div className="space-y-2">
@@ -199,7 +190,7 @@ const ChatApp: React.FC = () => {
                 <TabsContent value="two" className="mt-0">
                   <div className="flex flex-col md:flex-row items-center justify-between gap-8">
                     <motion.div
-                      className="md:w-1/2"
+                      className="md:max-w-1/2 w-full"
                       initial={{ opacity: 0, y: 20 }}
                       whileInView={{ opacity: 1, y: 0 }}
                       transition={{ duration: 0.5 }}
@@ -220,7 +211,7 @@ const ChatApp: React.FC = () => {
                         </Link>
                       </Button>
                     </motion.div>
-                    <div className="md:w-1/2">
+                    <div className="md:max-w-1/2 w-full">
                       <motion.div
                         initial={{ opacity: 0, scale: 0.95 }}
                         whileInView={{ opacity: 1, scale: 1 }}
@@ -294,7 +285,7 @@ const ChatApp: React.FC = () => {
                 <TabsContent value="three" className="mt-0">
                   <div className="flex flex-col md:flex-row items-center justify-between gap-8">
                     <motion.div
-                      className="md:w-1/2"
+                      className="md:max-w-1/2 w-full"
                       initial={{ opacity: 0, y: 20 }}
                       whileInView={{ opacity: 1, y: 0 }}
                       transition={{ duration: 0.5 }}
@@ -315,7 +306,7 @@ const ChatApp: React.FC = () => {
                         </Link>
                       </Button>
                     </motion.div>
-                    <div className="md:w-1/2">
+                    <div className="md:max-w-1/2 w-full">
                       <motion.div
                         initial={{ opacity: 0, scale: 0.95 }}
                         whileInView={{ opacity: 1, scale: 1 }}

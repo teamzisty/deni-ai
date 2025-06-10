@@ -11,6 +11,7 @@ import { toast } from "sonner";
 import { SiGithub, SiGoogle } from "@icons-pack/react-simple-icons";
 import { useParams } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
+import { AuthService } from "@/lib/auth/client";
 import {
   Card,
   CardHeader,
@@ -23,7 +24,7 @@ const Register: React.FC = () => {
   const t = useTranslations();
   const params = useParams();
   const router = useRouter();
-  const { supabase, user, isLoading } = useAuth();
+  const { supabase, user, isLoading } = useAuth({ authRequired: false });
   const noticeRef = useRef<HTMLLabelElement | null>(null);
   const [accountEmail, setEmail] = useState("");
   const [accountPassword, setPassword] = useState("");
@@ -78,25 +79,17 @@ const Register: React.FC = () => {
       }
     }
   };
-
   const registerClicked = async () => {
-    if (!supabase) return;
-
     if (!noticeRef.current) return;
     const notice = noticeRef.current;
 
     try {
-      const { error } = await supabase.auth.signUp({
-        email: accountEmail,
-        password: accountPassword,
-        options: {
-          emailRedirectTo: `${window.location.origin}`,
-        },
-      });
+      const formData = new FormData();
+      formData.append('email', accountEmail);
+      formData.append('password', accountPassword);
 
-      if (error) throw error;
-
-      toast.success(t("register.checkEmail"), {
+      const authService = new AuthService();
+      await authService.signupWithForm(formData);      toast.success(t("register.checkEmail"), {
         description: t("register.confirmationSent"),
       });
     } catch (error: unknown) {

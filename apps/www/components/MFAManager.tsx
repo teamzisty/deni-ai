@@ -192,11 +192,9 @@ export function MFAManager() {
                 </div>
               ))}
             </div>
-          </div>
-        ) : (
+          </div>        ) : (
           <div className="space-y-4">
             <div className="p-4 bg-yellow-50 dark:bg-yellow-950/20 rounded-lg border border-yellow-200 dark:border-yellow-800">
-              {" "}
               <div className="flex items-center space-x-2">
                 <Shield className="h-5 w-5 text-yellow-600" />
                 <span className="font-medium text-yellow-800 dark:text-yellow-200">
@@ -204,11 +202,12 @@ export function MFAManager() {
                 </span>
               </div>
               <p className="text-sm text-yellow-700 dark:text-yellow-300 mt-1">
-                {t("disabledDescription")}
+                Two-factor authentication is recommended for enhanced security.
               </p>
             </div>
 
-            <Button onClick={() => setIsEnrolling(true)} className="w-full">
+            <Button onClick={() => setIsEnrolling(true)} className="w-full" size="lg">
+              <Shield className="mr-2 h-4 w-4" />
               {t("setupButton")}
             </Button>
           </div>
