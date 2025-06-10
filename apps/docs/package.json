@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "NEXT_TURBOPACK_TRACING=1 next dev --turbopack",
+    "dev": "next dev --turbopack -p 3001",
     "build": "next build --no-lint --turbopack",
     "build:full": "next build",
     "build:turbopack": "next build --turbopack",
@@ -44,9 +44,9 @@
   "devDependencies": {
     "@tailwindcss/postcss": "^4.1.8",
     "@tailwindcss/typography": "^0.5.16",
-    "@types/node": "^22.15.29",
+    "@types/node": "^22.15.30",
     "@types/react": "^19.1.6",
-    "@types/react-dom": "^19.1.5",
+    "@types/react-dom": "^19.1.6",
     "@types/unist": "^3.0.3",
     "@workspace/eslint-config": "workspace:^",
     "@workspace/typescript-config": "workspace:*",

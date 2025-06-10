@@ -16,6 +16,10 @@ interface AuthContextType {
   sendVerificationEmail: () => Promise<void>;
 }
 
+interface UseAuthOptions {
+  authRequired?: boolean;
+}
+
 const supabase = createClient();
 
 const AuthContext = createContext<AuthContextType>({
@@ -72,7 +76,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setIsLoading(false);
       }
     }, AUTH_TIMEOUT_MS);    // Get initial session
-    supabase.auth.getSession().then(({ data: { session } }: { data: { session: Session | null } }) => {
+    supabase.auth.getSession().then(async ({ data: { session } }: { data: { session: Session | null } }) => {
       setSession(session);
       setUser(session?.user ?? null);
       setIsLoading(false);
@@ -82,31 +86,37 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         supabase.auth.stopAutoRefresh();
       }
 
-      // Check email verification
+      // Check email verification first
       if (session?.user && !session.user.email_confirmed_at) {
         // Exempt getting-started page from verification requirement
         const isGettingStartedPage = pathname?.includes('/getting-started');
         
         if (!isGettingStartedPage) {
           router.push('/getting-started');
+          return;
         }
       }
-    });// Listen for auth changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event: AuthChangeEvent, session: Session | null) => {
+
+      // MFA is optional - no forced redirection for initial session check
+    });    // Listen for auth changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event: AuthChangeEvent, session: Session | null) => {
       clearTimeout(authTimeout);
       setSession(session);
       setUser(session?.user ?? null);
       setIsLoading(false);
 
-      // Check email verification
+      // Check email verification first
       if (session?.user && !session.user.email_confirmed_at) {
         // Exempt getting-started page from verification requirement
         const isGettingStartedPage = pathname?.includes('/getting-started');
         
         if (!isGettingStartedPage) {
           router.push('/getting-started');
+          return;
         }
       }
+
+      // MFA is optional - no forced redirection for auth state changes
     });
 
     return () => {
@@ -122,4 +132,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   );
 };
 
-export const useAuth = () => useContext(AuthContext);
+export const useAuth = (options: UseAuthOptions = {}) => {
+  const context = useContext(AuthContext);
+  const { authRequired = true } = options;
+  const router = useRouter();
+
+  useEffect(() => {
+    if (!authRequired || context.isLoading) return;
+
+    if (!context.session?.user && typeof window !== 'undefined') {
+      router.push('/login');
+    }
+  }, [context.session, context.isLoading, authRequired, router]);
+
+  return context;
+};

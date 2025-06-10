@@ -8,7 +8,7 @@
 
 [![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fraicdev%2Fdeni-ai&env=OPENAI_API_KEY,ANTHROPIC_API_KEY,NEXT_PUBLIC_FIREBASE_API_KEY,GOOGLE_API_KEY,XAI_API_KEY,GROQ_API_KEY,OPENROUTER_API_KEY,FIREBASE_SERVICE_ACCOUNT_KEY,BRAVE_SEARCH_API_KEY,UPLOADTHING_TOKEN,NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,NEXT_PUBLIC_FIREBASE_PROJECT_ID,NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN&project-name=deni-ai&repository-name=deni-ai)
 
-Deni AI is a versatile chat application that allows interaction with multiple AI models. Built with Next.js and Firebase, it provides an intuitive user interface.
+Deni AI is a fully completed and versatile chat application that allows interaction with multiple AI models. Built with Next.js and Firebase, it provides an intuitive user interface.
 
 ## Getting Started
 

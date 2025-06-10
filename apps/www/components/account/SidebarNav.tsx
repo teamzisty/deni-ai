@@ -47,8 +47,8 @@ export const SidebarNav = () => {
     },
     {
       title: t("layout.return"),
-      href: "",
-      value: "",
+      href: "/",
+      value: "/",
       icon: <ArrowLeft className="h-4 w-4 mr-2" />,
     },
   ];

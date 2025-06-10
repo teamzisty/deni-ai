@@ -1,6 +1,6 @@
+import "./globals.css";
 import "@workspace/ui/globals.css";
-import "./mobile.css";
-import "./vercel-patterns.css";
+
 import { ThemeProvider } from "next-themes";
 import { Noto_Sans_JP } from "next/font/google";
 import { JetBrains_Mono } from "next/font/google";

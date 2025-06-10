@@ -20,7 +20,7 @@ import { AlertCircle, ArrowLeft, Check, Mail } from "lucide-react";
 
 const PasswordReset: React.FC = () => {
   const t = useTranslations();
-  const { supabase } = useAuth();
+  const { supabase } = useAuth({ authRequired: false });
   const router = useRouter();
 
   const [email, setEmail] = useState("");

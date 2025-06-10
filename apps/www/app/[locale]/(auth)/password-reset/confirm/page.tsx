@@ -20,7 +20,7 @@ import { Lock } from "lucide-react";
 
 const PasswordResetConfirm: React.FC = () => {
   const t = useTranslations();
-  const { supabase } = useAuth();
+  const { supabase } = useAuth({ authRequired: false });
   const router = useRouter();
 
   const [newPassword, setNewPassword] = useState("");

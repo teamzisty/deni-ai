@@ -1,7 +1,9 @@
 import {
   modelDescriptions,
   reasoningEffortType,
+  reasoningEffortValues,
 } from "@/lib/modelDescriptions";
+import { verify } from "hcaptcha";
 import { getSystemPrompt } from "@/lib/systemPrompt";
 import { createOpenAI } from "@ai-sdk/openai";
 import { createAnthropic } from "@ai-sdk/anthropic";
@@ -19,8 +21,6 @@ import { createSupabaseServerClient } from "@/lib/supabase/server";
 import {
   appendResponseMessages,
   convertToCoreMessages,
-  CoreAssistantMessage,
-  CoreMessage,
   createDataStream,
   extractReasoningMiddleware,
   generateId,
@@ -31,7 +31,7 @@ import {
   wrapLanguageModel,
 } from "ai";
 import { NextResponse } from "next/server";
-import { getTools, getTrailingMessageId } from "@/lib/utils";
+import { getTools } from "@/lib/utils";
 import { RowServerBot } from "@/types/bot";
 import {
   loadStreams,
@@ -42,6 +42,19 @@ import {
 import { after } from "next/server";
 import { createResumableStreamContext } from "resumable-stream";
 import { generateTitleFromUserMessage } from "@/lib/actions";
+import z from "zod";
+
+const chatPostRequestSchema = z.object({
+  messages: z.array(z.any()),
+  model: z.string(),
+  reasoningEffort: reasoningEffortValues,
+  toolList: z.array(z.string()),
+  sessionId: z.string(),
+  // Optional fields
+  captchaToken: z.string().optional().nullable(),
+  botId: z.string().optional().nullable(),
+  language: z.string().optional().nullable().default("en"),
+});
 
 // Only enable resumable streams when Redis is available
 const isRedisAvailable = !!process.env.REDIS_URL;
@@ -119,12 +132,6 @@ export async function POST(req: Request) {
   try {
     const authorization = req.headers.get("Authorization");
 
-    // Log the request details for debugging
-    console.log("Request Content-Type:", req.headers.get("Content-Type"));
-    console.log("Request Content-Length:", req.headers.get("Content-Length"));
-    console.log("Request URL:", req.url);
-    console.log("Request method:", req.method);
-
     // Gracefully handle non-JSON Content-Types
     let requestBody: any;
     const contentType = req.headers.get("Content-Type") || "";
@@ -135,39 +142,36 @@ export async function POST(req: Request) {
         const rawText = await req.text();
         requestBody = JSON.parse(rawText);
       }
-      console.log(
-        "Successfully parsed request body:",
-        JSON.stringify(requestBody, null, 2)
-      );
     } catch (parseError) {
       console.error("Body parse error:", parseError);
       return new NextResponse("Invalid JSON in request body", { status: 400 });
     }
 
+    const validationResult = chatPostRequestSchema.safeParse(requestBody);
+
+    if (!validationResult.success) {
+      console.error("Validation failed:", validationResult.error);
+      return new NextResponse("Invalid request data", { status: 400 });
+    }
+
     let {
-      // eslint-disable-next-line prefer-const
       messages,
       model,
-      toolList,
+      reasoningEffort = "medium",
+      captchaToken,
       botId,
-      // eslint-disable-next-line prefer-const
-      reasoningEffort,
-      language,
+      toolList,
+      language = "en",
       sessionId,
-    }: {
-      messages: UIMessage[];
-      model: string;
-      reasoningEffort: reasoningEffortType;
-      botId?: string;
-      toolList?: string[];
-      language?: string;
-      sessionId?: string;
-    } = requestBody;
-    if (!model || messages.length === 0) {
+    } = validationResult.data;
+
+    // Validate required fields
+    if (messages.length === 0) {
       return new NextResponse("Invalid request", { status: 400 });
-    } // Supabase authentication
+    }    // Supabase authentication - Support both authenticated and anonymous users
     const supabase = await createSupabaseServerClient();
-    let userId = null;
+    let userId: string | undefined = undefined;
+    let isAnonymous = true;
 
     if (authorization) {
       try {
@@ -178,15 +182,16 @@ export async function POST(req: Request) {
           error,
         } = await supabase.auth.getUser(token);
         if (error || !user) {
-          return new NextResponse("Authorization failed", { status: 401 });
+          // Allow anonymous users to proceed without authentication
+          console.log("Authentication failed, proceeding as anonymous user");
+        } else {
+          userId = user.id;
+          isAnonymous = false;
         }
-        userId = user.id;
       } catch (error) {
-        console.error(error);
-        return new NextResponse("Authorization failed", { status: 401 });
+        // Allow anonymous users to proceed without authentication
+        console.log("Authentication error, proceeding as anonymous user:", error);
       }
-    } else {
-      return new NextResponse("Authorization failed", { status: 401 });
     }
 
     let bot: RowServerBot | null = null;
@@ -206,6 +211,42 @@ export async function POST(req: Request) {
 
       bot = botData as RowServerBot;
       bot.id = botId;
+    }    const hcaptchaSiteKey = process.env.NEXT_PUBLIC_HCAPTCHA_SITE_KEY;
+    const hcaptchaSecretKey =
+      process.env.HCAPTCHA_SECRET_KEY || "10000000-ffff-ffff-ffff-000000000001"; // Dummy key for local testing    // Validate hCaptcha Token - Required for all users
+    if (hcaptchaSiteKey && hcaptchaSecretKey && !captchaToken) {
+      return new NextResponse("Captcha token is required", { status: 400 });
+    } else if (hcaptchaSiteKey && hcaptchaSecretKey && captchaToken) {
+      console.log(hcaptchaSiteKey, captchaToken);
+      const isValidCaptcha = await verify(
+        hcaptchaSecretKey,
+        hcaptchaSiteKey === "10000000-ffff-ffff-ffff-000000000001"
+          ? "0x0000000000000000000000000000000000000000" /* dummy */
+          : captchaToken
+      );
+      if (!isValidCaptcha.success) {        console.error(
+          "Captcha validation declined (failed) for: ",
+          userId || "anonymous",
+          "(Error: ",
+          isValidCaptcha["error-codes"]?.join(", "),
+          ")"
+        );
+        return new NextResponse(
+          "Falied to validate your request (ERROR: HC_0001)",
+          { status: 400 }
+        );
+      } else if (isValidCaptcha.score || 1 < 0.5) {        console.error(
+          "Captcha validation declined (low score) for: ",
+          userId || "anonymous",
+          "(Score: ",
+          isValidCaptcha.score,
+          ")"
+        );
+        return new NextResponse(
+          "Falied to validate your request (ERROR: HC_0002)",
+          { status: 400 }
+        );
+      }
     }
 
     const modelDescription = modelDescriptions[model];
@@ -391,7 +432,7 @@ export async function POST(req: Request) {
               sessionId,
               userId,
               modelDescription,
-              language
+              language || "en"
             );
           }
 

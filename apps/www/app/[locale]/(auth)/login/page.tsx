@@ -45,7 +45,7 @@ import { authService } from "@/lib/auth/client";
 const Login: React.FC = () => {
   const t = useTranslations();
   const noticeRef = useRef<HTMLLabelElement | null>(null);
-  const { user, isLoading, supabase } = useAuth();
+  const { user, isLoading, supabase } = useAuth({ authRequired: false });
   const params = useParams();
   const router = useRouter();
   const [accountEmail, setEmail] = useState("");
@@ -111,8 +111,7 @@ const Login: React.FC = () => {
         noticeRef.current.textContent = error.message;
       }
     }
-  };
-  const loginWithForm = async (formData: FormData) => {
+  };  const loginWithForm = async (formData: FormData) => {
     if (!noticeRef.current) return;
     const notice = noticeRef.current;
 
@@ -121,9 +120,8 @@ const Login: React.FC = () => {
       router.push("/");
     } catch (error: unknown) {
       if (!(error instanceof Error)) return;
-      
-      // Check if MFA is required
-      if (error.message.includes("MFA")) {
+        // Check if MFA is required
+      if (error.message === "MFA_REQUIRED") {
         // Extract email from form for MFA flow
         const email = formData.get('email') as string;
         const password = formData.get('password') as string;
@@ -211,9 +209,8 @@ const Login: React.FC = () => {
       }
     }
   };
-
   const verifyMFA = async () => {
-    if (!supabase || !twoFaCode) return;
+    if (!twoFaCode) return;
 
     if (!noticeRef.current) return;
     const notice = noticeRef.current;
@@ -229,12 +226,7 @@ const Login: React.FC = () => {
         throw new Error("No MFA factor found");
       }
 
-      const { data, error } = await supabase.auth.mfa.challengeAndVerify({
-        factorId: totpFactor.id,
-        code: twoFaCode,
-      });
-
-      if (error) throw error;
+      await authService.verifyMFA(totpFactor.id, twoFaCode);
 
       closeDialog();
       router.push("/");
