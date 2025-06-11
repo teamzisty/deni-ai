@@ -116,7 +116,8 @@ const Chat: React.FC<ChatProps> = ({
 }) => {
   const t = useTranslations();
   const isMobile = useIsMobile();
-  const { updateSessionPartial } = useChatSessions();  const [captchaToken, setCaptchaToken] = useState<string | null>(null);
+  const { updateSessionPartial } = useChatSessions();
+  const [captchaToken, setCaptchaToken] = useState<string | null>(null);
   const [showCaptcha, setShowCaptcha] = useState<boolean>(true); // Always show for invisible captcha
   const [captchaRequired, setCaptchaRequired] = useState<boolean>(true); // Captcha is required for all users
   const captchaRef = useRef<any>(null); // Reference to hCaptcha component
@@ -157,7 +158,8 @@ const Chat: React.FC<ChatProps> = ({
     experimental_resume,
     error,
     handleSubmit,
-    data,  } = useChat({
+    data,
+  } = useChat({
     api: "/api/chat", // Specify the chat API endpoint
     initialMessages: initialSessionData.messages, // Initialize messages
     id: sessionId, // Set chat id to sync with session
@@ -168,12 +170,16 @@ const Chat: React.FC<ChatProps> = ({
       setShowCaptcha(true); // Keep showing for invisible captcha
       setCaptchaRequired(true);
       setPendingMessageSend(false); // Clear any pending flag
+      console.log("Message sent successfully, captcha state reset");
     },
     onError: (error) => {
       console.error("useChat error:", error);
-      
+
       // Check if error indicates captcha is required
-      if (error.message?.includes("captcha") || error.message?.includes("429")) {
+      if (
+        error.message?.includes("captcha") ||
+        error.message?.includes("429")
+      ) {
         setCaptchaToken(null); // Reset captcha token
         setShowCaptcha(true);
         setCaptchaRequired(true);
@@ -212,7 +218,7 @@ const Chat: React.FC<ChatProps> = ({
         description: t("chat.error.errorOccurred", { message: error.message }),
       });
     },
-  });  // Check initial captcha requirement for all users (invisible mode)
+  }); // Check initial captcha requirement for all users (invisible mode)
   useEffect(() => {
     // For invisible captcha, always show the component but keep it hidden
     setShowCaptcha(true);
@@ -310,7 +316,8 @@ const Chat: React.FC<ChatProps> = ({
       "handleResearchDepthChange",
       `Research depth changed to ${depth}`
     );
-  }, []);  const baseSendMessage = async (
+  }, []);
+  const baseSendMessage = async (
     event:
       | React.MouseEvent<HTMLButtonElement>
       | React.KeyboardEvent<HTMLTextAreaElement>
@@ -332,6 +339,12 @@ const Chat: React.FC<ChatProps> = ({
       return;
     }    // For invisible captcha, execute captcha if token is not available
     if (captchaRequired && !captchaToken) {
+      // Check if we're already trying to get a captcha token to avoid infinite loop
+      if (pendingMessageSend) {
+        console.log("Already pending message send, skipping captcha execution");
+        return;
+      }
+      
       if (captchaRef.current) {
         try {
           console.log("Executing invisible captcha...");
@@ -342,6 +355,7 @@ const Chat: React.FC<ChatProps> = ({
         } catch (error) {
           console.error("Failed to execute invisible captcha:", error);
           toast.error(t("chat.error.captchaFailed"));
+          setPendingMessageSend(false); // Reset flag on error
           return;
         }
       } else {
@@ -515,26 +529,36 @@ const Chat: React.FC<ChatProps> = ({
             });
           });
       });
-    },    [startUpload, authToken, t]
+    },
+    [startUpload, authToken, t]
   ); // Dependencies for uploadImage  // hCaptcha handlers
-  const handleCaptchaVerify = useCallback((token: string) => {
-    console.log("Captcha verified, token received:", token);
-    setCaptchaToken(token);
-    setShowCaptcha(true); // Keep showing for invisible captcha
-    setCaptchaRequired(false);
-    toast.success(t("chat.captcha.verified"));
-    
-    // If there's a pending message send, continue with it
-    if (pendingMessageSend) {
-      setPendingMessageSend(false);
-      // Continue with message sending after a short delay
-      setTimeout(() => {
-        if (sendButtonRef.current) {
-          sendButtonRef.current.click();
-        }
-      }, 100);
-    }
-  }, [t, pendingMessageSend]);
+  const handleCaptchaVerify = useCallback(
+    (token: string) => {
+      console.log("Captcha verified, token received:", token);
+      
+      // Prevent duplicate verification
+      if (captchaToken === token) {
+        console.log("Duplicate captcha token, ignoring");
+        return;
+      }
+      
+      setCaptchaToken(token);
+      setShowCaptcha(true); // Keep showing for invisible captcha
+      setCaptchaRequired(false);
+      toast.success(t("chat.captcha.verified"));
+
+      // If there's a pending message send, continue with it using setTimeout to avoid immediate re-execution
+      if (pendingMessageSend) {
+        setPendingMessageSend(false);
+        // Use setTimeout to allow state updates to complete before continuing
+        setTimeout(() => {
+          const syntheticEvent = new Event('click') as any;
+          baseSendMessage(syntheticEvent);
+        }, 50);
+      }
+    },
+    [t, pendingMessageSend, captchaToken]
+  );
   const handleCaptchaExpire = useCallback(() => {
     console.log("Captcha expired, resetting state");
     setCaptchaToken(null);
@@ -544,14 +568,17 @@ const Chat: React.FC<ChatProps> = ({
     toast.warning(t("chat.captcha.expired"));
   }, [t]);
 
-  const handleCaptchaError = useCallback((error: string) => {
-    console.error("hCaptcha error:", error);
-    toast.error(t("chat.error.captchaFailed"));
-    setCaptchaToken(null);
-    setShowCaptcha(true); // Keep showing for invisible captcha
-    setCaptchaRequired(true);
-    setPendingMessageSend(false); // Clear pending flag
-  }, [t]);
+  const handleCaptchaError = useCallback(
+    (error: string) => {
+      console.error("hCaptcha error:", error);
+      toast.error(t("chat.error.captchaFailed"));
+      setCaptchaToken(null);
+      setShowCaptcha(true); // Keep showing for invisible captcha
+      setCaptchaRequired(true);
+      setPendingMessageSend(false); // Clear pending flag
+    },
+    [t]
+  );
 
   const handleImagePaste = async (
     event: React.ClipboardEvent<HTMLDivElement>
@@ -654,7 +681,6 @@ const Chat: React.FC<ChatProps> = ({
         user={user as User} // Use type assertion
         messages={messages}
       />
-
       <div
         className={cn(
           "flex w-full md:w-9/12 lg:w-7/12 rounded overflow-y-auto scrollbar-thin scrollbar-thumb-primary scrollbar-track-secondary scrollbar-thumb-rounded-md scrollbar-track-rounded-md flex-1 my-2",
@@ -701,10 +727,12 @@ const Chat: React.FC<ChatProps> = ({
                 </div>
               )}
             </>
-          </Suspense>        </div>
-      </div>      {/* hCaptcha component - Invisible mode */}
+          </Suspense>{" "}
+        </div>
+      </div>{" "}
+      {/* hCaptcha component - Invisible mode */}
       {showCaptcha && (
-        <div style={{ display: 'none' }}>
+        <div style={{ display: "none" }}>
           <HCaptchaComponent
             ref={captchaRef}
             onVerify={handleCaptchaVerify}
@@ -714,7 +742,6 @@ const Chat: React.FC<ChatProps> = ({
           />
         </div>
       )}
-
       <div
         className={cn(
           "w-full flex flex-col items-center justify-center shrink-0 pb-1"
