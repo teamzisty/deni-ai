@@ -42,7 +42,7 @@ Creates a model for text generation.
 */
   (
     modelId: VoidsOAIChatModelId,
-    settings?: VoidsOAIChatSettings
+    settings?: VoidsOAIChatSettings,
   ): LanguageModelV1;
 
   /**
@@ -50,15 +50,15 @@ Creates a chat model for text generation.
 */
   chatModel(
     modelId: VoidsOAIChatModelId,
-    settings?: VoidsOAIChatSettings
+    settings?: VoidsOAIChatSettings,
   ): LanguageModelV1;
 }
 
 export function createVoidsOAI(
-  options: VoidsOAIProviderSettings = {}
+  options: VoidsOAIProviderSettings = {},
 ): VoidsOAIProvider {
   const baseURL = withoutTrailingSlash(
-    options.baseURL ?? "https://capi.voids.top/v1/"
+    options.baseURL ?? "https://capi.voids.top/v1/",
   );
 
   interface CommonModelConfig {
@@ -93,7 +93,7 @@ export function createVoidsOAI(
 
   const createChatModel = (
     modelId: VoidsOAIChatModelId,
-    settings: VoidsOAIChatSettings = {}
+    settings: VoidsOAIChatSettings = {},
   ) => {
     return new OpenAICompatibleChatLanguageModel(modelId, settings, {
       ...getCommonModelConfig("chat"),
@@ -103,7 +103,7 @@ export function createVoidsOAI(
 
   const provider = (
     modelId: VoidsOAIChatModelId,
-    settings?: VoidsOAIChatSettings
+    settings?: VoidsOAIChatSettings,
   ) => createChatModel(modelId, settings);
 
   provider.chatModel = createChatModel;

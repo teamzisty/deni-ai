@@ -1,5 +1,4 @@
 ---
-
 title: Deni AI v3.2.1 のリリース
 date: 2025-05-05
 description: バージョン 3.2.1 の新しい機能やバグ修正、改善点をご紹介します。
@@ -17,6 +16,7 @@ tags: [update]
 - **削除されるモデル**: 一部のモデル (下部に一覧) は古い、または不安定のため、5/10 に削除されます。
 
 **削除されるモデル**:
+
 > Google: Gemini 2.0 Flash Lite, Gemini 1.5 Pro <br />
 > Grok: Grok 3 Beta / 3 mini Beta (OpenRouter)
 

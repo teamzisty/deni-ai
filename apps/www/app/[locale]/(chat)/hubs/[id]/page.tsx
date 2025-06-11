@@ -7,12 +7,12 @@ import { useHubs } from "@/hooks/use-hubs";
 import { useChatSessions } from "@/hooks/use-chat-sessions";
 import { Hub } from "@/types/hub";
 import { ChatSession } from "@/hooks/use-chat-sessions";
-import { 
-  Card, 
-  CardContent, 
-  CardDescription, 
-  CardHeader, 
-  CardTitle 
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
 } from "@workspace/ui/components/card";
 import {
   Table,
@@ -27,7 +27,7 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuTrigger
+  DropdownMenuTrigger,
 } from "@workspace/ui/components/dropdown-menu";
 import { Button } from "@workspace/ui/components/button";
 import { MessageCircleMore, MoreHorizontal, Pencil, Trash } from "lucide-react";
@@ -38,7 +38,7 @@ import {
   DialogDescription,
   DialogFooter,
   DialogHeader,
-  DialogTitle
+  DialogTitle,
 } from "@workspace/ui/components/dialog";
 import { Input } from "@workspace/ui/components/input";
 import { Textarea } from "@workspace/ui/components/textarea";
@@ -63,15 +63,15 @@ export default function HubDetailPage() {
   // Load hub data
   useEffect(() => {
     if (!hubId) return;
-    
+
     const fetchHub = () => {
       const foundHub = getHub(hubId);
-      
+
       if (foundHub) {
         setHub(foundHub);
         // Find all chat sessions that belong to this hub
-        const linkedSessions = sessions.filter(session => 
-          foundHub.chatSessionIds.includes(session.id)
+        const linkedSessions = sessions.filter((session) =>
+          foundHub.chatSessionIds.includes(session.id),
         );
         setHubSessions(linkedSessions);
       } else {
@@ -79,16 +79,16 @@ export default function HubDetailPage() {
         toast.error(t("Hubs.notFound"));
         router.push("/hubs");
       }
-      
+
       setIsLoading(false);
     };
-    
+
     fetchHub();
   }, [hubId, getHub, sessions, router, t]);
 
   const handleEditHub = () => {
     if (!hub) return;
-    
+
     if (!editName.trim()) {
       toast.error(t("Hubs.nameRequired"));
       return;
@@ -97,19 +97,19 @@ export default function HubDetailPage() {
     const updatedHub = {
       ...hub,
       name: editName,
-      description: editDescription || undefined
-    };  
+      description: editDescription || undefined,
+    };
 
     updateHub(hub.id, updatedHub);
-    
+
     // Update local state
     setHub({
       ...hub,
       name: editName,
       description: editDescription || undefined,
-      updatedAt: Date.now()
+      updatedAt: Date.now(),
     });
-    
+
     setEditDialogOpen(false);
     toast.success(t("Hubs.updated"));
   };
@@ -123,7 +123,7 @@ export default function HubDetailPage() {
 
   const handleDeleteHub = () => {
     if (!hub) return;
-    
+
     deleteHub(hub.id);
     toast.success(t("Hubs.deleted"));
     router.push("/hubs");
@@ -131,18 +131,18 @@ export default function HubDetailPage() {
 
   const handleRemoveSession = (sessionId: string) => {
     if (!hub) return;
-    
+
     removeChatFromHub(hub.id, sessionId);
-    
+
     // Update local state
     setHub({
       ...hub,
-      chatSessionIds: hub.chatSessionIds.filter(id => id !== sessionId),
-      updatedAt: Date.now()
+      chatSessionIds: hub.chatSessionIds.filter((id) => id !== sessionId),
+      updatedAt: Date.now(),
     });
-    
-    setHubSessions(hubSessions.filter(session => session.id !== sessionId));
-    
+
+    setHubSessions(hubSessions.filter((session) => session.id !== sessionId));
+
     toast.success(t("Hubs.chatRemoved"));
   };
   const createNewChat = async () => {
@@ -159,16 +159,17 @@ export default function HubDetailPage() {
       const updatedHub = {
         ...hub,
         chatSessionIds: [...hub.chatSessionIds, session.id],
-        updatedAt: Date.now()
+        updatedAt: Date.now(),
       };
-      
+
       updateHub(hub.id, updatedHub);
-      
+
       // Update local state
       setHub(updatedHub);
-      setHubSessions([...hubSessions, session]);await updateSession(session.id, {
+      setHubSessions([...hubSessions, session]);
+      await updateSession(session.id, {
         ...session,
-        hubId: hub.id
+        hubId: hub.id,
       });
 
       toast.success(t("common.success"));
@@ -205,7 +206,7 @@ export default function HubDetailPage() {
             {t("Hubs.createdOn", { date: formattedDate })}
           </p>
         </div>
-        
+
         <div className="flex items-center space-x-2">
           <Button variant="outline" size="icon" onClick={openEditDialog}>
             <Pencil className="h-4 w-4" />
@@ -217,7 +218,10 @@ export default function HubDetailPage() {
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              <DropdownMenuItem onClick={handleDeleteHub} className="text-destructive focus:text-destructive">
+              <DropdownMenuItem
+                onClick={handleDeleteHub}
+                className="text-destructive focus:text-destructive"
+              >
                 <Trash className="mr-2 h-4 w-4" />
                 {t("Hubs.delete")}
               </DropdownMenuItem>
@@ -225,7 +229,7 @@ export default function HubDetailPage() {
           </DropdownMenu>
         </div>
       </div>
-      
+
       <Card>
         <CardHeader>
           <div className="flex justify-between items-center">
@@ -251,22 +255,27 @@ export default function HubDetailPage() {
               <TableHeader>
                 <TableRow>
                   <TableHead>{t("common.title")}</TableHead>
-                  <TableHead className="w-[200px]">{t("common.actions")}</TableHead>
+                  <TableHead className="w-[200px]">
+                    {t("common.actions")}
+                  </TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {hubSessions.map((session) => (
                   <TableRow key={session.id}>
                     <TableCell className="font-medium">
-                      <Link href={`/chat/${session.id}`} className="hover:underline flex items-center gap-2">
+                      <Link
+                        href={`/chat/${session.id}`}
+                        className="hover:underline flex items-center gap-2"
+                      >
                         <MessageCircleMore className="h-4 w-4" />
                         <span>{session.title}</span>
                       </Link>
                     </TableCell>
                     <TableCell>
-                      <Button 
-                        variant="outline" 
-                        size="sm" 
+                      <Button
+                        variant="outline"
+                        size="sm"
                         onClick={() => handleRemoveSession(session.id)}
                         className="text-destructive hover:text-destructive"
                       >
@@ -281,7 +290,7 @@ export default function HubDetailPage() {
           )}
         </CardContent>
       </Card>
-      
+
       {/* Edit Dialog */}
       <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
         <DialogContent className="sm:max-w-[425px]">

@@ -9,17 +9,14 @@ interface DocContentProps {
 
 export default function DocContent({ content, blogSlug }: DocContentProps) {
   // Transform relative image paths to absolute paths for blog posts
-  const transformedContent = blogSlug 
-    ? content.replace(
-        /!\[([^\]]*)\]\(([^)]+)\)/g,
-        (match, alt, src) => {
-          // If the src doesn't start with http/https or /, it's a relative path
-          if (!src.startsWith('http') && !src.startsWith('/')) {
-            return `![${alt}](/api/blog-assets/${blogSlug}/${src})`;
-          }
-          return match;
+  const transformedContent = blogSlug
+    ? content.replace(/!\[([^\]]*)\]\(([^)]+)\)/g, (match, alt, src) => {
+        // If the src doesn't start with http/https or /, it's a relative path
+        if (!src.startsWith("http") && !src.startsWith("/")) {
+          return `![${alt}](/api/blog-assets/${blogSlug}/${src})`;
         }
-      )
+        return match;
+      })
     : content;
 
   return (

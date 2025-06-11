@@ -3,27 +3,32 @@ import { NextResponse } from "next/server";
 
 export async function POST(
   req: Request,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ id: string }> },
 ) {
   try {
-    const authorization = req.headers.get("Authorization")?.replace("Bearer ", "");
+    const authorization = req.headers
+      .get("Authorization")
+      ?.replace("Bearer ", "");
 
     if (!authorization) {
       return NextResponse.json(
         { error: "Authorization Failed" },
-        { status: 401 }
+        { status: 401 },
       );
     }
 
     const supabase = await createSupabaseServerClient();
-    
+
     // Verify the JWT token
-    const { data: { user }, error: authError } = await supabase.auth.getUser(authorization);
-    
+    const {
+      data: { user },
+      error: authError,
+    } = await supabase.auth.getUser(authorization);
+
     if (authError || !user) {
       return NextResponse.json(
         { error: "Authorization Failed" },
-        { status: 401 }
+        { status: 401 },
       );
     }
 
@@ -32,7 +37,7 @@ export async function POST(
     if (!keyId) {
       return NextResponse.json(
         { error: "Action Key ID is required" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -45,7 +50,10 @@ export async function POST(
       .single();
 
     if (fetchError || !keyData) {
-      return NextResponse.json({ error: "Action Key not found" }, { status: 404 });
+      return NextResponse.json(
+        { error: "Action Key not found" },
+        { status: 404 },
+      );
     }
 
     // Check if key is active
@@ -66,7 +74,7 @@ export async function POST(
       });
     }
 
-    // Simulate validation check (in a real implementation, you might check 
+    // Simulate validation check (in a real implementation, you might check
     // against external services or perform more complex validation)
     const now = new Date();
     const effectiveness = {

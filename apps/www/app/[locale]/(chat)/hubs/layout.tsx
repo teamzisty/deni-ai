@@ -5,9 +5,5 @@ interface HubsLayoutProps {
 }
 
 export default function HubsLayout({ children }: HubsLayoutProps) {
-  return (
-    <main className="flex-1 overflow-auto">
-      {children}
-    </main>
-  );
+  return <main className="flex-1 overflow-auto">{children}</main>;
 }

@@ -82,7 +82,7 @@ export async function GET(request: Request) {
 
   const stream = await streamContext.resumableStream(
     recentStreamId,
-    () => emptyDataStream
+    () => emptyDataStream,
   );
 
   if (stream) {
@@ -300,7 +300,7 @@ export async function POST(req: Request) {
                       command: z
                         .string()
                         .describe(
-                          "Command to execute (only for 'run' action, MAKE NULL TO OTHER ACTIONS, IF NOT, IT WILL ERROR)"
+                          "Command to execute (only for 'run' action, MAKE NULL TO OTHER ACTIONS, IF NOT, IT WILL ERROR)",
                         )
                         .nullable(),
                       action: z
@@ -315,7 +315,7 @@ export async function POST(req: Request) {
                         .string()
                         .describe("Content for write operations")
                         .nullable(),
-                    })
+                    }),
                   )
                   .describe("Sequence of steps to execute")
                   .nullable(),
@@ -371,7 +371,7 @@ export async function POST(req: Request) {
                       "X-Subscription-Token":
                         process.env.BRAVE_SEARCH_API_KEY || "",
                     }),
-                  }
+                  },
                 ).then((res) => res.json());
 
                 const totalCount = toolList?.includes("deepResearch") ? 10 : 5;
@@ -394,7 +394,7 @@ export async function POST(req: Request) {
                           const dom = new JSDOM(pageText, {
                             virtualConsole: new VirtualConsole().sendTo(
                               console,
-                              { omitJSDOMErrors: true }
+                              { omitJSDOMErrors: true },
                             ),
                           });
                           const doc = dom.window.document;
@@ -424,7 +424,7 @@ export async function POST(req: Request) {
                                 .trim();
                             } else {
                               const metaDesc = doc.querySelector(
-                                'meta[name="description"]'
+                                'meta[name="description"]',
                               );
                               if (metaDesc) {
                                 content =
@@ -445,8 +445,8 @@ export async function POST(req: Request) {
                           description,
                           content,
                         };
-                      }
-                    )
+                      },
+                    ),
                 );
 
                 dataStream.writeMessageAnnotation({
@@ -570,7 +570,7 @@ export async function POST(req: Request) {
     // Return a resumable stream to the client if Redis is available, otherwise return regular stream
     if (isRedisAvailable && streamContext && streamId) {
       return new Response(
-        await streamContext.resumableStream(streamId, () => stream)
+        await streamContext.resumableStream(streamId, () => stream),
       );
     } else {
       // Fallback to regular stream when Redis is not available
@@ -580,7 +580,7 @@ export async function POST(req: Request) {
     console.error(error);
     return new NextResponse(
       "An error occurred while processing your request. Please try again later.",
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

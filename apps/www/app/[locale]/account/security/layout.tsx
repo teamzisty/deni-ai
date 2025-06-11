@@ -6,7 +6,7 @@ export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations("account");
   return {
     title: t("sidebarNav.security"),
-    description: t("security.description")
+    description: t("security.description"),
   };
 }
 
@@ -16,4 +16,4 @@ interface SecurityLayoutProps {
 
 export default function SecurityLayout({ children }: SecurityLayoutProps) {
   return children;
-} 
+}

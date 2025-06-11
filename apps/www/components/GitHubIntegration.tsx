@@ -53,7 +53,7 @@ interface GitHubIntegrationProps {
   onActionComplete?: (
     success: boolean,
     pullRequestUrl?: string,
-    error?: any
+    error?: any,
   ) => void;
   triggerButton?: React.ReactNode;
 }
@@ -75,7 +75,7 @@ export function GitHubIntegration({
   const [isOpen, setIsOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [step, setStep] = useState<"auth" | "setup" | "review" | "creating">(
-    "auth"
+    "auth",
   );
 
   const [settings, setSettings] = useState<GitHubSettings>({
@@ -88,7 +88,7 @@ export function GitHubIntegration({
 
   const [repositories, setRepositories] = useState<GitHubRepository[]>([]);
   const [gitHubService, setGitHubService] = useState<GitHubService | null>(
-    null
+    null,
   );
   const [reauthorizeRequired, setReauthorizeRequired] = useState(true);
   const [fileChanges, setFileChanges] = useState<FileChange[]>([]);
@@ -130,7 +130,7 @@ export function GitHubIntegration({
       try {
         // Check if GitHub is already linked
         const existingIdentity = identities.find(
-          (identity) => identity.provider === "github"
+          (identity) => identity.provider === "github",
         );
 
         if (existingIdentity) {
@@ -188,7 +188,7 @@ export function GitHubIntegration({
       // Generate default values
       const generatedBranchName = GitHubService.generateBranchName();
       const generatedCommitMessage = GitHubService.generateCommitMessage(
-        files.length
+        files.length,
       );
       const generatedPRDescription =
         GitHubService.generatePullRequestBody(files);
@@ -212,7 +212,7 @@ export function GitHubIntegration({
     // Ensure repositories is an array before using find
     const reposArray = Array.isArray(repositories) ? repositories : [];
     const selectedRepo = reposArray.find(
-      (repo) => repo.full_name === repoFullName
+      (repo) => repo.full_name === repoFullName,
     );
     setSettings((prev) => ({
       ...prev,
@@ -257,11 +257,11 @@ export function GitHubIntegration({
       const branchExists = await gitHubService.checkBranchExists(
         owner,
         repoName,
-        settings.branchName
+        settings.branchName,
       );
       if (branchExists) {
         throw new Error(
-          t("errors.branchExists", { branchName: settings.branchName })
+          t("errors.branchExists", { branchName: settings.branchName }),
         );
       }
 
@@ -270,7 +270,7 @@ export function GitHubIntegration({
         owner,
         repoName,
         settings.branchName,
-        repo.default_branch
+        repo.default_branch,
       );
 
       // Commit files to the new branch
@@ -280,7 +280,7 @@ export function GitHubIntegration({
           repoName,
           settings.branchName,
           fileChanges,
-          settings.commitMessage
+          settings.commitMessage,
         );
       }
 
@@ -293,7 +293,7 @@ export function GitHubIntegration({
           body: settings.pullRequestDescription,
           head: settings.branchName,
           base: repo.default_branch,
-        }
+        },
       );
       toast.success(t("success.pullRequestCreated"));
       onActionComplete?.(true, pullRequest.html_url);

@@ -1,5 +1,4 @@
 ---
-
 title: Deni AI v2.4 Release
 date: 2025-04-12
 description: Discover the new features, bug fixes, and improvements in version 2.4.

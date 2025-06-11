@@ -282,12 +282,9 @@ export function AccountSettings() {
       // In Supabase, we can delete the user through admin API or RPC function
       // For now, we'll use the auth.admin.deleteUser method if available
       const secureFetch = new SecureFetch(user);
-      const response = await secureFetch.fetch(
-        "/api/account",
-        {
-          method: "DELETE",
-        }
-      )
+      const response = await secureFetch.fetch("/api/account", {
+        method: "DELETE",
+      });
 
       if (!response.ok) {
         const errorData = await response.json();
@@ -375,10 +372,7 @@ export function AccountSettings() {
           <CardDescription>{t("data.description")}</CardDescription>
         </CardHeader>
         <CardContent>
-          <Button
-            onClick={handleDownloadData}
-            disabled={isDownloading}
-          >
+          <Button onClick={handleDownloadData} disabled={isDownloading}>
             {isDownloading ? t("data.downloading") : t("data.download")}
           </Button>
         </CardContent>

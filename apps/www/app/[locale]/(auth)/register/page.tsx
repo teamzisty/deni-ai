@@ -85,11 +85,12 @@ const Register: React.FC = () => {
 
     try {
       const formData = new FormData();
-      formData.append('email', accountEmail);
-      formData.append('password', accountPassword);
+      formData.append("email", accountEmail);
+      formData.append("password", accountPassword);
 
       const authService = new AuthService();
-      await authService.signupWithForm(formData);      toast.success(t("register.checkEmail"), {
+      await authService.signupWithForm(formData);
+      toast.success(t("register.checkEmail"), {
         description: t("register.confirmationSent"),
       });
     } catch (error: unknown) {

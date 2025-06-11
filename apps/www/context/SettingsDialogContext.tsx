@@ -1,6 +1,12 @@
 "use client";
 
-import React, { createContext, useContext, useState, useEffect, ReactNode } from "react";
+import React, {
+  createContext,
+  useContext,
+  useState,
+  useEffect,
+  ReactNode,
+} from "react";
 import { useRouter, usePathname } from "@/i18n/navigation";
 import { useSearchParams } from "next/navigation";
 
@@ -11,9 +17,15 @@ type SettingsDialogContextType = {
   dialogType: string | null;
 };
 
-const SettingsDialogContext = createContext<SettingsDialogContextType | undefined>(undefined);
+const SettingsDialogContext = createContext<
+  SettingsDialogContextType | undefined
+>(undefined);
 
-export const SettingsDialogProvider = ({ children }: { children: ReactNode }) => {
+export const SettingsDialogProvider = ({
+  children,
+}: {
+  children: ReactNode;
+}) => {
   const [isOpen, setIsOpen] = useState(false);
   const [dialogType, setDialogType] = useState<string | null>(null);
   const router = useRouter();
@@ -37,7 +49,7 @@ export const SettingsDialogProvider = ({ children }: { children: ReactNode }) =>
     // 現在のURLパラメータを維持しながら、settingsパラメータを追加
     const params = new URLSearchParams(Array.from(searchParams.entries()));
     params.set("settings", type);
-    
+
     // URLを更新（ページ遷移なし）
     router.replace(`${pathname}?${params.toString()}`);
   };
@@ -47,14 +59,16 @@ export const SettingsDialogProvider = ({ children }: { children: ReactNode }) =>
     // settingsパラメータを削除
     const params = new URLSearchParams(Array.from(searchParams.entries()));
     params.delete("settings");
-    
+
     // URLを更新（ページ遷移なし）
     const newQuery = params.toString();
     router.replace(newQuery ? `${pathname}?${newQuery}` : pathname);
   };
 
   return (
-    <SettingsDialogContext.Provider value={{ isOpen, openDialog, closeDialog, dialogType }}>
+    <SettingsDialogContext.Provider
+      value={{ isOpen, openDialog, closeDialog, dialogType }}
+    >
       {children}
     </SettingsDialogContext.Provider>
   );
@@ -63,7 +77,9 @@ export const SettingsDialogProvider = ({ children }: { children: ReactNode }) =>
 export const useSettingsDialog = () => {
   const context = useContext(SettingsDialogContext);
   if (context === undefined) {
-    throw new Error("useSettingsDialog must be used within a SettingsDialogProvider");
+    throw new Error(
+      "useSettingsDialog must be used within a SettingsDialogProvider",
+    );
   }
   return context;
 };

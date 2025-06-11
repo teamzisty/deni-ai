@@ -74,27 +74,37 @@ export const MemoizedHighlighter = memo(
         {code}
       </ShikiHighlighter>
     );
-  }
+  },
 );
 MemoizedHighlighter.displayName = "MemoizedHighlighter";
 
-export const MemoizedHeader = memo(({ language, handleCopy, copied }: { handleCopy: () => void; language: string, copied: boolean }) => {
-  return (
-    <div className="flex items-center justify-between bg-secondary rounded-t dark:bg-zinc-800 px-4 py-2 border-b border-border">
-      <span className="text-xs font-medium text-zinc-600 dark:text-zinc-400">
-        {language || "code"}
-      </span>
-      <Button
-        onClick={handleCopy}
-        variant="ghost"
-        size="sm"
-        className="text-xs font-medium text-zinc-600 hover:bg-zinc-200 dark:text-zinc-400 dark:hover:bg-zinc-700"
-      >
-        {copied ? "Copied!" : "Copy"}
-      </Button>
-    </div>
-  );
-});
+export const MemoizedHeader = memo(
+  ({
+    language,
+    handleCopy,
+    copied,
+  }: {
+    handleCopy: () => void;
+    language: string;
+    copied: boolean;
+  }) => {
+    return (
+      <div className="flex items-center justify-between bg-secondary rounded-t dark:bg-zinc-800 px-4 py-2 border-b border-border">
+        <span className="text-xs font-medium text-zinc-600 dark:text-zinc-400">
+          {language || "code"}
+        </span>
+        <Button
+          onClick={handleCopy}
+          variant="ghost"
+          size="sm"
+          className="text-xs font-medium text-zinc-600 hover:bg-zinc-200 dark:text-zinc-400 dark:hover:bg-zinc-700"
+        >
+          {copied ? "Copied!" : "Copy"}
+        </Button>
+      </div>
+    );
+  },
+);
 
 export const Pre = memo(({ children, ...props }: PreProps) => {
   const [copied, setCopied] = useState(false);
@@ -148,7 +158,7 @@ export const Pre = memo(({ children, ...props }: PreProps) => {
           }
           language={language}
         />
-        
+
         {/* <div className="not-prose flex flex-col">
           <pre
             {...props}

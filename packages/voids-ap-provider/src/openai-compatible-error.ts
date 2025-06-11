@@ -1,4 +1,4 @@
-import { z, ZodSchema } from 'zod';
+import { z, ZodSchema } from "zod";
 
 export const openaiCompatibleErrorDataSchema = z.object({
   error: z.object({
@@ -26,5 +26,5 @@ export type ProviderErrorStructure<T> = {
 export const defaultOpenAICompatibleErrorStructure: ProviderErrorStructure<OpenAICompatibleErrorData> =
   {
     errorSchema: openaiCompatibleErrorDataSchema,
-    errorToMessage: data => data.error.message,
+    errorToMessage: (data) => data.error.message,
   };

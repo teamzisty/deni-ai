@@ -31,7 +31,8 @@ const ShareButton: FC<ShareButtonProps> = ({
     if (messages.length === 0) {
       toast.error(t("chat.error.shareNoMessages"));
       return;
-    }    try {
+    }
+    try {
       const response = await fetch("/api/share", {
         method: "POST",
         headers: {

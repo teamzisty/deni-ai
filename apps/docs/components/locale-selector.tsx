@@ -9,26 +9,28 @@ interface LocaleSelectorProps {
   onLocaleChange?: (locale: Locale) => void;
 }
 
-export function LocaleSelector({ 
+export function LocaleSelector({
   currentLocale = "en",
-  onLocaleChange 
+  onLocaleChange,
 }: LocaleSelectorProps) {
   const [isOpen, setIsOpen] = useState(false);
 
   const handleLocaleChange = (locale: Locale) => {
     setIsOpen(false);
     onLocaleChange?.(locale);
-    
+
     // For now, we'll just reload with the new locale in the URL
     // In a full implementation, this would use Next.js i18n routing
     if (locale !== currentLocale) {
       const currentPath = window.location.pathname;
-      const newPath = locale === "en" ? currentPath : `/${locale}${currentPath}`;
+      const newPath =
+        locale === "en" ? currentPath : `/${locale}${currentPath}`;
       window.location.href = newPath;
     }
   };
 
-  const currentLocaleData = locales.find(l => l.code === currentLocale) || locales[0];
+  const currentLocaleData =
+    locales.find((l) => l.code === currentLocale) || locales[0];
 
   return (
     <div className="relative">
@@ -50,7 +52,7 @@ export function LocaleSelector({
             onClick={() => setIsOpen(false)}
             aria-hidden="true"
           />
-          
+
           {/* Dropdown */}
           <div className="absolute right-0 top-full mt-2 w-40 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg z-20">
             <div className="py-1">

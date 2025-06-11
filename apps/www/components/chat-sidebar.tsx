@@ -73,7 +73,7 @@ function groupSessionsByDate(sessions: ChatSession[]): GroupedSessions {
       .filter((session) => new Date(session.createdAt) > oneDayAgo)
       .sort(
         (a, b) =>
-          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
       ),
     yesterday: sessions
       .filter((session) => {
@@ -82,7 +82,7 @@ function groupSessionsByDate(sessions: ChatSession[]): GroupedSessions {
       })
       .sort(
         (a, b) =>
-          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
       ),
     thisWeek: sessions
       .filter((session) => {
@@ -91,7 +91,7 @@ function groupSessionsByDate(sessions: ChatSession[]): GroupedSessions {
       })
       .sort(
         (a, b) =>
-          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
       ),
     thisMonth: sessions
       .filter((session) => {
@@ -100,13 +100,13 @@ function groupSessionsByDate(sessions: ChatSession[]): GroupedSessions {
       })
       .sort(
         (a, b) =>
-          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
       ),
     older: sessions
       .filter((session) => new Date(session.createdAt) <= oneMonthAgo)
       .sort(
         (a, b) =>
-          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
       ),
   };
 }
@@ -129,7 +129,7 @@ function SessionGroup({
   const handleDragStart = (
     e: React.DragEvent,
     sessionId: string,
-    sessionTitle: string
+    sessionTitle: string,
   ) => {
     e.dataTransfer.setData("text/plain", sessionId);
     e.dataTransfer.setData(
@@ -137,7 +137,7 @@ function SessionGroup({
       JSON.stringify({
         id: sessionId,
         title: sessionTitle,
-      })
+      }),
     );
     e.dataTransfer.effectAllowed = "move";
 
@@ -186,7 +186,7 @@ function SessionGroup({
                         ? `${t("sidebar.branchTooltipPrefix", {
                             parentTitle:
                               sessions.find(
-                                (s) => s.id === session.parentSessionId
+                                (s) => s.id === session.parentSessionId,
                               )?.title || "Unknown Parent",
                           })}: ${session.branchName}`
                         : session.title
@@ -213,7 +213,7 @@ function SessionGroup({
                             <span
                               className={cn(
                                 "text-muted-foreground whitespace-nowrap overflow-hidden text-ellipsis",
-                                settings.conversationsPrivacyMode && "blur-sm"
+                                settings.conversationsPrivacyMode && "blur-sm",
                               )}
                             >
                               {hub?.name}
@@ -246,7 +246,7 @@ function SessionGroup({
                             <span
                               className={cn(
                                 "text-muted-foreground whitespace-nowrap overflow-hidden text-ellipsis",
-                                settings.conversationsPrivacyMode && "blur-sm"
+                                settings.conversationsPrivacyMode && "blur-sm",
                               )}
                             >
                               {session.branchName}
@@ -258,7 +258,7 @@ function SessionGroup({
                         <p
                           className={cn(
                             "truncate min-w-0",
-                            settings.conversationsPrivacyMode && "blur-sm"
+                            settings.conversationsPrivacyMode && "blur-sm",
                           )}
                         >
                           {session.title}
@@ -313,7 +313,7 @@ const SearchBar = memo(
       (e: React.ChangeEvent<HTMLInputElement>) => {
         setInputValue(e.target.value);
       },
-      []
+      [],
     );
 
     return (
@@ -330,7 +330,7 @@ const SearchBar = memo(
         </div>
       </SidebarMenuItem>
     );
-  }
+  },
 );
 
 SearchBar.displayName = "SearchBar";
@@ -356,14 +356,14 @@ function ChatSidebarMenuSession() {
       return sessions;
     }
     return sessions.filter((session) =>
-      session.title.toLowerCase().includes(searchQuery.toLowerCase())
+      session.title.toLowerCase().includes(searchQuery.toLowerCase()),
     );
   }, [searchQuery, sessions]);
 
   // グループ化も最適化
   const groupedSessions = useMemo(
     () => groupSessionsByDate(filteredSessions),
-    [filteredSessions]
+    [filteredSessions],
   );
 
   // 検索処理はコールバックで最適化

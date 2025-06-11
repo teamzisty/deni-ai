@@ -16,7 +16,9 @@ interface RecentPostsProps {
 
 export function RecentPosts({ posts }: RecentPostsProps) {
   return (
-    <div className="space-y-8">      <div className="grid gap-8 lg:grid-cols-3">
+    <div className="space-y-8">
+      {" "}
+      <div className="grid gap-8 lg:grid-cols-3">
         {posts.map((post) => (
           <article
             key={post.slug}
@@ -29,18 +31,18 @@ export function RecentPosts({ posts }: RecentPostsProps) {
                   {format(new Date(post.date), "MMMM d, yyyy")}
                 </time>
               </div>
-              
+
               <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
                 <Link href={`/blog/${post.slug}`} className="absolute inset-0">
                   <span className="sr-only">Read article</span>
                 </Link>
                 {post.title}
               </h3>
-              
+
               <p className="text-gray-600 dark:text-gray-300 mb-4 line-clamp-3">
                 {post.description}
               </p>
-              
+
               <div className="flex flex-wrap gap-2">
                 {post.tags.map((tag) => (
                   <span
@@ -55,7 +57,6 @@ export function RecentPosts({ posts }: RecentPostsProps) {
           </article>
         ))}
       </div>
-      
       <div className="text-center">
         <Link
           href="/blog"

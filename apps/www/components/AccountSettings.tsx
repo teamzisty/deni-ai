@@ -10,7 +10,13 @@ import { Switch } from "@workspace/ui/components/switch";
 import { useChatSessions } from "@/hooks/use-chat-sessions";
 import { useTranslations } from "next-intl";
 import { createClient } from "@/lib/supabase/client";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@workspace/ui/components/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@workspace/ui/components/card";
 import { ArrowRight } from "lucide-react";
 import { useSettings } from "@/hooks/use-settings";
 
@@ -68,7 +74,9 @@ export default function AccountSettings() {
               <Switch
                 className="scale-125"
                 checked={settings.privacyMode}
-                onCheckedChange={(checked) => updateSetting("privacyMode", checked)}
+                onCheckedChange={(checked) =>
+                  updateSetting("privacyMode", checked)
+                }
               />
             </div>
           </div>
@@ -88,7 +96,9 @@ export default function AccountSettings() {
               <Switch
                 className="scale-125"
                 checked={settings.conversationsPrivacyMode}
-                onCheckedChange={(checked) => updateSetting("conversationsPrivacyMode", checked)}
+                onCheckedChange={(checked) =>
+                  updateSetting("conversationsPrivacyMode", checked)
+                }
               />
             </div>
           </div>

@@ -25,7 +25,6 @@
     "@blocknote/mantine": "0.32.0-hackdays.0",
     "@blocknote/react": "0.32.0-hackdays.0",
     "@blocknote/shadcn": "0.32.0-hackdays.0",
-    "@hcaptcha/react-hcaptcha": "^1.12.0",
     "@icons-pack/react-simple-icons": "^13.0.0",
     "@monaco-editor/react": "^4.7.0",
     "@openrouter/ai-sdk-provider": "^0.7.1",
@@ -46,7 +45,6 @@
     "cookies-next": "^6.0.0",
     "date-fns": "^4.1.0",
     "framer-motion": "^12.16.0",
-    "hcaptcha": "^0.2.0",
     "jsdom": "^26.1.0",
     "lucide-react": "^0.513.0",
     "marked": "^15.0.12",
@@ -71,7 +69,6 @@
     "zod": "^3.25.56"
   },
   "devDependencies": {
-    "@hcaptcha/types": "^1.0.4",
     "@types/ansi-html": "^0.0.0",
     "@types/jsdom": "^21.1.7",
     "@types/node": "^22.15.30",

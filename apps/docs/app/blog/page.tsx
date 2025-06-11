@@ -39,14 +39,14 @@ export default function BlogPage() {
             >
               <div className="flex items-center gap-4 text-sm text-gray-500 dark:text-gray-400 mb-3">
                 {post.date && (
-                <div className="flex items-center gap-1">
-                  <Calendar className="h-4 w-4" />
-                  <time dateTime={post.date}>
-                    {format(new Date(post.date), "MMMM d, yyyy")}
-                  </time>
-                </div>
+                  <div className="flex items-center gap-1">
+                    <Calendar className="h-4 w-4" />
+                    <time dateTime={post.date}>
+                      {format(new Date(post.date), "MMMM d, yyyy")}
+                    </time>
+                  </div>
                 )}
-                
+
                 <div className="flex items-center gap-1">
                   <Clock className="h-4 w-4" />
                   <span>{post.readingTime} min read</span>
@@ -54,9 +54,7 @@ export default function BlogPage() {
               </div>
 
               <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-3 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
-                <Link href={`/blog/${post.slug}`}>
-                  {post.title}
-                </Link>
+                <Link href={`/blog/${post.slug}`}>{post.title}</Link>
               </h2>
 
               <p className="text-gray-600 dark:text-gray-300 mb-4 line-clamp-3">

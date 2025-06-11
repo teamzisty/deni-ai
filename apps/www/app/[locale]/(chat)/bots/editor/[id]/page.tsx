@@ -3,14 +3,7 @@
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import { Button } from "@workspace/ui/components/button";
-import {
-  Save,
-  Trash,
-  PlusCircle,
-  Copy,
-  Loader2,
-  Verified,
-} from "lucide-react";
+import { Save, Trash, PlusCircle, Copy, Loader2, Verified } from "lucide-react";
 import { toast } from "sonner";
 import { useTranslations } from "next-intl";
 import { Loading } from "@/components/loading";
@@ -36,7 +29,7 @@ import {
   AlertDialogDescription,
   AlertDialogFooter,
   AlertDialogHeader,
-  AlertDialogTitle
+  AlertDialogTitle,
 } from "@workspace/ui/components/alert-dialog";
 import { Link, useRouter } from "@/i18n/navigation";
 
@@ -79,7 +72,7 @@ export default function BotEditorPage() {
 
         // Custom fetch function to include auth token
         const response = await secureFetch.fetch(
-          `/api/bots/retrieve?id=${params.id}`
+          `/api/bots/retrieve?id=${params.id}`,
         );
 
         if (!response.ok) {
@@ -98,7 +91,7 @@ export default function BotEditorPage() {
       } catch (err) {
         console.error(err);
         setError(
-          err instanceof Error ? err.message : t("bots.editor.fetchError")
+          err instanceof Error ? err.message : t("bots.editor.fetchError"),
         );
       } finally {
         setLoading(false);
@@ -155,7 +148,7 @@ export default function BotEditorPage() {
     } catch (error) {
       console.error(error);
       toast.error(
-        error instanceof Error ? error.message : t("bots.editor.updateError")
+        error instanceof Error ? error.message : t("bots.editor.updateError"),
       );
     } finally {
       setIsSaving(false);
@@ -193,7 +186,7 @@ export default function BotEditorPage() {
         `/api/bots/delete?id=${params.id}`,
         {
           method: "DELETE",
-        }
+        },
       );
 
       if (!response.ok) {
@@ -206,7 +199,7 @@ export default function BotEditorPage() {
     } catch (error) {
       console.error(error);
       toast.error(
-        error instanceof Error ? error.message : t("bots.editor.deleteError")
+        error instanceof Error ? error.message : t("bots.editor.deleteError"),
       );
     } finally {
       setDeleteDialogOpen(false);

@@ -11,13 +11,13 @@ interface DocsPageProps {
 export async function generateStaticParams() {
   const docs = getAllDocs();
   return docs.map((doc) => ({
-    slug: doc.slug.split('/'),
+    slug: doc.slug.split("/"),
   }));
 }
 
 export async function generateMetadata({ params }: DocsPageProps) {
   const { slug } = await params;
-  const slugString = slug.join('/');
+  const slugString = slug.join("/");
   const doc = getDocBySlug(slugString);
 
   if (!doc) {
@@ -34,7 +34,7 @@ export async function generateMetadata({ params }: DocsPageProps) {
 
 export default async function DocsPage({ params }: DocsPageProps) {
   const { slug } = await params;
-  const slugString = slug.join('/');
+  const slugString = slug.join("/");
   const doc = getDocBySlug(slugString, "ja");
 
   if (!doc) {
@@ -43,7 +43,9 @@ export default async function DocsPage({ params }: DocsPageProps) {
 
   return (
     <div className="container mx-auto px-6 py-8">
-      <div className="max-w-4xl mx-auto">        {/* Breadcrumb */}
+      <div className="max-w-4xl mx-auto">
+        {" "}
+        {/* Breadcrumb */}
         <nav className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400 mb-6">
           <a
             href="/docs"
@@ -56,14 +58,14 @@ export default async function DocsPage({ params }: DocsPageProps) {
               <span>/</span>
               {index === slug.length - 1 ? (
                 <span className="text-gray-900 dark:text-gray-200 capitalize">
-                  {segment.replace(/-/g, ' ')}
+                  {segment.replace(/-/g, " ")}
                 </span>
               ) : (
                 <a
-                  href={`/docs/${slug.slice(0, index + 1).join('/')}`}
+                  href={`/docs/${slug.slice(0, index + 1).join("/")}`}
                   className="hover:text-gray-900 dark:hover:text-gray-200 capitalize"
                 >
-                  {segment.replace(/-/g, ' ')}
+                  {segment.replace(/-/g, " ")}
                 </a>
               )}
             </div>
@@ -91,7 +93,6 @@ export default async function DocsPage({ params }: DocsPageProps) {
         </header>{" "}
         {/* Content */}
         <DocContent content={doc.content} />
-
         {/* Navigation */}
         <nav className="flex items-center justify-between mt-12 pt-8 border-t border-gray-200 dark:border-gray-700">
           <div>{/* Previous doc link could go here */}</div>

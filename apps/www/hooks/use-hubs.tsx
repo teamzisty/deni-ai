@@ -30,7 +30,7 @@ interface HubsContextProps {
   createHub: (
     name: string,
     description?: string,
-    customInstructions?: string
+    customInstructions?: string,
   ) => Promise<string>; // Returns hub ID
   updateHub: (id: string, updatedHubData: Partial<Hub>) => Promise<void>;
   deleteHub: (id: string) => Promise<void>;
@@ -41,11 +41,11 @@ interface HubsContextProps {
     fileName: string,
     fileType: string,
     filePath?: string,
-    fileSize?: number
+    fileSize?: number,
   ) => Promise<void>;
   removeFileReferenceFromHub: (
     hubId: string,
-    fileReferenceId: string
+    fileReferenceId: string,
   ) => Promise<void>;
   syncHubs: () => Promise<void>;
   syncLocalHubsToSupabase: () => Promise<void>;
@@ -89,12 +89,12 @@ export function HubsProvider({ children }: { children: ReactNode }) {
         return updatedHubs.map((h) => normalizeHubTimestampProperties(h, true));
       });
     },
-    [setInternalHubs]
+    [setInternalHubs],
   );
 
   const normalizeHubTimestampProperties = (
     hubData: any,
-    ensureCurrentTime = false
+    ensureCurrentTime = false,
   ): Hub => {
     const now = new Date().getTime();
     const id = hubData.id || uuidv4(); // Ensure ID exists
@@ -216,8 +216,8 @@ export function HubsProvider({ children }: { children: ReactNode }) {
             createdAt: item.created_at,
             updatedAt: item.updated_at,
           },
-          true
-        )
+          true,
+        ),
       );
 
       setHubs(loadedHubs);
@@ -233,7 +233,7 @@ export function HubsProvider({ children }: { children: ReactNode }) {
       const localHubsRaw = localStorage.getItem(LOCAL_STORAGE_KEY);
       const localHubs = localHubsRaw
         ? (JSON.parse(localHubsRaw) as Hub[]).map((h) =>
-            normalizeHubTimestampProperties(h, true)
+            normalizeHubTimestampProperties(h, true),
           )
         : [];
       setHubs(localHubs);
@@ -253,7 +253,7 @@ export function HubsProvider({ children }: { children: ReactNode }) {
       const localHubsRaw = localStorage.getItem(LOCAL_STORAGE_KEY);
       const localHubs = localHubsRaw
         ? (JSON.parse(localHubsRaw) as Hub[]).map((h) =>
-            normalizeHubTimestampProperties(h, true)
+            normalizeHubTimestampProperties(h, true),
           )
         : [];
       setHubs(localHubs);
@@ -275,7 +275,7 @@ export function HubsProvider({ children }: { children: ReactNode }) {
           for (const hub of hubsToSave) {
             if (idsToSave.has(hub.id)) {
               const hubData = hubToSupabaseData(
-                normalizeHubTimestampProperties(hub, true)
+                normalizeHubTimestampProperties(hub, true),
               );
               if (!supabase) {
                 throw new Error("Supabase client not available");
@@ -307,8 +307,8 @@ export function HubsProvider({ children }: { children: ReactNode }) {
           localStorage.setItem(
             LOCAL_STORAGE_KEY,
             JSON.stringify(
-              hubsToSave.map((h) => normalizeHubTimestampProperties(h, true))
-            )
+              hubsToSave.map((h) => normalizeHubTimestampProperties(h, true)),
+            ),
           );
         } finally {
           setLoadingState(false);
@@ -318,12 +318,12 @@ export function HubsProvider({ children }: { children: ReactNode }) {
         localStorage.setItem(
           LOCAL_STORAGE_KEY,
           JSON.stringify(
-            hubsToSave.map((h) => normalizeHubTimestampProperties(h, true))
-          )
+            hubsToSave.map((h) => normalizeHubTimestampProperties(h, true)),
+          ),
         );
       }
     },
-    [user, t, modifiedHubIds, setLoadingState]
+    [user, t, modifiedHubIds, setLoadingState],
   );
 
   useEffect(() => {
@@ -389,15 +389,15 @@ export function HubsProvider({ children }: { children: ReactNode }) {
                         path: fr.path,
                         size: fr.size,
                         createdAt: fr.created_at,
-                      })
+                      }),
                     ),
                     createdAt: item.created_at,
                     updatedAt: item.updated_at,
                   },
-                  true
+                  true,
                 ),
-              ] as [string, Hub]
-          )
+              ] as [string, Hub],
+          ),
         );
 
         let changesMade = false;
@@ -447,7 +447,7 @@ export function HubsProvider({ children }: { children: ReactNode }) {
         setLoadingState(false);
       }
     },
-    [user, t, loadHubsFromSupabase, setLoadingState]
+    [user, t, loadHubsFromSupabase, setLoadingState],
   );
 
   const syncHubs = useCallback(async () => {
@@ -464,7 +464,7 @@ export function HubsProvider({ children }: { children: ReactNode }) {
       const localHubsRaw = localStorage.getItem(LOCAL_STORAGE_KEY);
       const localHubs: Hub[] = localHubsRaw
         ? (JSON.parse(localHubsRaw) as Hub[]).map((h) =>
-            normalizeHubTimestampProperties(h, true)
+            normalizeHubTimestampProperties(h, true),
           )
         : []; // 2. Get Supabase hubs
       if (!supabase) {
@@ -498,8 +498,8 @@ export function HubsProvider({ children }: { children: ReactNode }) {
             createdAt: item.created_at,
             updatedAt: item.updated_at,
           },
-          true
-        )
+          true,
+        ),
       );
 
       const supabaseHubsMap = new Map(supabaseHubs.map((h: Hub) => [h.id, h]));
@@ -527,7 +527,7 @@ export function HubsProvider({ children }: { children: ReactNode }) {
             hubToKeep !== supabaseHub
           ) {
             const hubData = hubToSupabaseData(
-              normalizeHubTimestampProperties(hubToKeep, true)
+              normalizeHubTimestampProperties(hubToKeep, true),
             );
             if (!supabase) {
               throw new Error("Supabase client not available");
@@ -542,7 +542,7 @@ export function HubsProvider({ children }: { children: ReactNode }) {
           // Hub only in local: add to Supabase
           finalHubs.push(normalizeHubTimestampProperties(localHub, true));
           const hubData = hubToSupabaseData(
-            normalizeHubTimestampProperties(localHub, true)
+            normalizeHubTimestampProperties(localHub, true),
           );
           if (!supabase) {
             throw new Error("Supabase client not available");
@@ -559,12 +559,12 @@ export function HubsProvider({ children }: { children: ReactNode }) {
       }
 
       const normalizedFinalHubs = finalHubs.map((h) =>
-        normalizeHubTimestampProperties(h, true)
+        normalizeHubTimestampProperties(h, true),
       );
       setHubs(normalizedFinalHubs);
       localStorage.setItem(
         LOCAL_STORAGE_KEY,
-        JSON.stringify(normalizedFinalHubs)
+        JSON.stringify(normalizedFinalHubs),
       ); // Update local storage with merged
 
       // 同期完了後にロードフラグをクリア
@@ -608,7 +608,7 @@ export function HubsProvider({ children }: { children: ReactNode }) {
   const createHub = async (
     name: string,
     description?: string,
-    customInstructions?: string
+    customInstructions?: string,
   ): Promise<string> => {
     const now = new Date().getTime();
     const newHub: Hub = {
@@ -647,11 +647,11 @@ export function HubsProvider({ children }: { children: ReactNode }) {
         ...updatedHubData,
         updatedAt: new Date().getTime(),
       },
-      true
+      true,
     );
 
     const updatedHubs = hubs.map((hub) =>
-      hub.id === id ? updatedHub : normalizeHubTimestampProperties(hub, true)
+      hub.id === id ? updatedHub : normalizeHubTimestampProperties(hub, true),
     );
     setHubs(updatedHubs);
     setModifiedHubIds((prev) => new Set(prev).add(id));
@@ -684,7 +684,7 @@ export function HubsProvider({ children }: { children: ReactNode }) {
           [
             ...prevHubs,
             normalizeHubTimestampProperties(hubToDelete, true),
-          ].sort((a, b) => b.updatedAt - a.updatedAt)
+          ].sort((a, b) => b.updatedAt - a.updatedAt),
         );
       }
     } else {
@@ -697,7 +697,7 @@ export function HubsProvider({ children }: { children: ReactNode }) {
   // Add a chat session to a hub
   const addChatToHub = async (
     hubId: string,
-    chatSessionId: string
+    chatSessionId: string,
   ): Promise<void> => {
     const session = getSession(chatSessionId);
     if (!session) {
@@ -728,7 +728,7 @@ export function HubsProvider({ children }: { children: ReactNode }) {
     const updatedHubs = hubs.map((h) =>
       h.id === hubId
         ? normalizeHubTimestampProperties(updatedHub, true)
-        : normalizeHubTimestampProperties(h, true)
+        : normalizeHubTimestampProperties(h, true),
     );
     setHubs(updatedHubs);
     setModifiedHubIds((prev) => new Set(prev).add(hubId));
@@ -737,7 +737,7 @@ export function HubsProvider({ children }: { children: ReactNode }) {
   // Remove a chat session from a hub
   const removeChatFromHub = async (
     hubId: string,
-    chatSessionId: string
+    chatSessionId: string,
   ): Promise<void> => {
     const session = getSession(chatSessionId);
     // No error if session not found, as it might have been deleted independently.
@@ -752,7 +752,7 @@ export function HubsProvider({ children }: { children: ReactNode }) {
     const updatedHub = {
       ...normalizedHub,
       chatSessionIds: normalizedHub.chatSessionIds.filter(
-        (id: string) => id !== chatSessionId
+        (id: string) => id !== chatSessionId,
       ),
       updatedAt: new Date().getTime(),
     };
@@ -764,7 +764,7 @@ export function HubsProvider({ children }: { children: ReactNode }) {
     const updatedHubs = hubs.map((h) =>
       h.id === hubId
         ? normalizeHubTimestampProperties(updatedHub, true)
-        : normalizeHubTimestampProperties(h, true)
+        : normalizeHubTimestampProperties(h, true),
     );
     setHubs(updatedHubs);
     setModifiedHubIds((prev) => new Set(prev).add(hubId));
@@ -776,7 +776,7 @@ export function HubsProvider({ children }: { children: ReactNode }) {
     fileName: string,
     fileType: string,
     filePath?: string,
-    fileSize?: number
+    fileSize?: number,
   ): Promise<void> => {
     const hub = hubs.find((h) => h.id === hubId);
     if (!hub) {
@@ -800,7 +800,7 @@ export function HubsProvider({ children }: { children: ReactNode }) {
         ...normalizedHub.fileReferences,
         normalizeHubTimestampProperties(
           fileRef,
-          true
+          true,
         ) as unknown as HubFileReference,
       ], // Ensure fileRef is also normalized
       updatedAt: new Date().getTime(),
@@ -809,7 +809,7 @@ export function HubsProvider({ children }: { children: ReactNode }) {
     const updatedHubs = hubs.map((h) =>
       h.id === hubId
         ? normalizeHubTimestampProperties(updatedHub, true)
-        : normalizeHubTimestampProperties(h, true)
+        : normalizeHubTimestampProperties(h, true),
     );
     setHubs(updatedHubs);
     setModifiedHubIds((prev) => new Set(prev).add(hubId));
@@ -819,7 +819,7 @@ export function HubsProvider({ children }: { children: ReactNode }) {
   // Remove a file reference from a hub
   const removeFileReferenceFromHub = async (
     hubId: string,
-    fileReferenceId: string
+    fileReferenceId: string,
   ): Promise<void> => {
     const hub = hubs.find((h) => h.id === hubId);
     if (!hub) {
@@ -831,7 +831,7 @@ export function HubsProvider({ children }: { children: ReactNode }) {
     const updatedHub = {
       ...normalizedHub,
       fileReferences: normalizedHub.fileReferences.filter(
-        (file: HubFileReference) => file.id !== fileReferenceId
+        (file: HubFileReference) => file.id !== fileReferenceId,
       ),
       updatedAt: new Date().getTime(),
     };
@@ -839,7 +839,7 @@ export function HubsProvider({ children }: { children: ReactNode }) {
     const updatedHubs = hubs.map((h) =>
       h.id === hubId
         ? normalizeHubTimestampProperties(updatedHub, true)
-        : normalizeHubTimestampProperties(h, true)
+        : normalizeHubTimestampProperties(h, true),
     );
     setHubs(updatedHubs);
     setModifiedHubIds((prev) => new Set(prev).add(hubId));

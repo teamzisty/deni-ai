@@ -155,7 +155,7 @@ export const AccountDropdownMenu = memo(
         </DropdownMenuContent>
       </DropdownMenu>
     );
-  }
+  },
 );
 
 AccountDropdownMenu.displayName = "AccountDropdownMenu";

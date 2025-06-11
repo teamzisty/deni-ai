@@ -8,7 +8,7 @@ const postsDir = path.join(
   "docs",
   "docs",
   "blog",
-  "posts"
+  "posts",
 );
 
 // Regular expression to match date pattern in filename (YYYY-MM-DD-)
@@ -35,7 +35,7 @@ async function removePostDatePrefix() {
     for (const item of items) {
       const itemPath = path.join(postsDir, item);
       const isDirectory = fs.statSync(itemPath).isDirectory();
-      
+
       // Process based on file type
       if (isDirectory || item.endsWith(".md")) {
         // Check if the item matches the date pattern
@@ -44,10 +44,10 @@ async function removePostDatePrefix() {
           const newName = match[1]; // Extract the part after the date
           const oldPath = path.join(postsDir, item);
           const newPath = path.join(postsDir, newName);
-          
+
           // Rename the item
           fs.renameSync(oldPath, newPath);
-          
+
           if (isDirectory) {
             console.log(`Renamed folder: ${item} -> ${newName}`);
             renamedFolders++;
@@ -69,7 +69,9 @@ async function removePostDatePrefix() {
     console.log(`- Files renamed: ${renamedFiles}`);
     console.log(`- Folders renamed: ${renamedFolders}`);
     console.log(`- Items skipped: ${skippedItems}`);
-    console.log(`- Total items processed: ${renamedFiles + renamedFolders + skippedItems}`);
+    console.log(
+      `- Total items processed: ${renamedFiles + renamedFolders + skippedItems}`,
+    );
   } catch (error) {
     console.error("Error processing files and folders:", error);
   }

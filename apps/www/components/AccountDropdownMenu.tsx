@@ -100,7 +100,7 @@ export const AccountDropdownMenu = memo(
                 <span className={settings.privacyMode ? "blur-sm" : ""}>
                   {truncateName(
                     user?.user_metadata?.full_name ||
-                      user?.user_metadata?.display_name
+                      user?.user_metadata?.display_name,
                   )}
                 </span>
                 <span
@@ -148,7 +148,7 @@ export const AccountDropdownMenu = memo(
                     <span className={`${settings.privacyMode && "blur-sm"}`}>
                       {truncateName(
                         user?.user_metadata?.full_name ||
-                          user?.user_metadata?.name
+                          user?.user_metadata?.name,
                       )}
                     </span>
                     <span
@@ -219,7 +219,7 @@ export const AccountDropdownMenu = memo(
         </DropdownMenuContent>
       </DropdownMenu>
     );
-  }
+  },
 );
 
 AccountDropdownMenu.displayName = "AccountDropdownMenu";

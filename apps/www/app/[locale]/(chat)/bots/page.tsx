@@ -3,17 +3,8 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "@/i18n/navigation";
 import { Button } from "@workspace/ui/components/button";
-import {
-  Card,
-  CardFooter,
-  CardHeader,
-} from "@workspace/ui/components/card";
-import {
-  MessageCircle,
-  ArrowRight,
-  Loader2,
-  Verified,
-} from "lucide-react";
+import { Card, CardFooter, CardHeader } from "@workspace/ui/components/card";
+import { MessageCircle, ArrowRight, Loader2, Verified } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Loading } from "@/components/loading";
 import { useAuth } from "@/context/AuthContext";
@@ -32,7 +23,11 @@ import { toast } from "sonner";
 import { User } from "@supabase/supabase-js";
 import { SecureFetch } from "@/lib/secureFetch";
 import { ClientBot } from "@/types/bot";
-import { Popover, PopoverTrigger, PopoverContent } from "@workspace/ui/components/popover";
+import {
+  Popover,
+  PopoverTrigger,
+  PopoverContent,
+} from "@workspace/ui/components/popover";
 
 interface SharedChat {
   id: string;
@@ -83,7 +78,7 @@ export default function PublicBotsPage() {
       } catch (err) {
         console.error(err);
         setError(
-          err instanceof Error ? err.message : t("shared.error.unknown")
+          err instanceof Error ? err.message : t("shared.error.unknown"),
         );
       } finally {
         setLoading(false);
@@ -100,12 +95,13 @@ export default function PublicBotsPage() {
   return (
     <main className="container mx-auto p-4 md:p-8">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8">
-        <div>          <h1 className="text-3xl font-bold">{t("bots.title")}</h1>
-          <p className="text-muted-foreground mt-2">
-            {t("bots.subtitle")}
-          </p>
+        <div>
+          {" "}
+          <h1 className="text-3xl font-bold">{t("bots.title")}</h1>
+          <p className="text-muted-foreground mt-2">{t("bots.subtitle")}</p>
         </div>
-        {user && (          <Button className="mt-4 md:mt-0" onClick={() => setIsModalOpen(true)}>
+        {user && (
+          <Button className="mt-4 md:mt-0" onClick={() => setIsModalOpen(true)}>
             {t("bots.createButton")}
           </Button>
         )}
@@ -119,7 +115,10 @@ export default function PublicBotsPage() {
 
       {publicBots.length === 0 && !error ? (
         <div className="text-center py-12">
-          <MessageCircle className="mx-auto h-12 w-12 text-muted-foreground mb-4" />          <h2 className="text-xl font-semibold mb-2">{t("bots.empty.title")}</h2>
+          <MessageCircle className="mx-auto h-12 w-12 text-muted-foreground mb-4" />{" "}
+          <h2 className="text-xl font-semibold mb-2">
+            {t("bots.empty.title")}
+          </h2>
           <p className="text-muted-foreground mb-6">
             {t("bots.empty.message")}
           </p>
@@ -136,18 +135,20 @@ export default function PublicBotsPage() {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {publicBots.map((bot) => (
-            <Card
-              key={bot.id}
-              className="mb-4 my-auto mx-auto w-full h-full"
-            >
+            <Card key={bot.id} className="mb-4 my-auto mx-auto w-full h-full">
               <CardHeader className="text-center">
                 <h1 className="text-2xl font-bold">{bot.name}</h1>
                 <div className="text-muted-foreground mt-2 flex items-center justify-center">
-                  <span className="text-muted-foreground">{t("bots.createdBy")}: </span>
+                  <span className="text-muted-foreground">
+                    {t("bots.createdBy")}:{" "}
+                  </span>
                   <div className="bg-primary text-primary-foreground rounded-full px-4 py-1 ml-2 flex items-center">
                     <span
-                      className="cursor-pointer hover:underline"                      onClick={() =>
-                        toast.info(t("bots.creatorIdToast", { id: bot.createdBy.id }))
+                      className="cursor-pointer hover:underline"
+                      onClick={() =>
+                        toast.info(
+                          t("bots.creatorIdToast", { id: bot.createdBy.id }),
+                        )
                       }
                     >
                       {bot.createdBy.name}
@@ -161,17 +162,19 @@ export default function PublicBotsPage() {
                           <div className="bg-primary text-primary-foreground rounded-full p-1 mr-2">
                             <Verified />
                           </div>
-                          <div>                            <span className="text-sm">
+                          <div>
+                            {" "}
+                            <span className="text-sm">
                               {t("bots.verified.label")}
                             </span>
-
                             <br />
-
                             <span className="text-sm text-muted-foreground">
                               {t("bots.verified.disclaimer")}
-                              {bot.createdBy.domain && (                                <span>
+                              {bot.createdBy.domain && (
+                                <span>
                                   <br />
-                                  {t("bots.verified.domain")}: {bot.createdBy.domain}
+                                  {t("bots.verified.domain")}:{" "}
+                                  {bot.createdBy.domain}
                                 </span>
                               )}
                             </span>
@@ -192,7 +195,9 @@ export default function PublicBotsPage() {
                   <Link
                     href={`/bots/${bot.id}`}
                     className="flex items-center justify-center w-full h-full"
-                  >                    <ArrowRight className="mr-2 h-4 w-4" />
+                  >
+                    {" "}
+                    <ArrowRight className="mr-2 h-4 w-4" />
                     {t("bots.viewButton")}
                   </Link>
                 </Button>
@@ -244,7 +249,8 @@ function CreateBotModal({ isOpen, setIsOpen, user }: CreateBotModalProps) {
       if (!response.ok) {
         const errorData = await response.json();
         throw new Error(errorData.error || t("bots.createModal.error"));
-      }      toast.success(t("bots.createModal.successMessage"));
+      }
+      toast.success(t("bots.createModal.successMessage"));
       const data = await response.json();
       router.push(data.botUrl);
 
@@ -252,7 +258,9 @@ function CreateBotModal({ isOpen, setIsOpen, user }: CreateBotModalProps) {
       // Handle successful bot creation (e.g., redirect or show success message)
     } catch (error) {
       console.error(error);
-      setError(error instanceof Error ? error.message : t("bots.createModal.error"));
+      setError(
+        error instanceof Error ? error.message : t("bots.createModal.error"),
+      );
     } finally {
       setIsCreating(false);
     }
@@ -261,35 +269,40 @@ function CreateBotModal({ isOpen, setIsOpen, user }: CreateBotModalProps) {
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogContent>
-        <DialogHeader>          <DialogTitle>{t("bots.createModal.title")}</DialogTitle>
+        <DialogHeader>
+          {" "}
+          <DialogTitle>{t("bots.createModal.title")}</DialogTitle>
           <DialogDescription>
             {t("bots.createModal.description")}
           </DialogDescription>
         </DialogHeader>
-        <div className="space-y-2">          <Label htmlFor="botName">{t("bots.createModal.nameLabel")}</Label>
+        <div className="space-y-2">
+          {" "}
+          <Label htmlFor="botName">{t("bots.createModal.nameLabel")}</Label>
           <Input
             id="botName"
             placeholder={t("bots.createModal.namePlaceholder")}
             value={botName}
             onChange={(e) => setBotName(e.target.value)}
           />
-
           <Label htmlFor="botDescription" className="mt-4">
             {t("bots.createModal.descriptionLabel")}
           </Label>
-          <Input            id="botDescription"
+          <Input
+            id="botDescription"
             placeholder={t("bots.createModal.descriptionPlaceholder")}
             value={botDescription}
             onChange={(e) => setBotDescription(e.target.value)}
           />
-
           {error && (
             <div className="bg-destructive/10 p-4 rounded-lg mt-4">
               <p className="text-destructive text-sm">{error}</p>
             </div>
           )}
         </div>
-        <DialogFooter>          <Button variant="outline" onClick={() => setIsOpen(false)}>
+        <DialogFooter>
+          {" "}
+          <Button variant="outline" onClick={() => setIsOpen(false)}>
             {t("shared.cancel")}
           </Button>
           <Button
@@ -299,7 +312,9 @@ function CreateBotModal({ isOpen, setIsOpen, user }: CreateBotModalProps) {
             className="ml-2"
           >
             {isCreating && <Loader2 className="animate-spin" />}
-            {isCreating ? t("bots.createModal.creating") : t("bots.createModal.create")}
+            {isCreating
+              ? t("bots.createModal.creating")
+              : t("bots.createModal.create")}
           </Button>
         </DialogFooter>
       </DialogContent>

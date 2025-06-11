@@ -90,13 +90,13 @@ export default function ModelSettings() {
 
   const applyFilters = (
     models: [string, Model][],
-    filters: Filters
+    filters: Filters,
   ): [string, Model][] => {
     const activeTypeFilters = Object.entries(filters.types).filter(
-      ([_, isActive]) => isActive
+      ([_, isActive]) => isActive,
     );
     const activeFeatureFilters = Object.entries(filters.features).filter(
-      ([_, isActive]) => isActive
+      ([_, isActive]) => isActive,
     );
 
     if (activeTypeFilters.length === 0 && activeFeatureFilters.length === 0) {
@@ -273,10 +273,10 @@ export default function ModelSettings() {
                         </h3>
                         <div className="flex items-center gap-1">
                           {t(
-                            `modelDescriptions.${id.replace(".", "-")}`
+                            `modelDescriptions.${id.replace(".", "-")}`,
                           ).includes("Leaving") ||
                             (t(
-                              `modelDescriptions.${id.replace(".", "-")}`
+                              `modelDescriptions.${id.replace(".", "-")}`,
                             ).includes("廃止予定") && (
                               <DoorOpen size={16} className="text-red-400" />
                             ))}
@@ -296,7 +296,7 @@ export default function ModelSettings() {
                   <div
                     className={cn(
                       "flex items-center flex-wrap gap-2 mt-1 max-w-full overflow-hidden",
-                      !reasoning && !vision && !fast && "hidden"
+                      !reasoning && !vision && !fast && "hidden",
                     )}
                   >
                     {reasoning && (
@@ -337,7 +337,7 @@ export default function ModelSettings() {
                     )}
                   </div>
                 </div>
-              )
+              ),
             )}
           </div>
         )}

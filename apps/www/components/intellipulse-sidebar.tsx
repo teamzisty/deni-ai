@@ -84,7 +84,7 @@ function groupSessionsByDate(sessions: IntellipulseSession[]): GroupedSessions {
 
   return {
     older: sessions.filter(
-      (session) => new Date(session.createdAt) <= oneMonthAgo
+      (session) => new Date(session.createdAt) <= oneMonthAgo,
     ),
     thisMonth: sessions.filter((session) => {
       const date = new Date(session.createdAt);
@@ -99,7 +99,7 @@ function groupSessionsByDate(sessions: IntellipulseSession[]): GroupedSessions {
       return date <= oneDayAgo && date > twoDaysAgo;
     }),
     today: sessions.filter(
-      (session) => new Date(session.createdAt) > oneDayAgo
+      (session) => new Date(session.createdAt) > oneDayAgo,
     ),
   };
 }

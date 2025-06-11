@@ -10,7 +10,7 @@ export function UpdateAlertProvider() {
   useEffect(() => {
     // Check if the user has already dismissed the alert
     const alertDismissed = getCookie("update_alert");
-    
+
     // Show alert if it hasn't been dismissed and we're not on the canary subdomain
     if (alertDismissed !== "false" && typeof window !== "undefined") {
       const isCanaryDomain = window.location.hostname.includes("canary");

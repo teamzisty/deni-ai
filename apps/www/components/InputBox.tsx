@@ -35,16 +35,22 @@ const InputBox: React.FC<InputBoxProps> = memo(
     const t = useTranslations();
     const isMobile = useIsMobile();
 
-    const handleButtonClick = useCallback((e: React.MouseEvent<HTMLButtonElement>) => {
-      if (generating) {
-        stop();
-      } else {
-        handleSendMessage(e);
-      }
-    }, [generating, stop, handleSendMessage]);
+    const handleButtonClick = useCallback(
+      (e: React.MouseEvent<HTMLButtonElement>) => {
+        if (generating) {
+          stop();
+        } else {
+          handleSendMessage(e);
+        }
+      },
+      [generating, stop, handleSendMessage],
+    );
 
     return (
-      <div className="flex items-center mb-1 md:mb-2" onPaste={handleImagePaste}>
+      <div
+        className="flex items-center mb-1 md:mb-2"
+        onPaste={handleImagePaste}
+      >
         <div className="flex items-center w-full mb-2">
           <textarea
             value={input}
@@ -59,7 +65,7 @@ const InputBox: React.FC<InputBoxProps> = memo(
           />
           {/* Context Progress Bar */}
           {maxContextWindow && messages.length > 0 && (
-            <ContextProgressBar 
+            <ContextProgressBar
               messages={messages}
               maxContextWindow={maxContextWindow}
               className="mr-2 md:mr-3"
@@ -72,15 +78,16 @@ const InputBox: React.FC<InputBoxProps> = memo(
             ref={sendButtonRef}
             onClick={handleButtonClick}
           >
-            {generating ? 
-              <StopCircle className="h-[18px] w-[18px] md:h-6 md:w-6" /> : 
+            {generating ? (
+              <StopCircle className="h-[18px] w-[18px] md:h-6 md:w-6" />
+            ) : (
               <SendHorizonal className="h-[18px] w-[18px] md:h-6 md:w-6" />
-            }
+            )}
           </Button>
         </div>
       </div>
     );
-  }
+  },
 );
 
 InputBox.displayName = "InputBox";

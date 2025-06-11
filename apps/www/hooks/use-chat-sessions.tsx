@@ -23,7 +23,7 @@ interface ChatSessionsContextValue {
   updateSession: (id: string, updatedSession: ChatSession) => Promise<void>;
   updateSessionPartial: (
     id: string,
-    updatedFields: Partial<ChatSession>
+    updatedFields: Partial<ChatSession>,
   ) => Promise<void>;
   deleteSession: (id: string) => void;
   clearAllSessions: () => Promise<void>;
@@ -33,12 +33,12 @@ interface ChatSessionsContextValue {
   importAllSessions: (jsonData: string) => Promise<void>;
   createBranchSession: (
     parentSession: ChatSession,
-    branchName: string
+    branchName: string,
   ) => ChatSession;
   createBranchFromMessage: (
     parentSession: ChatSession,
     messageId: string,
-    branchName: string
+    branchName: string,
   ) => ChatSession | undefined;
   isLoading: boolean;
   isSupabaseLoaded: boolean;
@@ -57,7 +57,7 @@ export interface ChatSession {
 }
 
 const ChatSessionsContext = createContext<ChatSessionsContextValue | undefined>(
-  undefined
+  undefined,
 );
 
 // DB and store name for IndexedDB
@@ -191,7 +191,7 @@ export function ChatSessionsProvider({ children }: { children: ReactNode }) {
                 parentSessionId: session.parentSessionId, // Default value since column doesn't exist yet
                 branchName: session.branchName, // Default value since column doesn't exist yet
                 hubId: session.hubId, // Default value since column doesn't exist yet
-              })
+              }),
             );
             setSessions(supabaseSessions);
             setIsSupabaseLoaded(true);
@@ -258,7 +258,7 @@ export function ChatSessionsProvider({ children }: { children: ReactNode }) {
 
       return newSession;
     },
-    [t, user]
+    [t, user],
   );
   const createBranchSession = useCallback(
     (parentSession: ChatSession, branchName: string): ChatSession => {
@@ -303,17 +303,17 @@ export function ChatSessionsProvider({ children }: { children: ReactNode }) {
 
       return newBranchSession;
     },
-    [t, user]
+    [t, user],
   );
 
   const createBranchFromMessage = useCallback(
     (
       parentSession: ChatSession,
       messageId: string,
-      branchName: string
+      branchName: string,
     ): ChatSession | undefined => {
       const messageIndex = parentSession.messages.findIndex(
-        (msg) => msg.id === messageId
+        (msg) => msg.id === messageId,
       );
 
       if (messageIndex === -1) {
@@ -323,7 +323,7 @@ export function ChatSessionsProvider({ children }: { children: ReactNode }) {
 
       const messagesUpToPoint = parentSession.messages.slice(
         0,
-        messageIndex + 1
+        messageIndex + 1,
       );
 
       const newBranchSession: ChatSession = {
@@ -354,7 +354,7 @@ export function ChatSessionsProvider({ children }: { children: ReactNode }) {
             if (error) {
               console.error(
                 "Error saving branch session from message to Supabase:",
-                error
+                error,
               );
               // Fallback to IndexedDB on error
               saveSessionToIndexedDB(newBranchSession);
@@ -366,12 +366,12 @@ export function ChatSessionsProvider({ children }: { children: ReactNode }) {
       }
 
       toast.success(
-        t("chatSessions.branchFromMessageCreatedSuccess", { branchName })
+        t("chatSessions.branchFromMessageCreatedSuccess", { branchName }),
       );
 
       return newBranchSession;
     },
-    [t, user]
+    [t, user],
   );
   const addSession = useCallback(
     (session: ChatSession) => {
@@ -401,12 +401,12 @@ export function ChatSessionsProvider({ children }: { children: ReactNode }) {
         saveSessionToIndexedDB(session);
       }
     },
-    [user]
+    [user],
   );
   const updateSession = useCallback(
     async (id: string, updatedSession: ChatSession) => {
       setSessions((prev) =>
-        prev.map((session) => (session.id === id ? updatedSession : session))
+        prev.map((session) => (session.id === id ? updatedSession : session)),
       );
 
       // Save to appropriate storage based on authentication status
@@ -436,7 +436,7 @@ export function ChatSessionsProvider({ children }: { children: ReactNode }) {
         await saveSessionToIndexedDB(updatedSession);
       }
     },
-    [user]
+    [user],
   );
 
   const deleteSession = useCallback(
@@ -470,7 +470,7 @@ export function ChatSessionsProvider({ children }: { children: ReactNode }) {
 
       toast.success(t("chatSessions.sessionDeletedSuccess"));
     },
-    [user, t]
+    [user, t],
   );
 
   const clearAllSessions = useCallback(async () => {
@@ -505,7 +505,7 @@ export function ChatSessionsProvider({ children }: { children: ReactNode }) {
 
   const getSession = useCallback(
     (id: string) => sessions.find((session) => session.id === id),
-    [sessions]
+    [sessions],
   );
 
   const getLatestSession = useCallback(
@@ -527,15 +527,15 @@ export function ChatSessionsProvider({ children }: { children: ReactNode }) {
 
       return data;
     },
-    [supabase]
+    [supabase],
   );
 
   const updateSessionPartial = useCallback(
     async (id: string, updatedFields: Partial<ChatSession>) => {
       setSessions((prev) =>
         prev.map((session) =>
-          session.id === id ? { ...session, ...updatedFields } : session
-        )
+          session.id === id ? { ...session, ...updatedFields } : session,
+        ),
       );
 
       // Save to appropriate storage based on authentication status
@@ -581,7 +581,7 @@ export function ChatSessionsProvider({ children }: { children: ReactNode }) {
         }
       }
     },
-    [user, getSession]
+    [user, getSession],
   );
 
   const syncSessions = useCallback(async () => {
@@ -606,7 +606,7 @@ export function ChatSessionsProvider({ children }: { children: ReactNode }) {
       } // Upload local sessions that don't exist remotely
       const remoteIds = new Set(remoteSessions?.map((s: any) => s.id) || []);
       const sessionsToUpload = localSessions.filter(
-        (s: ChatSession) => !remoteIds.has(s.id)
+        (s: ChatSession) => !remoteIds.has(s.id),
       );
 
       for (const session of sessionsToUpload) {
@@ -635,7 +635,7 @@ export function ChatSessionsProvider({ children }: { children: ReactNode }) {
           parentSessionId: session.parentSessionId, // Default value since column doesn't exist yet
           branchName: session.branchName, // Default value since column doesn't exist yet
           hubId: session.hubId, // Default value since column doesn't exist yet
-        })
+        }),
       );
 
       setSessions(allSessions);
@@ -726,11 +726,11 @@ export function ChatSessionsProvider({ children }: { children: ReactNode }) {
         toast.error(
           t("chatSessions.importError", {
             description: error instanceof Error ? error.message : String(error),
-          })
+          }),
         );
       }
     },
-    [user, t, syncSessions]
+    [user, t, syncSessions],
   );
 
   const value: ChatSessionsContextValue = {
@@ -762,7 +762,7 @@ export function useChatSessions() {
   const context = useContext(ChatSessionsContext);
   if (context === undefined) {
     throw new Error(
-      "useChatSessions must be used within a ChatSessionsProvider"
+      "useChatSessions must be used within a ChatSessionsProvider",
     );
   }
   return context;

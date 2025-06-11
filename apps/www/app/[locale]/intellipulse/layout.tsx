@@ -12,14 +12,18 @@ import { IntellipulseSessionsProvider } from "@/hooks/use-intellipulse-sessions"
 import { SettingsDialogProvider } from "@/context/SettingsDialogContext";
 import { SettingsDialog } from "@/components/SettingsDialog";
 
-export default function IntellipulseLayout({ children }: { children: React.ReactNode }) {
+export default function IntellipulseLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   const { locale } = useParams() as { locale: string };
   return (
     <TooltipProvider>
       <SidebarProvider>
         <AuthProvider>
           <SettingsDialogProvider>
-            <IntellipulseSessionsProvider> 
+            <IntellipulseSessionsProvider>
               <IntellipulseSidebar />
               {children}
               <SettingsDialog />

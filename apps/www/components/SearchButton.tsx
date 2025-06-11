@@ -30,7 +30,7 @@ export const SearchButton = memo(
         </Button>
       </EasyTip>
     );
-  }
+  },
 );
 
 SearchButton.displayName = "SearchButton";

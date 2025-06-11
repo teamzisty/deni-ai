@@ -28,7 +28,7 @@ interface CanvasProps {
   isStreaming?: boolean;
   onUpdateCanvas?: (
     sessionId: string,
-    data: { content: string; title: string }
+    data: { content: string; title: string },
   ) => void;
 }
 
@@ -54,9 +54,9 @@ export const Canvas: React.FC<CanvasProps> = React.memo(function Canvas({
   const [language, setLanguage] = useState(
     typeof navigator !== "undefined" && navigator.language
       ? navigator.language
-      : (typeof window !== "undefined" && (window as any).locale)
+      : typeof window !== "undefined" && (window as any).locale
         ? (window as any).locale
-        : "en"
+        : "en",
   );
 
   const canvasData = getCanvasData(sessionId);
@@ -72,7 +72,9 @@ export const Canvas: React.FC<CanvasProps> = React.memo(function Canvas({
     // Only run on first mount or when content changes
     async function loadContent() {
       if (editor && canvasData?.content && !isJsonString(canvasData?.content)) {
-        const blocks = await editor.tryParseMarkdownToBlocks(canvasData?.content);
+        const blocks = await editor.tryParseMarkdownToBlocks(
+          canvasData?.content,
+        );
         editor.replaceBlocks(editor.document, blocks);
         setIsFirstLoad(false);
       }
@@ -167,14 +169,14 @@ export const Canvas: React.FC<CanvasProps> = React.memo(function Canvas({
         handleClose();
       }
     },
-    [handleClose]
+    [handleClose],
   );
 
   const handleTitleChange = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
       setCanvasTitle(e.target.value);
     },
-    []
+    [],
   );
 
   return (
@@ -198,13 +200,13 @@ export const Canvas: React.FC<CanvasProps> = React.memo(function Canvas({
             <div
               className={cn(
                 "flex items-center p-3 border-b justify-between",
-                isMobile && "flex-col"
+                isMobile && "flex-col",
               )}
             >
               <div
                 className={cn(
                   "flex items-center gap-2 flex-1",
-                  isMobile && "w-full"
+                  isMobile && "w-full",
                 )}
               >
                 <Paintbrush size={18} className="text-primary" />
@@ -222,7 +224,7 @@ export const Canvas: React.FC<CanvasProps> = React.memo(function Canvas({
               <div
                 className={cn(
                   "flex items-center gap-2",
-                  isMobile && "mt-2 w-full"
+                  isMobile && "mt-2 w-full",
                 )}
               >
                 {canUpdate && editMode && (
@@ -246,10 +248,14 @@ export const Canvas: React.FC<CanvasProps> = React.memo(function Canvas({
                   <X size={16} />
                 </Button>
               </div>
-            </div>            <div className={cn(
+            </div>{" "}
+            <div
+              className={cn(
                 "flex-1 p-4 overflow-y-scroll overflow-x-scroll",
-                isStreaming && "bg-secondary/10 border border-primary/20 rounded-b"
-              )}>
+                isStreaming &&
+                  "bg-secondary/10 border border-primary/20 rounded-b",
+              )}
+            >
               {isStreaming && content.trim() === "" ? (
                 <div className="flex flex-col items-center justify-center h-full space-y-2 text-muted-foreground">
                   <div className="animate-pulse flex space-x-1">
@@ -264,7 +270,7 @@ export const Canvas: React.FC<CanvasProps> = React.memo(function Canvas({
                   <div
                     className={cn(
                       "w-full h-full min-h-[300px]",
-                      !editMode && "hidden"
+                      !editMode && "hidden",
                     )}
                   >
                     <BlockNoteView
@@ -272,7 +278,7 @@ export const Canvas: React.FC<CanvasProps> = React.memo(function Canvas({
                       className="w-full"
                       onChange={async (editor) => {
                         const markdown = await editor.blocksToMarkdownLossy(
-                          editor.document
+                          editor.document,
                         );
                         setEditableContent(markdown);
                       }}
@@ -281,7 +287,7 @@ export const Canvas: React.FC<CanvasProps> = React.memo(function Canvas({
                   <div
                     className={cn(
                       "prose dark:prose-invert max-w-none",
-                      editMode && "hidden"
+                      editMode && "hidden",
                     )}
                   >
                     <ReactMarkdown

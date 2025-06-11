@@ -633,7 +633,8 @@
       "messageSendFailed": "Failed to send message",
       "shareNotLoggedIn": "You need to be logged in to share a conversation",
       "shareNoMessages": "There are no messages to share",
-      "shareFailed": "Failed to share conversation",      "retryMessage": "Failed to send message. Would you like to retry?",
+      "shareFailed": "Failed to share conversation",
+      "retryMessage": "Failed to send message. Would you like to retry?",
       "retry": "Retry",
       "maxRetriesReached": "Maximum retry attempts reached",
       "captchaRequired": "Please complete the captcha verification to continue",
@@ -648,7 +649,9 @@
       "shallow": "Shallow Research",
       "shallowDescription": "Fast research mode. It responds quickly.",
       "deep": "Deep Research",
-      "deepDescription": "More detailed research mode. It takes longer to respond."    },    "captcha": {
+      "deepDescription": "More detailed research mode. It takes longer to respond."
+    },
+    "captcha": {
       "verificationRequired": "Please complete the verification below to continue",
       "verified": "Verification completed successfully",
       "expired": "Verification expired. Please complete it again"

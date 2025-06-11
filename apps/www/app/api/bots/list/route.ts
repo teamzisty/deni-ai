@@ -11,7 +11,7 @@ export async function GET(req: Request) {
     if (!authorization) {
       return NextResponse.json(
         { error: "Authorization Failed" },
-        { status: 401 }
+        { status: 401 },
       );
     }
 
@@ -26,7 +26,7 @@ export async function GET(req: Request) {
     if (authError || !user) {
       return NextResponse.json(
         { error: "Authorization Failed" },
-        { status: 401 }
+        { status: 401 },
       );
     }
 

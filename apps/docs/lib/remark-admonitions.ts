@@ -129,7 +129,7 @@ function remarkAdmonitions() {
 
         // Replace the range of nodes with the admonition
         parent.children.splice(index, endIndex - index + 1, htmlNode);
-      }
+      },
     );
   };
 }

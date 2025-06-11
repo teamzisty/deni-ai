@@ -4,29 +4,38 @@ import { z } from "zod";
 
 // Validation schema for creating action keys
 const CreateActionKeySchema = z.object({
-  name: z.string().min(1, "Name is required").max(100, "Name must be less than 100 characters"),
+  name: z
+    .string()
+    .min(1, "Name is required")
+    .max(100, "Name must be less than 100 characters"),
   description: z.string().optional().default(""),
   expiresAt: z.string().datetime().optional(),
 });
 
 export async function GET(req: Request) {
   try {
-    const authorization = req.headers.get("Authorization")?.replace("Bearer ", "");    if (!authorization) {
+    const authorization = req.headers
+      .get("Authorization")
+      ?.replace("Bearer ", "");
+    if (!authorization) {
       return NextResponse.json(
         { error: "Authorization Failed" },
-        { status: 401 }
+        { status: 401 },
       );
     }
 
     const supabase = await createSupabaseServerClient();
-    
+
     // Verify the JWT token
-    const { data: { user }, error: authError } = await supabase.auth.getUser(authorization);
-    
+    const {
+      data: { user },
+      error: authError,
+    } = await supabase.auth.getUser(authorization);
+
     if (authError || !user) {
       return NextResponse.json(
         { error: "Authorization Failed" },
-        { status: 401 }
+        { status: 401 },
       );
     }
 
@@ -43,7 +52,7 @@ export async function GET(req: Request) {
     }
 
     // Transform the data to match the frontend interface
-    const transformedKeys = (actionKeys || []).map(key => ({
+    const transformedKeys = (actionKeys || []).map((key) => ({
       id: key.id,
       name: key.name,
       description: key.description || "",
@@ -67,23 +76,29 @@ export async function GET(req: Request) {
 
 export async function POST(req: Request) {
   try {
-    const authorization = req.headers.get("Authorization")?.replace("Bearer ", "");
+    const authorization = req.headers
+      .get("Authorization")
+      ?.replace("Bearer ", "");
 
     if (!authorization) {
       return NextResponse.json(
         { error: "Authorization Failed" },
-        { status: 401 }    );
+        { status: 401 },
+      );
     }
 
     const supabase = await createSupabaseServerClient();
-    
+
     // Verify the JWT token
-    const { data: { user }, error: authError } = await supabase.auth.getUser(authorization);
-    
+    const {
+      data: { user },
+      error: authError,
+    } = await supabase.auth.getUser(authorization);
+
     if (authError || !user) {
       return NextResponse.json(
         { error: "Authorization Failed" },
-        { status: 401 }
+        { status: 401 },
       );
     }
 
@@ -92,7 +107,7 @@ export async function POST(req: Request) {
     const validatedData = CreateActionKeySchema.parse(body);
 
     // Generate secure action key
-    const keyValue = `iap_${crypto.randomUUID().replace(/-/g, '')}`;
+    const keyValue = `iap_${crypto.randomUUID().replace(/-/g, "")}`;
     const keyId = crypto.randomUUID();
 
     // Insert new action key into Supabase
@@ -138,10 +153,10 @@ export async function POST(req: Request) {
     if (error instanceof z.ZodError) {
       return NextResponse.json(
         { error: "Invalid request data", details: error.errors },
-        { status: 400 }
+        { status: 400 },
       );
     }
-    
+
     console.error(error);
     return NextResponse.json({ error: "Server Error" }, { status: 500 });
   }

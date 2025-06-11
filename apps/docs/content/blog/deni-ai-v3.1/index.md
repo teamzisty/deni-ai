@@ -1,12 +1,10 @@
 ---
-
 title: Deni AI v3.1 Release
 date: 2025-05-03
 description: Introducing new features, bug fixes, and improvements in version 3.1.
 author: rai
 tags: [update]
 ---
-
 
 ## Deni AI Dev (Public Preview)
 

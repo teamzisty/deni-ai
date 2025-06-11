@@ -1,4 +1,11 @@
-import { CoreAssistantMessage, CoreToolMessage, DataStreamWriter, LanguageModelV1, tool, Tool } from "ai";
+import {
+  CoreAssistantMessage,
+  CoreToolMessage,
+  DataStreamWriter,
+  LanguageModelV1,
+  tool,
+  Tool,
+} from "ai";
 import { ImodelDescriptionType } from "./modelDescriptions";
 import { generateText, experimental_generateImage } from "ai";
 import { openai } from "@ai-sdk/openai";
@@ -14,7 +21,7 @@ const utapi = new UTApi();
 
 // Helper function to upload to uploadThing API
 async function uploadToUploadThing(
-  imageBase64: string
+  imageBase64: string,
 ): Promise<string | null> {
   try {
     // Convert base64 to Buffer
@@ -75,7 +82,7 @@ const fetchSearchResults = async (query: string) => {
         "Accept-Encoding": "gzip",
         "X-Subscription-Token": process.env.BRAVE_SEARCH_API_KEY || "",
       }),
-    }
+    },
   ).then((res) => res.json());
 
   return results;
@@ -101,13 +108,13 @@ const canvas = (dataStream: DataStreamWriter) =>
         title: z
           .string()
           .describe(
-            "An optional title for the Canvas document. (Set desired title to the Canvas.)"
+            "An optional title for the Canvas document. (Set desired title to the Canvas.)",
           )
           .nullable(),
         mode: z
           .enum(["create", "replace"])
           .describe(
-            "How to update canvas content. 'create' creates a new canvas (default if not specified), 'replace' replaces all content with new content."
+            "How to update canvas content. 'create' creates a new canvas (default if not specified), 'replace' replaces all content with new content.",
           )
           .nullable(),
       })
@@ -124,7 +131,7 @@ const search = (
   dataStream: DataStreamWriter,
   deepResearchModel: LanguageModelV1,
   toolList?: string[],
-  language?: string
+  language?: string,
 ) =>
   tool({
     description:
@@ -246,7 +253,7 @@ const search = (
                       } catch (summarizationError) {
                         console.error(
                           `Error summarizing ${url}:`,
-                          summarizationError
+                          summarizationError,
                         );
                         content = rawContent; // Fallback to raw content on error
                       }
@@ -271,7 +278,7 @@ const search = (
                   } else {
                     // Keep meta description logic for standard search
                     const metaDesc = doc.querySelector(
-                      'meta[name="description"]'
+                      'meta[name="description"]',
                     );
                     if (metaDesc) {
                       content =
@@ -295,8 +302,8 @@ const search = (
                 content,
                 type,
               };
-            }
-          )
+            },
+          ),
       );
 
       dataStream.writeMessageAnnotation({
@@ -366,7 +373,7 @@ export function getTools(
   sessionId?: string,
   userId?: string,
   modelDescription?: ImodelDescriptionType,
-  language?: string
+  language?: string,
 ) {
   let tools: { [key: string]: Tool } | undefined = {};
   if (modelDescription?.toolDisabled) {

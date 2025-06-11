@@ -55,10 +55,10 @@ const GettingStartedWizard: React.FC = () => {
 
   // ウィザードの状態管理
   const [currentStep, setCurrentStep] = useState<WizardStep>(
-    WizardStep.Language
+    WizardStep.Language,
   );
   const [selectedLanguage, setSelectedLanguage] = useState<string>(
-    (params.locale as string) || "ja"
+    (params.locale as string) || "ja",
   );
   const [displayName, setDisplayName] = useState<string>("");
   const [photoURL, setPhotoURL] = useState<string>("");
@@ -134,7 +134,7 @@ const GettingStartedWizard: React.FC = () => {
     // メール送信間隔制限（60秒）
     if (lastSentTime && Date.now() - lastSentTime < 60000) {
       const remainingSeconds = Math.ceil(
-        (60000 - (Date.now() - lastSentTime)) / 1000
+        (60000 - (Date.now() - lastSentTime)) / 1000,
       );
       toast.error(t("common.error.tooManyRequests"), {
         description: t("wizard.email.throttled", { seconds: remainingSeconds }),
@@ -206,7 +206,7 @@ const GettingStartedWizard: React.FC = () => {
 
   // 画像アップロードハンドラー
   const handleImageUpload = async (
-    event: React.ChangeEvent<HTMLInputElement>
+    event: React.ChangeEvent<HTMLInputElement>,
   ) => {
     const files = event.target?.files;
     if (!files || files.length === 0) return;
@@ -653,7 +653,7 @@ const GettingStartedWizard: React.FC = () => {
     <main className="w-full flex">
       <div
         className={cn(
-          "flex flex-col flex-1 w-full md:w-9/12 mr-0 md:mr-16 ml-3 p-4 h-screen"
+          "flex flex-col flex-1 w-full md:w-9/12 mr-0 md:mr-16 ml-3 p-4 h-screen",
         )}
       >
         <br />
@@ -674,7 +674,7 @@ const GettingStartedWizard: React.FC = () => {
                     ? "bg-primary"
                     : currentStep > index
                       ? "bg-primary/70"
-                      : "bg-muted"
+                      : "bg-muted",
                 )}
               />
             ))}

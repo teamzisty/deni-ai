@@ -6,7 +6,7 @@ category: docs
 
 ## Prerequisites
 
--   Deni AI instance setup is complete.
+- Deni AI instance setup is complete.
 
 ## Environment Variables and Available Features
 
@@ -14,22 +14,22 @@ By changing environment variables, you can increase the functionality of your in
 
 ### Features Available with Supabase-related Environment Variables
 
--   Use of Deni AI standard authentication and conversation synchronization
--   Use of Deni AI Bots
--   Other Supabase-related features
+- Use of Deni AI standard authentication and conversation synchronization
+- Use of Deni AI Bots
+- Other Supabase-related features
 
 ### Features Available with Non-Supabase Environment Variables
 
--   Deni AI standard search function - Requires Brave Search API key.
--   Deni AI standard image upload function - Requires UploadThing token.
+- Deni AI standard search function - Requires Brave Search API key.
+- Deni AI standard image upload function - Requires UploadThing token.
 
-| Environment Variable Name          | Description                                 |
-| ------------------------------------------ | ------------------------------------------- |
-| `NEXT_PUBLIC_SUPABASE_URL`                 | Supabase URL.                               |
-| `NEXT_PUBLIC_SUPABASE_ANON_KEY`            | Supabase anonymous key.                     |
-| `SUPABASE_SERVICE_ROLE_KEY`                | Supabase service role key.                  |
-| `BRAVE_SEARCH_API_KEY`                     | Brave Search API key.                       |
-| `UPLOADTHING_TOKEN`                        | UploadThing token.                          |
+| Environment Variable Name       | Description                |
+| ------------------------------- | -------------------------- |
+| `NEXT_PUBLIC_SUPABASE_URL`      | Supabase URL.              |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Supabase anonymous key.    |
+| `SUPABASE_SERVICE_ROLE_KEY`     | Supabase service role key. |
+| `BRAVE_SEARCH_API_KEY`          | Brave Search API key.      |
+| `UPLOADTHING_TOKEN`             | UploadThing token.         |
 
 ## Changing the Brand Name
 
@@ -48,8 +48,8 @@ Please refer to Contribution -> Adding and Improving Languages.
 
 Deni AI uses its own `ai-sdk` providers.
 
--   `voids-oai-provider`: A provider that allows you to use OpenAI models with voids.top
--   `voids-ap-provider`: A provider that allows you to use Anthropic models with voids.top
+- `voids-oai-provider`: A provider that allows you to use OpenAI models with voids.top
+- `voids-ap-provider`: A provider that allows you to use Anthropic models with voids.top
 
 > For voids.top API documentation, please refer to [here](https://voids.top/docs).
 

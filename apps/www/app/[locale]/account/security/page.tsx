@@ -19,10 +19,12 @@ export default function SecurityPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-2xl font-bold tracking-tight">{t("security.title")}</h2>
+        <h2 className="text-2xl font-bold tracking-tight">
+          {t("security.title")}
+        </h2>
         <p className="text-muted-foreground">{t("security.description")}</p>
       </div>
-      
+
       <Card className="bg-secondary/80">
         <CardHeader>
           <CardTitle>Security Settings</CardTitle>
@@ -32,20 +34,24 @@ export default function SecurityPage() {
         </CardHeader>
         <CardContent className="space-y-4">
           {!user && (
-            <p className="text-sm text-destructive">Please log in to view security settings.</p>
+            <p className="text-sm text-destructive">
+              Please log in to view security settings.
+            </p>
           )}
-            {user && (
+          {user && (
             <div className="space-y-6">
               <div>
                 <h3 className="text-lg font-medium">Account Information</h3>
-                <p className="text-sm text-muted-foreground">Email: {user.email}</p>
                 <p className="text-sm text-muted-foreground">
-                  Provider: {user.app_metadata?.provider || 'email'}
+                  Email: {user.email}
+                </p>
+                <p className="text-sm text-muted-foreground">
+                  Provider: {user.app_metadata?.provider || "email"}
                 </p>
               </div>
-              
+
               <MFAManager />
-              
+
               <IntellipulseActionKeyManager />
             </div>
           )}

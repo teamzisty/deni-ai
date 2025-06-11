@@ -1,12 +1,10 @@
 ---
-
 title: Deni AI v2.3.1 Release
 date: 2025-04-10
 description: Introducing new features, bug fixes, and improvements in version 2.3.1.
 author: rai
 tags: [update]
 ---
-
 
 ## Cloud Storage by Default
 

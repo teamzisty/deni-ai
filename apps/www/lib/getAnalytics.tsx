@@ -9,7 +9,6 @@ export async function getAnalytics() {
   return isAnalyticsEnabled;
 }
 
-
 export async function setAnalytics(isAnalyticsEnabled: boolean) {
   const cookieStore = await cookies();
   cookieStore.set("analytics-consent", isAnalyticsEnabled.toString());

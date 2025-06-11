@@ -1,12 +1,10 @@
 ---
-
 title: Deni AI v2.3 Release
 date: 2025-04-08
 description: Introducing new features, bug fixes, and improvements in version 2.3.
 author: rai
 tags: [update]
 ---
-
 
 TLDR; Sharing, Search, Research
 
@@ -16,7 +14,7 @@ Detailed search has been reborn as Deep Research, providing better results.
 
 Additionally, the search feature no longer sends all page content. This allows for faster results. (Can be changed in settings)
 
-<small>*Note: Not sending all content may reduce search accuracy.</small>
+<small>\*Note: Not sending all content may reduce search accuracy.</small>
 
 ![Deep Research Preview](deep-research.png)
 _Deep Research Preview_

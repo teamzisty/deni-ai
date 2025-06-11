@@ -25,17 +25,19 @@ A comprehensive documentation website for Deni AI built with Next.js 15, featuri
 
 ### Prerequisites
 
-- Node.js 18+ 
+- Node.js 18+
 - pnpm
 
 ### Setup
 
 1. Install dependencies:
+
    ```bash
    pnpm install
    ```
 
 2. Start development server:
+
    ```bash
    pnpm dev
    ```
@@ -103,6 +105,7 @@ Your content here...
 ## API Routes
 
 The site uses Next.js App Router with:
+
 - Dynamic routes for blog posts: `/blog/[slug]`
 - Dynamic routes for docs: `/docs/[slug]`
 - Static generation for optimal performance
@@ -118,6 +121,7 @@ The site uses Next.js App Router with:
 ### Styling
 
 Tailwind classes are configured with:
+
 - Custom typography styles in `globals.css`
 - Dark mode support throughout
 - Responsive design utilities
@@ -125,6 +129,7 @@ Tailwind classes are configured with:
 ### Content Processing
 
 Content is processed using:
+
 - `gray-matter` for frontmatter parsing
 - `remark` with GFM for markdown processing
 - Reading time calculation

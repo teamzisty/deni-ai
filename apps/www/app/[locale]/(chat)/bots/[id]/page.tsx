@@ -57,7 +57,7 @@ export default function BotsDetailsPage() {
 
         // Custom fetch function to include auth token
         const response = await secureFetch.fetch(
-          `/api/bots/retrieve?id=${params.id}`
+          `/api/bots/retrieve?id=${params.id}`,
         );
 
         if (!response.ok) {
@@ -70,7 +70,7 @@ export default function BotsDetailsPage() {
       } catch (err) {
         console.error(err);
         setError(
-          err instanceof Error ? err.message : t("bots.details.fetchError")
+          err instanceof Error ? err.message : t("bots.details.fetchError"),
         );
       } finally {
         setLoading(false);
@@ -150,7 +150,7 @@ export default function BotsDetailsPage() {
                 className="cursor-pointer hover:underline"
                 onClick={() =>
                   toast.info(
-                    t("bots.creatorIdToast", { id: chatData.createdBy.id })
+                    t("bots.creatorIdToast", { id: chatData.createdBy.id }),
                   )
                 }
               >

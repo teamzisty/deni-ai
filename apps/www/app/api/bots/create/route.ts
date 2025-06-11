@@ -8,22 +8,28 @@ interface BotsCreateRequest {
 
 export async function POST(req: Request) {
   try {
-    const authorization = req.headers.get("Authorization")?.replace("Bearer ", "");
+    const authorization = req.headers
+      .get("Authorization")
+      ?.replace("Bearer ", "");
 
     if (!authorization) {
       return NextResponse.json(
         { error: "Authorization Failed" },
-        { status: 401 }
+        { status: 401 },
       );
-    }    const supabase = await createSupabaseServerClient();
-    
+    }
+    const supabase = await createSupabaseServerClient();
+
     // Verify the JWT token
-    const { data: { user }, error: authError } = await supabase.auth.getUser(authorization);
-    
+    const {
+      data: { user },
+      error: authError,
+    } = await supabase.auth.getUser(authorization);
+
     if (authError || !user) {
       return NextResponse.json(
         { error: "Authorization Failed" },
-        { status: 401 }
+        { status: 401 },
       );
     }
 
@@ -31,26 +37,21 @@ export async function POST(req: Request) {
 
     if (!name || !description) {
       return NextResponse.json({ error: "Invalid Request" }, { status: 400 });
-    }    // Create bot id (random UUID)
+    } // Create bot id (random UUID)
     const botId = crypto.randomUUID();
 
     // Save bot data to Supabase
-    const { error } = await supabase
-      .from('bots')
-      .insert({
-        id: botId,
-        name,
-        description,
-        user_id: user.id,
-        created_at: new Date().toISOString(),
-      });
+    const { error } = await supabase.from("bots").insert({
+      id: botId,
+      name,
+      description,
+      user_id: user.id,
+      created_at: new Date().toISOString(),
+    });
 
     if (error) {
       console.error("Supabase error:", error);
-      return NextResponse.json(
-        { error: "Database Error" },
-        { status: 500 }
-      );
+      return NextResponse.json({ error: "Database Error" }, { status: 500 });
     }
 
     return NextResponse.json({

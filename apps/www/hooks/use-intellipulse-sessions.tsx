@@ -67,12 +67,12 @@ const initDatabase = async (): Promise<IDBDatabase> => {
 };
 
 const saveSessionToIndexedDB = async (
-  session: IntellipulseSession
+  session: IntellipulseSession,
 ): Promise<void> => {
   const db = await initDatabase();
   const transaction = db.transaction(
     [INTELLIPULSE_SESSIONS_STORE],
-    "readwrite"
+    "readwrite",
   );
   const store = transaction.objectStore(INTELLIPULSE_SESSIONS_STORE);
   store.put({
@@ -86,7 +86,7 @@ const loadSessionsFromIndexedDB = async (): Promise<IntellipulseSession[]> => {
     const db = await initDatabase();
     const transaction = db.transaction(
       [INTELLIPULSE_SESSIONS_STORE],
-      "readonly"
+      "readonly",
     );
     const store = transaction.objectStore(INTELLIPULSE_SESSIONS_STORE);
     const request = store.getAll();
@@ -111,7 +111,7 @@ const deleteSessionFromIndexedDB = async (id: string): Promise<void> => {
   const db = await initDatabase();
   const transaction = db.transaction(
     [INTELLIPULSE_SESSIONS_STORE],
-    "readwrite"
+    "readwrite",
   );
   const store = transaction.objectStore(INTELLIPULSE_SESSIONS_STORE);
   store.delete(id);
@@ -121,7 +121,7 @@ const clearAllSessionsFromIndexedDB = async (): Promise<void> => {
   const db = await initDatabase();
   const transaction = db.transaction(
     [INTELLIPULSE_SESSIONS_STORE],
-    "readwrite"
+    "readwrite",
   );
   const store = transaction.objectStore(INTELLIPULSE_SESSIONS_STORE);
   store.clear();
@@ -154,7 +154,7 @@ export function IntellipulseSessionsProvider({
 
     // Add the new session to the state
     setSessions((prev) => [newSession, ...prev]);
-    
+
     // Save to appropriate storage based on authentication status
     if (user && isSupabaseLoaded && supabase) {
       // Save to Supabase for authenticated users
@@ -172,7 +172,10 @@ export function IntellipulseSessionsProvider({
             console.error("Error saving new session to Supabase:", error);
             // Fallback to IndexedDB on error
             saveSessionToIndexedDB(newSession).catch((indexedError) => {
-              console.error("Error saving new session to IndexedDB fallback:", indexedError);
+              console.error(
+                "Error saving new session to IndexedDB fallback:",
+                indexedError,
+              );
             });
           }
         });
@@ -221,13 +224,13 @@ export function IntellipulseSessionsProvider({
         await saveSessionToIndexedDB(session);
       }
     },
-    [user, isSupabaseLoaded]
+    [user, isSupabaseLoaded],
   );
   // Update a session
   const updateSession = useCallback(
     async (id: string, updatedSession: IntellipulseSession) => {
       setSessions((prev) =>
-        prev.map((session) => (session.id === id ? updatedSession : session))
+        prev.map((session) => (session.id === id ? updatedSession : session)),
       );
 
       // Save to appropriate storage based on authentication status
@@ -259,7 +262,7 @@ export function IntellipulseSessionsProvider({
         await saveSessionToIndexedDB(updatedSession);
       }
     },
-    [user, isSupabaseLoaded]
+    [user, isSupabaseLoaded],
   );
   // Delete a session
   const deleteSession = useCallback(
@@ -291,7 +294,7 @@ export function IntellipulseSessionsProvider({
         await deleteSessionFromIndexedDB(id);
       }
     },
-    [user, isSupabaseLoaded]
+    [user, isSupabaseLoaded],
   );
   // Clear all sessions
   const clearAllSessions = useCallback(async () => {
@@ -329,11 +332,11 @@ export function IntellipulseSessionsProvider({
     (id: string): IntellipulseSession | undefined => {
       return sessions.find((session) => session.id === id);
     },
-    [sessions]
+    [sessions],
   );
   // Sync sessions from Supabase
   const syncSessions = useCallback(async () => {
-    if (!user || !isSupabaseLoaded && !supabase) return;
+    if (!user || (!isSupabaseLoaded && !supabase)) return;
 
     try {
       if (!supabase) return;
@@ -355,11 +358,11 @@ export function IntellipulseSessionsProvider({
             title: session.title || "",
             messages: session.messages || [],
             createdAt: new Date(session.created_at),
-          })
+          }),
         );
 
         setSessions(formattedSessions);
-        
+
         // Do not sync to IndexedDB when user is authenticated and using Supabase
         // IndexedDB should only be used as fallback storage for non-authenticated users
       }
@@ -397,7 +400,7 @@ export function IntellipulseSessionsProvider({
             title: session.title || "",
             messages: session.messages || [],
             createdAt: new Date(session.createdAt),
-          })
+          }),
         );
 
         // Add imported sessions
@@ -406,7 +409,7 @@ export function IntellipulseSessionsProvider({
         }
 
         toast.success(
-          t("sessionsImported", { count: importedSessions.length })
+          t("sessionsImported", { count: importedSessions.length }),
         );
       } catch (error) {
         console.error("Error importing sessions:", error);
@@ -414,7 +417,7 @@ export function IntellipulseSessionsProvider({
         throw error;
       }
     },
-    [addSession, t]
+    [addSession, t],
   );
   // Load initial data
   useEffect(() => {
@@ -475,7 +478,7 @@ export function useIntellipulseSessions(): IntellipulseSessionsContextValue {
   const context = useContext(IntellipulseSessionsContext);
   if (!context) {
     throw new Error(
-      "useIntellipulseSessions must be used within an IntellipulseSessionsProvider"
+      "useIntellipulseSessions must be used within an IntellipulseSessionsProvider",
     );
   }
   return context;

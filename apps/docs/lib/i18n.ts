@@ -5,7 +5,7 @@ export const locales = [
     flag: "🇺🇸",
   },
   {
-    code: "ja", 
+    code: "ja",
     name: "日本語",
     flag: "🇯🇵",
   },
@@ -28,11 +28,11 @@ export const localeFlags: Record<Locale, string> = {
 export function getLocaleFromPathname(pathname: string): Locale {
   const segments = pathname.split("/").filter(Boolean);
   const firstSegment = segments[0];
-  
-  if (locales.some(locale => locale.code === firstSegment)) {
+
+  if (locales.some((locale) => locale.code === firstSegment)) {
     return firstSegment as Locale;
   }
-  
+
   return defaultLocale;
 }
 
@@ -41,7 +41,7 @@ export function removeLocaleFromPathname(pathname: string): string {
   if (locale === defaultLocale) {
     return pathname;
   }
-  
+
   return pathname.replace(`/${locale}`, "") || "/";
 }
 
@@ -49,7 +49,7 @@ export function addLocaleToPathname(pathname: string, locale: Locale): string {
   if (locale === defaultLocale) {
     return pathname;
   }
-  
+
   const cleanPathname = removeLocaleFromPathname(pathname);
   return `/${locale}${cleanPathname}`;
 }

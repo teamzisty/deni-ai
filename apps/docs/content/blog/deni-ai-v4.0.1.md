@@ -1,5 +1,4 @@
 ---
-
 title: Deni AI v4.0.1 Release
 date: 2025-05-24
 description: Introducing new features, bug fixes, and improvements in version 4.0.1.
@@ -23,4 +22,4 @@ For all changes not included in the patch notes, please see the [GitHub Pull req
 > The Deni AI repository has been moved to https://github.com/raicdev/deni-ai. Future commits will be made to this repository.
 
 > [!NOTE]
-> The default branch has been changed to ``canary``. For release versions, please check the ``master`` branch.
+> The default branch has been changed to `canary`. For release versions, please check the `master` branch.

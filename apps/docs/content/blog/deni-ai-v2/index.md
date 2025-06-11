@@ -1,5 +1,4 @@
 ---
-
 title: Release of Deni AI v2
 date: 2025-03-28
 description: Introducing new features, bug fixes, and improvements in version 2.0.
@@ -12,21 +11,21 @@ tags: [update]
 New search feature for quick news searches. Advanced search for detailed inquiries.
 
 ![Search and Advanced Search](search-feature.png)
-*Search and Advanced Search*
+_Search and Advanced Search_
 
 ## Dynamic Island-style Indicator
 
 New indicator. Change models, stop generation, switch themes to change the mood. This keeps the message box clean.
 
 ![Dynamic Island-style Indicator](dynamic-island.png)<br />
-*Dynamic Island-style Indicator*
+_Dynamic Island-style Indicator_
 
 ## Chat Groups by Date
 
 The previously cluttered chat list is now more organized with date grouping. Great news for those with many chats!
 
 ![Chat Groups by Date](session-grouping.png)<br />
-*Chat Groups by Date*
+_Chat Groups by Date_
 
 ## Bug Fixes
 

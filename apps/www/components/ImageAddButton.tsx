@@ -13,7 +13,7 @@ interface ImageAddButtonProps {
 export const ImageAddButton = memo(
   ({ modelSupportsVision, onClick }: ImageAddButtonProps) => {
     const t = useTranslations();
-    
+
     return (
       <EasyTip content={t("chatInput.imageAdd")}>
         <Button
@@ -21,7 +21,7 @@ export const ImageAddButton = memo(
           size="icon"
           className={cn(
             "rounded-full",
-            !modelSupportsVision && "opacity-50 pointer-events-none"
+            !modelSupportsVision && "opacity-50 pointer-events-none",
           )}
           onClick={onClick}
         >
@@ -29,7 +29,7 @@ export const ImageAddButton = memo(
         </Button>
       </EasyTip>
     );
-  }
+  },
 );
 
 ImageAddButton.displayName = "ImageAddButton";

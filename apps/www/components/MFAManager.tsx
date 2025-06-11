@@ -192,7 +192,8 @@ export function MFAManager() {
                 </div>
               ))}
             </div>
-          </div>        ) : (
+          </div>
+        ) : (
           <div className="space-y-4">
             <div className="p-4 bg-yellow-50 dark:bg-yellow-950/20 rounded-lg border border-yellow-200 dark:border-yellow-800">
               <div className="flex items-center space-x-2">
@@ -206,7 +207,11 @@ export function MFAManager() {
               </p>
             </div>
 
-            <Button onClick={() => setIsEnrolling(true)} className="w-full" size="lg">
+            <Button
+              onClick={() => setIsEnrolling(true)}
+              className="w-full"
+              size="lg"
+            >
               <Shield className="mr-2 h-4 w-4" />
               {t("setupButton")}
             </Button>

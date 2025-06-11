@@ -58,7 +58,7 @@ const HeaderArea: React.FC<HeaderAreaProps> = memo(
       <div
         className={cn(
           "shadow-xl bg-secondary/70 rounded-full flex items-center justify-between mx-auto",
-          isMobile ? "p-1 px-2 gap-0.5" : "p-2 w-fit"
+          isMobile ? "p-1 px-2 gap-0.5" : "p-2 w-fit",
         )}
       >
         <div
@@ -136,7 +136,7 @@ const HeaderArea: React.FC<HeaderAreaProps> = memo(
       prevProps.reasoningEffort === nextProps.reasoningEffort &&
       prevProps.handleModelChange === nextProps.handleModelChange
     );
-  }
+  },
 );
 HeaderArea.displayName = "HeaderArea";
 

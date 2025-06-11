@@ -69,7 +69,8 @@ export function getAllBlogPosts(lang?: string): BlogPost[] {
         tags: data.tags || [],
         content,
         readingTime,
-      });    } else if (stat.isDirectory()) {
+      });
+    } else if (stat.isDirectory()) {
       // Handle directory/index.md format
       const indexPath = path.join(itemPath, "index.md");
       if (fs.existsSync(indexPath)) {
@@ -83,9 +84,10 @@ export function getAllBlogPosts(lang?: string): BlogPost[] {
         const readingTime = Math.ceil(words / wordsPerMinute);
 
         // Find images in the same directory
-        const images = fs.readdirSync(itemPath)
-          .filter(file => /\.(jpg|jpeg|png|gif|webp|svg)$/i.test(file))
-          .map(file => `/api/blog-assets/${slug}/${file}`);
+        const images = fs
+          .readdirSync(itemPath)
+          .filter((file) => /\.(jpg|jpeg|png|gif|webp|svg)$/i.test(file))
+          .map((file) => `/api/blog-assets/${slug}/${file}`);
 
         allPostsData.push({
           slug,
@@ -109,7 +111,12 @@ export function getAllBlogPosts(lang?: string): BlogPost[] {
 export function getBlogPost(slug: string, lang?: string): BlogPost | null {
   try {
     // First try the direct .md file format
-    const directPath = path.join(contentDirectory, lang || "", "blog", `${slug}.md`);
+    const directPath = path.join(
+      contentDirectory,
+      lang || "",
+      "blog",
+      `${slug}.md`,
+    );
     if (fs.existsSync(directPath)) {
       const fileContents = fs.readFileSync(directPath, "utf8");
       const { data, content } = matter(fileContents);
@@ -127,8 +134,14 @@ export function getBlogPost(slug: string, lang?: string): BlogPost | null {
         content,
         readingTime,
       };
-    }    // Then try the directory/index.md format
-    const indexPath = path.join(contentDirectory, lang || "", "blog", slug, "index.md");
+    } // Then try the directory/index.md format
+    const indexPath = path.join(
+      contentDirectory,
+      lang || "",
+      "blog",
+      slug,
+      "index.md",
+    );
     if (fs.existsSync(indexPath)) {
       const fileContents = fs.readFileSync(indexPath, "utf8");
       const { data, content } = matter(fileContents);
@@ -139,9 +152,10 @@ export function getBlogPost(slug: string, lang?: string): BlogPost | null {
 
       // Find images in the same directory
       const dirPath = path.join(contentDirectory, lang || "", "blog", slug);
-      const images = fs.readdirSync(dirPath)
-        .filter(file => /\.(jpg|jpeg|png|gif|webp|svg)$/i.test(file))
-        .map(file => `/api/blog-assets/${slug}/${file}`);
+      const images = fs
+        .readdirSync(dirPath)
+        .filter((file) => /\.(jpg|jpeg|png|gif|webp|svg)$/i.test(file))
+        .map((file) => `/api/blog-assets/${slug}/${file}`);
 
       return {
         slug,
@@ -214,7 +228,12 @@ export function getAllDocPages(lang?: string): DocPage[] {
 export function getDocPage(slug: string, lang?: string): DocPage | null {
   try {
     // Handle nested paths properly
-    const fullPath = path.join(contentDirectory, lang || "", "docs", `${slug}.md`);
+    const fullPath = path.join(
+      contentDirectory,
+      lang || "",
+      "docs",
+      `${slug}.md`,
+    );
     console.log("Full path for doc:", fullPath);
     const fileContents = fs.readFileSync(fullPath, "utf8");
     const { data, content } = matter(fileContents);

@@ -1,5 +1,4 @@
 ---
-
 title: Deni AI v2.2 のリリース
 date: 2025-04-04
 description: バージョン 2.2 の新しい機能やバグ修正、改善点をご紹介します。
@@ -16,11 +15,11 @@ tags: [update]
 GPT 4.5 Preview、Claude 3.7 Sonnet (+ Extended Thinking)、o1、o3-mini (改良版) を追加しました。
 
 | モデル名          | 公式 API 料金 (USD, 入力/出力) |
-| ----------------- | --------------------- |
-| GPT-4.5 Preview   | $75 / $150            |
-| Claude 3.7 Sonnet | $3 / $15              |
-| o1                | $15 / $60             |
-| o3-mini           | $1.1 / $4.4           |
+| ----------------- | ------------------------------ |
+| GPT-4.5 Preview   | $75 / $150                     |
+| Claude 3.7 Sonnet | $3 / $15                       |
+| o1                | $15 / $60                      |
+| o3-mini           | $1.1 / $4.4                    |
 
 <small>あと、Gemini 2.0 Flash が再び動くようになりました！</small>
 

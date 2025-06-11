@@ -82,7 +82,7 @@ export default function ChatHomepage() {
 
       // Navigate to the chat page with the message
       router.push(
-        `/chat/${newSession.id}?message=${encodeURIComponent(messageContent)}`
+        `/chat/${newSession.id}?message=${encodeURIComponent(messageContent)}`,
       );
     } catch (error) {
       console.error("Error sending message:", error);
@@ -119,7 +119,10 @@ export default function ChatHomepage() {
           {" "}
           <h1 className="text-4xl md:text-6xl font-semibold text-foreground mb-2">
             {t("greeting", {
-              name: user?.user_metadata?.full_name || user?.email?.split("@")[0] || "User",
+              name:
+                user?.user_metadata?.full_name ||
+                user?.email?.split("@")[0] ||
+                "User",
             })}
           </h1>
         </motion.div>
@@ -145,7 +148,7 @@ export default function ChatHomepage() {
               <div
                 className={cn(
                   "bg-card/50 backdrop-blur-sm border border-border/50 rounded-xl p-6 hover:border-border hover:bg-card/70 transition-all duration-300 group",
-                  isLoading && "opacity-50 cursor-not-allowed"
+                  isLoading && "opacity-50 cursor-not-allowed",
                 )}
               >
                 <div className="flex items-start space-x-4">
