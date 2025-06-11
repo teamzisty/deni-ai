@@ -67,7 +67,7 @@ const PasswordResetConfirm: React.FC = () => {
         setError(t("login.passwordResetConfirm.errors.passwordTooWeak"));
       } else {
         setError(
-          error.message || t("login.passwordResetConfirm.errors.updateFailed")
+          error.message || t("login.passwordResetConfirm.errors.updateFailed"),
         );
       }
     } finally {
@@ -113,7 +113,7 @@ const PasswordResetConfirm: React.FC = () => {
                     id="newPassword"
                     type="password"
                     placeholder={t(
-                      "login.passwordResetConfirm.newPasswordPlaceholder"
+                      "login.passwordResetConfirm.newPasswordPlaceholder",
                     )}
                     value={newPassword}
                     onChange={(e) => setNewPassword(e.target.value)}
@@ -131,7 +131,7 @@ const PasswordResetConfirm: React.FC = () => {
                     id="confirmPassword"
                     type="password"
                     placeholder={t(
-                      "login.passwordResetConfirm.confirmPasswordPlaceholder"
+                      "login.passwordResetConfirm.confirmPasswordPlaceholder",
                     )}
                     value={confirmPassword}
                     onChange={(e) => setConfirmPassword(e.target.value)}

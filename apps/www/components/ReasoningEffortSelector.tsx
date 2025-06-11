@@ -53,7 +53,11 @@ const ReasoningEffortItem = memo(
           <span className="text-base">{getEffortDisplayName(effort)}</span>
           <div className="flex items-center gap-2">
             {effort === "low" && (
-              <EasyTip content={t("reasoningEffort.lowTip") || "Fast but shallow reasoning"}>
+              <EasyTip
+                content={
+                  t("reasoningEffort.lowTip") || "Fast but shallow reasoning"
+                }
+              >
                 <Badge variant="secondary" className="p-1 flex gap-1">
                   <Zap size="16" />
                 </Badge>
@@ -61,7 +65,9 @@ const ReasoningEffortItem = memo(
             )}
 
             {effort === "medium" && (
-              <EasyTip content={t("reasoningEffort.mediumTip") || "Balanced reasoning"}>
+              <EasyTip
+                content={t("reasoningEffort.mediumTip") || "Balanced reasoning"}
+              >
                 <Badge className="p-1" variant="secondary">
                   <BrainCircuit size="16" />
                 </Badge>
@@ -69,7 +75,12 @@ const ReasoningEffortItem = memo(
             )}
 
             {effort === "high" && (
-              <EasyTip content={t("reasoningEffort.highTip") || "Deep reasoning (takes more time)"}>
+              <EasyTip
+                content={
+                  t("reasoningEffort.highTip") ||
+                  "Deep reasoning (takes more time)"
+                }
+              >
                 <Badge className="p-1" variant="secondary">
                   <Brain size="16" />
                 </Badge>
@@ -79,7 +90,7 @@ const ReasoningEffortItem = memo(
         </div>
       </DropdownMenuItem>
     );
-  }
+  },
 );
 ReasoningEffortItem.displayName = "ReasoningEffortItem";
 
@@ -95,7 +106,7 @@ export const ReasoningEffortSelector = memo(function ReasoningEffortSelector({
   availableEfforts?: reasoningEffortType[];
 }) {
   const t = useTranslations();
-  
+
   if (!modelDescriptions[model]?.reasoningEffort) return null;
 
   const getEffortIcon = (effort: reasoningEffortType) => {
@@ -124,10 +135,9 @@ export const ReasoningEffortSelector = memo(function ReasoningEffortSelector({
     }
   };
 
-  const memoizedHandleEffortChange = useCallback(
+  const memoizedHandleEffortChange = useCallback(handleReasoningEffortChange, [
     handleReasoningEffortChange,
-    [handleReasoningEffortChange]
-  );
+  ]);
 
   return (
     <DropdownMenu>
@@ -142,10 +152,13 @@ export const ReasoningEffortSelector = memo(function ReasoningEffortSelector({
       </DropdownMenuTrigger>
 
       <DropdownMenuContent className="w-64">
-        <DropdownMenuLabel className="pb-0!">{t("reasoningEffort.label") || "Reasoning Effort"}</DropdownMenuLabel>
+        <DropdownMenuLabel className="pb-0!">
+          {t("reasoningEffort.label") || "Reasoning Effort"}
+        </DropdownMenuLabel>
         <div className="ml-2">
           <span className="text-sm text-muted-foreground">
-            {t("reasoningEffort.description") || "Choose the depth of thinking AI uses to solve problems"}
+            {t("reasoningEffort.description") ||
+              "Choose the depth of thinking AI uses to solve problems"}
           </span>
         </div>
         <DropdownMenuGroup>

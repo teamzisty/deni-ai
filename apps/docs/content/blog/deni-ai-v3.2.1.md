@@ -16,6 +16,7 @@ We've made several improvements to model selection. Here are the highlights:
 - **Models to be Removed**: Some models (listed below) are old or unstable and will be removed on 5/10.
 
 **Models to be Removed**:
+
 > Google: Gemini 2.0 Flash Lite, Gemini 1.5 Pro  
 > Grok: Grok 3 Beta / 3 mini Beta (OpenRouter)
 

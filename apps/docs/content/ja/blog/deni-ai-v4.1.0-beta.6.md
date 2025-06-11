@@ -28,7 +28,6 @@ Deni AI のホームページが新しくなりました。新しいデザイン
 - アプリ: タイトル設定のロジックを改善
 - 依存関係を更新
 
-
 パッチノートに含まれていないすべての変更点は、[GitHub の Pull requests](https://github.com/raicdev/deni-ai/pull/51) をご覧ください。
 
 > [!NOTE]

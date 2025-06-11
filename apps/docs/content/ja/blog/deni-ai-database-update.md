@@ -52,8 +52,8 @@ NEXT_PUBLIC_SUPABASE_URL=<PROJECT_URL>
 NEXT_PUBLIC_SUPABASE_ANON_KEY=<ANON_KEY>
 ```
 
- - [Supabase Docs](https://supabase.com/docs/guides/getting-started/quickstarts/nextjs) から Project URL と Anon key を取得できます。
- - [API Keys](https://supabase.com/dashboard/project/_/settings/api-keys) にアクセスし、プロジェクトを選択すると、`service_role` key を取得できます。
+- [Supabase Docs](https://supabase.com/docs/guides/getting-started/quickstarts/nextjs) から Project URL と Anon key を取得できます。
+- [API Keys](https://supabase.com/dashboard/project/_/settings/api-keys) にアクセスし、プロジェクトを選択すると、`service_role` key を取得できます。
 
 #### 3. SQL Editor でテーブルを作成する
 
@@ -71,10 +71,12 @@ Supabase の SQL Editor でテーブルを作成してください。
 > ただし、カスタムデータの移行はサポートされません。
 
 > [!NOTE]
+>
 > - Firebase からパスワードを移行する場合、Hash Parameters をホストする Middleware が必要です。
 > - パスワード移行ができない場合は、パスワードリセットを要求してアカウントを使用することができます。
 
 > [!NOTE]
+>
 > - ネストされたコレクション (`deni-ai-conversations` など) をエクスポートするには、UID リストを作成し、それから一つずつデータを読み取る必要があります。
 > - Firebase Auth の UID と Supabase Auth の UID のマッピングを作成し、`user_id` に Supabase Auth の UID を入れる必要があります。
 

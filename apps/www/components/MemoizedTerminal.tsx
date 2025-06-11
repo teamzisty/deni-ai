@@ -95,7 +95,7 @@ export const MemoizedTerminal = memo(
             write(chunk) {
               terminal.write(chunk);
             },
-          })
+          }),
         );
 
         const input = shellProcess?.input.getWriter();
@@ -166,6 +166,6 @@ export const MemoizedTerminal = memo(
 
     // No significant changes, no need to re-render
     return true;
-  }
+  },
 );
 MemoizedTerminal.displayName = "MemoizedTerminal";

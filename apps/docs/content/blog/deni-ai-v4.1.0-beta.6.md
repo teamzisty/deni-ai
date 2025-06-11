@@ -28,7 +28,6 @@ Four other changes were made in this version.
 - App: Improved title setting logic
 - Updated dependencies
 
-
 For all changes not included in the patch notes, please see [GitHub Pull requests](https://github.com/raicdev/deni-ai/pull/51).
 
 > [!NOTE]
@@ -36,4 +35,3 @@ For all changes not included in the patch notes, please see [GitHub Pull request
 
 > [!NOTE]
 > The default branch has been changed to `canary`. For release versions, please check the `master` branch.
-

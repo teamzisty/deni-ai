@@ -19,14 +19,10 @@ export default function NotFound() {
       <Card className="w-[420px]">
         <CardHeader>
           <CardTitle>{t("title")}</CardTitle>
-          <CardDescription>
-            {t("description")}
-          </CardDescription>
+          <CardDescription>{t("description")}</CardDescription>
         </CardHeader>
         <CardContent>
-          <p>
-            {t("checkUrl")}
-          </p>
+          <p>{t("checkUrl")}</p>
         </CardContent>
         <CardFooter className="gap-3">
           <Button asChild>

@@ -21,7 +21,7 @@ Base URL for the API calls.
 Is Canary
 */
   isCanary?: boolean;
-/**
+  /**
 Custom headers to include in the requests.
 */
   headers?: Record<string, string>;
@@ -42,7 +42,7 @@ Creates a model for text generation.
 */
   (
     modelId: VoidsAPChatModelId,
-    settings?: VoidsAPChatSettings
+    settings?: VoidsAPChatSettings,
   ): LanguageModelV1;
 
   /**
@@ -50,15 +50,17 @@ Creates a chat model for text generation.
 */
   chatModel(
     modelId: VoidsAPChatModelId,
-    settings?: VoidsAPChatSettings
+    settings?: VoidsAPChatSettings,
   ): LanguageModelV1;
 }
 
 export function createVoidsAP(
-  options: VoidsAPProviderSettings = {}
+  options: VoidsAPProviderSettings = {},
 ): VoidsAPProvider {
   const baseURL = withoutTrailingSlash(
-    options.baseURL ?? options.isCanary ? "https://capi.voids.top/v1/" : "https://api.voids.top/v1/"
+    (options.baseURL ?? options.isCanary)
+      ? "https://capi.voids.top/v1/"
+      : "https://api.voids.top/v1/",
   );
 
   interface CommonModelConfig {
@@ -93,7 +95,7 @@ export function createVoidsAP(
 
   const createChatModel = (
     modelId: VoidsAPChatModelId,
-    settings: VoidsAPChatSettings = {}
+    settings: VoidsAPChatSettings = {},
   ) => {
     const modelSettings = { ...settings };
     return new VoidsAPChatLanguageModel(modelId, modelSettings, {
@@ -104,7 +106,7 @@ export function createVoidsAP(
 
   const provider = (
     modelId: VoidsAPChatModelId,
-    settings?: VoidsAPChatSettings
+    settings?: VoidsAPChatSettings,
   ) => createChatModel(modelId, settings);
 
   provider.chatModel = createChatModel;

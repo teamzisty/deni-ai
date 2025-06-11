@@ -24,7 +24,7 @@ export async function GET(request: NextRequest) {
       if (
         post.title.toLowerCase().includes(searchQuery) ||
         post.description.toLowerCase().includes(searchQuery) ||
-        post.tags.some(tag => tag.toLowerCase().includes(searchQuery))
+        post.tags.some((tag) => tag.toLowerCase().includes(searchQuery))
       ) {
         results.push({
           type: "blog",

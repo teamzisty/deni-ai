@@ -41,7 +41,9 @@ export function DocsLayout({
           <div className="flex">
             {/* Main Content */}
             <div className="flex-1 min-w-0">
-              <div className="px-6 py-6 lg:px-8">                {/* Breadcrumbs */}
+              <div className="px-6 py-6 lg:px-8">
+                {" "}
+                {/* Breadcrumbs */}
                 {breadcrumbs && breadcrumbs.length > 0 && (
                   <nav className="mb-6" aria-label="Breadcrumb">
                     <div className="flex items-center space-x-2 text-sm text-muted-foreground">
@@ -56,14 +58,15 @@ export function DocsLayout({
                               {crumb.title}
                             </Link>
                           ) : (
-                            <span className="text-foreground font-medium">{crumb.title}</span>
+                            <span className="text-foreground font-medium">
+                              {crumb.title}
+                            </span>
                           )}
                         </div>
                       ))}
                     </div>
                   </nav>
                 )}
-
                 {/* Page Header */}
                 {(title || description) && (
                   <div className="mb-8">
@@ -97,12 +100,10 @@ export function DocsLayout({
                     )}
                   </div>
                 )}
-
                 {/* Content */}
                 <div className="prose prose-slate dark:prose-invert max-w-none">
                   {children}
                 </div>
-
                 {/* Navigation */}
                 {navigation && (navigation.prev || navigation.next) && (
                   <div className="flex justify-between items-center pt-8 mt-8 border-t">
@@ -115,8 +116,12 @@ export function DocsLayout({
                           >
                             <ChevronLeft className="h-4 w-4" />
                             <div className="text-left">
-                              <div className="text-xs text-muted-foreground">Previous</div>
-                              <div className="font-medium">{navigation.prev.title}</div>
+                              <div className="text-xs text-muted-foreground">
+                                Previous
+                              </div>
+                              <div className="font-medium">
+                                {navigation.prev.title}
+                              </div>
                             </div>
                           </Link>
                         </Button>
@@ -130,8 +135,12 @@ export function DocsLayout({
                             className="flex items-center gap-2 text-sm justify-end"
                           >
                             <div className="text-right">
-                              <div className="text-xs text-muted-foreground">Next</div>
-                              <div className="font-medium">{navigation.next.title}</div>
+                              <div className="text-xs text-muted-foreground">
+                                Next
+                              </div>
+                              <div className="font-medium">
+                                {navigation.next.title}
+                              </div>
                             </div>
                             <ChevronRight className="h-4 w-4" />
                           </Link>
@@ -158,8 +167,8 @@ export function DocsLayout({
                             item.level === 1
                               ? "text-foreground"
                               : item.level === 2
-                              ? "pl-3 text-muted-foreground"
-                              : "pl-6 text-muted-foreground"
+                                ? "pl-3 text-muted-foreground"
+                                : "pl-6 text-muted-foreground"
                           }`}
                         >
                           {item.title}

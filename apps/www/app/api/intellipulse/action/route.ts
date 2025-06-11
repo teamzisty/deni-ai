@@ -1,7 +1,12 @@
 import { reasoningEffortType } from "@/lib/modelDescriptions";
 import { createOpenAI } from "@ai-sdk/openai";
 import { validateActionKey } from "@/lib/action-key";
-import { createDataStreamResponse, generateText, streamText, UIMessage } from "ai";
+import {
+  createDataStreamResponse,
+  generateText,
+  streamText,
+  UIMessage,
+} from "ai";
 import { NextResponse } from "next/server";
 
 export async function POST(req: Request) {
@@ -65,20 +70,22 @@ export async function POST(req: Request) {
       }
     }
 
-    const model = openai.responses("gpt-4.1-2025-04-14")
+    const model = openai.responses("gpt-4.1-2025-04-14");
 
     const response = await generateText({
-        model,
-        messages,
-    })
+      model,
+      messages,
+    });
 
-    return NextResponse.json({"success": true, "content": response.text }, { status: 200 });
-
+    return NextResponse.json(
+      { success: true, content: response.text },
+      { status: 200 },
+    );
   } catch (error) {
     console.error(error);
     return new NextResponse(
       "An error occurred while processing your request. Please try again later.",
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

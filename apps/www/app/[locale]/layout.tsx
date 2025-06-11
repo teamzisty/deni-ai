@@ -74,19 +74,20 @@ export default async function LocaleLayout({ children, params }: Props) {
     console.error(`Failed to load messages for locale: ${locale}`, error);
   }
 
-  const isAnalyticsEnabled = await getAnalyticsConsent();  return (
+  const isAnalyticsEnabled = await getAnalyticsConsent();
+  return (
     <NextIntlClientProvider locale={locale} messages={messages}>
-        <AuthProvider>
-          <SettingsProvider>
-            <CanvasProvider>
-              <DevelopmentBanner>{children}</DevelopmentBanner>
-              <Toaster richColors position="bottom-right" />
+      <AuthProvider>
+        <SettingsProvider>
+          <CanvasProvider>
+            <DevelopmentBanner>{children}</DevelopmentBanner>
+            <Toaster richColors position="bottom-right" />
 
-              <AnalyticsConsent initialConsent={isAnalyticsEnabled} />
-              {isAnalyticsEnabled && <Analytics />}
-            </CanvasProvider>
-          </SettingsProvider>
-        </AuthProvider>
+            <AnalyticsConsent initialConsent={isAnalyticsEnabled} />
+            {isAnalyticsEnabled && <Analytics />}
+          </CanvasProvider>
+        </SettingsProvider>
+      </AuthProvider>
     </NextIntlClientProvider>
   );
 }

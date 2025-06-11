@@ -88,7 +88,7 @@ const DeepResearchPanel: FC<DeepResearchPanelProps> = ({
       part.type === "tool-invocation" &&
       part.toolInvocation.toolName === "search" &&
       (part.toolInvocation.state === "call" ||
-        part.toolInvocation.state === "partial-call")
+        part.toolInvocation.state === "partial-call"),
   );
 
   if (isMessageComplete && !hasActiveSearchTools && !isOpen) {
@@ -276,7 +276,7 @@ export const MemoMarkdown = memo(
   (prevProps, nextProps) => {
     if (prevProps.content !== nextProps.content) return false;
     return true;
-  }
+  },
 );
 MemoMarkdown.displayName = "MemoMarkdown";
 
@@ -289,17 +289,26 @@ function parseMarkdownIntoBlocks(markdown: string): string[] {
 }
 
 export const MemoizedMarkdown = memo(
-  ({ content, id }: { content: string | { text: string; type: string }[]; id: string }) => {
+  ({
+    content,
+    id,
+  }: {
+    content: string | { text: string; type: string }[];
+    id: string;
+  }) => {
     let realContent = content;
     if (Array.isArray(content)) {
       realContent = content.map((block) => block.text).join("\n");
     }
-    const blocks = useMemo(() => parseMarkdownIntoBlocks(realContent as string), [realContent]);
+    const blocks = useMemo(
+      () => parseMarkdownIntoBlocks(realContent as string),
+      [realContent],
+    );
 
     return blocks.map((block, index) => (
       <MemoMarkdown content={block} key={`${id}-block_${index}`} />
     ));
-  }
+  },
 );
 MemoizedMarkdown.displayName = "MemoizedMarkdown";
 
@@ -500,7 +509,7 @@ const MessageControls = memo(
       prevProps.modelDescriptions === nextProps.modelDescriptions &&
       prevProps.generationTime === nextProps.generationTime
     );
-  }
+  },
 );
 MessageControls.displayName = "MessageControls";
 
@@ -511,16 +520,16 @@ export const MessageLog: FC<MessageLogProps> = memo(
 
     const [model, setModel] = useState<string>("openai/gpt-4.1-2025-04-14");
     const [canvasContent, setCanvasContent] = useState<string | undefined>(
-      undefined
+      undefined,
     );
     const [canvasTitle, setCanvasTitle] = useState<string | undefined>(
-      undefined
+      undefined,
     );
     const [generationTime, setGenerationTime] = useState<number | undefined>(
-      undefined
+      undefined,
     );
     const [session, setSession] = useState<ChatSession | undefined>(
-      getSession(sessionId)
+      getSession(sessionId),
     );
     const [researchProgress, setResearchProgress] = useState<
       messageAnnotation["researchProgress"] | undefined
@@ -532,7 +541,7 @@ export const MessageLog: FC<MessageLogProps> = memo(
 
     const [showCanvas, setShowCanvas] = useState(false);
     const [currentSession, setCurrentSession] = useState<ChatSession | null>(
-      null
+      null,
     );
     const { getCanvasData, updateCanvas } = useCanvas();
     const sessionCanvasData = useMemo(() => {
@@ -546,28 +555,28 @@ export const MessageLog: FC<MessageLogProps> = memo(
 
     const toolInvocations = React.useMemo(
       () => message.parts.filter((part) => part.type === "tool-invocation"),
-      [message.parts]
+      [message.parts],
     );
 
     const searchInvocations = React.useMemo(
       () =>
         toolInvocations.filter(
-          (part) => part.toolInvocation.toolName === "search"
+          (part) => part.toolInvocation.toolName === "search",
         ),
-      [toolInvocations]
+      [toolInvocations],
     );
 
     const canvasInvocations = React.useMemo(
       () =>
         toolInvocations.filter(
-          (part) => part.toolInvocation.toolName === "canvas"
+          (part) => part.toolInvocation.toolName === "canvas",
         ),
-      [toolInvocations]
+      [toolInvocations],
     );
 
     const annotationsKey = useMemo(
       () => JSON.stringify(message.annotations || []),
-      [message.annotations]
+      [message.annotations],
     );
 
     useEffect(() => {
@@ -575,17 +584,17 @@ export const MessageLog: FC<MessageLogProps> = memo(
       if (!annotations) return;
 
       const modelAnnotation = annotations.find(
-        (a) => (a as messageAnnotation).model
+        (a) => (a as messageAnnotation).model,
       );
       if (modelAnnotation) {
         setModel(
           (modelAnnotation as messageAnnotation).model ||
-            "openai/gpt-4.1-2025-04-14"
+            "openai/gpt-4.1-2025-04-14",
         );
       }
 
       const canvasAnnotation = annotations.find(
-        (a) => (a as messageAnnotation).canvasContent
+        (a) => (a as messageAnnotation).canvasContent,
       );
       if (canvasAnnotation) {
         const c = canvasAnnotation as messageAnnotation;
@@ -600,7 +609,7 @@ export const MessageLog: FC<MessageLogProps> = memo(
 
       // Find all generation time annotations
       const genAnnotations = annotations.filter(
-        (a) => (a as messageAnnotation).generationTime !== undefined
+        (a) => (a as messageAnnotation).generationTime !== undefined,
       );
 
       // If there are any generation time annotations, use the latest one
@@ -608,12 +617,12 @@ export const MessageLog: FC<MessageLogProps> = memo(
       if (genAnnotations.length > 0) {
         const latestGenAnnotation = genAnnotations[genAnnotations.length - 1];
         setGenerationTime(
-          (latestGenAnnotation as messageAnnotation).generationTime
+          (latestGenAnnotation as messageAnnotation).generationTime,
         );
       }
 
       const progressAnnotations = annotations.filter(
-        (a) => (a as messageAnnotation).researchProgress !== undefined
+        (a) => (a as messageAnnotation).researchProgress !== undefined,
       );
 
       // timestampがあると仮定して、timestampでソート（昇順）
@@ -631,7 +640,7 @@ export const MessageLog: FC<MessageLogProps> = memo(
 
       if (latestProgressAnnotation) {
         setResearchProgress(
-          (latestProgressAnnotation as messageAnnotation).researchProgress
+          (latestProgressAnnotation as messageAnnotation).researchProgress,
         );
       }
     }, [
@@ -680,7 +689,7 @@ export const MessageLog: FC<MessageLogProps> = memo(
 
     useEffect(() => {
       const reasoningParts = message.parts.filter(
-        (part) => part.type === "reasoning" && part.reasoning
+        (part) => part.type === "reasoning" && part.reasoning,
       );
 
       if (reasoningParts.length === 0) return;
@@ -694,7 +703,7 @@ export const MessageLog: FC<MessageLogProps> = memo(
         if (newReasoningStates[key] === "completed") return;
 
         const hasTextParts = message.parts.some(
-          (p) => p.type === "text" && p.text && p.text.trim().length > 0
+          (p) => p.type === "text" && p.text && p.text.trim().length > 0,
         );
 
         if (hasTextParts || message.content) {
@@ -743,7 +752,7 @@ export const MessageLog: FC<MessageLogProps> = memo(
       (sid: string, data: { content: string; title: string }) => {
         updateCanvas(sid, data);
       },
-      [updateCanvas]
+      [updateCanvas],
     );
 
     const canvasContentToShow = useMemo(() => {
@@ -787,7 +796,7 @@ export const MessageLog: FC<MessageLogProps> = memo(
           onRegenerate(selectedModel);
         }
       },
-      [onRegenerate]
+      [onRegenerate],
     );
 
     const [isDeepResearchPanelOpen, setIsDeepResearchPanelOpen] =
@@ -919,7 +928,7 @@ export const MessageLog: FC<MessageLogProps> = memo(
                 part.toolInvocation.toolName === "shallowResearch" ||
                 part.toolInvocation.toolName === "advancedResearch") &&
               (part.toolInvocation.state === "call" ||
-                part.toolInvocation.state === "partial-call")
+                part.toolInvocation.state === "partial-call"),
           );
 
           // Auto-close when message is complete AND all searches are done
@@ -956,7 +965,7 @@ export const MessageLog: FC<MessageLogProps> = memo(
     // Get all reasoning parts combined
     const combinedReasoningContent = useMemo(() => {
       const reasoningParts = message.parts.filter(
-        (part) => part.type === "reasoning" && part.reasoning
+        (part) => part.type === "reasoning" && part.reasoning,
       );
 
       if (reasoningParts.length === 0) return "";
@@ -971,7 +980,7 @@ export const MessageLog: FC<MessageLogProps> = memo(
         combinedReasoningContent.trim().length > 0 &&
         (message.content ||
           message.parts.some(
-            (p) => p.type === "text" && p.text && p.text.trim().length > 0
+            (p) => p.type === "text" && p.text && p.text.trim().length > 0,
           ))
       );
     }, [combinedReasoningContent, message.content, message.parts]);
@@ -1103,7 +1112,7 @@ export const MessageLog: FC<MessageLogProps> = memo(
                                     {item.description?.replace(/<[^>]*>/g, "")}
                                   </span>
                                 </p>
-                              )
+                              ),
                             )
                           ) : state === "call" || state === "partial-call" ? (
                             <span className="animate-pulse">
@@ -1154,7 +1163,7 @@ export const MessageLog: FC<MessageLogProps> = memo(
                   (part) =>
                     part.type === "reasoning" &&
                     "reasoning" in part &&
-                    part.reasoning
+                    part.reasoning,
                 ) &&
                   !isDeepResearchMessage &&
                   hasCompletedReasoning && (
@@ -1172,7 +1181,7 @@ export const MessageLog: FC<MessageLogProps> = memo(
                             (part) =>
                               part.type === "reasoning" &&
                               "reasoning" in part &&
-                              part.reasoning
+                              part.reasoning,
                           )
                           .map((part, index, array) => (
                             <div key={`${message.id}_reasoning_${index}`}>
@@ -1199,7 +1208,7 @@ export const MessageLog: FC<MessageLogProps> = memo(
                                                 return reasoning
                                                   .filter(
                                                     (item: any) =>
-                                                      item.type === "text"
+                                                      item.type === "text",
                                                   )
                                                   .map((item: any) => item.text)
                                                   .join("");
@@ -1292,11 +1301,13 @@ export const MessageLog: FC<MessageLogProps> = memo(
               {message.parts.map((part, index) => {
                 switch (part.type) {
                   case "text":
-                    return <MemoizedMarkdown
-                      key={`${message.id}_user_text_${index}`}
-                      id={`${message.id}_user_text_${index}`}
-                      content={part.text}
-                    />;
+                    return (
+                      <MemoizedMarkdown
+                        key={`${message.id}_user_text_${index}`}
+                        id={`${message.id}_user_text_${index}`}
+                        content={part.text}
+                      />
+                    );
                   default:
                     return null;
                 }
@@ -1312,6 +1323,6 @@ export const MessageLog: FC<MessageLogProps> = memo(
         />
       </div>
     );
-  }
+  },
 );
 MessageLog.displayName = "MessageLog";

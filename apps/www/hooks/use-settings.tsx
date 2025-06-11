@@ -43,7 +43,7 @@ interface SettingsContextValue {
   settings: Settings;
   updateSetting: <K extends keyof Settings>(
     key: K,
-    value: Settings[K]
+    value: Settings[K],
   ) => Promise<void>;
   resetSettings: () => Promise<void>;
   isLoading: boolean;
@@ -51,7 +51,7 @@ interface SettingsContextValue {
 
 // Create context
 const SettingsContext = createContext<SettingsContextValue | undefined>(
-  undefined
+  undefined,
 );
 
 // Provider component
@@ -73,18 +73,19 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
             .from(SUPABASE_TABLE)
             .select("settings")
             .eq("user_id", user.id)
-            .single();          if (!error && data) {
+            .single();
+          if (!error && data) {
             // Ensure data.settings is properly parsed if it's a string
             let parsedSettings = data.settings;
-            if (typeof data.settings === 'string') {
+            if (typeof data.settings === "string") {
               try {
                 parsedSettings = JSON.parse(data.settings);
               } catch (e) {
-                console.error('Error parsing settings from Supabase:', e);
+                console.error("Error parsing settings from Supabase:", e);
                 parsedSettings = {};
               }
             }
-            
+
             // Merge with defaults to ensure all properties exist
             const loadedSettings = {
               ...DEFAULT_SETTINGS,
@@ -122,18 +123,18 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
       }
     };
     loadSettings();
-  }, [user, supabase]);  // Update a single setting
+  }, [user, supabase]); // Update a single setting
   const updateSetting = useCallback(
     async <K extends keyof Settings>(key: K, value: Settings[K]) => {
       // Use functional update to get current settings
       setSettings((currentSettings) => {
         // Ensure currentSettings is a proper object, not a string
         let validCurrentSettings = currentSettings;
-        if (typeof currentSettings === 'string') {
+        if (typeof currentSettings === "string") {
           try {
             validCurrentSettings = JSON.parse(currentSettings);
           } catch (e) {
-            console.error('Error parsing current settings:', e);
+            console.error("Error parsing current settings:", e);
             validCurrentSettings = DEFAULT_SETTINGS;
           }
         }
@@ -143,7 +144,7 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
           [key]: value,
         };
 
-        console.log('New settings to save:', newSettings);
+        console.log("New settings to save:", newSettings);
 
         // Save to the appropriate storage (async operation)
         (async () => {
@@ -172,7 +173,10 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
               }
             } else {
               // Save to localStorage
-              localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(newSettings));
+              localStorage.setItem(
+                LOCAL_STORAGE_KEY,
+                JSON.stringify(newSettings),
+              );
             }
           } catch (error) {
             console.error(`Failed to save setting ${String(key)}:`, error);
@@ -185,7 +189,7 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
         return newSettings;
       });
     },
-    [user, supabase, t, recordExists]
+    [user, supabase, t, recordExists],
   );
   // Reset settings to defaults
   const resetSettings = useCallback(async () => {
@@ -216,13 +220,13 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
         // Reset in localStorage
         localStorage.setItem(
           LOCAL_STORAGE_KEY,
-          JSON.stringify(DEFAULT_SETTINGS)
+          JSON.stringify(DEFAULT_SETTINGS),
         );
       }
 
       setSettings(DEFAULT_SETTINGS);
       toast.success(
-        t("settings.resetSuccess") || "Settings reset successfully"
+        t("settings.resetSuccess") || "Settings reset successfully",
       );
     } catch (error) {
       console.error("Failed to reset settings:", error);

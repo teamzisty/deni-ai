@@ -166,7 +166,7 @@ const ChatInput = memo(
       JSON.stringify(prevProps.modelDescriptions) ===
         JSON.stringify(nextProps.modelDescriptions)
     );
-  }
+  },
 );
 
 ChatInput.displayName = "ChatInput";

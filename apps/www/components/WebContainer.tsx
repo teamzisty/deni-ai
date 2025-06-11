@@ -76,7 +76,7 @@ const readyMessageShown = false;
 // Add this function to handle WebContainer instance acquisition
 export const getOrCreateWebContainer = async (
   workdirName: string,
-  conversationId?: string
+  conversationId?: string,
 ): Promise<WebContainerAPI> => {
   // If conversation ID is provided and it's different from current, reset the instance
   if (
@@ -85,7 +85,7 @@ export const getOrCreateWebContainer = async (
     conversationId !== currentConversationId
   ) {
     console.log(
-      `Conversation changed from ${currentConversationId} to ${conversationId}, resetting WebContainer`
+      `Conversation changed from ${currentConversationId} to ${conversationId}, resetting WebContainer`,
     );
     await resetWebContainerInstance();
   }
@@ -267,20 +267,20 @@ export const webContainerProcess = {
 export const buildFileStructure = async (
   dir = "/",
   autoExpandRoot = false,
-  expandedDirs = new Set<string>(["/"])
+  expandedDirs = new Set<string>(["/"]),
 ) => {
   console.log(
     "[buildFileStructure] Starting for dir:",
     dir,
     "with expandedDirs:",
-    new Set(expandedDirs)
+    new Set(expandedDirs),
   );
 
   const localExpandedDirs = new Set(expandedDirs);
   const instance = getWebContainerInstance();
   if (!instance) {
     console.error(
-      "[buildFileStructure] WebContainer instance is not available"
+      "[buildFileStructure] WebContainer instance is not available",
     );
     return {};
   }
@@ -295,7 +295,7 @@ export const buildFileStructure = async (
 
     if (processingDirs.has(normalizedPath)) {
       console.warn(
-        `[processDirectory] Circular reference detected: ${normalizedPath}`
+        `[processDirectory] Circular reference detected: ${normalizedPath}`,
       );
       return {};
     }
@@ -322,7 +322,7 @@ export const buildFileStructure = async (
       for (const entry of entries) {
         if (entry.name.startsWith(".")) continue;
         const entryPath = normalizePathUtil(
-          `${normalizedPath === "/" ? "" : normalizedPath}/${entry.name}`
+          `${normalizedPath === "/" ? "" : normalizedPath}/${entry.name}`,
         );
 
         if (entry.isDirectory()) {
@@ -332,12 +332,12 @@ export const buildFileStructure = async (
             (normalizedPath === "/" && autoExpandRoot) ||
             localExpandedDirs.has(entryPath);
           console.log(
-            `[processDirectory] Checking children for ${entryPath}: Should process? ${shouldProcessChildren} (localExpandedDirs has it: ${localExpandedDirs.has(entryPath)})`
+            `[processDirectory] Checking children for ${entryPath}: Should process? ${shouldProcessChildren} (localExpandedDirs has it: ${localExpandedDirs.has(entryPath)})`,
           );
 
           if (shouldProcessChildren) {
             console.log(
-              `[processDirectory] Recursively processing children for: ${entryPath}`
+              `[processDirectory] Recursively processing children for: ${entryPath}`,
             );
             try {
               const childrenObj = await processDirectory(entryPath);
@@ -345,19 +345,19 @@ export const buildFileStructure = async (
             } catch (e) {
               console.error(
                 `[processDirectory] Error processing directory ${entryPath}:`,
-                e
+                e,
               );
               dirEntry.children = {};
             }
           } else {
             console.log(
-              `[processDirectory] Skipping children processing for: ${entryPath}`
+              `[processDirectory] Skipping children processing for: ${entryPath}`,
             );
           }
           dirInfo[entry.name] = dirEntry;
         } else {
           const isImage = /\.(png|jpe?g|gif|svg|webp|bmp|ico)$/i.test(
-            entry.name
+            entry.name,
           );
           const fileEntry = { type: "file", path: entryPath, isImage };
           dirInfo[entry.name] = fileEntry;
@@ -369,7 +369,7 @@ export const buildFileStructure = async (
     } catch (error) {
       console.error(
         `[processDirectory] Error reading directory ${normalizedPath}:`,
-        error
+        error,
       );
       processingDirs.delete(normalizedPath);
       return {};
@@ -383,7 +383,7 @@ export const buildFileStructure = async (
 
 // Function to refresh file structure
 export const refreshFileStructure = async (
-  expandedDirs = new Set<string>(["/"])
+  expandedDirs = new Set<string>(["/"]),
 ) => {
   const instance = getWebContainerInstance();
   if (!instance) {
@@ -453,7 +453,7 @@ export const updateFileList = async () => {
 export const useWebContainer = (
   chatId: string,
   onServerReady?: (url: string) => void,
-  onError?: (message: string) => void
+  onError?: (message: string) => void,
 ) => {
   const [instance, setInstance] = React.useState<WebContainerAPI | null>(null);
   const [isLoading, setIsLoading] = React.useState(false);
@@ -462,7 +462,7 @@ export const useWebContainer = (
     [key: string]: any;
   }>({});
   const [expandedDirs, setExpandedDirs] = React.useState<Set<string>>(
-    new Set(["/"])
+    new Set(["/"]),
   );
   const [lastWebContainerAction, setLastWebContainerAction] =
     useState<any>(null);
@@ -477,7 +477,7 @@ export const useWebContainer = (
     async (path: string) => {
       console.log(
         `[toggleDir] Attempting to toggle: ${path}. Current expanded:`,
-        new Set(expandedDirs)
+        new Set(expandedDirs),
       );
       const newExpandedDirs = new Set(expandedDirs);
       let structureNeedsUpdate = false;
@@ -486,13 +486,13 @@ export const useWebContainer = (
         newExpandedDirs.delete(path);
         console.log(
           `[toggleDir] Collapsing ${path}. New expanded:`,
-          new Set(newExpandedDirs)
+          new Set(newExpandedDirs),
         );
       } else {
         newExpandedDirs.add(path);
         console.log(
           `[toggleDir] Expanding ${path}. New expanded:`,
-          new Set(newExpandedDirs)
+          new Set(newExpandedDirs),
         );
         structureNeedsUpdate = true;
       }
@@ -511,23 +511,23 @@ export const useWebContainer = (
           const structure = await buildFileStructure(
             "/",
             false,
-            newExpandedDirs
+            newExpandedDirs,
           );
           if (structure) {
             console.log(
-              `[toggleDir] buildFileStructure successful for ${path}. Updating state.`
+              `[toggleDir] buildFileStructure successful for ${path}. Updating state.`,
             );
             setFileStructure(structure);
           } else {
             console.error(
-              `[toggleDir] buildFileStructure returned null/empty for ${path}.`
+              `[toggleDir] buildFileStructure returned null/empty for ${path}.`,
             );
             throw new Error("ファイル構造の構築に失敗しました");
           }
         } catch (error) {
           console.error(
             `[toggleDir] Error during buildFileStructure for ${path}:`,
-            error
+            error,
           );
           // Revert expansion on error - crucial!
           console.log(`[toggleDir] Reverting expansion for ${path}`);
@@ -539,7 +539,7 @@ export const useWebContainer = (
         }
       }
     },
-    [expandedDirs, setFileStructure]
+    [expandedDirs, setFileStructure],
   );
   // Initialize WebContainer
   React.useEffect(() => {
@@ -549,7 +549,7 @@ export const useWebContainer = (
       try {
         const container = await getOrCreateWebContainer(
           "web-container-" + chatId,
-          chatId // Pass conversation ID for reset detection
+          chatId, // Pass conversation ID for reset detection
         );
         if (!listenersSetupMap.has(container)) {
           listenersSetupMap.set(container, true);
@@ -564,7 +564,7 @@ export const useWebContainer = (
         const initialStructure = await buildFileStructure(
           "/",
           true,
-          expandedDirs
+          expandedDirs,
         );
         setFileStructure(initialStructure || {});
       } catch (err) {
@@ -601,39 +601,42 @@ export const useWebContainer = (
       const { action, path, content, isImage, tab } = lastWebContainerAction;
       console.log(
         `[processAction] Processing action: ${action}`,
-        lastWebContainerAction
+        lastWebContainerAction,
       );
-      
+
       // Clear the action *before* processing to prevent infinite loops
       setLastWebContainerAction(null);
-      
+
       try {
         if (action === "read" && path) {
           console.log(`[processAction] Reading file: ${path}`);
           if (isImage) {
             console.log(
-              `[processAction] It's an image. Setting tab to preview.`
+              `[processAction] It's an image. Setting tab to preview.`,
             );
             setEditorTab("preview");
           } else {
             try {
               const fileContentData = await instance.fs.readFile(path, "utf-8");
               console.log(
-                `[processAction] File read success. Content length: ${fileContentData.length}. Setting content and tab.`
+                `[processAction] File read success. Content length: ${fileContentData.length}. Setting content and tab.`,
               );
               setFileContent({ content: fileContentData, path });
               setEditorTab("code");
             } catch (readError) {
               console.error(
                 `[processAction] Error reading file ${path}:`,
-                readError
+                readError,
               );
             }
-          }        } else if (action === "write" && path && content !== undefined) {
+          }
+        } else if (action === "write" && path && content !== undefined) {
           console.log(`[processAction] Writing file: ${path}`);
           const dirPath = path.substring(0, path.lastIndexOf("/"));
           if (dirPath) {
-            await instance.fs.mkdir(dirPath, { recursive: true }).catch(() => {});
+            await instance.fs
+              .mkdir(dirPath, { recursive: true })
+              .catch(() => {});
           }
           await instance.fs.writeFile(path, content);
           console.log(`[processAction] File write success.`);
@@ -642,19 +645,25 @@ export const useWebContainer = (
           console.log(`[processAction] Refreshing file structure...`);
           await memoizedRefreshFileStructure();
           console.log(`[processAction] File structure refresh completed.`);
-        } else if (action === "setTab" && (tab === "code" || tab === "preview")) {
+        } else if (
+          action === "setTab" &&
+          (tab === "code" || tab === "preview")
+        ) {
           console.log(`[processAction] Setting editor tab to: ${tab}`);
           setEditorTab(tab);
         } else {
-          console.warn(
-            "[processAction] Unhandled or invalid action:",
-            { action, path, content, isImage, tab }
-          );
+          console.warn("[processAction] Unhandled or invalid action:", {
+            action,
+            path,
+            content,
+            isImage,
+            tab,
+          });
         }
       } catch (error) {
         console.error(
           `[processAction] Error processing action ${action}:`,
-          error
+          error,
         );
       }
       console.log(`[processAction] Action processing finished.`);
@@ -663,7 +672,13 @@ export const useWebContainer = (
     if (lastWebContainerAction) {
       processAction();
     }
-  }, [lastWebContainerAction, instance, memoizedRefreshFileStructure, setEditorTab, setFileContent]);
+  }, [
+    lastWebContainerAction,
+    instance,
+    memoizedRefreshFileStructure,
+    setEditorTab,
+    setFileContent,
+  ]);
 
   // Removed the problematic useEffect syncing fileStructure to expandedUIMap
 
@@ -785,81 +800,85 @@ export const TerminalDisplay = memo(
     const activeTab = terminalTabs.find((tab) => tab.id === activeTabId);
 
     // Initialize terminal for a tab
-    const initializeTerminal = useCallback(async (tab: TerminalTab) => {
-      if (!realWebContainerProcess || tab.terminal) return;
+    const initializeTerminal = useCallback(
+      async (tab: TerminalTab) => {
+        if (!realWebContainerProcess || tab.terminal) return;
 
-      const { Terminal } = await import("@xterm/xterm");
-      const { FitAddon } = await import("@xterm/addon-fit");
-      const { WebLinksAddon } = await import("@xterm/addon-web-links");
+        const { Terminal } = await import("@xterm/xterm");
+        const { FitAddon } = await import("@xterm/addon-fit");
+        const { WebLinksAddon } = await import("@xterm/addon-web-links");
 
-      const terminal = new Terminal({
-        cursorBlink: true,
-        fontSize: 14,
-        fontFamily: 'Menlo, Monaco, "Courier New", monospace',
-        theme: {
-          background: '#000000',
-          foreground: '#ffffff',
-          cursor: '#ffffff',
-        },
-        convertEol: true,
-      });
-
-      const fitAddon = new FitAddon();
-      const webLinksAddon = new WebLinksAddon();
-      
-      terminal.loadAddon(fitAddon);
-      terminal.loadAddon(webLinksAddon);
-
-      try {
-        // Start jsh process for this terminal
-        const jshProcess = await realWebContainerProcess.spawn('jsh', [], {
-          terminal: {
-            cols: terminal.cols,
-            rows: terminal.rows,
+        const terminal = new Terminal({
+          cursorBlink: true,
+          fontSize: 14,
+          fontFamily: 'Menlo, Monaco, "Courier New", monospace',
+          theme: {
+            background: "#000000",
+            foreground: "#ffffff",
+            cursor: "#ffffff",
           },
+          convertEol: true,
         });
 
-        // Connect terminal to process
-        jshProcess.output.pipeTo(
-          new WritableStream({
-            write(data) {
-              terminal.write(data);
+        const fitAddon = new FitAddon();
+        const webLinksAddon = new WebLinksAddon();
+
+        terminal.loadAddon(fitAddon);
+        terminal.loadAddon(webLinksAddon);
+
+        try {
+          // Start jsh process for this terminal
+          const jshProcess = await realWebContainerProcess.spawn("jsh", [], {
+            terminal: {
+              cols: terminal.cols,
+              rows: terminal.rows,
             },
-          })
-        );
+          });
 
-        const input = jshProcess.input.getWriter();
-        terminal.onData((data) => {
-          input.write(data);
-        });        // Update tab with terminal and process
-        setTerminalTabs(prev =>
-          prev.map(t =>
-            t.id === tab.id
-              ? { ...t, terminal, jshProcess, process: jshProcess, fitAddon }
-              : t
-          )
-        );
+          // Connect terminal to process
+          jshProcess.output.pipeTo(
+            new WritableStream({
+              write(data) {
+                terminal.write(data);
+              },
+            }),
+          );
 
-        // Mount terminal if this is the active tab
-        if (tab.id === activeTabId && terminalContainerRef.current) {
-          const terminalElement = terminalContainerRef.current.querySelector(`[data-terminal-id="${tab.id}"]`);
-          if (terminalElement) {
-            terminal.open(terminalElement as HTMLElement);
-            fitAddon.fit();
+          const input = jshProcess.input.getWriter();
+          terminal.onData((data) => {
+            input.write(data);
+          }); // Update tab with terminal and process
+          setTerminalTabs((prev) =>
+            prev.map((t) =>
+              t.id === tab.id
+                ? { ...t, terminal, jshProcess, process: jshProcess, fitAddon }
+                : t,
+            ),
+          );
+
+          // Mount terminal if this is the active tab
+          if (tab.id === activeTabId && terminalContainerRef.current) {
+            const terminalElement = terminalContainerRef.current.querySelector(
+              `[data-terminal-id="${tab.id}"]`,
+            );
+            if (terminalElement) {
+              terminal.open(terminalElement as HTMLElement);
+              fitAddon.fit();
+            }
           }
+        } catch (error) {
+          console.error("Failed to initialize terminal:", error);
+          terminal.write("\r\n\x1b[31mFailed to start jsh process\x1b[0m\r\n");
         }
-
-      } catch (error) {
-        console.error('Failed to initialize terminal:', error);
-        terminal.write('\r\n\x1b[31mFailed to start jsh process\x1b[0m\r\n');
-      }
-    }, [realWebContainerProcess, activeTabId, setTerminalTabs]);
+      },
+      [realWebContainerProcess, activeTabId, setTerminalTabs],
+    );
 
     // Initialize terminals for all tabs
     useEffect(() => {
       if (!realWebContainerProcess) return;
 
-      terminalTabs.forEach(tab => {
+      terminalTabs.forEach((tab) => {
         if (!tab.terminal) {
           initializeTerminal(tab);
         }
@@ -870,13 +889,15 @@ export const TerminalDisplay = memo(
     useEffect(() => {
       if (!activeTab?.terminal || !terminalContainerRef.current) return;
 
-      const terminalElement = terminalContainerRef.current.querySelector(`[data-terminal-id="${activeTabId}"]`);
+      const terminalElement = terminalContainerRef.current.querySelector(
+        `[data-terminal-id="${activeTabId}"]`,
+      );
       if (terminalElement && !terminalElement.hasChildNodes()) {
         activeTab.terminal.open(terminalElement as HTMLElement);
         // Fit the terminal to its container
-      if (activeTab.fitAddon) {
-        setTimeout(() => activeTab.fitAddon?.fit(), 0);
-      }
+        if (activeTab.fitAddon) {
+          setTimeout(() => activeTab.fitAddon?.fit(), 0);
+        }
       }
     }, [activeTabId, activeTab, showTerminal]);
 
@@ -889,47 +910,53 @@ export const TerminalDisplay = memo(
         logs: [],
         isActive: true,
       };
-      
-      setTerminalTabs(prev => [
-        ...prev.map(tab => ({ ...tab, isActive: false })),
-        newTab
+
+      setTerminalTabs((prev) => [
+        ...prev.map((tab) => ({ ...tab, isActive: false })),
+        newTab,
       ]);
       setActiveTabId(newTabId);
     }, [terminalTabs.length, setTerminalTabs, setActiveTabId]);
 
     // Close terminal tab
-    const closeTab = useCallback((tabId: string) => {
-      if (terminalTabs.length === 1) return; // Don't close last tab
-      
-      setTerminalTabs(prev => {
-        const tabToClose = prev.find(tab => tab.id === tabId);
-        
-        // Clean up terminal and process
-        if (tabToClose?.terminal) {
-          tabToClose.terminal.dispose();
-        }
-        if (tabToClose?.jshProcess) {
-          tabToClose.jshProcess.kill();
-        }
-        
-        const filtered = prev.filter(tab => tab.id !== tabId);
-        if (activeTabId === tabId && filtered.length > 0) {
-          setActiveTabId(filtered[0]?.id || "");
-        }
-        return filtered;
-      });
-    }, [terminalTabs.length, activeTabId, setTerminalTabs, setActiveTabId]);
+    const closeTab = useCallback(
+      (tabId: string) => {
+        if (terminalTabs.length === 1) return; // Don't close last tab
+
+        setTerminalTabs((prev) => {
+          const tabToClose = prev.find((tab) => tab.id === tabId);
+
+          // Clean up terminal and process
+          if (tabToClose?.terminal) {
+            tabToClose.terminal.dispose();
+          }
+          if (tabToClose?.jshProcess) {
+            tabToClose.jshProcess.kill();
+          }
+
+          const filtered = prev.filter((tab) => tab.id !== tabId);
+          if (activeTabId === tabId && filtered.length > 0) {
+            setActiveTabId(filtered[0]?.id || "");
+          }
+          return filtered;
+        });
+      },
+      [terminalTabs.length, activeTabId, setTerminalTabs, setActiveTabId],
+    );
 
     // Switch to tab
-    const switchToTab = useCallback((tabId: string) => {
-      setActiveTabId(tabId);
-      setTerminalTabs(prev => 
-        prev.map(tab => ({ 
-          ...tab, 
-          isActive: tab.id === tabId 
-        }))
-      );
-    }, [setActiveTabId, setTerminalTabs]);
+    const switchToTab = useCallback(
+      (tabId: string) => {
+        setActiveTabId(tabId);
+        setTerminalTabs((prev) =>
+          prev.map((tab) => ({
+            ...tab,
+            isActive: tab.id === tabId,
+          })),
+        );
+      },
+      [setActiveTabId, setTerminalTabs],
+    );
 
     if (!realWebContainerProcess) {
       return null;
@@ -1002,7 +1029,10 @@ export const TerminalDisplay = memo(
         {showTerminal && (
           <>
             {/* Terminal Content */}
-            <div className="flex-1 relative h-full w-full" ref={terminalContainerRef}>
+            <div
+              className="flex-1 relative h-full w-full"
+              ref={terminalContainerRef}
+            >
               {terminalTabs.map((tab) => (
                 <div
                   key={tab.id}
@@ -1034,8 +1064,10 @@ export const TerminalDisplay = memo(
                       startHeight - (moveEvent.clientY - startY);
                     if (newHeight > 30) {
                       terminalContainer.style.height = `${newHeight}px`;
-                        // Resize active terminal
-                      const activeTab = terminalTabs.find(t => t.id === activeTabId);
+                      // Resize active terminal
+                      const activeTab = terminalTabs.find(
+                        (t) => t.id === activeTabId,
+                      );
                       if (activeTab?.fitAddon) {
                         setTimeout(() => activeTab.fitAddon?.fit(), 0);
                       }
@@ -1056,7 +1088,7 @@ export const TerminalDisplay = memo(
         )}
       </div>
     );
-  }
+  },
 );
 TerminalDisplay.displayName = "TerminalDisplay";
 
@@ -1119,7 +1151,7 @@ export const WebContainerUI: React.FC<WebContainerUIProps> = memo(
     // Helper function to find item type in fileStructure by path
     const getItemTypeFromStructure = (
       structure: { [key: string]: any },
-      targetPath: string
+      targetPath: string,
     ): "file" | "directory" | null => {
       const pathSegments = targetPath.split("/").filter(Boolean);
       let currentLevel = structure;
@@ -1147,7 +1179,7 @@ export const WebContainerUI: React.FC<WebContainerUIProps> = memo(
         } else {
           // If segment or currentLevel is invalid, the path is broken
           console.warn(
-            `[getItemTypeFromStructure] Invalid segment or level encountered for path ${targetPath}`
+            `[getItemTypeFromStructure] Invalid segment or level encountered for path ${targetPath}`,
           );
           return null;
         }
@@ -1164,7 +1196,7 @@ export const WebContainerUI: React.FC<WebContainerUIProps> = memo(
         setContextMenuPath(path);
         // console.log(`[handleContextMenu] Opening menu for: ${path}`);
       },
-      []
+      [],
     );
 
     // handleFileClick - Add check for item type
@@ -1184,7 +1216,7 @@ export const WebContainerUI: React.FC<WebContainerUIProps> = memo(
         const isImage = path.match(/\.(jpg|jpeg|png|gif|svg|webp)$/i) !== null;
         setLastWebContainerAction({ action: "read", path, isImage });
       },
-      [instance, setLastWebContainerAction, fileStructure]
+      [instance, setLastWebContainerAction, fileStructure],
     );
 
     const getLanguageFromPath = useCallback((path: string) => {
@@ -1240,11 +1272,11 @@ export const WebContainerUI: React.FC<WebContainerUIProps> = memo(
         } catch (error) {
           console.error(
             `Error deleting ${isDir ? "directory" : "file"}:`,
-            error
+            error,
           );
         }
       },
-      [instance, refreshFileStructure, selectedFile, t]
+      [instance, refreshFileStructure, selectedFile, t],
     ); // Removed setFileContent, setSelectedFile deps for now
 
     // handleCreateNewFile - uses setLastWebContainerAction, refreshFileStructure
@@ -1254,7 +1286,7 @@ export const WebContainerUI: React.FC<WebContainerUIProps> = memo(
           return;
         }
         const fileName = prompt(
-          t("webContainer.enterFileName") || "Enter file name:"
+          t("webContainer.enterFileName") || "Enter file name:",
         );
         if (!fileName) return;
         const fullPath = `${dirPath === "/" ? "" : dirPath}/${fileName}`;
@@ -1267,7 +1299,7 @@ export const WebContainerUI: React.FC<WebContainerUIProps> = memo(
           console.error(`Error creating file:`, error);
         }
       },
-      [instance, refreshFileStructure, t, setLastWebContainerAction]
+      [instance, refreshFileStructure, t, setLastWebContainerAction],
     ); // Use original name
 
     // handleCreateNewDirectory - uses refreshFileStructure, toggleDir from hook
@@ -1277,7 +1309,7 @@ export const WebContainerUI: React.FC<WebContainerUIProps> = memo(
           return;
         }
         const dirName = prompt(
-          t("webContainer.enterDirectoryName") || "Enter directory name:"
+          t("webContainer.enterDirectoryName") || "Enter directory name:",
         );
         if (!dirName) return;
         const fullPath = `${parentPath === "/" ? "" : parentPath}/${dirName}`;
@@ -1292,7 +1324,7 @@ export const WebContainerUI: React.FC<WebContainerUIProps> = memo(
           console.error(`Error creating directory:`, error);
         }
       },
-      [instance, refreshFileStructure, t, toggleDir, expandedDirs]
+      [instance, refreshFileStructure, t, toggleDir, expandedDirs],
     ); // Add toggleDir, expandedDirs deps
 
     // Add handleRenameFile function
@@ -1305,7 +1337,7 @@ export const WebContainerUI: React.FC<WebContainerUIProps> = memo(
         const oldName = oldPath.split("/").pop();
         const newName = prompt(
           t("webContainer.enterNewName") || `Enter new name for ${oldName}:`,
-          oldName
+          oldName,
         );
 
         if (!newName || newName === oldName) {
@@ -1351,7 +1383,7 @@ export const WebContainerUI: React.FC<WebContainerUIProps> = memo(
         t,
         selectedFile,
         setLastWebContainerAction,
-      ]
+      ],
     ); // No need for normalizePath in dependency array now
 
     // handleSave - uses setLastWebContainerAction
@@ -1413,7 +1445,7 @@ export const WebContainerUI: React.FC<WebContainerUIProps> = memo(
 
         input.click();
       },
-      [instance, refreshFileStructure]
+      [instance, refreshFileStructure],
     );
 
     const handleRefreshClick = useCallback(() => {
@@ -1432,7 +1464,7 @@ export const WebContainerUI: React.FC<WebContainerUIProps> = memo(
     const handleReloadPreview = useCallback(() => {
       if (appFrameRef.current && iframeUrl) {
         console.log(
-          "[handleReloadPreview] Reloading iframe using src manipulation..."
+          "[handleReloadPreview] Reloading iframe using src manipulation...",
         );
         const currentSrc = iframeUrl; // Store the current URL
         // Temporarily set src to about:blank
@@ -1443,13 +1475,13 @@ export const WebContainerUI: React.FC<WebContainerUIProps> = memo(
             appFrameRef.current.src = currentSrc;
             console.log(
               "[handleReloadPreview] Iframe src set back to:",
-              currentSrc
+              currentSrc,
             );
           }
         }, 0); // Use setTimeout to ensure the change is processed
       } else {
         console.warn(
-          "[handleReloadPreview] Iframe ref or iframeUrl not found."
+          "[handleReloadPreview] Iframe ref or iframeUrl not found.",
         );
       }
     }, [appFrameRef, iframeUrl]); // Add iframeUrl as dependency
@@ -1459,7 +1491,7 @@ export const WebContainerUI: React.FC<WebContainerUIProps> = memo(
       (
         structure: { [key: string]: any },
         parentPath: string = "",
-        level: number = 0
+        level: number = 0,
       ) => {
         if (!structure || Object.keys(structure).length === 0) return null;
         const sortedEntries = Object.entries(structure).sort((a, b) => {
@@ -1480,7 +1512,7 @@ export const WebContainerUI: React.FC<WebContainerUIProps> = memo(
               if (!value || !value.type) {
                 console.warn(
                   `[renderFileTree] Invalid entry for name ${name} at path ${path}:`,
-                  value
+                  value,
                 );
                 return null;
               }
@@ -1621,7 +1653,7 @@ export const WebContainerUI: React.FC<WebContainerUIProps> = memo(
         handleRenameFile,
         handleContextMenu,
         contextMenuPath,
-      ]
+      ],
     );
 
     return (
@@ -1730,7 +1762,7 @@ export const WebContainerUI: React.FC<WebContainerUIProps> = memo(
                         console.log("Pull request created:", pullRequestUrl);
                         // Show success message to user
                         alert(
-                          `Pull request created successfully!\n${pullRequestUrl}`
+                          `Pull request created successfully!\n${pullRequestUrl}`,
                         );
                       } else if (error) {
                         console.error("Failed to create pull request:", error);
@@ -1739,7 +1771,7 @@ export const WebContainerUI: React.FC<WebContainerUIProps> = memo(
                         const errorDetails =
                           error?.response?.data?.message || "";
                         alert(
-                          `Failed to create pull request:\n${errorMessage}\n${errorDetails}`
+                          `Failed to create pull request:\n${errorMessage}\n${errorDetails}`,
                         );
                       }
                     }}
@@ -1812,7 +1844,7 @@ export const WebContainerUI: React.FC<WebContainerUIProps> = memo(
         />
       </div>
     );
-  }
+  },
 );
 
 // Add display name for better debugging

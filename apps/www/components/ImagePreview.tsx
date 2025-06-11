@@ -36,7 +36,7 @@ export const ImagePreview = memo(
         {isUploading && <Loader2 className="animate-spin my-auto" size={64} />}
       </div>
     );
-  }
+  },
 );
 
 ImagePreview.displayName = "ImagePreview";

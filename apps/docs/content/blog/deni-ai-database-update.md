@@ -39,6 +39,7 @@ git pull
 If conflicts occur, please resolve them yourself.
 
 #### 1. Create a Supabase project
+
 > For instructions on how to create one, please see the [Supabase Docs](https://supabase.com/docs/guides/getting-started/quickstarts/nextjs).
 
 #### 2. Edit .env

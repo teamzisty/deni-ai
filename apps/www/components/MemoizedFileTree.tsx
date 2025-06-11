@@ -54,7 +54,12 @@ export const MemoizedFileTree = memo(
           .map((name) => {
             const item = structure[name];
             // pathが提供されていない場合は、親パスとファイル名から生成
-            const path = item.path || `${parentPath === "/" ? "" : parentPath}/${name}`.replace(/\/+/g, '/');
+            const path =
+              item.path ||
+              `${parentPath === "/" ? "" : parentPath}/${name}`.replace(
+                /\/+/g,
+                "/",
+              );
             const isDir = item.type === "directory";
             const isExpanded = expandedDirs.has(path); // Use prop
 
@@ -162,7 +167,7 @@ export const MemoizedFileTree = memo(
     if (
       prevProps.expandedDirs.size !== nextProps.expandedDirs.size ||
       ![...prevProps.expandedDirs].every((dir) =>
-        nextProps.expandedDirs.has(dir)
+        nextProps.expandedDirs.has(dir),
       )
     ) {
       return false;
@@ -181,6 +186,6 @@ export const MemoizedFileTree = memo(
     // If primary props haven't changed, assume no re-render needed
     // Note: Functions props are assumed stable
     return true;
-  }
+  },
 );
 MemoizedFileTree.displayName = "MemoizedFileTree";

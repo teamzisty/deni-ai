@@ -92,25 +92,26 @@ export default function IntellipulseChatPage() {
       model,
     },
     async onToolCall({ toolCall }) {
-        if (toolCall.toolName === "read_file") {
-          const { path } = toolCall.args as { path: string };
-          const instance = getWebContainerInstance();
-          if (!instance) {
-            throw new Error("WebContainer instance is not available");
-          }
-
-          try {
-            const content = await instance.fs.readFile(path, "utf-8");
-            return {
-              type: "text",
-              text: content,
-            };
-          } catch (error) {
-            console.error("Error reading file:", error);
-            throw new Error(`Failed to read file at ${path}`);
-          }
+      if (toolCall.toolName === "read_file") {
+        const { path } = toolCall.args as { path: string };
+        const instance = getWebContainerInstance();
+        if (!instance) {
+          throw new Error("WebContainer instance is not available");
         }
-    },    onError: (error) => {
+
+        try {
+          const content = await instance.fs.readFile(path, "utf-8");
+          return {
+            type: "text",
+            text: content,
+          };
+        } catch (error) {
+          console.error("Error reading file:", error);
+          throw new Error(`Failed to read file at ${path}`);
+        }
+      }
+    },
+    onError: (error) => {
       console.error("Chat error:", error);
     },
   });
@@ -127,19 +128,21 @@ export default function IntellipulseChatPage() {
       }
       setIsSessionLoaded(true);
     }
-  }, [id, getSession, setMessages]);  // Reset WebContainer instance when conversation ID changes
+  }, [id, getSession, setMessages]); // Reset WebContainer instance when conversation ID changes
   useEffect(() => {
     const resetWebContainer = async () => {
       try {
         const currentConversationId = getCurrentConversationId();
         if (currentConversationId && currentConversationId !== id) {
-          console.log(`Conversation switching detected: ${currentConversationId} -> ${id}`);
-          
+          console.log(
+            `Conversation switching detected: ${currentConversationId} -> ${id}`,
+          );
+
           // Clear terminal logs when switching conversations
           setTerminalLogs([]);
           setActiveProcess(null);
           setIsWaitingForInput(false);
-          
+
           await resetWebContainerInstance();
           console.log(`WebContainer reset completed for conversation: ${id}`);
         } else if (!currentConversationId) {
@@ -173,7 +176,7 @@ export default function IntellipulseChatPage() {
       if (res && res.length > 0) {
         setImage(res[0]?.ufsUrl || null);
         toast.success(
-          t("chat.imageUploadSuccess") || "Image uploaded successfully!"
+          t("chat.imageUploadSuccess") || "Image uploaded successfully!",
         );
       }
     },
@@ -202,13 +205,15 @@ export default function IntellipulseChatPage() {
     if (user && supabase) {
       // We can use the user ID directly if needed
       const getToken = async () => {
-        const { data: { session } } = await supabase.auth.getSession();
+        const {
+          data: { session },
+        } = await supabase.auth.getSession();
         if (session) {
           setAuthToken(session.access_token);
         } else {
           setAuthToken(null);
         }
-      }
+      };
       getToken();
     } else {
       setAuthToken(null);
@@ -303,7 +308,6 @@ export default function IntellipulseChatPage() {
       });
 
       try {
-
         // Parse command and arguments for regular commands
         const parts = command.trim().split(/\s+/);
         const cmd = parts[0];
@@ -335,7 +339,7 @@ export default function IntellipulseChatPage() {
                 });
               }
             },
-          })
+          }),
         );
 
         if (args.includes("dev")) {
@@ -381,7 +385,7 @@ export default function IntellipulseChatPage() {
         throw error;
       }
     },
-    [handleLogMessage]
+    [handleLogMessage],
   );
 
   // Handle command input from terminal
@@ -400,7 +404,7 @@ export default function IntellipulseChatPage() {
         setIsWebContainerOpen(true);
         // Wait for WebContainer to initialize
         await new Promise((resolve) => setTimeout(resolve, 1000));
-      }      // Execute each step sequentially
+      } // Execute each step sequentially
       for (const step of steps) {
         // Update step status to running
         const statusEvent = new CustomEvent("stepStatusUpdate", {
@@ -411,29 +415,39 @@ export default function IntellipulseChatPage() {
         });
         window.dispatchEvent(statusEvent);
 
-        try {          // Handle different step actions
-          if (step.action === "write" && step.path && step.content !== undefined) {
+        try {
+          // Handle different step actions
+          if (
+            step.action === "write" &&
+            step.path &&
+            step.content !== undefined
+          ) {
             // Handle file write operations
             console.log("Executing step file write:", step.path);
-            
+
             // Get WebContainer instance directly for immediate file write
             const instance = getWebContainerInstance();
             if (instance) {
               try {
                 // Create directory if it doesn't exist
-                const dirPath = step.path.substring(0, step.path.lastIndexOf("/"));
+                const dirPath = step.path.substring(
+                  0,
+                  step.path.lastIndexOf("/"),
+                );
                 if (dirPath) {
-                  await instance.fs.mkdir(dirPath, { recursive: true }).catch(() => {});
+                  await instance.fs
+                    .mkdir(dirPath, { recursive: true })
+                    .catch(() => {});
                 }
-                
+
                 // Write file directly
                 await instance.fs.writeFile(step.path, step.content);
-                
+
                 handleLogMessage({
                   text: `File written successfully: ${step.path}`,
                   className: "text-green-500",
                 });
-                
+
                 // Trigger file structure refresh through WebContainer action
                 setLastWebContainerAction({
                   action: "refreshFileStructure",
@@ -478,9 +492,10 @@ export default function IntellipulseChatPage() {
             detail: {
               stepId: step.id,
               status: "completed",
-              output: step.action === "write" 
-                ? `File written successfully: ${step.path}`
-                : "Command executed successfully",
+              output:
+                step.action === "write"
+                  ? `File written successfully: ${step.path}`
+                  : "Command executed successfully",
             },
           });
           window.dispatchEvent(completeEvent);
@@ -491,8 +506,7 @@ export default function IntellipulseChatPage() {
             detail: {
               stepId: step.id,
               status: "failed",
-              output:
-                error instanceof Error ? error.message : "Unknown error",
+              output: error instanceof Error ? error.message : "Unknown error",
             },
           });
           window.dispatchEvent(failEvent);
@@ -543,11 +557,12 @@ export default function IntellipulseChatPage() {
         };
 
         updateSession(id, updatedSession);
-        console.log("Session saved successfully:", id);      } catch (error) {
+        console.log("Session saved successfully:", id);
+      } catch (error) {
         console.error("Error saving session:", error);
       }
     }, [id, session, messages, getSession, updateSession, isSessionLoaded]),
-    2000 // 2-second debounce
+    2000, // 2-second debounce
   );
 
   // Save session when messages change (only after session is loaded)
@@ -584,7 +599,7 @@ export default function IntellipulseChatPage() {
 
       updateSession(sessionId, updatedSession);
     },
-    [getSession, updateSession]
+    [getSession, updateSession],
   );
 
   // Memoize callbacks for WebContainerUI to prevent re-renders
@@ -597,7 +612,7 @@ export default function IntellipulseChatPage() {
         className: "text-green-500",
       });
     },
-    [handleLogMessage]
+    [handleLogMessage],
   );
 
   const handleWebContainerError = useCallback(
@@ -608,7 +623,7 @@ export default function IntellipulseChatPage() {
         className: "text-red-500",
       });
     },
-    [handleLogMessage]
+    [handleLogMessage],
   );
 
   // Terminal command handler registration
@@ -624,13 +639,13 @@ export default function IntellipulseChatPage() {
 
     window.addEventListener(
       "webcontainer-execute-command",
-      handleWebContainerCommand as EventListener
+      handleWebContainerCommand as EventListener,
     );
 
     return () => {
       window.removeEventListener(
         "webcontainer-execute-command",
-        handleWebContainerCommand as EventListener
+        handleWebContainerCommand as EventListener,
       );
     };
   }, [executeCommand]);
@@ -667,7 +682,7 @@ export default function IntellipulseChatPage() {
         }
       }
     },
-    [handleLogMessage]
+    [handleLogMessage],
   );
 
   // Early returns MUST come after all hooks

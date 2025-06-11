@@ -84,7 +84,9 @@ export default function HubsPage() {
               <CardHeader>
                 <CardTitle>{hub.name}</CardTitle>
                 <CardDescription>
-                  {t("Hubs.chatSessionsCount", { count: hub.chatSessionIds.length })}
+                  {t("Hubs.chatSessionsCount", {
+                    count: hub.chatSessionIds.length,
+                  })}
                 </CardDescription>
               </CardHeader>
               <CardContent>
@@ -94,9 +96,7 @@ export default function HubsPage() {
               </CardContent>
               <CardFooter className="flex justify-between">
                 <Button variant="ghost" asChild>
-                  <Link href={`/hubs/${hub.id}`}>
-                    {t("common.view")}
-                  </Link>
+                  <Link href={`/hubs/${hub.id}`}>{t("common.view")}</Link>
                 </Button>
                 <span className="text-sm text-muted-foreground">
                   {new Date(hub.createdAt).toLocaleDateString()}
@@ -141,7 +141,10 @@ export default function HubsPage() {
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setIsNewHubDialogOpen(false)}>
+            <Button
+              variant="outline"
+              onClick={() => setIsNewHubDialogOpen(false)}
+            >
               {t("common.cancel")}
             </Button>
             <Button onClick={handleCreateHub}>{t("common.create")}</Button>

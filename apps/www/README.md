@@ -33,6 +33,7 @@ The application supports resumable streams for improved chat experience during n
    ```
 
 **When resumable streams are disabled:**
+
 - The application automatically falls back to regular streaming
 - All chat functionality remains available
 - No additional setup required

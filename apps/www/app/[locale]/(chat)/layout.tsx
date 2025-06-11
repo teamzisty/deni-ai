@@ -34,7 +34,6 @@ export default async function Layout({
                       <ChatSidebar />
                       <Suspense fallback={<Loading />}>{children}</Suspense>
 
-
                       <SettingsDialog />
                     </div>
                   </AuthProvider>

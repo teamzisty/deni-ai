@@ -23,7 +23,7 @@ const ContextProgressBar = memo(
 
     const { totalTokens, percentage, isNearLimit } = calculateContextUsage(
       messages,
-      maxContextWindow
+      maxContextWindow,
     );
 
     // Don't show if no messages or context window is not defined
@@ -67,7 +67,7 @@ const ContextProgressBar = memo(
           <span
             className={cn(
               "text-xs font-mono min-w-[40px] text-right",
-              isNearLimit ? "text-amber-500" : "text-muted-foreground"
+              isNearLimit ? "text-amber-500" : "text-muted-foreground",
             )}
           >
             {percentage.toFixed(0)}%
@@ -82,7 +82,7 @@ const ContextProgressBar = memo(
         </div>
       </EasyTip>
     );
-  }
+  },
 );
 
 ContextProgressBar.displayName = "ContextProgressBar";

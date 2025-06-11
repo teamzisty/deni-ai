@@ -4,16 +4,19 @@ import { FileText, ArrowRight } from "lucide-react";
 
 export default function DocsPage() {
   const docs = getAllDocPages("ja");
-  
+
   // Group docs by category
-  const groupedDocs = docs.reduce((acc, doc) => {
-    const category = doc.category || "General";
-    if (!acc[category]) {
-      acc[category] = [];
-    }
-    acc[category].push(doc);
-    return acc;
-  }, {} as Record<string, typeof docs>);
+  const groupedDocs = docs.reduce(
+    (acc, doc) => {
+      const category = doc.category || "General";
+      if (!acc[category]) {
+        acc[category] = [];
+      }
+      acc[category].push(doc);
+      return acc;
+    },
+    {} as Record<string, typeof docs>,
+  );
 
   return (
     <div className="max-w-6xl mx-auto px-6 py-12">

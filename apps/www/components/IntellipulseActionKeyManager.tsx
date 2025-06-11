@@ -73,11 +73,14 @@ export function IntellipulseActionKeyManager() {
     if (!user) return;
 
     try {
-      const response = await secureFetch.fetch("/api/intellipulse/action-keys", {
-        headers: {
-          "Content-Type": "application/json",
+      const response = await secureFetch.fetch(
+        "/api/intellipulse/action-keys",
+        {
+          headers: {
+            "Content-Type": "application/json",
+          },
         },
-      });
+      );
 
       if (!response.ok) {
         throw new Error("Failed to load action keys");
@@ -100,15 +103,18 @@ export function IntellipulseActionKeyManager() {
     setError("");
 
     try {
-      const response = await secureFetch.fetch("/api/intellipulse/action-keys", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
+      const response = await secureFetch.fetch(
+        "/api/intellipulse/action-keys",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            name: newKeyName.trim(),
+          }),
         },
-        body: JSON.stringify({
-          name: newKeyName.trim(),
-        }),
-      });
+      );
 
       if (!response.ok) {
         throw new Error("Failed to create action key");
@@ -137,9 +143,12 @@ export function IntellipulseActionKeyManager() {
     setError("");
 
     try {
-      const response = await secureFetch.fetch(`/api/intellipulse/action-keys/${keyId}`, {
-        method: "DELETE",
-      });
+      const response = await secureFetch.fetch(
+        `/api/intellipulse/action-keys/${keyId}`,
+        {
+          method: "DELETE",
+        },
+      );
       if (!response.ok) {
         throw new Error("Failed to delete action key");
       }
@@ -193,7 +202,7 @@ export function IntellipulseActionKeyManager() {
         `/api/intellipulse/action-keys/${keyId}/validate`,
         {
           method: "POST",
-        }
+        },
       );
 
       if (!response.ok) {
@@ -207,7 +216,7 @@ export function IntellipulseActionKeyManager() {
         toast.error(
           t("toasts.validationFailed", {
             reason: data.reason || t("errors.unknownReason"),
-          })
+          }),
         );
       }
 

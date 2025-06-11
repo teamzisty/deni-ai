@@ -29,17 +29,19 @@ export default function SharedChatPage() {
       try {
         setLoading(true);
         const response = await fetch(`/api/share?id=${params.id}`);
-        
+
         if (!response.ok) {
           const errorData = await response.json();
           throw new Error(errorData.error || t("shared.error.notFound"));
         }
-        
+
         const data = await response.json();
         setChatData(data.data);
       } catch (err) {
         console.error(err);
-        setError(err instanceof Error ? err.message : t("shared.error.unknown"));
+        setError(
+          err instanceof Error ? err.message : t("shared.error.unknown"),
+        );
       } finally {
         setLoading(false);
       }
@@ -69,7 +71,9 @@ export default function SharedChatPage() {
       <div className="flex flex-col items-center justify-center min-h-screen p-4">
         <h1 className="text-2xl font-bold mb-4">{t("shared.error.title")}</h1>
         <p className="text-muted-foreground mb-6">{error}</p>
-        <Button onClick={() => window.history.back()}>{t("shared.backButton")}</Button>
+        <Button onClick={() => window.history.back()}>
+          {t("shared.backButton")}
+        </Button>
       </div>
     );
   }
@@ -82,13 +86,14 @@ export default function SharedChatPage() {
     <main className="flex flex-col min-h-screen p-4 md:p-8">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6">
         <div>
-          <h1 className="text-2xl font-bold">{chatData.title || t("shared.untitledChat")}</h1>
+          <h1 className="text-2xl font-bold">
+            {chatData.title || t("shared.untitledChat")}
+          </h1>
           <p className="text-muted-foreground">
-            {t("shared.viewCount", { count: chatData.viewCount })} • {
-              chatData.createdAt
-                ? new Date(chatData.createdAt).toLocaleDateString()
-                : new Date().toLocaleDateString()
-            }
+            {t("shared.viewCount", { count: chatData.viewCount })} •{" "}
+            {chatData.createdAt
+              ? new Date(chatData.createdAt).toLocaleDateString()
+              : new Date().toLocaleDateString()}
           </p>
         </div>
         <div className="flex gap-2 mt-4 md:mt-0">
@@ -96,7 +101,11 @@ export default function SharedChatPage() {
             <Copy className="mr-2 h-4 w-4" />
             {t("shared.copyLink")}
           </Button>
-          <Button variant="outline" size="sm" onClick={() => window.history.back()}>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => window.history.back()}
+          >
             {t("shared.backButton")}
           </Button>
         </div>
@@ -104,7 +113,11 @@ export default function SharedChatPage() {
 
       <div className="bg-background rounded-lg p-4 flex-grow">
         {chatData.messages.map((message, index) => (
-          <MessageLog key={index} message={message} sessionId={params.id as string} />
+          <MessageLog
+            key={index}
+            message={message}
+            sessionId={params.id as string}
+          />
         ))}
       </div>
     </main>

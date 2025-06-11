@@ -77,7 +77,7 @@ const ModelItem = memo(
           onClick={handleSelect}
           className={cn(
             "flex flex-col h-full p-4 border rounded-lg cursor-pointer hover:bg-accent/50 min-w-[100px] min-h-[100px] relative transition-all duration-200 ease-in-out",
-            disabled && "opacity-50 cursor-not-allowed"
+            disabled && "opacity-50 cursor-not-allowed",
           )}
         >
           <div className="flex justify-center mb-2">
@@ -171,7 +171,7 @@ const ModelItem = memo(
         </div>
       </DropdownMenuItem>
     );
-  }
+  },
 );
 ModelItem.displayName = "ModelItem";
 
@@ -212,7 +212,7 @@ export const RefreshModelSelector = memo(function ModelSelector({
       closeDropdown();
       openDialog("model");
     },
-    [closeDropdown, openDialog]
+    [closeDropdown, openDialog],
   );
 
   const getShrinkedName = (name?: string) => {
@@ -280,7 +280,7 @@ export const RefreshModelSelector = memo(function ModelSelector({
                   acc[type].push(modelKey);
                   return acc;
                 },
-                {} as Record<string, string[]>
+                {} as Record<string, string[]>,
               );
 
               // Sort models within each group by displayName for consistent ordering
@@ -447,7 +447,7 @@ export const ModelSelector = memo(function ModelSelector({
       e.stopPropagation();
       toggleGridView(true);
     },
-    [toggleGridView]
+    [toggleGridView],
   );
 
   const handleShowVisibleModels = useCallback(
@@ -456,7 +456,7 @@ export const ModelSelector = memo(function ModelSelector({
       e.stopPropagation();
       toggleGridView(false);
     },
-    [toggleGridView]
+    [toggleGridView],
   );
 
   const handleManageModels = useCallback(
@@ -466,7 +466,7 @@ export const ModelSelector = memo(function ModelSelector({
       closeDropdown();
       openDialog("model");
     },
-    [closeDropdown, openDialog]
+    [closeDropdown, openDialog],
   );
 
   const getShrinkedName = (name?: string) => {
@@ -512,7 +512,7 @@ export const ModelSelector = memo(function ModelSelector({
         className={cn(
           "w-96",
           isGridView &&
-            "sm:w-[500px] md:w-[600px] lg:w-[700px] w-[300px] max-w-[95vw]"
+            "sm:w-[500px] md:w-[600px] lg:w-[700px] w-[300px] max-w-[95vw]",
         )}
         onCloseAutoFocus={(e) => e.preventDefault()}
       >
@@ -569,7 +569,7 @@ export const ModelSelector = memo(function ModelSelector({
                   {filteredModels.map((model) => (
                     <EasyTip
                       content={t(
-                        `modelDescriptions.${model.key.replace(".", "-")}`
+                        `modelDescriptions.${model.key.replace(".", "-")}`,
                       )}
                       key={model.key}
                     >

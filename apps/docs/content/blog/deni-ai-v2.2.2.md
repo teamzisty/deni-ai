@@ -1,12 +1,10 @@
 ---
-
 title: Release of Deni AI v2.2.2
 date: 2025-04-06
 description: Introducing new features, bug fixes, and improvements in version 2.2.2
 author: rai
 tags: [update]
 ---
-
 
 ## Claude is Available Again
 

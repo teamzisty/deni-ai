@@ -17,11 +17,13 @@ export const DevelopmentBanner = ({ children }: DevelopmentBannerProps) => {
     setIsMounted(true);
   }, []);
 
-  useEffect(() => {    
+  useEffect(() => {
     // カスタムイベントも発行（より直接的な通知方法）
-    window.dispatchEvent(new CustomEvent('dev-banner-visibility-change', {
-      detail: { isVisible }
-    }));
+    window.dispatchEvent(
+      new CustomEvent("dev-banner-visibility-change", {
+        detail: { isVisible },
+      }),
+    );
 
     const handleKeyDown = (event: KeyboardEvent) => {
       // Ctrl+Shift+L のキー組み合わせを検出
@@ -43,14 +45,10 @@ export const DevelopmentBanner = ({ children }: DevelopmentBannerProps) => {
     <>
       {isDevelopment && isVisible && (
         <div className="fixed bottom-0 left-0 w-full z-50 bg-primary text-primary-foreground text-center py-2 px-4">
-          <p>
-            DEVELOPMENT BUILD - MAY NOT REPRESENT THE FINAL LOOK OF DESIGN
-          </p>
+          <p>DEVELOPMENT BUILD - MAY NOT REPRESENT THE FINAL LOOK OF DESIGN</p>
         </div>
       )}
-      <div>
-        {children}
-      </div>
+      <div>{children}</div>
     </>
   );
 };

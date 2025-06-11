@@ -1,12 +1,10 @@
 ---
-
 title: Release of Deni AI v2.2
 date: 2025-04-04T00:00:00+09:00
 description: Introducing new features, bug fixes, and improvements in version 2.2.
 author: rai
 tags: [update]
 ---
-
 
 ## Localization (English in Beta)
 
@@ -17,11 +15,11 @@ We've implemented localization in beta. While some parts are still not localized
 We've added GPT 4.5 Preview, Claude 3.7 Sonnet (+ Extended Thinking), o1, and o3-mini (improved version).
 
 | Model Name        | Official API Price (USD, input/output) |
-| ---------------- | ------------------------------------- |
-| GPT-4.5 Preview  | $75 / $150                           |
-| Claude 3.7 Sonnet| $3 / $15                             |
-| o1               | $15 / $60                            |
-| o3-mini          | $1.1 / $4.4                          |
+| ----------------- | -------------------------------------- |
+| GPT-4.5 Preview   | $75 / $150                             |
+| Claude 3.7 Sonnet | $3 / $15                               |
+| o1                | $15 / $60                              |
+| o3-mini           | $1.1 / $4.4                            |
 
 <small>Also, Gemini 2.0 Flash is working again!</small>
 

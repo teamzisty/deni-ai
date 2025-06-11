@@ -33,7 +33,6 @@ import { ResearchDepth } from "@/components/DeepResearchButton"; // Import the R
 import { useSettings } from "@/hooks/use-settings";
 import { useTitle } from "@/hooks/use-title";
 import { useAutoResume } from "@/hooks/use-auto-resume";
-import HCaptchaComponent from "@/components/HCaptcha";
 
 interface MessageListProps {
   messages: UIMessage[];
@@ -93,7 +92,7 @@ const MemoizedMessageList = memo(
     const nextAnnot = JSON.stringify(nextLastMsg.annotations || []);
     const sameAnnotations = prevAnnot === nextAnnot;
     return sameMessage && sameAnnotations;
-  }
+  },
 );
 MemoizedMessageList.displayName = "MemoizedMessageList";
 
@@ -117,11 +116,6 @@ const Chat: React.FC<ChatProps> = ({
   const t = useTranslations();
   const isMobile = useIsMobile();
   const { updateSessionPartial } = useChatSessions();
-  const [captchaToken, setCaptchaToken] = useState<string | null>(null);
-  const [showCaptcha, setShowCaptcha] = useState<boolean>(true); // Always show for invisible captcha
-  const [captchaRequired, setCaptchaRequired] = useState<boolean>(true); // Captcha is required for all users
-  const captchaRef = useRef<any>(null); // Reference to hCaptcha component
-  const [pendingMessageSend, setPendingMessageSend] = useState<boolean>(false); // Flag for pending message send after captcha
 
   // --- State Variables ---
   const [image, setImage] = useState<string | null>(null);
@@ -163,30 +157,14 @@ const Chat: React.FC<ChatProps> = ({
     api: "/api/chat", // Specify the chat API endpoint
     initialMessages: initialSessionData.messages, // Initialize messages
     id: sessionId, // Set chat id to sync with session
-    maxSteps: 50,    onFinish: (message, options) => {
-      // Reset captcha token after successful message send for invisible captcha
-      // This ensures a new captcha token is required for the next message
-      setCaptchaToken(null);
-      setShowCaptcha(true); // Keep showing for invisible captcha
-      setCaptchaRequired(true);
-      setPendingMessageSend(false); // Clear any pending flag
-      console.log("Message sent successfully, captcha state reset");
+    maxSteps: 50,
+    onFinish: (message, options) => {
+      // Message sent successfully
+      console.log("Message sent successfully");
     },
     onError: (error) => {
       console.error("useChat error:", error);
-
-      // Check if error indicates captcha is required
-      if (
-        error.message?.includes("captcha") ||
-        error.message?.includes("429")
-      ) {
-        setCaptchaToken(null); // Reset captcha token
-        setShowCaptcha(true);
-        setCaptchaRequired(true);
-        toast.error(t("chat.error.captchaRequired"));
-      } else {
-        toast.error(String(error));
-      }
+      toast.error(String(error));
     },
     headers: {
       Authorization: authToken || "",
@@ -195,7 +173,6 @@ const Chat: React.FC<ChatProps> = ({
       toolList: availableTools || [],
       language: navigator.language,
       botId: currentSession.bot?.id,
-      captchaToken: captchaToken || null,
       model: model || "openai/gpt-4.1-2025-04-14",
       reasoningEffort: reasoningEffort || "medium",
       sessionId: sessionId,
@@ -218,18 +195,7 @@ const Chat: React.FC<ChatProps> = ({
         description: t("chat.error.errorOccurred", { message: error.message }),
       });
     },
-  }); // Check initial captcha requirement for all users (invisible mode)
-  useEffect(() => {
-    // For invisible captcha, always show the component but keep it hidden
-    setShowCaptcha(true);
-    if (!captchaToken) {
-      setCaptchaRequired(true);
-    } else {
-      setCaptchaRequired(false);
-    }
-  }, [captchaToken]);
-
-  // Scroll chat log
+  }); // Scroll chat log
   useEffect(() => {
     if (!settings.autoScroll) return; // Check if auto-scroll is enabled
     if (
@@ -262,7 +228,8 @@ const Chat: React.FC<ChatProps> = ({
     if (
       !visionRequired &&
       messages.some(
-        (message) => message.role === "user" && message.experimental_attachments
+        (message) =>
+          message.role === "user" && message.experimental_attachments,
       )
     ) {
       setVisionRequired(true);
@@ -280,7 +247,7 @@ const Chat: React.FC<ChatProps> = ({
       if (!modelDescriptions[newModel]?.vision && image) {
         logger.warn(
           "handleModelChange",
-          "Model doesn't support vision, removing image."
+          "Model doesn't support vision, removing image.",
         );
         setImage(null);
       }
@@ -293,7 +260,7 @@ const Chat: React.FC<ChatProps> = ({
       logger.info("handleModelChange", "Model changed to " + newModel);
       setModel(newModel);
     },
-    [image] // Dependency on image state
+    [image], // Dependency on image state
   );
 
   const searchToggle = useCallback(() => {
@@ -314,13 +281,13 @@ const Chat: React.FC<ChatProps> = ({
     setResearchDepth(depth);
     logger.info(
       "handleResearchDepthChange",
-      `Research depth changed to ${depth}`
+      `Research depth changed to ${depth}`,
     );
   }, []);
   const baseSendMessage = async (
     event:
       | React.MouseEvent<HTMLButtonElement>
-      | React.KeyboardEvent<HTMLTextAreaElement>
+      | React.KeyboardEvent<HTMLTextAreaElement>,
   ) => {
     // Use component state/props
     if (!currentSession || !input) {
@@ -337,31 +304,6 @@ const Chat: React.FC<ChatProps> = ({
         reasoningEffort,
       });
       return;
-    }    // For invisible captcha, execute captcha if token is not available
-    if (captchaRequired && !captchaToken) {
-      // Check if we're already trying to get a captcha token to avoid infinite loop
-      if (pendingMessageSend) {
-        console.log("Already pending message send, skipping captcha execution");
-        return;
-      }
-      
-      if (captchaRef.current) {
-        try {
-          console.log("Executing invisible captcha...");
-          setPendingMessageSend(true); // Set flag to continue message send after captcha
-          captchaRef.current.execute();
-          // The actual message sending will happen in handleCaptchaVerify callback
-          return;
-        } catch (error) {
-          console.error("Failed to execute invisible captcha:", error);
-          toast.error(t("chat.error.captchaFailed"));
-          setPendingMessageSend(false); // Reset flag on error
-          return;
-        }
-      } else {
-        toast.error(t("chat.error.captchaRequired"));
-        return;
-      }
     }
 
     const newAvailableTools = [];
@@ -395,7 +337,7 @@ const Chat: React.FC<ChatProps> = ({
 
       logger.info(
         "Send message",
-        `Sending message: "${input.substring(0, 30)}..."`
+        `Sending message: "${input.substring(0, 30)}..."`,
       );
       if (image) logger.info("Send message", "Sending with image attachment");
 
@@ -424,7 +366,7 @@ const Chat: React.FC<ChatProps> = ({
       // This might require a more complex setup or using a different approach.
       // For now, just set the model state.
       console.warn(
-        "Regenerating with a specific model might not update API call body immediately."
+        "Regenerating with a specific model might not update API call body immediately.",
       );
     } // Wait for 1 second before reloading
     if (authToken) {
@@ -449,7 +391,7 @@ const Chat: React.FC<ChatProps> = ({
     (modelOverride?: string) => {
       authReload({ regenerateWithModel: modelOverride });
     },
-    [authReload]
+    [authReload],
   ); // authReload depends on other states/props
 
   const handleRetry = async () => {
@@ -462,13 +404,13 @@ const Chat: React.FC<ChatProps> = ({
   };
 
   const handleSendMessage = async (
-    event: React.MouseEvent<HTMLButtonElement>
+    event: React.MouseEvent<HTMLButtonElement>,
   ) => {
     baseSendMessage(event);
   };
 
   const handleSendMessageKey = async (
-    event: React.KeyboardEvent<HTMLTextAreaElement>
+    event: React.KeyboardEvent<HTMLTextAreaElement>,
   ) => {
     if (event.key === "Enter" && !event.shiftKey) {
       event.preventDefault();
@@ -530,58 +472,11 @@ const Chat: React.FC<ChatProps> = ({
           });
       });
     },
-    [startUpload, authToken, t]
-  ); // Dependencies for uploadImage  // hCaptcha handlers
-  const handleCaptchaVerify = useCallback(
-    (token: string) => {
-      console.log("Captcha verified, token received:", token);
-      
-      // Prevent duplicate verification
-      if (captchaToken === token) {
-        console.log("Duplicate captcha token, ignoring");
-        return;
-      }
-      
-      setCaptchaToken(token);
-      setShowCaptcha(true); // Keep showing for invisible captcha
-      setCaptchaRequired(false);
-      toast.success(t("chat.captcha.verified"));
-
-      // If there's a pending message send, continue with it using setTimeout to avoid immediate re-execution
-      if (pendingMessageSend) {
-        setPendingMessageSend(false);
-        // Use setTimeout to allow state updates to complete before continuing
-        setTimeout(() => {
-          const syntheticEvent = new Event('click') as any;
-          baseSendMessage(syntheticEvent);
-        }, 50);
-      }
-    },
-    [t, pendingMessageSend, captchaToken]
-  );
-  const handleCaptchaExpire = useCallback(() => {
-    console.log("Captcha expired, resetting state");
-    setCaptchaToken(null);
-    setShowCaptcha(true); // Keep showing for invisible captcha
-    setCaptchaRequired(true);
-    setPendingMessageSend(false); // Clear pending flag
-    toast.warning(t("chat.captcha.expired"));
-  }, [t]);
-
-  const handleCaptchaError = useCallback(
-    (error: string) => {
-      console.error("hCaptcha error:", error);
-      toast.error(t("chat.error.captchaFailed"));
-      setCaptchaToken(null);
-      setShowCaptcha(true); // Keep showing for invisible captcha
-      setCaptchaRequired(true);
-      setPendingMessageSend(false); // Clear pending flag
-    },
-    [t]
-  );
+    [startUpload, authToken, t],
+  ); // Dependencies for uploadImage
 
   const handleImagePaste = async (
-    event: React.ClipboardEvent<HTMLDivElement>
+    event: React.ClipboardEvent<HTMLDivElement>,
   ) => {
     if (
       !modelDescriptions[model]?.vision ||
@@ -604,7 +499,7 @@ const Chat: React.FC<ChatProps> = ({
       error: (res) => {
         logger.error(
           "handleImagePaste",
-          "Upload failed: " + JSON.stringify(res.error)
+          "Upload failed: " + JSON.stringify(res.error),
         );
         return res.error?.message || t("common.error.unknown");
       },
@@ -616,7 +511,7 @@ const Chat: React.FC<ChatProps> = ({
   };
 
   const handleImageUpload = async (
-    event: React.ChangeEvent<HTMLInputElement>
+    event: React.ChangeEvent<HTMLInputElement>,
   ) => {
     if (
       !modelDescriptions[model]?.vision ||
@@ -638,7 +533,7 @@ const Chat: React.FC<ChatProps> = ({
       error: (res) => {
         logger.error(
           "handleImageUpload",
-          "Upload failed: " + JSON.stringify(res.error)
+          "Upload failed: " + JSON.stringify(res.error),
         );
         return res.error?.message || t("common.error.unknown");
       },
@@ -684,7 +579,7 @@ const Chat: React.FC<ChatProps> = ({
       <div
         className={cn(
           "flex w-full md:w-9/12 lg:w-7/12 rounded overflow-y-auto scrollbar-thin scrollbar-thumb-primary scrollbar-track-secondary scrollbar-thumb-rounded-md scrollbar-track-rounded-md flex-1 my-2",
-          isMobile && "px-1"
+          isMobile && "px-1",
         )}
       >
         <div ref={chatLogRef} className="w-full overflow-y-auto">
@@ -730,21 +625,9 @@ const Chat: React.FC<ChatProps> = ({
           </Suspense>{" "}
         </div>
       </div>{" "}
-      {/* hCaptcha component - Invisible mode */}
-      {showCaptcha && (
-        <div style={{ display: "none" }}>
-          <HCaptchaComponent
-            ref={captchaRef}
-            onVerify={handleCaptchaVerify}
-            onExpire={handleCaptchaExpire}
-            onError={handleCaptchaError}
-            size="invisible"
-          />
-        </div>
-      )}
       <div
         className={cn(
-          "w-full flex flex-col items-center justify-center shrink-0 pb-1"
+          "w-full flex flex-col items-center justify-center shrink-0 pb-1",
         )}
       >
         <ChatInput

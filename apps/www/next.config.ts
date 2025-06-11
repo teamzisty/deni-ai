@@ -23,17 +23,16 @@ const nextConfig: NextConfig = {
         hostname: "lh3.googleusercontent.com",
         pathname: "/**",
       },
-    ]
-
+    ],
   },
   // Add cross-origin isolation for WebContainers on dev pages
   async headers() {
     return [
       {
-        source: '/:locale/intellipulse/:path*',
+        source: "/:locale/intellipulse/:path*",
         headers: [
-          { key: 'Cross-Origin-Opener-Policy', value: 'same-origin' },
-          { key: 'Cross-Origin-Embedder-Policy', value: 'require-corp' },
+          { key: "Cross-Origin-Opener-Policy", value: "same-origin" },
+          { key: "Cross-Origin-Embedder-Policy", value: "require-corp" },
         ],
       },
     ];

@@ -8,39 +8,42 @@ export function estimateTokenCount(text: string): number {
   return Math.ceil(text.length / averageCharsPerToken);
 }
 
-export function calculateContextUsage(messages: any[], maxContextWindow: number): {
+export function calculateContextUsage(
+  messages: any[],
+  maxContextWindow: number,
+): {
   totalTokens: number;
   percentage: number;
   isNearLimit: boolean;
 } {
   let totalTokens = 0;
-  
+
   // Calculate tokens for all messages
-  messages.forEach(message => {
+  messages.forEach((message) => {
     if (message.content) {
       totalTokens += estimateTokenCount(message.content);
     }
-    
+
     // Add extra tokens for system prompts, tool calls, etc.
-    if (message.role === 'system') {
+    if (message.role === "system") {
       totalTokens += 50; // Additional overhead for system messages
     }
-    
+
     if (message.tool_calls || message.experimental_attachments) {
       totalTokens += 100; // Additional overhead for tool calls/attachments
     }
   });
-  
+
   // Add some overhead for the conversation structure
   totalTokens += messages.length * 10;
-  
+
   const percentage = Math.min((totalTokens / maxContextWindow) * 100, 100);
   const isNearLimit = percentage > 80; // Consider 80% as "near limit"
-  
+
   return {
     totalTokens,
     percentage,
-    isNearLimit
+    isNearLimit,
   };
 }
 

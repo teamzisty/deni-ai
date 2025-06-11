@@ -8,7 +8,7 @@ class CustomLogger {
     const formattedMessage = this.formatMessage(
       "ERROR",
       fn,
-      `${message} (Stack: ${error})`
+      `${message} (Stack: ${error})`,
     );
     console.error(formattedMessage);
   }

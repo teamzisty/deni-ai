@@ -1,6 +1,12 @@
 "use client";
 
-import { createContext, useContext, useState, ReactNode, useCallback } from "react";
+import {
+  createContext,
+  useContext,
+  useState,
+  ReactNode,
+  useCallback,
+} from "react";
 
 type CanvasData = {
   content: string;
@@ -18,21 +24,26 @@ const CanvasContext = createContext<CanvasContextType | undefined>(undefined);
 
 export const CanvasProvider = ({ children }: { children: ReactNode }) => {
   // キャンバスデータをセッションIDごとに保存するマップ
-  const [canvasDataMap, setCanvasDataMap] = useState<Record<string, CanvasData>>({});
+  const [canvasDataMap, setCanvasDataMap] = useState<
+    Record<string, CanvasData>
+  >({});
 
-  const getCanvasData = useCallback((sessionId: string) => {
-    return canvasDataMap[sessionId] || null;
-  }, [canvasDataMap]);
+  const getCanvasData = useCallback(
+    (sessionId: string) => {
+      return canvasDataMap[sessionId] || null;
+    },
+    [canvasDataMap],
+  );
 
   const updateCanvas = useCallback((sessionId: string, data: CanvasData) => {
-    setCanvasDataMap(prev => ({
+    setCanvasDataMap((prev) => ({
       ...prev,
-      [sessionId]: data
+      [sessionId]: data,
     }));
   }, []);
 
   const clearCanvas = useCallback((sessionId: string) => {
-    setCanvasDataMap(prev => {
+    setCanvasDataMap((prev) => {
       const newMap = { ...prev };
       delete newMap[sessionId];
       return newMap;
@@ -44,7 +55,9 @@ export const CanvasProvider = ({ children }: { children: ReactNode }) => {
   }, []);
 
   return (
-    <CanvasContext.Provider value={{ getCanvasData, updateCanvas, clearCanvas, clearAllCanvas }}>
+    <CanvasContext.Provider
+      value={{ getCanvasData, updateCanvas, clearCanvas, clearAllCanvas }}
+    >
       {children}
     </CanvasContext.Provider>
   );
@@ -56,4 +69,4 @@ export const useCanvas = (): CanvasContextType => {
     throw new Error("useCanvas must be used within a CanvasProvider");
   }
   return context;
-}; 
+};

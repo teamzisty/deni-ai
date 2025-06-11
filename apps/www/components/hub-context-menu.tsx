@@ -58,8 +58,8 @@ export function HubContextMenu({ hub, children }: HubContextMenuProps) {
     const updatedHub = {
       ...hub,
       name: editName,
-      description: editDescription || undefined
-    };  
+      description: editDescription || undefined,
+    };
 
     updateHub(hub.id, updatedHub);
 
@@ -143,7 +143,9 @@ export function HubContextMenu({ hub, children }: HubContextMenuProps) {
       <AlertDialog open={isDeleteAlertOpen} onOpenChange={setIsDeleteAlertOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>{t("common.deleteConfirmTitle")}</AlertDialogTitle>
+            <AlertDialogTitle>
+              {t("common.deleteConfirmTitle")}
+            </AlertDialogTitle>
             <AlertDialogDescription>
               {t("Hubs.deleteConfirmDescription")}
             </AlertDialogDescription>

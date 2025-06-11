@@ -1,25 +1,32 @@
 import { createUploadthing, type FileRouter } from "uploadthing/next";
 import { UploadThingError } from "uploadthing/server";
-import { createSupabaseServerClient, notAvailable } from "@/lib/supabase/server";
+import {
+  createSupabaseServerClient,
+  notAvailable,
+} from "@/lib/supabase/server";
 import { User } from "@supabase/supabase-js";
 
 const f = createUploadthing();
 
 async function auth(req: Request) {
   const authHeader = req.headers.get("authorization");
-  if (!authHeader) throw new UploadThingError("No authorization header");  if (notAvailable()) {
+  if (!authHeader) throw new UploadThingError("No authorization header");
+  if (notAvailable()) {
     throw new UploadThingError("Auth not available");
   }
-  
+
   try {
-    const token = authHeader.replace('Bearer ', '');
+    const token = authHeader.replace("Bearer ", "");
     const supabase = await createSupabaseServerClient();
-    const { data: { user }, error } = await supabase.auth.getUser(token);
-    
+    const {
+      data: { user },
+      error,
+    } = await supabase.auth.getUser(token);
+
     if (error || !user) {
       throw new UploadThingError("Invalid token");
     }
-    
+
     return user;
   } catch (e: unknown) {
     if (e instanceof UploadThingError) {
@@ -50,7 +57,11 @@ export const ourFileRouter: FileRouter = {
         return { userId: user.id };
       } catch (e) {
         if (e instanceof UploadThingError) {
-          if (e.message.includes("Token") || e.message.includes("Invalid") || e.message.includes("authorization")) {
+          if (
+            e.message.includes("Token") ||
+            e.message.includes("Invalid") ||
+            e.message.includes("authorization")
+          ) {
             throw new UploadThingError("Unauthorized");
           } else {
             throw new UploadThingError("Something went wrong: " + String(e));

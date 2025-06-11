@@ -72,7 +72,8 @@ export default function VersionsPage() {
           Versions
         </h1>
         <p className="text-lg text-gray-600 dark:text-gray-300">
-          All released versions of Deni AI with their status and changelog information.
+          All released versions of Deni AI with their status and changelog
+          information.
         </p>
       </div>
 
@@ -81,9 +82,18 @@ export default function VersionsPage() {
           Version Support Policy
         </h2>
         <ul className="text-blue-800 dark:text-blue-200 space-y-1">
-          <li><strong>Current:</strong> Latest stable version with active development</li>
-          <li><strong>Supported:</strong> Receives security updates and critical bug fixes</li>
-          <li><strong>Deprecated:</strong> No longer supported, upgrade recommended</li>
+          <li>
+            <strong>Current:</strong> Latest stable version with active
+            development
+          </li>
+          <li>
+            <strong>Supported:</strong> Receives security updates and critical
+            bug fixes
+          </li>
+          <li>
+            <strong>Deprecated:</strong> No longer supported, upgrade
+            recommended
+          </li>
         </ul>
       </div>
 
@@ -101,7 +111,7 @@ export default function VersionsPage() {
                   </h3>
                   <span
                     className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(
-                      version.status
+                      version.status,
                     )}`}
                   >
                     {getStatusText(version.status)}

@@ -51,7 +51,7 @@ export default function DataControlsSettings() {
     clearAllSessions: clearAllIntellipulseSessions,
   } = useIntellipulseSessions();
   const dialogPromiseRef = useRef<{ resolve: (value: string) => void } | null>(
-    null
+    null,
   );
 
   // Create Supabase client instance
@@ -370,7 +370,7 @@ export default function DataControlsSettings() {
       } catch (error) {
         console.error(
           "Error deleting user's conversations data via hook:",
-          error
+          error,
         );
         // Continue with account deletion even if data deletion fails
       }
@@ -624,7 +624,7 @@ export default function DataControlsSettings() {
                   </AlertDialogTitle>
                   <AlertDialogDescription>
                     {t(
-                      "settings.dataControls.accountDeletion.confirmDescription"
+                      "settings.dataControls.accountDeletion.confirmDescription",
                     )}
                   </AlertDialogDescription>
                 </AlertDialogHeader>

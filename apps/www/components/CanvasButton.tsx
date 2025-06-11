@@ -14,7 +14,12 @@ interface CanvasButtonProps {
 }
 
 const CanvasButton = memo(
-  ({ disabled, canvasEnabled, canvasToggle, intellipulse }: CanvasButtonProps) => {
+  ({
+    disabled,
+    canvasEnabled,
+    canvasToggle,
+    intellipulse,
+  }: CanvasButtonProps) => {
     const t = useTranslations();
 
     return (
@@ -37,7 +42,7 @@ const CanvasButton = memo(
         </Button>
       </EasyTip>
     );
-  }
+  },
 );
 
 CanvasButton.displayName = "CanvasButton";

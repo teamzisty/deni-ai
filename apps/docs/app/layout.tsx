@@ -9,12 +9,14 @@ const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
   title: "Deni AI Docs",
-  description: "A documentation and blog of Deni AI - Powerful, customizable AI conversations",
+  description:
+    "A documentation and blog of Deni AI - Powerful, customizable AI conversations",
   keywords: ["Deni AI", "AI", "Documentation", "Open Source"],
   authors: [{ name: "Deni AI Team" }],
   openGraph: {
     title: "Deni AI Docs",
-    description: "A documentation and blog of Deni AI - Powerful, customizable AI conversations",
+    description:
+      "A documentation and blog of Deni AI - Powerful, customizable AI conversations",
     type: "website",
     locale: "en_US",
   },
@@ -35,7 +37,6 @@ export default function RootLayout({
           disableTransitionOnChange
         >
           <SidebarProvider defaultOpen={true}>
-            
             <div className="min-h-screen flex flex-col min-w-screen">
               {children}
             </div>

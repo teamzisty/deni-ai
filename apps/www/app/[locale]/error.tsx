@@ -53,16 +53,18 @@ export default function Error({
   useEffect(() => {
     console.error(error);
 
-    setErrorReport([
-      `Deni AI Error Report (${buildInfo.version} ${buildInfo.codename})`,
-      `Date: ${new Date().toLocaleString()}`,
-      `Pathname: ${pathname}`,
-      `Error: ${error?.message || "Unknown error"}`,
-      `Stack: ${error?.stack || "No stack trace available"}`,
-      `Digest: ${error?.digest || "No digest available"}`,
-      `User Agent: ${navigator.userAgent}`,
-      `Build Type: ${buildInfo.type}`,
-    ].join("\n"))
+    setErrorReport(
+      [
+        `Deni AI Error Report (${buildInfo.version} ${buildInfo.codename})`,
+        `Date: ${new Date().toLocaleString()}`,
+        `Pathname: ${pathname}`,
+        `Error: ${error?.message || "Unknown error"}`,
+        `Stack: ${error?.stack || "No stack trace available"}`,
+        `Digest: ${error?.digest || "No digest available"}`,
+        `User Agent: ${navigator.userAgent}`,
+        `Build Type: ${buildInfo.type}`,
+      ].join("\n"),
+    );
   }, [error]);
 
   return (
@@ -70,21 +72,19 @@ export default function Error({
       <Card className="w-[420px]">
         <CardHeader>
           <CardTitle>{t("error.title")}</CardTitle>
-          <CardDescription>
-            {t("error.description")}
-          </CardDescription>
+          <CardDescription>{t("error.description")}</CardDescription>
         </CardHeader>
         <CardContent>
           <p className="leading-none font-bold">{t("error.commonCauses")}</p>
           <Accordion type="single" collapsible>
             <AccordionItem value="try-again">
               <AccordionTrigger>{t("error.tryAgain.title")}</AccordionTrigger>
-              <AccordionContent>
-                {t("error.tryAgain.content")}
-              </AccordionContent>
+              <AccordionContent>{t("error.tryAgain.content")}</AccordionContent>
             </AccordionItem>
             <AccordionItem value="chat-session-old">
-              <AccordionTrigger>{t("error.oldChatSession.title")}</AccordionTrigger>
+              <AccordionTrigger>
+                {t("error.oldChatSession.title")}
+              </AccordionTrigger>
               <AccordionContent>
                 {t("error.oldChatSession.content")}
                 <br /> <br />
@@ -104,10 +104,11 @@ export default function Error({
               </AccordionContent>
             </AccordionItem>
             <AccordionItem value="other-errors">
-              <AccordionTrigger>{t("error.otherErrors.title")}</AccordionTrigger>
+              <AccordionTrigger>
+                {t("error.otherErrors.title")}
+              </AccordionTrigger>
               <AccordionContent>
-                {t("error.otherErrors.content")}{" "}
-                <br /> <br />
+                {t("error.otherErrors.content")} <br /> <br />
                 <ol className="list-decimal list-inside">
                   <li>{t("error.otherErrors.steps.step1")}</li>
                   <li>{t("error.otherErrors.steps.step2")}</li>
@@ -136,7 +137,9 @@ export default function Error({
               <span className="ml-2 text-muted-foreground text-xs">
                 {t("error.dangerousActions")}
               </span>
-              <DropdownMenuItem onClick={() => window.localStorage.clear()}>{t("error.deleteSession")}</DropdownMenuItem>
+              <DropdownMenuItem onClick={() => window.localStorage.clear()}>
+                {t("error.deleteSession")}
+              </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         </CardFooter>
@@ -160,7 +163,7 @@ export default function Error({
               onClick={(e) => {
                 e.currentTarget.select();
                 navigator.clipboard.writeText(
-                  String(errorReport || "Failed to get error report")
+                  String(errorReport || "Failed to get error report"),
                 );
                 toast.success(t("error.copied"));
               }}

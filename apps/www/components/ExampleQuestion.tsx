@@ -17,10 +17,10 @@ export const ExampleQuestion: React.FC<ExampleQuestionProps> = ({
       onClick={onClick}
       className={cn(
         "w-full text-left py-3 px-4 rounded-lg border-b border-b-border hover:bg-accent transition-colors duration-200 text-muted-foreground",
-        className
+        className,
       )}
     >
       {children}
     </button>
   );
-}; 
+};

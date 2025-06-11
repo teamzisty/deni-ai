@@ -111,7 +111,8 @@ const Login: React.FC = () => {
         noticeRef.current.textContent = error.message;
       }
     }
-  };  const loginWithForm = async (formData: FormData) => {
+  };
+  const loginWithForm = async (formData: FormData) => {
     if (!noticeRef.current) return;
     const notice = noticeRef.current;
 
@@ -120,18 +121,18 @@ const Login: React.FC = () => {
       router.push("/");
     } catch (error: unknown) {
       if (!(error instanceof Error)) return;
-        // Check if MFA is required
+      // Check if MFA is required
       if (error.message === "MFA_REQUIRED") {
         // Extract email from form for MFA flow
-        const email = formData.get('email') as string;
-        const password = formData.get('password') as string;
+        const email = formData.get("email") as string;
+        const password = formData.get("password") as string;
         setEmail(email);
         setPassword(password);
         setIsPendingMFA(true);
         setIsDialogOpen(true);
         return;
       }
-      
+
       if (error.message.includes("Invalid login credentials")) {
         notice.textContent = t("login.invalidCredentials");
       } else if (error.message.includes("Email not confirmed")) {
@@ -162,7 +163,7 @@ const Login: React.FC = () => {
           return;
         }
         throw error;
-      }      // Check if user has MFA enabled
+      } // Check if user has MFA enabled
       if (data.session && data.user) {
         // Get MFA factors to check if user has MFA enabled
         const { data: factors } = await supabase.auth.mfa.listFactors();
@@ -174,7 +175,7 @@ const Login: React.FC = () => {
           try {
             // Attempt to get the current session to see if it's fully authenticated
             const { data: sessionCheck } = await supabase.auth.getSession();
-            
+
             // If the session exists but we still have MFA factors, check if MFA verification is needed
             // In Supabase, a successful MFA login should be complete, but we can verify by
             // checking if the session is recent and properly authenticated
@@ -189,7 +190,10 @@ const Login: React.FC = () => {
             }
           } catch (sessionError) {
             // If there's an error getting the session, it might indicate incomplete MFA
-            console.warn("Session check failed, may need MFA verification:", sessionError);
+            console.warn(
+              "Session check failed, may need MFA verification:",
+              sessionError,
+            );
             setIsPendingMFA(true);
             setIsDialogOpen(true);
             return;

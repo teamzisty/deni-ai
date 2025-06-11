@@ -100,7 +100,8 @@
   @apply text-blue-600 dark:text-blue-400 hover:underline;
 }
 
-.prose ul, .prose ol {
+.prose ul,
+.prose ol {
   @apply mb-4 pl-6;
 }
 

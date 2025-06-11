@@ -18,9 +18,7 @@ export interface ImodelDescriptionType {
 
 export type modelType = "ChatGPT" | "Gemini" | "Claude" | "Grok" | "DeepSeek";
 export type reasoningEffortType = "low" | "medium" | "high";
-export const reasoningEffortValues = z.enum(
-  ["low", "medium", "high"]
-);
+export const reasoningEffortValues = z.enum(["low", "medium", "high"]);
 
 // Powered by Voids.top (not used)
 // export const modelDescriptions: modelDescriptionType = {

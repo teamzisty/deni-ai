@@ -1,7 +1,8 @@
 {
   "extends": "@workspace/typescript-config/nextjs.json",
   "compilerOptions": {
-    "baseUrl": ".",    "paths": {
+    "baseUrl": ".",
+    "paths": {
       "@/*": ["./*"],
       "@workspace/ui/*": ["../../packages/ui/src/*"],
       "@workspace/supabase-config/*": ["../../packages/supabase-config/src/*"],

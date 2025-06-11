@@ -38,7 +38,9 @@ export function SearchDialog() {
 
     const searchContent = async () => {
       try {
-        const response = await fetch(`/api/search?q=${encodeURIComponent(query)}`);
+        const response = await fetch(
+          `/api/search?q=${encodeURIComponent(query)}`,
+        );
         const data = await response.json();
         setResults(data.results || []);
       } catch (error) {
@@ -86,7 +88,7 @@ export function SearchDialog() {
             <X className="h-4 w-4" />
           </button>
         </div>
-        
+
         {results.length > 0 && (
           <div className="max-h-80 overflow-y-auto">
             {results.map((result, index) => (
@@ -113,7 +115,7 @@ export function SearchDialog() {
             ))}
           </div>
         )}
-        
+
         {query && results.length === 0 && (
           <div className="p-8 text-center text-gray-500 dark:text-gray-400">
             No results found for "{query}"

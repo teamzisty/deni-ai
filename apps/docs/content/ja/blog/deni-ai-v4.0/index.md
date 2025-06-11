@@ -66,7 +66,7 @@ Deni AI Bots は、特定の役割に特化した AI を作成することがで
 ## 今後の予定
 
 - **Deni AI CLI**: 開発は一時的に破棄しました。
-- **Intellipulse** NEW: Deni AI が搭載されたAI エディタです。 
+- **Intellipulse** NEW: Deni AI が搭載されたAI エディタです。
 - **Deni AI API**: Deni AI の近日登場する API プラットフォームです。[詳細](/ja/blog/posts/deni-ai-api-preview)
 
 パッチノートに含まれていないすべての変更点は、[GitHub の Pull requests](https://github.com/raicdev/deni-ai/pull/39) をご覧ください。
@@ -75,4 +75,4 @@ Deni AI Bots は、特定の役割に特化した AI を作成することがで
 > Deni AI のレポジトリは、https://github.com/raicdev/deni-ai に移動しました。今後はこちらのレポジトリでコミットされます。
 
 > [!NOTE]
-> デフォルトブランチが``canary``に変更されました。リリース版については``master``ブランチをご確認してください。
+> デフォルトブランチが`canary`に変更されました。リリース版については`master`ブランチをご確認してください。

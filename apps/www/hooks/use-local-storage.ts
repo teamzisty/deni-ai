@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback } from "react";
 
 /**
  * A custom hook that provides localStorage functionality with React state integration
@@ -10,12 +10,12 @@ import { useState, useEffect, useCallback } from 'react';
  */
 export function useLocalStorage<T>(
   key: string,
-  initialValue: T
+  initialValue: T,
 ): [T, (value: T | ((val: T) => T)) => void] {
   // Get from local storage then parse stored json or return initialValue
   const readValue = useCallback((): T => {
     // Prevent build error "window is undefined" but keep working
-    if (typeof window === 'undefined') {
+    if (typeof window === "undefined") {
       return initialValue;
     }
 
@@ -39,19 +39,19 @@ export function useLocalStorage<T>(
         // Allow value to be a function so we have the same API as useState
         const valueToStore =
           value instanceof Function ? value(storedValue) : value;
-        
+
         // Save state
         setStoredValue(valueToStore);
-        
+
         // Save to local storage
-        if (typeof window !== 'undefined') {
+        if (typeof window !== "undefined") {
           window.localStorage.setItem(key, JSON.stringify(valueToStore));
         }
       } catch (error) {
         console.warn(`Error setting localStorage key "${key}":`, error);
       }
     },
-    [key, storedValue]
+    [key, storedValue],
   );
 
   // Listen for changes to this localStorage key in other tabs/windows
@@ -61,10 +61,10 @@ export function useLocalStorage<T>(
         setStoredValue(JSON.parse(e.newValue));
       }
     };
-    
+
     // Listen for storage changes
-    window.addEventListener('storage', handleStorageChange);
-    return () => window.removeEventListener('storage', handleStorageChange);
+    window.addEventListener("storage", handleStorageChange);
+    return () => window.removeEventListener("storage", handleStorageChange);
   }, [key]);
 
   return [storedValue, setValue];

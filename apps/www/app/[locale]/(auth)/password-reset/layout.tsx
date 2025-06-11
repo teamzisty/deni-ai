@@ -6,7 +6,7 @@ export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations("login.passwordReset");
   return {
     title: t("title"),
-    description: t("description")
+    description: t("description"),
   };
 }
 
@@ -14,6 +14,8 @@ interface PasswordResetLayoutProps {
   children: ReactNode;
 }
 
-export default function PasswordResetLayout({ children }: PasswordResetLayoutProps) {
+export default function PasswordResetLayout({
+  children,
+}: PasswordResetLayoutProps) {
   return children;
 }

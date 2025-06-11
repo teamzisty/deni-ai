@@ -18,8 +18,8 @@ NEXT_PUBLIC_SUPABASE_URL=<PROJECT_URL>
 NEXT_PUBLIC_SUPABASE_ANON_KEY=<ANON_KEY>
 ```
 
- - You can get the Project URL and Anon key from the [Supabase Docs](https://supabase.com/docs/guides/getting-started/quickstarts/nextjs).
- - You can get the `service_role` key by accessing [API Keys](https://supabase.com/dashboard/project/_/settings/api-keys) and selecting your project.
+- You can get the Project URL and Anon key from the [Supabase Docs](https://supabase.com/docs/guides/getting-started/quickstarts/nextjs).
+- You can get the `service_role` key by accessing [API Keys](https://supabase.com/dashboard/project/_/settings/api-keys) and selecting your project.
 
 ## 3. Create tables in the SQL Editor
 

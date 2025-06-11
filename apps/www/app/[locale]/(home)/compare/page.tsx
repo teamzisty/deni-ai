@@ -289,7 +289,7 @@ const ComparePage = () => {
                   "flex flex-col h-full",
                   service.highlight
                     ? "border-primary/50 shadow-lg shadow-primary/10"
-                    : ""
+                    : "",
                 )}
               >
                 <CardHeader>
@@ -403,7 +403,7 @@ const ComparePage = () => {
                       "w-full",
                       service.highlight
                         ? ""
-                        : "bg-muted/80 text-foreground hover:bg-muted/90"
+                        : "bg-muted/80 text-foreground hover:bg-muted/90",
                     )}
                     variant={service.highlight ? "default" : "outline"}
                   >
@@ -487,7 +487,7 @@ const ComparePage = () => {
                                 typeof item.chatGPT === "string" &&
                                   item.chatGPT.includes("|")
                                   ? item.chatGPT.split("|")[0]?.trim() || ""
-                                  : item.chatGPT
+                                  : item.chatGPT,
                               )}
                             </TableCell>
                             <TableCell>
@@ -495,7 +495,7 @@ const ComparePage = () => {
                                 typeof item.claude === "string" &&
                                   item.claude.includes("|")
                                   ? item.claude.split("|")[0]?.trim() || ""
-                                  : item.claude
+                                  : item.claude,
                               )}
                             </TableCell>
                             <TableCell>
@@ -556,7 +556,7 @@ const ComparePage = () => {
                                 typeof item.chatGPT === "string" &&
                                   item.chatGPT.includes("|")
                                   ? item.chatGPT.split("|")[1]?.trim() || ""
-                                  : item.chatGPT
+                                  : item.chatGPT,
                               )}
                             </TableCell>
                             <TableCell>
@@ -564,7 +564,7 @@ const ComparePage = () => {
                                 typeof item.claude === "string" &&
                                   item.claude.includes("|")
                                   ? item.claude.split("|")[1]?.trim() || ""
-                                  : item.claude
+                                  : item.claude,
                               )}
                             </TableCell>
                             <TableCell>
@@ -572,7 +572,7 @@ const ComparePage = () => {
                                 typeof item.claude === "string" &&
                                   item.claude.includes("|")
                                   ? item.claude.split("|")[2]?.trim() || ""
-                                  : item.claude
+                                  : item.claude,
                               )}
                             </TableCell>
                           </TableRow>

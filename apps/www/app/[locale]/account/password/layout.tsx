@@ -6,7 +6,7 @@ export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations("account");
   return {
     title: t("sidebarNav.password"),
-    description: t("password.description")
+    description: t("password.description"),
   };
 }
 
@@ -16,4 +16,4 @@ interface PasswordLayoutProps {
 
 export default function PasswordLayout({ children }: PasswordLayoutProps) {
   return children;
-} 
+}

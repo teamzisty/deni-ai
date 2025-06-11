@@ -70,7 +70,7 @@ export class VoidsAPChatLanguageModel implements LanguageModelV1 {
   constructor(
     modelId: VoidsAPChatModelId,
     settings: VoidsAPChatSettings,
-    config: VoidsAPChatConfig
+    config: VoidsAPChatConfig,
   ) {
     this.modelId = modelId;
     this.settings = settings;
@@ -80,7 +80,7 @@ export class VoidsAPChatLanguageModel implements LanguageModelV1 {
     const errorStructure =
       config.errorStructure ?? defaultOpenAICompatibleErrorStructure;
     this.chunkSchema = createOpenAICompatibleChatChunkSchema(
-      errorStructure.errorSchema
+      errorStructure.errorSchema,
     );
     this.failedResponseHandler = createJsonErrorResponseHandler(errorStructure);
 
@@ -178,7 +178,7 @@ export class VoidsAPChatLanguageModel implements LanguageModelV1 {
       stop: stopSequences,
 
       ...(isThinking && {
-        thinking: { type: 'enabled', budget_tokens: thinkingBudget },
+        thinking: { type: "enabled", budget_tokens: thinkingBudget },
       }),
 
       seed,
@@ -252,7 +252,7 @@ export class VoidsAPChatLanguageModel implements LanguageModelV1 {
   }
 
   async doGenerate(
-    options: Parameters<LanguageModelV1["doGenerate"]>[0]
+    options: Parameters<LanguageModelV1["doGenerate"]>[0],
   ): Promise<Awaited<ReturnType<LanguageModelV1["doGenerate"]>>> {
     const { args, warnings } = this.getArgs({ ...options });
 
@@ -271,7 +271,7 @@ export class VoidsAPChatLanguageModel implements LanguageModelV1 {
       body: args,
       failedResponseHandler: this.failedResponseHandler,
       successfulResponseHandler: createJsonResponseHandler(
-        OpenAICompatibleChatResponseSchema
+        OpenAICompatibleChatResponseSchema,
       ),
       abortSignal: options.abortSignal,
       fetch: this.config.fetch,
@@ -331,7 +331,7 @@ export class VoidsAPChatLanguageModel implements LanguageModelV1 {
   }
 
   async doStream(
-    options: Parameters<LanguageModelV1["doStream"]>[0]
+    options: Parameters<LanguageModelV1["doStream"]>[0],
   ): Promise<Awaited<ReturnType<LanguageModelV1["doStream"]>>> {
     if (this.settings.simulateStreaming) {
       const result = await this.doGenerate(options);
@@ -405,7 +405,7 @@ export class VoidsAPChatLanguageModel implements LanguageModelV1 {
       },
       failedResponseHandler: this.failedResponseHandler,
       successfulResponseHandler: createEventSourceResponseHandler(
-        this.chunkSchema
+        this.chunkSchema,
       ),
       abortSignal: options.abortSignal,
       fetch: this.config.fetch,
@@ -521,7 +521,7 @@ export class VoidsAPChatLanguageModel implements LanguageModelV1 {
 
             if (choice?.finish_reason != null) {
               finishReason = mapOpenAICompatibleFinishReason(
-                choice.finish_reason
+                choice.finish_reason,
               );
             }
 
@@ -692,7 +692,7 @@ export class VoidsAPChatLanguageModel implements LanguageModelV1 {
               providerMetadata,
             });
           },
-        })
+        }),
       ),
       rawCall: { rawPrompt, rawSettings },
       rawResponse: { headers: responseHeaders },
@@ -742,12 +742,12 @@ const OpenAICompatibleChatResponseSchema = z.object({
                 name: z.string(),
                 arguments: z.string(),
               }),
-            })
+            }),
           )
           .nullish(),
       }),
       finish_reason: z.string().nullish(),
-    })
+    }),
   ),
   usage: openaiCompatibleTokenUsageSchema,
 });
@@ -764,7 +764,7 @@ const anthropicProviderOptionsSchema = z.object({
 // limited version of the schema, focussed on what is needed for the implementation
 // this approach limits breakages when the API changes and increases efficiency
 const createOpenAICompatibleChatChunkSchema = <ERROR_SCHEMA extends z.ZodType>(
-  errorSchema: ERROR_SCHEMA
+  errorSchema: ERROR_SCHEMA,
 ) =>
   z.union([
     z.object({
@@ -788,13 +788,13 @@ const createOpenAICompatibleChatChunkSchema = <ERROR_SCHEMA extends z.ZodType>(
                       name: z.string().nullish(),
                       arguments: z.string().nullish(),
                     }),
-                  })
+                  }),
                 )
                 .nullish(),
             })
             .nullish(),
           finish_reason: z.string().nullish(),
-        })
+        }),
       ),
       usage: openaiCompatibleTokenUsageSchema,
     }),

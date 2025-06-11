@@ -1,12 +1,10 @@
 ---
-
 title: Deni AI v3.0 Release
 date: 2025-04-21
 description: Introducing new features, bug fixes, and improvements in version 3.0.
 author: rai
 tags: [update]
 ---
-
 
 TLDR; Enhanced Canvas feature, improved message controls, internal changes, and bug fixes.
 
@@ -56,7 +54,6 @@ The following system changes have been made in this version:
 
 - **Deni AI for Development:** Developer features, including development capabilities using WebContainers and the Deni AI CLI, are planned for future updates.
 - **Message Log:** The fix for the issue where thinking time shows 0 seconds until the next message is sent has been postponed to a future update as further investigation is required.
-
 
 For all changes not included in the patch notes, please see the [GitHub Pull requests](https://github.com/raicdev/deni-ai/pull/22).
 

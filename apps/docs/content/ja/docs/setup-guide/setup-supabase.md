@@ -18,8 +18,8 @@ NEXT_PUBLIC_SUPABASE_URL=<PROJECT_URL>
 NEXT_PUBLIC_SUPABASE_ANON_KEY=<ANON_KEY>
 ```
 
- - [Supabase Docs](https://supabase.com/docs/guides/getting-started/quickstarts/nextjs) から Project URL と Anon key を取得できます。
- - [API Keys](https://supabase.com/dashboard/project/_/settings/api-keys) にアクセスし、プロジェクトを選択すると、`service_role` key を取得できます。
+- [Supabase Docs](https://supabase.com/docs/guides/getting-started/quickstarts/nextjs) から Project URL と Anon key を取得できます。
+- [API Keys](https://supabase.com/dashboard/project/_/settings/api-keys) にアクセスし、プロジェクトを選択すると、`service_role` key を取得できます。
 
 ## 3. SQL Editor でテーブルを作成する
 

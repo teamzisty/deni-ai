@@ -215,7 +215,7 @@ export function Header() {
                       >
                         {link.label}
                       </Link>
-                    )
+                    ),
                   )}
 
                   <div className="pt-4 mt-4 border-t border-border">

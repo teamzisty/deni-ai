@@ -1,13 +1,15 @@
 # Commit Message Guidelines
 
 - Use the below format for commit messages:
+
   ```
   [Type] ([Scope]): [Short description of the change]
-  
+
   [Detailed description of the change, if necessary]
-  
+
   [Related issues or pull requests, if applicable]
   ```
+
 - **Do not use Type more than once in a commit message**
 - **Types**: `feat` (new feature), `fix` (bug fix), `docs` (documentation), `style` (formatting, missing semi-colons, etc.), `refactor` (code change that neither fixes a bug nor adds a feature), `perf` (performance improvement), `test` (adding or updating tests), `chore` (maintenance tasks).
 
@@ -39,7 +41,6 @@
 - TypeScript: ^5.0.0
 - pnpm: ^10.0.0
 - ESLint: ^9.0.0
-
 
 ---
 

@@ -76,7 +76,7 @@ export const MemoMarkdown = memo(
   (prevProps, nextProps) => {
     if (prevProps.content !== nextProps.content) return false;
     return true;
-  }
+  },
 );
 
 MemoMarkdown.displayName = "MemoMarkdown";
@@ -94,7 +94,7 @@ export const MemoizedMarkdown = memo(
 
     // マーキングのために遅延レンダリングを使用
     const [visibleBlocks, setVisibleBlocks] = useState(
-      Math.min(5, blocks.length)
+      Math.min(5, blocks.length),
     );
 
     // コンテンツが長い場合、スクロールするとより多くのブロックを表示
@@ -102,12 +102,12 @@ export const MemoizedMarkdown = memo(
       if (blocks.length <= 5) return;
 
       console.log(
-        `MemoizedMarkdown: Initializing scroll listener for ${id} with ${blocks.length} blocks`
+        `MemoizedMarkdown: Initializing scroll listener for ${id} with ${blocks.length} blocks`,
       );
 
       const handleScroll = () => {
         setVisibleBlocks((prevVisible) =>
-          Math.min(prevVisible + 5, blocks.length)
+          Math.min(prevVisible + 5, blocks.length),
         );
       };
 
@@ -128,7 +128,7 @@ export const MemoizedMarkdown = memo(
         ))}
       </>
     );
-  }
+  },
 );
 MemoizedMarkdown.displayName = "MemoizedMarkdown";
 
@@ -226,7 +226,13 @@ CommandExecution.displayName = "CommandExecution";
 
 // ステップ実行計画を表示するコンポーネント
 const StepsExecution = memo(
-  ({ steps: initialSteps, onExecuteSteps }: { steps: any[]; onExecuteSteps: (steps: any[]) => void }) => {
+  ({
+    steps: initialSteps,
+    onExecuteSteps,
+  }: {
+    steps: any[];
+    onExecuteSteps: (steps: any[]) => void;
+  }) => {
     const [expanded, setExpanded] = useState(true); // デフォルトで開いた状態にする
     const [isExecuting, setIsExecuting] = useState(false);
     const [steps, setSteps] = useState<any[]>(initialSteps);
@@ -236,7 +242,7 @@ const StepsExecution = memo(
     // 親コンポーネントからのsteps更新時の同期
     const initialStepsStringified = useMemo(
       () => JSON.stringify(initialSteps),
-      [initialSteps]
+      [initialSteps],
     );
 
     useEffect(() => {
@@ -244,7 +250,7 @@ const StepsExecution = memo(
       if (!isExecuting) {
         console.log(
           "StepsExecution: Initializing steps",
-          initialStepsStringified
+          initialStepsStringified,
         );
         setSteps((prevSteps) => {
           // 初回表示または新しいデータが来た場合に初期化
@@ -268,7 +274,7 @@ const StepsExecution = memo(
                 }
                 return acc;
               },
-              {} as Record<string, string>
+              {} as Record<string, string>,
             );
 
             // 新しいステップリストを作成し、完了したステップのステータスを保持
@@ -309,11 +315,11 @@ const StepsExecution = memo(
         if (isExecuting) {
           return;
         }
-        
+
         // すべてのステップのステータスを初期化
         console.log(
           "StepsExecution: Initializing steps for execution",
-          initialStepsStringified
+          initialStepsStringified,
         );
         const initializedSteps = steps.map((step, index) => ({
           ...step,
@@ -345,30 +351,30 @@ const StepsExecution = memo(
         // 実行ボタンクリック時にステップリストを展開
         setExpanded(true);
       },
-      [steps, isExecuting, onExecuteSteps, initialStepsStringified]
+      [steps, isExecuting, onExecuteSteps, initialStepsStringified],
     );
 
     // ステップのステータス更新イベントリスナー
     useEffect(() => {
       const handleStepStatusUpdate = (
-        event: CustomEvent<StepStatusEventDetail>
+        event: CustomEvent<StepStatusEventDetail>,
       ) => {
         const { stepId, status, output } = event.detail;
         if (!stepId) return;
 
         console.log(
           `StepsExecution: Updating step ${stepId} status to ${status}`,
-          output
+          output,
         );
 
         setSteps((currentSteps) => {
           // IDで該当するステップを探す
           const stepIndex = currentSteps.findIndex(
-            (step) => step.id === stepId
+            (step) => step.id === stepId,
           );
           if (stepIndex === -1) {
             console.warn(
-              `StepsExecution: Could not find step with ID ${stepId}`
+              `StepsExecution: Could not find step with ID ${stepId}`,
             );
             return currentSteps;
           }
@@ -397,7 +403,7 @@ const StepsExecution = memo(
 
           // すべてのステップが完了または失敗したかチェック
           const allDone = updatedSteps.every(
-            (step) => step.status === "completed" || step.status === "failed"
+            (step) => step.status === "completed" || step.status === "failed",
           );
 
           return updatedSteps;
@@ -407,14 +413,14 @@ const StepsExecution = memo(
       // イベントリスナーの登録
       window.addEventListener(
         "stepStatusUpdate",
-        handleStepStatusUpdate as EventListener
+        handleStepStatusUpdate as EventListener,
       );
 
       // クリーンアップ
       return () => {
         window.removeEventListener(
           "stepStatusUpdate",
-          handleStepStatusUpdate as EventListener
+          handleStepStatusUpdate as EventListener,
         );
       };
     }, []);
@@ -583,7 +589,7 @@ const StepsExecution = memo(
 
     // それ以外の場合は再レンダリング不要
     return true;
-  }
+  },
 );
 StepsExecution.displayName = "StepsExecution";
 
@@ -638,14 +644,14 @@ const MessageControls = memo(
       const remainingSeconds = seconds % 60;
       if (minutes < 60) {
         return `${minutes}${t("messageLog.minute")} ${remainingSeconds}${t(
-          "messageLog.second"
+          "messageLog.second",
         )}`;
       }
 
       const hours = Math.floor(minutes / 60);
       const remainingMinutes = minutes % 60;
       return `${hours}${t("messageLog.hour")} ${remainingMinutes}${t(
-        "messageLog.minute"
+        "messageLog.minute",
       )} ${remainingSeconds}${t("messageLog.second")}`;
     };
 
@@ -696,7 +702,7 @@ const MessageControls = memo(
       prevProps.modelDescriptions === nextProps.modelDescriptions &&
       prevProps.generationTime === nextProps.generationTime
     );
-  }
+  },
 );
 MessageControls.displayName = "MessageControls";
 
@@ -705,7 +711,7 @@ export const IntellipulseMessageLog: FC<IntellipulseMessageLogProps> = memo(
     // 初期状態を一度だけセットアップ
     const [model, setModel] = useState<string>("openai/gpt-4.1-2025-04-14");
     const [generationTime, setGenerationTime] = useState<number | undefined>(
-      undefined
+      undefined,
     );
     const [webcontainerActions, setWebcontainerActions] = useState<any[]>([]);
     const [steps, setSteps] = useState<any[]>([]);
@@ -720,7 +726,7 @@ export const IntellipulseMessageLog: FC<IntellipulseMessageLogProps> = memo(
     // メッセージIDまたはアノテーションが変更された場合のみ再評価
     const annotationsKey = useMemo(
       () => JSON.stringify(message.annotations || []),
-      [message.annotations]
+      [message.annotations],
     );
 
     // 型アサーションを追加してアノテーション処理を修正
@@ -729,7 +735,7 @@ export const IntellipulseMessageLog: FC<IntellipulseMessageLogProps> = memo(
       if (!annotations || annotations.length === 0) return;
 
       console.log(
-        `IntellipulseMessageLog: Processing annotations for message ${message.id}`
+        `IntellipulseMessageLog: Processing annotations for message ${message.id}`,
       );
 
       // コンポーネントのアンマウント時にキャンセルできるようにする
@@ -868,7 +874,10 @@ export const IntellipulseMessageLog: FC<IntellipulseMessageLogProps> = memo(
                         count: steps.length,
                       })}
                     </div>
-                    <StepsExecution steps={steps} onExecuteSteps={onExecuteSteps} />
+                    <StepsExecution
+                      steps={steps}
+                      onExecuteSteps={onExecuteSteps}
+                    />
                   </>
                 )}
               </div>
@@ -901,7 +910,7 @@ export const IntellipulseMessageLog: FC<IntellipulseMessageLogProps> = memo(
       prevProps.isExecuting === nextProps.isExecuting &&
       prevProps.allowExecution === nextProps.allowExecution
     );
-  }
+  },
 );
 IntellipulseMessageLog.displayName = "IntellipulseMessageLog";
 

@@ -1,12 +1,10 @@
 ---
-
 title: Deni AI v3.2 Release
 date: 2025-05-03
 description: Introducing new features, bug fixes, and improvements in version 3.2.
 author: rai
 tags: [update]
 ---
-
 
 We apologize for the delay in the release of Deni AI v3.2.
 
@@ -66,6 +64,6 @@ For all changes not included in the patch notes, please see the [GitHub Pull req
 
 ::: info Note
 
-The default branch has been changed to ``canary``. Please check the ``master`` branch for the release version.
+The default branch has been changed to `canary`. Please check the `master` branch for the release version.
 
 :::

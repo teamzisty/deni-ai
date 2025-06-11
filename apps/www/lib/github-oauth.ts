@@ -1,4 +1,9 @@
-import { User, AuthError, Session, SupabaseClient } from "@supabase/supabase-js";
+import {
+  User,
+  AuthError,
+  Session,
+  SupabaseClient,
+} from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/client";
 
 export interface GitHubOAuthResult {
@@ -17,18 +22,22 @@ export class GitHubOAuthService {
   constructor() {
     if (this.supabase) {
       // Listen for auth state changes
-      this.supabase.auth.onAuthStateChange(async (event: string, session: Session | null) => {
-        const user = session?.user || null;
-        let accessToken: string | undefined;
+      this.supabase.auth.onAuthStateChange(
+        async (event: string, session: Session | null) => {
+          const user = session?.user || null;
+          let accessToken: string | undefined;
 
-        if (user && session) {
-          // Get provider token for GitHub
-          accessToken =
-            session.provider_token || this.getStoredAccessToken() || undefined;
-        }
+          if (user && session) {
+            // Get provider token for GitHub
+            accessToken =
+              session.provider_token ||
+              this.getStoredAccessToken() ||
+              undefined;
+          }
 
-        this.notifyAuthStateChange(user, accessToken);
-      });
+          this.notifyAuthStateChange(user, accessToken);
+        },
+      );
 
       this.checkRedirectResult();
     }
@@ -172,7 +181,7 @@ export class GitHubOAuthService {
         const popup = window.open(
           data.url,
           "github-oauth",
-          "width=600,height=700,scrollbars=yes,resizable=yes"
+          "width=600,height=700,scrollbars=yes,resizable=yes",
         );
 
         // Wait for popup to close
@@ -181,7 +190,8 @@ export class GitHubOAuthService {
             if (popup?.closed && this.supabase) {
               clearInterval(checkClosed);
               // Check for session after popup closes
-              const { data: sessionData } = await this.supabase.auth.getSession();
+              const { data: sessionData } =
+                await this.supabase.auth.getSession();
               if (sessionData.session) {
                 resolve({
                   user: sessionData.session.user,
@@ -300,7 +310,7 @@ export class GitHubOAuthService {
   }
 
   onAuthStateChange(
-    callback: (user: User | null, accessToken?: string) => void
+    callback: (user: User | null, accessToken?: string) => void,
   ): () => void {
     this.authStateListeners.push(callback);
 
@@ -376,15 +386,15 @@ export class GitHubOAuthService {
     switch (error.message) {
       case "popup_closed_by_user":
         throw new Error(
-          "GitHub Authentication popup was closed before completion. Please try again."
+          "GitHub Authentication popup was closed before completion. Please try again.",
         );
       case "popup_blocked":
         throw new Error(
-          "Popup blocked by browser. Please allow popups for this site and try again."
+          "Popup blocked by browser. Please allow popups for this site and try again.",
         );
       case "network_error":
         throw new Error(
-          "Network error occurred during GitHub authentication. Please check your connection and try again."
+          "Network error occurred during GitHub authentication. Please check your connection and try again.",
         );
       default:
         throw new Error(`GitHub Authentication Error: ${error.message}`);

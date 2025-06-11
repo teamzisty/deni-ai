@@ -12,10 +12,7 @@ import { Switch } from "@workspace/ui/components/switch";
 import { Check } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useTheme } from "next-themes";
-import {
-  useParams,
-  usePathname,
-} from "next/navigation";
+import { useParams, usePathname } from "next/navigation";
 
 export default function CustomizeSettings() {
   const t = useTranslations();

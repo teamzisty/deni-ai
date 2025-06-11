@@ -35,7 +35,7 @@ export default function MFASetupRequiredPage() {
       const response = await fetch("/api/auth/logout", {
         method: "POST",
       });
-      
+
       if (response.ok) {
         router.push("/login");
       }
@@ -68,39 +68,36 @@ export default function MFASetupRequiredPage() {
             Two-Factor Authentication Required
           </CardTitle>
           <CardDescription>
-            To secure your account, you must set up two-factor authentication before continuing.
+            To secure your account, you must set up two-factor authentication
+            before continuing.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <Alert>
             <Shield className="h-4 w-4" />
             <AlertDescription>
-              Two-factor authentication adds an extra layer of security to your account by requiring a verification code from your authenticator app.
+              Two-factor authentication adds an extra layer of security to your
+              account by requiring a verification code from your authenticator
+              app.
             </AlertDescription>
           </Alert>
 
           <div className="space-y-2">
-            <Button 
-              onClick={handleSetupMFA} 
-              className="w-full"
-              size="lg"
-            >
+            <Button onClick={handleSetupMFA} className="w-full" size="lg">
               <Shield className="mr-2 h-4 w-4" />
               Set Up Two-Factor Authentication
             </Button>
-            
-            <Button 
-              variant="outline" 
-              onClick={handleLogout}
-              className="w-full"
-            >
+
+            <Button variant="outline" onClick={handleLogout} className="w-full">
               Sign Out
             </Button>
           </div>
 
           <div className="text-sm text-muted-foreground text-center">
             <p>You'll need an authenticator app like:</p>
-            <p className="font-medium">Google Authenticator, Authy, or 1Password</p>
+            <p className="font-medium">
+              Google Authenticator, Authy, or 1Password
+            </p>
           </div>
         </CardContent>
       </Card>

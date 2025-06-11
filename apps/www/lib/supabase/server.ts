@@ -5,7 +5,7 @@ import { cookies } from "next/headers";
 export async function createSupabaseServiceRoleClient(): Promise<SupabaseClient> {
   return createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!
+    process.env.SUPABASE_SERVICE_ROLE_KEY!,
   );
 }
 
@@ -39,7 +39,7 @@ export async function createSupabaseServerClient(): Promise<SupabaseClient> {
           }
         },
       },
-    }
+    },
   );
 }
 

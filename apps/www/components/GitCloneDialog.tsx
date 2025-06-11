@@ -70,7 +70,7 @@ export function GitCloneDialog({
   const handleClone = useCallback(async () => {
     if (!repoUrl.trim()) {
       setError(
-        t("gitClone.errors.emptyUrl") || "Please enter a repository URL"
+        t("gitClone.errors.emptyUrl") || "Please enter a repository URL",
       );
       return;
     }
@@ -78,7 +78,7 @@ export function GitCloneDialog({
     if (!validateGitUrl(repoUrl)) {
       setError(
         t("gitClone.errors.invalidUrl") ||
-          "Please enter a valid Git repository URL"
+          "Please enter a valid Git repository URL",
       );
       return;
     }
@@ -128,16 +128,14 @@ export function GitCloneDialog({
         if (installDependencies) {
           setCloneStep(
             t("gitClone.installingDependencies") ||
-              "Installing dependencies..."
+              "Installing dependencies...",
           );
-          const installProcess = await webContainer.spawn("pnpm", [
-            "install",
-          ]);
+          const installProcess = await webContainer.spawn("pnpm", ["install"]);
           const installExitCode = await installProcess.exit;
           if (installExitCode !== 0) {
             throw new Error(
               t("gitClone.errors.installFailed") ||
-                "Failed to install dependencies"
+                "Failed to install dependencies",
             );
           }
         }
@@ -157,7 +155,7 @@ export function GitCloneDialog({
       console.error("Error cloning repository:", err);
       setError(
         t("gitClone.errors.cloneFailed") ||
-          `Failed to clone repository: ${err.message}`
+          `Failed to clone repository: ${err.message}`,
       );
       onCloneComplete?.(false);
     } finally {

@@ -11,14 +11,16 @@ interface EasyTipProps {
   className?: string;
 }
 
-export const EasyTip = React.memo(({ content, children, className }: EasyTipProps) => {
-  return (
-    <Tooltip>
-      <TooltipTrigger asChild>
-        <div className={className}>{children}</div>
-      </TooltipTrigger>
-      <TooltipContent>{content}</TooltipContent>
-    </Tooltip>
-  );
-});
+export const EasyTip = React.memo(
+  ({ content, children, className }: EasyTipProps) => {
+    return (
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <div className={className}>{children}</div>
+        </TooltipTrigger>
+        <TooltipContent>{content}</TooltipContent>
+      </Tooltip>
+    );
+  },
+);
 EasyTip.displayName = "EasyTip";

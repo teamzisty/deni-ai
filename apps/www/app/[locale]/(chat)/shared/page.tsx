@@ -3,7 +3,14 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "@/i18n/navigation";
 import { Button } from "@workspace/ui/components/button";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@workspace/ui/components/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@workspace/ui/components/card";
 import { MessageCircle, Eye, Calendar, ArrowRight } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Loading } from "@/components/loading";
@@ -30,17 +37,19 @@ export default function SharedChatsPage() {
       try {
         setLoading(true);
         const response = await fetch("/api/share/list");
-        
+
         if (!response.ok) {
           const errorData = await response.json();
           throw new Error(errorData.error || t("shared.error.fetchFailed"));
         }
-        
+
         const data = await response.json();
         setSharedChats(data.chats || []);
       } catch (err) {
         console.error(err);
-        setError(err instanceof Error ? err.message : t("shared.error.unknown"));
+        setError(
+          err instanceof Error ? err.message : t("shared.error.unknown"),
+        );
       } finally {
         setLoading(false);
       }
@@ -50,9 +59,7 @@ export default function SharedChatsPage() {
   }, [t]);
 
   if (loading || isLoading) {
-    return (
-      <Loading />
-    );
+    return <Loading />;
   }
 
   return (
@@ -60,13 +67,12 @@ export default function SharedChatsPage() {
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8">
         <div>
           <h1 className="text-3xl font-bold">{t("shared.title")}</h1>
-          <p className="text-muted-foreground mt-2">{t("shared.description")}</p>
+          <p className="text-muted-foreground mt-2">
+            {t("shared.description")}
+          </p>
         </div>
         {user && (
-          <Button 
-            className="mt-4 md:mt-0" 
-            onClick={() => router.push("/")}
-          >
+          <Button className="mt-4 md:mt-0" onClick={() => router.push("/")}>
             {t("shared.myChats")}
           </Button>
         )}
@@ -82,7 +88,9 @@ export default function SharedChatsPage() {
         <div className="text-center py-12">
           <MessageCircle className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
           <h2 className="text-xl font-semibold mb-2">{t("shared.noChats")}</h2>
-          <p className="text-muted-foreground mb-6">{t("shared.noChatsDescription")}</p>
+          <p className="text-muted-foreground mb-6">
+            {t("shared.noChatsDescription")}
+          </p>
           {user ? (
             <Button onClick={() => router.push("/chat/new")}>
               {t("shared.startChat")}
@@ -110,18 +118,22 @@ export default function SharedChatsPage() {
                 <div className="flex justify-between text-sm text-muted-foreground">
                   <div className="flex items-center gap-1">
                     <MessageCircle className="h-4 w-4" />
-                    <span>{chat.messageCount} {t("shared.messages")}</span>
+                    <span>
+                      {chat.messageCount} {t("shared.messages")}
+                    </span>
                   </div>
                   <div className="flex items-center gap-1">
                     <Eye className="h-4 w-4" />
-                    <span>{chat.viewCount} {t("shared.views")}</span>
+                    <span>
+                      {chat.viewCount} {t("shared.views")}
+                    </span>
                   </div>
                 </div>
               </CardContent>
               <CardFooter>
-                <Button 
-                  variant="outline" 
-                  className="w-full" 
+                <Button
+                  variant="outline"
+                  className="w-full"
                   onClick={() => router.push(`/shared/${chat.id}`)}
                 >
                   {t("shared.view")}

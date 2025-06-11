@@ -7,7 +7,7 @@ import { routing } from "./i18n/routing"; // Ensure this path is correct
 const intlMiddleware = createNextIntlMiddleware(routing);
 
 export default async function middleware(
-  request: NextRequest
+  request: NextRequest,
 ): Promise<NextResponse> {
   // Early return for API routes - skip intl middleware for API endpoints
   if (request.nextUrl.pathname.startsWith("/api/")) {
@@ -31,17 +31,17 @@ export default async function middleware(
         },
         setAll(cookiesToSet) {
           cookiesToSet.forEach(({ name, value, options }) =>
-            request.cookies.set(name, value)
+            request.cookies.set(name, value),
           );
           response = NextResponse.next({
             request,
           });
           cookiesToSet.forEach(({ name, value, options }) =>
-            response.cookies.set(name, value, options)
+            response.cookies.set(name, value, options),
           );
         },
       },
-    }
+    },
   );
 
   // After change
@@ -61,7 +61,7 @@ export default async function middleware(
   // Example: /en/home -> /home
   const pathnameWithoutParameters = request.nextUrl.pathname.replace(
     /\?.*$/,
-    ""
+    "",
   ); // Remove parameters
   const locale = pathnameWithoutParameters.split("/")[1];
 
@@ -70,12 +70,12 @@ export default async function middleware(
     "loggedIn:",
     loggedIn,
     "locale:",
-    locale
+    locale,
   );
 
   const pathnameWithoutLocale = request.nextUrl.pathname.replace(
     `/${locale}`,
-    ""
+    "",
   );
   // Adjustment for root path: /en -> ""
   let adjustedPathname = pathnameWithoutLocale.replace(/\?.*$/, ""); // Delete ? parameter
@@ -124,4 +124,3 @@ export const config = {
     "/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
   ], // Example: ['/', '/(ja|en)/dashboard/:path*', '/(ja|en)/home/:path*']
 };
-

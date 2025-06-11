@@ -69,7 +69,7 @@ export const DeepResearchButton = memo(
             disabled={intellipulse || disabled}
             className={cn(
               "rounded-l-full mr-0 transition-all duration-200",
-              deepResearch ? "rounded-r-none" : "rounded-full"
+              deepResearch ? "rounded-r-none" : "rounded-full",
             )}
             size={isMobile ? "sm" : "default"}
             onClick={deepResearchToggle}
@@ -140,7 +140,7 @@ export const DeepResearchButton = memo(
                         "ml-auto",
                         researchDepth === "shallow"
                           ? "opacity-100"
-                          : "opacity-0"
+                          : "opacity-0",
                       )}
                     />
                   </CommandItem>
@@ -163,7 +163,7 @@ export const DeepResearchButton = memo(
                     <Check
                       className={cn(
                         "ml-auto",
-                        researchDepth === "deep" ? "opacity-100" : "opacity-0"
+                        researchDepth === "deep" ? "opacity-100" : "opacity-0",
                       )}
                     />
                   </CommandItem>
@@ -189,7 +189,7 @@ export const DeepResearchButton = memo(
                         "ml-auto",
                         researchDepth === "advanced"
                           ? "opacity-100"
-                          : "opacity-0"
+                          : "opacity-0",
                       )}
                     />
                   </CommandItem>
@@ -200,7 +200,7 @@ export const DeepResearchButton = memo(
         </Popover>
       </div>
     );
-  }
+  },
 );
 
 DeepResearchButton.displayName = "DeepResearchButton";

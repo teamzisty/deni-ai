@@ -1,5 +1,4 @@
 ---
-
 title: Deni AI v3.0.1 Release
 date: 2025-04-21
 description: Introducing the new features, bug fixes, and improvements in version 3.0.1.

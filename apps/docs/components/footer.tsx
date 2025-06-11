@@ -1,5 +1,9 @@
 import Link from "next/link";
-import { SiRefinedgithub, SiX, SiDiscord } from "@icons-pack/react-simple-icons";
+import {
+  SiRefinedgithub,
+  SiX,
+  SiDiscord,
+} from "@icons-pack/react-simple-icons";
 
 export function Footer() {
   return (
@@ -36,10 +40,16 @@ export function Footer() {
               &copy; 2025 Veltrix. All rights reserved.
             </p>
             <div className="mt-4 md:mt-0 flex justify-center space-x-6">
-              <Link href="/privacy" className="text-xs text-gray-500 dark:text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
+              <Link
+                href="/privacy"
+                className="text-xs text-gray-500 dark:text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+              >
                 Privacy Policy
               </Link>
-              <Link href="/terms" className="text-xs text-gray-500 dark:text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
+              <Link
+                href="/terms"
+                className="text-xs text-gray-500 dark:text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+              >
                 Terms of Service
               </Link>
             </div>

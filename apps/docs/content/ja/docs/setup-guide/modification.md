@@ -23,13 +23,13 @@ category: docs
 - Deni AI 標準の検索機能 - Brave Search API キーが必要です。
 - Deni AI 標準の画像アップロード機能 - UploadThing トークンが必要です。
 
-| 環境変数名 | 説明 |
-| ------------------------------------------ | ------------------------------------------- |
-| `NEXT_PUBLIC_SUPABASE_URL` | Supabase の URL。 |
-| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Supabase の匿名キー。 |
-| `SUPABASE_SERVICE_ROLE_KEY` | Supabase のサービスロールキー。 |
-| `BRAVE_SEARCH_API_KEY` | Brave Search API キー。 |
-| `UPLOADTHING_TOKEN` | UploadThing のトークン。 |
+| 環境変数名                      | 説明                            |
+| ------------------------------- | ------------------------------- |
+| `NEXT_PUBLIC_SUPABASE_URL`      | Supabase の URL。               |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Supabase の匿名キー。           |
+| `SUPABASE_SERVICE_ROLE_KEY`     | Supabase のサービスロールキー。 |
+| `BRAVE_SEARCH_API_KEY`          | Brave Search API キー。         |
+| `UPLOADTHING_TOKEN`             | UploadThing のトークン。        |
 
 ## ブランド名の変更
 

@@ -73,7 +73,9 @@ export function Header() {
         <div className="flex items-center gap-2 mr-6">
           <Link href="/" className="flex items-center gap-2 font-semibold">
             <div className="h-6 w-6 bg-primary rounded-sm flex items-center justify-center">
-              <span className="text-primary-foreground text-xs font-bold">D</span>
+              <span className="text-primary-foreground text-xs font-bold">
+                D
+              </span>
             </div>
             <span className="hidden sm:inline-block">Deni AI</span>
           </Link>
