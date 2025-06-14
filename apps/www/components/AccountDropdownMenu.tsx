@@ -10,6 +10,7 @@ import {
   Notebook,
   Settings,
   User2,
+  BarChart3,
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -169,6 +170,10 @@ export const AccountDropdownMenu = memo(
                 {t("accountMenu.account")}
               </DropdownMenuItem>
             )}
+            <DropdownMenuItem onClick={() => openDialog("general")}>
+              <BarChart3 />
+              {t("accountMenu.usage", { default: "使用状況" })}
+            </DropdownMenuItem>
             <DropdownMenuItem onClick={() => openDialog()}>
               <Settings />
               {t("accountMenu.userSettings")}

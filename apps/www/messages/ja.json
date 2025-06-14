@@ -256,6 +256,26 @@
       },
       "authDisabled": "認証は一時的に無効になっているか、あなたのインスタンスでは利用できません。"
     },
+    "usage": {
+      "title": "使用状況",
+      "loginRequired": "使用状況を確認するにはログインが必要です",
+      "loading": "使用状況を読み込み中...",
+      "retry": "再試行",
+      "refresh": "更新",
+      "refreshing": "更新中...",
+      "showAllModels": "全モデル",
+      "showUsedOnly": "使用中のみ",
+      "todayTotal": "今日の合計",
+      "premiumModels": "プレミアムモデル",
+      "basicModels": "ベーシックモデル",
+      "modelUsage": "モデル別使用状況",
+      "premium": "プレミアム",
+      "unlimited": "無制限",
+      "used": "使用済み",
+      "remaining": "残り",
+      "limitExceeded": "使用制限に達しました",
+      "recentActivity": "最近の使用履歴"
+    },
     "dataControls": {
       "tab": "データ管理",
       "title": "データ管理",
@@ -366,6 +386,7 @@
   "accountMenu": {
     "login": "ログイン",
     "account": "アカウント",
+    "usage": "使用状況",
     "userSettings": "ユーザー設定",
     "logout": "ログアウト",
     "version": "Deni AI v{version} ({codename}) ({type})"
@@ -617,7 +638,11 @@
       "retry": "再試行",
       "maxRetriesReached": "最大再試行回数に達しました",
       "captchaRequired": "続行するには、キャプチャ認証を完了してください",
-      "captchaFailed": "キャプチャ認証に失敗しました。もう一度お試しください"
+      "captchaFailed": "キャプチャ認証に失敗しました。もう一度お試しください",
+      "usageLimitReached": "{model}の1日の利用制限に達しました",
+      "tryDifferentModel": "別のモデルを試すか、明日まで待ってください",
+      "usageLimitWarning": "{model}の今日の残り利用回数は{remaining}回です",
+      "usageLimitSoon": "利用制限が近づいています"
     },
     "deepResearch": {
       "info": "詳細なリサーチについて",
@@ -1533,6 +1558,7 @@
     "openai/gpt-4o-mini-2024-07-18": "特定のタスクに適した高速で手頃な小型モデル。",
     "openai/o4-mini-2025-04-16": "高速で効率的な推論に最適化されたモデル。",
     "openai/o3-2025-04-16": "複雑な推論タスクに対応する高性能モデル。",
+    "openai-o3-pro-2025-06-10": "o3のプロバージョン、より高い精度と速度を提供。",
     "google/gemini-2-5-flash-preview-05-20": "複雑なタスクでも高速処理に最適なモデル。",
     "google/gemini-2-5-pro-preview-06-05": "コーディングや複雑なプロンプトに最適なモデル。",
     "google/gemini-2-5-pro-preview-03-25": "2025年5月10日に廃止予定。",

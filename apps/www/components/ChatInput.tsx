@@ -12,6 +12,8 @@ import CanvasButton from "./CanvasButton";
 import { useIsMobile } from "@workspace/ui/hooks/use-mobile";
 import { cn } from "@workspace/ui/lib/utils";
 import { Bot } from "@/types/bot";
+import { AlertCircle, Loader2 } from "lucide-react";
+import { Badge } from "@workspace/ui/components/badge";
 
 type ModelDescription =
   (typeof modelDescriptions)[keyof typeof modelDescriptions];
@@ -32,6 +34,13 @@ interface ChatInputProps {
   sendButtonRef?: React.RefObject<HTMLButtonElement | null>;
   modelDescriptions: Record<string, ModelDescription>;
   intellipulse?: boolean;
+  modelUsage?: {
+    canUse: boolean;
+    remaining: number;
+    isPremium: boolean;
+    displayName: string;
+  } | null;
+  usageLoading?: boolean;
   handleInputChange: (e: React.ChangeEvent<HTMLTextAreaElement>) => void;
   deepResearchToggle: () => void;
   onResearchDepthChange?: (depth: ResearchDepth) => void;
@@ -66,6 +75,8 @@ const ChatInput = memo(
     canvasToggle,
     searchToggle,
     modelDescriptions,
+    modelUsage,
+    usageLoading,
     handleInputChange,
     handleSendMessage,
     handleSendMessageKey,
@@ -80,6 +91,11 @@ const ChatInput = memo(
     const isMobile = useIsMobile();
     const isBot = !!bot;
 
+    // Calculate disabled state and warnings
+    const isDisabled = !!(modelUsage && !modelUsage.canUse);
+    const showWarning = !!(modelUsage && modelUsage.isPremium && modelUsage.remaining <= 10 && modelUsage.remaining > 0);
+    const showLimitReached = !!(modelUsage && !modelUsage.canUse);
+
     // Callback for ImageAddButton click
     const handleImageAddClick = useCallback(() => {
       fileInputRef.current?.click();
@@ -91,11 +107,59 @@ const ChatInput = memo(
           image={image}
           isUploading={isUploading}
           setImage={setImage}
-        />{" "}
+        />
+        
+        {/* Usage Warning/Limit Messages */}
+        {usageLoading && (
+          <div className="flex items-center gap-2 p-3 mb-2 bg-muted/50 rounded-lg">
+            <Loader2 className="h-4 w-4 animate-spin" />
+            <span className="text-sm text-muted-foreground">
+              {t("settings.usage.loading")}
+            </span>
+          </div>
+        )}
+        
+        {showLimitReached && (
+          <div className="flex items-center gap-2 p-3 mb-2 bg-destructive/10 border border-destructive/20 rounded-lg">
+            <AlertCircle className="h-4 w-4 text-destructive" />
+            <div className="flex-1">
+              <p className="text-sm font-medium text-destructive">
+                {t("chat.error.usageLimitReached", { model: modelUsage?.displayName })}
+              </p>
+              <p className="text-xs text-muted-foreground">
+                {t("chat.error.tryDifferentModel")}
+              </p>
+            </div>
+          </div>
+        )}
+        
+        {showWarning && !showLimitReached && (
+          <div className="flex items-center gap-2 p-3 mb-2 bg-orange-50 dark:bg-orange-950/20 border border-orange-200 dark:border-orange-800 rounded-lg">
+            <AlertCircle className="h-4 w-4 text-orange-600 dark:text-orange-400" />
+            <div className="flex-1">
+              <p className="text-sm font-medium text-orange-800 dark:text-orange-200">
+                {t("chat.error.usageLimitSoon")}
+              </p>
+              <p className="text-xs text-orange-600 dark:text-orange-400">
+                {t("chat.error.usageLimitWarning", { 
+                  remaining: modelUsage?.remaining,
+                  model: modelUsage?.displayName 
+                })}
+              </p>
+            </div>
+            {modelUsage?.isPremium && (
+              <Badge variant="secondary" className="text-xs">
+                {t("settings.usage.premium")}
+              </Badge>
+            )}
+          </div>
+        )}
+        
         <InputBox
           input={input}
           stop={stop}
           generating={generating}
+          disabled={isDisabled}
           sendButtonRef={sendButtonRef}
           handleInputChange={handleInputChange}
           handleSendMessage={handleSendMessage}
@@ -162,9 +226,12 @@ const ChatInput = memo(
       prevProps.model === nextProps.model &&
       prevProps.canvasEnabled === nextProps.canvasEnabled &&
       prevProps.generating === nextProps.generating &&
+      prevProps.usageLoading === nextProps.usageLoading &&
       prevProps.messages?.length === nextProps.messages?.length &&
       JSON.stringify(prevProps.modelDescriptions) ===
-        JSON.stringify(nextProps.modelDescriptions)
+        JSON.stringify(nextProps.modelDescriptions) &&
+      JSON.stringify(prevProps.modelUsage) ===
+        JSON.stringify(nextProps.modelUsage)
     );
   },
 );

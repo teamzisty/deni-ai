@@ -263,6 +263,26 @@
       },
       "authDisabled": "Authentication is temporarily disabled or not available in your instance."
     },
+    "usage": {
+      "title": "Usage Statistics",
+      "loginRequired": "Login required to view usage statistics",
+      "loading": "Loading usage statistics...",
+      "retry": "Retry",
+      "refresh": "Refresh",
+      "refreshing": "Refreshing...",
+      "showAllModels": "Show All Models",
+      "showUsedOnly": "Show Used Only",
+      "todayTotal": "Today's Total",
+      "premiumModels": "Premium Models",
+      "basicModels": "Basic Models",
+      "modelUsage": "Model Usage",
+      "premium": "Premium",
+      "unlimited": "Unlimited",
+      "used": "Used",
+      "remaining": "Remaining",
+      "limitExceeded": "Usage limit exceeded",
+      "recentActivity": "Recent Activity"
+    },
     "dataControls": {
       "tab": "Data Controls",
       "title": "Data Controls",
@@ -424,6 +444,7 @@
   "accountMenu": {
     "login": "Login",
     "account": "Account",
+    "usage": "Usage",
     "userSettings": "User Settings",
     "logout": "Logout",
     "version": "Deni AI v{version} ({codename}) ({type})"
@@ -638,7 +659,11 @@
       "retry": "Retry",
       "maxRetriesReached": "Maximum retry attempts reached",
       "captchaRequired": "Please complete the captcha verification to continue",
-      "captchaFailed": "Captcha verification failed. Please try again"
+      "captchaFailed": "Captcha verification failed. Please try again",
+      "usageLimitReached": "Daily usage limit reached for {model}",
+      "tryDifferentModel": "Please try a different model or wait until tomorrow",
+      "usageLimitWarning": "Only {remaining} uses remaining for {model} today",
+      "usageLimitSoon": "Usage limit approaching"
     },
     "deepResearch": {
       "info": "About Deep Research",
@@ -1655,6 +1680,7 @@
     "openai/gpt-4o-mini-2024-07-18": "A fast, affordable small model for focused tasks.",
     "openai/o4-mini-2025-04-16": "Optimized for fast, efficient reasoning.",
     "openai/o3-2025-04-16": "High-performance model for complex reasoning tasks.",
+    "openai/o3-pro-2025-06-10": "Pro version of o3 with enhanced capabilities.",
     "google/gemini-2-5-flash-preview-05-20": "Best model for fast performance on complex tasks.",
     "google/gemini-2-5-pro-preview-06-05": "Best model for coding and complex prompts.",
     "google/gemini-2-5-pro-preview-03-25": "Leaving in May 10, 2025.",

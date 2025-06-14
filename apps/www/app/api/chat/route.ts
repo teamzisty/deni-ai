@@ -193,6 +193,18 @@ export async function POST(req: Request) {
       }
     }
 
+    // Check usage limits for authenticated users
+    if (!isAnonymous && userId) {
+      const { canUseModel } = await import("@/lib/usage");
+      const canUse = await canUseModel(userId, model);
+
+      if (!canUse) {
+        return new NextResponse("Usage limit exceeded for this model", {
+          status: 429,
+        });
+      }
+    }
+
     let bot: RowServerBot | null = null;
     if (botId) {
       console.log("Bot ID provided:", botId);
@@ -364,20 +376,30 @@ export async function POST(req: Request) {
 
     const lastMsg = messages[messages.length - 1];
     if (lastMsg) {
-      const title = await generateTitleFromUserMessage({ message: lastMsg });
-
-      const { error: updateError } = await supabase
+      // Check for existing session title
+      const { data: existingSession } = await supabase
         .from("chat_sessions")
-        .update({
-          title: title,
-          updated_at: new Date().toISOString(),
-        })
+        .select("title")
         .eq("id", sessionId)
-        .eq("user_id", userId);
+        .eq("user_id", userId)
+        .single();
 
-      if (updateError) {
-        console.error("Error updating session title:", updateError);
-        return "Failed to update title";
+      if (existingSession?.title != "New Chat" || !existingSession?.title) {
+        const title = await generateTitleFromUserMessage({ message: lastMsg });
+
+        const { error: updateError } = await supabase
+          .from("chat_sessions")
+          .update({
+            title: title,
+            updated_at: new Date().toISOString(),
+          })
+          .eq("id", sessionId)
+          .eq("user_id", userId);
+
+        if (updateError) {
+          console.error("Error updating session title:", updateError);
+          return "Failed to update title";
+        }
       }
     }
 
@@ -419,7 +441,7 @@ export async function POST(req: Request) {
               ...(modelDescription?.reasoning && {
                 openai: {
                   reasoningEffort: reasoningEffort,
-                  reasoningSummary: "auto",
+                  reasoningSummary: "detailed",
                 },
               }),
               google: {
@@ -451,6 +473,17 @@ export async function POST(req: Request) {
                   responseMessages: response.messages,
                 }),
               });
+
+              // Record usage for authenticated users
+              if (!isAnonymous && userId) {
+                try {
+                  const { recordUsage } = await import("@/lib/usage");
+                  await recordUsage(userId, model);
+                } catch (usageError) {
+                  console.error("Failed to record usage:", usageError);
+                  // Don't fail the entire request if usage recording fails
+                }
+              }
             },
           });
 
@@ -467,6 +500,7 @@ export async function POST(req: Request) {
           });
         }
       },
+      onError: errorHandler,
     }); // Return a resumable stream to the client if Redis is available, otherwise return regular stream
     if (isRedisAvailable && streamContext && streamId) {
       console.log("Using resumable stream with ID:", streamId);
