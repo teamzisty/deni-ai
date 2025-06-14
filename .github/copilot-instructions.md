@@ -1,17 +1,14 @@
 # Commit Message Guidelines
 
-- Use the below format for commit messages:
-
-  ```
-  [Type] ([Scope]): [Short description of the change]
-
-  [Detailed description of the change, if necessary]
-
-  [Related issues or pull requests, if applicable]
-  ```
-
-- **Do not use Type more than once in a commit message**
-- **Types**: `feat` (new feature), `fix` (bug fix), `docs` (documentation), `style` (formatting, missing semi-colons, etc.), `refactor` (code change that neither fixes a bug nor adds a feature), `perf` (performance improvement), `test` (adding or updating tests), `chore` (maintenance tasks).
+- If you generating commit messages, use the following format:
+  - "feat: [description of the feature]"
+  - "fix: [description of the bug fix]"
+  - "docs: [description of the documentation update]"
+  - "style: [description of the style change]"
+  - "refactor: [description of the refactor]"
+  - "test: [description of the test update]"
+  - "chore: [description of the chore]"
+  And after, add a brief description of the change in the body of the commit message.
 
 ---
 

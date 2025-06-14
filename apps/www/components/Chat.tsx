@@ -33,6 +33,7 @@ import { ResearchDepth } from "@/components/DeepResearchButton"; // Import the R
 import { useSettings } from "@/hooks/use-settings";
 import { useTitle } from "@/hooks/use-title";
 import { useAutoResume } from "@/hooks/use-auto-resume";
+import { getModelDisplayName, isModelPremium } from "@/lib/usage-client";
 
 interface MessageListProps {
   messages: UIMessage[];
@@ -134,7 +135,16 @@ const Chat: React.FC<ChatProps> = ({
   const [canvasEnabled, setCanvasEnabled] = useState(false);
   const [isInitialMessageSent, setIsInitialMessageSent] = useState(false);
   const [retryCount, setRetryCount] = useState<number>(0);
+  const [modelUsage, setModelUsage] = useState<{
+    canUse: boolean;
+    remaining: number;
+    isPremium: boolean;
+    displayName: string;
+  } | null>(null);
+  const [usageLoading, setUsageLoading] = useState(false);
   const MAX_RETRIES = 3;
+  // Auto-scroll state
+  const [autoScrollDisabled, setAutoScrollDisabled] = useState(false);
   // --- Refs ---
   const chatLogRef = useRef<HTMLDivElement>(null);
   const sendButtonRef = useRef<HTMLButtonElement>(null);
@@ -161,6 +171,11 @@ const Chat: React.FC<ChatProps> = ({
     onFinish: (message, options) => {
       // Message sent successfully
       console.log("Message sent successfully");
+      
+      // Refresh usage data for the current model
+      if (model && authToken && user) {
+        checkModelUsage(model);
+      }
     },
     onError: (error) => {
       console.error("useChat error:", error);
@@ -197,14 +212,40 @@ const Chat: React.FC<ChatProps> = ({
     },
   }); // Scroll chat log
   useEffect(() => {
-    if (!settings.autoScroll) return; // Check if auto-scroll is enabled
+    if (!settings.autoScroll || autoScrollDisabled) return; // Check if auto-scroll is enabled and not manually disabled
     if (
       (status === "streaming" || status === "submitted") &&
       chatLogRef.current
     ) {
       chatLogRef.current.scrollTop = chatLogRef.current.scrollHeight;
     }
-  }, [messages, status]); // Handle initial message from URL parameter
+  }, [messages, status, settings.autoScroll, autoScrollDisabled]);
+
+  // Handle manual scroll detection
+  useEffect(() => {
+    const chatContainer = chatLogRef.current;
+    if (!chatContainer) return;
+
+    const handleScroll = () => {
+      const { scrollTop, scrollHeight, clientHeight } = chatContainer;
+      const isAtBottom = scrollTop + clientHeight >= scrollHeight - 50; // 50px threshold
+      
+      // If user scrolled away from bottom, disable auto-scroll
+      if (!isAtBottom && !autoScrollDisabled) {
+        setAutoScrollDisabled(true);
+      }
+    };
+
+    chatContainer.addEventListener('scroll', handleScroll);
+    return () => chatContainer.removeEventListener('scroll', handleScroll);
+  }, [autoScrollDisabled]);
+
+  // Re-enable auto-scroll when a new generation starts
+  useEffect(() => {
+    if (status === "streaming" || status === "submitted") {
+      setAutoScrollDisabled(false);
+    }
+  }, [status]); // Handle initial message from URL parameter
   useEffect(() => {
     if (
       initialMessage &&
@@ -236,6 +277,54 @@ const Chat: React.FC<ChatProps> = ({
     }
   }, [messages, visionRequired]);
 
+  // Usage check function
+  const checkModelUsage = useCallback(async (modelKey: string) => {
+    if (!authToken || !user) return;
+    
+    setUsageLoading(true);
+    try {
+      const response = await fetch('/api/uses?forceRefresh=true', {
+        headers: {
+          'Authorization': authToken,
+          'Content-Type': 'application/json',
+        },
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        const usage = data.usage?.find((u: any) => u.model === modelKey);
+        
+        if (usage) {
+          setModelUsage({
+            canUse: usage.canUse,
+            remaining: usage.remaining,
+            isPremium: usage.isPremium,
+            displayName: usage.displayName,
+          });
+        } else {
+          // Model not in usage data, assume unlimited
+          setModelUsage({
+            canUse: true,
+            remaining: -1,
+            isPremium: isModelPremium(modelKey),
+            displayName: getModelDisplayName(modelKey),
+          });
+        }
+      }
+    } catch (error) {
+      console.error('Failed to check model usage:', error);
+    } finally {
+      setUsageLoading(false);
+    }
+  }, [authToken, user]);
+
+  // Check model usage when component mounts or model changes
+  useEffect(() => {
+    if (model && authToken && user) {
+      checkModelUsage(model);
+    }
+  }, [model, authToken, user, checkModelUsage]);
+
   // --- Handler Functions ---
 
   const canvasToggle = useCallback(() => {
@@ -259,8 +348,11 @@ const Chat: React.FC<ChatProps> = ({
       }
       logger.info("handleModelChange", "Model changed to " + newModel);
       setModel(newModel);
+      
+      // Check usage for the new model
+      checkModelUsage(newModel);
     },
-    [image], // Dependency on image state
+    [image, checkModelUsage], // Dependency on image state and checkModelUsage
   );
 
   const searchToggle = useCallback(() => {
@@ -302,6 +394,16 @@ const Chat: React.FC<ChatProps> = ({
       console.error("Model or reasoningEffort not initialized", {
         model,
         reasoningEffort,
+      });
+      return;
+    }
+
+    // Check model usage limit
+    if (modelUsage && !modelUsage.canUse) {
+      toast.error(t("chat.error.usageLimitReached", { 
+        model: modelUsage.displayName 
+      }), {
+        description: t("chat.error.tryDifferentModel")
       });
       return;
     }
@@ -591,19 +693,17 @@ const Chat: React.FC<ChatProps> = ({
                 error={error}
                 onRegenerate={handleRegenerate} // Pass handler
               />
-              {status === "submitted" ||
-                (status === "streaming" &&
-                  !messages[messages.length - 1]?.content && (
-                    <div className="flex w-full message-log visible">
-                      <div className="p-2 my-2 rounded-lg text-muted-foreground w-full">
-                        <span className="animate-pulse">
-                          {modelDescriptions[model]?.reasoning
-                            ? t("messageLog.reasoning")
-                            : t("messageLog.thinking")}
-                        </span>
-                      </div>
-                    </div>
-                  ))}
+              {status === "submitted" && (
+                <div className="flex w-full message-log visible">
+                  <div className="p-2 my-2 rounded-lg text-muted-foreground w-full">
+                    <span className="animate-pulse">
+                      {modelDescriptions[model]?.reasoning
+                        ? t("messageLog.reasoning")
+                        : t("messageLog.thinking")}
+                    </span>
+                  </div>
+                </div>
+              )}
               {error && (
                 <div className="flex w-full message-log visible">
                   <div className="p-2 my-2 rounded-lg text-muted-foreground w-full">
@@ -644,6 +744,8 @@ const Chat: React.FC<ChatProps> = ({
           sendButtonRef={sendButtonRef}
           canvasEnabled={canvasEnabled}
           modelDescriptions={modelDescriptions}
+          modelUsage={modelUsage}
+          usageLoading={usageLoading}
           bot={currentSession.bot}
           deepResearchToggle={deepResearchToggle}
           onResearchDepthChange={handleResearchDepthChange}

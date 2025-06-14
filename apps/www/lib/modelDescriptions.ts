@@ -12,6 +12,7 @@ export interface ImodelDescriptionType {
   defaultVisibility?: boolean;
   knowledgeCutoff?: string;
   reasoning?: boolean;
+  isPremium?: boolean;
   type: modelType;
   maxContextWindow?: number;
 }
@@ -220,7 +221,7 @@ export const modelDescriptions: modelDescriptionType = {
     defaultVisibility: true,
     vision: true,
     type: "ChatGPT",
-    maxContextWindow: 128000,
+    maxContextWindow: 1047576,
   },
   "openai/gpt-4.1-mini-2025-04-14": {
     displayName: "GPT-4.1 mini",
@@ -228,7 +229,7 @@ export const modelDescriptions: modelDescriptionType = {
     fast: true,
     vision: true,
     type: "ChatGPT",
-    maxContextWindow: 128000,
+    maxContextWindow: 1047576,
   },
   "openai/gpt-4.1-nano-2025-04-14": {
     displayName: "GPT-4.1 nano",
@@ -236,7 +237,7 @@ export const modelDescriptions: modelDescriptionType = {
     fast: true,
     vision: true,
     type: "ChatGPT",
-    maxContextWindow: 128000,
+    maxContextWindow: 1047576,
   },
   "openai/gpt-4o-2024-11-20": {
     displayName: "GPT-4o",
@@ -262,7 +263,7 @@ export const modelDescriptions: modelDescriptionType = {
     reasoning: true,
     vision: true,
     type: "ChatGPT",
-    maxContextWindow: 128000,
+    maxContextWindow: 200000,
   },
   "openai/o3-2025-04-16": {
     displayName: "o3",
@@ -272,7 +273,18 @@ export const modelDescriptions: modelDescriptionType = {
     reasoning: true,
     vision: true,
     type: "ChatGPT",
-    maxContextWindow: 128000,
+    maxContextWindow: 200000,
+  },
+  "openai/o3-pro-2025-06-10": {
+    displayName: "o3-pro",
+    knowledgeCutoff: "2024/06",
+    defaultVisibility: true,
+    reasoning: true,
+    toolDisabled: true,
+    isPremium: true,
+    vision: true,
+    type: "ChatGPT",
+    maxContextWindow: 200000,
   },
   "google/gemini-2.5-flash-preview-05-20": {
     displayName: "Gemini 2.5 Flash",
@@ -303,6 +315,7 @@ export const modelDescriptions: modelDescriptionType = {
     displayName: "Claude Opus 4",
     knowledgeCutoff: "2025/03",
     defaultVisibility: true,
+    isPremium: true,
     vision: true,
     type: "Claude",
     maxContextWindow: 200000,

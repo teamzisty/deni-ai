@@ -143,6 +143,15 @@ export async function POST(req: Request) {
       }
 
       userId = user.id;
+      
+      // Check usage limits for authenticated users
+      const { canUseModel } = await import("@/lib/usage");
+      const canUse = await canUseModel(userId, model);
+      
+      if (!canUse) {
+        return new NextResponse("Usage limit exceeded for this model", { status: 429 });
+      }
+      
       // Extract sessionId from request URL or body
       const url = new URL(req.url);
       sessionId = url.searchParams.get("id") || undefined;

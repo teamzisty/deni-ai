@@ -123,7 +123,7 @@ const ChatApp: React.FC = () => {
                         viewport={{ once: true }}
                         className="flex-1 relative w-full"
                       >
-                        <div className="w-fullrelative bg-card rounded-xl overflow-hidden shadow-2xl border border-border/40">
+                        <div className="w-full relative bg-card rounded-xl overflow-hidden shadow-2xl border border-border/40">
                           <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-primary/80 via-primary to-primary/80" />
                           <div className="p-6 sm:p-8">
                             <div className="space-y-2">

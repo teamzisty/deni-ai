@@ -32,6 +32,8 @@ import ChatInput from "@/components/ChatInput";
 import { useAuth } from "@/context/AuthContext";
 import { useDebouncedCallback } from "use-debounce";
 import { UseChatHelpers } from "@ai-sdk/react";
+import { getModelDisplayName, isModelPremium } from "@/lib/usage-client";
+import { useSettings } from "@/hooks/use-settings";
 
 interface MemoizedMessageLogProps {
   message: UIMessage;
@@ -239,6 +241,7 @@ const IntellipulseChat: React.FC<IntellipulseChatProps> = memo(
   }) => {
     const t = useTranslations();
     const isMobile = useIsMobile();
+    const { settings } = useSettings();
 
     const { user } = useAuth();
 
@@ -257,11 +260,61 @@ const IntellipulseChat: React.FC<IntellipulseChatProps> = memo(
     ]);
     const [canvasEnabled, setCanvasEnabled] = useState(false);
     const [retryCount, setRetryCount] = useState<number>(0);
+    const [modelUsage, setModelUsage] = useState<{
+      canUse: boolean;
+      remaining: number;
+      isPremium: boolean;
+      displayName: string;
+    } | null>(null);
+    const [usageLoading, setUsageLoading] = useState(false);
     const MAX_RETRIES = 3;
+    // Auto-scroll state
+    const [autoScrollDisabled, setAutoScrollDisabled] = useState(false);
 
     const chatLogRef = useRef<HTMLDivElement>(null);
     const sendButtonRef = useRef<HTMLButtonElement>(null);
     const fileInputRef = useRef<HTMLInputElement | null>(null);
+
+    // Usage check function
+    const checkModelUsage = useCallback(async (modelKey: string) => {
+      if (!authToken || !user) return;
+      
+      setUsageLoading(true);
+      try {
+        const response = await fetch('/api/uses', {
+          headers: {
+            'Authorization': authToken,
+            'Content-Type': 'application/json',
+          },
+        });
+        
+        if (response.ok) {
+          const data = await response.json();
+          const usage = data.usage?.find((u: any) => u.model === modelKey);
+          
+          if (usage) {
+            setModelUsage({
+              canUse: usage.canUse,
+              remaining: usage.remaining,
+              isPremium: usage.isPremium,
+              displayName: usage.displayName,
+            });
+          } else {
+            // Model not in usage data, assume unlimited
+            setModelUsage({
+              canUse: true,
+              remaining: -1,
+              isPremium: isModelPremium(modelKey),
+              displayName: getModelDisplayName(modelKey),
+            });
+          }
+        }
+      } catch (error) {
+        console.error('Failed to check model usage:', error);
+      } finally {
+        setUsageLoading(false);
+      }
+    }, [authToken, user]);
 
     // セッションを保存するデバウンス関数（一時的に無効化）
     /*
@@ -325,6 +378,50 @@ const IntellipulseChat: React.FC<IntellipulseChatProps> = memo(
         }, 100);
       }
     }, [initialMessage, setInput, messages.length]);
+
+    // Check model usage when component mounts or model changes
+    useEffect(() => {
+      if (model && authToken && user) {
+        checkModelUsage(model);
+      }
+    }, [model, authToken, user, checkModelUsage]);
+
+    // Auto-scroll logic
+    useEffect(() => {
+      if (!settings.autoScroll || autoScrollDisabled) return; // Check if auto-scroll is enabled and not manually disabled
+      if (
+        (status === "streaming" || status === "submitted") &&
+        chatLogRef.current
+      ) {
+        chatLogRef.current.scrollTop = chatLogRef.current.scrollHeight;
+      }
+    }, [messages, status, settings.autoScroll, autoScrollDisabled]);
+
+    // Handle manual scroll detection
+    useEffect(() => {
+      const chatContainer = chatLogRef.current;
+      if (!chatContainer) return;
+
+      const handleScroll = () => {
+        const { scrollTop, scrollHeight, clientHeight } = chatContainer;
+        const isAtBottom = scrollTop + clientHeight >= scrollHeight - 50; // 50px threshold
+        
+        // If user scrolled away from bottom, disable auto-scroll
+        if (!isAtBottom && !autoScrollDisabled) {
+          setAutoScrollDisabled(true);
+        }
+      };
+
+      chatContainer.addEventListener('scroll', handleScroll);
+      return () => chatContainer.removeEventListener('scroll', handleScroll);
+    }, [autoScrollDisabled]);
+
+    // Re-enable auto-scroll when a new generation starts
+    useEffect(() => {
+      if (status === "streaming" || status === "submitted") {
+        setAutoScrollDisabled(false);
+      }
+    }, [status]);
 
     // ──────────────────────────────────────────────
     // Each assistant message should be annotated once only
@@ -482,6 +579,14 @@ const IntellipulseChat: React.FC<IntellipulseChatProps> = memo(
           handleSubmit(event as any, submitOptions);
           setImage(null);
           setRetryCount(0);
+
+          // Refresh usage data after message submission
+          if (model && authToken && user) {
+            // Add a small delay to allow the API to process the usage update
+            setTimeout(() => {
+              checkModelUsage(model);
+            }, 1000);
+          }
 
           // メッセージ送信後にセッションを即座に保存（無効化）
           // debouncedSaveSession.flush();
@@ -839,6 +944,8 @@ const IntellipulseChat: React.FC<IntellipulseChatProps> = memo(
               sendButtonRef={sendButtonRef}
               canvasEnabled={canvasEnabled}
               modelDescriptions={modelDescriptions}
+              modelUsage={modelUsage}
+              usageLoading={usageLoading}
               deepResearchToggle={deepResearchToggle}
               searchToggle={searchToggle}
               canvasToggle={canvasToggle}

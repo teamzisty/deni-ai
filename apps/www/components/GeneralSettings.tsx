@@ -18,6 +18,7 @@ import {
   usePathname,
 } from "next/navigation";
 import { useEffect, useState } from "react";
+import UsageSettings from "./UsageSettings";
 
 export default function GeneralSettings() {
   const { setTheme, theme } = useTheme();
@@ -103,6 +104,9 @@ export default function GeneralSettings() {
           </div>
         </div>
       </div>
+
+      {/* Usage Statistics Section */}
+      <UsageSettings />
     </div>
   );
 }

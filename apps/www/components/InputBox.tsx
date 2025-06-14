@@ -10,6 +10,7 @@ interface InputBoxProps {
   input: string;
   stop: () => void;
   generating: boolean;
+  disabled?: boolean;
   handleInputChange: (e: React.ChangeEvent<HTMLTextAreaElement>) => void;
   handleSendMessage: (e: React.MouseEvent<HTMLButtonElement>) => void;
   handleSendMessageKey: (e: React.KeyboardEvent<HTMLTextAreaElement>) => void;
@@ -24,6 +25,7 @@ const InputBox: React.FC<InputBoxProps> = memo(
     input,
     stop,
     generating,
+    disabled = false,
     handleInputChange,
     handleSendMessage,
     handleSendMessageKey,
@@ -55,13 +57,14 @@ const InputBox: React.FC<InputBoxProps> = memo(
           <textarea
             value={input}
             onChange={handleInputChange}
+            disabled={disabled}
             placeholder={t("inputBox.placeholder")}
             onKeyDown={(e) => {
-              if (e.key === "Enter" && !e.shiftKey) {
+              if (e.key === "Enter" && !e.shiftKey && !disabled) {
                 handleSendMessageKey(e);
               }
             }}
-            className="w-full resize-none field-sizing-content bg-transparent border-none shadow-none !outline-none focus:ring-0 focus:ring-offset-0 disabled:opacity-0 px-2 py-1.5 md:px-3 md:py-2 text-sm md:text-base"
+            className="w-full resize-none field-sizing-content bg-transparent border-none shadow-none !outline-none focus:ring-0 focus:ring-offset-0 disabled:opacity-50 disabled:cursor-not-allowed px-2 py-1.5 md:px-3 md:py-2 text-sm md:text-base"
           />
           {/* Context Progress Bar */}
           {maxContextWindow && messages.length > 0 && (
@@ -77,6 +80,7 @@ const InputBox: React.FC<InputBoxProps> = memo(
             size="icon"
             ref={sendButtonRef}
             onClick={handleButtonClick}
+            disabled={disabled}
           >
             {generating ? (
               <StopCircle className="h-[18px] w-[18px] md:h-6 md:w-6" />

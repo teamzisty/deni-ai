@@ -102,7 +102,7 @@ export const systemPromptToolPart = [
   "- If Shallow Research, Search at least one, but not more than three times. (REQUIRED)",
   "- If Deep Research, Search at least three times. I want five times. (REQUIRED)",
   "- If Advanced Research, Search at least five times. I want seventh times. (REQUIRED)",
-  "- You must to provide source links [name](url) for each sentence.",
+  "- You must to provide source links [name](url) for each sentence. (same as markdown)",
   "- Bullet points should be used as little as possible and should be expressed in writing. Tables are acceptable.",
   `- Ethically analyzed and integrated step-by-step. Also, Deep Research results should be output to Canvas before generating a summary as a message.`,
   `## Tools Disabled (Feature)`,
