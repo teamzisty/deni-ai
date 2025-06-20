@@ -172,6 +172,12 @@ const CommandExecution = memo(({ action }: { action: any }) => {
       return t("intellipulseMessageLog.writeAction", { path: action.path });
     } else if (action.action === "read") {
       return t("intellipulseMessageLog.readAction", { path: action.path });
+    } else if (action.action === "read_file") {
+      return `Read file: ${action.path}`;
+    } else if (action.action === "list_files") {
+      return `List files: ${action.path}${action.recursive ? ' (recursive)' : ''}`;
+    } else if (action.action === "read_multiple_files") {
+      return `Read multiple files: ${action.paths ? action.paths.join(', ') : 'multiple files'}`;
     } else if (action.action === "list") {
       return t("intellipulseMessageLog.listAction", {
         path: action.path || "/",
@@ -210,10 +216,76 @@ const CommandExecution = memo(({ action }: { action: any }) => {
                 <span className="font-mono">{action.path}</span>
               </div>
             )}
+            {action.recursive !== undefined && (
+              <div>
+                Recursive: <span className="font-mono">{action.recursive ? 'Yes' : 'No'}</span>
+              </div>
+            )}
+            {action.paths && Array.isArray(action.paths) && (
+              <div>
+                Files: 
+                <ul className="ml-4 mt-1">
+                  {action.paths.map((path: string, index: number) => (
+                    <li key={index} className="font-mono text-xs">{path}</li>
+                  ))}
+                </ul>
+              </div>
+            )}
             {action.dependsOn && (
               <div>
                 {t("intellipulseMessageLog.dependsOnLabel")}:{" "}
                 <span className="font-mono">{action.dependsOn}</span>
+              </div>
+            )}
+            {/* Display file content or file list results */}
+            {action.result && (
+              <div className="mt-2">
+                <div className="text-xs font-semibold mb-1">Result:</div>
+                {action.action === "read_file" && (
+                  <div className="bg-background border rounded p-2 max-h-60 overflow-y-auto">
+                    <pre className="text-xs font-mono whitespace-pre-wrap">{action.result}</pre>
+                  </div>
+                )}
+                {action.action === "list_files" && Array.isArray(action.result) && (
+                  <div className="bg-background border rounded p-2 max-h-60 overflow-y-auto">
+                    <ul className="text-xs font-mono space-y-1">
+                      {action.result.map((item: any, index: number) => (
+                        <li key={index} className="flex items-center">
+                          <span className={`mr-2 ${item.type === 'directory' ? 'text-blue-500' : 'text-gray-600'}`}>
+                            {item.type === 'directory' ? '📁' : '📄'}
+                          </span>
+                          <span>{item.name}</span>
+                          {item.size !== undefined && (
+                            <span className="ml-auto text-gray-500">({item.size} bytes)</span>
+                          )}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+                {action.action === "list_files" && typeof action.result === "string" && (
+                  <div className="bg-background border rounded p-2 max-h-60 overflow-y-auto">
+                    <pre className="text-xs font-mono whitespace-pre-wrap">{action.result}</pre>
+                  </div>
+                )}
+                {action.action === "read_multiple_files" && action.result && (
+                  <div className="bg-background border rounded p-2 max-h-60 overflow-y-auto space-y-3">
+                    {Array.isArray(action.result) ? (
+                      action.result.map((fileResult: any, index: number) => (
+                        <div key={index} className="border-b border-gray-200 pb-2 last:border-b-0">
+                          <div className="text-xs font-semibold text-blue-600 mb-1">
+                            📄 {fileResult.path || `File ${index + 1}`}
+                          </div>
+                          <pre className="text-xs font-mono whitespace-pre-wrap bg-gray-50 p-2 rounded">
+                            {fileResult.content || fileResult.error || 'No content'}
+                          </pre>
+                        </div>
+                      ))
+                    ) : (
+                      <pre className="text-xs font-mono whitespace-pre-wrap">{action.result}</pre>
+                    )}
+                  </div>
+                )}
               </div>
             )}
           </div>
@@ -339,14 +411,6 @@ const StepsExecution = memo(
         if (onExecuteSteps) {
           onExecuteSteps(initializedSteps);
         }
-
-        // カスタムイベントも発生させて実行を開始（後方互換性のため）
-        const event = new CustomEvent("executeSteps", {
-          detail: {
-            steps: initializedSteps,
-          },
-        });
-        window.dispatchEvent(event);
 
         // 実行ボタンクリック時にステップリストを展開
         setExpanded(true);
@@ -850,17 +914,9 @@ export const IntellipulseMessageLog: FC<IntellipulseMessageLogProps> = memo(
 
             {/* ステップとアクションの表示 */}
             {(steps.length > 0 || webcontainerActions.length > 0) && (
-              <div className="mt-2 bg-primary/50 text-primary-foreground p-2 rounded-md">
-                <span className="text-sm font-medium">
-                  {t("intellipulseMessageLog.executionPlan")}
-                </span>
+              <div className="mt-2">
                 {webcontainerActions.length > 0 && (
                   <>
-                    <div className="mt-1 text-xs text-muted-foreground">
-                      {t("intellipulseMessageLog.webContainerActions", {
-                        count: webcontainerActions.length,
-                      })}
-                    </div>
                     {webcontainerActions.map((action, index) => (
                       <CommandExecution key={`cmd-${index}`} action={action} />
                     ))}
@@ -869,11 +925,6 @@ export const IntellipulseMessageLog: FC<IntellipulseMessageLogProps> = memo(
 
                 {steps && steps.length > 0 && (
                   <>
-                    <div className="mt-1 text-xs text-muted-foreground">
-                      {t("intellipulseMessageLog.commandSteps", {
-                        count: steps.length,
-                      })}
-                    </div>
                     <StepsExecution
                       steps={steps}
                       onExecuteSteps={onExecuteSteps}

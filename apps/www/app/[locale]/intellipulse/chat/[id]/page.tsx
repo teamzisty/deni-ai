@@ -404,7 +404,11 @@ export default function IntellipulseChatPage() {
         setIsWebContainerOpen(true);
         // Wait for WebContainer to initialize
         await new Promise((resolve) => setTimeout(resolve, 1000));
-      } // Execute each step sequentially
+      }
+
+      // Dispatch event to show terminal when execution starts
+      const showTerminalEvent = new CustomEvent("intellipulse-show-terminal");
+      window.dispatchEvent(showTerminalEvent); // Execute each step sequentially
       for (const step of steps) {
         // Update step status to running
         const statusEvent = new CustomEvent("stepStatusUpdate", {
@@ -470,19 +474,83 @@ export default function IntellipulseChatPage() {
               throw new Error("WebContainer instance not available");
             }
           } else if (step.action === "run" && step.command) {
-            // Handle command execution
-            console.log("Executing step command:", step.command);
-            await executeCommand(step.command);
+            // Handle command execution - send to Intellipulse terminal tab
+            console.log("Sending command to Intellipulse tab:", step.command);
+            
+            // Create promise to wait for command completion
+            const commandPromise = new Promise((resolve, reject) => {
+              const handleCompletion = (event: CustomEvent) => {
+                const { stepId, success, error } = event.detail;
+                if (stepId === step.id) {
+                  window.removeEventListener("intellipulse-command-completed", handleCompletion as EventListener);
+                  if (success) {
+                    resolve(true);
+                  } else {
+                    reject(new Error(error || "Command execution failed"));
+                  }
+                }
+              };
+              
+              window.addEventListener("intellipulse-command-completed", handleCompletion as EventListener);
+              
+              // Set timeout for command execution (60 seconds)
+              setTimeout(() => {
+                window.removeEventListener("intellipulse-command-completed", handleCompletion as EventListener);
+                console.warn(`Command timed out: ${step.command}`);
+                resolve(true); // Resolve even on timeout to continue execution
+              }, 60000);
+            });
+            
+            // Dispatch event to send command to Intellipulse tab
+            const commandEvent = new CustomEvent("intellipulse-execute-command", {
+              detail: {
+                command: step.command,
+                stepId: step.id,
+              },
+            });
+            window.dispatchEvent(commandEvent);
 
-            // Wait for command to complete
-            await new Promise((resolve) => setTimeout(resolve, 2000));
+            // Wait for command completion or timeout
+            await commandPromise;
           } else if (step.command) {
             // Backward compatibility for steps with only command (no action field)
-            console.log("Executing step command (legacy):", step.command);
-            await executeCommand(step.command);
+            console.log("Sending command to Intellipulse tab (legacy):", step.command);
+            
+            // Create promise to wait for command completion
+            const commandPromise = new Promise((resolve, reject) => {
+              const handleCompletion = (event: CustomEvent) => {
+                const { stepId, success, error } = event.detail;
+                if (stepId === step.id) {
+                  window.removeEventListener("intellipulse-command-completed", handleCompletion as EventListener);
+                  if (success) {
+                    resolve(true);
+                  } else {
+                    reject(new Error(error || "Command execution failed"));
+                  }
+                }
+              };
+              
+              window.addEventListener("intellipulse-command-completed", handleCompletion as EventListener);
+              
+              // Set timeout for command execution (60 seconds)
+              setTimeout(() => {
+                window.removeEventListener("intellipulse-command-completed", handleCompletion as EventListener);
+                console.warn(`Command timed out: ${step.command}`);
+                resolve(true); // Resolve even on timeout to continue execution
+              }, 60000);
+            });
+            
+            // Dispatch event to send command to Intellipulse tab
+            const commandEvent = new CustomEvent("intellipulse-execute-command", {
+              detail: {
+                command: step.command,
+                stepId: step.id,
+              },
+            });
+            window.dispatchEvent(commandEvent);
 
-            // Wait for command to complete
-            await new Promise((resolve) => setTimeout(resolve, 2000));
+            // Wait for command completion or timeout
+            await commandPromise;
           } else {
             console.warn("Step has no valid action or command:", step);
           }
@@ -561,7 +629,7 @@ export default function IntellipulseChatPage() {
       } catch (error) {
         console.error("Error saving session:", error);
       }
-    }, [id, session, messages, getSession, updateSession, isSessionLoaded]),
+    }, [id, messages, getSession, updateSession, isSessionLoaded]),
     2000, // 2-second debounce
   );
 
@@ -570,13 +638,7 @@ export default function IntellipulseChatPage() {
     if (messages.length > 0 && session && isSessionLoaded) {
       debouncedSaveSession();
     }
-  }, [messages, session, isSessionLoaded, debouncedSaveSession]);
-  // Save session when settings change
-  useEffect(() => {
-    if (session && isSessionLoaded) {
-      debouncedSaveSession();
-    }
-  }, [session, debouncedSaveSession, isSessionLoaded]);
+  }, [messages.length, isSessionLoaded, debouncedSaveSession]);
 
   // Save session immediately before component unmount
   useEffect(() => {

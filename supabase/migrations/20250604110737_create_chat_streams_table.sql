@@ -15,24 +15,24 @@ CREATE INDEX IF NOT EXISTS idx_chat_streams_created_at ON public.chat_streams(cr
 -- Enable Row Level Security (RLS)
 ALTER TABLE public.chat_streams ENABLE ROW LEVEL SECURITY;
 
--- Create RLS policies
-CREATE POLICY "Users can read their own chat streams" ON public.chat_streams
-    FOR SELECT USING (
-        EXISTS (
-            SELECT 1 FROM public.chat_sessions cs 
-            WHERE cs.id = chat_streams.chat_id 
-            AND cs.user_id = auth.uid()
-        )
-    );
+-- Create RLS policies (commented out until chat_sessions table exists)
+-- CREATE POLICY "Users can read their own chat streams" ON public.chat_streams
+--     FOR SELECT USING (
+--         EXISTS (
+--             SELECT 1 FROM public.chat_sessions cs 
+--             WHERE cs.id = chat_streams.chat_id 
+--             AND cs.user_id = auth.uid()
+--         )
+--     );
 
-CREATE POLICY "Users can insert their own chat streams" ON public.chat_streams
-    FOR INSERT WITH CHECK (
-        EXISTS (
-            SELECT 1 FROM public.chat_sessions cs 
-            WHERE cs.id = chat_streams.chat_id 
-            AND cs.user_id = auth.uid()
-        )
-    );
+-- CREATE POLICY "Users can insert their own chat streams" ON public.chat_streams
+--     FOR INSERT WITH CHECK (
+--         EXISTS (
+--             SELECT 1 FROM public.chat_sessions cs 
+--             WHERE cs.id = chat_streams.chat_id 
+--             AND cs.user_id = auth.uid()
+--         )
+--     );
 
 -- Add comments for documentation
 COMMENT ON TABLE public.chat_streams IS 'Tracks resumable stream IDs for chat sessions';

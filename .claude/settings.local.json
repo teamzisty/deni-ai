@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(pnpm typecheck:*)",
+      "Bash(pnpm build:*)",
+      "Bash(rg:*)",
+      "Bash(grep:*)"
+    ],
+    "deny": []
+  }
+}

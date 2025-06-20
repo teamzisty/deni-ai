@@ -143,15 +143,17 @@ export async function POST(req: Request) {
       }
 
       userId = user.id;
-      
+
       // Check usage limits for authenticated users
       const { canUseModel } = await import("@/lib/usage");
       const canUse = await canUseModel(userId, model);
-      
+
       if (!canUse) {
-        return new NextResponse("Usage limit exceeded for this model", { status: 429 });
+        return new NextResponse("Usage limit exceeded for this model", {
+          status: 429,
+        });
       }
-      
+
       // Extract sessionId from request URL or body
       const url = new URL(req.url);
       sessionId = url.searchParams.get("id") || undefined;
@@ -293,6 +295,58 @@ export async function POST(req: Request) {
               }),
             }),
 
+            list_files: tool({
+              description:
+                "List files and directories in the virtual filesystem.",
+              parameters: z.object({
+                path: z
+                  .string()
+                  .describe(
+                    "Directory path to list. Use '.' for current directory.",
+                  )
+                  .default("."),
+                recursive: z
+                  .boolean()
+                  .describe("Whether to list files recursively.")
+                  .default(false),
+              }),
+              execute: async ({ path, recursive }) => {
+                // Send directory listing request to the frontend WebContainer
+                dataStream.writeMessageAnnotation({
+                  webcontainerAction: {
+                    action: "list_files",
+                    path: path,
+                    recursive: recursive,
+                    timestamp: Date.now(),
+                  },
+                });
+
+                return `Directory listing request sent for: ${path}${recursive ? " (recursive)" : ""}. Waiting for file list from WebContainer...`;
+              },
+            }),
+
+            read_multiple_files: tool({
+              description:
+                "Read multiple files from the virtual filesystem at once.",
+              parameters: z.object({
+                paths: z
+                  .array(z.string())
+                  .describe("Array of file paths to read."),
+              }),
+              execute: async ({ paths }) => {
+                // Send multiple file read request to the frontend WebContainer
+                dataStream.writeMessageAnnotation({
+                  webcontainerAction: {
+                    action: "read_multiple_files",
+                    paths: paths,
+                    timestamp: Date.now(),
+                  },
+                });
+
+                return `Multiple file read request sent for: ${paths.join(", ")}. Waiting for file contents from WebContainer...`;
+              },
+            }),
+
             webcontainer: tool({
               description:
                 "Execute commands in WebContainer or manage files in the virtual filesystem.",
@@ -358,6 +412,8 @@ export async function POST(req: Request) {
                       timestamp: timestamp, // タイムスタンプを追加
                     },
                   });
+
+                  return `STEPS ARE SENDED, BUT NOT COMPLETED, WAIT FOR NEXT USER MESSAGE`;
                 }
               },
             }),
