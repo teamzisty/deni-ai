@@ -28,7 +28,6 @@
     "@icons-pack/react-simple-icons": "^13.1.0",
     "@monaco-editor/react": "^4.7.0",
     "@openrouter/ai-sdk-provider": "^0.7.2",
-    "@radix-ui/react-dialog": "^1.1.14",
     "@supabase/ssr": "^0.6.1",
     "@supabase/supabase-js": "^2.50.0",
     "@uploadthing/react": "^7.3.1",
@@ -66,7 +65,8 @@
     "uploadthing": "^7.7.2",
     "use-debounce": "^10.0.5",
     "uuid": "^11.1.0",
-    "zod": "^3.25.64"
+    "zod": "^3.25.64",
+    "radix-ui": "latest"
   },
   "devDependencies": {
     "@types/ansi-html": "^0.0.0",

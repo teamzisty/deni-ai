@@ -26,6 +26,7 @@ import {
 } from "lucide-react";
 import GitHubIntegration from "@/components/GitHubIntegration";
 import GitCloneDialog from "./GitCloneDialog";
+import { ChildProcess } from "child_process";
 
 // Add TypeScript interface for step status event data
 export interface StepStatusEventDetail {
@@ -48,6 +49,8 @@ export interface TerminalTab {
   name: string;
   logs: TerminalLogEntry[];
   isActive: boolean;
+  isInitializing?: boolean;
+  initializationFailed?: boolean;
   process?: any;
   terminal?: any;
   jshProcess?: any;
@@ -152,7 +155,7 @@ export const resetWebContainerInstance = async () => {
     try {
       console.log("Resetting WebContainer instance for conversation switch");
 
-      globalWebContainerInstance.teardown(); // Ensure we clean up the instance properly
+      globalWebContainerInstance.teardown(); // Call teardown if available
 
       // Clear the global instance and conversation tracking
       globalWebContainerInstance = null;
@@ -802,7 +805,15 @@ export const TerminalDisplay = memo(
     // Initialize terminal for a tab
     const initializeTerminal = useCallback(
       async (tab: TerminalTab) => {
-        if (!realWebContainerProcess || tab.terminal) return;
+        if (!realWebContainerProcess || tab.terminal || tab.isInitializing)
+          return;
+
+        // Mark tab as initializing to prevent duplicate initialization
+        setTerminalTabs((prev) =>
+          prev.map((t) =>
+            t.id === tab.id ? { ...t, isInitializing: true } : t,
+          ),
+        );
 
         const { Terminal } = await import("@xterm/xterm");
         const { FitAddon } = await import("@xterm/addon-fit");
@@ -827,31 +838,73 @@ export const TerminalDisplay = memo(
         terminal.loadAddon(webLinksAddon);
 
         try {
-          // Start jsh process for this terminal
-          const jshProcess = await realWebContainerProcess.spawn("jsh", [], {
-            terminal: {
-              cols: terminal.cols,
-              rows: terminal.rows,
-            },
-          });
-
-          // Connect terminal to process
-          jshProcess.output.pipeTo(
-            new WritableStream({
-              write(data) {
-                terminal.write(data);
+          // For Intellipulse tab, don't start jsh automatically
+          let jshProcess;
+          if (tab.name !== "Intellipulse") {
+            // Start jsh process for regular terminals only
+            jshProcess = await realWebContainerProcess.spawn("jsh", [], {
+              terminal: {
+                cols: terminal.cols,
+                rows: terminal.rows,
               },
-            }),
-          );
+            });
+          } else {
+            // For Intellipulse, don't create a persistent shell process
+            // Commands will be executed on-demand
+            jshProcess = null;
+          }
 
-          const input = jshProcess.input.getWriter();
-          terminal.onData((data) => {
-            input.write(data);
-          }); // Update tab with terminal and process
+          // Connect terminal to process with error handling (only for regular terminals)
+          if (jshProcess) {
+            const outputReader = jshProcess.output.getReader();
+            const readOutput = async () => {
+              try {
+                while (true) {
+                  const { done, value } = await outputReader.read();
+                  if (done) break;
+                  terminal.write(value);
+                }
+              } catch (error) {
+                console.error("Terminal output read error:", error);
+              } finally {
+                outputReader.releaseLock();
+              }
+            };
+            readOutput();
+
+            // Handle input with proper writer management
+            let inputWriter: WritableStreamDefaultWriter<string> | null = null;
+            terminal.onData(async (data) => {
+              try {
+                if (!inputWriter) {
+                  inputWriter = jshProcess.input.getWriter();
+                }
+                await inputWriter.write(data);
+              } catch (error) {
+                console.error("Terminal input write error:", error);
+                // Reset writer on error
+                if (inputWriter) {
+                  try {
+                    inputWriter.releaseLock();
+                  } catch (e) {
+                    // Ignore release errors
+                  }
+                  inputWriter = null;
+                }
+              }
+            });
+          } // Update tab with terminal and process
           setTerminalTabs((prev) =>
             prev.map((t) =>
               t.id === tab.id
-                ? { ...t, terminal, jshProcess, process: jshProcess, fitAddon }
+                ? {
+                    ...t,
+                    terminal,
+                    jshProcess,
+                    process: jshProcess,
+                    fitAddon,
+                    isInitializing: false,
+                  }
                 : t,
             ),
           );
@@ -866,9 +919,36 @@ export const TerminalDisplay = memo(
               fitAddon.fit();
             }
           }
+
+          // Show welcome message for Intellipulse tab only once
+          if (tab.name === "Intellipulse") {
+            setTimeout(() => {
+              terminal.writeln("\x1b[36mIntellipulse Terminal\x1b[0m");
+              terminal.writeln(
+                "\x1b[2mCommands will be executed here during AI assistance...\x1b[0m",
+              );
+              terminal.writeln("");
+            }, 100);
+          }
         } catch (error) {
-          console.error("Failed to initialize terminal:", error);
-          terminal.write("\r\n\x1b[31mFailed to start jsh process\x1b[0m\r\n");
+          console.error(
+            `Failed to initialize terminal for tab ${tab.id}:`,
+            error,
+          );
+          if (terminal) {
+            terminal.write(
+              "\r\n\x1b[31mFailed to start jsh process\x1b[0m\r\n",
+            );
+          }
+
+          // Clear initialization flag on error and mark as failed
+          setTerminalTabs((prev) =>
+            prev.map((t) =>
+              t.id === tab.id
+                ? { ...t, isInitializing: false, initializationFailed: true }
+                : t,
+            ),
+          );
         }
       },
       [realWebContainerProcess, activeTabId, setTerminalTabs],
@@ -879,7 +959,7 @@ export const TerminalDisplay = memo(
       if (!realWebContainerProcess) return;
 
       terminalTabs.forEach((tab) => {
-        if (!tab.terminal) {
+        if (!tab.terminal && !tab.isInitializing) {
           initializeTerminal(tab);
         }
       });
@@ -901,6 +981,20 @@ export const TerminalDisplay = memo(
       }
     }, [activeTabId, activeTab, showTerminal]);
 
+    // Switch to tab
+    const switchToTab = useCallback(
+      (tabId: string) => {
+        setActiveTabId(tabId);
+        setTerminalTabs((prev) =>
+          prev.map((tab) => ({
+            ...tab,
+            isActive: tab.id === tabId,
+          })),
+        );
+      },
+      [setActiveTabId, setTerminalTabs],
+    );
+
     // Create new terminal tab
     const createNewTab = useCallback(() => {
       const newTabId = `terminal-${Date.now()}`;
@@ -918,6 +1012,43 @@ export const TerminalDisplay = memo(
       setActiveTabId(newTabId);
     }, [terminalTabs.length, setTerminalTabs, setActiveTabId]);
 
+    // Create or switch to Intellipulse terminal tab
+    const createOrSwitchToIntellipulseTab = useCallback(() => {
+      return new Promise<string>((resolve) => {
+        // Use setTerminalTabs with callback to ensure atomic check and creation
+        setTerminalTabs((prev) => {
+          // Check if Intellipulse tab already exists
+          const existingTab = prev.find((tab) => tab.name === "Intellipulse");
+
+          if (existingTab) {
+            // Switch to existing tab
+            setActiveTabId(existingTab.id);
+            resolve(existingTab.id);
+            return prev.map((tab) => ({
+              ...tab,
+              isActive: tab.id === existingTab.id,
+            }));
+          } else {
+            // Create new Intellipulse tab only if it doesn't exist
+            const newTabId = `intellipulse-${Date.now()}`;
+            const newTab: TerminalTab = {
+              id: newTabId,
+              name: "Intellipulse",
+              logs: [],
+              isActive: true,
+            };
+
+            setActiveTabId(newTabId);
+            resolve(newTabId);
+            return [
+              ...prev.map((tab) => ({ ...tab, isActive: false })),
+              newTab,
+            ];
+          }
+        });
+      });
+    }, [setTerminalTabs, setActiveTabId]);
+
     // Close terminal tab
     const closeTab = useCallback(
       (tabId: string) => {
@@ -928,10 +1059,18 @@ export const TerminalDisplay = memo(
 
           // Clean up terminal and process
           if (tabToClose?.terminal) {
-            tabToClose.terminal.dispose();
+            try {
+              tabToClose.terminal.dispose();
+            } catch (error) {
+              console.error("Error disposing terminal:", error);
+            }
           }
           if (tabToClose?.jshProcess) {
-            tabToClose.jshProcess.kill();
+            try {
+              tabToClose.jshProcess.kill();
+            } catch (error) {
+              console.error("Error killing jsh process:", error);
+            }
           }
 
           const filtered = prev.filter((tab) => tab.id !== tabId);
@@ -944,19 +1083,290 @@ export const TerminalDisplay = memo(
       [terminalTabs.length, activeTabId, setTerminalTabs, setActiveTabId],
     );
 
-    // Switch to tab
-    const switchToTab = useCallback(
-      (tabId: string) => {
-        setActiveTabId(tabId);
-        setTerminalTabs((prev) =>
-          prev.map((tab) => ({
-            ...tab,
-            isActive: tab.id === tabId,
-          })),
-        );
+    // Execute command in specific terminal tab and wait for completion
+    const executeCommandInTab = useCallback(
+      async (
+        tabId: string,
+        command: string,
+        stepId?: string,
+      ): Promise<void> => {
+        const tab = terminalTabs.find((t) => t.id === tabId);
+        if (!tab || !tab.terminal) {
+          console.warn(
+            `Cannot execute command in tab ${tabId}: tab or terminal not found`,
+          );
+          return;
+        }
+
+        // For Intellipulse tab, execute commands directly without persistent process
+        let tempProcess = null;
+        let processToUse = tab.jshProcess;
+
+        if (tab.name === "Intellipulse" && !tab.jshProcess) {
+          try {
+            // Show command being executed
+            tab.terminal.writeln(`\x1b[36m$ ${command}\x1b[0m`);
+
+            // Execute command directly using WebContainer
+            tempProcess = await realWebContainerProcess?.spawn(
+              "sh",
+              ["-c", command],
+              {
+                terminal: {
+                  cols: tab.terminal.cols,
+                  rows: tab.terminal.rows,
+                },
+              },
+            );
+
+            // Connect output to terminal and wait for completion
+            let outputComplete = false;
+            const outputReader = tempProcess?.output.getReader();
+            const readOutput = async () => {
+              try {
+                while (true) {
+                  if (!outputReader) break;
+                  const { done, value } = await outputReader.read();
+                  if (done) {
+                    outputComplete = true;
+                    break;
+                  }
+                  tab.terminal.write(value);
+                }
+              } catch (error) {
+                // Process ended, which is expected
+                outputComplete = true;
+              } finally {
+                try {
+                  outputReader?.releaseLock();
+                } catch (e) {
+                  // Ignore
+                }
+              }
+            };
+
+            // Start reading output
+            const outputPromise = readOutput();
+
+            // Wait for both output reading to complete AND process to exit
+            await Promise.all([outputPromise, tempProcess?.exit]);
+
+            // Clean up and return early since command is complete
+            return;
+          } catch (error) {
+            console.error(
+              "Failed to execute command in Intellipulse tab:",
+              error,
+            );
+            const errorMessage =
+              error instanceof Error ? error.message : String(error);
+            tab.terminal.writeln(`\x1b[31mError: ${errorMessage}\x1b[0m`);
+            return;
+          }
+        }
+
+        if (!processToUse) {
+          console.warn(
+            `Cannot execute command in tab ${tabId}: no process available`,
+          );
+          return;
+        }
+
+        try {
+          return new Promise(async (resolve, reject) => {
+            let commandOutput = "";
+            let isCommandFinished = false;
+
+            // Monitor terminal output for command completion
+            const originalWrite = tab.terminal.write;
+            tab.terminal.write = function (data: string) {
+              originalWrite.call(this, data);
+              commandOutput += data;
+
+              // Look for shell prompt patterns to detect command completion
+              // More comprehensive prompt patterns including JSH
+              const promptPatterns = [
+                /\$\s*$/, // $ at end of line
+                /#\s*$/, // # at end of line
+                />\s*$/, // > at end of line
+                /[a-zA-Z0-9_-]+@[a-zA-Z0-9_-]+:[^$]*\$\s*$/, // user@host:path$
+                /~\/[^$]*\$\s*$/, // ~/path$
+                /❯\s*$/, // JSH prompt
+              ];
+
+              const hasPrompt = promptPatterns.some((pattern) =>
+                pattern.test(data),
+              );
+
+              if (hasPrompt) {
+                if (isCommandFinished) {
+                  // Restore original write function
+                  tab.terminal.write = originalWrite;
+                  // Clean up temporary process
+                  if (tempProcess) {
+                    try {
+                      (tempProcess as ChildProcess).kill();
+                    } catch (e) {
+                      // Ignore
+                    }
+                  }
+                  resolve();
+                }
+                isCommandFinished = true;
+              }
+            };
+
+            // Execute the command with proper error handling
+            let writer: WritableStreamDefaultWriter<string> | null = null;
+            try {
+              writer = processToUse.input.getWriter();
+              await writer?.write(command + "\n");
+            } catch (writeError) {
+              console.error("Error writing command to terminal:", writeError);
+              throw writeError;
+            } finally {
+              if (writer) {
+                try {
+                  writer.releaseLock();
+                } catch (releaseError) {
+                  console.error("Error releasing writer lock:", releaseError);
+                }
+              }
+            }
+
+            // Set a timeout as fallback (60 seconds for longer-running commands)
+            setTimeout(() => {
+              if (tab.terminal) {
+                tab.terminal.write = originalWrite;
+              }
+              // Clean up temporary process
+              if (tempProcess) {
+                try {
+                  (tempProcess as ChildProcess).kill();
+                } catch (e) {
+                  // Ignore
+                }
+              }
+              console.warn(`Command timed out after 60 seconds: ${command}`);
+              resolve(); // Resolve even on timeout
+            }, 60000);
+          });
+        } catch (error) {
+          console.error(`Error executing command in tab ${tabId}:`, error);
+          throw error;
+        }
       },
-      [setActiveTabId, setTerminalTabs],
+      [terminalTabs],
     );
+
+    // Expose functions via a custom event for external access
+    useEffect(() => {
+      const handleIntellipulseCommand = async (event: Event) => {
+        const customEvent = event as CustomEvent;
+        const { command, stepId } = customEvent.detail;
+        if (command) {
+          try {
+            const intellipulseTabId = await createOrSwitchToIntellipulseTab();
+
+            // Wait for the tab to be properly initialized
+            let retries = 0;
+            const maxRetries = 20; // Increase retries for better reliability
+
+            const waitForTab = async (): Promise<void> => {
+              const tab = terminalTabs.find((t) => t.id === intellipulseTabId);
+
+              if (tab?.initializationFailed) {
+                throw new Error(
+                  `Terminal tab ${intellipulseTabId} initialization failed`,
+                );
+              }
+
+              if (
+                tab &&
+                tab.terminal &&
+                !tab.isInitializing &&
+                (tab.jshProcess || tab.name === "Intellipulse")
+              ) {
+                return;
+              }
+
+              if (retries < maxRetries) {
+                retries++;
+                await new Promise((resolve) => setTimeout(resolve, 250)); // Shorter interval
+                return waitForTab();
+              } else {
+                const tabStatus = tab
+                  ? `terminal: ${!!tab.terminal}, jshProcess: ${!!tab.jshProcess}, isInitializing: ${!!tab.isInitializing}`
+                  : "tab not found";
+                throw new Error(
+                  `Terminal tab failed to initialize after ${maxRetries} retries. Status: ${tabStatus}`,
+                );
+              }
+            };
+
+            await waitForTab();
+
+            // Execute the command and wait for completion
+            await executeCommandInTab(intellipulseTabId, command, stepId);
+
+            // Dispatch command completion event
+            if (stepId) {
+              const completionEvent = new CustomEvent(
+                "intellipulse-command-completed",
+                {
+                  detail: { stepId, success: true },
+                },
+              );
+              window.dispatchEvent(completionEvent);
+            }
+          } catch (error) {
+            console.error(
+              "Error executing command in Intellipulse tab:",
+              error,
+            );
+            if (stepId) {
+              const errorMessage =
+                error instanceof Error ? error.message : String(error);
+              const errorEvent = new CustomEvent(
+                "intellipulse-command-completed",
+                {
+                  detail: { stepId, success: false, error: errorMessage },
+                },
+              );
+              window.dispatchEvent(errorEvent);
+            }
+          }
+        }
+      };
+
+      window.addEventListener(
+        "intellipulse-execute-command",
+        handleIntellipulseCommand,
+      );
+
+      return () => {
+        window.removeEventListener(
+          "intellipulse-execute-command",
+          handleIntellipulseCommand,
+        );
+      };
+    }, [createOrSwitchToIntellipulseTab, executeCommandInTab, terminalTabs]);
+
+    // Handle show terminal event
+    useEffect(() => {
+      const handleShowTerminal = () => {
+        setShowTerminal(true);
+      };
+
+      window.addEventListener("intellipulse-show-terminal", handleShowTerminal);
+
+      return () => {
+        window.removeEventListener(
+          "intellipulse-show-terminal",
+          handleShowTerminal,
+        );
+      };
+    }, [setShowTerminal]);
 
     if (!realWebContainerProcess) {
       return null;
@@ -1115,13 +1525,15 @@ export const WebContainerUI: React.FC<WebContainerUIProps> = memo(
     // Terminal tabs state
     const [terminalTabs, setTerminalTabs] = useState<TerminalTab[]>([
       {
-        id: "terminal-1",
-        name: "Terminal 1",
+        id: "intellipulse-default",
+        name: "Intellipulse",
         logs: [],
         isActive: true,
       },
     ]);
-    const [activeTabId, setActiveTabId] = useState<string>("terminal-1");
+    const [activeTabId, setActiveTabId] = useState<string>(
+      "intellipulse-default",
+    );
 
     // Context menu state
     const [contextMenuPath, setContextMenuPath] = useState<string | null>(null);
