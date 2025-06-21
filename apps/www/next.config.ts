@@ -1,42 +1,27 @@
 import type { NextConfig } from "next";
-import nextIntlPlugin from "next-intl/plugin";
-
-const withNextIntl = nextIntlPlugin();
 
 const nextConfig: NextConfig = {
-  /* config options here */
-  transpilePackages: ["@workspace/ui/"],
+  poweredByHeader: false,
+  compress: true,
   images: {
-    remotePatterns: [
-      {
-        protocol: "https",
-        hostname: "0t8sk6ibfw.ufs.sh",
-        pathname: "/**",
-      },
-      {
-        protocol: "https",
-        hostname: "avatars.githubusercontent.com",
-        pathname: "/**",
-      },
-      {
-        protocol: "https",
-        hostname: "lh3.googleusercontent.com",
-        pathname: "/**",
-      },
-    ],
+    formats: ['image/webp', 'image/avif'],
+    dangerouslyAllowSVG: true,
+    contentDispositionType: 'attachment',
+    contentSecurityPolicy: "default-src 'self'; script-src 'none'; sandbox;",
   },
-  // Add cross-origin isolation for WebContainers on dev pages
-  async headers() {
-    return [
-      {
-        source: "/:locale/intellipulse/:path*",
-        headers: [
-          { key: "Cross-Origin-Opener-Policy", value: "same-origin" },
-          { key: "Cross-Origin-Embedder-Policy", value: "require-corp" },
-        ],
-      },
-    ];
+  experimental: {
+    optimizePackageImports: ['@ai-sdk/openai', '@ai-sdk/anthropic', '@ai-sdk/google', '@ai-sdk/xai', '@ai-sdk/groq'],
+    serverComponentsExternalPackages: ['marked'],
+  },
+  webpack: (config, { isServer }) => {
+    if (!isServer) {
+      config.resolve.fallback = {
+        ...config.resolve.fallback,
+        fs: false,
+      };
+    }
+    return config;
   },
 };
 
-export default withNextIntl(nextConfig);
+export default nextConfig;
