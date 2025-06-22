@@ -18,10 +18,12 @@
     "@icons-pack/react-simple-icons": "^13.1.0",
     "@openrouter/ai-sdk-provider": "^0.7.2",
     "@radix-ui/react-label": "^2.1.7",
+    "@radix-ui/react-popover": "^1.1.14",
     "@radix-ui/react-slot": "^1.2.3",
     "@supabase/ssr": "^0.6.1",
     "@supabase/supabase-js": "^2.50.0",
     "@t3-oss/env-nextjs": "^0.13.8",
+    "@uploadthing/react": "^7.3.1",
     "@workspace/ui": "workspace:*",
     "ai": "^4.3.16",
     "framer-motion": "^12.18.1",
@@ -40,6 +42,7 @@
     "remark-gfm": "^4.0.1",
     "remark-math": "^6.0.0",
     "sonner": "^2.0.5",
+    "uploadthing": "^7.7.2",
     "zod": "^3.25.67"
   },
   "devDependencies": {

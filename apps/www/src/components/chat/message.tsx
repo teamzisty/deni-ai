@@ -90,8 +90,39 @@ const Message = memo<MessageProps>(({ message }) => {
     case "user":
       return (
         <div className="flex items-start gap-4 mb-4">
-          <div className="whitespace-pre-wrap ml-auto bg-secondary rounded-2xl p-4 w-fit max-w-[80%]">
-            {message.content}
+          <div className="prose ml-auto bg-secondary rounded-2xl p-4 w-fit max-w-[80%]">
+            {message.experimental_attachments &&
+              message.experimental_attachments.map((attachment, index) => (
+                <img
+                  key={index}
+                  src={attachment.url}
+                  alt={attachment.name}
+                  className="rounded-lg max-w-24 max-h-24 w-24 h-24 object-cover mb-2"
+                />
+              ))}
+            {message.parts.map((part, index) => {
+              switch (part.type) {
+                case "text":
+                  return (
+                    <MemoizedMarkdown
+                      key={index}
+                      content={part.text}
+                      id={`${message.id}-text_${index}`}
+                    />
+                  );
+                case "file":
+                  return (
+                    <img
+                      key={index}
+                      src={part.data}
+                      alt="A Image"
+                      className="rounded-lg"
+                    />
+                  );
+                default:
+                  return null;
+              }
+            })}
           </div>
         </div>
       );
@@ -108,7 +139,8 @@ const Message = memo<MessageProps>(({ message }) => {
                     variant="ghost"
                     className="flex items-center gap-1"
                   >
-                    {showReasoning ? <ArrowRight /> : <ArrowDown />}View reasoning process
+                    {showReasoning ? <ArrowRight /> : <ArrowDown />}View
+                    reasoning process
                   </Button>
 
                   <motion.div
@@ -171,7 +203,7 @@ const Message = memo<MessageProps>(({ message }) => {
                       return (
                         <div
                           key={index}
-                          className="bg-secondary rounded-2xl p-4"
+                          className="bg-secondary rounded-2xl p-4 my-1"
                         >
                           <h3 className="font-semibold">Search Results</h3>
                           <span className="text-muted-foreground">
@@ -191,7 +223,7 @@ const Message = memo<MessageProps>(({ message }) => {
                         <Button
                           onClick={toggleSearchResults}
                           variant="outline"
-                          className="flex items-center gap-1"
+                          className="flex items-center gap-1 my-1"
                         >
                           <Globe className="h-4 w-4" />
                           <span>

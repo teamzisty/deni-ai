@@ -18,13 +18,24 @@ import {
   ContextMenu,
   ContextMenuContent,
   ContextMenuItem,
+  ContextMenuSeparator,
   ContextMenuTrigger,
 } from "@workspace/ui/components/context-menu";
 import { useParams, useRouter } from "next/navigation";
 import { toast } from "sonner";
-import React from "react";
+import React, { useEffect } from "react";
 import Message from "./chat/message";
 import LoadingIndicator from "./link-loading-indicator";
+import {
+  AlertDialog,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@workspace/ui/components/alert-dialog";
+import { Input } from "@workspace/ui/components/input";
 
 export function ChatContextMenu({
   conversationId,
@@ -34,7 +45,20 @@ export function ChatContextMenu({
   children?: React.ReactNode;
 }) {
   const router = useRouter();
-  const { deleteConversation } = useConversations();
+  const [open, setOpen] = React.useState(false);
+  const [newName, setNewName] = React.useState("");
+  const { conversations, deleteConversation, updateConversation, updateConversationTitle } = useConversations();
+
+  useEffect(() => {
+    const conversation = conversations.find(
+      (conv) => conv.id === conversationId,
+    );
+    if (conversation) {
+      setNewName(conversation.title || "");
+    } else {
+      setNewName("");
+    }
+  }, [])
 
   const handleDeleteChat = async () => {
     try {
@@ -61,15 +85,58 @@ export function ChatContextMenu({
     }
   };
 
+  const handleRenameChat = async () => {
+    // Implement rename chat functionality
+    if (!newName.trim()) {
+      toast.error("Please enter a valid conversation name.");
+      return;
+    }
+
+    toast.promise(updateConversation(conversationId, { title: newName }), {
+      loading: "Renaming conversation...",
+      success: () => "Conversation renamed successfully!",
+      error: () => "Failed to rename conversation. Please try again.",
+    });
+    await updateConversationTitle(conversationId, newName);
+  };
+
   return (
-    <ContextMenu>
-      <ContextMenuTrigger asChild>{children}</ContextMenuTrigger>
-      <ContextMenuContent>
-        <ContextMenuItem variant={"destructive"} onClick={handleDeleteChat}>
-          <Trash2 /> Delete
-        </ContextMenuItem>
-      </ContextMenuContent>
-    </ContextMenu>
+    <>
+      <ContextMenu>
+        <ContextMenuTrigger asChild>{children}</ContextMenuTrigger>
+        <ContextMenuContent>
+          <ContextMenuItem onClick={() => setOpen(true)}>
+            <MessageCircle /> Rename
+          </ContextMenuItem>
+          <ContextMenuSeparator />
+          <ContextMenuItem variant={"destructive"} onClick={handleDeleteChat}>
+            <Trash2 /> Delete
+          </ContextMenuItem>
+        </ContextMenuContent>
+      </ContextMenu>
+
+      <AlertDialog open={open} onOpenChange={setOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Rename Conversation</AlertDialogTitle>
+            <AlertDialogDescription>
+              Enter a new name for the conversation.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <Input
+            value={newName}
+            onChange={(e) => setNewName(e.target.value)}
+            placeholder="New conversation name"
+          />
+          <AlertDialogFooter>
+            <Button variant={"outline"} onClick={() => setOpen(false)}>
+              Cancel
+            </Button>
+            <Button onClick={handleRenameChat}>Save</Button>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </>
   );
 }
 

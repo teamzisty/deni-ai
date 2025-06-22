@@ -22,7 +22,7 @@ export const canvas = tool({
 });
 
 export const search = tool({
-  description: "Search the web using Brave Search",
+  description: "Search the web using Brave Search. Use this for finding current information, research, and web content.",
   parameters: z.object({
     query: z.string().describe("The search query to execute"),
     language: z
@@ -33,17 +33,24 @@ export const search = tool({
       .string()
       .nullable()
       .describe("The country to use for the search (ex. 'us', 'uk', 'fr', 'all')"),
+    depth: z
+      .enum(["shallow", "deep", "deeper"])
+      .nullable()
+      .describe("Research depth: shallow (3 results), deep (5 results), deeper (8 results)"),
   }),
-  execute: async ({ query, language, country }) => {
+  execute: async ({ query, language, country, depth }) => {
     if (!query) {
       return [];
     }
+
+    // Determine result count based on depth
+    const resultCount = depth === "shallow" ? 3 : depth === "deep" ? 5 : depth === "deeper" ? 8 : 5;
 
     const braveSearch = new BraveSearchSDK();
     const searchResult = await braveSearch.getWebResults(query, {
       country: country || "us",
       language: language || "en",
-      count: 5,
+      count: resultCount,
     });
     let result: {
       title: string;

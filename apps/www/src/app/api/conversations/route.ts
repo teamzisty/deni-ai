@@ -71,9 +71,10 @@ export async function POST(req: Request) {
     );
   }
 
-  const body = await req.json();
-  const result = ConversationSchema.safeParse(body);
-  if (!result.success) {
+  const body = await req.json() as Partial<Conversation>;
+
+  const { id } = body;
+  if (!id) {
     return NextResponse.json(
       {
         success: false,
@@ -82,9 +83,6 @@ export async function POST(req: Request) {
       { status: 400 },
     );
   }
-
-  const resultData = result.data as Conversation;
-  const { id } = resultData;
 
   const conversation = await getConversation(id);
   if (!conversation) {
@@ -97,7 +95,7 @@ export async function POST(req: Request) {
     );
   }
 
-  const newConversation = await updateConversation(id, resultData);
+  const newConversation = await updateConversation(id, body);
   if (!newConversation) {
     return NextResponse.json(
       {

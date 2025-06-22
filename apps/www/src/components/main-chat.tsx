@@ -10,6 +10,8 @@ import Messages from "./chat/messages";
 import { Conversation } from "@/lib/conversations";
 import { useConversations } from "@/hooks/use-conversations";
 import { useSupabase } from "@/context/supabase-context";
+import { useUploadThing } from "@/lib/uploadthing";
+import { toast } from "sonner";
 
 interface MainChatProps {
   initialConversation?: Conversation;
@@ -37,7 +39,24 @@ const MainChat = memo<MainChatProps>(
     const messagesRef = useRef<HTMLDivElement>(null);
     const [authToken, setAuthToken] = useState<string>("");
 
+    const [image, setImage] = useState<string | null>(null);
+
     const router = useRouter();
+
+    const { isUploading, startUpload } = useUploadThing("imageUploader", {
+      headers: {
+        // Use authToken prop
+        Authorization: authToken || "",
+      },
+      onClientUploadComplete: (res) => {
+        setImage(res[0]?.ufsUrl || null);
+      },
+      onUploadError: (error: Error) => {
+        toast.error("Image upload failed", {
+          description: `Error occurred: ${error.message}`,
+        });
+      },
+    });
 
     useEffect(() => {
       const getAuthToken = async () => {
@@ -59,6 +78,9 @@ const MainChat = memo<MainChatProps>(
             id: initialConversation?.id || "",
             thinkingEffort,
             model,
+            canvas,
+            search,
+            researchMode,
           },
           initialMessages: initialConversation?.messages || [],
           initialInput: initialInput || "",
@@ -74,6 +96,10 @@ const MainChat = memo<MainChatProps>(
         initialConversation?.messages,
         initialInput,
         model,
+        thinkingEffort,
+        canvas,
+        search,
+        researchMode,
       ],
     );
 
@@ -133,8 +159,21 @@ const MainChat = memo<MainChatProps>(
 
     useEffect(() => {
       setLoadingWord(
-        loading_words[Math.floor(Math.random() * loading_words.length)] || "Please wait...",
+        loading_words[Math.floor(Math.random() * loading_words.length)] ||
+          "Please wait...",
       );
+    }, []);
+
+    const handleImageUpload = useCallback(async (file: File) => {
+      if (!file) return;
+
+      try {
+        await startUpload([file]);
+      } catch (error) {
+        toast.error("Image upload failed", {
+          description: `Error occurred: ${error}`,
+        });
+      }
     }, []);
 
     const welcomeMessage = useMemo(() => {
@@ -169,21 +208,12 @@ const MainChat = memo<MainChatProps>(
             >
               {welcomeMessage}
             </h1>
-            {ssUserData?.plan === "pro" && (
+            {ssUserData?.plan != "free" && (
               <span className="font-semibold">
-                <span className="bg-gradient-to-r from-pink-400 to-sky-500 bg-clip-text text-transparent">
-                  Pro
+                <span className="bg-gradient-to-r from-pink-400 to-sky-500 bg-clip-text text-transparent capitalize">
+                  {ssUserData?.plan}
                 </span>{" "}
                 Plan Active
-              </span>
-            )}
-            {ssUserData?.plan === "enterprise" && (
-              <span className="font-semibold">
-                Hello,{" "}
-                <span className="bg-gradient-to-r from-pink-400 to-sky-500 bg-clip-text text-transparent">
-                  Enterprise
-                </span>{" "}
-                User!
               </span>
             )}
           </div>
@@ -212,6 +242,10 @@ const MainChat = memo<MainChatProps>(
             input={input}
             thinkingEffort={thinkingEffort}
             setThinkingEffort={setThinkingEffort}
+            image={image}
+            setImage={setImage}
+            handleImageUpload={handleImageUpload}
+            isUploading={isUploading}
           />
         </div>
       </main>

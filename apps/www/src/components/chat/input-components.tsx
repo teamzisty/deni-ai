@@ -29,6 +29,7 @@ import {
   BrainCircuit,
   FlaskConical,
   Gem,
+  Loader2,
 } from "lucide-react";
 import { researchModeMapping } from "./input";
 import {
@@ -37,7 +38,7 @@ import {
   SiOpenai,
   SiX,
 } from "@icons-pack/react-simple-icons";
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import DeepSeekIcon from "../deepseek-icon";
 import { Tip } from "../tooltip";
 import { Badge } from "@workspace/ui/components/badge";
@@ -55,13 +56,51 @@ export interface InputActionsProps {
   input: UseChatHelpers["input"];
   thinkingEffort?: "disabled" | "low" | "medium" | "high";
   setThinkingEffort?: (effort: "disabled" | "low" | "medium" | "high") => void;
+  image?: string | null;
+  handleImageUpload?: (file: File) => void;
+  isUploading?: boolean;
 }
 
-export function UploadButton() {
+export function UploadButton({
+  image,
+  handleImageUpload,
+  isUploading,
+}: {
+  image?: string | null;
+  handleImageUpload?: (file: File) => void;
+  isUploading?: boolean;
+}) {
+  const inputRef = useRef<HTMLInputElement>(null);
   return (
-    <Button type="button" variant="ghost" size="icon" className="rounded-full">
-      <Upload className="h-5 w-5" />
-    </Button>
+    <div>
+      <input
+        ref={inputRef}
+        type="file"
+        accept="image/*"
+        onChange={(e) => {
+          const file = e.target.files?.[0];
+          if (file && handleImageUpload) {
+            handleImageUpload(file);
+          }
+        }}
+        style={{ display: "none" }}
+        disabled={isUploading}
+      />
+      <Button
+        type="button"
+        variant="ghost"
+        size="icon"
+        className="rounded-full"
+        onClick={() => inputRef.current?.click()}
+        disabled={isUploading}
+      >
+        {isUploading ? (
+          <Loader2 className="h-5 w-5 animate-spin" />
+        ) : (
+          <Upload className="h-5 w-5" />
+        )}
+      </Button>
+    </div>
   );
 }
 
@@ -80,7 +119,7 @@ export function CanvasButton({
       className="rounded-full"
     >
       <Presentation className="h-5 w-5" />
-      Canvas
+      <div className="hidden md:inline">Canvas</div>
     </Button>
   );
 }
@@ -100,7 +139,7 @@ export function SearchButton({
       className="rounded-full"
     >
       <Globe className="h-5 w-5" />
-      Search
+      <div className="hidden md:inline">Search</div>
     </Button>
   );
 }
@@ -157,7 +196,9 @@ export function ThinkingEffortButton({
           )}
         >
           <BrainCircuit className="h-5 w-5" />
-          {effortMapping[thinkingEffort]}
+          <div className="hidden md:inline">
+            {effortMapping[thinkingEffort]}
+          </div>
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-[200px] p-0">
@@ -224,10 +265,12 @@ export function ResearchModeButton({
           className="rounded-full"
         >
           <Telescope className="h-5 w-5" />
-          Research{" "}
-          <Badge className={cn(researchMode === "disabled" && "hidden")}>
-            {researchModeMapping[researchMode]}
-          </Badge>
+          <div className="hidden md:inline">
+            Research{" "}
+            <Badge className={cn(researchMode === "disabled" && "hidden")}>
+              {researchModeMapping[researchMode]}
+            </Badge>
+          </div>
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-[200px] p-0">
@@ -317,7 +360,9 @@ export function ModelSelector({
                   return <CircleQuestionMark className="h-4 w-4" />;
               }
             })()}
-            {models[model]?.name || model}
+            <span className="hidden md:inline">
+              {models[model]?.name || model}
+            </span>
           </Button>
         </PopoverTrigger>
         <PopoverContent className="p-0 w-full flex w-[300px]">
@@ -373,17 +418,31 @@ export function ModelSelector({
                             switch (feature) {
                               case "vision":
                                 return (
-                                  <ImageIcon key={feature} className="ml-auto h-4 w-4 text-green-500" />
+                                  <ImageIcon
+                                    key={feature}
+                                    className="ml-auto h-4 w-4 text-green-500"
+                                  />
                                 );
                               case "fast":
-                                return <Zap key={feature} className="ml-auto h-4 w-4 text-yellow-500" />;
+                                return (
+                                  <Zap
+                                    key={feature}
+                                    className="ml-auto h-4 w-4 text-yellow-500"
+                                  />
+                                );
                               case "reasoning":
                                 return (
-                                  <BrainCircuit key={feature} className="ml-auto h-4 w-4 text-pink-500" />
+                                  <BrainCircuit
+                                    key={feature}
+                                    className="ml-auto h-4 w-4 text-pink-500"
+                                  />
                                 );
                               case "experimental":
                                 return (
-                                  <FlaskConical key={feature} className="ml-auto h-4 w-4 text-purple-500" />
+                                  <FlaskConical
+                                    key={feature}
+                                    className="ml-auto h-4 w-4 text-purple-500"
+                                  />
                                 );
                               default:
                                 return null;
@@ -419,15 +478,28 @@ export function InputActions({
   thinkingEffort,
   setThinkingEffort,
   input,
+  image,
+  handleImageUpload,
+  isUploading,
 }: InputActionsProps) {
   useEffect(() => {
-    if (!models[model || "gpt-4o"]?.reasoning_efforts?.find((effort) => effort === "disabled") && thinkingEffort === "disabled" && setThinkingEffort) {
+    if (
+      !models[model || "gpt-4o"]?.reasoning_efforts?.find(
+        (effort) => effort === "disabled",
+      ) &&
+      thinkingEffort === "disabled" &&
+      setThinkingEffort
+    ) {
       setThinkingEffort("medium");
     }
   }, [model]);
   return (
     <>
-      <UploadButton />
+      <UploadButton
+        image={image}
+        handleImageUpload={handleImageUpload}
+        isUploading={isUploading}
+      />
       {canvas !== undefined && setCanvas && (
         <CanvasButton canvas={canvas} setCanvas={setCanvas} />
       )}

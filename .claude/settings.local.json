@@ -4,7 +4,8 @@
       "Bash(pnpm typecheck:*)",
       "Bash(pnpm build:*)",
       "Bash(rg:*)",
-      "Bash(grep:*)"
+      "Bash(grep:*)",
+      "Bash(find:*)"
     ],
     "deny": []
   }

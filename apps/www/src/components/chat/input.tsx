@@ -1,6 +1,8 @@
 import { UseChatHelpers } from "@ai-sdk/react";
 import { useState, memo, useCallback } from "react";
 import { InputActions } from "./input-components";
+import { Button } from "@workspace/ui/components/button";
+import { XIcon } from "lucide-react";
 
 export const researchModeMapping = {
   disabled: "Disabled",
@@ -18,11 +20,15 @@ interface ChatInputProps {
   canvas?: boolean;
   search?: boolean;
   researchMode?: "disabled" | "shallow" | "deep" | "deeper";
+  image?: string | null;
+  isUploading?: boolean;
+  handleImageUpload?: (file: File) => void;
   setThinkingEffort?: (effort: "disabled" | "low" | "medium" | "high") => void;
   setModel?: (model: string) => void;
   setCanvas?: (canvas: boolean) => void;
   setSearch?: (search: boolean) => void;
   setResearchMode?: (mode: "disabled" | "shallow" | "deep" | "deeper") => void;
+  setImage?: (image: string | null) => void;
 }
 
 const ChatInput = memo<ChatInputProps>(
@@ -33,6 +39,9 @@ const ChatInput = memo<ChatInputProps>(
     search = false,
     researchMode = "disabled",
     thinkingEffort = "disabled",
+    image = null,
+    isUploading = false,
+    handleImageUpload,
     handleSubmit,
     handleInputChange,
     setModel,
@@ -40,6 +49,7 @@ const ChatInput = memo<ChatInputProps>(
     setSearch,
     setResearchMode,
     setThinkingEffort,
+    setImage,
   }) => {
     const [open, setOpen] = useState(false);
 
@@ -47,7 +57,21 @@ const ChatInput = memo<ChatInputProps>(
       (event: React.KeyboardEvent<HTMLTextAreaElement>) => {
         if (event.key === "Enter" && !event.shiftKey) {
           event.preventDefault();
-          handleSubmit();
+          handleSubmit(event, {
+            experimental_attachments: image
+              ? [
+                  {
+                    name: "image",
+                    contentType: "image/*",
+                    url: image,
+                  },
+                ]
+              : undefined,
+          });
+
+          if (setImage) {
+            setImage(null); // Clear image after submission
+          }
         }
       },
       [handleSubmit],
@@ -57,8 +81,47 @@ const ChatInput = memo<ChatInputProps>(
       <>
         {/* Chat Input */}
         <div className="relative">
-          <form onSubmit={handleSubmit} className="w-full">
+          <form
+            onSubmit={(event) => {
+              handleSubmit(event, {
+                experimental_attachments: image
+                  ? [
+                      {
+                        name: "image",
+                        contentType: "image/*",
+                        url: image,
+                      },
+                    ]
+                  : undefined,
+              });
+
+              if (setImage) {
+                setImage(null); // Clear image after submission
+              }
+            }}
+            className="w-full"
+          >
             <div className="w-full rounded-2xl border p-4 space-y-4">
+              {/* Image Viewer */}
+              {image && (
+                <div className="mb-4 relative w-fit">
+                  <img
+                    src={image}
+                    alt="Uploaded"
+                    className="h-auto rounded-lg max-w-24 max-h-24 w-24 h-24 object-cover mb-2"
+                  />
+                  <Button
+                    type="button"
+                    onClick={() => setImage && setImage(null)}
+                    size={"icon"}
+                    className="absolute -top-2 -right-2"
+                  >
+                    <XIcon />
+                  </Button>
+                </div>
+              )}
+
+              {/* Input Area */}
               <textarea
                 value={input}
                 onChange={handleInputChange}
@@ -82,6 +145,9 @@ const ChatInput = memo<ChatInputProps>(
                   input={input}
                   thinkingEffort={thinkingEffort}
                   setThinkingEffort={setThinkingEffort}
+                  image={image}
+                  handleImageUpload={handleImageUpload}
+                  isUploading={isUploading}
                 />
               </div>
             </div>

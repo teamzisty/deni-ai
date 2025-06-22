@@ -16,31 +16,11 @@ export interface Conversation {
     hub_id?: string;
 }
 
-export const textPartSchema = z.object({
-  text: z.string().min(1),
-  type: z.enum(["text"]),
-});
-
-export const messageSchema = z.object({
-  role: z.enum(["user"]),
-  content: z.string().min(1),
-  parts: z.array(textPartSchema),
-  experimental_attachments: z
-    .array(
-      z.object({
-        url: z.url(),
-        name: z.string().min(1),
-        contentType: z.enum(["image/png", "image/jpg", "image/jpeg"]),
-      }),
-    )
-    .optional(),
-});
-
 export const ConversationSchema = z.object({
     id: z.string(),
     user_id: z.string(),
     title: z.string(),
-    messages: z.array(messageSchema),
+    messages: z.array(z.any()),
     created_at: z.string(),
     updated_at: z.string(),
     bot: BotSchema.optional(),
