@@ -1,4 +1,4 @@
-import { createSupabaseServerClient } from "@/lib/supabase/server";
+import {createSupabaseServiceRoleClient} from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
 import { UIMessage } from "ai";
 
@@ -20,7 +20,7 @@ export async function POST(req: Request) {
         { status: 401 },
       );
     }
-    const supabase = await createSupabaseServerClient();
+    const supabase = await createSupabaseServiceRoleClient();
 
     // Verify the JWT token
     const {
@@ -82,7 +82,7 @@ export async function GET(req: Request) {
         { status: 400 },
       );
     }
-    const supabase = await createSupabaseServerClient();
+    const supabase = await createSupabaseServiceRoleClient();
 
     // Supabaseから共有データを取得
     const { data: sharedChatData, error: fetchError } = await supabase

@@ -1,4 +1,4 @@
-import { createSupabaseServerClient } from "@/lib/supabase/server";
+import {createSupabaseServiceRoleClient} from "@/lib/supabase/server";
 import { getAllUsage, getUsageStats, UsageInfo } from "@/lib/usage";
 import {
   getCachedUsage,
@@ -16,7 +16,7 @@ export async function GET(req: Request) {
     }
 
     // Get user from token
-    const supabase = await createSupabaseServerClient();
+    const supabase = await createSupabaseServiceRoleClient();
     const token = authorization.replace("Bearer ", "");
     const {
       data: { user },
@@ -79,7 +79,7 @@ export async function POST(req: Request) {
     }
 
     // Get user from token
-    const supabase = await createSupabaseServerClient();
+    const supabase = await createSupabaseServiceRoleClient();
     const token = authorization.replace("Bearer ", "");
     const {
       data: { user },

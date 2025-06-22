@@ -17,7 +17,7 @@ async function auth(req: Request) {
 
   try {
     const token = authHeader.replace("Bearer ", "");
-    const supabase = await createSupabaseServerClient();
+    const supabase = await createSupabaseServiceRoleClient();
     const {
       data: { user },
       error,

@@ -1,7 +1,7 @@
 // Simple test to validate our Intellipulse Action Keys API implementation
 // This script can be run to check if our API endpoints are working correctly
 
-import { createSupabaseServerClient } from "@workspace/supabase-config/server";
+import {createSupabaseServiceRoleClient} from "@workspace/supabase-config/server";
 
 async function testActionKeysSetup() {
   console.log("🔧 Testing Intellipulse Action Keys setup...");

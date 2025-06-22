@@ -1,4 +1,4 @@
-import { createSupabaseServerClient } from "@/lib/supabase/server";
+import {createSupabaseServiceRoleClient} from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
 
 export async function DELETE(
@@ -17,7 +17,7 @@ export async function DELETE(
       );
     }
 
-    const supabase = await createSupabaseServerClient();
+    const supabase = await createSupabaseServiceRoleClient();
 
     // Verify the JWT token
     const {

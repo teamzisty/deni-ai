@@ -1,4 +1,4 @@
-import { createSupabaseServerClient } from "@/lib/supabase/server";
+import {createSupabaseServiceRoleClient} from "@/lib/supabase/server";
 import { MODEL_LIMITS, UsageInfo, UsageLimit } from "@/lib/usage-client";
 
 // Re-export client-side functions and types
@@ -9,7 +9,7 @@ export type { UsageInfo, UsageLimit } from "@/lib/usage-client";
  * Get current usage for a user and model for today
  */
 export async function getCurrentUsage(userId: string, model: string): Promise<number> {
-  const supabase = await createSupabaseServerClient();
+  const supabase = await createSupabaseServiceRoleClient();
   const today = new Date().toISOString().split('T')[0];
 
   const { data, error } = await supabase
@@ -31,7 +31,7 @@ export async function getCurrentUsage(userId: string, model: string): Promise<nu
  * Get usage information for all models for a user (optimized)
  */
 export async function getAllUsage(userId: string, onlyUsedModels: boolean = false): Promise<UsageInfo[]> {
-  const supabase = await createSupabaseServerClient();
+  const supabase = await createSupabaseServiceRoleClient();
   const today = new Date().toISOString().split('T')[0];
 
   // Get all usage data for today in a single query
@@ -100,7 +100,7 @@ export async function canUseModel(userId: string, model: string): Promise<boolea
  * Record usage for a model
  */
 export async function recordUsage(userId: string, model: string): Promise<void> {
-  const supabase = await createSupabaseServerClient();
+  const supabase = await createSupabaseServiceRoleClient();
   const today = new Date().toISOString().split('T')[0];
 
   // Try to increment existing record first
@@ -146,7 +146,7 @@ export async function recordUsage(userId: string, model: string): Promise<void> 
  * Get usage statistics for a user (optimized)
  */
 export async function getUsageStats(userId: string, days: number = 30): Promise<any[]> {
-  const supabase = await createSupabaseServerClient();
+  const supabase = await createSupabaseServiceRoleClient();
   const startDate = new Date();
   startDate.setDate(startDate.getDate() - days);
   const startDateStr = startDate.toISOString().split('T')[0];

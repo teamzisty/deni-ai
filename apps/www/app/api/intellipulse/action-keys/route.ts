@@ -1,4 +1,4 @@
-import { createSupabaseServerClient } from "@/lib/supabase/server";
+import {createSupabaseServiceRoleClient} from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 
@@ -24,7 +24,7 @@ export async function GET(req: Request) {
       );
     }
 
-    const supabase = await createSupabaseServerClient();
+    const supabase = await createSupabaseServiceRoleClient();
 
     // Verify the JWT token
     const {
@@ -87,7 +87,7 @@ export async function POST(req: Request) {
       );
     }
 
-    const supabase = await createSupabaseServerClient();
+    const supabase = await createSupabaseServiceRoleClient();
 
     // Verify the JWT token
     const {

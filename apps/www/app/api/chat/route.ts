@@ -15,7 +15,7 @@ import {
   OpenRouterProviderOptions,
 } from "@openrouter/ai-sdk-provider";
 import { createGroq } from "@ai-sdk/groq";
-import { createSupabaseServerClient } from "@/lib/supabase/server";
+import {createSupabaseServiceRoleClient} from "@/lib/supabase/server";
 import {
   appendResponseMessages,
   convertToCoreMessages,
@@ -163,7 +163,7 @@ export async function POST(req: Request) {
     if (messages.length === 0) {
       return new NextResponse("Invalid request", { status: 400 });
     } // Supabase authentication - Support both authenticated and anonymous users
-    const supabase = await createSupabaseServerClient();
+    const supabase = await createSupabaseServiceRoleClient();
     let userId: string | undefined = undefined;
     let isAnonymous = true;
 

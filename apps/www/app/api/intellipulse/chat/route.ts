@@ -15,7 +15,7 @@ import {
   OpenRouterProviderOptions,
 } from "@openrouter/ai-sdk-provider";
 import { createGroq } from "@ai-sdk/groq";
-import { createSupabaseServerClient } from "@/lib/supabase/server";
+import {createSupabaseServiceRoleClient} from "@/lib/supabase/server";
 import {
   convertToCoreMessages,
   createDataStream,
@@ -132,7 +132,7 @@ export async function POST(req: Request) {
 
     // Handle authentication if authorization header is present
     if (authorization) {
-      const supabase = await createSupabaseServerClient();
+      const supabase = await createSupabaseServiceRoleClient();
       const {
         data: { user },
         error: authError,

@@ -1,8 +1,8 @@
-import { createSupabaseServerClient } from "@/lib/supabase/server";
+import {createSupabaseServiceRoleClient} from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
 
 export async function DELETE(req: Request) {
-  const supabase = await createSupabaseServerClient();
+  const supabase = await createSupabaseServiceRoleClient();
 
   let userId = null;
   const authorization = req.headers.get("Authorization");
