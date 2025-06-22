@@ -79,7 +79,7 @@ const ChatApp: React.FC = () => {
                     width={1200}
                     height={800}
                     className="w-full h-auto object-cover"
-                    src="/assets/hero.png"
+                    src="/assets/hero-blow.png"
                     unoptimized={true}
                   />
                 </div>

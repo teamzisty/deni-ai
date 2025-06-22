@@ -11,6 +11,10 @@ supabase/.temp
 # API (in progress)
 apps/api
 
+# backup
+
+/www
+
 # Cache
 apps/docs/docs/.vitepress/cache
 
