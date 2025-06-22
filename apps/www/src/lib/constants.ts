@@ -17,6 +17,12 @@ export const loading_words = [
   "Filling the missing pieces...",
 ];
 
+export const ERROR_MAPPING: Record<string, string> = {
+  "common.invalid_request": "Oops, something went wrong with your request.",
+  "common.internal_error": "Oops, we are experiencing an issue.",
+  "chat.model_limit_reached": "You've reached your usage limit for this model.",
+};
+
 export const PREMIUM_USES_LIMIT = 30; // Default is 30 per day
 
 export type ModelFeature =

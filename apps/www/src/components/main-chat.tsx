@@ -4,8 +4,8 @@ import { Message, useChat, UseChatOptions } from "@ai-sdk/react";
 import { useEffect, useRef, useState, useCallback, useMemo, memo } from "react";
 import ChatInput from "./chat/input";
 import { redirect, useRouter } from "next/navigation";
-import { Loader2 } from "lucide-react";
-import { loading_words } from "@/lib/constants";
+import { AlertTriangle, Loader2 } from "lucide-react";
+import { ERROR_MAPPING, loading_words } from "@/lib/constants";
 import Messages from "./chat/messages";
 import { Conversation } from "@/lib/conversations";
 import { useConversations } from "@/hooks/use-conversations";
@@ -106,6 +106,7 @@ const MainChat = memo<MainChatProps>(
     const {
       messages,
       setMessages,
+      error,
       data,
       handleSubmit,
       handleInputChange,
@@ -208,7 +209,7 @@ const MainChat = memo<MainChatProps>(
             >
               {welcomeMessage}
             </h1>
-            {ssUserData?.plan != "free" && (
+            {ssUserData?.plan && ssUserData?.plan != "free" && (
               <span className="font-semibold">
                 <span className="bg-gradient-to-r from-pink-400 to-sky-500 bg-clip-text text-transparent capitalize">
                   {ssUserData?.plan}
@@ -220,6 +221,21 @@ const MainChat = memo<MainChatProps>(
         )}
         <div className="flex-1 overflow-y-auto" ref={messagesRef}>
           <Messages messages={messages} />
+          {error && (
+            <div className="flex items-center gap-2 p-4 pl-0 w-full max-w-4xl mx-auto">
+              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-destructive/15">
+                <AlertTriangle className="h-4 w-4 text-destructive" />
+              </div>
+              <div className="flex-1">
+                <h3 className="text-sm font-medium text-destructive">
+                  Something went wrong
+                </h3>
+                <p className="text-sm text-muted-foreground">
+                  {ERROR_MAPPING[error.message] || error.message}
+                </p>
+              </div>
+            </div>
+          )}
           {status === "submitted" && (
             <div className="flex items-center p-4 w-full max-w-4xl mx-auto text-sm">
               <Loader2 className="animate-spin" />

@@ -1,54 +1,60 @@
-'use client'
+"use client";
 
-import { cn } from '@workspace/ui/lib/utils'
-import { supabase } from '@/lib/supabase'
-import { Button } from '@workspace/ui/components/button'
+import { cn } from "@workspace/ui/lib/utils";
+import { supabase } from "@/lib/supabase";
+import { Button } from "@workspace/ui/components/button";
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-} from '@workspace/ui/components/card'
-import { Input } from '@workspace/ui/components/input'
-import { Label } from '@workspace/ui/components/label'
-import Link from 'next/link'
-import { useRouter } from 'next/navigation'
-import { useState } from 'react'
+} from "@workspace/ui/components/card";
+import { Input } from "@workspace/ui/components/input";
+import { Label } from "@workspace/ui/components/label";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useState } from "react";
+import { SiGoogle, SiRefinedgithub } from "@icons-pack/react-simple-icons";
 
-export function LoginForm({ className, ...props }: React.ComponentPropsWithoutRef<'div'>) {
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
-  const [error, setError] = useState<string | null>(null)
-  const [isLoading, setIsLoading] = useState(false)
-  const router = useRouter()
+export function LoginForm({
+  className,
+  ...props
+}: React.ComponentPropsWithoutRef<"div">) {
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const router = useRouter();
 
   const handleLogin = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setIsLoading(true)
-    setError(null)
+    e.preventDefault();
+    setIsLoading(true);
+    setError(null);
 
     try {
       const { error } = await supabase.auth.signInWithPassword({
         email,
         password,
-      })
-      if (error) throw error
+      });
+      if (error) throw error;
       // Update this route to redirect to an authenticated route. The user already has an active session.
-      router.push('/protected')
+      router.push("/chat");
     } catch (error: unknown) {
-      setError(error instanceof Error ? error.message : 'An error occurred')
+      setError(error instanceof Error ? error.message : "An error occurred");
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
-  }
+  };
 
   return (
-    <div className={cn('flex flex-col gap-6', className)} {...props}>
+    <div className={cn("flex flex-col gap-6", className)} {...props}>
       <Card>
         <CardHeader>
           <CardTitle className="text-2xl">Login</CardTitle>
-          <CardDescription>Enter your email below to login to your account</CardDescription>
+          <CardDescription>
+            Enter your email below to login to your account
+          </CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleLogin}>
@@ -84,12 +90,50 @@ export function LoginForm({ className, ...props }: React.ComponentPropsWithoutRe
               </div>
               {error && <p className="text-sm text-red-500">{error}</p>}
               <Button type="submit" className="w-full" disabled={isLoading}>
-                {isLoading ? 'Logging in...' : 'Login'}
+                {isLoading ? "Logging in..." : "Login"}
               </Button>
             </div>
+            {/* Provider login options */}
+            <div className="mt-4 flex flex-col gap-4 text-center text-sm text-muted-foreground">
+              Or login with{" "}
+              <div className="flex justify-center gap-2 items-center w-full">
+                <Button
+                  onClick={() =>
+                    supabase.auth.signInWithOAuth({
+                      provider: "github",
+                      options: { redirectTo: `${window.location.origin}/chat` },
+                    })
+                  }
+                  type="button"
+                  className="w-full"
+                  variant="secondary"
+                >
+                  <SiRefinedgithub />
+                  GitHub
+                </Button>
+
+                <Button
+                  onClick={() =>
+                    supabase.auth.signInWithOAuth({
+                      provider: "google",
+                      options: { redirectTo: `${window.location.origin}/chat` },
+                    })
+                  }
+                  type="button"
+                  className="w-full"
+                  variant="secondary"
+                >
+                  <SiGoogle />
+                  Google
+                </Button>
+              </div>
+            </div>
             <div className="mt-4 text-center text-sm">
-              Don&apos;t have an account?{' '}
-              <Link href="/auth/sign-up" className="underline underline-offset-4">
+              Don&apos;t have an account?{" "}
+              <Link
+                href="/auth/sign-up"
+                className="underline underline-offset-4"
+              >
                 Sign up
               </Link>
             </div>
@@ -97,5 +141,5 @@ export function LoginForm({ className, ...props }: React.ComponentPropsWithoutRe
         </CardContent>
       </Card>
     </div>
-  )
+  );
 }

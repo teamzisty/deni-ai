@@ -19,8 +19,8 @@ console.time("build time");
 
 // Build command with optional turbopack flag
 const buildCommand = useTurbopack
-  ? "pnpm run build --turbopack"
-  : "pnpm run build";
+  ? "bun run build --turbopack"
+  : "bun run build";
 const logs = [
   `===== Starting build in ${buildDir} =====`,
   `Using command: ${buildCommand}`,

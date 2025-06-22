@@ -14,7 +14,7 @@ import { groq } from "@ai-sdk/groq";
 import {
   appendResponseMessages,
   convertToCoreMessages,
-  createDataStreamResponse,
+  created_ataStreamResponse,
   generateText,
   LanguageModelV1,
   streamText,
@@ -34,8 +34,15 @@ export async function POST(request: Request) {
     return new Response("common.invalid_request", { status: 400 });
   }
 
-  const { id, messages, model: _model, thinkingEffort, canvas: enableCanvas, search: enableSearch, researchMode } = body;
-  console.log(thinkingEffort)
+  const {
+    id,
+    messages,
+    model: _model,
+    thinkingEffort,
+    canvas: enableCanvas,
+    search: enableSearch,
+    researchMode,
+  } = body;
   const model = models[_model];
   if (!model) {
     return new Response("common.invalid_request", { status: 400 });
@@ -67,9 +74,13 @@ export async function POST(request: Request) {
   }
 
   const coreMessages = convertToCoreMessages(messages);
-  const canUse = await canUseModel(user!.id, _model);
-  if (!canUse) {
-    return new Response("chat.model_limit_reached", { status: 403 });
+  try {
+    const canUse = await canUseModel(user!.id, _model);
+    if (!canUse) {
+      return new Response("chat.model_limit_reached", { status: 403 });
+    }
+  } catch (error) {
+    return new Response("common.internal_error", { status: 500 });
   }
 
   // Only fetch conversation if we need to check the title
@@ -78,13 +89,20 @@ export async function POST(request: Request) {
   let titleGeneration: Promise<string> | undefined;
 
   if (id) {
-    const conversation = await getConversation(id);
-    if (!conversation) {
-      return new Response("common.invalid_request", { status: 404 });
-    }
+    try {
+      const conversation = await getConversation(id);
+      if (!conversation) {
+        return new Response("common.invalid_request", { status: 404 });
+      }
 
-    shouldGenerateTitle =
-      conversation.title === "New Session" && coreMessages.length > 0;
+      shouldGenerateTitle =
+        conversation.title === "New Session" && coreMessages.length > 0;
+    } catch (error) {
+      console.error("Error fetching conversation:", error);
+      return new Response("common.internal_error", { status: 500 });
+    }
+  } else {
+    return new Response("common.invalid_request", { status: 404 });
   }
 
   if (shouldGenerateTitle) {
@@ -129,7 +147,7 @@ export async function POST(request: Request) {
     : 0;
 
   // Process the chat request here
-  return createDataStreamResponse({
+  return created_ataStreamResponse({
     execute: async (dataStream) => {
       // Send title when it's ready
       if (shouldGenerateTitle && titleGeneration) {
@@ -145,9 +163,10 @@ export async function POST(request: Request) {
         tools.search = {
           ...baseSearch,
           execute: async (params: any, options: any) => {
-            const depth = researchMode !== "disabled" ? researchMode : undefined;
+            const depth =
+              researchMode !== "disabled" ? researchMode : undefined;
             return baseSearch.execute({ ...params, depth }, options);
-          }
+          },
         };
       }
       if (enableCanvas) {
@@ -158,14 +177,18 @@ export async function POST(request: Request) {
       let systemPrompt = "";
       if (researchMode !== "disabled") {
         const researchPrompts = {
-          shallow: "You are a research assistant. When asked questions, use web search to find current, accurate information. Provide 1-2 search queries to find relevant information. Focus on finding the most relevant and recent sources.",
+          shallow:
+            "You are a research assistant. When asked questions, use web search to find current, accurate information. Provide 1-2 search queries to find relevant information. Focus on finding the most relevant and recent sources.",
           deep: "You are a comprehensive research assistant. When asked questions, conduct thorough research using web search. Use 2-4 strategic search queries to gather information from multiple perspectives. Cross-reference sources and provide detailed, well-sourced answers.",
-          deeper: "You are an expert research analyst. When asked questions, conduct extensive research using web search. Use 3-6 targeted search queries to explore the topic comprehensively. Analyze information from multiple authoritative sources, identify potential biases, and provide nuanced, well-supported conclusions with proper attribution."
+          deeper:
+            "You are an expert research analyst. When asked questions, conduct extensive research using web search. Use 3-6 targeted search queries to explore the topic comprehensively. Analyze information from multiple authoritative sources, identify potential biases, and provide nuanced, well-supported conclusions with proper attribution.",
         };
-        systemPrompt = researchPrompts[researchMode as keyof typeof researchPrompts] || researchPrompts.deep;
+        systemPrompt =
+          researchPrompts[researchMode as keyof typeof researchPrompts] ||
+          researchPrompts.deep;
       }
 
-      const enhancedMessages = systemPrompt 
+      const enhancedMessages = systemPrompt
         ? [{ role: "system" as const, content: systemPrompt }, ...coreMessages]
         : coreMessages;
 

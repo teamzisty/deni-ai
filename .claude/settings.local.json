@@ -1,8 +1,8 @@
 {
   "permissions": {
     "allow": [
-      "Bash(pnpm typecheck:*)",
-      "Bash(pnpm build:*)",
+      "Bash(bun typecheck:*)",
+      "Bash(bun build:*)",
       "Bash(rg:*)",
       "Bash(grep:*)",
       "Bash(find:*)"

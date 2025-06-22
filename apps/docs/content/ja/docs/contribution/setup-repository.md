@@ -7,7 +7,7 @@ description: このページでは、Deni AI へ貢献するためにレポジ�
 
 このレポジトリはmonorepo構造になっています。
 
-- [pnpm](https://pnpm.io/) と [Workspaces](https://pnpm.io/docs/install/workspaces) 機能を開発のために利用しています。
+- [bun](https://bun.io/) と [Workspaces](https://bun.io/docs/install/workspaces) 機能を開発のために利用しています。
 - [Turborepo](https://turbo.build/repo/) をビルドシステムに利用しています。
 - [Next.js](https://nextjs.org/) をメインアプリ (apps/www) のフレームワークに利用しています。
 - [Docusaurus](https://docusaurus.io/) をドキュメント (apps/docs) のフレームワークに利用しています。
@@ -54,7 +54,7 @@ git checkout -b <your-branch-name>
 ### 依存関係をインストール
 
 ```bash
-pnpm install
+bun install
 ```
 
 ### ローカルで実行
@@ -62,7 +62,7 @@ pnpm install
 Deni AI のアプリケーションのみを実行するには、以下のコマンドを使用してください。
 
 ```bash
-pnpm --filter=www dev
+bun --filter=www dev
 ```
 
 ### コミットの条件

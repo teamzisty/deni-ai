@@ -1,38 +1,42 @@
-'use client'
+"use client";
 
-import { cn } from '@workspace/ui/lib/utils'
-import { supabase } from '@/lib/supabase'
-import { Button } from '@workspace/ui/components/button'
+import { cn } from "@workspace/ui/lib/utils";
+import { supabase } from "@/lib/supabase";
+import { Button } from "@workspace/ui/components/button";
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-} from '@workspace/ui/components/card'
-import { Input } from '@workspace/ui/components/input'
-import { Label } from '@workspace/ui/components/label'
-import Link from 'next/link'
-import { useRouter } from 'next/navigation'
-import { useState } from 'react'
+} from "@workspace/ui/components/card";
+import { Input } from "@workspace/ui/components/input";
+import { Label } from "@workspace/ui/components/label";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useState } from "react";
+import { SiRefinedgithub, SiGoogle } from "@icons-pack/react-simple-icons";
 
-export function SignUpForm({ className, ...props }: React.ComponentPropsWithoutRef<'div'>) {
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
-  const [repeatPassword, setRepeatPassword] = useState('')
-  const [error, setError] = useState<string | null>(null)
-  const [isLoading, setIsLoading] = useState(false)
-  const router = useRouter()
+export function SignUpForm({
+  className,
+  ...props
+}: React.ComponentPropsWithoutRef<"div">) {
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [repeatPassword, setRepeatPassword] = useState("");
+  const [error, setError] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const router = useRouter();
 
   const handleSignUp = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setIsLoading(true)
-    setError(null)
+    e.preventDefault();
+    setIsLoading(true);
+    setError(null);
 
     if (password !== repeatPassword) {
-      setError('Passwords do not match')
-      setIsLoading(false)
-      return
+      setError("Passwords do not match");
+      setIsLoading(false);
+      return;
     }
 
     try {
@@ -40,20 +44,20 @@ export function SignUpForm({ className, ...props }: React.ComponentPropsWithoutR
         email,
         password,
         options: {
-          emailRedirectTo: `${window.location.origin}/protected`,
+          emailRedirectTo: `${window.location.origin}/chat`,
         },
-      })
-      if (error) throw error
-      router.push('/auth/sign-up-success')
+      });
+      if (error) throw error;
+      router.push("/auth/sign-up-success");
     } catch (error: unknown) {
-      setError(error instanceof Error ? error.message : 'An error occurred')
+      setError(error instanceof Error ? error.message : "An error occurred");
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
-  }
+  };
 
   return (
-    <div className={cn('flex flex-col gap-6', className)} {...props}>
+    <div className={cn("flex flex-col gap-6", className)} {...props}>
       <Card>
         <CardHeader>
           <CardTitle className="text-2xl">Sign up</CardTitle>
@@ -99,11 +103,39 @@ export function SignUpForm({ className, ...props }: React.ComponentPropsWithoutR
               </div>
               {error && <p className="text-sm text-red-500">{error}</p>}
               <Button type="submit" className="w-full" disabled={isLoading}>
-                {isLoading ? 'Creating an account...' : 'Sign up'}
+                {isLoading ? "Creating an account..." : "Sign up"}
               </Button>
             </div>
+            <div className="mt-4 flex flex-col gap-4 text-center text-sm text-muted-foreground">
+              Or sign up with{" "}
+              <div className="flex justify-center gap-2 items-center w-full">
+                <Button
+                  onClick={() =>
+                    supabase.auth.signInWithOAuth({ provider: "github" })
+                  }
+                  type="button"
+                  className="w-full"
+                  variant="secondary"
+                >
+                  <SiRefinedgithub />
+                  GitHub
+                </Button>
+
+                <Button
+                  onClick={() =>
+                    supabase.auth.signInWithOAuth({ provider: "google" })
+                  }
+                  type="button"
+                  className="w-full"
+                  variant="secondary"
+                >
+                  <SiGoogle />
+                  Google
+                </Button>
+              </div>
+            </div>
             <div className="mt-4 text-center text-sm">
-              Already have an account?{' '}
+              Already have an account?{" "}
               <Link href="/auth/login" className="underline underline-offset-4">
                 Login
               </Link>
@@ -112,5 +144,5 @@ export function SignUpForm({ className, ...props }: React.ComponentPropsWithoutR
         </CardContent>
       </Card>
     </div>
-  )
+  );
 }

@@ -7,7 +7,7 @@ category: "docs"
 ## Prerequisites
 
 - Node.js (v18.18.0) or later
-- Latest version of pnpm
+- Latest version of bun
 - (Optional) Supabase project setup (For Supabase setup, see "Supabase Setup" below)
 - (Optional) Brave Search API key (used for search)
 - (Optional) Uploadthing token (used for image uploads)
@@ -28,7 +28,7 @@ cd deni-ai
 - Install dependencies:
 
 ```bash
-pnpm install
+bun install
 ```
 
 ## Local Setup
@@ -47,7 +47,7 @@ cp .env.example .env.local
 - Start the development server:
 
 ```bash
-pnpm dev
+bun dev
 ```
 
 ## Deploy to Vercel

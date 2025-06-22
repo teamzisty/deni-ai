@@ -5,34 +5,34 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## Development Commands
 
 ### Core Commands (from repository root)
-- `pnpm dev` - Start all applications in development mode
-- `pnpm build` - Build all applications for production
-- `pnpm lint` - Lint all applications
-- `pnpm format` - Format code with Prettier
+- `bun dev` - Start all applications in development mode
+- `bun build` - Build all applications for production
+- `bun lint` - Lint all applications
+- `bun format` - Format code with Prettier
 
 ### Main Web App (`apps/www/`)
-- `pnpm dev` - Start development server with Turbopack
-- `pnpm build` - Fast production build (no linting)
-- `pnpm build:full` - Full production build with linting
-- `pnpm typecheck` - Run TypeScript type checking
-- `pnpm lint` - Run ESLint
-- `pnpm lint:fix` - Auto-fix ESLint issues
+- `bun dev` - Start development server with Turbopack
+- `bun build` - Fast production build (no linting)
+- `bun build:full` - Full production build with linting
+- `bun typecheck` - Run TypeScript type checking
+- `bun lint` - Run ESLint
+- `bun lint:fix` - Auto-fix ESLint issues
 
 ### API App (`apps/api/`) - Port 5100
-- `pnpm dev` - Development server
-- `pnpm build` - Production build
+- `bun dev` - Development server
+- `bun build` - Production build
 
 ### Docs App (`apps/docs/`) - Port 3001
-- `pnpm dev` - Development server
-- `pnpm build:full` - Full build with linting
+- `bun dev` - Development server
+- `bun build:full` - Full build with linting
 
 ## Architecture Overview
 
 ### Monorepo Structure
-- **Technology**: Turborepo with pnpm workspaces
+- **Technology**: Turborepo with bun workspaces
 - **Node Version**: >=20 required
 - **TypeScript**: v5.8.3 (strict mode)
-- **Package Manager**: pnpm v10.11.1
+- **Package Manager**: bun v1.2.17
 
 ### Key Applications
 1. **`apps/www/`** - Main Next.js web application (v4.1.0)
@@ -166,9 +166,9 @@ REDIS_URL=
 ## Testing and Quality Assurance
 
 ### Pre-commit Checks
-- Run `pnpm typecheck` for TypeScript errors
-- Run `pnpm lint` for code quality
-- Test build process with `pnpm build`
+- Run `bun typecheck` for TypeScript errors
+- Run `bun lint` for code quality
+- Test build process with `bun build`
 - Verify database migrations work correctly
 
 ### Performance Monitoring

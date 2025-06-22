@@ -54,6 +54,11 @@ const navigationLinks = [
     type: "description",
     items: [
       {
+        href: "/more/student",
+        label: "Student",
+        description: "Learn student benefits and how to apply.",
+      },
+      {
         href: "/more/contributors",
         label: "Contributors",
         description: "Meet the people behind the project.",
@@ -169,7 +174,7 @@ export default function Component() {
           {/* Main nav */}
           <div className="flex items-center gap-6">
             <a
-              href="#"
+              href="/"
               className="text-foreground hover:text-foreground/80 transition-colors duration-200"
             >
               <Logo />

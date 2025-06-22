@@ -83,7 +83,7 @@ export function UserDropdownMenu() {
               <div className="flex flex-col space-y-2 w-full">
                 <span className="text-muted-foreground">
                   Your Plan:{" "}
-                  {ssUserData?.plan != "free" ? (
+                  {ssUserData?.plan && ssUserData?.plan != "free" ? (
                     <span className="bg-gradient-to-r from-pink-400 to-sky-500 bg-clip-text text-transparent capitalize">
                       {ssUserData?.plan}
                     </span>

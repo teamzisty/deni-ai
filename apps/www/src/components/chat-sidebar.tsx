@@ -12,7 +12,7 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@workspace/ui/components/sidebar";
-import { Loader2, MessageCircle, Trash2 } from "lucide-react";
+import { Bot, Loader2, MessageCircle, Trash2 } from "lucide-react";
 import Link, { useLinkStatus } from "next/link";
 import {
   ContextMenu,
@@ -47,7 +47,12 @@ export function ChatContextMenu({
   const router = useRouter();
   const [open, setOpen] = React.useState(false);
   const [newName, setNewName] = React.useState("");
-  const { conversations, deleteConversation, updateConversation, updateConversationTitle } = useConversations();
+  const {
+    conversations,
+    deleteConversation,
+    updateConversation,
+    updateConversationTitle,
+  } = useConversations();
 
   useEffect(() => {
     const conversation = conversations.find(
@@ -58,7 +63,7 @@ export function ChatContextMenu({
     } else {
       setNewName("");
     }
-  }, [])
+  }, []);
 
   const handleDeleteChat = async () => {
     try {
@@ -185,6 +190,15 @@ export function ChatSidebar() {
                     <MessageCircle />
                   )}
                   New Chat
+                </Button>
+              </SidebarMenuItem>
+
+              <SidebarMenuItem>
+                <Button className="w-full" variant={"secondary"} asChild>
+                  <Link href="/bots">
+                    <Bot />
+                    Bots
+                  </Link>
                 </Button>
               </SidebarMenuItem>
             </SidebarMenu>

@@ -62,6 +62,14 @@ export function Footer() {
             <ul className="space-y-2 text-sm text-muted-foreground">
               <li>
                 <Link
+                  href="/more/student"
+                  className="hover:text-foreground hover:underline hover:underline-offset-4 transition-colors duration-200"
+                >
+                  Student
+                </Link>
+              </li>
+              <li>
+                <Link
                   href="/more/contributors"
                   className="hover:text-foreground hover:underline hover:underline-offset-4 transition-colors duration-200"
                 >
