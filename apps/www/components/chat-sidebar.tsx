@@ -542,7 +542,7 @@ export function ChatSidebar() {
           <div className="flex items-center gap-2">
             <div className="flex items-center gap-2">
               <Link
-                href="/"
+                href="/chat/home"
                 className="text-xl font-bold transition-all hover:text-muted-foreground group-data-[collapsible=icon]:hidden flex items-center"
               >
                 Deni AI

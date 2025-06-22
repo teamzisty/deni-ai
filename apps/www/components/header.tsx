@@ -77,7 +77,7 @@ export function Header() {
       dropdown: false,
     },
     {
-      href: "",
+      href: "/chat/home",
       label: t("header.app"),
       dropdown: false,
     },
@@ -149,7 +149,7 @@ export function Header() {
         <div className="flex items-center gap-2">
           <LanguageSwitcher />
 
-          <Link href="/" className="hidden md:flex">
+          <Link href="/chat/home" className="hidden md:flex">
             <Button variant="default" size="sm">
               {t("header.app")}
             </Button>
@@ -220,7 +220,7 @@ export function Header() {
 
                   <div className="pt-4 mt-4 border-t border-border">
                     <Button variant="default" asChild className="w-full">
-                      <Link href="/" onClick={() => setIsOpen(false)}>
+                      <Link href="/chat/home" onClick={() => setIsOpen(false)}>
                         {t("header.app")}
                       </Link>
                     </Button>

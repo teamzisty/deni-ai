@@ -33,16 +33,16 @@ const ChatApp: React.FC = () => {
         <div className="w-full lg:max-w-3/4 lg:my-8 mx-auto">
           {/* Hero Section */}
           <div className="w-full border">
-            <div className="relative overflow-hidden bg-black border-b border-neutral-800 mb-5">
+            <div className="relative overflow-hidden bg-black border-b border-border mb-5">
               <div className="absolute inset-0 bg-grid-small-white/[0.2] bg-grid-small-white/[0.2]" />
               <div className="absolute inset-0 flex items-center justify-center">
                 <div className="h-[40rem] w-[40rem] rounded-full bg-[radial-gradient(circle_farthest-side,rgba(255,0,182,.15),rgba(255,255,255,0))]"></div>
               </div>
               <div className="flex items-center pt-24 animate-show flex-col w-full max-w-7xl m-auto px-6 lg:px-8 pb-24 relative z-10">
-                <h1 className="px-1 text-center text-5xl font-bold tracking-tight pb-4 sm:text-6xl md:text-7xl md:px-0">
+                <h1 className="px-1 text-center text-5xl font-bold tracking-tight pb-4 sm:text-6xl md:text-7xl md:px-0 text-white">
                   {t("title")}
                 </h1>
-                <p className="mx-auto mt-6 max-w-2xl text-center text-xl md:text-2xl text-neutral-400">
+                <p className="mx-auto mt-6 max-w-2xl text-center text-xl md:text-2xl text-muted-foreground">
                   {t("subtitle")}
                 </p>
                 <div className="flex flex-col sm:flex-row gap-4 mt-10">
@@ -61,7 +61,7 @@ const ChatApp: React.FC = () => {
                   <Button
                     variant="outline"
                     size="lg"
-                    className="h-12 px-8 font-medium rounded-full border-neutral-700 hover:bg-neutral-800 text-neutral-200"
+                    className="h-12 px-8 font-medium rounded-full"
                   >
                     <Link href="https://docs.deniai.app">Docs</Link>
                   </Button>
