@@ -1,7 +1,7 @@
 import { createUploadthing, type FileRouter } from "uploadthing/next";
 import { UploadThingError } from "uploadthing/server";
 import {
-  createSupabaseServerClient,
+  createSupabaseServiceRoleClient,
   notAvailable,
 } from "@/lib/supabase/server";
 import { User } from "@supabase/supabase-js";
