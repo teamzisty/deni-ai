@@ -158,10 +158,6 @@ export const useAuth = (options: UseAuthOptions = {}) => {
 
   useEffect(() => {
     if (!authRequired || context.isLoading) return;
-
-    if (!context.session?.user && typeof window !== "undefined") {
-      router.push("/login");
-    }
   }, [context.session, context.isLoading, authRequired, router]);
 
   return context;
