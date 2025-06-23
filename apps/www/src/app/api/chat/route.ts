@@ -14,7 +14,7 @@ import { groq } from "@ai-sdk/groq";
 import {
   appendResponseMessages,
   convertToCoreMessages,
-  created_ataStreamResponse,
+  createDataStreamResponse,
   generateText,
   LanguageModelV1,
   streamText,
@@ -147,7 +147,7 @@ export async function POST(request: Request) {
     : 0;
 
   // Process the chat request here
-  return created_ataStreamResponse({
+  return createDataStreamResponse({
     execute: async (dataStream) => {
       // Send title when it's ready
       if (shouldGenerateTitle && titleGeneration) {

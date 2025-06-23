@@ -37,13 +37,12 @@ const MemoizedMarkdownBlock = memo(
   ({ content }: { content: string }) => {
     return (
       <ReactMarkdown
-        key={content}
         components={{
-          code: CodeBlock as Components["code"],
-          pre: Pre as Components["pre"],
+          code: CodeBlock,
+          pre: Pre,
         }}
-        remarkPlugins={remarkPlugins}
-        rehypePlugins={rehypePlugins}
+        remarkPlugins={[remarkGfm, remarkMath]}
+        rehypePlugins={[rehypeKatex]}
       >
         {content}
       </ReactMarkdown>
@@ -57,21 +56,14 @@ const MemoizedMarkdownBlock = memo(
 
 MemoizedMarkdownBlock.displayName = "MemoizedMarkdownBlock";
 
+
 export const MemoizedMarkdown = memo(
   ({ content, id }: { content: string; id: string }) => {
-    return (
-      <ReactMarkdown
-        key={id}
-        components={{
-          code: CodeBlock as Components["code"],
-          pre: Pre as Components["pre"],
-        }}
-        remarkPlugins={remarkPlugins}
-        rehypePlugins={rehypePlugins}
-      >
-        {content}
-      </ReactMarkdown>
-    );
+    const blocks = useMemo(() => parseMarkdownIntoBlocks(content), [content]);
+
+    return blocks.map((block, index) => (
+      <MemoizedMarkdownBlock content={block} key={`${id}-block_${index}`} />
+    ));
   },
 );
 
