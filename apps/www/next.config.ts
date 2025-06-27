@@ -11,17 +11,8 @@ const nextConfig: NextConfig = {
   },
   experimental: {
     optimizePackageImports: ['@ai-sdk/openai', '@ai-sdk/anthropic', '@ai-sdk/google', '@ai-sdk/xai', '@ai-sdk/groq'],
-    serverComponentsExternalPackages: ['marked'],
   },
-  webpack: (config, { isServer }) => {
-    if (!isServer) {
-      config.resolve.fallback = {
-        ...config.resolve.fallback,
-        fs: false,
-      };
-    }
-    return config;
-  },
+  serverExternalPackages: ["marked"]
 };
 
 export default nextConfig;

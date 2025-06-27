@@ -1,5 +1,5 @@
 import {
-    Conversation,
+  Conversation,
   ConversationSchema,
   createConversation,
   deleteAllConversations,
@@ -42,7 +42,16 @@ export async function PUT(req: Request) {
     );
   }
 
-  const conversation = await createConversation(userData.user.id);
+  let bot;
+  if (req.body) {
+    const body = await req.json();
+
+    if (body.bot) {
+      bot = body.bot;
+    }
+  }
+
+  const conversation = await createConversation(userData.user.id, bot);
   if (!conversation) {
     return NextResponse.json(
       {
@@ -71,7 +80,7 @@ export async function POST(req: Request) {
     );
   }
 
-  const body = await req.json() as Partial<Conversation>;
+  const body = (await req.json()) as Partial<Conversation>;
 
   const { id } = body;
   if (!id) {

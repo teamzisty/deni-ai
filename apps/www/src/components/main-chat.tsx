@@ -4,7 +4,7 @@ import { Message, useChat, UseChatOptions } from "@ai-sdk/react";
 import { useEffect, useRef, useState, useCallback, useMemo, memo } from "react";
 import ChatInput from "./chat/input";
 import { redirect, useRouter } from "next/navigation";
-import { AlertTriangle, Loader2 } from "lucide-react";
+import { AlertTriangle, Dot, Loader2 } from "lucide-react";
 import { ERROR_MAPPING, loading_words } from "@/lib/constants";
 import Messages from "./chat/messages";
 import { Conversation } from "@/lib/conversations";
@@ -12,6 +12,7 @@ import { useConversations } from "@/hooks/use-conversations";
 import { useSupabase } from "@/context/supabase-context";
 import { useUploadThing } from "@/lib/uploadthing";
 import { toast } from "sonner";
+import Link from "next/link";
 
 interface MainChatProps {
   initialConversation?: Conversation;
@@ -74,9 +75,11 @@ const MainChat = memo<MainChatProps>(
           headers: {
             Authorization: `Bearer ${authToken}`,
           },
+          sendExtraMessageFields: true,
           body: {
             id: initialConversation?.id || "",
             thinkingEffort,
+            botId: initialConversation?.bot?.id,
             model,
             canvas,
             search,
@@ -93,8 +96,6 @@ const MainChat = memo<MainChatProps>(
       [
         authToken,
         initialConversation?.id,
-        initialConversation?.messages,
-        initialInput,
         model,
         thinkingEffort,
         canvas,
@@ -105,7 +106,6 @@ const MainChat = memo<MainChatProps>(
 
     const {
       messages,
-      setMessages,
       error,
       data,
       handleSubmit,
@@ -165,17 +165,21 @@ const MainChat = memo<MainChatProps>(
       );
     }, []);
 
-    const handleImageUpload = useCallback(async (file: File) => {
-      if (!file) return;
+    const handleImageUpload = useCallback(
+      async (file: File) => {
+        if (!file) return;
 
-      try {
-        await startUpload([file]);
-      } catch (error) {
-        toast.error("Image upload failed", {
-          description: `Error occurred: ${error}`,
-        });
-      }
-    }, []);
+        try {
+          await startUpload([file]);
+        } catch (error) {
+          toast.error("Image upload failed", {
+            description: `Error occurred: ${error}`,
+          });
+        }
+      },
+      [startUpload],
+    );
+
 
     const welcomeMessage = useMemo(() => {
       if (researchMode !== "disabled") {
@@ -209,13 +213,21 @@ const MainChat = memo<MainChatProps>(
             >
               {welcomeMessage}
             </h1>
-            {ssUserData?.plan && ssUserData?.plan != "free" && (
+            {ssUserData?.plan && ssUserData?.plan !== "free" && (
               <span className="font-semibold">
                 <span className="bg-gradient-to-r from-pink-400 to-sky-500 bg-clip-text text-transparent capitalize">
                   {ssUserData?.plan}
                 </span>{" "}
                 Plan Active
               </span>
+            )}
+            {(!ssUserData?.plan ||
+              !ssUserData ||
+              ssUserData?.plan === "free") && (
+              <div className="flex items-center font-semibold text-sm">
+                Free Plan <Dot size={16} className="text-foreground" />{" "}
+                <Link href="/upgrade" className="text-blue-500 dark:text-blue-400 underline-offset-3 hover:underline">Upgrade Plan</Link>
+              </div>
             )}
           </div>
         )}
@@ -263,6 +275,12 @@ const MainChat = memo<MainChatProps>(
             handleImageUpload={handleImageUpload}
             isUploading={isUploading}
           />
+          {initialConversation?.bot && (
+            <div className="text-center text-sm mt-2 text-muted-foreground">
+              You are in bot session. To leave, create a new chat or select a
+              different conversation.
+            </div>
+          )}
         </div>
       </main>
     );

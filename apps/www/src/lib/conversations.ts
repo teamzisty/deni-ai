@@ -1,6 +1,6 @@
 import { Message, UIMessage } from "ai";
 import { createSupabaseServer } from "./supabase/server";
-import { Bot, BotSchema } from "./bot";
+import { BotSchema, ClientBot } from "./bot";
 import z from "zod/v4";
 
 export interface Conversation {
@@ -10,7 +10,7 @@ export interface Conversation {
     messages: UIMessage[];
     created_at: string;
     updated_at: string;
-    bot?: Bot;
+    bot?: ClientBot;
     parentSessionId?: string;
     branchName?: string;
     hub_id?: string;
@@ -29,7 +29,7 @@ export const ConversationSchema = z.object({
     hub_id: z.string().optional(),
 });
 
-export async function createConversation(userId: string): Promise<Conversation | null> {
+export async function createConversation(userId: string, bot?: ClientBot): Promise<Conversation | null> {
     const supabase = await createSupabaseServer();
     const { data, error } = await supabase
         .from("chat_sessions")
@@ -39,6 +39,7 @@ export async function createConversation(userId: string): Promise<Conversation |
             messages: [],
             created_at: new Date().toISOString(),
             updated_at: new Date().toISOString(),
+            bot,
         })
         .select("*")
         .single();

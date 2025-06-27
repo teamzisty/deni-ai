@@ -5,7 +5,11 @@
       "Bash(bun build:*)",
       "Bash(rg:*)",
       "Bash(grep:*)",
-      "Bash(find:*)"
+      "Bash(find:*)",
+      "Bash(bun:*)",
+      "Bash(npx supabase:*)",
+      "Bash(git add:*)",
+      "WebFetch(domain:ai.google.dev)"
     ],
     "deny": []
   }

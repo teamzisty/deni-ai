@@ -74,7 +74,7 @@ const ChatInput = memo<ChatInputProps>(
           }
         }
       },
-      [handleSubmit],
+      [handleSubmit, image, setImage],
     );
 
     return (
@@ -141,11 +141,9 @@ const ChatInput = memo<ChatInputProps>(
                   setSearch={setSearch}
                   researchMode={researchMode}
                   setResearchMode={setResearchMode}
-                  handleSubmit={handleSubmit}
                   input={input}
                   thinkingEffort={thinkingEffort}
                   setThinkingEffort={setThinkingEffort}
-                  image={image}
                   handleImageUpload={handleImageUpload}
                   isUploading={isUploading}
                 />

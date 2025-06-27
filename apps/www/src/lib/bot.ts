@@ -1,4 +1,5 @@
 import z from "zod/v4";
+import { createSupabaseServer } from "./supabase/server";
 
 export interface Bot {
   id: string;
@@ -36,3 +37,23 @@ export const BotSchema = z.object({
   created_at: z.string(),
   updated_at: z.string(),
 });
+
+export const getBot = async (id: string): Promise<Bot | null> => {
+  try {
+    const supabase = await createSupabaseServer();
+    const { data, error } = await supabase
+      .from("bots")
+      .select("*")
+      .eq("id", id)
+      .single();
+    if (error || !data) {
+      return null;
+    }
+    const bot = data as Bot;
+
+    return bot;
+  } catch (error) {
+    console.error("Error fetching bot:", error);
+    return null;
+  }
+};

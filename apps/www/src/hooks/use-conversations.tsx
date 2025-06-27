@@ -10,13 +10,12 @@ import React, {
 } from "react";
 import { Conversation } from "@/lib/conversations";
 import { supabase } from "@/lib/supabase/client";
-import { id } from "zod/v4/locales";
-
+import { ClientBot } from "@/lib/bot";
 interface ConversationsContextType {
   conversations: Conversation[];
   loading: boolean;
   error: string | null;
-  createConversation: () => Promise<Conversation | null>;
+  createConversation: (bot?: ClientBot, hubId?: string) => Promise<Conversation | null>;
   updateConversation: (
     id: string,
     data: Partial<Conversation>,
@@ -92,12 +91,16 @@ export function ConversationsProvider({
   }, [secureFetch]);
 
   const createConversation =
-    useCallback(async (): Promise<Conversation | null> => {
+    useCallback(async (bot?: ClientBot, hubId?: string): Promise<Conversation | null> => {
       setError(null);
 
       try {
         const response = await secureFetch("/api/conversations", {
           method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ bot, hub_id: hubId }),
         });
 
         if (!response.success) {

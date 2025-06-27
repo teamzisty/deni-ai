@@ -17,6 +17,15 @@ export const loading_words = [
   "Filling the missing pieces...",
 ];
 
+export const SYSTEM_PROMPT = [
+  "You are a helpful AI assistant on Deni AI. Your task is to assist users with their questions and provide accurate information based on the context provided.",
+  "",
+  "# Tools",
+  "You have access to the following tools:",
+  "- **Search**: Search the web for information.",
+  "- **Canvas**: Create and manipulate images.",
+].join("\n");
+
 export const ERROR_MAPPING: Record<string, string> = {
   "common.invalid_request": "Oops, something went wrong with your request.",
   "common.internal_error": "Oops, we are experiencing an issue.",

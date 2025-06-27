@@ -21,6 +21,19 @@ import {
 } from "ai";
 import { authCheck } from "@/lib/supabase/server";
 import { canUseModel, recordUsage } from "@/lib/usage";
+import z from "zod/v4";
+import { Bot, getBot } from "@/lib/bot";
+
+const chatRequestSchema = z.object({
+  id: z.string(),
+  messages: z.any(),
+  model: z.string(),
+  botId: z.string().optional(),
+  thinkingEffort: z.string().optional(),
+  canvas: z.boolean().optional(),
+  search: z.boolean().optional(),
+  researchMode: z.enum(["disabled", "shallow", "deep", "deeper"]),
+});
 
 export async function POST(request: Request) {
   const { user, success } = await authCheck(request);
@@ -34,23 +47,29 @@ export async function POST(request: Request) {
     return new Response("common.invalid_request", { status: 400 });
   }
 
+  const parsed = chatRequestSchema.safeParse(body);
+  if (!parsed.success) {
+    console.error("Invalid request body:", parsed.error);
+    return new Response("common.invalid_request", { status: 400 });
+  }
   const {
     id,
     messages,
+    botId,
     model: _model,
     thinkingEffort,
     canvas: enableCanvas,
     search: enableSearch,
     researchMode,
-  } = body;
+  } = parsed.data;
   const model = models[_model];
   if (!model) {
-    return new Response("common.invalid_request", { status: 400 });
+    return new Response("common.invalid_request", { status: 404 });
   }
   const modelId = model.id;
 
   let sdkModel: LanguageModelV1;
-  switch (models[_model]?.provider) {
+  switch (model.provider) {
     case "openai":
       sdkModel = openai.responses(modelId);
       break;
@@ -85,7 +104,7 @@ export async function POST(request: Request) {
 
   // Only fetch conversation if we need to check the title
   let shouldGenerateTitle = false;
-  let title: string | undefined;
+  let bot: Bot | undefined | null;
   let titleGeneration: Promise<string> | undefined;
 
   if (id) {
@@ -103,6 +122,18 @@ export async function POST(request: Request) {
     }
   } else {
     return new Response("common.invalid_request", { status: 404 });
+  }
+
+  if (botId) {
+    try {
+      bot = await getBot(botId);
+      if (!bot) {
+        return new Response("common.invalid_request", { status: 404 });
+      }
+    } catch (error) {
+      console.error("Error fetching bot:", error);
+      return new Response("common.internal_error", { status: 500 });
+    }
   }
 
   if (shouldGenerateTitle) {
@@ -127,7 +158,6 @@ export async function POST(request: Request) {
         "generates titles for conversations. simple and concise, no more than 5 words. no punctuation. no sorry, generate a title related user message.",
     })
       .then(async (generatedTitle) => {
-        title = generatedTitle.text;
         await updateConversation(id, {
           title: generatedTitle.text,
         });
@@ -175,6 +205,9 @@ export async function POST(request: Request) {
 
       // Add research-specific system prompts
       let systemPrompt = "";
+      if (bot && bot.system_instruction) {
+        systemPrompt = bot.system_instruction || "";
+      }
       if (researchMode !== "disabled") {
         const researchPrompts = {
           shallow:
@@ -188,12 +221,13 @@ export async function POST(request: Request) {
           researchPrompts.deep;
       }
 
-      const enhancedMessages = systemPrompt
-        ? [{ role: "system" as const, content: systemPrompt }, ...coreMessages]
-        : coreMessages;
+      coreMessages.unshift({
+        role: "system",
+        content: systemPrompt,
+      });
 
       const response = streamText({
-        messages: enhancedMessages,
+        messages: coreMessages,
         model: sdkModel,
         tools,
         toolCallStreaming: true,

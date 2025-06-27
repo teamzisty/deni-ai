@@ -18,16 +18,27 @@ import {
   TabsList,
   TabsTrigger,
 } from "@workspace/ui/components/tabs";
-import { BotIcon, Save, ArrowLeft, Verified } from "lucide-react";
+import {
+  BotIcon,
+  Save,
+  ArrowLeft,
+  Verified,
+  MessageCircleMore,
+  Loader2,
+} from "lucide-react";
 import { useSupabase } from "@/context/supabase-context";
 import { Bot, ClientBot } from "@/lib/bot";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
+import { useConversations } from "@/hooks/use-conversations";
 
 export default function BotPage() {
   const [bot, setBot] = useState<ClientBot | null>(null);
   const { user, secureFetch, loading } = useSupabase();
+  const { createConversation, loading: conversationLoading } =
+    useConversations();
   const [isLoading, setIsLoading] = useState(true);
+  const [isConversationCreating, setIsConversationCreating] = useState(false);
   const [editData, setEditData] = useState<
     Partial<
       ClientBot & {
@@ -120,7 +131,15 @@ export default function BotPage() {
     return user && bot && bot.created_by.id === user.id;
   };
 
-  if (isLoading || loading) {
+  const handleCreateBotChat = async () => {
+    setIsConversationCreating(true);
+    const conversation = await createConversation(bot!);
+    if (conversation) {
+      router.push(`/chat/${conversation.id}`);
+    }
+  };
+
+  if (isLoading || loading || conversationLoading) {
     return (
       <div className="container mx-auto p-4">
         <Card className="animate-pulse">
@@ -166,7 +185,7 @@ export default function BotPage() {
       <div className="w-full h-full flex justify-center items-center">
         <Card className="w-full max-w-2xl mx-auto">
           <Tabs defaultValue="view" className="w-full">
-            <TabsList className="w-[95%] mx-auto">
+            <TabsList className="w-[95%] mx-auto mb-4">
               <TabsTrigger value="view">View</TabsTrigger>
               {isAuthor() && <TabsTrigger value="edit">Edit</TabsTrigger>}
             </TabsList>
@@ -192,7 +211,7 @@ export default function BotPage() {
                   </p>
                 </CardDescription>
               </CardHeader>
-              <CardContent className="space-y-6 mt-10">
+              <CardContent className="space-y-6 mt-4">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center justify-center w-full gap-4 text-sm text-muted-foreground">
                     <div className="flex flex-col items-center h-full justify-between">
@@ -218,9 +237,14 @@ export default function BotPage() {
 
                 <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <Button
-                    onClick={() => router.push(`/chat?bot=${bot.id}`)}
-                    className="bg-blue-600 hover:bg-blue-700"
+                    onClick={handleCreateBotChat}
+                    disabled={!bot || isConversationCreating}
                   >
+                    {isConversationCreating ? (
+                      <Loader2 className="animate-spin w-4" />
+                    ) : (
+                      <MessageCircleMore />
+                    )}
                     Start Chat
                   </Button>
 
@@ -230,17 +254,21 @@ export default function BotPage() {
                 </div>
 
                 {bot.instructions && (
-                  <div className="space-y-3">
-                    {bot.instructions.map((example, index) => (
-                      <div
-                        key={index}
-                        className="border rounded-lg p-4 space-y-2"
-                      >
-                        <p className="text-sm text-blue-800">
-                          {example.content}
-                        </p>
-                      </div>
-                    ))}
+                  <div>
+                    <h3 className="text-lg font-semibold">Instructions</h3>
+                    <p className="text-sm text-muted-foreground mb-2">
+                      A prompt guide to help you interact with this bot.
+                    </p>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {bot.instructions.map((example, index) => (
+                        <div
+                          key={index}
+                          className="border rounded-lg p-4 space-y-2"
+                        >
+                          <p className="text-sm">{example.content}</p>
+                        </div>
+                      ))}
+                    </div>
                   </div>
                 )}
               </CardContent>
@@ -259,7 +287,7 @@ export default function BotPage() {
                     <Label htmlFor="edit-name">Name</Label>
                     <Input
                       id="edit-name"
-                      value={editData.name}
+                      value={editData.name || ""}
                       onChange={(e) =>
                         setEditData({ ...editData, name: e.target.value })
                       }
@@ -270,7 +298,7 @@ export default function BotPage() {
                     <Label htmlFor="edit-description">Description</Label>
                     <Textarea
                       id="edit-description"
-                      value={editData.description}
+                      value={editData.description || ""}
                       onChange={(e) =>
                         setEditData({
                           ...editData,
@@ -287,7 +315,7 @@ export default function BotPage() {
                     </Label>
                     <Textarea
                       id="edit-system-instruction"
-                      value={editData.system_instruction}
+                      value={editData.system_instruction || ""}
                       onChange={(e) =>
                         setEditData({
                           ...editData,
@@ -301,47 +329,50 @@ export default function BotPage() {
                   <div className="grid gap-2">
                     <Label htmlFor="edit-instructions">Instructions</Label>
                     <div className="space-y-2">
-                      {(editData.instructions || []).map(
-                        (instruction, index) => (
-                          <div key={index} className="flex gap-2">
-                            <Textarea
-                              value={instruction.content}
-                              onChange={(e) => {
-                                const newInstructions = [
-                                  ...(editData.instructions || []),
-                                ];
-                                if (!newInstructions[index]) {
-                                  newInstructions[index] = { content: "" };
-                                }
-                                newInstructions[index].content = e.target.value;
-                                setEditData({
-                                  ...editData,
-                                  instructions: newInstructions,
-                                });
-                              }}
-                              placeholder={`Instruction ${index + 1}`}
-                              rows={2}
-                              className="flex-1"
-                            />
-                            <Button
-                              type="button"
-                              variant="outline"
-                              size="sm"
-                              onClick={() => {
-                                const newInstructions = (
-                                  editData.instructions || []
-                                ).filter((_, i) => i !== index);
-                                setEditData({
-                                  ...editData,
-                                  instructions: newInstructions,
-                                });
-                              }}
-                            >
-                              Remove
-                            </Button>
-                          </div>
-                        ),
-                      )}
+                      {Array.isArray(editData.instructions) &&
+                        editData.instructions.length > 0 &&
+                        (editData.instructions || []).map(
+                          (instruction, index) => (
+                            <div key={index} className="flex gap-2">
+                              <Textarea
+                                value={instruction.content || ""}
+                                onChange={(e) => {
+                                  const newInstructions = [
+                                    ...(editData.instructions || []),
+                                  ];
+                                  if (!newInstructions[index]) {
+                                    newInstructions[index] = { content: "" };
+                                  }
+                                  newInstructions[index].content =
+                                    e.target.value;
+                                  setEditData({
+                                    ...editData,
+                                    instructions: newInstructions,
+                                  });
+                                }}
+                                placeholder={`Instruction ${index + 1}`}
+                                rows={2}
+                                className="flex-1"
+                              />
+                              <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                onClick={() => {
+                                  const newInstructions = (
+                                    editData.instructions || []
+                                  ).filter((_, i) => i !== index);
+                                  setEditData({
+                                    ...editData,
+                                    instructions: newInstructions,
+                                  });
+                                }}
+                              >
+                                Remove
+                              </Button>
+                            </div>
+                          ),
+                        )}
                       <Button
                         type="button"
                         variant="outline"
