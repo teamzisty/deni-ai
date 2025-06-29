@@ -13,6 +13,7 @@ import { useSupabase } from "@/context/supabase-context";
 import { useUploadThing } from "@/lib/uploadthing";
 import { toast } from "sonner";
 import Link from "next/link";
+import { BranchTree } from "./chat/branch-tree";
 
 interface MainChatProps {
   initialConversation?: Conversation;
@@ -232,7 +233,16 @@ const MainChat = memo<MainChatProps>(
           </div>
         )}
         <div className="flex-1 overflow-y-auto" ref={messagesRef}>
-          <Messages messages={messages} />
+          {/* Branch tree - only show if we have messages and a conversation */}
+          {messages.length > 0 && initialConversation?.id && (
+            <div className="w-full max-w-4xl mx-auto mb-4">
+              <BranchTree 
+                conversationId={initialConversation.id}
+                currentConversationId={initialConversation.id}
+              />
+            </div>
+          )}
+          <Messages messages={messages} conversationId={initialConversation?.id} />
           {error && (
             <div className="flex items-center gap-2 p-4 pl-0 w-full max-w-4xl mx-auto">
               <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-destructive/15">

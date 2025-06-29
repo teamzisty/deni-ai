@@ -12,6 +12,7 @@ import { Button } from "@workspace/ui/components/button";
 import { Globe, ExternalLink, ArrowRight, ArrowDown } from "lucide-react";
 import { motion } from "framer-motion";
 import { useCanvas } from "@/context/canvas-context";
+import { BranchButton } from "./branch-button";
 
 interface SearchResult {
   title: string;
@@ -26,6 +27,7 @@ interface SearchResult {
 
 interface MessageProps {
   message: UIMessage;
+  conversationId?: string;
 }
 
 function parseMarkdownIntoBlocks(markdown: string): string[] {
@@ -69,7 +71,7 @@ export const MemoizedMarkdown = memo(
 
 MemoizedMarkdown.displayName = "MemoizedMarkdown";
 
-const Message = memo<MessageProps>(({ message }) => {
+const Message = memo<MessageProps>(({ message, conversationId }) => {
   const [showSearchResults, setShowSearchResults] = useState(false);
   const [showReasoning, setShowReasoning] = useState(false);
   const { openCanvas } = useCanvas();
@@ -120,8 +122,14 @@ const Message = memo<MessageProps>(({ message }) => {
       );
     case "assistant":
       return (
-        <div className="flex items-start gap-4 mb-4">
-          <div className="prose prose-sm max-w-none">
+        <div className="flex items-start gap-4 mb-4 group">
+          <div className="prose prose-sm max-w-none flex-1">
+            {/* Branch button - only show if we have a conversationId */}
+            {conversationId && (
+              <div className="flex justify-end mb-2">
+                <BranchButton conversationId={conversationId} />
+              </div>
+            )}
             {/* Reasoning Section */}
             {message.parts.some((part) => part.type === "reasoning") && (
               <div className="mb-4 not-prose" key={message.id}>

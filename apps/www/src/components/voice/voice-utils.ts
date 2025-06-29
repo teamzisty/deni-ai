@@ -1,6 +1,6 @@
 export const generateSpeech = async (text: string): Promise<Blob> => {
   try {
-    const response = await fetch("/api/tts", {
+    const response = await fetch("/api/audio/tts", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -69,6 +69,13 @@ export const playAudioBlob = (audioBlob: Blob): Promise<void> => {
       return;
     }
 
+    // Validate blob has content and reasonable size
+    if (audioBlob.size < 100) {
+      console.warn("Audio blob suspiciously small, falling back to browser TTS");
+      reject(new Error("Invalid audio data"));
+      return;
+    }
+
     const audioUrl = URL.createObjectURL(audioBlob);
     const audio = new Audio();
     
@@ -87,9 +94,9 @@ export const playAudioBlob = (audioBlob: Blob): Promise<void> => {
     };
     
     audio.onerror = (e) => {
-      console.error("Audio playback error:", e);
+      console.error("Audio playback error:", e, "Audio error details:", audio.error);
       URL.revokeObjectURL(audioUrl);
-      reject(new Error(`Failed to play audio: ${audio.error?.message || 'Unknown error'}`));
+      reject(new Error(`Media resource error: ${audio.error?.message || 'Invalid media format or corrupted data'}`));
     };
 
     audio.onabort = () => {
@@ -98,9 +105,17 @@ export const playAudioBlob = (audioBlob: Blob): Promise<void> => {
     };
     
     // Set audio properties for better compatibility
-    audio.preload = "auto";
-    audio.crossOrigin = "anonymous";
-    audio.src = audioUrl;
+    audio.preload = "metadata"; // Change from "auto" to "metadata" for better compatibility
+    // Remove crossOrigin as it's not needed for blob URLs
+    
+    try {
+      audio.src = audioUrl;
+    } catch (error) {
+      console.error("Failed to set audio src:", error);
+      URL.revokeObjectURL(audioUrl);
+      reject(new Error(`Failed to set audio source: ${error}`));
+      return;
+    }
     
     // Try to play with error handling
     audio.play().catch((playError) => {

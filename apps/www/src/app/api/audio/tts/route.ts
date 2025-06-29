@@ -87,21 +87,67 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const audioBuffer = Buffer.from(audioData, "base64");
+    // Validate base64 data before processing
+    if (!audioData || typeof audioData !== 'string') {
+      console.error("Invalid audio data received from API");
+      return NextResponse.json(
+        { error: "Invalid audio data", fallback: true },
+        { status: 422 }
+      );
+    }
+
+    let audioBuffer;
+    try {
+      audioBuffer = Buffer.from(audioData, "base64");
+    } catch (error) {
+      console.error("Failed to decode base64 audio data:", error);
+      return NextResponse.json(
+        { error: "Failed to decode audio data", fallback: true },
+        { status: 422 }
+      );
+    }
+
+    // Validate buffer size
+    if (audioBuffer.length < 100) {
+      console.error("Audio buffer too small:", audioBuffer.length, "bytes");
+      return NextResponse.json(
+        { error: "Invalid audio data size", fallback: true },
+        { status: 422 }
+      );
+    }
     
     // Detect audio format from first few bytes and set appropriate content type
     let contentType = "audio/wav";
-    if (audioBuffer[0] === 0xFF && audioBuffer[1] === 0xFB) {
-      contentType = "audio/mp3";
-    } else if (audioBuffer[0] === 0x4F && audioBuffer[1] === 0x67) {
-      contentType = "audio/ogg";
+    if (audioBuffer.length >= 2) {
+      // MP3 signature
+      if (audioBuffer[0] === 0xFF && (audioBuffer[1] & 0xE0) === 0xE0) {
+        contentType = "audio/mpeg";
+      }
+      // WAV signature  
+      else if (audioBuffer[0] === 0x52 && audioBuffer[1] === 0x49 && 
+               audioBuffer[2] === 0x46 && audioBuffer[3] === 0x46) {
+        contentType = "audio/wav";
+      }
+      // OGG signature
+      else if (audioBuffer[0] === 0x4F && audioBuffer[1] === 0x67 && 
+               audioBuffer[2] === 0x67 && audioBuffer[3] === 0x53) {
+        contentType = "audio/ogg";
+      }
+      // M4A/AAC signature
+      else if (audioBuffer[4] === 0x66 && audioBuffer[5] === 0x74 &&
+               audioBuffer[6] === 0x79 && audioBuffer[7] === 0x70) {
+        contentType = "audio/mp4";
+      }
     }
+
+    console.log(`Serving audio: ${audioBuffer.length} bytes, type: ${contentType}`);
     
     return new NextResponse(audioBuffer, {
       headers: {
         "Content-Type": contentType,
         "Content-Length": audioBuffer.length.toString(),
         "Accept-Ranges": "bytes",
+        "Cache-Control": "no-cache",
       },
     });
   } catch (error) {

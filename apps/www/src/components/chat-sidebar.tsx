@@ -182,23 +182,20 @@ function DraggableConversation({
   const params = useParams();
   const isActive = conversation.id === (params?.id as string | undefined);
 
-  const {
-    attributes,
-    listeners,
-    setNodeRef,
-    transform,
-    isDragging,
-  } = useDraggable({
-    id: conversation.id,
-    data: {
-      type: "conversation",
-      conversation,
-    },
-  });
+  const { attributes, listeners, setNodeRef, transform, isDragging } =
+    useDraggable({
+      id: conversation.id,
+      data: {
+        type: "conversation",
+        conversation,
+      },
+    });
 
-  const style = transform ? {
-    transform: `translate3d(${transform.x}px, ${transform.y}px, 0)`,
-  } : undefined;
+  const style = transform
+    ? {
+        transform: `translate3d(${transform.x}px, ${transform.y}px, 0)`,
+      }
+    : undefined;
 
   return (
     <div
@@ -219,7 +216,13 @@ function DraggableConversation({
             <SidebarMenuButton isActive={isActive} className="flex-1" asChild>
               <Link href={`/chat/${conversation.id}`}>
                 <LoadingIndicator>
-                  {conversation.bot ? <BotIcon /> : conversation.hub_id ? <FolderOpen /> : <MessageCircle />}
+                  {conversation.bot ? (
+                    <BotIcon />
+                  ) : conversation.hub_id ? (
+                    <FolderOpen />
+                  ) : (
+                    <MessageCircle />
+                  )}
                 </LoadingIndicator>
                 {(() => {
                   const title = conversation.title || "Untitled Conversation";
@@ -227,11 +230,11 @@ function DraggableConversation({
                   const hubId = conversation.hub_id;
 
                   // Find hub name if conversation belongs to a hub
-                  const hub = hubId ? hubs.find(h => h.id === hubId) : null;
+                  const hub = hubId ? hubs.find((h) => h.id === hubId) : null;
                   const hubName = hub?.name;
 
                   let visualTitle = <>{title}</>;
-                  
+
                   if (hubName) {
                     // Show Hubs icon + Hub name > conversation icon + conversation name
                     visualTitle = (
@@ -298,7 +301,12 @@ function DroppableHub({ hub }: { hub: { id: string; name: string } }) {
 
 function ChatSidebarContent() {
   const { conversations, loading, createConversation } = useConversations();
-  const { hubs, loading: hubsLoading, createHub, addConversationToHub } = useHubs();
+  const {
+    hubs,
+    loading: hubsLoading,
+    createHub,
+    addConversationToHub,
+  } = useHubs();
   const [isCreating, setIsCreating] = React.useState(false);
   const [isCreatingHub, setIsCreatingHub] = React.useState(false);
   const [activeId, setActiveId] = React.useState<string | null>(null);
@@ -309,7 +317,7 @@ function ChatSidebarContent() {
 
   const sensors = useSensors(
     useSensor(PointerSensor),
-    useSensor(KeyboardSensor)
+    useSensor(KeyboardSensor),
   );
 
   const handleDragStart = (event: DragStartEvent) => {
@@ -326,17 +334,16 @@ function ChatSidebarContent() {
     const overData = over.data.current;
 
     // Check if we're dropping a conversation onto a hub
-    if (
-      activeData?.type === "conversation" &&
-      overData?.type === "hub"
-    ) {
+    if (activeData?.type === "conversation" && overData?.type === "hub") {
       const conversation = activeData.conversation;
       const hub = overData.hub;
 
       try {
         const success = await addConversationToHub(hub.id, conversation.id);
         if (success) {
-          toast.success(`Conversation "${conversation.title || "Untitled"}" added to hub "${hub.name}"`);
+          toast.success(
+            `Conversation "${conversation.title || "Untitled"}" added to hub "${hub.name}"`,
+          );
         } else {
           toast.error("Failed to add conversation to hub");
         }
@@ -364,11 +371,11 @@ function ChatSidebarContent() {
   const handleNewHub = async () => {
     if (isCreatingHub) return; // Prevent multiple clicks
     setIsCreatingHub(true);
-    
+
     try {
       const hubName = `Hub ${hubs.length + 1}`;
       const hubDescription = "New hub";
-      
+
       const hub = await createHub(hubName, hubDescription);
       if (!hub) {
         toast.error("Failed to create a new hub. Please try again.");
@@ -383,7 +390,9 @@ function ChatSidebarContent() {
     }
   };
 
-  const activeConversation = activeId ? conversations.find(c => c.id === activeId) : null;
+  const activeConversation = activeId
+    ? conversations.find((c) => c.id === activeId)
+    : null;
 
   return (
     <DndContext
@@ -418,15 +427,9 @@ function ChatSidebarContent() {
                 </SidebarMenuItem>
 
                 <SidebarMenuItem>
-                  <Button
-                    className="w-full"
-                    variant="outline"
-                    asChild
-                  >
-                    <Link href="/voice">
-                      <Headphones />
-                      New Voice Chat
-                    </Link>
+                  <Button className="w-full" variant="outline" disabled>
+                    <Headphones />
+                    New Voice Chat
                   </Button>
                 </SidebarMenuItem>
 
@@ -504,7 +507,11 @@ function ChatSidebarContent() {
         {activeConversation ? (
           <div className="bg-background border rounded-md p-2 shadow-lg">
             <div className="flex items-center gap-2">
-              {activeConversation.bot ? <BotIcon className="h-4 w-4" /> : <MessageCircle className="h-4 w-4" />}
+              {activeConversation.bot ? (
+                <BotIcon className="h-4 w-4" />
+              ) : (
+                <MessageCircle className="h-4 w-4" />
+              )}
               <span className="text-sm font-medium">
                 {activeConversation.title || "Untitled Conversation"}
               </span>

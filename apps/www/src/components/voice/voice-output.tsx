@@ -26,7 +26,7 @@ export const VoiceOutput: React.FC<VoiceOutputProps> = ({
     setIsLoading(true);
     
     try {
-      const response = await fetch("/api/tts", {
+      const response = await fetch("/api/audio/tts", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

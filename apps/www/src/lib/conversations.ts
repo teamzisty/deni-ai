@@ -53,16 +53,18 @@ export async function createConversation(userId: string, bot?: ClientBot): Promi
 }
 
 export async function createBranchConversation(
+    userId: string,
     parentSessionId: string,
     branchName: string,
+    parentMessages?: any[],
 ): Promise<Conversation | null> {
     const supabase = await createSupabaseServer();
     const { data, error } = await supabase
         .from("chat_sessions")
         .insert({
-            user_id: "user_id",
-            title: `Branch of ${branchName}`,
-            messages: [],
+            user_id: userId,
+            title: `Branch: ${branchName}`,
+            messages: parentMessages || [],
             created_at: new Date().toISOString(),
             updated_at: new Date().toISOString(),
             parentSessionId,
@@ -75,6 +77,40 @@ export async function createBranchConversation(
         return null;
     }
     return data;
+}
+
+export async function getBranches(parentSessionId: string): Promise<Conversation[]> {
+    const supabase = await createSupabaseServer();
+    const { data, error } = await supabase
+        .from("chat_sessions")
+        .select("*")
+        .eq("parentSessionId", parentSessionId)
+        .order("created_at", { ascending: true });
+
+    if (error) {
+        console.error("Error fetching branches:", error);
+        return [];
+    }
+
+    return data || [];
+}
+
+export async function getBranchTree(conversationId: string): Promise<{
+    root: Conversation | null;
+    branches: Conversation[];
+}> {
+    const supabase = await createSupabaseServer();
+    
+    // Get the root conversation
+    const rootConversation = await getConversation(conversationId);
+    
+    // Get all branches for this conversation
+    const branches = await getBranches(conversationId);
+    
+    return {
+        root: rootConversation,
+        branches,
+    };
 }
 
 export async function updateConversation(id: string, updates: Partial<Conversation>): Promise<Conversation | null> {
