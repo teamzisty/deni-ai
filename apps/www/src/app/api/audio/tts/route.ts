@@ -5,45 +5,49 @@ export async function POST(request: NextRequest) {
     const { text } = await request.json();
 
     if (!text || typeof text !== "string") {
-      return NextResponse.json(
-        { error: "Text is required" },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "Text is required" }, { status: 400 });
     }
 
-    const apiKey = process.env.GOOGLE_GENERATIVE_AI_API_KEY || process.env.GOOGLE_API_KEY;
-    
+    const apiKey =
+      process.env.GOOGLE_GENERATIVE_AI_API_KEY || process.env.GOOGLE_API_KEY;
+
     if (!apiKey) {
       return NextResponse.json(
         { error: "Google API key not configured" },
-        { status: 500 }
+        { status: 500 },
       );
     }
 
     // Try multiple Gemini TTS API approaches
     let response;
     let audioData;
-    
+
     // First try with newer API structure
     try {
-      response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-tts:generateContent?key=${apiKey}`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
+      response = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-tts:generateContent?key=${apiKey}`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            contents: [
+              {
+                parts: [{ text }],
+              },
+            ],
+            generationConfig: {
+              responseModalities: ["AUDIO"],
+            },
+          }),
         },
-        body: JSON.stringify({
-          contents: [{ 
-            parts: [{ text }] 
-          }],
-          generationConfig: {
-            responseModalities: ["AUDIO"]
-          }
-        }),
-      });
+      );
 
       if (response.ok) {
         const result = await response.json();
-        audioData = result.candidates?.[0]?.content?.parts?.[0]?.inlineData?.data;
+        audioData =
+          result.candidates?.[0]?.content?.parts?.[0]?.inlineData?.data;
       }
     } catch (error) {
       console.log("First API approach failed, trying alternative...");
@@ -52,24 +56,30 @@ export async function POST(request: NextRequest) {
     // If first approach fails, try alternative structure
     if (!response?.ok || !audioData) {
       try {
-        response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-tts:generateContent?key=${apiKey}`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
+        response = await fetch(
+          `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-tts:generateContent?key=${apiKey}`,
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              contents: [
+                {
+                  parts: [{ text }],
+                },
+              ],
+              generationConfig: {
+                responseMimeType: "audio/mp3",
+              },
+            }),
           },
-          body: JSON.stringify({
-            contents: [{ 
-              parts: [{ text }] 
-            }],
-            generationConfig: {
-              responseMimeType: "audio/mp3"
-            }
-          }),
-        });
+        );
 
         if (response.ok) {
           const result = await response.json();
-          audioData = result.candidates?.[0]?.content?.parts?.[0]?.inlineData?.data;
+          audioData =
+            result.candidates?.[0]?.content?.parts?.[0]?.inlineData?.data;
         }
       } catch (error) {
         console.log("Second API approach failed, using browser TTS fallback");
@@ -79,20 +89,20 @@ export async function POST(request: NextRequest) {
     if (!response?.ok || !audioData) {
       const errorData = response ? await response.json().catch(() => ({})) : {};
       console.error("Gemini API error:", JSON.stringify(errorData, null, 2));
-      
+
       // Fallback to browser TTS if Gemini fails
       return NextResponse.json(
         { error: "Using browser TTS fallback", fallback: true },
-        { status: 422 }
+        { status: 422 },
       );
     }
 
     // Validate base64 data before processing
-    if (!audioData || typeof audioData !== 'string') {
+    if (!audioData || typeof audioData !== "string") {
       console.error("Invalid audio data received from API");
       return NextResponse.json(
         { error: "Invalid audio data", fallback: true },
-        { status: 422 }
+        { status: 422 },
       );
     }
 
@@ -103,7 +113,7 @@ export async function POST(request: NextRequest) {
       console.error("Failed to decode base64 audio data:", error);
       return NextResponse.json(
         { error: "Failed to decode audio data", fallback: true },
-        { status: 422 }
+        { status: 422 },
       );
     }
 
@@ -112,36 +122,70 @@ export async function POST(request: NextRequest) {
       console.error("Audio buffer too small:", audioBuffer.length, "bytes");
       return NextResponse.json(
         { error: "Invalid audio data size", fallback: true },
-        { status: 422 }
+        { status: 422 },
       );
     }
-    
+
     // Detect audio format from first few bytes and set appropriate content type
     let contentType = "audio/wav";
     if (audioBuffer.length >= 2) {
       // MP3 signature
-      if (audioBuffer[0] === 0xFF && (audioBuffer[1] & 0xE0) === 0xE0) {
+      if (
+        audioBuffer[0] !== undefined &&
+        audioBuffer[1] !== undefined &&
+        audioBuffer[0] === 0xff &&
+        (audioBuffer[1] & 0xe0) === 0xe0
+      ) {
         contentType = "audio/mpeg";
       }
-      // WAV signature  
-      else if (audioBuffer[0] === 0x52 && audioBuffer[1] === 0x49 && 
-               audioBuffer[2] === 0x46 && audioBuffer[3] === 0x46) {
+      // WAV signature
+      else if (
+        audioBuffer.length >= 4 &&
+        audioBuffer[0] !== undefined &&
+        audioBuffer[1] !== undefined &&
+        audioBuffer[2] !== undefined &&
+        audioBuffer[3] !== undefined &&
+        audioBuffer[0] === 0x52 &&
+        audioBuffer[1] === 0x49 &&
+        audioBuffer[2] === 0x46 &&
+        audioBuffer[3] === 0x46
+      ) {
         contentType = "audio/wav";
       }
       // OGG signature
-      else if (audioBuffer[0] === 0x4F && audioBuffer[1] === 0x67 && 
-               audioBuffer[2] === 0x67 && audioBuffer[3] === 0x53) {
+      else if (
+        audioBuffer.length >= 4 &&
+        audioBuffer[0] !== undefined &&
+        audioBuffer[1] !== undefined &&
+        audioBuffer[2] !== undefined &&
+        audioBuffer[3] !== undefined &&
+        audioBuffer[0] === 0x4f &&
+        audioBuffer[1] === 0x67 &&
+        audioBuffer[2] === 0x67 &&
+        audioBuffer[3] === 0x53
+      ) {
         contentType = "audio/ogg";
       }
       // M4A/AAC signature
-      else if (audioBuffer[4] === 0x66 && audioBuffer[5] === 0x74 &&
-               audioBuffer[6] === 0x79 && audioBuffer[7] === 0x70) {
+      else if (
+        audioBuffer.length >= 8 &&
+        audioBuffer[4] !== undefined &&
+        audioBuffer[5] !== undefined &&
+        audioBuffer[6] !== undefined &&
+        audioBuffer[7] !== undefined &&
+        audioBuffer[4] === 0x66 &&
+        audioBuffer[5] === 0x74 &&
+        audioBuffer[6] === 0x79 &&
+        audioBuffer[7] === 0x70
+      ) {
         contentType = "audio/mp4";
       }
     }
 
-    console.log(`Serving audio: ${audioBuffer.length} bytes, type: ${contentType}`);
-    
+    console.log(
+      `Serving audio: ${audioBuffer.length} bytes, type: ${contentType}`,
+    );
+
     return new NextResponse(audioBuffer, {
       headers: {
         "Content-Type": contentType,
@@ -153,8 +197,11 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     console.error("TTS API error:", error);
     return NextResponse.json(
-      { error: "TTS generation failed, using browser fallback", fallback: true },
-      { status: 422 }
+      {
+        error: "TTS generation failed, using browser fallback",
+        fallback: true,
+      },
+      { status: 422 },
     );
   }
 }

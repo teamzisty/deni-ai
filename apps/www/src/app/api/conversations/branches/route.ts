@@ -5,6 +5,7 @@ import {
   getConversation,
 } from "@/lib/conversations";
 import { authCheck } from "@/lib/supabase/server";
+import { UIMessage } from "ai";
 import { NextResponse } from "next/server";
 
 export async function POST(req: Request) {
@@ -33,7 +34,7 @@ export async function POST(req: Request) {
   }
 
   // Get parent conversation to inherit messages if requested
-  let parentMessages = [];
+  let parentMessages: UIMessage[] | null = [];
   if (includeMessages) {
     const parentConversation = await getConversation(parentSessionId);
     if (parentConversation) {

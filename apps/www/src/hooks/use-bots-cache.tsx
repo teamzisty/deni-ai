@@ -51,7 +51,7 @@ export function BotsCacheProvider({ children }: BotsCacheProviderProps) {
 
       try {
         const response = await secureFetch(`/api/bots/${botId}`);
-        const bot = response.data as Bot;
+        const bot = await response.json() as Bot;
 
         // Cache the result
         setCache((prev) => new Map(prev).set(botId, bot));

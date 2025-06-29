@@ -10,12 +10,13 @@
     "build": "turbo build",
     "dev": "turbo dev",
     "lint": "turbo lint",
+    "deni": "bun run scripts/src/cli.ts",
     "format": "prettier --write \"**/*.{ts,tsx,md}\""
   },
   "devDependencies": {
     "@workspace/eslint-config": "workspace:*",
     "@workspace/typescript-config": "workspace:*",
-    "prettier": "^3.5.3",
+    "prettier": "^3.6.2",
     "turbo": "^2.5.4",
     "typescript": "5.8.3"
   },
@@ -24,6 +25,6 @@
   },
   "packageManager": "bun@1.2.17",
   "dependencies": {
-    "zod": "^3.25.64"
+    "zod": "^3.25.67"
   }
 }
