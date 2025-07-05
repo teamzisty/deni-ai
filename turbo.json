@@ -3,6 +3,13 @@
   "ui": "tui",
   "globalEnv": [
     "NODE_ENV",
+    "OPENAI_API_KEY",
+    "ANTHROPIC_API_KEY",
+    "GOOGLE_GENERATIVE_AI_API_KEY",
+    "XAI_API_KEY",
+    "GROQ_API_KEY",
+    "OPENROUTER_API_KEY",
+    "REDIS_URL",
     "BRAVE_SEARCH_API_KEY",
     "UPLOADTHING_TOKEN",
     "NEXT_PUBLIC_SUPABASE_URL",
