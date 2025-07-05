@@ -218,12 +218,12 @@ const MainChat = memo<MainChatProps>(
           <div className="text-center mb-12 w-full h-full flex items-center justify-center flex-col">
             <h1
               key={welcomeMessage}
-              className="!mb-1 text-4xl font-bold mb-4 bg-gradient-to-r from-lime-400 via-sky-500 to-fuchsia-600 bg-clip-text text-transparent animate-welcome"
+              className="!mb-1 text-4xl font-bold bg-gradient-to-r from-lime-400 via-sky-500 to-fuchsia-600 bg-clip-text text-transparent animate-welcome"
             >
               {welcomeMessage}
             </h1>
             {ssUserData?.plan && ssUserData?.plan !== "free" && (
-              <span className="font-semibold">
+              <span className="font-semibold opacity-80 hover:opacity-100 transition-all">
                 <span className="bg-gradient-to-r from-pink-400 to-sky-500 bg-clip-text text-transparent capitalize">
                   {ssUserData?.plan}
                 </span>{" "}

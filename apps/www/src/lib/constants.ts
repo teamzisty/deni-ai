@@ -41,7 +41,7 @@ export const ERROR_MAPPING: Record<string, string> = {
   "chat.model_limit_reached": "You've reached your usage limit for this model.",
 };
 
-export const PREMIUM_USES_LIMIT = 30; // Default is 30 per day
+export const PREMIUM_USES_LIMIT = -1; // Default is 30 per day
 
 export type ModelFeature =
   | "vision"

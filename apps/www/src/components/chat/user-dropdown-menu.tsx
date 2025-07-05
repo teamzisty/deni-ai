@@ -103,7 +103,7 @@ export function UserDropdownMenu() {
                         <span>{models[u.model]?.name}</span>
                         <span>{t("chat.userMenu.uses", { count: u.count })}</span>
                       </div>
-                      <Progress value={u.count} max={PREMIUM_USES_LIMIT} />
+                      <Progress value={u.count} max={PREMIUM_USES_LIMIT === -1 ? Infinity : PREMIUM_USES_LIMIT} />
                     </div>
                   ))}
               </div>

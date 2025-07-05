@@ -204,22 +204,7 @@ export async function POST(request: Request) {
       }
 
       // Add research-specific system prompts
-      let systemPrompt = "";
-      if (bot && bot.system_instruction) {
-        systemPrompt = bot.system_instruction || "";
-      }
-      if (researchMode !== "disabled") {
-        const researchPrompts = {
-          shallow:
-            "You are a research assistant. When asked questions, use web search to find current, accurate information. Provide 1-2 search queries to find relevant information. Focus on finding the most relevant and recent sources.",
-          deep: "You are a comprehensive research assistant. When asked questions, conduct thorough research using web search. Use 2-4 strategic search queries to gather information from multiple perspectives. Cross-reference sources and provide detailed, well-sourced answers.",
-          deeper:
-            "You are an expert research analyst. When asked questions, conduct extensive research using web search. Use 3-6 targeted search queries to explore the topic comprehensively. Analyze information from multiple authoritative sources, identify potential biases, and provide nuanced, well-supported conclusions with proper attribution.",
-        };
-        systemPrompt =
-          researchPrompts[researchMode as keyof typeof researchPrompts] ||
-          researchPrompts.deep;
-      }
+      let systemPrompt = "You are Deni AI.";
 
       coreMessages.unshift({
         role: "system",
