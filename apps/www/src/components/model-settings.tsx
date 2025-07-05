@@ -28,8 +28,10 @@ import { Checkbox } from "@workspace/ui/components/checkbox";
 import { Button } from "@workspace/ui/components/button";
 import { Loading } from "@/components/loading";
 import { models, Model, ModelFeature } from "@/lib/constants";
+import { useSettings } from "@/hooks/use-settings";
 
 export default function ModelSettings() {
+  const { settings, updateSetting, isLoading: settingsLoading } = useSettings();
   const [visibility, setVisibility] = useState<Record<string, boolean>>({});
   const [isLoading, setIsLoading] = useState(true);
   const [filteredModels, setFilteredModels] = useState<[string, Model][] | null>(null);
@@ -119,28 +121,43 @@ export default function ModelSettings() {
     });
   };
 
-  const toggleModelVisibility = (modelId: string) => {
-    setVisibility((prev) => ({
-      ...prev,
-      [modelId]: !prev[modelId],
-    }));
+  const toggleModelVisibility = async (modelId: string) => {
+    const newVisibility = {
+      ...visibility,
+      [modelId]: !visibility[modelId],
+    };
+    setVisibility(newVisibility);
+    await updateSetting('modelVisibility', newVisibility);
   };
 
   useEffect(() => {
-    // Initialize visibility settings
-    const initialVisibility: Record<string, boolean> = {};
-    Object.keys(models).forEach((key) => {
-      initialVisibility[key] = true;
-    });
-    setVisibility(initialVisibility);
-    setIsLoading(false);
-  }, []);
+    // Initialize visibility settings from saved settings or defaults
+    if (!settingsLoading) {
+      const savedVisibility = settings.modelVisibility;
+      if (savedVisibility && Object.keys(savedVisibility).length > 0) {
+        // Use saved visibility, but ensure all models have a visibility setting
+        const completeVisibility: Record<string, boolean> = {};
+        Object.keys(models).forEach((key) => {
+          completeVisibility[key] = savedVisibility[key] ?? true;
+        });
+        setVisibility(completeVisibility);
+      } else {
+        // Initialize all models as visible by default
+        const initialVisibility: Record<string, boolean> = {};
+        Object.keys(models).forEach((key) => {
+          initialVisibility[key] = true;
+        });
+        setVisibility(initialVisibility);
+      }
+      setIsLoading(false);
+    }
+  }, [settings.modelVisibility, settingsLoading]);
 
   useEffect(() => {
     setFilteredModels(applyFilters(Object.entries(models), filters));
   }, [filters]);
 
-  if (isLoading && !filteredModels) {
+  if ((isLoading || settingsLoading) && !filteredModels) {
     return <Loading />;
   }
 

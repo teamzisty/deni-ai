@@ -65,6 +65,8 @@ import {
   useDroppable,
 } from "@dnd-kit/core";
 import { BRAND_NAME } from "@/lib/constants";
+import { useSettings } from "@/hooks/use-settings";
+import { cn } from "@workspace/ui/lib/utils";
 
 export function ChatContextMenu({
   conversationId,
@@ -311,10 +313,8 @@ function ChatSidebarContent() {
   const [isCreating, setIsCreating] = React.useState(false);
   const [isCreatingHub, setIsCreatingHub] = React.useState(false);
   const [activeId, setActiveId] = React.useState<string | null>(null);
-  const params = useParams();
+  const { settings } = useSettings();
   const router = useRouter();
-  const { pending } = useLinkStatus();
-  const conversationId = params?.id as string | undefined;
 
   const sensors = useSensors(
     useSensor(PointerSensor),
@@ -427,34 +427,40 @@ function ChatSidebarContent() {
                   </Button>
                 </SidebarMenuItem>
 
-                <SidebarMenuItem>
-                  <Button className="w-full" variant="outline" disabled>
-                    <Headphones />
-                    New Voice Chat
-                  </Button>
-                </SidebarMenuItem>
+                {settings.voice && (
+                  <SidebarMenuItem>
+                    <Button className="w-full" variant="outline" disabled>
+                      <Headphones />
+                      New Voice Chat
+                    </Button>
+                  </SidebarMenuItem>
+                )}
 
-                <SidebarMenuItem>
-                  <Button className="w-full" variant={"secondary"} asChild>
-                    <Link href="/bots">
-                      <BotIcon />
-                      Bots
-                    </Link>
-                  </Button>
-                </SidebarMenuItem>
+                {settings.bots && (
+                  <SidebarMenuItem>
+                    <Button className="w-full" variant={"secondary"} asChild>
+                      <Link href="/bots">
+                        <BotIcon />
+                        Bots
+                      </Link>
+                    </Button>
+                  </SidebarMenuItem>
+                )}
 
-                <SidebarMenuItem>
-                  <Button className="w-full" variant={"secondary"} asChild>
-                    <Link href="/hubs">
-                      <FolderOpen />
-                      Hubs
-                    </Link>
-                  </Button>
-                </SidebarMenuItem>
+                {settings.hubs && (
+                  <SidebarMenuItem>
+                    <Button className="w-full" variant={"secondary"} asChild>
+                      <Link href="/hubs">
+                        <FolderOpen />
+                        Hubs
+                      </Link>
+                    </Button>
+                  </SidebarMenuItem>
+                )}
               </SidebarMenu>
             </SidebarGroupContent>
           </SidebarGroup>
-          <SidebarGroup>
+          <SidebarGroup className={cn({ hidden: !settings.hubs })}>
             <SidebarGroupLabel className="flex items-center justify-between">
               Hubs
               <Button

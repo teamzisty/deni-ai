@@ -1,6 +1,7 @@
 import { models } from "@/lib/constants";
 import { UseChatHelpers } from "@ai-sdk/react";
 import { Button } from "@workspace/ui/components/button";
+import { useSettings } from "@/hooks/use-settings";
 import {
   Command,
   CommandInput,
@@ -331,6 +332,18 @@ export const ModelSelector = React.memo<{
   setModel: (model: string) => void;
 }>(function ModelSelector({ model, setModel }) {
   const [open, setOpen] = useState(false);
+  const { settings } = useSettings();
+  
+  // Filter models based on visibility settings
+  const visibleModels = useMemo(() => {
+    if (!settings.modelVisibility) {
+      // If no visibility settings, show all models
+      return Object.keys(models);
+    }
+    return Object.keys(models).filter(modelId => 
+      settings.modelVisibility?.[modelId] !== false
+    );
+  }, [settings.modelVisibility]);
 
   return (
     <div className="flex flex-row gap-2">
@@ -365,7 +378,7 @@ export const ModelSelector = React.memo<{
               <CommandList>
                 <CommandEmpty>No models found.</CommandEmpty>
                 <CommandGroup>
-                  {Object.keys(models).map((modelOption) => (
+                  {visibleModels.map((modelOption) => (
                     <CommandItem
                       key={modelOption}
                       value={modelOption}

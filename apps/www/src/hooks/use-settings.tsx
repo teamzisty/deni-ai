@@ -19,7 +19,9 @@ export interface Settings {
   hubs: boolean;
   bots: boolean;
   branch: boolean;
+  voice: boolean;
   conversationsPrivacyMode: boolean;
+  modelVisibility?: Record<string, boolean>;
   // Add more settings here as needed
 }
 
@@ -31,6 +33,7 @@ const DEFAULT_SETTINGS: Settings = {
   bots: true,
   hubs: true,
   branch: true,
+  voice: true,
   conversationsPrivacyMode: false,
 };
 

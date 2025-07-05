@@ -32,6 +32,18 @@ import {
 import { useSupabase } from "@/context/supabase-context";
 import { useParams, useRouter } from "next/navigation";
 import { useConversations } from "@/hooks/use-conversations";
+import { useHubs } from "@/hooks/use-hubs";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@workspace/ui/components/alert-dialog";
 
 interface ClientHub {
   id: string;
@@ -50,8 +62,10 @@ export default function HubPage() {
   const [hub, setHub] = useState<ClientHub | null>(null);
   const { user, secureFetch, loading } = useSupabase();
   const { createConversation, loading: conversationLoading } = useConversations();
+  const { deleteHub } = useHubs();
   const [isLoading, setIsLoading] = useState(true);
   const [isConversationCreating, setIsConversationCreating] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
   const [editData, setEditData] = useState<Partial<ClientHub>>({
     name: "",
     description: "",
@@ -142,6 +156,22 @@ export default function HubPage() {
     const conversation = await createConversation(undefined, hub?.id);
     if (conversation) {
       router.push(`/chat/${conversation.id}`);
+    }
+  };
+
+  const handleDeleteHub = async () => {
+    if (!hub) return;
+    
+    setIsDeleting(true);
+    try {
+      const success = await deleteHub(hub.id);
+      if (success) {
+        router.push("/hubs");
+      }
+    } catch (error) {
+      console.error("Failed to delete hub:", error);
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -294,17 +324,43 @@ export default function HubPage() {
                       rows={4}
                     />
                   </div>
-                  <Button
-                    onClick={saveHub}
-                    disabled={
-                      !editData.name?.trim() ||
-                      !editData.description?.trim() ||
-                      isSaving
-                    }
-                  >
-                    <Save className="w-4 h-4 mr-2" />
-                    {isSaving ? "Saving..." : "Save Changes"}
-                  </Button>
+                  <div className="flex justify-between items-center">
+                    <Button
+                      onClick={saveHub}
+                      disabled={
+                        !editData.name?.trim() ||
+                        !editData.description?.trim() ||
+                        isSaving
+                      }
+                    >
+                      <Save className="w-4 h-4 mr-2" />
+                      {isSaving ? "Saving..." : "Save Changes"}
+                    </Button>
+                    
+                    <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                        <Button variant="destructive" disabled={isDeleting}>
+                          <Trash2 className="w-4 h-4 mr-2" />
+                          {isDeleting ? "Deleting..." : "Delete Hub"}
+                        </Button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>Delete Hub</AlertDialogTitle>
+                          <AlertDialogDescription>
+                            Are you sure you want to delete this hub? This action cannot be undone.
+                            All conversations associated with this hub will be removed from the hub.
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel>Cancel</AlertDialogCancel>
+                          <AlertDialogAction onClick={handleDeleteHub}>
+                            Delete
+                          </AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
+                  </div>
                 </CardContent>
               </TabsContent>
             )}

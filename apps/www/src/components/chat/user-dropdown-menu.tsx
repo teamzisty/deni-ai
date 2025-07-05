@@ -46,10 +46,6 @@ export function UserDropdownMenu() {
     }
   };
 
-  const handleOpenSettings = () => {
-    openDialog();
-  }
-
   if (loading) return null;
 
   return (
@@ -113,11 +109,11 @@ export function UserDropdownMenu() {
             <DropdownMenuSeparator />
           </>
         )}
-        <DropdownMenuItem onClick={() => router.push("/account")}>
+        <DropdownMenuItem onClick={() => openDialog("account")}>
           <User />
           Account
         </DropdownMenuItem>
-        <DropdownMenuItem onClick={handleOpenSettings}>
+        <DropdownMenuItem onClick={() => openDialog()}>
           <SettingsIcon />
           Settings
         </DropdownMenuItem>

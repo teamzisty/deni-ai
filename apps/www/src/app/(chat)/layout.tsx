@@ -6,6 +6,7 @@ import { ChatLayoutContent } from "@/components/chat-layout-content";
 import { UserDropdownMenu } from "@/components/chat/user-dropdown-menu";
 import { SettingsDialogProvider } from "@/context/settings-dialog-context";
 import { SettingsProvider } from "@/hooks/use-settings";
+import { HubsProvider } from "@/hooks/use-hubs";
 
 export default function ChatLayout({
   children,
@@ -19,10 +20,12 @@ export default function ChatLayout({
           <CanvasProvider>
             <SettingsProvider>
               <SettingsDialogProvider>
-                <ChatLayoutContent>
-                  {children}
-                  <UserDropdownMenu />
-                </ChatLayoutContent>
+                <HubsProvider>
+                  <ChatLayoutContent>
+                    {children}
+                    <UserDropdownMenu />
+                  </ChatLayoutContent>
+                </HubsProvider>
               </SettingsDialogProvider>
             </SettingsProvider>
           </CanvasProvider>

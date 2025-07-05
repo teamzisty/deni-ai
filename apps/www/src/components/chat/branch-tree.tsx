@@ -32,13 +32,15 @@ interface BranchTreeProps {
 export function BranchTree({ conversationId, currentConversationId }: BranchTreeProps) {
   const [branchTree, setBranchTree] = useState<BranchTreeData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isRequesting, setIsRequesting] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
   const { secureFetch } = useSupabase();
   const router = useRouter();
 
   useEffect(() => {
     const fetchBranchTree = async () => {
-      setIsLoading(true);
+      if (!isLoading || isRequesting) return;
+      setIsRequesting(true)
       try {
         const response = await secureFetch(
           `/api/conversations/branches?parentSessionId=${conversationId}&tree=true`
@@ -55,6 +57,7 @@ export function BranchTree({ conversationId, currentConversationId }: BranchTree
       } catch (error) {
         console.error("Error fetching branch tree:", error);
       } finally {
+        setIsRequesting(false);
         setIsLoading(false);
       }
     };
