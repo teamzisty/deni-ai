@@ -4,7 +4,7 @@ import { NextResponse } from "next/server";
 
 export async function GET(
   req: Request,
-  { _params }: { _params: Promise<{ id: string }> },
+  { params: _params }: { params: Promise<{ id: string }> },
 ) {
   const userData = await authCheck(req);
   if (!userData.success || !userData.user) {
