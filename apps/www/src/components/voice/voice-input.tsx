@@ -4,6 +4,7 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { Button } from "@workspace/ui/components/button";
 import { Mic, MicOff } from "lucide-react";
 import { cn } from "@workspace/ui/lib/utils";
+import { useTranslations } from "@/hooks/use-translations";
 
 interface VoiceInputProps {
   onTranscript?: (transcript: string) => void;
@@ -28,6 +29,7 @@ export const VoiceInput: React.FC<VoiceInputProps> = ({
   const recognitionRef = useRef<SpeechRecognition | null>(null);
   const holdTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const isHoldingRef = useRef(false);
+  const t = useTranslations();
 
   useEffect(() => {
     const SpeechRecognition = 
@@ -50,7 +52,7 @@ export const VoiceInput: React.FC<VoiceInputProps> = ({
       }
       
       recognition.onstart = () => {
-        console.log("Speech recognition started");
+        console.log(t("voice.recognitionStarted"));
         setIsListening(true);
         onStart?.();
       };
@@ -86,7 +88,7 @@ export const VoiceInput: React.FC<VoiceInputProps> = ({
         // Handle different types of errors
         switch (event.error) {
           case "not-allowed":
-            onError?.("Microphone access denied. Please allow microphone access in your browser settings.");
+            onError?.(t("voice.errors.microphoneAccessDenied"));
             setIsListening(false);
             setIsHolding(false);
             isHoldingRef.current = false;
@@ -99,13 +101,13 @@ export const VoiceInput: React.FC<VoiceInputProps> = ({
             }
             break;
           case "network":
-            onError?.("Network error occurred.");
+            onError?.(t("voice.errors.networkError"));
             setIsListening(false);
             setIsHolding(false);
             isHoldingRef.current = false;
             break;
           case "audio-capture":
-            onError?.("Microphone problem. Please check if your microphone is connected.");
+            onError?.(t("voice.errors.microphoneProblem"));
             setIsListening(false);
             setIsHolding(false);
             isHoldingRef.current = false;
@@ -121,7 +123,7 @@ export const VoiceInput: React.FC<VoiceInputProps> = ({
       };
       
       recognition.onend = () => {
-        console.log("Speech recognition ended");
+        console.log(t("voice.recognitionEnded"));
         setIsListening(false);
         onStop?.();
         
@@ -140,7 +142,7 @@ export const VoiceInput: React.FC<VoiceInputProps> = ({
         }
       };
     } else {
-      onError?.("This browser does not support speech recognition. Please use Chrome or Edge.");
+      onError?.(t("voice.errors.browserNotSupported"));
     }
     
     return () => {
@@ -160,7 +162,7 @@ export const VoiceInput: React.FC<VoiceInputProps> = ({
       return true;
     } catch (error) {
       console.error("Microphone permission denied:", error);
-      onError?.("Microphone permission required. Please allow microphone access in your browser.");
+      onError?.(t("voice.errors.microphonePermissionRequired"));
       return false;
     }
   }, [onError]);
@@ -185,7 +187,7 @@ export const VoiceInput: React.FC<VoiceInputProps> = ({
         console.log("Recognition already started, continuing...");
         return;
       }
-      onError?.("Failed to start speech recognition.");
+      onError?.(t("voice.errors.failedToStart"));
     }
   }, [isListening, onError, requestMicrophonePermission]);
 
@@ -238,7 +240,7 @@ export const VoiceInput: React.FC<VoiceInputProps> = ({
         size="icon"
         className={cn("rounded-full opacity-50", className)}
         disabled
-        title="This browser does not support speech recognition"
+        title={t("voice.errors.browserNotSupported")}
       >
         <Mic className="h-5 w-5" />
       </Button>
@@ -262,7 +264,7 @@ export const VoiceInput: React.FC<VoiceInputProps> = ({
       onTouchStart={handleTouchStart}
       onTouchEnd={handleTouchEnd}
       disabled={disabled}
-      title={isListening ? "Speaking... Release to stop" : "Hold to speak"}
+      title={isListening ? t("voice.speakingReleaseToStop") : t("voice.holdToSpeak")}
     >
       {isListening ? (
         <div className="relative">

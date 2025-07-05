@@ -1,6 +1,7 @@
 "use client";
 
 import { useSettings } from "@/hooks/use-settings";
+import { useTranslations } from "@/hooks/use-translations";
 import { Switch } from "@workspace/ui/components/switch";
 import {
   Card,
@@ -13,6 +14,7 @@ import { Badge } from "@workspace/ui/components/badge";
 
 export default function CustomizeSettings() {
   const { settings, updateSetting } = useSettings();
+  const t = useTranslations('settings.customize');
 
   return (
     <div className="space-y-6">
@@ -20,14 +22,14 @@ export default function CustomizeSettings() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Search className="h-5 w-5" />
-            Advanced Search
+            {t('advancedSearch.title')}
           </CardTitle>
         </CardHeader>
         <CardContent>
           <div className="flex items-center justify-between">
             <div className="flex-grow">
               <p className="text-sm text-muted-foreground">
-                We use a more detailed model internally for searching
+                {t('advancedSearch.description')}
               </p>
             </div>
             <Switch
@@ -45,14 +47,14 @@ export default function CustomizeSettings() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <ScrollText className="h-5 w-5" />
-            Auto Scroll
+            {t('autoScroll.title')}
           </CardTitle>
         </CardHeader>
         <CardContent>
           <div className="flex items-center justify-between">
             <div className="flex-grow">
               <p className="text-sm text-muted-foreground">
-                Automatically scroll to new messages
+                {t('autoScroll.description')}
               </p>
             </div>
             <Switch
@@ -70,14 +72,14 @@ export default function CustomizeSettings() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Mic className="h-5 w-5" />
-            Voice Mode
-            <Badge>Soon</Badge>
+            {t('voiceMode.title')}
+            <Badge>{t('soon')}</Badge>
           </CardTitle>
         </CardHeader>
         <CardContent>
           <div className="flex items-center justify-between">
             <div className="flex-grow">
-              <p className="text-sm text-muted-foreground">Talk to Deni AI about anything</p>
+              <p className="text-sm text-muted-foreground">{t('voiceMode.description')}</p>
             </div>
             <Switch
               id="voice"
@@ -94,14 +96,14 @@ export default function CustomizeSettings() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Bot className="h-5 w-5" />
-            Bots
+            {t('bots.title')}
           </CardTitle>
         </CardHeader>
         <CardContent>
           <div className="flex items-center justify-between">
             <div className="flex-grow">
               <p className="text-sm text-muted-foreground">
-                AI collections created by the community
+                {t('bots.description')}
               </p>
             </div>
             <Switch
@@ -119,14 +121,14 @@ export default function CustomizeSettings() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Users className="h-5 w-5" />
-            Hubs
+            {t('hubs.title')}
           </CardTitle>
         </CardHeader>
         <CardContent>
           <div className="flex items-center justify-between">
             <div className="flex-grow">
               <p className="text-sm text-muted-foreground">
-                Organize conversations into folders
+                {t('hubs.description')}
               </p>
             </div>
             <Switch
@@ -144,14 +146,14 @@ export default function CustomizeSettings() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <GitBranch className="h-5 w-5" />
-            Branch Conversations
+            {t('branchConversations.title')}
           </CardTitle>
         </CardHeader>
         <CardContent>
           <div className="flex items-center justify-between">
             <div className="flex-grow">
               <p className="text-sm text-muted-foreground">
-                Enable conversation branching feature
+                {t('branchConversations.description')}
               </p>
             </div>
             <Switch

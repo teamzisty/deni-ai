@@ -8,6 +8,7 @@ import { Loader2 } from "lucide-react";
 import { loading_words } from "@/lib/constants";
 import { useSupabase } from "@/context/supabase-context";
 import { useConversations } from "@/hooks/use-conversations";
+import { useTranslations } from "@/hooks/use-translations";
 
 const Chat = memo(() => {
   const { user, loading } = useSupabase();
@@ -17,6 +18,7 @@ const Chat = memo(() => {
   );
   const { createConversation } = useConversations();
   const [input, setInput] = useState("");
+  const t = useTranslations();
 
   useEffect(() => {
     if (!loading && !user) {
@@ -60,7 +62,7 @@ const Chat = memo(() => {
       <div className="w-full max-w-4xl">
         {/* Header */}
         <div className="text-center mb-12">
-          <h1 className="text-4xl font-bold mb-4">How can I help you today?</h1>
+          <h1 className="text-4xl font-bold mb-4">{t("chat.welcome.default")}</h1>
         </div>
 
         {/* Chat Input */}
@@ -78,12 +80,15 @@ const Chat = memo(() => {
 
 // 提案カードコンポーネントを分離
 const SuggestionCards = memo(() => {
-  const suggestions = [
-    "Illustrate Python dictionary comprehension",
-    "Evaluate arguments for universal healthcare",
-    "Debate free will in a deterministic world",
-  ];
+  return null;
 
+  const t = useTranslations();
+  const suggestions = [
+    t("chat.suggestions.python"),
+    t("chat.suggestions.healthcare"),
+    t("chat.suggestions.freeWill"),
+  ];
+  
   return (
     <div className="grid grid-cols-1 md:grid-cols-3 gap-4 my-8 w-3/4 mx-auto">
       {suggestions.map((suggestion, index) => (

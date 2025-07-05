@@ -1,15 +1,29 @@
+"use client";
+
 import { UseChatHelpers } from "@ai-sdk/react";
 import { useState, memo, useCallback } from "react";
 import { InputActions } from "./input-components";
 import { Button } from "@workspace/ui/components/button";
 import { XIcon } from "lucide-react";
 import { BRAND_NAME } from "@/lib/constants";
+import { useTranslations } from "@/hooks/use-translations";
 
 export const researchModeMapping = {
-  disabled: "Disabled",
-  shallow: "Shallow",
-  deep: "Deep",
-  deeper: "Deeper",
+  disabled: "disabled",
+  shallow: "shallow",
+  deep: "deep",
+  deeper: "deeper",
+};
+
+export const useResearchModeMappingIntl = () => {
+  const t = useTranslations("chat.input");
+  
+  return {
+    disabled: t("disabled"),
+    shallow: t("shallow"),
+    deep: t("deep"),
+    deeper: t("deeper"),
+  };
 };
 
 interface ChatInputProps {
@@ -53,6 +67,7 @@ const ChatInput = memo<ChatInputProps>(
     setImage,
   }) => {
     const [open, setOpen] = useState(false);
+    const t = useTranslations("chat.input");
 
     const handleKeyDown = useCallback(
       (event: React.KeyboardEvent<HTMLTextAreaElement>) => {
@@ -127,7 +142,7 @@ const ChatInput = memo<ChatInputProps>(
                 value={input}
                 onChange={handleInputChange}
                 onKeyDown={handleKeyDown}
-                placeholder={`Ask ${BRAND_NAME} anything...`}
+                placeholder={t("placeholder", { brandName: BRAND_NAME })}
                 className="flex-1 border-none outline-none resize-none w-full bg-transparent"
               />
 

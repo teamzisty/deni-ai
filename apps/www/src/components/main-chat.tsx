@@ -12,9 +12,11 @@ import { useConversations } from "@/hooks/use-conversations";
 import { useSupabase } from "@/context/supabase-context";
 import { useUploadThing } from "@/lib/uploadthing";
 import { toast } from "sonner";
-import Link from "next/link";
+import { Link } from "@/i18n/navigation";
 import { BranchTree } from "./chat/branch-tree";
 import { ShareButton } from "./chat/share-button";
+import { SidebarTrigger } from "@workspace/ui/components/sidebar";
+import { useTranslations } from "@/hooks/use-translations";
 
 interface MainChatProps {
   initialConversation?: Conversation;
@@ -36,6 +38,7 @@ const MainChat = memo<MainChatProps>(
     >("disabled");
     const { updateConversationTitle } = useConversations();
     const [titleApplied, setTitleApplied] = useState(false);
+    const t = useTranslations();
 
     const [loadingWord, setLoadingWord] = useState<string>("");
 
@@ -55,8 +58,8 @@ const MainChat = memo<MainChatProps>(
         setImage(res[0]?.ufsUrl || null);
       },
       onUploadError: (error: Error) => {
-        toast.error("Image upload failed", {
-          description: `Error occurred: ${error.message}`,
+        toast.error(t('chat.imageUpload.failed'), {
+          description: `${t('chat.imageUpload.errorOccurred')}: ${error.message}`,
         });
       },
     });
@@ -155,7 +158,7 @@ const MainChat = memo<MainChatProps>(
         setTitleApplied(true);
         updateConversationTitle(
           initialConversation.id,
-          (title as string) || "Untitled Conversation",
+          (title as string) || t('chat.message.untitledConversation'),
         );
       }
     }, [data]);
@@ -163,9 +166,9 @@ const MainChat = memo<MainChatProps>(
     useEffect(() => {
       setLoadingWord(
         loading_words[Math.floor(Math.random() * loading_words.length)] ||
-          "Please wait...",
+          t('common.loading'),
       );
-    }, []);
+    }, [t]);
 
     const handleImageUpload = useCallback(
       async (file: File) => {
@@ -174,27 +177,26 @@ const MainChat = memo<MainChatProps>(
         try {
           await startUpload([file]);
         } catch (error) {
-          toast.error("Image upload failed", {
-            description: `Error occurred: ${error}`,
+          toast.error(t('chat.imageUpload.failed'), {
+            description: `${t('chat.imageUpload.errorOccurred')}: ${error}`,
           });
         }
       },
-      [startUpload],
+      [startUpload, t],
     );
-
 
     const welcomeMessage = useMemo(() => {
       if (researchMode !== "disabled") {
-        return "What can I research?";
+        return t('chat.welcome.research');
       }
       if (search) {
-        return "What can I search for?";
+        return t('chat.welcome.search');
       }
       if (canvas) {
-        return "What can I create for you?";
+        return t('chat.welcome.canvas');
       }
-      return "How can I help you today?";
-    }, [researchMode, search, canvas]);
+      return t('chat.welcome.default');
+    }, [researchMode, search, canvas, t]);
 
     if (loading && loadingWord) {
       return (
@@ -220,38 +222,48 @@ const MainChat = memo<MainChatProps>(
                 <span className="bg-gradient-to-r from-pink-400 to-sky-500 bg-clip-text text-transparent capitalize">
                   {ssUserData?.plan}
                 </span>{" "}
-                Plan Active
+                {t('chat.welcome.planActive')}
               </span>
             )}
             {(!ssUserData?.plan ||
               !ssUserData ||
               ssUserData?.plan === "free") && (
               <div className="flex items-center font-semibold text-sm">
-                Free Plan <Dot size={16} className="text-foreground" />{" "}
-                <Link href="/upgrade" className="text-blue-500 dark:text-blue-400 underline-offset-3 hover:underline">Upgrade Plan</Link>
+                {t('chat.welcome.freePlan')} <Dot size={16} className="text-foreground" />{" "}
+                <Link
+                  href="/upgrade"
+                  className="text-blue-500 dark:text-blue-400 underline-offset-3 hover:underline"
+                >
+                  {t('chat.welcome.upgradePlan')}
+                </Link>
               </div>
             )}
           </div>
         )}
         <div className="flex-1 overflow-y-auto" ref={messagesRef}>
-          {/* Branch tree and share button - only show if we have messages and a conversation */}
-          {messages.length > 0 && initialConversation?.id && (
-            <div className="w-full max-w-4xl mx-auto mb-4">
-              <div className="flex items-center justify-between">
-                <BranchTree 
+          {/* Sidebar toggle, branch tree and share button */}
+          <div className="w-full max-w-4xl mx-auto mb-4">
+            <div className="flex items-center justify-between">
+              {messages.length > 0 && initialConversation?.id && (
+                <BranchTree
                   conversationId={initialConversation.id}
                   currentConversationId={initialConversation.id}
                 />
+              )}
+              {messages.length > 0 && initialConversation?.id && (
                 <ShareButton
                   conversation={initialConversation}
                   user={user}
                   messages={messages}
                   authToken={authToken}
                 />
-              </div>
+              )}
             </div>
-          )}
-          <Messages messages={messages} conversationId={initialConversation?.id} />
+          </div>
+          <Messages
+            messages={messages}
+            conversationId={initialConversation?.id}
+          />
           {error && (
             <div className="flex items-center gap-2 p-4 pl-0 w-full max-w-4xl mx-auto">
               <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-destructive/15">
@@ -259,7 +271,7 @@ const MainChat = memo<MainChatProps>(
               </div>
               <div className="flex-1">
                 <h3 className="text-sm font-medium text-destructive">
-                  Something went wrong
+                  {t('common.error.title')}
                 </h3>
                 <p className="text-sm text-muted-foreground">
                   {ERROR_MAPPING[error.message] || error.message}
@@ -296,8 +308,7 @@ const MainChat = memo<MainChatProps>(
           />
           {initialConversation?.bot && (
             <div className="text-center text-sm mt-2 text-muted-foreground">
-              You are in bot session. To leave, create a new chat or select a
-              different conversation.
+              {t('chat.botSession.message')}
             </div>
           )}
         </div>

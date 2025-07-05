@@ -12,6 +12,7 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
+  SidebarTrigger,
 } from "@workspace/ui/components/sidebar";
 import {
   ArrowRight,
@@ -24,7 +25,7 @@ import {
   Plus,
   Trash2,
 } from "lucide-react";
-import Link, { useLinkStatus } from "next/link";
+import { Link } from "@/i18n/navigation"
 import {
   ContextMenu,
   ContextMenuContent,
@@ -67,6 +68,7 @@ import {
 import { BRAND_NAME } from "@/lib/constants";
 import { useSettings } from "@/hooks/use-settings";
 import { cn } from "@workspace/ui/lib/utils";
+import { useTranslations } from "@/hooks/use-translations";
 
 export function ChatContextMenu({
   conversationId,
@@ -84,6 +86,7 @@ export function ChatContextMenu({
     updateConversation,
     updateConversationTitle,
   } = useConversations();
+  const t = useTranslations();
 
   useEffect(() => {
     const conversation = conversations.find(
@@ -109,29 +112,29 @@ export function ChatContextMenu({
         },
       );
       toast.promise(deleteConversationPromise, {
-        loading: "Deleting conversation...",
+        loading: t("chat.sidebar.deleting"),
         success: () => {
           router.push("/chat");
-          return "Conversation deleted successfully!";
+          return t("chat.sidebar.deleteSuccess");
         },
-        error: () => "Failed to delete conversation. Please try again.",
+        error: () => t("chat.sidebar.deleteFailed"),
       });
     } catch (error) {
-      toast.error("Failed to delete conversation. Please try again.");
+      toast.error(t("chat.sidebar.deleteFailed"));
     }
   };
 
   const handleRenameChat = async () => {
     // Implement rename chat functionality
     if (!newName.trim()) {
-      toast.error("Please enter a valid conversation name.");
+      toast.error(t("chat.sidebar.invalidName"));
       return;
     }
 
     toast.promise(updateConversation(conversationId, { title: newName }), {
-      loading: "Renaming conversation...",
-      success: () => "Conversation renamed successfully!",
-      error: () => "Failed to rename conversation. Please try again.",
+      loading: t("chat.sidebar.renaming"),
+      success: () => t("chat.sidebar.renameSuccess"),
+      error: () => t("chat.sidebar.renameFailed"),
     });
     await updateConversationTitle(conversationId, newName);
   };
@@ -142,11 +145,11 @@ export function ChatContextMenu({
         <ContextMenuTrigger asChild>{children}</ContextMenuTrigger>
         <ContextMenuContent>
           <ContextMenuItem onClick={() => setOpen(true)}>
-            <MessageCircle /> Rename
+            <MessageCircle /> {t("chat.sidebar.rename")}
           </ContextMenuItem>
           <ContextMenuSeparator />
           <ContextMenuItem variant={"destructive"} onClick={handleDeleteChat}>
-            <Trash2 /> Delete
+            <Trash2 /> {t("chat.sidebar.delete")}
           </ContextMenuItem>
         </ContextMenuContent>
       </ContextMenu>
@@ -154,21 +157,21 @@ export function ChatContextMenu({
       <AlertDialog open={open} onOpenChange={setOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Rename Conversation</AlertDialogTitle>
+            <AlertDialogTitle>{t("chat.sidebar.renameTitle")}</AlertDialogTitle>
             <AlertDialogDescription>
-              Enter a new name for the conversation.
+              {t("chat.sidebar.renameSubtitle")}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <Input
             value={newName}
             onChange={(e) => setNewName(e.target.value)}
-            placeholder="New conversation name"
+            placeholder={t("chat.sidebar.renamePlaceholder")}
           />
           <AlertDialogFooter>
             <Button variant={"outline"} onClick={() => setOpen(false)}>
-              Cancel
+              {t("chat.sidebar.cancel")}
             </Button>
-            <Button onClick={handleRenameChat}>Save</Button>
+            <Button onClick={handleRenameChat}>{t("chat.sidebar.save")}</Button>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
@@ -183,6 +186,7 @@ function DraggableConversation({
 }) {
   const { hubs } = useHubs();
   const params = useParams();
+  const t = useTranslations();
   const isActive = conversation.id === (params?.id as string | undefined);
 
   const { attributes, listeners, setNodeRef, transform, isDragging } =
@@ -228,7 +232,7 @@ function DraggableConversation({
                   )}
                 </LoadingIndicator>
                 {(() => {
-                  const title = conversation.title || "Untitled Conversation";
+                  const title = conversation.title || t("chat.sidebar.untitledConversation");
                   const botName = conversation.bot?.name;
                   const hubId = conversation.hub_id;
 
@@ -315,6 +319,7 @@ function ChatSidebarContent() {
   const [activeId, setActiveId] = React.useState<string | null>(null);
   const { settings } = useSettings();
   const router = useRouter();
+  const t = useTranslations();
 
   const sensors = useSensors(
     useSensor(PointerSensor),
@@ -343,14 +348,17 @@ function ChatSidebarContent() {
         const success = await addConversationToHub(hub.id, conversation.id);
         if (success) {
           toast.success(
-            `Conversation "${conversation.title || "Untitled"}" added to hub "${hub.name}"`,
+            t("chat.sidebar.addedToHub", {
+              title: conversation.title || t("chat.sidebar.untitledConversation"),
+              hubName: hub.name
+            }),
           );
         } else {
-          toast.error("Failed to add conversation to hub");
+          toast.error(t("chat.sidebar.addToHubFailed"));
         }
       } catch (error) {
         console.error("Error adding conversation to hub:", error);
-        toast.error("Error adding conversation to hub");
+        toast.error(t("chat.sidebar.addToHubError"));
       }
     }
   };
@@ -360,10 +368,10 @@ function ChatSidebarContent() {
     setIsCreating(true);
     const conversation = await createConversation();
     if (!conversation) {
-      toast.error("Failed to create a new conversation. Please try again.");
+      toast.error(t("chat.sidebar.newChatFailed"));
       return;
     }
-    toast.success("New conversation created successfully!");
+    toast.success(t("chat.sidebar.newChatSuccess"));
     // Redirect to the new conversation
     router.push(`/chat/${conversation.id}`);
     setIsCreating(false);
@@ -374,18 +382,18 @@ function ChatSidebarContent() {
     setIsCreatingHub(true);
 
     try {
-      const hubName = `Hub ${hubs.length + 1}`;
-      const hubDescription = "New hub";
+      const hubName = t("chat.sidebar.hubTitle", { number: hubs.length + 1 });
+      const hubDescription = t("chat.sidebar.newHub");
 
       const hub = await createHub(hubName, hubDescription);
       if (!hub) {
-        toast.error("Failed to create a new hub. Please try again.");
+        toast.error(t("chat.sidebar.newHubFailed"));
         return;
       }
-      toast.success("New hub created successfully!");
+      toast.success(t("chat.sidebar.newHubSuccess"));
       router.push(`/hubs/${hub.id}`);
     } catch (error) {
-      toast.error("Failed to create a new hub. Please try again.");
+      toast.error(t("chat.sidebar.newHubFailed"));
     } finally {
       setIsCreatingHub(false);
     }
@@ -406,9 +414,10 @@ function ChatSidebarContent() {
         <SidebarContent>
           <SidebarGroup>
             <div className="w-full flex justify-center my-2">
-              <SidebarGroupLabel className="text-xl font-semibold text-foreground">
-                {BRAND_NAME}
+              <SidebarGroupLabel className="text-xl font-semibold text-foreground underline-offset-3 hover:underline">
+                <Link href="/chat">{BRAND_NAME}</Link>
               </SidebarGroupLabel>
+              <SidebarTrigger className="top-4.5 right-3 absolute" />
             </div>
             <SidebarGroupContent>
               <SidebarMenu>
@@ -423,7 +432,7 @@ function ChatSidebarContent() {
                     ) : (
                       <MessageCircle />
                     )}
-                    New Chat
+                    {t("chat.sidebar.newChat")}
                   </Button>
                 </SidebarMenuItem>
 
@@ -431,7 +440,7 @@ function ChatSidebarContent() {
                   <SidebarMenuItem>
                     <Button className="w-full" variant="outline" disabled>
                       <Headphones />
-                      New Voice Chat
+                      {t("chat.sidebar.newVoiceChat")}
                     </Button>
                   </SidebarMenuItem>
                 )}
@@ -441,7 +450,7 @@ function ChatSidebarContent() {
                     <Button className="w-full" variant={"secondary"} asChild>
                       <Link href="/bots">
                         <BotIcon />
-                        Bots
+                        {t("chat.sidebar.bots")}
                       </Link>
                     </Button>
                   </SidebarMenuItem>
@@ -452,7 +461,7 @@ function ChatSidebarContent() {
                     <Button className="w-full" variant={"secondary"} asChild>
                       <Link href="/hubs">
                         <FolderOpen />
-                        Hubs
+                        {t("chat.sidebar.hubs")}
                       </Link>
                     </Button>
                   </SidebarMenuItem>
@@ -462,7 +471,7 @@ function ChatSidebarContent() {
           </SidebarGroup>
           <SidebarGroup className={cn({ hidden: !settings.hubs })}>
             <SidebarGroupLabel className="flex items-center justify-between">
-              Hubs
+              {t("chat.sidebar.hubs")}
               <Button
                 size="sm"
                 variant="ghost"
@@ -491,7 +500,7 @@ function ChatSidebarContent() {
             </SidebarGroupContent>
           </SidebarGroup>
           <SidebarGroup>
-            <SidebarGroupLabel>Conversations</SidebarGroupLabel>
+            <SidebarGroupLabel>{t("chat.sidebar.conversations")}</SidebarGroupLabel>
             <SidebarGroupContent>
               <SidebarMenu>
                 {loading && (
@@ -520,7 +529,7 @@ function ChatSidebarContent() {
                 <MessageCircle className="h-4 w-4" />
               )}
               <span className="text-sm font-medium">
-                {activeConversation.title || "Untitled Conversation"}
+                {activeConversation.title || t("chat.sidebar.untitledConversation")}
               </span>
             </div>
           </div>

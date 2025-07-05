@@ -2,6 +2,7 @@ import { models } from "@/lib/constants";
 import { UseChatHelpers } from "@ai-sdk/react";
 import { Button } from "@workspace/ui/components/button";
 import { useSettings } from "@/hooks/use-settings";
+import { useTranslations } from "@/hooks/use-translations";
 import {
   Command,
   CommandInput,
@@ -32,7 +33,7 @@ import {
   Gem,
   Loader2,
 } from "lucide-react";
-import { researchModeMapping } from "./input";
+import { useResearchModeMappingIntl } from "./input";
 import {
   SiAnthropic,
   SiGooglegemini,
@@ -108,6 +109,8 @@ export const CanvasButton = React.memo<{
   canvas: boolean;
   setCanvas: (canvas: boolean) => void;
 }>(function CanvasButton({ canvas, setCanvas }) {
+  const t = useTranslations("canvas");
+  
   return (
     <Button
       type="button"
@@ -116,7 +119,7 @@ export const CanvasButton = React.memo<{
       className="rounded-full"
     >
       <Presentation className="h-5 w-5" />
-      <div className="hidden md:inline">Canvas</div>
+      <div className="hidden md:inline">{t("title")}</div>
     </Button>
   );
 });
@@ -125,6 +128,8 @@ export const SearchButton = React.memo<{
   search: boolean;
   setSearch: (search: boolean) => void;
 }>(function SearchButton({ search, setSearch }) {
+  const t = useTranslations("common.actions");
+  
   return (
     <Button
       type="button"
@@ -133,7 +138,7 @@ export const SearchButton = React.memo<{
       className="rounded-full"
     >
       <Globe className="h-5 w-5" />
-      <div className="hidden md:inline">Search</div>
+      <div className="hidden md:inline">{t("search")}</div>
     </Button>
   );
 });
@@ -164,11 +169,13 @@ export const ThinkingEffortButton = React.memo<{
   thinkingEffort: "disabled" | "low" | "medium" | "high";
   setThinkingEffort: (effort: "disabled" | "low" | "medium" | "high") => void;
 }>(function ThinkingEffortButton({ model, thinkingEffort, setThinkingEffort }) {
+  const t = useTranslations("chat.input");
+  
   const effortMapping: Record<"disabled" | "low" | "medium" | "high", string> =
     {
-      disabled: "Off",
+      disabled: t("disabled"),
       low: "Low",
-      medium: "Medium",
+      medium: "Medium", 
       high: "High",
     };
 
@@ -236,6 +243,7 @@ export const ResearchModeButton = React.memo<{
   setResearchMode: (mode: "disabled" | "shallow" | "deep" | "deeper") => void;
 }>(function ResearchModeButton({ search, researchMode, setResearchMode }) {
   const [open, setOpen] = useState(false);
+  const researchModeMapping = useResearchModeMappingIntl();
 
   const handleResearchModeSelect = useCallback(
     (value: string) => {
@@ -245,34 +253,36 @@ export const ResearchModeButton = React.memo<{
     [setResearchMode],
   );
 
+  const t = useTranslations("chat.input");
+  
   const researchModes = useMemo(
     () => [
       {
         value: "disabled",
         label: researchModeMapping.disabled,
         icon: <X className={cn("mr-2 h-4 w-4")} />,
-        description: "Disable research mode",
+        description: t("researchModeDescriptions.disabled"),
       },
       {
         value: "shallow",
         label: researchModeMapping.shallow,
         icon: <Zap className={cn("mr-2 h-4 w-4")} />,
-        description: "Get faster responses",
+        description: t("researchModeDescriptions.shallow"),
       },
       {
         value: "deep",
         label: researchModeMapping.deep,
         icon: <Telescope className={cn("mr-2 h-4 w-4")} />,
-        description: "Get detailed responses",
+        description: t("researchModeDescriptions.deep"),
       },
       {
         value: "deeper",
         label: researchModeMapping.deeper,
         icon: <Telescope className={cn("mr-2 h-4 w-4")} />,
-        description: "Get advanced responses",
+        description: t("researchModeDescriptions.deeper"),
       },
     ],
-    [],
+    [researchModeMapping, t],
   );
 
   return (
@@ -286,7 +296,7 @@ export const ResearchModeButton = React.memo<{
         >
           <Telescope className="h-5 w-5" />
           <div className="hidden md:inline">
-            Research{" "}
+            {t("research")}{" "}
             <Badge className={cn(researchMode === "disabled" && "hidden")}>
               {researchModeMapping[researchMode]}
             </Badge>

@@ -28,10 +28,10 @@ import {
 import Image from "next/image";
 import { memo, useEffect, useState } from "react";
 import { User } from "@supabase/supabase-js";
-import Link from "next/link";
+import { Link } from "@/i18n/navigation";
 import { toast } from "sonner";
 import { useSettingsDialog } from "@/context/settings-dialog-context";
-import { useRouter } from "next/navigation";
+import { useRouter } from "@/i18n/navigation";
 import { useSettings } from "@/hooks/use-settings";
 
 export const AccountManagement = () => {

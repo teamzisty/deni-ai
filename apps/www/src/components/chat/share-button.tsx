@@ -8,6 +8,7 @@ import { Conversation } from "@/lib/conversations";
 import { User } from "@supabase/supabase-js";
 import { Message } from "ai";
 import { useSupabase } from "@/context/supabase-context";
+import { useTranslations } from "@/hooks/use-translations";
 
 interface ShareButtonProps {
   conversation: Conversation | undefined;
@@ -23,15 +24,16 @@ export const ShareButton: FC<ShareButtonProps> = ({
   authToken,
 }) => {
   const { secureFetch } = useSupabase();
+  const t = useTranslations();
   
   const handleShare = async () => {
     if (!conversation || !user) {
-      toast.error("Please log in to share conversations");
+      toast.error(t("chat.share.loginRequired"));
       return;
     }
 
     if (messages.length === 0) {
-      toast.error("Cannot share an empty conversation");
+      toast.error(t("chat.share.emptyConversation"));
       return;
     }
 
@@ -44,14 +46,14 @@ export const ShareButton: FC<ShareButtonProps> = ({
         },
         body: JSON.stringify({
           sessionId: conversation.id,
-          title: conversation.title || "Untitled Conversation",
+          title: conversation.title || t("chat.message.untitledConversation"),
           messages: messages,
         }),
       });
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.error || "Failed to share conversation");
+        throw new Error(errorData.error || t("chat.share.shareFailed"));
       }
 
       const data = await response.json();
@@ -60,13 +62,13 @@ export const ShareButton: FC<ShareButtonProps> = ({
       const shareUrl = `${window.location.origin}${data.shareUrl}`;
       await navigator.clipboard.writeText(shareUrl);
 
-      toast.success("Conversation shared!", {
-        description: "Link copied to clipboard",
+      toast.success(t("chat.share.shareSuccess"), {
+        description: t("chat.share.linkCopied"),
       });
     } catch (error) {
       console.error(error);
-      toast.error("Failed to share conversation", {
-        description: error instanceof Error ? error.message : "Unknown error",
+      toast.error(t("chat.share.shareFailed"), {
+        description: error instanceof Error ? error.message : t("chat.share.unknownError"),
       });
     }
   };
@@ -79,7 +81,7 @@ export const ShareButton: FC<ShareButtonProps> = ({
       className="flex items-center gap-2"
     >
       <Share2 className="h-4 w-4" />
-      <span>Share</span>
+      <span>{t("chat.share.shareButton")}</span>
     </Button>
   );
 };

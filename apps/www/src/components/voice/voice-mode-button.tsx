@@ -6,6 +6,7 @@ import { Headphones } from "lucide-react";
 import { VoiceInput } from "./voice-input";
 import { generateSpeech, playAudioBlob, playBrowserSpeech } from "./voice-utils";
 import { toast } from "sonner";
+import { useTranslations } from "@/hooks/use-translations";
 
 interface VoiceModeButtonProps {
   voiceMode: boolean;
@@ -23,6 +24,7 @@ export const VoiceModeButton: React.FC<VoiceModeButtonProps> = ({
   disabled = false,
 }) => {
   const [isPlayingTTS, setIsPlayingTTS] = useState(false);
+  const t = useTranslations();
 
   const handleVoiceTranscript = useCallback((transcript: string) => {
     if (transcript.trim()) {
@@ -32,7 +34,7 @@ export const VoiceModeButton: React.FC<VoiceModeButtonProps> = ({
 
   const handlePlayLastMessage = useCallback(async () => {
     if (!lastMessage?.trim()) {
-      toast.error("No message to play");
+      toast.error(t("voice.noMessageToPlay"));
       return;
     }
 
@@ -43,7 +45,7 @@ export const VoiceModeButton: React.FC<VoiceModeButtonProps> = ({
       await playAudioBlob(audioBlob);
     } catch (error) {
       console.error("TTS error:", error);
-      toast.error("Using browser TTS fallback");
+      toast.error(t("voice.usingBrowserTTSFallback"));
       // Direct browser TTS fallback
       playBrowserSpeech(lastMessage);
     } finally {
@@ -54,15 +56,15 @@ export const VoiceModeButton: React.FC<VoiceModeButtonProps> = ({
   // Test browser TTS function for debugging
   const handleTestBrowserTTS = useCallback(() => {
     if (!lastMessage?.trim()) {
-      toast.error("No message to test");
+      toast.error(t("voice.noMessageToTest"));
       return;
     }
     playBrowserSpeech(lastMessage);
-    toast.success("Playing with browser TTS");
+    toast.success(t("voice.playingWithBrowserTTS"));
   }, [lastMessage]);
 
   const handleVoiceError = useCallback((error: string) => {
-    toast.error(`Voice recognition error: ${error}`);
+    toast.error(t("voice.recognitionError", { error }));
   }, []);
 
   return (
@@ -75,7 +77,7 @@ export const VoiceModeButton: React.FC<VoiceModeButtonProps> = ({
         disabled={disabled}
       >
         <Headphones className="h-5 w-5" />
-        <div className="hidden md:inline">Voice</div>
+        <div className="hidden md:inline">{t("voice.voiceButton")}</div>
       </Button>
       
       {voiceMode && (
@@ -94,7 +96,7 @@ export const VoiceModeButton: React.FC<VoiceModeButtonProps> = ({
                 className="rounded-full"
                 onClick={handlePlayLastMessage}
                 disabled={disabled || isPlayingTTS}
-                title="Play with Gemini TTS (fallback to browser)"
+                title={t("voice.playWithGeminiTTS")}
               >
                 🔊
               </Button>
@@ -105,7 +107,7 @@ export const VoiceModeButton: React.FC<VoiceModeButtonProps> = ({
                 className="rounded-full text-xs"
                 onClick={handleTestBrowserTTS}
                 disabled={disabled}
-                title="Test browser TTS directly"
+                title={t("voice.testBrowserTTS")}
               >
                 🗣️
               </Button>

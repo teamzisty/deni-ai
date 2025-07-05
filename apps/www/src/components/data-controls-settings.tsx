@@ -32,6 +32,7 @@ import {
 import { useSupabase } from "@/context/supabase-context";
 import { Input } from "@workspace/ui/components/input";
 import { Label } from "@workspace/ui/components/label";
+import { useTranslations } from "@/hooks/use-translations";
 
 export default function DataControlsSettings() {
   const [dataCollection, setDataCollection] = useState(false);
@@ -40,6 +41,7 @@ export default function DataControlsSettings() {
   const [password, setPassword] = useState("");
   const [reauthError, setReauthError] = useState("");
   const { user, supabase } = useSupabase();
+  const t = useTranslations("dataControls");
 
   useEffect(() => {
     // Read the 'analytics-consent' cookie on component mount
@@ -77,10 +79,10 @@ export default function DataControlsSettings() {
       const mockData = [{ id: 1, message: "Sample conversation" }];
       const fileName = `deni-ai-conversations-${new Date().toISOString()}.json`;
       saveFile(JSON.stringify(mockData), fileName);
-      toast.success("Export completed successfully!");
+      toast.success(t("export.success"));
     } catch (error) {
       console.error("Export error:", error);
-      toast.error("Export failed");
+      toast.error(t("export.failed"));
     }
   };
 
@@ -98,13 +100,13 @@ export default function DataControlsSettings() {
           try {
             const jsonData = event.target?.result as string;
             // Add actual import logic here
-            toast.success("Import completed successfully!");
+            toast.success(t("import.success"));
           } catch (error) {
-            toast.error("Invalid file format");
+            toast.error(t("import.invalidFormat"));
           }
         };
         reader.onerror = () => {
-          toast.error("Failed to read file");
+          toast.error(t("import.readFailed"));
         };
         reader.readAsText(file);
       };
@@ -113,7 +115,7 @@ export default function DataControlsSettings() {
       if (error instanceof Error && error.name === "AbortError") {
         return;
       }
-      toast.error("Failed to import file");
+      toast.error(t("import.failed"));
     }
   };
 
@@ -121,10 +123,10 @@ export default function DataControlsSettings() {
   const deleteAllConversations = async () => {
     try {
       // Add actual delete logic here
-      toast.success("All conversations deleted successfully!");
+      toast.success(t("deleteAll.success"));
     } catch (error) {
       console.error("Delete all error:", error);
-      toast.error("Failed to delete conversations");
+      toast.error(t("deleteAll.failed"));
     }
   };
 
@@ -155,7 +157,7 @@ export default function DataControlsSettings() {
     setReauthError("");
 
     if (!user) {
-      setReauthError("Authentication required");
+      setReauthError(t("reauth.authRequired"));
       return;
     }
 
@@ -186,10 +188,10 @@ export default function DataControlsSettings() {
       // Sign out
       await supabase.auth.signOut();
 
-      toast.success("Account deleted successfully");
+      toast.success(t("deleteAccount.success"));
     } catch (error: unknown) {
       console.error("Account deletion error:", error);
-      toast.error("Failed to delete account");
+      toast.error(t("deleteAccount.failed"));
     } finally {
       setIsDeleting(false);
     }
@@ -197,7 +199,7 @@ export default function DataControlsSettings() {
 
   const handleDeleteAccount = async () => {
     if (!user) {
-      toast.error("Authentication required");
+      toast.error(t("reauth.authRequired"));
       return;
     }
 
@@ -218,14 +220,14 @@ export default function DataControlsSettings() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Shield className="h-5 w-5" />
-            Data Collection
+            {t("dataCollection.title")}
           </CardTitle>
         </CardHeader>
         <CardContent>
           <div className="flex items-center justify-between">
             <div className="flex-grow">
               <p className="text-sm text-muted-foreground">
-                Allow analytics and usage data collection
+                {t("dataCollection.description")}
               </p>
             </div>
             <Switch
@@ -243,13 +245,13 @@ export default function DataControlsSettings() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <FileText className="h-5 w-5" />
-            Export Data
+            {t("export.title")}
           </CardTitle>
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
             <p className="text-sm text-muted-foreground">
-              Export your conversations and data
+              {t("export.description")}
             </p>
             <div className="flex flex-col md:flex-row gap-2">
               <Button
@@ -258,7 +260,7 @@ export default function DataControlsSettings() {
                 className="gap-2"
               >
                 <Download className="h-4 w-4" />
-                Export
+                {t("export.button")}
               </Button>
               <Button
                 variant="outline"
@@ -266,7 +268,7 @@ export default function DataControlsSettings() {
                 className="gap-2"
               >
                 <Upload className="h-4 w-4" />
-                Import
+                {t("import.button")}
               </Button>
             </div>
           </div>
@@ -278,38 +280,37 @@ export default function DataControlsSettings() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-destructive">
             <Database className="h-5 w-5" />
-            Delete All Data
+            {t("deleteAll.title")}
           </CardTitle>
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
             <div>
               <p className="text-sm text-muted-foreground">
-                Permanently delete all your conversations and data
+                {t("deleteAll.description")}
               </p>
             </div>
             <AlertDialog>
               <AlertDialogTrigger asChild>
                 <Button variant="destructive" className="gap-2">
                   <Trash2 className="h-4 w-4" />
-                  Delete All
+                  {t("deleteAll.button")}
                 </Button>
               </AlertDialogTrigger>
               <AlertDialogContent>
                 <AlertDialogHeader>
-                  <AlertDialogTitle>Delete All Data</AlertDialogTitle>
+                  <AlertDialogTitle>{t("deleteAll.dialogTitle")}</AlertDialogTitle>
                   <AlertDialogDescription>
-                    This action cannot be undone. All your conversations and
-                    data will be permanently deleted.
+                    {t("deleteAll.dialogDescription")}
                   </AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter>
-                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                  <AlertDialogCancel>{t("common.cancel")}</AlertDialogCancel>
                   <AlertDialogAction
                     onClick={deleteAllConversations}
                     className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
                   >
-                    Delete All
+                    {t("deleteAll.confirmButton")}
                   </AlertDialogAction>
                 </AlertDialogFooter>
               </AlertDialogContent>
@@ -323,39 +324,38 @@ export default function DataControlsSettings() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-destructive">
             <Trash2 className="h-5 w-5" />
-            Delete Account
+            {t("deleteAccount.title")}
           </CardTitle>
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
             <div>
               <p className="text-sm text-muted-foreground">
-                Permanently delete your account and all associated data
+                {t("deleteAccount.description")}
               </p>
             </div>
             <AlertDialog>
               <AlertDialogTrigger asChild>
                 <Button variant="destructive" className="gap-2">
                   <Trash2 className="h-4 w-4" />
-                  Delete Account
+                  {t("deleteAccount.button")}
                 </Button>
               </AlertDialogTrigger>
               <AlertDialogContent>
                 <AlertDialogHeader>
-                  <AlertDialogTitle>Delete Account</AlertDialogTitle>
+                  <AlertDialogTitle>{t("deleteAccount.dialogTitle")}</AlertDialogTitle>
                   <AlertDialogDescription>
-                    This will permanently delete your account and all associated
-                    data. This action cannot be undone.
+                    {t("deleteAccount.dialogDescription")}
                   </AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter>
-                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                  <AlertDialogCancel>{t("common.cancel")}</AlertDialogCancel>
                   <AlertDialogAction
                     onClick={handleDeleteAccount}
                     className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
                     disabled={isDeleting}
                   >
-                    {isDeleting ? "Deleting..." : "Delete Account"}
+                    {isDeleting ? t("deleteAccount.deleting") : t("deleteAccount.confirmButton")}
                   </AlertDialogAction>
                 </AlertDialogFooter>
               </AlertDialogContent>
@@ -368,33 +368,33 @@ export default function DataControlsSettings() {
       <AlertDialog open={showReauthDialog}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Confirm Identity</AlertDialogTitle>
+            <AlertDialogTitle>{t("reauth.title")}</AlertDialogTitle>
             <AlertDialogDescription>
-              Please enter your password to confirm this action
+              {t("reauth.description")}
             </AlertDialogDescription>
           </AlertDialogHeader>
 
           <div className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="password">Password</Label>
+              <Label htmlFor="password">{t("reauth.passwordLabel")}</Label>
               <Input
                 id="password"
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                placeholder="Enter your password"
+                placeholder={t("reauth.passwordPlaceholder")}
               />
             </div>
             {reauthError && (
               <p className="text-sm text-destructive">{reauthError}</p>
             )}
             <div className="flex flex-col gap-2">
-              <Button onClick={handleReauth}>Continue</Button>
+              <Button onClick={handleReauth}>{t("reauth.continueButton")}</Button>
               <Button
                 variant="outline"
                 onClick={() => setShowReauthDialog(false)}
               >
-                Cancel
+                {t("common.cancel")}
               </Button>
             </div>
           </div>

@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { Button } from "@workspace/ui/components/button";
 import { GitBranch, ChevronRight, MessageSquare } from "lucide-react";
-import { useRouter } from "next/navigation";
+import { useRouter } from "@/i18n/navigation";
 import {
   Collapsible,
   CollapsibleContent,

@@ -13,6 +13,7 @@ import { Globe, ExternalLink, ArrowRight, ArrowDown } from "lucide-react";
 import { motion } from "framer-motion";
 import { useCanvas } from "@/context/canvas-context";
 import { BranchButton } from "./branch-button";
+import { useTranslations } from "@/hooks/use-translations";
 
 interface SearchResult {
   title: string;
@@ -75,6 +76,7 @@ const Message = memo<MessageProps>(({ message, conversationId }) => {
   const [showSearchResults, setShowSearchResults] = useState(false);
   const [showReasoning, setShowReasoning] = useState(false);
   const { openCanvas } = useCanvas();
+  const t = useTranslations();
 
   const toggleSearchResults = () => {
     setShowSearchResults(!showSearchResults);
@@ -109,7 +111,7 @@ const Message = memo<MessageProps>(({ message, conversationId }) => {
                     <img
                       key={index}
                       src={part.data}
-                      alt="A Image"
+                      alt={t("chat.message.imageAlt")}
                       className="rounded-lg"
                     />
                   );
@@ -139,8 +141,8 @@ const Message = memo<MessageProps>(({ message, conversationId }) => {
                     variant="ghost"
                     className="flex items-center gap-1"
                   >
-                    {showReasoning ? <ArrowRight /> : <ArrowDown />}View
-                    reasoning process
+                    {showReasoning ? <ArrowRight /> : <ArrowDown />}
+                    {t("chat.message.viewReasoning")}
                   </Button>
 
                   <motion.div
@@ -180,7 +182,7 @@ const Message = memo<MessageProps>(({ message, conversationId }) => {
                     const canvasContent =
                       part.toolInvocation.args?.content || "";
                     const canvasTitle =
-                      part.toolInvocation.args?.title || "Canvas";
+                      part.toolInvocation.args?.title || t("chat.message.canvas");
                     return (
                       <div key={index} className="bg-secondary rounded-2xl p-4">
                         <div className="flex items-center justify-between">
@@ -192,7 +194,7 @@ const Message = memo<MessageProps>(({ message, conversationId }) => {
                             className="flex items-center gap-1"
                           >
                             <ExternalLink className="h-4 w-4" />
-                            Open in Canvas
+                            {t("chat.message.openInCanvas")}
                           </Button>
                         </div>
                       </div>
@@ -205,13 +207,13 @@ const Message = memo<MessageProps>(({ message, conversationId }) => {
                           key={index}
                           className="bg-secondary rounded-2xl p-4 my-1"
                         >
-                          <h3 className="font-semibold">Search Results</h3>
+                          <h3 className="font-semibold">{t("chat.message.searchResults")}</h3>
                           <span className="text-muted-foreground">
-                            Searching with "{part.toolInvocation.args?.query}"
+                            {t("chat.message.searchingWith", { query: part.toolInvocation.args?.query })}
                           </span>
                           <div className="mt-2">
                             <p className="!m-0 animate-pulse text-muted-foreground">
-                              Searching...
+                              {t("chat.message.searching")}
                             </p>
                           </div>
                         </div>
@@ -227,8 +229,7 @@ const Message = memo<MessageProps>(({ message, conversationId }) => {
                         >
                           <Globe className="h-4 w-4" />
                           <span>
-                            searched {part.toolInvocation.result.length}{" "}
-                            websites
+                            {t("chat.message.searchedWebsites", { count: part.toolInvocation.result.length })}
                           </span>
                         </Button>
 
@@ -246,21 +247,19 @@ const Message = memo<MessageProps>(({ message, conversationId }) => {
                           style={{ overflow: "hidden" }}
                         >
                           <div className="flex items-center justify-between">
-                            <h3 className="font-semibold">Search Results</h3>
+                            <h3 className="font-semibold">{t("chat.message.searchResults")}</h3>
                             <button className="text-sm text-muted-foreground hover:text-foreground transition-colors">
-                              searched {part.toolInvocation.result.length}{" "}
-                              websites
+                              {t("chat.message.searchedWebsites", { count: part.toolInvocation.result.length })}
                             </button>
                           </div>
                           <span className="text-muted-foreground">
-                            Found {part.toolInvocation.result.length} results
-                            for "{part.toolInvocation.args.query}"
+                            {t("chat.message.foundResults", { count: part.toolInvocation.result.length, query: part.toolInvocation.args.query })}
                           </span>
                           <details className="mt-2" open={true}>
                             {" "}
                             {/* Set open to true to show content initially if animated */}
                             <summary className="cursor-pointer text-sm text-foreground/80 hover:text-foreground transition-colors">
-                              View search results
+                              {t("chat.message.viewSearchResults")}
                             </summary>
                             <div className="mt-2">
                               {(
@@ -295,12 +294,7 @@ const Message = memo<MessageProps>(({ message, conversationId }) => {
                                   <div className="mt-2">
                                     <details className="mt-2">
                                       <summary className="cursor-pointer text-sm text-foreground/80 hover:text-foreground transition-colors">
-                                        Page Summary (using{" "}
-                                        {
-                                          internalModels["search-summary-model"]
-                                            ?.name
-                                        }
-                                        )
+                                        {t("chat.message.pageSummary", { model: internalModels["search-summary-model"]?.name || "" })}
                                       </summary>
                                       <MemoizedMarkdownBlock
                                         key={`${message.id}-search-result-${index}-${idx}`}

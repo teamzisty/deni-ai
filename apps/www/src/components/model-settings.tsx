@@ -29,9 +29,12 @@ import { Button } from "@workspace/ui/components/button";
 import { Loading } from "@/components/loading";
 import { models, Model, ModelFeature } from "@/lib/constants";
 import { useSettings } from "@/hooks/use-settings";
+import { useTranslations } from "@/hooks/use-translations";
 
 export default function ModelSettings() {
   const { settings, updateSetting, isLoading: settingsLoading } = useSettings();
+  const t = useTranslations('settings.models');
+  const tCommon = useTranslations('common.actions');
   const [visibility, setVisibility] = useState<Record<string, boolean>>({});
   const [isLoading, setIsLoading] = useState(true);
   const [filteredModels, setFilteredModels] = useState<[string, Model][] | null>(null);
@@ -167,10 +170,10 @@ export default function ModelSettings() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Settings className="h-5 w-5" />
-            Model Settings
+            {t('title')}
           </CardTitle>
           <CardDescription>
-            Adjust visibility and filter available models based on your preferences.
+            {t('description')}
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -179,7 +182,7 @@ export default function ModelSettings() {
               <PopoverTrigger asChild>
                 <Button variant="outline" className="flex items-center gap-2">
                   <Filter size={16} />
-                  Filter
+                  {t('filter')}
                   {activeFilterCount > 0 && (
                     <Badge variant="secondary" className="ml-1">
                       {activeFilterCount}
@@ -189,7 +192,7 @@ export default function ModelSettings() {
               </PopoverTrigger>
               <PopoverContent className="w-80">
                 <div className="space-y-4">
-                  <h4 className="font-bold">Model Authors</h4>
+                  <h4 className="font-bold">{t('modelAuthors')}</h4>
                   <div className="grid grid-cols-2 gap-2">
                     <div className="flex items-center space-x-2">
                       <Checkbox
@@ -201,7 +204,7 @@ export default function ModelSettings() {
                         htmlFor="OpenAI"
                         className="text-sm flex items-center"
                       >
-                        <SiOpenai className="mr-1" size={14} /> OpenAI
+                        <SiOpenai className="mr-1" size={14} /> {t('authors.openai')}
                       </label>
                     </div>
                     <div className="flex items-center space-x-2">
@@ -211,7 +214,7 @@ export default function ModelSettings() {
                         onCheckedChange={() => toggleFilter("authors", "Google")}
                       />
                       <label htmlFor="Google" className="text-sm flex items-center">
-                        <SiGooglegemini className="mr-1" size={14} /> Google
+                        <SiGooglegemini className="mr-1" size={14} /> {t('authors.google')}
                       </label>
                     </div>
                     <div className="flex items-center space-x-2">
@@ -221,7 +224,7 @@ export default function ModelSettings() {
                         onCheckedChange={() => toggleFilter("authors", "Anthropic")}
                       />
                       <label htmlFor="Anthropic" className="text-sm flex items-center">
-                        <SiClaude className="mr-1" size={14} /> Anthropic
+                        <SiClaude className="mr-1" size={14} /> {t('authors.anthropic')}
                       </label>
                     </div>
                     <div className="flex items-center space-x-2">
@@ -236,12 +239,12 @@ export default function ModelSettings() {
                         htmlFor="DeepSeek"
                         className="text-sm flex items-center"
                       >
-                        DeepSeek
+                        {t('authors.deepseek')}
                       </label>
                     </div>
                   </div>
 
-                  <h4 className="font-bold">Features</h4>
+                  <h4 className="font-bold">{t('features')}</h4>
                   <div className="grid grid-cols-2 gap-2">
                     <div className="flex items-center space-x-2">
                       <Checkbox
@@ -256,7 +259,7 @@ export default function ModelSettings() {
                         className="text-sm flex items-center"
                       >
                         <BrainCircuit size={14} className="mr-1" />
-                        Reasoning
+                        {t('featureLabels.reasoning')}
                       </label>
                     </div>
                     <div className="flex items-center space-x-2">
@@ -269,7 +272,7 @@ export default function ModelSettings() {
                       />
                       <label htmlFor="vision" className="text-sm flex items-center">
                         <Eye size={14} className="mr-1" />
-                        Vision
+                        {t('featureLabels.vision')}
                       </label>
                     </div>
                     <div className="flex items-center space-x-2">
@@ -282,17 +285,17 @@ export default function ModelSettings() {
                       />
                       <label htmlFor="fast" className="text-sm flex items-center">
                         <Zap size={14} className="mr-1" />
-                        Fast
+                        {t('featureLabels.fast')}
                       </label>
                     </div>
                   </div>
 
                   <div className="flex justify-between pt-2">
                     <Button variant="outline" size="sm" onClick={resetFilters}>
-                      Reset
+                      {tCommon('reset')}
                     </Button>
                     <p className="text-sm text-muted-foreground self-center">
-                      {filteredModels?.length} showing
+                      {t('showingCount', { count: filteredModels?.length })}
                     </p>
                   </div>
                 </div>
@@ -303,7 +306,7 @@ export default function ModelSettings() {
           <div className="h-full overflow-hidden flex-1">
             {filteredModels?.length === 0 ? (
               <div className="text-center py-8 text-muted-foreground">
-                No models match the current filters
+                {t('noMatchingModels')}
               </div>
             ) : (
               <div className="w-full h-full overflow-y-auto pr-2">
@@ -354,7 +357,7 @@ export default function ModelSettings() {
                                 className="mr-1 flex-shrink-0"
                               />
                               <span className="text-[10px] sm:text-xs truncate max-w-[80px] sm:max-w-none">
-                                Reasoning
+                                {t('featureLabels.reasoning')}
                               </span>
                             </Badge>
                           )}
@@ -365,7 +368,7 @@ export default function ModelSettings() {
                             >
                               <Zap size="14" className="mr-1 flex-shrink-0" />
                               <span className="text-[10px] sm:text-xs truncate max-w-[80px] sm:max-w-none">
-                                Fast
+                                {t('featureLabels.fast')}
                               </span>
                             </Badge>
                           )}
@@ -376,7 +379,7 @@ export default function ModelSettings() {
                             >
                               <Eye size="14" className="mr-1 flex-shrink-0" />
                               <span className="text-[10px] sm:text-xs truncate max-w-[80px] sm:max-w-none">
-                                Vision
+                                {t('featureLabels.vision')}
                               </span>
                             </Badge>
                           )}

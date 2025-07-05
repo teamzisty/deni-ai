@@ -5,6 +5,7 @@ import { Button } from "@workspace/ui/components/button";
 import { Mic, MicOff } from "lucide-react";
 import { cn } from "@workspace/ui/lib/utils";
 import { toast } from "sonner";
+import { useTranslations } from "@/hooks/use-translations";
 
 interface GeminiVoiceInputProps {
   onTranscript?: (transcript: string) => void;
@@ -29,6 +30,7 @@ export const GeminiVoiceInput: React.FC<GeminiVoiceInputProps> = ({
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
   const streamRef = useRef<MediaStream | null>(null);
+  const t = useTranslations();
 
   const requestMicrophonePermission = useCallback(async () => {
     try {
@@ -42,7 +44,7 @@ export const GeminiVoiceInput: React.FC<GeminiVoiceInputProps> = ({
       return stream;
     } catch (error) {
       console.error("Microphone permission denied:", error);
-      onError?.("Microphone permission required. Please allow microphone access in your browser.");
+      onError?.(t("voice.errors.microphonePermissionRequired"));
       return null;
     }
   }, [onError]);
@@ -72,13 +74,13 @@ export const GeminiVoiceInput: React.FC<GeminiVoiceInputProps> = ({
       if (transcript) {
         onTranscript?.(transcript);
       } else {
-        toast.warning("No speech detected. Please try again.");
+        toast.warning(t("voice.noSpeechDetected"));
       }
     } catch (error) {
       console.error("Transcription error:", error);
-      const errorMessage = error instanceof Error ? error.message : "Failed to transcribe audio";
+      const errorMessage = error instanceof Error ? error.message : t("voice.transcriptionFailed");
       onError?.(errorMessage);
-      toast.error("Transcription failed. Please try again.");
+      toast.error(t("voice.transcriptionFailed"));
     } finally {
       setIsProcessing(false);
     }
@@ -127,7 +129,7 @@ export const GeminiVoiceInput: React.FC<GeminiVoiceInputProps> = ({
       onStart?.();
     } catch (error) {
       console.error("Failed to start recording:", error);
-      onError?.("Failed to start recording.");
+      onError?.(t("voice.failedToStartRecording"));
       
       // Clean up on error
       if (streamRef.current) {
@@ -195,10 +197,10 @@ export const GeminiVoiceInput: React.FC<GeminiVoiceInputProps> = ({
       disabled={disabled || isProcessing}
       title={
         isProcessing 
-          ? "Processing audio..." 
+          ? t("voice.processingAudio") 
           : isRecording 
-            ? "Recording... Release to transcribe" 
-            : "Hold to record and transcribe with Gemini"
+            ? t("voice.recordingReleaseToTranscribe") 
+            : t("voice.holdToRecordGemini")
       }
     >
       {isActive ? (

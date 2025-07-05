@@ -1,6 +1,7 @@
 import { createSupabaseServer } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
 import { UIMessage } from "ai";
+import { getApiTranslations } from "@/lib/api-i18n";
 
 interface ShareRequest {
   sessionId: string;
@@ -9,6 +10,7 @@ interface ShareRequest {
 }
 
 export async function POST(req: Request) {
+  const t = await getApiTranslations(req, 'common');
   try {
     const authorization = req.headers
       .get("Authorization")
@@ -16,7 +18,7 @@ export async function POST(req: Request) {
 
     if (!authorization) {
       return NextResponse.json(
-        { error: "Authorization Failed" },
+        { error: t('unauthorized') },
         { status: 401 },
       );
     }
@@ -29,7 +31,7 @@ export async function POST(req: Request) {
 
     if (authError || !user) {
       return NextResponse.json(
-        { error: "Authorization Failed" },
+        { error: t('unauthorized') },
         { status: 401 },
       );
     }
@@ -37,7 +39,7 @@ export async function POST(req: Request) {
     const { sessionId, title, messages }: ShareRequest = await req.json();
 
     if (!sessionId || !title || !messages || messages.length === 0) {
-      return NextResponse.json({ error: "Invalid Request" }, { status: 400 });
+      return NextResponse.json({ error: t('invalid_request') }, { status: 400 });
     }
 
     const shareId = crypto.randomUUID();
@@ -54,7 +56,7 @@ export async function POST(req: Request) {
 
     if (error) {
       console.error("Supabase error:", error);
-      return NextResponse.json({ error: "Database Error" }, { status: 500 });
+      return NextResponse.json({ error: t('database_error') }, { status: 500 });
     }
 
     return NextResponse.json({
@@ -64,18 +66,19 @@ export async function POST(req: Request) {
     });
   } catch (error) {
     console.error(error);
-    return NextResponse.json({ error: "Server Error" }, { status: 500 });
+    return NextResponse.json({ error: t('internal_error') }, { status: 500 });
   }
 }
 
 export async function GET(req: Request) {
+  const t = await getApiTranslations(req, 'common');
   try {
     const url = new URL(req.url);
     const shareId = url.searchParams.get("id");
 
     if (!shareId) {
       return NextResponse.json(
-        { error: "Share ID is not specified" },
+        { error: t('share_id_required') },
         { status: 400 },
       );
     }
@@ -89,7 +92,7 @@ export async function GET(req: Request) {
 
     if (fetchError || !sharedChatData) {
       return NextResponse.json(
-        { error: "Specified shared chat not found" },
+        { error: t('shared_chat_not_found') },
         { status: 404 },
       );
     }
@@ -116,6 +119,6 @@ export async function GET(req: Request) {
     });
   } catch (error) {
     console.error(error);
-    return NextResponse.json({ error: "Server Error" }, { status: 500 });
+    return NextResponse.json({ error: t('internal_error') }, { status: 500 });
   }
 }

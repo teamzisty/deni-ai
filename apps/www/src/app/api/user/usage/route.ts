@@ -8,9 +8,10 @@ export async function GET(req: Request) {
     return new Response("common.unauthorized", { status: 401 });
   }
 
-  const usage = await getAllUsage(user.id)
-  return NextResponse.json({
-    success: true,
-    usage
-  })
+  try {
+    const usage = await getAllUsage(user.id);
+    return NextResponse.json({ success: true, usage });
+  } catch (error) {
+    return new Response("Internal server error", { status: 500 });
+  }
 }

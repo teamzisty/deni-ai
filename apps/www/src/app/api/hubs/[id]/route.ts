@@ -1,6 +1,7 @@
 import { authCheck, createSupabaseServer } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
 import { z } from "zod";
+import { getApiTranslations } from "@/lib/api-i18n";
 
 const HubSchema = z.object({
   name: z.string().min(1, "Name is required"),
@@ -13,12 +14,13 @@ export async function GET(
   req: Request,
   { params }: { params: Promise<{ id: string }> },
 ) {
+  const t = await getApiTranslations(req, 'common');
   const auth = await authCheck(req);
   if (!auth.success || !auth.user) {
     return NextResponse.json(
       {
         success: false,
-        error: "common.unauthorized",
+        error: t('unauthorized'),
       },
       { status: 401 },
     );
@@ -36,7 +38,7 @@ export async function GET(
       .single();
 
     if (error || !hubData) {
-      return NextResponse.json({ error: "Hub not found" }, { status: 404 });
+      return NextResponse.json({ error: t('hub_not_found') }, { status: 404 });
     }
 
     // Check if the user is the owner of the hub
@@ -44,14 +46,14 @@ export async function GET(
 
     if (!isOwner) {
       return NextResponse.json(
-        { error: "common.unauthorized" },
+        { error: t('unauthorized') },
         { status: 403 },
       );
     }
 
     const hubUserData = await supabase.auth.admin.getUserById(hubData.user_id);
     if (!hubUserData.data.user) {
-      return NextResponse.json({ error: "common.not_found" }, { status: 404 });
+      return NextResponse.json({ error: t('not_found') }, { status: 404 });
     }
 
     const hubUser = hubUserData.data.user;
@@ -75,18 +77,19 @@ export async function GET(
   } catch (error) {
     console.error(error);
     return NextResponse.json(
-      { error: "common.internal_error" },
+      { error: t('internal_error') },
       { status: 500 },
     );
   }
 }
 
 export async function POST(req: Request, { params }: { params: Promise<{ id: string }> }) {
+  const t = await getApiTranslations(req, 'common');
   try {
     const auth = await authCheck(req);
     if (!auth.success || !auth.user) {
       return NextResponse.json(
-        { error: "common.unauthorized" },
+        { error: t('unauthorized') },
         { status: 401 },
       );
     }
@@ -95,7 +98,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
     const parsedBody = HubSchema.partial().safeParse(body);
     if (!parsedBody.success) {
       return NextResponse.json(
-        { error: "common.invalid_request" },
+        { error: t('invalid_request') },
         { status: 400 },
       );
     }
@@ -113,12 +116,12 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
       .single();
 
     if (fetchError || !hubData) {
-      return NextResponse.json({ error: "common.not_found" }, { status: 404 });
+      return NextResponse.json({ error: t('not_found') }, { status: 404 });
     }
 
     if (hubData.user_id !== auth.user.id) {
       return NextResponse.json(
-        { error: "common.unauthorized" },
+        { error: t('unauthorized') },
         { status: 403 },
       );
     }
@@ -138,7 +141,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
     if (error) {
       console.error("Supabase error:", error);
       return NextResponse.json(
-        { error: "common.internal_error" },
+        { error: t('internal_error') },
         { status: 500 },
       );
     }
@@ -149,7 +152,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
   } catch (error) {
     console.error(error);
     return NextResponse.json(
-      { error: "common.internal_error" },
+      { error: t('internal_error') },
       { status: 500 },
     );
   }
@@ -159,9 +162,10 @@ export async function DELETE(
   req: Request,
   { params }: { params: Promise<{ id: string }> },
 ) {
+  const t = await getApiTranslations(req, 'common');
   const auth = await authCheck(req);
   if (!auth.success || !auth.user) {
-    return NextResponse.json({ error: "common.unauthorized" }, { status: 401 });
+    return NextResponse.json({ error: t('unauthorized') }, { status: 401 });
   }
 
   const { id } = await params;
@@ -176,12 +180,12 @@ export async function DELETE(
       .single();
 
     if (fetchError || !hubData) {
-      return NextResponse.json({ error: "common.not_found" }, { status: 404 });
+      return NextResponse.json({ error: t('not_found') }, { status: 404 });
     }
 
     if (hubData.user_id !== auth.user.id) {
       return NextResponse.json(
-        { error: "common.unauthorized" },
+        { error: t('unauthorized') },
         { status: 403 },
       );
     }
@@ -192,7 +196,7 @@ export async function DELETE(
     if (error) {
       console.error("Supabase error:", error);
       return NextResponse.json(
-        { error: "common.internal_error" },
+        { error: t('internal_error') },
         { status: 500 },
       );
     }
@@ -203,7 +207,7 @@ export async function DELETE(
   } catch (error) {
     console.error(error);
     return NextResponse.json(
-      { error: "common.internal_error" },
+      { error: t('internal_error') },
       { status: 500 },
     );
   }

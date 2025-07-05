@@ -2,15 +2,17 @@ import { NextRequest, NextResponse } from "next/server";
 import { google } from "@ai-sdk/google";
 import { env } from "@/lib/env";
 import { generateText } from "ai";
+import { getApiTranslations } from "@/lib/api-i18n";
 
 export async function POST(request: NextRequest) {
+  const t = await getApiTranslations(request, 'common');
   try {
     const formData = await request.formData();
     const audio = formData.get("audio") as File;
     
     if (!audio) {
       return NextResponse.json(
-        { error: "No audio file provided" },
+        { error: t('audio_file_required') },
         { status: 400 }
       );
     }
@@ -27,14 +29,14 @@ export async function POST(request: NextRequest) {
       messages: [
         {
           role: "system",
-          content: `Transcribe the following audio file. The audio is in English and may contain various accents. Provide a clean and accurate transcription.`,
+          content: t('audio_transcription_prompt'),
         },
         {
           role: "user",
           content: [
             {
               type: "text",
-              text: "Please transcribe the following audio file.",
+              text: t('audio_transcription_request'),
             },
             {
               type: "file",
@@ -52,7 +54,7 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     console.error("Transcription error:", error);
     return NextResponse.json(
-      { error: "Failed to transcribe audio" },
+      { error: t('audio_transcription_failed') },
       { status: 500 }
     );
   }

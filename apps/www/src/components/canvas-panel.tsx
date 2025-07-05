@@ -9,6 +9,7 @@ import ReactMarkdown, { Components } from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { marked } from "marked";
 import { CodeBlock, Pre } from "./chat/markdown-components";
+import { useTranslations } from "@/hooks/use-translations";
 
 interface Block {
   id: string;
@@ -128,6 +129,7 @@ function detectBlockType(content: string): { type: Block['type'], level?: number
 }
 
 export function CanvasPanel({ isOpen, onClose, initialContent = "" }: CanvasPanelProps) {
+  const t = useTranslations("canvas");
   const [blocks, setBlocks] = useState<Block[]>(() => parseMarkdownToBlocks(initialContent));
   const [editingId, setEditingId] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<ViewMode>('view');
@@ -149,7 +151,7 @@ export function CanvasPanel({ isOpen, onClose, initialContent = "" }: CanvasPane
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = 'canvas-content.md';
+    a.download = t('fileName');
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
@@ -259,7 +261,7 @@ export function CanvasPanel({ isOpen, onClose, initialContent = "" }: CanvasPane
         return (
           <div className="text-muted-foreground text-sm">
             {getBlockIcon(block.type)}
-            <span className="ml-2">Click to edit...</span>
+            <span className="ml-2">{t('clickToEdit')}</span>
           </div>
         );
       }
@@ -308,7 +310,7 @@ export function CanvasPanel({ isOpen, onClose, initialContent = "" }: CanvasPane
                 onKeyDown={handleKeyDown}
                 className="w-full bg-transparent resize-none outline-none border-none text-sm leading-relaxed font-mono"
                 rows={Math.max(1, block.content.split('\n').length)}
-                placeholder="Type something..."
+                placeholder={t('typeSomething')}
               />
             ) : (
               <div
@@ -375,7 +377,7 @@ export function CanvasPanel({ isOpen, onClose, initialContent = "" }: CanvasPane
       />
       <div className="flex items-center justify-between p-4 border-b border-border">
         <div className="flex items-center gap-2">
-          <h2 className="text-lg font-semibold">Canvas</h2>
+          <h2 className="text-lg font-semibold">{t('title')}</h2>
           <div className="flex items-center gap-1">
             <Button
               size="sm"
@@ -384,7 +386,7 @@ export function CanvasPanel({ isOpen, onClose, initialContent = "" }: CanvasPane
               className="h-7 px-2"
             >
               <Eye className="h-3 w-3 mr-1" />
-              View
+              {t('view')}
             </Button>
             <Button
               size="sm"
@@ -393,7 +395,7 @@ export function CanvasPanel({ isOpen, onClose, initialContent = "" }: CanvasPane
               className="h-7 px-2"
             >
               <Edit className="h-3 w-3 mr-1" />
-              Edit
+              {t('edit')}
             </Button>
           </div>
         </div>
@@ -403,7 +405,7 @@ export function CanvasPanel({ isOpen, onClose, initialContent = "" }: CanvasPane
             variant="ghost"
             onClick={downloadMarkdown}
             className="h-8 w-8 p-0"
-            title="Download as Markdown"
+            title={t('downloadAsMarkdown')}
           >
             <Download className="h-4 w-4" />
           </Button>
@@ -453,7 +455,7 @@ export function CanvasPanel({ isOpen, onClose, initialContent = "" }: CanvasPane
               className="flex items-center gap-1"
             >
               <Type className="h-3 w-3" />
-              Text
+              {t('text')}
             </Button>
             <Button
               onClick={() => addBlock(undefined, 'heading')}
@@ -462,7 +464,7 @@ export function CanvasPanel({ isOpen, onClose, initialContent = "" }: CanvasPane
               className="flex items-center gap-1"
             >
               <Hash className="h-3 w-3" />
-              Heading
+              {t('heading')}
             </Button>
             <Button
               onClick={() => addBlock(undefined, 'code')}
@@ -471,7 +473,7 @@ export function CanvasPanel({ isOpen, onClose, initialContent = "" }: CanvasPane
               className="flex items-center gap-1"
             >
               <Code2 className="h-3 w-3" />
-              Code
+              {t('code')}
             </Button>
             <Button
               onClick={() => addBlock(undefined, 'list')}
@@ -480,11 +482,11 @@ export function CanvasPanel({ isOpen, onClose, initialContent = "" }: CanvasPane
               className="flex items-center gap-1"
             >
               <List className="h-3 w-3" />
-              List
+              {t('list')}
             </Button>
           </div>
           <div className="text-xs text-muted-foreground text-center">
-            Export: {blocksToMarkdown(blocks).length} characters
+            {t('export')}: {t('charactersCount', { count: blocksToMarkdown(blocks).length })}
           </div>
         </div>
       )}
@@ -492,7 +494,7 @@ export function CanvasPanel({ isOpen, onClose, initialContent = "" }: CanvasPane
       {viewMode === 'view' && (
         <div className="p-4 border-t border-border">
           <div className="text-xs text-muted-foreground text-center">
-            {blocksToMarkdown(blocks).length} characters • {blocks.length} blocks
+            {t('status', { characters: blocksToMarkdown(blocks).length, blocks: blocks.length })}
           </div>
         </div>
       )}

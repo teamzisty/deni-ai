@@ -29,9 +29,11 @@ import DataControlsSettings from "./data-controls-settings";
 import { Button } from "@workspace/ui/components/button";
 import CustomizeSettings from "./customize-settings";
 import { Loading } from "./loading";
+import { useTranslations } from "@/hooks/use-translations";
 
 export function SettingsDialog() {
   const { isOpen, closeDialog, dialogType } = useSettingsDialog();
+  const t = useTranslations("settings");
   const isMobile = useIsMobile();
 
   // Initial tab setting
@@ -49,7 +51,7 @@ export function SettingsDialog() {
             >
               <MenuIcon className="md:mr-2" />
               <span className="hidden md:inline">
-                General
+                {t("tabs.general")}
               </span>
             </TabsTrigger>
             <TabsTrigger
@@ -58,7 +60,7 @@ export function SettingsDialog() {
             >
               <User className="md:mr-2" />
               <span className="hidden md:inline">
-                Account
+              {t("tabs.account")}
               </span>
             </TabsTrigger>
             <TabsTrigger
@@ -67,7 +69,7 @@ export function SettingsDialog() {
             >
               <Settings2 className="md:mr-2" />
               <span className="hidden md:inline">
-                Customize
+              {t("tabs.customize")}
               </span>
             </TabsTrigger>
             <TabsTrigger
@@ -76,7 +78,7 @@ export function SettingsDialog() {
             >
               <Bot className="md:mr-2" />
               <span className="hidden md:inline">
-                Models
+              {t("tabs.models")}
               </span>
             </TabsTrigger>
             <TabsTrigger
@@ -85,7 +87,7 @@ export function SettingsDialog() {
             >
               <Database className="md:mr-2" />
               <span className="hidden md:inline">
-                Data Controls
+              {t("tabs.dataControls")}
               </span>
             </TabsTrigger>
           </TabsList>
@@ -124,7 +126,7 @@ export function SettingsDialog() {
       >
         <DrawerContent className="h-[90vh]">
           <DrawerHeader className="border-b p-4 flex items-center flex-row justify-between">
-            <DrawerTitle>Settings</DrawerTitle>
+            <DrawerTitle>{t("title")}</DrawerTitle>
             <DrawerClose asChild>
               <button className="p-1 rounded-full">
                 <X className="h-5 w-5" />
@@ -143,7 +145,7 @@ export function SettingsDialog() {
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && closeDialog()}>
       <DialogContent className="[&>button]:hidden rounded-3xl h-[80vh] md:h-[70vh] overflow-hidden md:w-[calc(100%-2rem)] !max-w-3xl">
-        <DialogTitle>Settings</DialogTitle>
+        <DialogTitle>{t("title")}</DialogTitle>
         <div className="!h-fit !p-0 !mb-0">
           <Button
             variant="ghost"

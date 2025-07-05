@@ -1,6 +1,7 @@
 import { createUploadthing, type FileRouter } from "uploadthing/next";
 import { UploadThingError } from "uploadthing/server";
 import { authCheck } from "@/lib/supabase/server";
+import { getApiTranslations } from "@/lib/api-i18n";
 
 const f = createUploadthing();
 
@@ -21,9 +22,10 @@ export const ourFileRouter: FileRouter = {
     .middleware(async ({ req }) => {
       // This code runs on your server before upload
       const authResult = await authCheck(req);
+      const t = await getApiTranslations(req, 'common');
 
       // If you throw, the user will not be able to upload
-      if (!authResult.success || !authResult.user) throw new UploadThingError("Unauthorized");
+      if (!authResult.success || !authResult.user) throw new UploadThingError(t('unauthorized'));
 
       // Whatever is returned here is accessible in onUploadComplete as `metadata`
       return { userId: authResult.user.id };

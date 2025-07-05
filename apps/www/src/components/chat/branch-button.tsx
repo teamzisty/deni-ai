@@ -4,8 +4,10 @@ import { useState } from "react";
 import { Button } from "@workspace/ui/components/button";
 import { GitBranch, Loader2 } from "lucide-react";
 import { BranchDialog } from "./branch-dialog";
-import { useRouter } from "next/navigation";
+import { useRouter } from "@/i18n/navigation";
 import { useSupabase } from "@/context/supabase-context";
+import { useTranslations } from "@/hooks/use-translations";
+import { toast } from "sonner";
 
 interface BranchButtonProps {
   conversationId: string;
@@ -17,6 +19,7 @@ export function BranchButton({ conversationId, messageIndex }: BranchButtonProps
   const [isCreating, setIsCreating] = useState(false);
   const { secureFetch } = useSupabase();
   const router = useRouter();
+  const t = useTranslations();
 
   const handleCreateBranch = async (branchName: string, includeMessages: boolean) => {
     setIsCreating(true);
@@ -35,7 +38,7 @@ export function BranchButton({ conversationId, messageIndex }: BranchButtonProps
       });
 
       if (!response.ok) {
-        throw new Error("Failed to create branch");
+        throw new Error(t("chat.branch.createFailed"));
       }
 
       const result = await response.json();
@@ -44,11 +47,11 @@ export function BranchButton({ conversationId, messageIndex }: BranchButtonProps
         // Navigate to the new branch
         router.push(`/chat/${result.data.id}`);
       } else {
-        throw new Error(result.error || "Failed to create branch");
+        throw new Error(result.error || t("chat.branch.createFailed"));
       }
     } catch (error) {
       console.error("Error creating branch:", error);
-      // You might want to show a toast notification here
+      toast.error(t("chat.branch.createFailed"));
     } finally {
       setIsCreating(false);
       setIsDialogOpen(false);
@@ -69,7 +72,7 @@ export function BranchButton({ conversationId, messageIndex }: BranchButtonProps
         ) : (
           <GitBranch className="h-4 w-4" />
         )}
-        Branch
+        {t("chat.branch.branchButton")}
       </Button>
       
       <BranchDialog

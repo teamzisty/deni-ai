@@ -17,15 +17,17 @@ import {
 } from "@workspace/ui/components/dropdown-menu";
 import { useSupabase } from "@/context/supabase-context";
 import { toast } from "sonner";
-import { useRouter } from "next/navigation";
+import { useRouter } from "@/i18n/navigation";
 import { LogOut, SettingsIcon, User } from "lucide-react";
 import { models, PREMIUM_USES_LIMIT } from "@/lib/constants";
 import { useSettingsDialog } from "@/context/settings-dialog-context";
+import { useTranslations } from "@/hooks/use-translations";
 
 export function UserDropdownMenu() {
   const { supabase, user, usage, ssUserData, loading } = useSupabase();
   const { openDialog } = useSettingsDialog();
   const router = useRouter();
+  const t = useTranslations();
 
   const getInitials = (name: string) => {
     if (!name) return "U"; // Fallback if no name is provided
@@ -40,7 +42,7 @@ export function UserDropdownMenu() {
   const handleLogout = async () => {
     const { error } = await supabase.auth.signOut();
     if (error) {
-      toast.error("Failed to log out. Please try again.");
+      toast.error(t("chat.userMenu.logOutFailed"));
     } else {
       router.push("/auth/login");
     }
@@ -80,17 +82,17 @@ export function UserDropdownMenu() {
         <DropdownMenuSeparator />
         {usage && (
           <>
-            <DropdownMenuLabel>Usage</DropdownMenuLabel>
+            <DropdownMenuLabel>{t("chat.userMenu.usage")}</DropdownMenuLabel>
             <div className="p-2 text-sm pt-0">
               <div className="flex flex-col space-y-2 w-full">
                 <span className="text-muted-foreground">
-                  Your Plan:{" "}
+                  {t("chat.userMenu.yourPlan")}{" "}
                   {ssUserData?.plan && ssUserData?.plan != "free" ? (
                     <span className="bg-gradient-to-r from-pink-400 to-sky-500 bg-clip-text text-transparent capitalize">
                       {ssUserData?.plan}
                     </span>
                   ) : (
-                    <span>Free</span>
+                    <span>{t("chat.userMenu.free")}</span>
                   )}
                 </span>
                 {usage
@@ -99,7 +101,7 @@ export function UserDropdownMenu() {
                     <div key={u.model} className="space-y-1 w-full">
                       <div className="flex justify-between text-xs">
                         <span>{models[u.model]?.name}</span>
-                        <span>{u.count} uses</span>
+                        <span>{t("chat.userMenu.uses", { count: u.count })}</span>
                       </div>
                       <Progress value={u.count} max={PREMIUM_USES_LIMIT} />
                     </div>
@@ -111,15 +113,15 @@ export function UserDropdownMenu() {
         )}
         <DropdownMenuItem onClick={() => openDialog("account")}>
           <User />
-          Account
+          {t("chat.userMenu.account")}
         </DropdownMenuItem>
         <DropdownMenuItem onClick={() => openDialog()}>
           <SettingsIcon />
-          Settings
+          {t("chat.userMenu.settings")}
         </DropdownMenuItem>
         <DropdownMenuItem onClick={handleLogout} variant="destructive">
           <LogOut />
-          Log out
+          {t("chat.userMenu.logOut")}
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>

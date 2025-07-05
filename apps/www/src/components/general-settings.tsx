@@ -22,6 +22,7 @@ import {
   usePathname,
 } from "next/navigation";
 import UsageSettings from "./usage-settings";
+import { useTranslations } from "@/hooks/use-translations";
 
 export default function GeneralSettings() {
   const { setTheme, theme } = useTheme();
@@ -29,6 +30,7 @@ export default function GeneralSettings() {
   const language = params.locale === "ja" ? "ja" : "en";
   const NextRouter = nextRouter();
   const pathname = usePathname();
+  const t = useTranslations("settings.general");
 
   return (
     <div className="space-y-6">
@@ -36,14 +38,14 @@ export default function GeneralSettings() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Palette className="h-5 w-5" />
-            Theme
+            {t("theme")}
           </CardTitle>
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
             <div>
               <p className="text-sm text-muted-foreground">
-                Choose your preferred theme appearance
+                {t("themeDescription")}
               </p>
             </div>
             <DropdownMenu>
@@ -55,13 +57,13 @@ export default function GeneralSettings() {
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
                 <DropdownMenuItem onClick={() => setTheme("light")}>
-                  Light {theme === "light" && <Check className="ml-auto" />}
+                  {t("light")} {theme === "light" && <Check className="ml-auto" />}
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={() => setTheme("dark")}>
-                  Dark {theme === "dark" && <Check className="ml-auto" />}
+                  {t("dark")} {theme === "dark" && <Check className="ml-auto" />}
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={() => setTheme("system")}>
-                  System {theme === "system" && <Check className="ml-auto" />}
+                  {t("system")} {theme === "system" && <Check className="ml-auto" />}
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
@@ -73,14 +75,14 @@ export default function GeneralSettings() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Globe className="h-5 w-5" />
-            Language
+            {t("language")}
           </CardTitle>
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
             <div>
               <p className="text-sm text-muted-foreground">
-                Select your preferred language
+                {t("languageDescription")}
               </p>
             </div>
             <DropdownMenu>
@@ -96,7 +98,7 @@ export default function GeneralSettings() {
                     NextRouter.push(pathname.replace("/" + language, "/ja"));
                   }}
                 >
-                  {"Japanese - 日本語"}{" "}
+                  {t("japanese")}{" "}
                   {language === "ja" && <Check className="ml-auto" />}
                 </DropdownMenuItem>
                 <DropdownMenuItem
@@ -104,7 +106,7 @@ export default function GeneralSettings() {
                     NextRouter.push(pathname.replace("/" + language, "/en"));
                   }}
                 >
-                  {"English - 英語"}{" "}
+                  {t("english")}{" "}
                   {language === "en" && <Check className="ml-auto" />}
                 </DropdownMenuItem>
               </DropdownMenuContent>

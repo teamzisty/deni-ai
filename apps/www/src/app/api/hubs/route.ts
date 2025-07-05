@@ -1,6 +1,7 @@
 import { authCheck, createSupabaseServer } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
 import { z } from "zod";
+import { getApiTranslations } from "@/lib/api-i18n";
 
 export interface ClientHub {
   id: string;
@@ -18,12 +19,13 @@ export interface ClientHub {
 
 export async function GET(req: Request) {
   try {
+    const t = await getApiTranslations(req, 'common');
     const auth = await authCheck(req);
     if (!auth.success || !auth.user) {
       return NextResponse.json(
         {
           success: false,
-          error: "common.unauthorized",
+          error: t('unauthorized'),
         },
         { status: 401 },
       );
@@ -42,7 +44,7 @@ export async function GET(req: Request) {
     if (error) {
       console.error("Supabase error:", error);
       return NextResponse.json(
-        { error: "common.internal_error" },
+        { error: t('internal_error') },
         { status: 500 },
       );
     }
@@ -93,12 +95,13 @@ const hubCreateRequestSchema = z.object({
 
 export async function PUT(req: Request) {
   try {
+    const t = await getApiTranslations(req, 'common');
     const auth = await authCheck(req);
     if (!auth.success || !auth.user) {
       return NextResponse.json(
         {
           success: false,
-          error: "common.unauthorized",
+          error: t('unauthorized'),
         },
         { status: 401 },
       );
@@ -112,7 +115,7 @@ export async function PUT(req: Request) {
 
     if (!parsedBody.success) {
       return NextResponse.json(
-        { error: "common.invalid_request" },
+        { error: t('invalid_request') },
         { status: 400 },
       );
     }
@@ -136,7 +139,7 @@ export async function PUT(req: Request) {
     if (error) {
       console.error("Supabase error:", error);
       return NextResponse.json(
-        { error: "common.internal_error" },
+        { error: t('internal_error') },
         { status: 500 },
       );
     }

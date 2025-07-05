@@ -38,12 +38,14 @@ import {
   AlertDialogTitle,
 } from "@workspace/ui/components/alert-dialog";
 import { Loading } from "@/components/loading";
-import { useRouter } from "next/navigation";
+import { useRouter } from "@/i18n/navigation";
 import { useSettings } from "@/hooks/use-settings";
 import { Switch } from "@workspace/ui/components/switch";
 import { Shield, Eye, Loader2, DownloadIcon, Lock } from "lucide-react";
+import { useTranslations } from "next-intl";
 
 export function AccountSettings() {
+  const t = useTranslations();
   const { user, supabase, secureFetch } = useSupabase();
   const { settings, updateSetting } = useSettings();
   const [isDeleting, setIsDeleting] = useState(false);
@@ -75,8 +77,8 @@ export function AccountSettings() {
       Authorization: authToken || "",
     },
     onUploadError: (error: Error) => {
-      toast.error("Upload failed", {
-        description: `Error: ${error.message}`,
+      toast.error(t("account.uploadFailed"), {
+        description: `${t("common.actions.error")}: ${error.message}`,
       });
     },
   });
@@ -87,7 +89,7 @@ export function AccountSettings() {
         resolve({
           status: "error",
           error: {
-            message: "No file selected",
+            message: t("account.noFileSelected"),
             code: "file_not_selected",
           },
         });
@@ -115,7 +117,7 @@ export function AccountSettings() {
               resolve({
                 status: "error",
                 error: {
-                  message: "Unknown error",
+                  message: t("common.error.unknownError"),
                   code: "upload_failed",
                 },
               });
@@ -133,7 +135,7 @@ export function AccountSettings() {
               resolve({
                 status: "error",
                 error: {
-                  message: "Unknown error",
+                  message: t("common.error.unknownError"),
                   code: "upload_failed",
                 },
               });
@@ -143,7 +145,7 @@ export function AccountSettings() {
             resolve({
               status: "error",
               error: {
-                message: "Unknown error",
+                message: t("common.error.unknownError"),
                 code: "upload_failed",
               },
             });
@@ -159,7 +161,7 @@ export function AccountSettings() {
     if (!user || !supabase) return;
 
     if (!name) {
-      toast.error("Display name is required");
+      toast.error(t("account.displayNameRequired"));
       return;
     }
 
@@ -172,9 +174,9 @@ export function AccountSettings() {
 
       if (error) throw error;
 
-      toast.success("Display name updated successfully");
+      toast.success(t("account.displayNameUpdateSuccess"));
     } catch (error: any) {
-      const errorMessage = "Failed to update display name";
+      const errorMessage = t("account.displayNameUpdateFailed");
       toast.error(errorMessage, {
         description: error.message,
       });
@@ -202,7 +204,7 @@ export function AccountSettings() {
         if (response.status === "success" && response.data) {
           photoURL = response.data.url;
         } else {
-          toast.error("Failed to upload image");
+          toast.error(t("account.imageUploadFailed"));
           return;
         }
       }
@@ -217,12 +219,12 @@ export function AccountSettings() {
 
       if (error) throw error;
 
-      toast.success("Profile updated successfully");
+      toast.success(t("account.profileUpdateSuccess"));
       setImagePreview(null);
       setSelectedImage(null);
       setIsDialogOpen(false);
     } catch (error: any) {
-      toast.error("Failed to update profile", {
+      toast.error(t("account.profileUpdateFailed"), {
         description: error.message,
       });
     }
@@ -241,7 +243,7 @@ export function AccountSettings() {
       // Fetch conversations from API
       const response = await secureFetch("/api/conversations");
       if (!response.ok) {
-        throw new Error("Failed to fetch conversations");
+        throw new Error(t("account.fetchConversationsFailed"));
       }
       const conversations = await response.json();
       
@@ -266,10 +268,10 @@ export function AccountSettings() {
       linkElement.setAttribute("download", exportFileDefaultName);
       linkElement.click();
 
-      toast.success("Data downloaded successfully");
+      toast.success(t("account.dataDownloadSuccess"));
     } catch (error) {
       console.error("Failed to download data:", error);
-      toast.error("Failed to download data");
+      toast.error(t("account.dataDownloadFailed"));
     } finally {
       setIsDownloading(false);
     }
@@ -283,17 +285,17 @@ export function AccountSettings() {
 
     // Validate passwords
     if (!newPassword || !confirmPassword) {
-      setPasswordError("Please fill in all password fields");
+      setPasswordError(t("account.passwordFieldsRequired"));
       return;
     }
 
     if (newPassword !== confirmPassword) {
-      setPasswordError("New passwords do not match");
+      setPasswordError(t("account.passwordsDoNotMatch"));
       return;
     }
 
     if (newPassword.length < 6) {
-      setPasswordError("Password must be at least 6 characters long");
+      setPasswordError(t("account.passwordLengthError"));
       return;
     }
 
@@ -307,14 +309,14 @@ export function AccountSettings() {
 
       if (error) throw error;
 
-      toast.success("Password changed successfully");
+      toast.success(t("account.passwordChangeSuccess"));
       setShowPasswordDialog(false);
       // Reset form
       setCurrentPassword("");
       setNewPassword("");
       setConfirmPassword("");
     } catch (error: any) {
-      setPasswordError(error.message || "Failed to change password");
+      setPasswordError(error.message || t("account.passwordChangeFailed"));
     } finally {
       setIsChangingPassword(false);
     }
@@ -338,16 +340,16 @@ export function AccountSettings() {
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.error || "An error occurred");
+        throw new Error(errorData.error || t("common.error.unexpectedError"));
       }
 
       router.push("/login");
 
-      toast.success("Account deleted successfully");
+      toast.success(t("account.accountDeleteSuccess"));
       // User will be automatically signed out
     } catch (error: any) {
       console.error("Failed to delete account:", error);
-      toast.error("An error occurred", {
+      toast.error(t("common.error.unexpectedError"), {
         description: error.message,
       });
       setIsDeleting(false);
@@ -367,8 +369,8 @@ export function AccountSettings() {
 
       <Card>
         <CardHeader>
-          <CardTitle>Profile Information</CardTitle>
-          <CardDescription>Update your profile details and avatar</CardDescription>
+          <CardTitle>{t("account.profileInformation")}</CardTitle>
+          <CardDescription>{t("account.profileInformationDescription")}</CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
           <div className="flex flex-col md:flex-row md:items-center gap-4">
@@ -383,28 +385,28 @@ export function AccountSettings() {
             <div className="flex-1 space-y-4">
               <div>
                 <div className="text-sm font-medium text-muted-foreground mb-1">
-                  Display Name
+                  {t("account.displayName")}
                 </div>
                 <p className="font-medium">
-                  {user.user_metadata?.display_name || "Not set"}
+                  {user.user_metadata?.display_name || t("account.notSet")}
                 </p>
               </div>
 
               <div>
                 <div className="text-sm font-medium text-muted-foreground mb-1">
-                  Email
+                  {t("account.email")}
                 </div>
                 <div className="flex items-center gap-2">
                   <p className="font-medium">{user.email}</p>
                   {user.email_confirmed_at && (
-                    <Badge variant="outline">Confirmed</Badge>
+                    <Badge variant="outline">{t("account.confirmed")}</Badge>
                   )}
                 </div>
               </div>
 
               <div>
                 <Button onClick={handleOpenEditDialog}>
-                  Edit Profile
+                  {t("account.editProfile")}
                 </Button>
               </div>
             </div>
@@ -416,14 +418,14 @@ export function AccountSettings() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Shield className="h-5 w-5" />
-            Privacy Mode
+            {t("account.privacyMode")}
           </CardTitle>
         </CardHeader>
         <CardContent>
           <div className="flex items-center justify-between">
             <div className="flex-grow">
               <p className="text-sm text-muted-foreground">
-                Hide your name and email address
+                {t("account.privacyModeDescription")}
               </p>
             </div>
             <Switch
@@ -441,14 +443,14 @@ export function AccountSettings() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Eye className="h-5 w-5" />
-            Conversations Privacy Mode
+            {t("account.conversationsPrivacyMode")}
           </CardTitle>
         </CardHeader>
         <CardContent>
           <div className="flex items-center justify-between">
             <div className="flex-grow">
               <p className="text-sm text-muted-foreground">
-                Keep your conversations private
+                {t("account.conversationsPrivacyModeDescription")}
               </p>
             </div>
             <Switch
@@ -466,34 +468,34 @@ export function AccountSettings() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Lock className="h-5 w-5" />
-            Change Password
+            {t("account.changePassword")}
           </CardTitle>
-          <CardDescription>Update your account password</CardDescription>
+          <CardDescription>{t("account.changePasswordDescription")}</CardDescription>
         </CardHeader>
         <CardContent>
           <Button onClick={() => setShowPasswordDialog(true)}>
-            Change Password
+            {t("account.changePassword")}
           </Button>
         </CardContent>
       </Card>
 
       <Card>
         <CardHeader>
-          <CardTitle>Data & Privacy</CardTitle>
-          <CardDescription>Download your data or manage your account</CardDescription>
+          <CardTitle>{t("account.dataPrivacy")}</CardTitle>
+          <CardDescription>{t("account.dataPrivacyDescription")}</CardDescription>
         </CardHeader>
         <CardContent>
           <Button onClick={handleDownloadData} disabled={isDownloading}>
             {isDownloading ? <Loader2 /> : <DownloadIcon />}
-            {isDownloading ? "Downloading..." : "Download My Data"}
+            {isDownloading ? t("account.downloading") : t("account.downloadMyData")}
           </Button>
         </CardContent>
       </Card>
 
       <Card>
         <CardHeader>
-          <CardTitle>Delete Account</CardTitle>
-          <CardDescription>Permanently delete your account and all associated data</CardDescription>
+          <CardTitle>{t("account.deleteAccount")}</CardTitle>
+          <CardDescription>{t("account.deleteAccountDescription")}</CardDescription>
         </CardHeader>
         <CardContent>
           <Button
@@ -501,7 +503,7 @@ export function AccountSettings() {
             onClick={handleDeleteAccount}
             disabled={isDeleting || isAuthenticating}
           >
-            {isDeleting ? "Deleting..." : "Delete Account"}
+            {isDeleting ? t("account.deleting") : t("account.deleteAccount")}
           </Button>
         </CardContent>
       </Card>
@@ -509,9 +511,9 @@ export function AccountSettings() {
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
         <DialogContent className="sm:max-w-[425px]">
           <DialogHeader>
-            <DialogTitle>Edit Profile</DialogTitle>
+            <DialogTitle>{t("account.editProfile")}</DialogTitle>
             <DialogDescription>
-              Update your profile information
+              {t("account.editProfileDescription")}
             </DialogDescription>
           </DialogHeader>
           <div className="grid gap-4 py-4">
@@ -532,7 +534,7 @@ export function AccountSettings() {
                 size="sm"
                 onClick={() => fileInputRef.current?.click()}
               >
-                Change Avatar
+                {t("account.changeAvatar")}
               </Button>
               <input
                 type="file"
@@ -545,22 +547,22 @@ export function AccountSettings() {
 
             <div className="grid gap-2">
               <label htmlFor="name" className="text-sm font-medium">
-                Display Name
+                {t("account.displayName")}
               </label>
               <Input
                 id="name"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                placeholder="Enter your display name"
+                placeholder={t("account.displayNamePlaceholder")}
               />
             </div>
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setIsDialogOpen(false)}>
-              Cancel
+              {t("common.actions.cancel")}
             </Button>
             <Button onClick={handleProfileSave} disabled={isUploading || !name}>
-              Save Changes
+              {t("account.saveChanges")}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -570,35 +572,35 @@ export function AccountSettings() {
       <Dialog open={showPasswordDialog} onOpenChange={setShowPasswordDialog}>
         <DialogContent className="sm:max-w-[425px]">
           <DialogHeader>
-            <DialogTitle>Change Password</DialogTitle>
+            <DialogTitle>{t("account.changePassword")}</DialogTitle>
             <DialogDescription>
-              Enter your new password to update your account security
+              {t("account.changePasswordDialogDescription")}
             </DialogDescription>
           </DialogHeader>
           <div className="grid gap-4 py-4">
             <div className="grid gap-2">
               <label htmlFor="new-password" className="text-sm font-medium">
-                New Password
+                {t("account.newPassword")}
               </label>
               <Input
                 id="new-password"
                 type="password"
                 value={newPassword}
                 onChange={(e) => setNewPassword(e.target.value)}
-                placeholder="Enter new password"
+                placeholder={t("account.newPasswordPlaceholder")}
                 disabled={isChangingPassword}
               />
             </div>
             <div className="grid gap-2">
               <label htmlFor="confirm-password" className="text-sm font-medium">
-                Confirm New Password
+                {t("account.confirmNewPassword")}
               </label>
               <Input
                 id="confirm-password"
                 type="password"
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
-                placeholder="Confirm new password"
+                placeholder={t("account.confirmNewPasswordPlaceholder")}
                 disabled={isChangingPassword}
               />
             </div>
@@ -618,13 +620,13 @@ export function AccountSettings() {
               }}
               disabled={isChangingPassword}
             >
-              Cancel
+              {t("common.actions.cancel")}
             </Button>
             <Button
               onClick={handlePasswordChange}
               disabled={isChangingPassword || !newPassword || !confirmPassword}
             >
-              {isChangingPassword ? "Changing..." : "Change Password"}
+              {isChangingPassword ? t("account.changing") : t("account.changePassword")}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -637,9 +639,9 @@ export function AccountSettings() {
       >
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Confirm Account Deletion</AlertDialogTitle>
+            <AlertDialogTitle>{t("account.confirmAccountDeletion")}</AlertDialogTitle>
             <AlertDialogDescription>
-              This action cannot be undone. This will permanently delete your account and remove all your data from our servers.
+              {t("account.confirmAccountDeletionDescription")}
             </AlertDialogDescription>
           </AlertDialogHeader>
 
@@ -649,7 +651,7 @@ export function AccountSettings() {
             </div>
           ) : (
             <div className="space-y-4 py-4">
-              <p>Are you sure you want to delete your account?</p>
+              <p>{t("account.deleteAccountConfirmation")}</p>
               {reauthError && (
                 <p className="text-sm text-destructive">{reauthError}</p>
               )}
@@ -665,13 +667,13 @@ export function AccountSettings() {
               }}
               disabled={isAuthenticating}
             >
-              Cancel
+              {t("common.actions.cancel")}
             </AlertDialogCancel>
             <AlertDialogAction
               onClick={proceedWithDeletion}
               disabled={isAuthenticating}
             >
-              Delete Account
+              {t("account.deleteAccount")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

@@ -14,6 +14,7 @@ import { Input } from "@workspace/ui/components/input";
 import { Label } from "@workspace/ui/components/label";
 import { Checkbox } from "@workspace/ui/components/checkbox";
 import { GitBranch } from "lucide-react";
+import { useTranslations } from "@/hooks/use-translations";
 
 interface BranchDialogProps {
   open: boolean;
@@ -30,6 +31,7 @@ export function BranchDialog({
 }: BranchDialogProps) {
   const [branchName, setBranchName] = useState("");
   const [includeMessages, setIncludeMessages] = useState(true);
+  const t = useTranslations();
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -46,24 +48,23 @@ export function BranchDialog({
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <GitBranch className="h-5 w-5" />
-            Create New Branch
+            {t("chat.branch.createTitle")}
           </DialogTitle>
           <DialogDescription>
-            Create a new conversation branch to explore different directions
-            from this point.
+            {t("chat.branch.createDescription")}
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit}>
           <div className="grid gap-4 py-4">
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="branch-name" className="text-right">
-                Name
+                {t("chat.branch.name")}
               </Label>
               <Input
                 id="branch-name"
                 value={branchName}
                 onChange={(e) => setBranchName(e.target.value)}
-                placeholder="Enter branch name"
+                placeholder={t("chat.branch.namePlaceholder")}
                 className="col-span-3"
                 required
               />
@@ -77,7 +78,7 @@ export function BranchDialog({
                 }
               />
               <Label htmlFor="include-messages" className="text-sm">
-                Include existing messages in the new branch
+                {t("chat.branch.includeMessages")}
               </Label>
             </div>
           </div>
@@ -87,10 +88,10 @@ export function BranchDialog({
               variant="outline"
               onClick={() => onOpenChange(false)}
             >
-              Cancel
+              {t("common.actions.cancel")}
             </Button>
             <Button type="submit" disabled={!branchName.trim() || isCreating}>
-              {isCreating ? "Creating..." : "Create Branch"}
+              {isCreating ? t("chat.branch.creating") : t("chat.branch.createButton")}
             </Button>
           </DialogFooter>
         </form>

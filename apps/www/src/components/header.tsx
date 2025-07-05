@@ -1,5 +1,6 @@
-import { BookOpenIcon, InfoIcon, LifeBuoyIcon } from "lucide-react";
+"use client";
 
+import { BookOpenIcon, InfoIcon, LifeBuoyIcon } from "lucide-react";
 import { cn } from "@workspace/ui/lib/utils";
 import { Button } from "@workspace/ui/components/button";
 import {
@@ -16,68 +17,94 @@ import {
   PopoverTrigger,
 } from "@workspace/ui/components/popover";
 import Logo from "./logo";
-import Link from "next/link";
+import { Link } from "@/i18n/navigation";
+import { useTranslations } from "@/hooks/use-translations";
+import { LanguageSwitcher } from "./language-switcher";
 
-// Navigation links array to be used in both desktop and mobile menus
-const navigationLinks = [
-  { href: "/", label: "Home" },
-  {
-    label: "Features",
-    submenu: true,
-    type: "description",
-    items: [
-      {
-        href: "/features/search",
-        label: "Search",
-        description: "Search the web with AI.",
-      },
-      {
-        href: "/features/intellipulse",
-        label: "Intellipulse",
-        description: "The new generation of vibe coding.",
-      },
-    ],
-  },
-  {
-    label: "Resources",
-    submenu: true,
-    type: "icon",
-    items: [
-      { href: "https://docs.deniai.app/", label: "Docs", icon: "BookOpenIcon" },
-      { href: "https://docs.deniai.app/docs/intro", label: "Getting Started", icon: "LifeBuoyIcon" },
-      { href: "https://docs.deniai.app/blog/", label: "Changelog", icon: "InfoIcon" },
-    ],
-  },
-  {
-    label: "More",
-    submenu: true,
-    type: "description",
-    items: [
-      {
-        href: "/more/student",
-        label: "Student",
-        description: "Learn student benefits and how to apply.",
-      },
-      {
-        href: "/more/contributors",
-        label: "Contributors",
-        description: "Meet the people behind the project.",
-      },
-      {
-        href: "/more/contact",
-        label: "Contact",
-        description: "Get in touch with us.",
-      },
-      {
-        href: "/more/partners",
-        label: "Partners",
-        description: "Our valued partners.",
-      },
-    ],
-  },
-];
+interface NavigationItem {
+  label: string;
+  href?: string;
+  icon?: React.ReactNode;
+  description?: string;
+  submenu?: boolean;
+  type?: "icon" | "description";
+  items?: NavigationItem[];
+}
 
-export default function Component() {
+export default function Header() {
+  const t = useTranslations("nav");
+
+  // Navigation links array to be used in both desktop and mobile menus
+  const navigationLinks: NavigationItem[] = [
+    { href: "/", label: t("home") },
+    {
+      label: t("features"),
+      submenu: true,
+      type: "description",
+      items: [
+        {
+          href: "/features/search",
+          label: t("search"),
+          description: t("searchDescription"),
+        },
+        {
+          href: "/features/intellipulse",
+          label: t("intellipulse"),
+          description: t("intellipulseDescription"),
+        },
+      ],
+    },
+    {
+      label: t("resources"),
+      submenu: true,
+      type: "icon",
+      items: [
+        {
+          href: "https://docs.deniai.app/",
+          label: t("docs"),
+          icon: "BookOpenIcon",
+        },
+        {
+          href: "https://docs.deniai.app/docs/intro",
+          label: t("gettingStarted"),
+          icon: "LifeBuoyIcon",
+        },
+        {
+          href: "https://docs.deniai.app/blog/",
+          label: t("changelog"),
+          icon: "InfoIcon",
+        },
+      ],
+    },
+    {
+      label: t("more"),
+      submenu: true,
+      type: "description",
+      items: [
+        {
+          href: "/more/student",
+          label: t("student"),
+          description: t("studentDescription"),
+        },
+        {
+          href: "/more/contributors",
+          label: t("contributors"),
+          description: t("contributorsDescription"),
+        },
+        {
+          href: "/more/contact",
+          label: t("contact"),
+          description: t("contactDescription"),
+        },
+        {
+          href: "/more/partners",
+          label: t("partners"),
+          description: t("partnersDescription"),
+        },
+      ],
+    },
+  ];
+
   return (
     <header className="border-b px-4 md:px-6">
       <div className="flex h-16 items-center justify-between gap-4">
@@ -129,14 +156,14 @@ export default function Component() {
                             {link.label}
                           </div>
                           <ul>
-                            {link.items.map((item, itemIndex) => (
+                            {link.items?.map((item, itemIndex) => (
                               <li key={itemIndex}>
-                                <NavigationMenuLink
-                                  href={item.href}
+                                <NavigationMenuItem
+                                  asChild
                                   className="py-1.5"
                                 >
-                                  {item.label}
-                                </NavigationMenuLink>
+                                  <Link href={item.href || "/"}>{item.label}</Link>
+                                </NavigationMenuItem>
                               </li>
                             ))}
                           </ul>
@@ -171,14 +198,15 @@ export default function Component() {
               </NavigationMenu>
             </PopoverContent>
           </Popover>
+
           {/* Main nav */}
           <div className="flex items-center gap-6">
-            <a
+            <Link
               href="/"
               className="text-foreground hover:text-foreground/80 transition-colors duration-200"
             >
               <Logo />
-            </a>
+            </Link>
             {/* Navigation menu */}
             <NavigationMenu viewport={false} className="max-md:hidden">
               <NavigationMenuList className="gap-2">
@@ -197,59 +225,58 @@ export default function Component() {
                                 : "min-w-48",
                             )}
                           >
-                            {link.items.map((item, itemIndex) => (
+                            {link.items?.map((item, itemIndex) => (
                               <li key={itemIndex}>
-                                <NavigationMenuLink
-                                  href={item.href}
-                                  className="py-1.5"
-                                >
-                                  {/* Display icon if present */}
-                                  {link.type === "icon" && "icon" in item && (
-                                    <div className="flex items-center gap-2">
-                                      {item.icon === "BookOpenIcon" && (
-                                        <BookOpenIcon
-                                          size={16}
-                                          className="text-foreground opacity-60"
-                                          aria-hidden="true"
-                                        />
-                                      )}
-                                      {item.icon === "LifeBuoyIcon" && (
-                                        <LifeBuoyIcon
-                                          size={16}
-                                          className="text-foreground opacity-60"
-                                          aria-hidden="true"
-                                        />
-                                      )}
-                                      {item.icon === "InfoIcon" && (
-                                        <InfoIcon
-                                          size={16}
-                                          className="text-foreground opacity-60"
-                                          aria-hidden="true"
-                                        />
-                                      )}
-                                      <span>{item.label}</span>
-                                    </div>
-                                  )}
-
-                                  {/* Display label with description if present */}
-                                  {link.type === "description" &&
-                                  "description" in item ? (
-                                    <div className="space-y-1">
-                                      <div className="font-medium">
-                                        {item.label}
-                                      </div>
-                                      <p className="text-muted-foreground line-clamp-2 text-xs">
-                                        {item.description}
-                                      </p>
-                                    </div>
-                                  ) : (
-                                    // Display simple label if not icon or description type
-                                    !link.type ||
-                                    (link.type !== "icon" &&
-                                      link.type !== "description" && (
+                                <NavigationMenuLink asChild className="py-1.5">
+                                  <Link href={item.href || "#"}>
+                                    {/* Display icon if present */}
+                                    {link.type === "icon" && item.icon && (
+                                      <div className="flex items-center gap-2">
+                                        {item.icon === "BookOpenIcon" && (
+                                          <BookOpenIcon
+                                            size={16}
+                                            className="text-foreground opacity-60"
+                                            aria-hidden="true"
+                                          />
+                                        )}
+                                        {item.icon === "LifeBuoyIcon" && (
+                                          <LifeBuoyIcon
+                                            size={16}
+                                            className="text-foreground opacity-60"
+                                            aria-hidden="true"
+                                          />
+                                        )}
+                                        {item.icon === "InfoIcon" && (
+                                          <InfoIcon
+                                            size={16}
+                                            className="text-foreground opacity-60"
+                                            aria-hidden="true"
+                                          />
+                                        )}
                                         <span>{item.label}</span>
-                                      ))
-                                  )}
+                                      </div>
+                                    )}
+
+                                    {/* Display label with description if present */}
+                                    {link.type === "description" &&
+                                    item.description ? (
+                                      <div className="space-y-1">
+                                        <div className="font-medium">
+                                          {item.label}
+                                        </div>
+                                        <p className="text-muted-foreground line-clamp-2 text-xs">
+                                          {item.description}
+                                        </p>
+                                      </div>
+                                    ) : (
+                                      // Display simple label if not icon or description type
+                                      !link.type ||
+                                      (link.type !== "icon" &&
+                                        link.type !== "description" && (
+                                          <span>{item.label}</span>
+                                        ))
+                                    )}
+                                  </Link>
                                 </NavigationMenuLink>
                               </li>
                             ))}
@@ -258,10 +285,10 @@ export default function Component() {
                       </>
                     ) : (
                       <NavigationMenuLink
-                        href={link.href}
+                        asChild
                         className="text-muted-foreground hover:text-primary py-1.5 font-medium"
                       >
-                        {link.label}
+                        <Link href={link.href || "/"}>{link.label}</Link>
                       </NavigationMenuLink>
                     )}
                   </NavigationMenuItem>
@@ -270,13 +297,15 @@ export default function Component() {
             </NavigationMenu>
           </div>
         </div>
+
         {/* Right side */}
         <div className="flex items-center gap-2">
+          <LanguageSwitcher />
           <Button asChild variant="ghost" size="sm" className="text-sm">
-            <Link href="/auth/signin">Sign In</Link>
+            <Link href="/auth/signin">{t("signIn")}</Link>
           </Button>
           <Button asChild size="sm" className="text-sm">
-            <Link href="/chat">Get Started</Link>
+            <Link href="/chat">{t("getStarted")}</Link>
           </Button>
         </div>
       </div>
