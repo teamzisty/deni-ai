@@ -41,7 +41,7 @@ import { Loading } from "@/components/loading";
 import { useRouter } from "next/navigation";
 import { useSettings } from "@/hooks/use-settings";
 import { Switch } from "@workspace/ui/components/switch";
-import { Shield, Eye, Loader2, DownloadIcon } from "lucide-react";
+import { Shield, Eye, Loader2, DownloadIcon, Lock } from "lucide-react";
 
 export function AccountSettings() {
   const { user, supabase, secureFetch } = useSupabase();
@@ -61,6 +61,14 @@ export function AccountSettings() {
   const [isAuthenticating, setIsAuthenticating] = useState(false);
   const [reauthPassword, setReauthPassword] = useState("");
   const [reauthError, setReauthError] = useState<string | null>(null);
+
+  // Password change state
+  const [showPasswordDialog, setShowPasswordDialog] = useState(false);
+  const [currentPassword, setCurrentPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [isChangingPassword, setIsChangingPassword] = useState(false);
+  const [passwordError, setPasswordError] = useState<string | null>(null);
 
   const { isUploading, startUpload } = useUploadThing("imageUploader", {
     headers: {
@@ -267,6 +275,51 @@ export function AccountSettings() {
     }
   };
 
+  const handlePasswordChange = async () => {
+    if (!supabase) return;
+
+    // Reset error state
+    setPasswordError(null);
+
+    // Validate passwords
+    if (!newPassword || !confirmPassword) {
+      setPasswordError("Please fill in all password fields");
+      return;
+    }
+
+    if (newPassword !== confirmPassword) {
+      setPasswordError("New passwords do not match");
+      return;
+    }
+
+    if (newPassword.length < 6) {
+      setPasswordError("Password must be at least 6 characters long");
+      return;
+    }
+
+    try {
+      setIsChangingPassword(true);
+
+      // Update password using Supabase auth
+      const { error } = await supabase.auth.updateUser({
+        password: newPassword,
+      });
+
+      if (error) throw error;
+
+      toast.success("Password changed successfully");
+      setShowPasswordDialog(false);
+      // Reset form
+      setCurrentPassword("");
+      setNewPassword("");
+      setConfirmPassword("");
+    } catch (error: any) {
+      setPasswordError(error.message || "Failed to change password");
+    } finally {
+      setIsChangingPassword(false);
+    }
+  };
+
   const handleDeleteAccount = async () => {
     setShowDeleteReauthDialog(true);
   };
@@ -411,6 +464,21 @@ export function AccountSettings() {
 
       <Card>
         <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Lock className="h-5 w-5" />
+            Change Password
+          </CardTitle>
+          <CardDescription>Update your account password</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Button onClick={() => setShowPasswordDialog(true)}>
+            Change Password
+          </Button>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
           <CardTitle>Data & Privacy</CardTitle>
           <CardDescription>Download your data or manage your account</CardDescription>
         </CardHeader>
@@ -493,6 +561,70 @@ export function AccountSettings() {
             </Button>
             <Button onClick={handleProfileSave} disabled={isUploading || !name}>
               Save Changes
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Password Change Dialog */}
+      <Dialog open={showPasswordDialog} onOpenChange={setShowPasswordDialog}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>Change Password</DialogTitle>
+            <DialogDescription>
+              Enter your new password to update your account security
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="grid gap-2">
+              <label htmlFor="new-password" className="text-sm font-medium">
+                New Password
+              </label>
+              <Input
+                id="new-password"
+                type="password"
+                value={newPassword}
+                onChange={(e) => setNewPassword(e.target.value)}
+                placeholder="Enter new password"
+                disabled={isChangingPassword}
+              />
+            </div>
+            <div className="grid gap-2">
+              <label htmlFor="confirm-password" className="text-sm font-medium">
+                Confirm New Password
+              </label>
+              <Input
+                id="confirm-password"
+                type="password"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                placeholder="Confirm new password"
+                disabled={isChangingPassword}
+              />
+            </div>
+            {passwordError && (
+              <p className="text-sm text-destructive">{passwordError}</p>
+            )}
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setShowPasswordDialog(false);
+                setCurrentPassword("");
+                setNewPassword("");
+                setConfirmPassword("");
+                setPasswordError(null);
+              }}
+              disabled={isChangingPassword}
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={handlePasswordChange}
+              disabled={isChangingPassword || !newPassword || !confirmPassword}
+            >
+              {isChangingPassword ? "Changing..." : "Change Password"}
             </Button>
           </DialogFooter>
         </DialogContent>

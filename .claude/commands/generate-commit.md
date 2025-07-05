@@ -1,0 +1,1 @@
+git diffを見て、詳細なcommit messageをよく考えて作成してください。

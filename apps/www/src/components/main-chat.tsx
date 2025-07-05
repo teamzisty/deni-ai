@@ -14,6 +14,7 @@ import { useUploadThing } from "@/lib/uploadthing";
 import { toast } from "sonner";
 import Link from "next/link";
 import { BranchTree } from "./chat/branch-tree";
+import { ShareButton } from "./chat/share-button";
 
 interface MainChatProps {
   initialConversation?: Conversation;
@@ -233,13 +234,21 @@ const MainChat = memo<MainChatProps>(
           </div>
         )}
         <div className="flex-1 overflow-y-auto" ref={messagesRef}>
-          {/* Branch tree - only show if we have messages and a conversation */}
+          {/* Branch tree and share button - only show if we have messages and a conversation */}
           {messages.length > 0 && initialConversation?.id && (
             <div className="w-full max-w-4xl mx-auto mb-4">
-              <BranchTree 
-                conversationId={initialConversation.id}
-                currentConversationId={initialConversation.id}
-              />
+              <div className="flex items-center justify-between">
+                <BranchTree 
+                  conversationId={initialConversation.id}
+                  currentConversationId={initialConversation.id}
+                />
+                <ShareButton
+                  conversation={initialConversation}
+                  user={user}
+                  messages={messages}
+                  authToken={authToken}
+                />
+              </div>
             </div>
           )}
           <Messages messages={messages} conversationId={initialConversation?.id} />
