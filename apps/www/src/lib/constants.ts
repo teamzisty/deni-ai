@@ -1,5 +1,10 @@
 export const BRAND_NAME = "Deni AI"; // Change your brand
 
+export const VERSION = {
+  version: "5.0.1",
+  codename: "Tulip"
+} // Version
+
 export const GITHUB_URL = "https://github.com/raicdev/deni-ai" // Change to your GitHub URL
 
 export const loading_words = [

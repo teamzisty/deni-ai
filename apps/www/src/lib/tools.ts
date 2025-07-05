@@ -67,8 +67,7 @@ export const search = tool({
       const pageParser = new PageParser();
       const content = await pageParser.parseUrl(item.url);
 
-      const [longSummary, shortSummary] = await Promise.all([
-        generateText({
+      const longSummary = await generateText({
           prompt: content.content,
           model: google(
             internalModels["search-summary-model"]?.id ||
@@ -76,17 +75,7 @@ export const search = tool({
           ),
           system:
             "You are a helpful assistant that summarizes web pages. respond as markdown, no concise.",
-        }),
-        generateText({
-          prompt: content.content,
-          model: google(
-            internalModels["search-summary-model"]?.id ||
-              "gemini-2.5-flash-lite-preview-06-17",
-          ),
-          system:
-            "You are a helpful assistant that summarizes web pages. respond as plain text, concise. less than 50 words.",
-        }),
-      ]);
+        })
 
       const endTime = Date.now();
       const scrapeTime = endTime - startTime;
@@ -98,7 +87,7 @@ export const search = tool({
         url: item.url,
         content: {
           long: longSummary.text,
-          short: shortSummary.text,
+          short: item.description,
         },
       };
     });

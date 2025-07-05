@@ -16,7 +16,7 @@ export function ChatLayoutContent({ children }: { children: React.ReactNode }) {
       <ChatSidebar />
 
       <main className="flex-1 overflow-y-auto p-4">
-        <SidebarTrigger className="top-4.5 left-5 absolute" />
+        <SidebarTrigger className="top-4.5 left-5 absolute z-1" />
         {children}
       </main>
       <CanvasPanel

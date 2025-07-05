@@ -4,5 +4,6 @@
     "next/router",
     "next/dist",
     "^lucide-react/dist/lucide-react.suffixed$"
-  ]
+  ],
+  "tailwindCSS.experimental.configFile": "packages/ui/src/styles/globals.css"
 }

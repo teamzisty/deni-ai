@@ -13,7 +13,7 @@ import {
   CardTitle,
 } from "@workspace/ui/components/card";
 import { Textarea } from "@workspace/ui/components/textarea";
-import { BRAND_NAME } from "@/lib/constants";
+import { BRAND_NAME, VERSION } from "@/lib/constants";
 import { useTranslations } from "@/hooks/use-translations";
 
 export default function Error({
@@ -28,7 +28,7 @@ export default function Error({
   const t = useTranslations("common.error");
 
   const errorReport = `${t("reportTitle", { brandName: BRAND_NAME })}
-${t("version")}
+${t("version", { version: VERSION.version})}
 ${t("pathname", { pathname })}
 ${t("timestamp", { timestamp: new Date().toISOString() })}
 

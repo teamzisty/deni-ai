@@ -408,7 +408,7 @@
       "tryAgain": "もう一度試す",
       "goHome": "ホームに戻る",
       "reportTitle": "{brandName} (Deni AI) エラーレポート",
-      "version": "バージョン: 5.0.0",
+      "version": "バージョン: {version}",
       "pathname": "パス名: {pathname}",
       "timestamp": "タイムスタンプ: {timestamp}",
       "errorMessage": "エラーメッセージ: {message}",

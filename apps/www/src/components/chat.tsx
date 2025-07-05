@@ -3,7 +3,8 @@
 import { useChat } from "@ai-sdk/react";
 import { useEffect, useState, useCallback, memo } from "react";
 import ChatInput from "./chat/input";
-import { redirect, useRouter } from "next/navigation";
+import { redirect, } from "next/navigation"
+import { useRouter } from "@/i18n/navigation";
 import { Loader2 } from "lucide-react";
 import { loading_words } from "@/lib/constants";
 import { useSupabase } from "@/context/supabase-context";
@@ -88,7 +89,7 @@ const SuggestionCards = memo(() => {
     t("chat.suggestions.healthcare"),
     t("chat.suggestions.freeWill"),
   ];
-  
+
   return (
     <div className="grid grid-cols-1 md:grid-cols-3 gap-4 my-8 w-3/4 mx-auto">
       {suggestions.map((suggestion, index) => (

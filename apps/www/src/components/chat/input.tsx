@@ -96,7 +96,7 @@ const ChatInput = memo<ChatInputProps>(
     return (
       <>
         {/* Chat Input */}
-        <div className="relative">
+        <div>
           <form
             onSubmit={(event) => {
               handleSubmit(event, {
@@ -124,7 +124,7 @@ const ChatInput = memo<ChatInputProps>(
                   <img
                     src={image}
                     alt="Uploaded"
-                    className="h-auto rounded-lg max-w-24 max-h-24 w-24 h-24 object-cover mb-2"
+                    className="rounded-lg max-w-24 max-h-24 w-24 h-24 object-cover mb-2"
                   />
                   <Button
                     type="button"

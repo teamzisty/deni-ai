@@ -28,7 +28,8 @@ import {
 } from "lucide-react";
 import { useSupabase } from "@/context/supabase-context";
 import { Bot, ClientBot } from "@/lib/bot";
-import { useParams, useRouter } from "next/navigation";
+import { useParams, } from "next/navigation"
+import { useRouter } from "@/i18n/navigation";
 import { Link } from "@/i18n/navigation";
 import { useConversations } from "@/hooks/use-conversations";
 

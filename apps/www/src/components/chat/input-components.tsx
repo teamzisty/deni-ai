@@ -16,6 +16,13 @@ import {
   PopoverTrigger,
   PopoverContent,
 } from "@workspace/ui/components/popover";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+  DropdownMenuSeparator,
+} from "@workspace/ui/components/dropdown-menu";
 import { cn } from "@workspace/ui/lib/utils";
 import {
   CircleQuestionMark,
@@ -32,6 +39,7 @@ import {
   FlaskConical,
   Gem,
   Loader2,
+  Settings,
 } from "lucide-react";
 import { useResearchModeMappingIntl } from "./input";
 import {
@@ -355,6 +363,10 @@ export const ModelSelector = React.memo<{
     );
   }, [settings.modelVisibility]);
 
+  const getShortModelName = useCallback((model: string) => {
+    return model.replace("GPT-", "").replace("Gemini ", "").replace("Claude ", "")
+  }, [])
+
   return (
     <div className="flex flex-row gap-2">
       <Popover open={open} onOpenChange={setOpen}>
@@ -379,10 +391,13 @@ export const ModelSelector = React.memo<{
             <span className="hidden md:inline">
               {models[model]?.name || model}
             </span>
+            <span className="md:hidden">
+              {getShortModelName(models[model]?.name || model)}
+            </span>
           </Button>
         </PopoverTrigger>
         {open && (
-          <PopoverContent className="p-0 w-full flex w-[300px]">
+          <PopoverContent className="p-0 flex w-[300px]">
             <Command>
               <CommandInput placeholder="Select model..." />
               <CommandList>
@@ -532,6 +547,100 @@ const SubmitButton = React.memo<{ disabled: boolean }>(function SubmitButton({
   );
 });
 
+const ToolsDropdown = React.memo<{
+  canvas?: boolean;
+  setCanvas?: (canvas: boolean) => void;
+  search?: boolean;
+  setSearch?: (search: boolean) => void;
+  researchMode?: "disabled" | "shallow" | "deep" | "deeper";
+  setResearchMode?: (mode: "disabled" | "shallow" | "deep" | "deeper") => void;
+}>(function ToolsDropdown({
+  canvas,
+  setCanvas,
+  search,
+  setSearch,
+  researchMode,
+  setResearchMode,
+}) {
+  const t = useTranslations("common.actions");
+  const tCanvas = useTranslations("canvas");
+  const researchModeMapping = useResearchModeMappingIntl();
+
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button type="button" variant="ghost" size="icon" className="rounded-full">
+          <Settings className="h-5 w-5" />
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end" className="w-56">
+        {canvas !== undefined && setCanvas && (
+          <DropdownMenuItem onClick={() => setCanvas(!canvas)}>
+            <Presentation className="h-4 w-4 mr-2" />
+            {tCanvas("title")}
+            {canvas && <CheckIcon className="h-4 w-4 ml-auto" />}
+          </DropdownMenuItem>
+        )}
+        {search !== undefined && setSearch && (
+          <DropdownMenuItem onClick={() => setSearch(!search)}>
+            <Globe className="h-4 w-4 mr-2" />
+            {t("search")}
+            {search && <CheckIcon className="h-4 w-4 ml-auto" />}
+          </DropdownMenuItem>
+        )}
+        {researchMode && setResearchMode && search !== undefined && (
+          <>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem
+              onClick={() => setResearchMode("disabled")}
+              disabled={!search}
+            >
+              <X className="h-4 w-4 mr-2" />
+              {researchModeMapping.disabled}
+              {researchMode === "disabled" && <CheckIcon className="h-4 w-4 ml-auto" />}
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              onClick={() => setResearchMode("shallow")}
+              disabled={!search}
+            >
+              <Zap className="h-4 w-4 mr-2" />
+              {researchModeMapping.shallow}
+              {researchMode === "shallow" && <CheckIcon className="h-4 w-4 ml-auto" />}
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              onClick={() => setResearchMode("deep")}
+              disabled={!search}
+            >
+              <Telescope className="h-4 w-4 mr-2" />
+              {researchModeMapping.deep}
+              {researchMode === "deep" && <CheckIcon className="h-4 w-4 ml-auto" />}
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              onClick={() => setResearchMode("deeper")}
+              disabled={!search}
+            >
+              <Telescope className="h-4 w-4 mr-2" />
+              {researchModeMapping.deeper}
+              {researchMode === "deeper" && <CheckIcon className="h-4 w-4 ml-auto" />}
+            </DropdownMenuItem>
+          </>
+        )}
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+});
+
+export const MobileModelSelector = React.memo<{
+  model: string;
+  setModel: (model: string) => void;
+}>(function MobileModelSelector({ model, setModel }) {
+  return (
+    <div className="md:hidden fixed top-3.5 left-1/2 transform -translate-x-1/2 z-50">
+      <ModelSelector model={model} setModel={setModel} />
+    </div>
+  );
+});
+
 export const InputActions = React.memo<InputActionsProps>(
   function InputActions({
     model,
@@ -559,37 +668,68 @@ export const InputActions = React.memo<InputActionsProps>(
         setThinkingEffort("medium");
       }
     }, [model, thinkingEffort, setThinkingEffort]);
+    
     return (
       <>
         <UploadButton
           handleImageUpload={handleImageUpload}
           isUploading={isUploading}
         />
-        {canvas !== undefined && setCanvas && (
-          <CanvasButton canvas={canvas} setCanvas={setCanvas} />
-        )}
-        {search !== undefined && setSearch && (
-          <SearchButton search={search} setSearch={setSearch} />
-        )}
-        {researchMode && setResearchMode && search !== undefined && (
-          <ResearchModeButton
+        
+        {/* Desktop layout */}
+        <div className="hidden md:flex md:items-center md:gap-2">
+          {canvas !== undefined && setCanvas && (
+            <CanvasButton canvas={canvas} setCanvas={setCanvas} />
+          )}
+          {search !== undefined && setSearch && (
+            <SearchButton search={search} setSearch={setSearch} />
+          )}
+          {researchMode && setResearchMode && search !== undefined && (
+            <ResearchModeButton
+              search={search}
+              researchMode={researchMode}
+              setResearchMode={setResearchMode}
+            />
+          )}
+        </div>
+        
+        {/* Mobile tools dropdown */}
+        <div className="md:hidden">
+          <ToolsDropdown
+            canvas={canvas}
+            setCanvas={setCanvas}
             search={search}
+            setSearch={setSearch}
             researchMode={researchMode}
             setResearchMode={setResearchMode}
           />
-        )}
+        </div>
 
-        <div className="flex items-center gap-4 ml-auto">
-          {thinkingEffort !== undefined && setThinkingEffort && (
-            <ThinkingEffortButton
-              model={model || ""}
-              thinkingEffort={thinkingEffort}
-              setThinkingEffort={setThinkingEffort}
-            />
-          )}
-          {model !== undefined && setModel && (
-            <ModelSelector model={model} setModel={setModel} />
-          )}
+        <div className="flex items-center gap-2 ml-auto">
+          {/* Mobile thinking effort only */}
+          <div className="flex md:hidden items-center gap-2">
+            {thinkingEffort !== undefined && setThinkingEffort && (
+              <ThinkingEffortButton
+                model={model || ""}
+                thinkingEffort={thinkingEffort}
+                setThinkingEffort={setThinkingEffort}
+              />
+            )}
+          </div>
+          
+          {/* Desktop thinking effort and model selector */}
+          <div className="hidden md:flex md:items-center md:gap-4">
+            {thinkingEffort !== undefined && setThinkingEffort && (
+              <ThinkingEffortButton
+                model={model || ""}
+                thinkingEffort={thinkingEffort}
+                setThinkingEffort={setThinkingEffort}
+              />
+            )}
+            {model !== undefined && setModel && (
+              <ModelSelector model={model} setModel={setModel} />
+            )}
+          </div>
           <SubmitButton disabled={input.trim().length === 0} />
         </div>
       </>

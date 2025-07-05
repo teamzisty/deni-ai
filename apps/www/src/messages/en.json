@@ -408,7 +408,7 @@
       "tryAgain": "Try again",
       "goHome": "Go home",
       "reportTitle": "{brandName} (Deni AI) Error Report",
-      "version": "Version: 5.0.0",
+      "version": "Version: v{version}",
       "pathname": "Pathname: {pathname}",
       "timestamp": "Timestamp: {timestamp}",
       "errorMessage": "Error Message: {message}",

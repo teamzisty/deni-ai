@@ -3,7 +3,9 @@
 import { Message, useChat, UseChatOptions } from "@ai-sdk/react";
 import { useEffect, useRef, useState, useCallback, useMemo, memo } from "react";
 import ChatInput from "./chat/input";
-import { redirect, useRouter } from "next/navigation";
+import { MobileModelSelector } from "./chat/input-components";
+import { redirect, } from "next/navigation"
+import { useRouter } from "@/i18n/navigation";
 import { AlertTriangle, Dot, Loader2 } from "lucide-react";
 import { ERROR_MAPPING, loading_words } from "@/lib/constants";
 import Messages from "./chat/messages";
@@ -208,7 +210,10 @@ const MainChat = memo<MainChatProps>(
     }
 
     return (
-      <main className="h-full flex flex-col">
+      <main className="h-full flex flex-col relative">
+        {/* Mobile model selector at top center */}
+        <MobileModelSelector model={model} setModel={setModel} />
+        
         {messages.length === 0 && (
           <div className="text-center mb-12 w-full h-full flex items-center justify-center flex-col">
             <h1
