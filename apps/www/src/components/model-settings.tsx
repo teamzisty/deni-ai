@@ -295,7 +295,7 @@ export default function ModelSettings() {
                       {tCommon('reset')}
                     </Button>
                     <p className="text-sm text-muted-foreground self-center">
-                      {t('showingCount', { count: filteredModels?.length })}
+                      {t('showingCount', { count: filteredModels?.length || 0 })}
                     </p>
                   </div>
                 </div>
