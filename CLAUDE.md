@@ -4,175 +4,110 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Development Commands
 
-### Core Commands (from repository root)
-- `pnpm dev` - Start all applications in development mode
-- `pnpm build` - Build all applications for production
-- `pnpm lint` - Lint all applications
-- `pnpm format` - Format code with Prettier
+### Package Management
+- **Package Manager**: Bun (v1.2.17)
+- **Install dependencies**: `bun install`
 
-### Main Web App (`apps/www/`)
-- `pnpm dev` - Start development server with Turbopack
-- `pnpm build` - Fast production build (no linting)
-- `pnpm build:full` - Full production build with linting
-- `pnpm typecheck` - Run TypeScript type checking
-- `pnpm lint` - Run ESLint
-- `pnpm lint:fix` - Auto-fix ESLint issues
+### Development & Build
+- **Start development server**: `bun dev` (runs all apps with Turbo)
+- **Build all apps**: `bun build`
+- **Lint all code**: `bun lint`
+- **Format code**: `bun format`
+  
+### App-specific Commands (in apps/www/)
+- **Start www app only**: `bun dev --turbopack`
+- **Build www app**: `bun build`
+- **Lint www app**: `bun lint`
 
-### API App (`apps/api/`) - Port 5100
-- `pnpm dev` - Development server
-- `pnpm build` - Production build
-
-### Docs App (`apps/docs/`) - Port 3001
-- `pnpm dev` - Development server
-- `pnpm build:full` - Full build with linting
+### Type Checking
+- **Type check**: `bun check-types` (defined in turbo.json)
 
 ## Architecture Overview
 
 ### Monorepo Structure
-- **Technology**: Turborepo with pnpm workspaces
-- **Node Version**: >=20 required
-- **TypeScript**: v5.8.3 (strict mode)
-- **Package Manager**: pnpm v10.11.1
+- **Framework**: Turborepo with Bun workspaces
+- **Apps**: `apps/www` (main Next.js app), `apps/docs` (documentation)
+- **Packages**: Shared configs, UI components, and AI providers in `packages/`
 
-### Key Applications
-1. **`apps/www/`** - Main Next.js web application (v4.1.0)
-   - Multi-model AI chat interface
-   - User authentication and account management
-   - Real-time chat with streaming responses
-   - Canvas/coding environment integration
-   - Internationalization (English/Japanese)
+### Main Application (apps/www)
+- **Framework**: Next.js 15.3.4 with App Router
+- **UI**: React 19.1.0 + Tailwind CSS 4.x + shadcn/ui components
+- **Database**: Supabase (PostgreSQL) with authentication
+- **AI Integration**: Vercel AI SDK 4.3.x supporting multiple providers:
+  - OpenAI, Anthropic, Google, Groq, XAI, OpenRouter
+  - Custom Voids.top providers
+- **File Uploads**: UploadThing integration
+- **Search**: Brave Search API integration
 
-2. **`apps/api/`** - Backend API application
-   - User dashboard and billing system
-   - Authentication endpoints
-   - Stripe integration for payments
-   - API key management
+### Route Structure (App Router)
+- **`(chat)/`**: Chat interface, bot management (`/chat/[id]`, `/bots/`)
+- **`(info)/`**: Marketing pages (`/features/`, `/more/`)
+- **`api/`**: API routes for chat, bots, conversations, user management
+- **`auth/`**: Authentication pages
 
-3. **`apps/docs/`** - Documentation site
-   - Blog and release notes
-   - Setup guides and contribution docs
-
-### Shared Packages
-- `@workspace/ui` - Shared UI components
-- `@workspace/eslint-config` - ESLint configuration
-- `@workspace/typescript-config` - TypeScript configuration
-- `@workspace/supabase-config` - Supabase configuration
-- `voids-ap-provider` / `voids-oai-provider` - Custom AI providers
-
-## Core Architecture Patterns
-
-### AI Integration
-- **Multi-Provider Support**: OpenAI, Anthropic, Google, xAI, Groq, OpenRouter
-- **Streaming Responses**: Using AI SDK with resumable streams
-- **Usage Tracking**: Optimized performance with caching and single-query fetching
-- **Tool Calling**: Custom tools for enhanced AI capabilities
-
-### Database & Authentication
-- **Supabase**: PostgreSQL database with real-time subscriptions
-- **Tables**: `chat_streams`, `intellipulse_action_keys`, `uses`
-- **Authentication**: Multi-factor authentication support
-- **Performance**: Optimized indexes and query patterns (see `docs/USAGE_OPTIMIZATION.md`)
-
-### Frontend Architecture
-- **Next.js 15+**: App Router with TypeScript
-- **React 19**: Latest React features
-- **UI Components**: Radix UI primitives with custom styling
-- **Styling**: Tailwind CSS v4.x
-- **State Management**: React context and local storage hooks
-
-### Key Features
-- **Intellipulse**: Advanced coding assistant with WebContainer integration
-- **Hubs**: Collaborative spaces for team discussions
-- **Canvas**: Code editing and execution environment
-- **Deep Research**: Web search integration with Brave Search API
-- **Bots**: Custom AI assistants with specific prompts
-
-## Performance Optimizations
-
-### Usage Tracking System
-- **Problem Solved**: N+1 query problem in usage tracking
-- **Solution**: Single query for all model usage data
-- **Caching**: 5-minute TTL with automatic cache invalidation
-- **Performance Gain**: 10-50x faster queries, 95% cache hit improvement
-
-### Database Indexes
-Key optimized indexes in `scripts/optimize-uses-table-indexes.sql`:
-```sql
-CREATE INDEX idx_uses_user_date ON uses (user_id, date);
-CREATE INDEX idx_uses_user_model_date ON uses (user_id, model, date);
-```
+### Key Providers & Context
+- **SupabaseProvider**: Database and auth
+- **ConversationsProvider**: Chat state management
+- **CanvasProvider**: Canvas mode functionality
+- **SidebarProvider**: UI state
+- **ThemeProvider**: Dark/light mode support
 
 ## Development Guidelines
 
-### Code Quality Requirements
-- Follow existing code patterns and conventions
-- Use shared workspace configurations for ESLint and TypeScript
-- Maintain strict TypeScript mode
-- Avoid ScrollArea component (known bugs)
+### Critical Restrictions
+- **No UI/UX changes** without explicit approval (layout, colors, fonts, spacing)
+- **No version changes** to technology stack without approval
+- **Do not use ScrollArea component** (known bugs - use alternatives)
+- **No arbitrary changes** - only implement what's explicitly requested
 
-### Technology Stack Constraints
-- **No Version Changes**: Do not modify versions in package.json without approval
-- **UI/UX Changes**: Require explicit approval before making design changes
-- **Dependency Management**: Check existing usage before introducing new libraries
+### Code Conventions
+- **TypeScript**: Strict typing required (^5.8.3)
+- **Components**: Follow shadcn/ui patterns, use workspace UI package
+- **Styling**: Tailwind CSS 4.x classes, maintain design system consistency
+- **AI Integration**: Use Vercel AI SDK patterns for streaming responses
+- **Database**: Use Supabase client patterns with proper RLS policies
 
-### File Organization
-- **Components**: Place in appropriate `components/` directories
-- **Types**: Use shared type definitions in `types/` directories
-- **Utils**: Utilize existing utility functions in `lib/` directories
-- **API Routes**: Follow Next.js App Router conventions
+### Commit Messages
+Use conventional commit format:
+- `feat: [description]` - New features
+- `fix: [description]` - Bug fixes  
+- `docs: [description]` - Documentation
+- `style: [description]` - Styling changes
+- `refactor: [description]` - Code refactoring
+- `test: [description]` - Tests
+- `chore: [description]` - Maintenance
 
-## Environment Variables
+### Task Execution Process
+1. **Analysis**: Identify requirements, check for existing functionality
+2. **Planning**: Determine implementation steps and execution order
+3. **Implementation**: Execute step-by-step with progress reports
+4. **Quality Control**: Verify results, fix issues if found
+5. **Final Review**: Ensure consistency and no duplication
 
-### Required for Development
-```bash
-# Supabase
-NEXT_PUBLIC_SUPABASE_URL=
-NEXT_PUBLIC_SUPABASE_ANON_KEY=
-SUPABASE_SERVICE_ROLE_KEY=
+## Important File Locations
 
-# AI Providers
-OPENAI_API_KEY=
-ANTHROPIC_API_KEY=
-GOOGLE_API_KEY=
-XAI_API_KEY=
-GROQ_API_KEY=
-OPENROUTER_API_KEY=
+### Configuration
+- `turbo.json` - Turborepo configuration
+- `apps/www/next.config.ts` - Next.js configuration
+- `apps/www/tailwind.config.ts` - Tailwind configuration
+- `apps/www/components.json` - shadcn/ui configuration
 
-# Optional
-BRAVE_SEARCH_API_KEY=
-UPLOADTHING_TOKEN=
-REDIS_URL=
-```
+### Core Directories
+- `apps/www/src/app/(chat)/` - Chat interface and bot management
+- `apps/www/src/components/` - React components
+- `apps/www/src/lib/` - Utility functions and configurations
+- `packages/ui/` - Shared UI components
+- `supabase/` - Database schema and migrations
 
-## Key Development Workflows
+### Environment Variables
+Required variables in `apps/www/.env`:
+- AI provider keys (OPENAI_API_KEY, ANTHROPIC_API_KEY, etc.)
+- Supabase config (NEXT_PUBLIC_SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY)
+- Service keys (BRAVE_SEARCH_API_KEY, UPLOADTHING_TOKEN)
 
-### Adding New AI Models
-1. Update model configuration in `lib/modelDescriptions.ts`
-2. Add provider setup in relevant API routes
-3. Update usage tracking in `lib/usage.ts`
-4. Test streaming and tool calling capabilities
-
-### Database Changes
-1. Create migration files in `supabase/migrations/`
-2. Update corresponding scripts in `scripts/`
-3. Test performance impact with usage optimization patterns
-
-### UI Component Development
-1. Use `@workspace/ui` for shared components
-2. Follow Radix UI patterns for accessibility
-3. Implement both light and dark theme support
-4. Ensure mobile responsiveness
-
-## Testing and Quality Assurance
-
-### Pre-commit Checks
-- Run `pnpm typecheck` for TypeScript errors
-- Run `pnpm lint` for code quality
-- Test build process with `pnpm build`
-- Verify database migrations work correctly
-
-### Performance Monitoring
-- Monitor usage tracking query performance
-- Check WebContainer integration functionality
-- Verify streaming response performance
-- Test real-time features with Supabase
+## Notes
+- Development server is typically already running - avoid starting additional servers
+- Project uses Bun for package management - prefer `bun` over `npm`
+- Main branch is `canary`, current work is on `updates/rewrite` branch
+- All AI providers are optional - configure only what's needed
+- Supabase handles authentication, database, and RLS policies

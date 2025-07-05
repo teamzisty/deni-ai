@@ -7,7 +7,7 @@ category: "docs"
 ## 前提条件
 
 - Node.js (v18.18.0) 以降
-- 最新バージョンの pnpm
+- 最新バージョンの bun
 - (オプション) Supabase プロジェクトの設定 (Supabase の設定については、以下の「Supabase の設定」を参照してください)
 - (オプション) Brave Search API キー (検索に使用)
 - (オプション) Uploadthing トークン (画像のアップロードに使用)
@@ -28,7 +28,7 @@ cd deni-ai
 - 依存関係をインストールする:
 
 ```bash
-pnpm install
+bun install
 ```
 
 ## セットアップ (ローカル)
@@ -47,7 +47,7 @@ cp .env.example .env.local
 - 開発サーバーを起動する:
 
 ```bash
-pnpm dev
+bun dev
 ```
 
 ## Vercel へデプロイ

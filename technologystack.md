@@ -22,5 +22,5 @@
 ## Development Tools
 
 - TypeScript: ^5.0.0
-- pnpm: ^10.0.0
+- bun: ^10.0.0
 - ESLint: ^9.0.0
