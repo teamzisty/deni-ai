@@ -1,1 +1,1 @@
-git diffを見て、詳細なcommit messageをよく考えて作成してください。
+Look at git diff and carefully consider the detailed commit message before creating it.
