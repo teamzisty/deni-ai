@@ -19,27 +19,27 @@ A comprehensive documentation website for Deni AI built with Next.js 15, featuri
 - **Content**: Markdown with frontmatter parsing
 - **Icons**: Lucide React
 - **Theme**: next-themes for dark/light mode
-- **Package Manager**: pnpm
+- **Package Manager**: bun
 
 ## Development
 
 ### Prerequisites
 
 - Node.js 18+
-- pnpm
+- bun
 
 ### Setup
 
 1. Install dependencies:
 
    ```bash
-   pnpm install
+   bun install
    ```
 
 2. Start development server:
 
    ```bash
-   pnpm dev
+   bun dev
    ```
 
 3. Open [http://localhost:3000](http://localhost:3000)
@@ -47,8 +47,8 @@ A comprehensive documentation website for Deni AI built with Next.js 15, featuri
 ### Build
 
 ```bash
-pnpm build
-pnpm start
+bun build
+bun start
 ```
 
 ## Content Structure

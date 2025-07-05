@@ -1,0 +1,1 @@
+Look at git diff and carefully consider the detailed commit message before creating it.

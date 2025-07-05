@@ -12,7 +12,7 @@ deni-ai/
 ├── apps/                  # Applications
 ├── packages/              # Shared packages
 ├── .gitignore             # Git exclusion file settings
-├── pnpm-lock.yaml         # pnpm lock file
+├── bun-lock.yaml         # bun lock file
 ├── LICENSE.md             # License information
 ├── package.json           # Project settings
 ├── README.md              # Project description
