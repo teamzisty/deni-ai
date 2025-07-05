@@ -9,6 +9,7 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@workspace/ui/components/collapsible";
+import { useSupabase } from "@/context/supabase-context";
 
 interface Conversation {
   id: string;
@@ -32,13 +33,14 @@ export function BranchTree({ conversationId, currentConversationId }: BranchTree
   const [branchTree, setBranchTree] = useState<BranchTreeData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isOpen, setIsOpen] = useState(false);
+  const { secureFetch } = useSupabase();
   const router = useRouter();
 
   useEffect(() => {
     const fetchBranchTree = async () => {
       setIsLoading(true);
       try {
-        const response = await fetch(
+        const response = await secureFetch(
           `/api/conversations/branches?parentSessionId=${conversationId}&tree=true`
         );
         

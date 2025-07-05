@@ -9,6 +9,7 @@ import {
 } from "@workspace/ui/components/card";
 import { Badge } from "@workspace/ui/components/badge";
 import { LockIcon, Rocket, Zap } from "lucide-react";
+import { BRAND_NAME, GITHUB_URL } from "@/lib/constants";
 
 export default function Home() {
   return (
@@ -35,10 +36,10 @@ export default function Home() {
       <section className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 mb-20">
         <div className="space-y-1 mb-8 text-center">
           <h1 className="text-3xl font-bold text-center">
-            Features that make Deni AI stand out
+            Features that make {BRAND_NAME} stand out
           </h1>
           <p className="text-center text-muted-foreground">
-            Discover the unique features that set Deni AI apart from the
+            Discover the unique features that set {BRAND_NAME} apart from the
             competition.
           </p>
         </div>
@@ -100,7 +101,7 @@ export default function Home() {
           <div className="flex flex-col space-y-6 h-full">
             <div className="bg-black text-green-400 p-3 rounded text-xs font-mono overflow-auto flex flex-col min-h-[250px]">
               <div className="whitespace-nowrap">
-                $ git clone https://github.com/raicdev/deni-ai.git
+                $ git clone {GITHUB_URL}
               </div>
               <div className="whitespace-nowrap">
                 {">"} Cloning into 'deni-ai'...
@@ -146,7 +147,7 @@ export default function Home() {
         <p className="text-lg text-muted-foreground mb-8">
           No limits on usage and No credit card required. No subscriptions.
           <br />
-          Leave of chains and start using Deni AI today.
+          Leave of chains and start using {BRAND_NAME} today.
         </p>
         <Button size="lg">Getting Started</Button>
       </section>

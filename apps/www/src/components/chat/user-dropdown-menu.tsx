@@ -18,11 +18,13 @@ import {
 import { useSupabase } from "@/context/supabase-context";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
-import { LogOut } from "lucide-react";
+import { LogOut, SettingsIcon, User } from "lucide-react";
 import { models, PREMIUM_USES_LIMIT } from "@/lib/constants";
+import { useSettingsDialog } from "@/context/settings-dialog-context";
 
 export function UserDropdownMenu() {
   const { supabase, user, usage, ssUserData, loading } = useSupabase();
+  const { openDialog } = useSettingsDialog();
   const router = useRouter();
 
   const getInitials = (name: string) => {
@@ -43,6 +45,10 @@ export function UserDropdownMenu() {
       router.push("/auth/login");
     }
   };
+
+  const handleOpenSettings = () => {
+    openDialog();
+  }
 
   if (loading) return null;
 
@@ -107,6 +113,14 @@ export function UserDropdownMenu() {
             <DropdownMenuSeparator />
           </>
         )}
+        <DropdownMenuItem onClick={() => router.push("/account")}>
+          <User />
+          Account
+        </DropdownMenuItem>
+        <DropdownMenuItem onClick={handleOpenSettings}>
+          <SettingsIcon />
+          Settings
+        </DropdownMenuItem>
         <DropdownMenuItem onClick={handleLogout} variant="destructive">
           <LogOut />
           Log out

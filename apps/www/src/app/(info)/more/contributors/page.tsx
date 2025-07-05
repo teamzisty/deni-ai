@@ -13,6 +13,7 @@ import {
 import { Badge } from "@workspace/ui/components/badge";
 import { Button } from "@workspace/ui/components/button";
 import { Github, ExternalLink } from "lucide-react";
+import { BRAND_NAME, GITHUB_URL } from "@/lib/constants";
 
 interface GitHubContributor {
   id: number;
@@ -40,7 +41,7 @@ async function getContributors(): Promise<Contributor[]> {
   try {
     // Replace with your actual repository
     const response = await fetch(
-      "https://api.github.com/repos/raicdev/deni-ai/contributors",
+      `https://api.github.com/repos/${GITHUB_URL.split("github.com/")[1]}/contributors`,
       {
         headers: {
           Accept: "application/vnd.github.v3+json",
@@ -129,7 +130,7 @@ export default async function ContributorsPage() {
         <div className="text-center mb-12">
           <h1 className="text-4xl font-bold mb-4">Contributors</h1>
           <p className="text-xl text-muted-foreground">
-            Meet the amazing people who make Deni AI possible
+            Meet the amazing people who make {BRAND_NAME} possible
           </p>
         </div>
 
@@ -226,7 +227,7 @@ export default async function ContributorsPage() {
           </p>
           <Button asChild>
             <a
-              href="https://github.com/raicdev/deni-ai"
+              href={GITHUB_URL}
               target="_blank"
               rel="noopener noreferrer"
               className="flex items-center gap-2"

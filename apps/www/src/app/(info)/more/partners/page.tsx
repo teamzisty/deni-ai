@@ -10,11 +10,12 @@ import { Badge } from "@workspace/ui/components/badge";
 import { ExternalLink, Globe } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@workspace/ui/components/button";
+import { BRAND_NAME } from "@/lib/constants";
 
 export const metadata: Metadata = {
-  title: "Partners | Deni AI",
+  title: `Partners | ${BRAND_NAME}`,
   description:
-    "Our trusted partners and collaborators who help make Deni AI possible.",
+    `Our trusted partners and collaborators who help make ${BRAND_NAME} possible.`,
 };
 
 const partners = [

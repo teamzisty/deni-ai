@@ -8,11 +8,12 @@ import {
 import { Search, Brain, FileText, Zap, BrainCog } from "lucide-react";
 import { Button } from "@workspace/ui/components/button";
 import Link from "next/link";
+import { BRAND_NAME } from "@/lib/constants";
 
 export const metadata: Metadata = {
-  title: "Search Features - Deni AI",
+  title: `Search Features - ${BRAND_NAME}`,
   description:
-    "Discover powerful search capabilities in Deni AI including research mode, canvas documents, and lightning-fast results.",
+    `Discover powerful search capabilities in ${BRAND_NAME} including research mode, canvas documents, and lightning-fast results.`,
 };
 
 export default function SearchFeaturesPage() {
@@ -62,7 +63,7 @@ export default function SearchFeaturesPage() {
     <div className="container mx-auto px-4 py-8">
       <div className="max-w-4xl mx-auto">
         <div className="text-center mb-12">
-          <h1 className="text-4xl font-bold mb-4">Deni AI Search</h1>
+          <h1 className="text-4xl font-bold mb-4">{BRAND_NAME} Search</h1>
           <p className="text-xl text-muted-foreground">
             Search features that empower you to find information quickly and
             efficiently.
@@ -122,7 +123,7 @@ export default function SearchFeaturesPage() {
             Ready to Experience Advanced Search?
           </h2>
           <p className="text-muted-foreground mb-6">
-            Try Deni AI's powerful search features and transform how you
+            Try {BRAND_NAME}'s powerful search features and transform how you
             discover and research information.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">

@@ -13,6 +13,7 @@ import {
   CardTitle,
 } from "@workspace/ui/components/card";
 import { Textarea } from "@workspace/ui/components/textarea";
+import { BRAND_NAME } from "@/lib/constants";
 
 export default function Error({
   error,
@@ -24,7 +25,7 @@ export default function Error({
   const pathname = usePathname();
   const [copied, setCopied] = useState(false);
 
-  const errorReport = `Deni AI Error Report
+  const errorReport = `${BRAND_NAME} (Deni AI) Error Report
 Version: 5.0.0
 Pathname: ${pathname}
 Timestamp: ${new Date().toISOString()}

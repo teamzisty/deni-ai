@@ -7,6 +7,7 @@ import "katex/dist/katex.min.css"; // Ensure you have katex styles imported
 import { ReactScan } from "@/components/react-scan";
 import Header from "@/components/header";
 import Footer from "@/components/footer";
+import { BRAND_NAME } from "@/lib/constants";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -19,8 +20,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Deni AI",
-  description: "Deni AI - Save time, Save money.",
+  title: BRAND_NAME,
+  description: `${BRAND_NAME} - Save time, Save money.`,
 };
 
 export default function RootLayout({

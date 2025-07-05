@@ -5,6 +5,7 @@ import { Toaster } from "sonner";
 import { CanvasPanel } from "./canvas-panel";
 import { ChatSidebar } from "./chat-sidebar";
 import { HiddenElement } from "./hidden-element";
+import { SettingsDialog } from "./settings-dialog";
 
 export function ChatLayoutContent({
   children,
@@ -27,6 +28,8 @@ export function ChatLayoutContent({
 
       <HiddenElement />
       <Toaster richColors position="top-center" />
+
+      <SettingsDialog />
     </div>
   );
 }

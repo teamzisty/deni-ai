@@ -3,6 +3,7 @@ import { useState, memo, useCallback } from "react";
 import { InputActions } from "./input-components";
 import { Button } from "@workspace/ui/components/button";
 import { XIcon } from "lucide-react";
+import { BRAND_NAME } from "@/lib/constants";
 
 export const researchModeMapping = {
   disabled: "Disabled",
@@ -126,7 +127,7 @@ const ChatInput = memo<ChatInputProps>(
                 value={input}
                 onChange={handleInputChange}
                 onKeyDown={handleKeyDown}
-                placeholder="Ask Deni AI anything..."
+                placeholder={`Ask ${BRAND_NAME} anything...`}
                 className="flex-1 border-none outline-none resize-none w-full bg-transparent"
               />
 

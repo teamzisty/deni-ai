@@ -64,6 +64,7 @@ import {
   useDraggable,
   useDroppable,
 } from "@dnd-kit/core";
+import { BRAND_NAME } from "@/lib/constants";
 
 export function ChatContextMenu({
   conversationId,
@@ -406,7 +407,7 @@ function ChatSidebarContent() {
           <SidebarGroup>
             <div className="w-full flex justify-center my-2">
               <SidebarGroupLabel className="text-xl font-semibold text-foreground">
-                Deni AI
+                {BRAND_NAME}
               </SidebarGroupLabel>
             </div>
             <SidebarGroupContent>

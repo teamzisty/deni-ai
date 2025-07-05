@@ -1,3 +1,7 @@
+export const BRAND_NAME = "Deni AI"; // Change your brand
+
+export const GITHUB_URL = "https://github.com/raicdev/deni-ai" // Change to your GitHub URL
+
 export const loading_words = [
   "Making things happen...",
   "Loading the magic...",
@@ -18,7 +22,7 @@ export const loading_words = [
 ];
 
 export const SYSTEM_PROMPT = [
-  "You are a helpful AI assistant on Deni AI. Your task is to assist users with their questions and provide accurate information based on the context provided.",
+  `You are a helpful AI assistant on ${BRAND_NAME}. Your task is to assist users with their questions and provide accurate information based on the context provided.`,
   "",
   "# Tools",
   "You have access to the following tools:",
@@ -66,6 +70,17 @@ export interface Model {
   context_window?: number;
   features?: ModelFeature[];
 }
+
+export const languages = {
+  en: {
+    id: "en",
+    name: "English",
+  },
+  ja: {
+    id: "ja",
+    name: "日本語",
+  },
+};
 
 export const models: Record<string, Model> = {
   "gpt-4o": {
@@ -217,5 +232,5 @@ export const models: Record<string, Model> = {
 export const internalModels: Record<string, Model> = {
   "title-model": models["gemini-2.5-flash-lite"]!,
   "search-summary-model": models["gemini-2.5-flash-lite"]!,
-  "research-summary-model": models["gemini-2.5-flash"]!
+  "research-summary-model": models["gemini-2.5-flash"]!,
 };

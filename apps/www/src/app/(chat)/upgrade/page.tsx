@@ -1,3 +1,4 @@
+import { BRAND_NAME } from "@/lib/constants";
 import { Button } from "@workspace/ui/components/button";
 import {
   Card,
@@ -79,7 +80,7 @@ export default function UpgradePage() {
       features: [
         "Includes all Team features",
         "Unlimited premium messages for unlimited users",
-        "Private Deni AI instance",
+        "Private instance",
       ],
     },
   ];
@@ -105,7 +106,7 @@ export default function UpgradePage() {
       <div className="text-center mb-12">
         <h1 className="text-4xl font-bold mb-4">Choose Your Plan</h1>
         <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
-          Unlock the full potential of Deni AI with our flexible pricing plans.
+          Unlock the full potential of {BRAND_NAME} with our flexible pricing plans.
           Get more GitHub contributions and advanced features.
         </p>
       </div>

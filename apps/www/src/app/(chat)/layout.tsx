@@ -4,6 +4,8 @@ import { ConversationsProvider } from "@/hooks/use-conversations";
 import { SidebarProvider } from "@workspace/ui/components/sidebar";
 import { ChatLayoutContent } from "@/components/chat-layout-content";
 import { UserDropdownMenu } from "@/components/chat/user-dropdown-menu";
+import { SettingsDialogProvider } from "@/context/settings-dialog-context";
+import { SettingsProvider } from "@/hooks/use-settings";
 
 export default function ChatLayout({
   children,
@@ -15,10 +17,14 @@ export default function ChatLayout({
       <SupabaseProvider>
         <ConversationsProvider>
           <CanvasProvider>
-            <ChatLayoutContent>
-              {children}
-              <UserDropdownMenu />
-            </ChatLayoutContent>
+            <SettingsProvider>
+              <SettingsDialogProvider>
+                <ChatLayoutContent>
+                  {children}
+                  <UserDropdownMenu />
+                </ChatLayoutContent>
+              </SettingsDialogProvider>
+            </SettingsProvider>
           </CanvasProvider>
         </ConversationsProvider>
       </SupabaseProvider>
