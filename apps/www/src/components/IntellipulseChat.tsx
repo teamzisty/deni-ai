@@ -959,34 +959,9 @@ const IntellipulseChat: React.FC<IntellipulseChatProps> = memo(
               input={input}
               image={image}
               model={model}
-              generating={
-                memoizedStatus.isThinking || memoizedStatus.isStreaming
-              }
-              stop={stop}
-              intellipulse={true}
               isUploading={isUploading}
-              searchEnabled={searchEnabled}
-              deepResearch={deepResearch}
-              sendButtonRef={sendButtonRef}
-              canvasEnabled={canvasEnabled}
-              modelDescriptions={modelDescriptions}
-              modelUsage={modelUsage}
-              usageLoading={usageLoading}
-              deepResearchToggle={deepResearchToggle}
-              searchToggle={searchToggle}
-              canvasToggle={canvasToggle}
-              handleSendMessage={handleSendMessage}
-              handleSendMessageKey={handleSendMessageKey}
+              handleSubmit={handleSubmit}
               handleInputChange={handleInputChange}
-              handleImagePaste={handleImagePaste}
-              handleImageUpload={handleImageUpload}
-              handleModelChange={handleModelChange}
-              handleReasoningEffortChange={handleReasoningEffortChange}
-              advancedSearchToggle={advancedSearchToggle}
-              reasoningEffort={reasoningEffort}
-              advancedSearch={advancedSearch}
-              fileInputRef={fileInputRef}
-              setImage={setImage}
             />
           </div>
         </div>

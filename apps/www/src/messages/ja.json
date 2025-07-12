@@ -439,6 +439,8 @@
   },
   "common": {
     "loading": "読み込み中...",
+    "delete": "削除",
+    "cancel": "キャンセル",
     "error": {
       "title": "問題が発生しました！",
       "subtitle": "予期しないエラーが発生しました。あなたのせいではありません。",
@@ -959,5 +961,46 @@
     "recognitionEnded": "音声認識を終了しました",
     "speakingReleaseToStop": "話しています...離すと停止します",
     "holdToSpeak": "長押しして話す"
+  },
+  "intellipulseSessions": {
+    "sessionsCleared": "すべてのセッションが正常にクリアされました",
+    "sessionsImported": "{count}個のセッションが正常にインポートされました",
+    "importError": "セッションのインポートに失敗しました"
+  },
+  "intellipulseMessageLog": {
+    "writeAction": "ファイル書き込み: {path}",
+    "readAction": "ファイル読み取り: {path}",
+    "listAction": "ディレクトリ一覧: {path}",
+    "genericAction": "アクション: {action}",
+    "actionLabel": "アクション",
+    "commandLabel": "コマンド",
+    "pathLabel": "パス",
+    "dependsOnLabel": "依存関係",
+    "executionPlan": "実行プラン",
+    "stepsCount": "{count}ステップ",
+    "executing": "実行中",
+    "executeSequence": "順次実行",
+    "statusRunning": "（実行中）",
+    "statusCompleted": "（完了）",
+    "statusFailed": "（失敗）",
+    "toggleOutput": "出力を表示",
+    "executionNote": "実行ボタンをクリックして、これらのステップを順次実行してください。"
+  },
+  "intellipulseChat": {
+    "initialMessageSent": "初期メッセージが正常に送信されました",
+    "sendMessageLog": "メッセージを送信中: {message}",
+    "sendImageLog": "画像付きメッセージを送信中",
+    "regenerateWarning": "異なるモデルで再生成中"
+  },
+  "messageLog": {
+    "reasoning": "推論中...",
+    "thinking": "思考中...",
+    "copied": "クリップボードにコピーしました",
+    "second": "秒",
+    "minute": "分",
+    "hour": "時間",
+    "copy": "メッセージをコピー",
+    "generationTime": "生成時間",
+    "regenerate": "レスポンスを再生成"
   }
 }

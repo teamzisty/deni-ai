@@ -77,6 +77,9 @@ const GitHubIntegration: React.FC<GitHubIntegrationProps> = ({
 
     try {
       const instance = await getWebContainerInstance();
+      if (!instance) {
+        throw new Error("WebContainer instance is not available");
+      }
 
       // Step 1: Create a new branch
       updateStatus("Creating new branch", false);

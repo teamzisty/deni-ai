@@ -373,6 +373,7 @@ export const ModelSelector = React.memo<{
         <PopoverTrigger asChild>
           <Button type="button" variant="outline" className="rounded-full">
             {(() => {
+              if (models[model]?.premium) return <Gem className="h-4 w-4 text-primary" />;
               switch (models[model]?.author) {
                 case "OpenAI":
                   return <SiOpenai className="h-4 w-4" />;

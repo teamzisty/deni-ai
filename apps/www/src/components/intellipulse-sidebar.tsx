@@ -38,7 +38,7 @@ import {
 import { Link } from "@/i18n/navigation";
 import { Badge } from "@workspace/ui/components/badge";
 import { useParams } from "next/navigation";
-import { useIsMobile } from "@workspace/ui/hooks/use-mobile";
+import { useIsMobile } from "@/hooks/use-mobile";
 import {
   Drawer,
   DrawerContent,
@@ -49,7 +49,7 @@ import {
 import { useRouter } from "@/i18n/navigation";
 import { Button } from "@workspace/ui/components/button";
 import { useTranslations } from "next-intl";
-// import { buildInfo } from "@/lib/version"; // Component not available
+// import { buildInfo } from "@/lib/version";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -216,7 +216,7 @@ function IntellipulseSidebarMenuSession() {
       {" "}
       <SidebarGroup>
         <SidebarGroupLabel className="text-xs text-muted-foreground font-medium mb-2">
-          {t("intellipulseSidebar.quickActions")}
+          Quick Actions
         </SidebarGroupLabel>
         <SidebarGroupContent>
           <SidebarMenu>
@@ -250,7 +250,7 @@ function IntellipulseSidebarMenuSession() {
         groupedSessions.older.length > 0) && (
         <SidebarGroup>
           <SidebarGroupLabel className="text-xs text-muted-foreground font-medium">
-            {t("intellipulseSidebar.recentSessions")}
+            Recent Sessions
           </SidebarGroupLabel>
         </SidebarGroup>
       )}

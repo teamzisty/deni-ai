@@ -1,4 +1,4 @@
-import { createSupabaseServerClient, createSupabaseServiceRoleClient } from "@/lib/supabase/server";
+import { createSupabaseServer } from "@/lib/supabase/server";
 
 export async function validateActionKey(actionKey: string): Promise<{
   success: boolean;
@@ -18,7 +18,7 @@ export async function validateActionKey(actionKey: string): Promise<{
       throw new Error("Action Key is required");
     }
 
-    const supabase = await createSupabaseServiceRoleClient();
+    const supabase = await createSupabaseServer();
 
     // Get action key data and verify ownership
     const { data: keyData, error: fetchError } = await supabase

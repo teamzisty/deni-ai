@@ -95,6 +95,9 @@ const GitCloneDialog: React.FC<GitCloneDialogProps> = ({
 
     try {
       const instance = await getWebContainerInstance();
+      if (!instance) {
+        throw new Error("WebContainer instance is not available");
+      }
       const finalProjectName = projectName.trim() || extractProjectName(repoUrl);
 
       // Step 1: Clone repository

@@ -70,7 +70,6 @@ export const MemoMarkdown = memo(
       <div className="text-sm md:text-base prose dark:prose-invert w-full">
         <ReactMarkdown
           remarkPlugins={[remarkGfm]}
-          components={{ a: MarkdownLink }}
         >
           {content}
         </ReactMarkdown>
