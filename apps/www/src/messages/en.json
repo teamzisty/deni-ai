@@ -256,6 +256,14 @@
       }
     },
     "customize": {
+      "theme": {
+        "title": "Theme",
+        "description": "Choose your preferred theme appearance"
+      },
+      "colorTheme": {
+        "title": "Color Theme",
+        "description": "Choose from a variety of colors and themes to match your flavor"
+      },
       "advancedSearch": {
         "title": "Advanced Search",
         "description": "We use a more detailed model internally for searching"
@@ -372,6 +380,39 @@
       "freeAndOpen": {
         "title": "Free, Unlimited Uses, Open Source",
         "description": "No limits on usage(*exclude premium models). No credit card required. Fully open source."
+      },
+      "pricing": {
+        "title": "Compare with competitors",
+        "subtitle": "See how {brandName} compares with other AI chatbots",
+        "month": "month",
+        "recommended": "Recommended",
+        "deniDescription": "Free, unlimited, and fully customizable AI chatbot",
+        "t3Description": "A cheaper alternative to ChatGPT, Claude, Gemini",
+        "chatgptDescription": "Most popular AI chatbot from OpenAI",
+        "claudeDescription": "Another AI chatbot from Anthropic",
+        "deniFeatures": {
+          "unlimited": "Unlimited basic model uses",
+          "openSource": "100% open source",
+          "customizable": "Fully customizable",
+          "privacy": "Privacy-first approach"
+        },
+        "t3Features": {
+          "basic": "1500/mo basic uses",
+          "limited": "100/mo premium uses",
+          "closedSource": "Closed source"
+        },
+        "chatgptFeatures": {
+          "gpt4": "Access to Latest Models",
+          "plugins": "Plugin marketplace",
+          "closedSource": "Closed source",
+          "usageLimits": "Usage limits apply"
+        },
+        "claudeFeatures": {
+          "latest": "Access to Latest Models",
+          "priority": "Priority access",
+          "closedSource": "Closed source",
+          "usageLimits": "Usage limits apply"
+        }
       },
       "setup": {
         "title": "Setup once, use forever.",
@@ -621,6 +662,56 @@
       "tryWebVersion": "Try Web Version",
       "vsCodeExtension": "VS Code Extension (Coming Soon)"
     }
+  },
+  "intellipulseHomePage": {
+    "title": "Intellipulse",
+    "button": "Start New Session",
+    "welcomeTitle": "Welcome to Intellipulse",
+    "welcomeDescription": "Start a conversation to begin your development session. Ask questions, get code assistance, or explore ideas.",
+    "inputPlaceholder": "Type your message to start a new session...",
+    "sendButton": "Send",
+    "quickStartSuggestions": {
+      "createReactComponent": {
+        "title": "Create React Component",
+        "description": "Get help building a new React component",
+        "prompt": "Help me create a new React component"
+      },
+      "debugCode": {
+        "title": "Debug Code",
+        "description": "Find and fix issues in your code",
+        "prompt": "Debug my code issue"
+      },
+      "explainCode": {
+        "title": "Code Explanation",
+        "description": "Understand how code works",
+        "prompt": "Explain this code to me"
+      },
+      "optimizePerformance": {
+        "title": "Performance Tips",
+        "description": "Improve your app's performance",
+        "prompt": "Optimize my application performance"
+      }
+    }
+  },
+  "intellipulseSidebar": {
+    "newIntellipulseChat": "New Intellipulse Chat",
+    "intellipulse": "Intellipulse",
+    "backToHome": "Back to Home",
+    "quickActions": "Quick Actions",
+    "recentSessions": "Recent Sessions",
+    "publicBeta": "Public Beta: May not work as expected"
+  },
+  "sidebar": {
+    "today": "Today",
+    "yesterday": "Yesterday",
+    "thisWeek": "This Week",
+    "thisMonth": "This Month",
+    "older": "Older"
+  },
+  "contextMenu": {
+    "delete": "Delete",
+    "deleteTitle": "Delete Session",
+    "deleteDescription": "Are you sure you want to delete the session \"{title}\"? This action cannot be undone."
   },
   "search": {
     "metadata": {

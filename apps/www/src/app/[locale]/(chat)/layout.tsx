@@ -7,6 +7,7 @@ import { UserDropdownMenu } from "@/components/chat/user-dropdown-menu";
 import { SettingsDialogProvider } from "@/context/settings-dialog-context";
 import { SettingsProvider } from "@/hooks/use-settings";
 import { HubsProvider } from "@/hooks/use-hubs";
+import { ColorThemeProvider } from "@/context/color-theme-context";
 import { cookies } from "next/headers";
 
 export default async function ChatLayout({
@@ -23,14 +24,16 @@ export default async function ChatLayout({
         <ConversationsProvider>
           <CanvasProvider>
             <SettingsProvider>
-              <SettingsDialogProvider>
-                <HubsProvider>
-                  <ChatLayoutContent>
-                    {children}
-                    <UserDropdownMenu />
-                  </ChatLayoutContent>
-                </HubsProvider>
-              </SettingsDialogProvider>
+              <ColorThemeProvider>
+                <SettingsDialogProvider>
+                  <HubsProvider>
+                    <ChatLayoutContent>
+                      {children}
+                      <UserDropdownMenu />
+                    </ChatLayoutContent>
+                  </HubsProvider>
+                </SettingsDialogProvider>
+              </ColorThemeProvider>
             </SettingsProvider>
           </CanvasProvider>
         </ConversationsProvider>

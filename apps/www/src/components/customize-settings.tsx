@@ -9,15 +9,104 @@ import {
   CardHeader,
   CardTitle,
 } from "@workspace/ui/components/card";
-import { Search, Users, ScrollText, GitBranch, Bot, Mic } from "lucide-react";
+  import { Search, Users, ScrollText, GitBranch, Bot, Mic, Monitor, Moon, Sun } from "lucide-react";
 import { Badge } from "@workspace/ui/components/badge";
+import { Button } from "@workspace/ui/components/button";
+import { useTheme } from "next-themes";
 
 export default function CustomizeSettings() {
   const { settings, updateSetting } = useSettings();
   const t = useTranslations('settings.customize');
+  const { theme, setTheme } = useTheme();
+
+  const themeOptions = [
+    { value: 'light', label: 'Light', icon: Sun },
+    { value: 'dark', label: 'Dark', icon: Moon },
+    { value: 'system', label: 'System', icon: Monitor },
+  ];
+
+  const colorThemes = [
+    { value: 'blue', label: 'Blue', color: 'bg-blue-500' },
+    { value: 'purple', label: 'Purple', color: 'bg-purple-500' },
+    { value: 'green', label: 'Green', color: 'bg-green-500' },
+    { value: 'orange', label: 'Orange', color: 'bg-orange-500' },
+    { value: 'red', label: 'Red', color: 'bg-red-500' },
+    { value: 'pink', label: 'Pink', color: 'bg-pink-500' },
+    { value: 'indigo', label: 'Indigo', color: 'bg-indigo-500' },
+    { value: 'yellow', label: 'Yellow', color: 'bg-yellow-500' },
+  ];
 
   return (
     <div className="space-y-6">
+      <Card className="!gap-2">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Monitor className="h-5 w-5" />
+            {t('theme.title')}
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-3">
+            <p className="text-sm text-muted-foreground">
+              {t('theme.description')}
+            </p>
+            <div className="flex flex-wrap gap-2">
+              {themeOptions.map((option) => {
+                const Icon = option.icon;
+                return (
+                  <Button
+                    key={option.value}
+                    variant={theme === option.value ? 'default' : 'outline'}
+                    size="sm"
+                    onClick={() => setTheme(option.value)}
+                    className="flex items-center gap-2"
+                  >
+                    <Icon className="h-4 w-4" />
+                    {option.label}
+                  </Button>
+                );
+              })}
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card className="!gap-2">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Monitor className="h-5 w-5" />
+            {t('colorTheme.title')}
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-3">
+            <p className="text-sm text-muted-foreground">
+              {t('colorTheme.description')}
+            </p>
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+              {colorThemes.map((colorTheme) => {
+                const isSelected = settings.colorTheme === colorTheme.value;
+                return (
+                  <Button
+                    key={colorTheme.value}
+                    variant={isSelected ? "default" : "outline"}
+                    className="h-auto p-3 justify-start"
+                    onClick={() => {
+                      updateSetting('colorTheme', colorTheme.value);
+                    }}
+                  >
+                    <div className="flex items-center gap-2">
+                      <div className={`w-4 h-4 rounded-full ${colorTheme.color}`} />
+                      <span className="text-sm">{colorTheme.label}</span>
+                    </div>
+                  </Button>
+                );
+              })}
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
       <Card className="!gap-2">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
