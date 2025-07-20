@@ -17,6 +17,8 @@ import { useRouter } from "@/i18n/navigation";
 import { useState } from "react";
 import { SiRefinedgithub, SiGoogle } from "@icons-pack/react-simple-icons";
 import { useTranslations } from "@/hooks/use-translations";
+import { toast } from "sonner";
+import { Provider } from "@supabase/supabase-js";
 
 export function SignUpForm({
   className,
@@ -29,6 +31,7 @@ export function SignUpForm({
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
   const t = useTranslations();
+  const tCommon = useTranslations("common");
 
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -57,6 +60,17 @@ export function SignUpForm({
       );
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const signInWithSocial = async (provider: Provider) => {
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider,
+      options: { redirectTo: `${window.location.origin}/chat` },
+    });
+    if (error) {
+      console.error(error);
+      toast.error(tCommon("error.title"));
     }
   };
 
@@ -118,12 +132,7 @@ export function SignUpForm({
               {t("auth.signUp.orSignUpWith")}{" "}
               <div className="flex justify-center gap-2 items-center w-full">
                 <Button
-                  onClick={() =>
-                    supabase.auth.signInWithOAuth({
-                      provider: "github",
-                      options: { redirectTo: "http://localhost:3000/chat" },
-                    })
-                  }
+                  onClick={() => signInWithSocial("github")}
                   type="button"
                   className="w-full"
                   variant="secondary"
@@ -133,12 +142,7 @@ export function SignUpForm({
                 </Button>
 
                 <Button
-                  onClick={() =>
-                    supabase.auth.signInWithOAuth({
-                      provider: "google",
-                      options: { redirectTo: "http://localhost:3000/chat" },
-                    })
-                  }
+                  onClick={() => signInWithSocial("google")}
                   type="button"
                   className="w-full"
                   variant="secondary"
