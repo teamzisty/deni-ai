@@ -199,6 +199,14 @@
     "botSession": {
       "message": "You are in bot session. To leave, create a new chat or select a different conversation."
     },
+    "error": {
+      "messageSendFailed": "Failed to send message",
+      "regenerateFailed": "Failed to regenerate response",
+      "maxRetriesReached": "Maximum retry attempts reached",
+      "retryMessage": "An error occurred while generating the response",
+      "retry": "Retry",
+      "authRequiredUpload": "Authentication required to upload files"
+    },
     "branch": {
       "branchButton": "Branch",
       "createTitle": "Create Branch",
@@ -256,6 +264,14 @@
       }
     },
     "customize": {
+      "theme": {
+        "title": "Theme",
+        "description": "Choose your preferred theme appearance"
+      },
+      "colorTheme": {
+        "title": "Color Theme",
+        "description": "Choose from a variety of colors and themes to match your flavor"
+      },
       "advancedSearch": {
         "title": "Advanced Search",
         "description": "We use a more detailed model internally for searching"
@@ -373,6 +389,39 @@
         "title": "Free, Unlimited Uses, Open Source",
         "description": "No limits on usage(*exclude premium models). No credit card required. Fully open source."
       },
+      "pricing": {
+        "title": "Compare with competitors",
+        "subtitle": "See how {brandName} compares with other AI chatbots",
+        "month": "month",
+        "recommended": "Recommended",
+        "deniDescription": "Free, unlimited, and fully customizable AI chatbot",
+        "t3Description": "A cheaper alternative to ChatGPT, Claude, Gemini",
+        "chatgptDescription": "Most popular AI chatbot from OpenAI",
+        "claudeDescription": "Another AI chatbot from Anthropic",
+        "deniFeatures": {
+          "unlimited": "Unlimited basic model uses",
+          "openSource": "100% open source",
+          "customizable": "Fully customizable",
+          "privacy": "Privacy-first approach"
+        },
+        "t3Features": {
+          "basic": "1500/mo basic uses",
+          "limited": "100/mo premium uses",
+          "closedSource": "Closed source"
+        },
+        "chatgptFeatures": {
+          "gpt4": "Access to Latest Models",
+          "plugins": "Plugin marketplace",
+          "closedSource": "Closed source",
+          "usageLimits": "Usage limits apply"
+        },
+        "claudeFeatures": {
+          "latest": "Access to Latest Models",
+          "priority": "Priority access",
+          "closedSource": "Closed source",
+          "usageLimits": "Usage limits apply"
+        }
+      },
       "setup": {
         "title": "Setup once, use forever.",
         "description": "No limits on usage and No credit card required. No subscriptions."
@@ -398,6 +447,8 @@
   },
   "common": {
     "loading": "Loading...",
+    "delete": "Delete",
+    "cancel": "Cancel",
     "error": {
       "title": "Something went wrong!",
       "subtitle": "An unexpected error occurred. Don't worry, it's not your fault.",
@@ -408,7 +459,7 @@
       "tryAgain": "Try again",
       "goHome": "Go home",
       "reportTitle": "{brandName} (Deni AI) Error Report",
-      "version": "Version: 5.0.0",
+      "version": "Version: v{version}",
       "pathname": "Pathname: {pathname}",
       "timestamp": "Timestamp: {timestamp}",
       "errorMessage": "Error Message: {message}",
@@ -416,7 +467,25 @@
       "digest": "Digest: {digest}",
       "unknownError": "Unknown error",
       "noStackTrace": "No stack trace available",
-      "notAvailable": "N/A"
+      "notAvailable": "N/A",
+      "fileNotSelected": "No file selected"
+    },
+    "upload": {
+      "uploading": "Uploading...",
+      "uploaded": "File uploaded successfully",
+      "success": "Upload successful",
+      "error": "Upload failed"
+    },
+    "messageLog": {
+      "reasoning": "Reasoning...",
+      "thinking": "Thinking...",
+      "copied": "Copied to clipboard",
+      "second": "s",
+      "minute": "m",
+      "hour": "h",
+      "copy": "Copy message",
+      "generationTime": "Generated in",
+      "regenerate": "Regenerate response"
     },
     "actions": {
       "pleaseTryAgain": "Please try again.",
@@ -621,6 +690,56 @@
       "tryWebVersion": "Try Web Version",
       "vsCodeExtension": "VS Code Extension (Coming Soon)"
     }
+  },
+  "intellipulseHomePage": {
+    "title": "Intellipulse",
+    "button": "Start New Session",
+    "welcomeTitle": "Welcome to Intellipulse",
+    "welcomeDescription": "Start a conversation to begin your development session. Ask questions, get code assistance, or explore ideas.",
+    "inputPlaceholder": "Type your message to start a new session...",
+    "sendButton": "Send",
+    "quickStartSuggestions": {
+      "createReactComponent": {
+        "title": "Create React Component",
+        "description": "Get help building a new React component",
+        "prompt": "Help me create a new React component"
+      },
+      "debugCode": {
+        "title": "Debug Code",
+        "description": "Find and fix issues in your code",
+        "prompt": "Debug my code issue"
+      },
+      "explainCode": {
+        "title": "Code Explanation",
+        "description": "Understand how code works",
+        "prompt": "Explain this code to me"
+      },
+      "optimizePerformance": {
+        "title": "Performance Tips",
+        "description": "Improve your app's performance",
+        "prompt": "Optimize my application performance"
+      }
+    }
+  },
+  "intellipulseSidebar": {
+    "newIntellipulseChat": "New Intellipulse Chat",
+    "intellipulse": "Intellipulse",
+    "backToHome": "Back to Home",
+    "quickActions": "Quick Actions",
+    "recentSessions": "Recent Sessions",
+    "publicBeta": "Public Beta: May not work as expected"
+  },
+  "sidebar": {
+    "today": "Today",
+    "yesterday": "Yesterday",
+    "thisWeek": "This Week",
+    "thisMonth": "This Month",
+    "older": "Older"
+  },
+  "contextMenu": {
+    "delete": "Delete",
+    "deleteTitle": "Delete Session",
+    "deleteDescription": "Are you sure you want to delete the session \"{title}\"? This action cannot be undone."
   },
   "search": {
     "metadata": {
@@ -847,6 +966,36 @@
         }
       }
     }
+  },
+  "intellipulseSessions": {
+    "sessionsCleared": "All sessions cleared successfully",
+    "sessionsImported": "{count} sessions imported successfully",
+    "importError": "Failed to import sessions"
+  },
+  "intellipulseMessageLog": {
+    "writeAction": "Write file: {path}",
+    "readAction": "Read file: {path}",
+    "listAction": "List directory: {path}",
+    "genericAction": "Action: {action}",
+    "actionLabel": "Action",
+    "commandLabel": "Command",
+    "pathLabel": "Path",
+    "dependsOnLabel": "Depends on",
+    "executionPlan": "Execution Plan",
+    "stepsCount": "{count} steps",
+    "executing": "Executing",
+    "executeSequence": "Execute Sequence",
+    "statusRunning": "(Running)",
+    "statusCompleted": "(Completed)",
+    "statusFailed": "(Failed)",
+    "toggleOutput": "View Output",
+    "executionNote": "Click the execute button to run these steps sequentially."
+  },
+  "intellipulseChat": {
+    "initialMessageSent": "Initial message sent successfully",
+    "sendMessageLog": "Sending message: {message}",
+    "sendImageLog": "Sending image with message",
+    "regenerateWarning": "Regenerating with different model"
   },
   "voice": {
     "authRequired": {

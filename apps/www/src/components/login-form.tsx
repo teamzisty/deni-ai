@@ -97,6 +97,9 @@ export function LoginFormIntl({
               {t("orLoginWith")}{" "}
               <div className="flex justify-center gap-2 items-center w-full">
                 <Button
+                  onClick={() =>
+                    supabase.auth.signInWithOAuth({ provider: "github" })
+                  }
                   type="button"
                   variant="outline"
                   className="w-full hover:border-gray-600 transition-colors duration-300 ease-in-out"
@@ -105,6 +108,9 @@ export function LoginFormIntl({
                   {t("github")}
                 </Button>
                 <Button
+                  onClick={() =>
+                    supabase.auth.signInWithOAuth({ provider: "google" })
+                  }
                   type="button"
                   variant="outline"
                   className="w-full hover:border-blue-600 transition-colors duration-300 ease-in-out"
@@ -116,7 +122,10 @@ export function LoginFormIntl({
             </div>
             <div className="mt-4 text-center text-sm">
               {t("noAccount")}{" "}
-              <Link href="/auth/sign-up" className="underline underline-offset-4">
+              <Link
+                href="/auth/sign-up"
+                className="underline underline-offset-4"
+              >
                 {t("signUp")}
               </Link>
             </div>

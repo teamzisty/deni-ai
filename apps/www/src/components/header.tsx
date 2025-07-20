@@ -20,6 +20,7 @@ import Logo from "./logo";
 import { Link } from "@/i18n/navigation";
 import { useTranslations } from "@/hooks/use-translations";
 import { LanguageSwitcher } from "./language-switcher";
+import { ThemeSwitcher } from "./theme-switcher";
 
 interface NavigationItem {
   label: string;
@@ -300,9 +301,10 @@ export default function Header() {
 
         {/* Right side */}
         <div className="flex items-center gap-2">
+          <ThemeSwitcher />
           <LanguageSwitcher />
           <Button asChild variant="ghost" size="sm" className="text-sm">
-            <Link href="/auth/signin">{t("signIn")}</Link>
+            <Link href="/auth/login">{t("signIn")}</Link>
           </Button>
           <Button asChild size="sm" className="text-sm">
             <Link href="/chat">{t("getStarted")}</Link>

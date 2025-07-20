@@ -1,6 +1,7 @@
 "use client";
 
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname, } from "next/navigation"
+import { useRouter } from "@/i18n/navigation";
 import { useTransition } from "react";
 import { useLocale } from "next-intl";
 import { Button } from "@workspace/ui/components/button";

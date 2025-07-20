@@ -33,7 +33,8 @@ import {
   ContextMenuSeparator,
   ContextMenuTrigger,
 } from "@workspace/ui/components/context-menu";
-import { useParams, useRouter } from "next/navigation";
+import { useParams, } from "next/navigation"
+import { useRouter } from "@/i18n/navigation";
 import { toast } from "sonner";
 import React, { useEffect } from "react";
 import Message from "./chat/message";

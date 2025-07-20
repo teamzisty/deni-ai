@@ -3,7 +3,9 @@
 import { Message, useChat, UseChatOptions } from "@ai-sdk/react";
 import { useEffect, useRef, useState, useCallback, useMemo, memo } from "react";
 import ChatInput from "./chat/input";
-import { redirect, useRouter } from "next/navigation";
+import { MobileModelSelector } from "./chat/input-components";
+import { redirect, } from "next/navigation"
+import { useRouter } from "@/i18n/navigation";
 import { AlertTriangle, Dot, Loader2 } from "lucide-react";
 import { ERROR_MAPPING, loading_words } from "@/lib/constants";
 import Messages from "./chat/messages";
@@ -208,17 +210,20 @@ const MainChat = memo<MainChatProps>(
     }
 
     return (
-      <main className="h-full flex flex-col">
+      <main className="h-full flex flex-col relative">
+        {/* Mobile model selector at top center */}
+        <MobileModelSelector model={model} setModel={setModel} />
+        
         {messages.length === 0 && (
           <div className="text-center mb-12 w-full h-full flex items-center justify-center flex-col">
             <h1
               key={welcomeMessage}
-              className="!mb-1 text-4xl font-bold mb-4 bg-gradient-to-r from-lime-400 via-sky-500 to-fuchsia-600 bg-clip-text text-transparent animate-welcome"
+              className="!mb-1 text-4xl font-bold bg-gradient-to-r from-lime-400 via-sky-500 to-fuchsia-600 bg-clip-text text-transparent animate-welcome"
             >
               {welcomeMessage}
             </h1>
             {ssUserData?.plan && ssUserData?.plan !== "free" && (
-              <span className="font-semibold">
+              <span className="font-semibold opacity-80 hover:opacity-100 transition-all">
                 <span className="bg-gradient-to-r from-pink-400 to-sky-500 bg-clip-text text-transparent capitalize">
                   {ssUserData?.plan}
                 </span>{" "}
@@ -243,7 +248,7 @@ const MainChat = memo<MainChatProps>(
         <div className="flex-1 overflow-y-auto" ref={messagesRef}>
           {/* Sidebar toggle, branch tree and share button */}
           <div className="w-full max-w-4xl mx-auto mb-4">
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between pl-12 md:pl-0">
               {messages.length > 0 && initialConversation?.id && (
                 <BranchTree
                   conversationId={initialConversation.id}

@@ -30,6 +30,7 @@ import { Loading } from "@/components/loading";
 import { models, Model, ModelFeature } from "@/lib/constants";
 import { useSettings } from "@/hooks/use-settings";
 import { useTranslations } from "@/hooks/use-translations";
+import DeepSeekIcon from "./deepseek-icon";
 
 export default function ModelSettings() {
   const { settings, updateSetting, isLoading: settingsLoading } = useSettings();
@@ -239,6 +240,7 @@ export default function ModelSettings() {
                         htmlFor="DeepSeek"
                         className="text-sm flex items-center"
                       >
+                        <DeepSeekIcon className="mr-1" size={14} />
                         {t('authors.deepseek')}
                       </label>
                     </div>
@@ -320,8 +322,8 @@ export default function ModelSettings() {
                               {model.author === "OpenAI" && <SiOpenai />}
                               {model.author === "Google" && <SiGooglegemini />}
                               {model.author === "Anthropic" && <SiClaude />}
-                              {model.author === "xAI" && <SiX size="16" />}
-                              {model.author === "DeepSeek" && <span>🧠</span>}
+                              {model.author === "xAI" && <SiX />}
+                              {model.author === "DeepSeek" && <DeepSeekIcon />}
                             </Avatar>
                             <div className="min-w-0 flex-1 overflow-hidden">
                               <h3 className="text-md sm:text-lg font-bold block min-w-0 truncate">

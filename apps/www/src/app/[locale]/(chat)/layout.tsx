@@ -7,28 +7,38 @@ import { UserDropdownMenu } from "@/components/chat/user-dropdown-menu";
 import { SettingsDialogProvider } from "@/context/settings-dialog-context";
 import { SettingsProvider } from "@/hooks/use-settings";
 import { HubsProvider } from "@/hooks/use-hubs";
+import { ColorThemeProvider } from "@/context/color-theme-context";
+import { AuthGuard } from "@/components/auth-guard";
+import { cookies } from "next/headers";
 
-export default function ChatLayout({
+export default async function ChatLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const cookieStore = await cookies();
+  const defaultOpen = cookieStore.get("sidebar_state")?.value === "true";
+
   return (
-    <SidebarProvider>
+    <SidebarProvider defaultOpen={defaultOpen}>
       <SupabaseProvider>
         <ConversationsProvider>
-          <CanvasProvider>
-            <SettingsProvider>
-              <SettingsDialogProvider>
-                <HubsProvider>
-                  <ChatLayoutContent>
-                    {children}
-                    <UserDropdownMenu />
-                  </ChatLayoutContent>
-                </HubsProvider>
-              </SettingsDialogProvider>
-            </SettingsProvider>
-          </CanvasProvider>
+          <AuthGuard>
+            <CanvasProvider>
+              <SettingsProvider>
+                <ColorThemeProvider>
+                  <SettingsDialogProvider>
+                    <HubsProvider>
+                      <ChatLayoutContent>
+                        {children}
+                        <UserDropdownMenu />
+                      </ChatLayoutContent>
+                    </HubsProvider>
+                  </SettingsDialogProvider>
+                </ColorThemeProvider>
+              </SettingsProvider>
+            </CanvasProvider>
+          </AuthGuard>
         </ConversationsProvider>
       </SupabaseProvider>
     </SidebarProvider>

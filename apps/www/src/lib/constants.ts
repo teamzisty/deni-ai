@@ -1,5 +1,10 @@
 export const BRAND_NAME = "Deni AI"; // Change your brand
 
+export const VERSION = {
+  version: "5.0.1",
+  codename: "Tulip"
+} // Version
+
 export const GITHUB_URL = "https://github.com/raicdev/deni-ai" // Change to your GitHub URL
 
 export const loading_words = [
@@ -36,7 +41,7 @@ export const ERROR_MAPPING: Record<string, string> = {
   "chat.model_limit_reached": "You've reached your usage limit for this model.",
 };
 
-export const PREMIUM_USES_LIMIT = 30; // Default is 30 per day
+export const PREMIUM_USES_LIMIT = -1; // Default is 30 per day
 
 export type ModelFeature =
   | "vision"

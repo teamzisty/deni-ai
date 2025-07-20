@@ -22,6 +22,7 @@ export interface Settings {
   voice: boolean;
   conversationsPrivacyMode: boolean;
   modelVisibility?: Record<string, boolean>;
+  colorTheme?: string;
   // Add more settings here as needed
 }
 
@@ -35,6 +36,7 @@ const DEFAULT_SETTINGS: Settings = {
   branch: true,
   voice: true,
   conversationsPrivacyMode: false,
+  colorTheme: 'blue',
 };
 
 const SUPABASE_TABLE = "user_settings";

@@ -19,7 +19,7 @@ import { useSupabase } from "@/context/supabase-context";
 import { toast } from "sonner";
 import { useRouter } from "@/i18n/navigation";
 import { LogOut, SettingsIcon, User } from "lucide-react";
-import { models, PREMIUM_USES_LIMIT } from "@/lib/constants";
+import { BRAND_NAME, models, PREMIUM_USES_LIMIT, VERSION } from "@/lib/constants";
 import { useSettingsDialog } from "@/context/settings-dialog-context";
 import { useTranslations } from "@/hooks/use-translations";
 
@@ -103,7 +103,7 @@ export function UserDropdownMenu() {
                         <span>{models[u.model]?.name}</span>
                         <span>{t("chat.userMenu.uses", { count: u.count })}</span>
                       </div>
-                      <Progress value={u.count} max={PREMIUM_USES_LIMIT} />
+                      <Progress value={u.count} max={PREMIUM_USES_LIMIT === -1 ? Infinity : PREMIUM_USES_LIMIT} />
                     </div>
                   ))}
               </div>
@@ -123,6 +123,10 @@ export function UserDropdownMenu() {
           <LogOut />
           {t("chat.userMenu.logOut")}
         </DropdownMenuItem>
+        <DropdownMenuSeparator />
+        <DropdownMenuLabel className="text-muted-foreground">
+          {BRAND_NAME} v{VERSION.version} ({VERSION.codename})
+        </DropdownMenuLabel>
       </DropdownMenuContent>
     </DropdownMenu>
   );

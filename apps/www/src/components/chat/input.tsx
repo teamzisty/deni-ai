@@ -1,12 +1,13 @@
 "use client";
 
 import { UseChatHelpers } from "@ai-sdk/react";
-import { useState, memo, useCallback } from "react";
+import { useState, memo, useCallback, useRef, useEffect } from "react";
 import { InputActions } from "./input-components";
 import { Button } from "@workspace/ui/components/button";
 import { XIcon } from "lucide-react";
 import { BRAND_NAME } from "@/lib/constants";
 import { useTranslations } from "@/hooks/use-translations";
+import { useIsMobile } from "@workspace/ui/hooks/use-mobile";
 
 export const researchModeMapping = {
   disabled: "disabled",
@@ -68,6 +69,19 @@ const ChatInput = memo<ChatInputProps>(
   }) => {
     const [open, setOpen] = useState(false);
     const t = useTranslations("chat.input");
+    const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+    const adjustHeight = useCallback(() => {
+      const textarea = textareaRef.current;
+      if (textarea) {
+        textarea.style.height = "auto";
+        textarea.style.height = `${textarea.scrollHeight}px`;
+      }
+    }, []);
+
+    useEffect(() => {
+      adjustHeight();
+    }, [input, adjustHeight]);
 
     const handleKeyDown = useCallback(
       (event: React.KeyboardEvent<HTMLTextAreaElement>) => {
@@ -96,7 +110,7 @@ const ChatInput = memo<ChatInputProps>(
     return (
       <>
         {/* Chat Input */}
-        <div className="relative">
+        <div>
           <form
             onSubmit={(event) => {
               handleSubmit(event, {
@@ -124,7 +138,7 @@ const ChatInput = memo<ChatInputProps>(
                   <img
                     src={image}
                     alt="Uploaded"
-                    className="h-auto rounded-lg max-w-24 max-h-24 w-24 h-24 object-cover mb-2"
+                    className="rounded-lg max-w-24 max-h-24 w-24 h-24 object-cover mb-2"
                   />
                   <Button
                     type="button"
@@ -139,11 +153,16 @@ const ChatInput = memo<ChatInputProps>(
 
               {/* Input Area */}
               <textarea
+                ref={textareaRef}
                 value={input}
-                onChange={handleInputChange}
+                onChange={(e) => {
+                  handleInputChange(e);
+                  adjustHeight();
+                }}
                 onKeyDown={handleKeyDown}
                 placeholder={t("placeholder", { brandName: BRAND_NAME })}
-                className="flex-1 border-none outline-none resize-none w-full bg-transparent"
+                className="flex-1 border-none outline-none resize-none w-full bg-transparent min-h-[24px] max-h-[100px] sm:max-h-[200px] overflow-y-auto"
+                rows={1}
               />
 
               {/* Controls */}
