@@ -33,6 +33,10 @@ export function SupabaseProvider({ children }: { children: React.ReactNode }) {
       data: { session },
       error,
     } = await supabase.auth.getSession();
+    if (error) {
+      console.error(error);
+      throw new Error("Failed to get session");
+    }
     const response = await fetch(url, {
       ...options,
       headers: {
@@ -59,43 +63,39 @@ export function SupabaseProvider({ children }: { children: React.ReactNode }) {
   };
 
   useEffect(() => {
-    const getSession = async () => {
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
-      setSession(session);
-      setUser(session?.user ?? null);
-      setLoading(false);
-
-      if (session?.user) {
-        const getSsData = async () => {
-          // Check if we have server-side user data
-          const ssData = await secureFetch("/api/user");
-          if (ssData.ok) {
-            const { user } = await ssData.json();
-            setSsUserData(user);
-          }
-        };
-        const getUsage = async () => {
-          // Fetch usage information
-          const usageData = await secureFetch("/api/user/usage");
-          if (usageData.ok) {
-            const { usage } = await usageData.json();
-            setUsage(usage);
-          }
-        };
-        getSsData();
-        getUsage();
-      }
-    };
-
-    getSession();
-
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(async (event, session) => {
       setSession(session);
       setUser(session?.user ?? null);
+
+      if (session?.user) {
+        const getSsData = async () => {
+          try {
+            // Check if we have server-side user data
+            const ssData = await secureFetch("/api/user");
+            if (ssData.ok) {
+              const { user } = await ssData.json();
+              setSsUserData(user);
+            }
+          } catch (error) {
+            console.error(error);
+          }
+        };
+        const getUsage = async () => {
+          try {
+            // Fetch usage information
+            const usageData = await secureFetch("/api/user/usage");
+            if (usageData.ok) {
+              const { usage } = await usageData.json();
+              setUsage(usage);
+            }
+          } catch (error) {
+            console.error(error);
+          }
+        };
+        await Promise.all([getSsData(), getUsage()]);
+      }
       setLoading(false);
     });
 

@@ -1,4 +1,3 @@
-import Image from "next/image";
 import { Button } from "@workspace/ui/components/button";
 import {
   Card,
@@ -11,6 +10,7 @@ import { Badge } from "@workspace/ui/components/badge";
 import { LockIcon, Rocket, Zap } from "lucide-react";
 import { BRAND_NAME, GITHUB_URL } from "@/lib/constants";
 import { getTranslations } from "next-intl/server";
+import Link from "next/link";
 
 export default async function Home() {
   const t = await getTranslations("landing");
@@ -29,7 +29,9 @@ export default async function Home() {
           <span className="ml-1">{t("hero.badge")}</span>
         </Badge>
         <div className="flex flex-col sm:flex-row gap-4 justify-center">
-          <Button size="lg">{t("hero.getStarted")}</Button>
+          <Button size="lg" asChild>
+            <Link href="/docs">{t("hero.getStarted")}</Link>
+          </Button>
         </div>
       </section>
 
