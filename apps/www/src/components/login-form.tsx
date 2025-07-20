@@ -98,7 +98,7 @@ export function LoginFormIntl({
               <div className="flex justify-center gap-2 items-center w-full">
                 <Button
                   onClick={() =>
-                    supabase.auth.signInWithOAuth({ provider: "github" })
+                    supabase.auth.signInWithOAuth({ provider: "github", options: { redirectTo: "http://localhost:3000/chat" } })
                   }
                   type="button"
                   variant="outline"
@@ -109,7 +109,7 @@ export function LoginFormIntl({
                 </Button>
                 <Button
                   onClick={() =>
-                    supabase.auth.signInWithOAuth({ provider: "google" })
+                    supabase.auth.signInWithOAuth({ provider: "google", options: { redirectTo: "http://localhost:3000/chat" } })
                   }
                   type="button"
                   variant="outline"

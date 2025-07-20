@@ -52,7 +52,9 @@ export function SignUpForm({
       if (error) throw error;
       router.push("/auth/sign-up-success");
     } catch (error: unknown) {
-      setError(error instanceof Error ? error.message : t("auth.signUp.errorOccurred"));
+      setError(
+        error instanceof Error ? error.message : t("auth.signUp.errorOccurred"),
+      );
     } finally {
       setIsLoading(false);
     }
@@ -93,7 +95,9 @@ export function SignUpForm({
               </div>
               <div className="grid gap-2">
                 <div className="flex items-center">
-                  <Label htmlFor="repeat-password">{t("auth.signUp.repeatPassword")}</Label>
+                  <Label htmlFor="repeat-password">
+                    {t("auth.signUp.repeatPassword")}
+                  </Label>
                 </div>
                 <Input
                   id="repeat-password"
@@ -105,7 +109,9 @@ export function SignUpForm({
               </div>
               {error && <p className="text-sm text-red-500">{error}</p>}
               <Button type="submit" className="w-full" disabled={isLoading}>
-                {isLoading ? t("auth.signUp.creatingAccount") : t("auth.signUp.signUpButton")}
+                {isLoading
+                  ? t("auth.signUp.creatingAccount")
+                  : t("auth.signUp.signUpButton")}
               </Button>
             </div>
             <div className="mt-4 flex flex-col gap-4 text-center text-sm text-muted-foreground">
@@ -113,7 +119,10 @@ export function SignUpForm({
               <div className="flex justify-center gap-2 items-center w-full">
                 <Button
                   onClick={() =>
-                    supabase.auth.signInWithOAuth({ provider: "github" })
+                    supabase.auth.signInWithOAuth({
+                      provider: "github",
+                      options: { redirectTo: "http://localhost:3000/chat" },
+                    })
                   }
                   type="button"
                   className="w-full"
@@ -125,7 +134,10 @@ export function SignUpForm({
 
                 <Button
                   onClick={() =>
-                    supabase.auth.signInWithOAuth({ provider: "google" })
+                    supabase.auth.signInWithOAuth({
+                      provider: "google",
+                      options: { redirectTo: "http://localhost:3000/chat" },
+                    })
                   }
                   type="button"
                   className="w-full"
