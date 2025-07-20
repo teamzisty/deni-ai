@@ -39,10 +39,10 @@ export const search = tool({
         "The country to use for the search (ex. 'us', 'uk', 'fr', 'all')",
       ),
     depth: z
-      .enum(["shallow", "deep", "deeper"])
+      .enum(["disabled", "shallow", "deep", "deeper"])
       .nullable()
       .describe(
-        "Research depth: shallow (3 results), deep (5 results), deeper (8 results)",
+        "Research depth: disabled (do not deep research) shallow (3 results), deep (5 results), deeper (8 results)",
       ),
   }),
   execute: async ({ query, language, country, depth }) => {

@@ -304,7 +304,7 @@ export default function Header() {
           <ThemeSwitcher />
           <LanguageSwitcher />
           <Button asChild variant="ghost" size="sm" className="text-sm">
-            <Link href="/auth/signin">{t("signIn")}</Link>
+            <Link href="/auth/login">{t("signIn")}</Link>
           </Button>
           <Button asChild size="sm" className="text-sm">
             <Link href="/chat">{t("getStarted")}</Link>

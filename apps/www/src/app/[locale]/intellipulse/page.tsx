@@ -6,6 +6,7 @@ import { Button } from "@workspace/ui/components/button";
 import { useTranslations } from "next-intl";
 import { useIntellipulseSessions } from "@/hooks/use-intellipulse-sessions";
 import { Send, Sparkles } from "lucide-react";
+import { AuthGuard } from "@/components/auth-guard";
 
 export default function IntellipulsePage() {
   const router = useRouter();
@@ -35,7 +36,8 @@ export default function IntellipulsePage() {
   };
 
   return (
-    <div className="flex flex-col h-full">
+    <AuthGuard>
+      <div className="flex flex-col h-full">
       {/* Header */}
       <div className="flex-none border-b border-border p-4">
         <div className="flex items-center gap-2">
@@ -143,6 +145,7 @@ export default function IntellipulsePage() {
           </div>
         </div>
       </div>
-    </div>
+      </div>
+    </AuthGuard>
   );
 }

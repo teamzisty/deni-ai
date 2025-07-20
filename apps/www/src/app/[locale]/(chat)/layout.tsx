@@ -8,6 +8,7 @@ import { SettingsDialogProvider } from "@/context/settings-dialog-context";
 import { SettingsProvider } from "@/hooks/use-settings";
 import { HubsProvider } from "@/hooks/use-hubs";
 import { ColorThemeProvider } from "@/context/color-theme-context";
+import { AuthGuard } from "@/components/auth-guard";
 import { cookies } from "next/headers";
 
 export default async function ChatLayout({
@@ -22,20 +23,22 @@ export default async function ChatLayout({
     <SidebarProvider defaultOpen={defaultOpen}>
       <SupabaseProvider>
         <ConversationsProvider>
-          <CanvasProvider>
-            <SettingsProvider>
-              <ColorThemeProvider>
-                <SettingsDialogProvider>
-                  <HubsProvider>
-                    <ChatLayoutContent>
-                      {children}
-                      <UserDropdownMenu />
-                    </ChatLayoutContent>
-                  </HubsProvider>
-                </SettingsDialogProvider>
-              </ColorThemeProvider>
-            </SettingsProvider>
-          </CanvasProvider>
+          <AuthGuard>
+            <CanvasProvider>
+              <SettingsProvider>
+                <ColorThemeProvider>
+                  <SettingsDialogProvider>
+                    <HubsProvider>
+                      <ChatLayoutContent>
+                        {children}
+                        <UserDropdownMenu />
+                      </ChatLayoutContent>
+                    </HubsProvider>
+                  </SettingsDialogProvider>
+                </ColorThemeProvider>
+              </SettingsProvider>
+            </CanvasProvider>
+          </AuthGuard>
         </ConversationsProvider>
       </SupabaseProvider>
     </SidebarProvider>

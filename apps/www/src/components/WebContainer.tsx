@@ -893,7 +893,98 @@ export const TerminalDisplay = memo(
                 }
               }
             });
-          } // Update tab with terminal and process
+          }
+
+          // Add command execution handler for Intellipulse tab
+          if (tab.name === "Intellipulse") {
+            const handleIntellipulseCommand = async (event: CustomEvent) => {
+              const { command, stepId } = event.detail;
+              if (!command) return;
+
+              // Show command in terminal
+              terminal.writeln(`\r\n\x1b[32m$ ${command}\x1b[0m`);
+
+              try {
+                // Parse command and arguments
+                const parts = command.trim().split(/\s+/);
+                const cmd = parts[0];
+                const args = parts.slice(1);
+
+                // Execute command
+                const process = await realWebContainerProcess.spawn(cmd, args);
+
+                // Stream output to terminal
+                const outputReader = process.output.getReader();
+                let outputData = "";
+
+                const readOutput = async () => {
+                  try {
+                    while (true) {
+                      const { done, value } = await outputReader.read();
+                      if (done) break;
+                      terminal.write(value);
+                      outputData += value;
+                    }
+                  } catch (error) {
+                    console.error("Command output read error:", error);
+                    terminal.writeln(`\r\n\x1b[31mError reading output: ${error}\x1b[0m`);
+                  } finally {
+                    outputReader.releaseLock();
+                  }
+                };
+
+                // Start reading output
+                readOutput();
+
+                // Wait for process to complete
+                const exitCode = await process.exit;
+
+                // Show completion status
+                if (exitCode === 0) {
+                  terminal.writeln(`\r\n\x1b[32mCommand completed successfully\x1b[0m`);
+                } else {
+                  terminal.writeln(`\r\n\x1b[33mCommand exited with code ${exitCode}\x1b[0m`);
+                }
+
+                // Notify completion
+                const completionEvent = new CustomEvent("intellipulse-command-completed", {
+                  detail: {
+                    stepId,
+                    success: exitCode === 0,
+                    output: outputData,
+                  },
+                });
+                window.dispatchEvent(completionEvent);
+
+              } catch (error) {
+                console.error("Command execution error:", error);
+                terminal.writeln(`\r\n\x1b[31mError: ${error}\x1b[0m`);
+
+                // Notify failure
+                const completionEvent = new CustomEvent("intellipulse-command-completed", {
+                  detail: {
+                    stepId,
+                    success: false,
+                    error: error instanceof Error ? error.message : "Unknown error",
+                  },
+                });
+                window.dispatchEvent(completionEvent);
+              }
+            };
+
+            // Add event listener for command execution
+            const listener = (event: Event) => {
+              handleIntellipulseCommand(event as CustomEvent);
+            };
+            window.addEventListener("intellipulse-execute-command", listener);
+
+            // Store cleanup function for later use
+            (terminal as any)._intellipulseCleanup = () => {
+              window.removeEventListener("intellipulse-execute-command", listener);
+            };
+          }
+
+          // Update tab with terminal and process
           setTerminalTabs((prev) =>
             prev.map((t) =>
               t.id === tab.id
@@ -954,7 +1045,25 @@ export const TerminalDisplay = memo(
       [realWebContainerProcess, activeTabId, setTerminalTabs],
     );
 
-    // Add rest of the TerminalDisplay implementation from v4...
+    // Auto-initialize terminals when they become active
+    useEffect(() => {
+      const activeTab = terminalTabs.find((tab) => tab.id === activeTabId);
+      if (activeTab && !activeTab.terminal && !activeTab.isInitializing) {
+        initializeTerminal(activeTab);
+      }
+    }, [activeTabId, terminalTabs, initializeTerminal]);
+
+    // Cleanup event listeners when component unmounts
+    useEffect(() => {
+      return () => {
+        terminalTabs.forEach((tab) => {
+          if (tab.terminal && (tab.terminal as any)._intellipulseCleanup) {
+            (tab.terminal as any)._intellipulseCleanup();
+          }
+        });
+      };
+    }, [terminalTabs]);
+
     return (
       <div className="h-full flex flex-col">
         <div className="p-2 border-b border-gray-200 dark:border-gray-700">

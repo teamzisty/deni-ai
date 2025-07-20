@@ -57,7 +57,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@workspace/ui/components/dropdown-menu";
-import Image from "next/image";
+import { Logo } from "@/components/logo";
 import {
   ContextMenu,
   ContextMenuContent,
@@ -322,9 +322,7 @@ export function IntellipulseSidebar() {
                 href="/intellipulse"
                 className="text-xl font-bold transition-all hover:text-muted-foreground group-data-[collapsible=icon]:hidden flex items-center"
               >
-                <Image
-                  src="/assets/icon.png"
-                  alt="Deni AI"
+                <Logo
                   className="mr-2"
                   width={20}
                   height={20}

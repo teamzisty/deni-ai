@@ -248,7 +248,7 @@ const MainChat = memo<MainChatProps>(
         <div className="flex-1 overflow-y-auto" ref={messagesRef}>
           {/* Sidebar toggle, branch tree and share button */}
           <div className="w-full max-w-4xl mx-auto mb-4">
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between pl-12 md:pl-0">
               {messages.length > 0 && initialConversation?.id && (
                 <BranchTree
                   conversationId={initialConversation.id}
