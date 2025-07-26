@@ -1,10 +1,11 @@
-import { DocsSidebar } from "@/components/docs-sidebar";
+import { DocsLayout, generateNavigation } from 'docsfly'
 
-export default function Layout({ children }: { children: React.ReactNode }) {
-  return (
-    <div className="flex min-h-screen w-full">
-      <DocsSidebar />
-      {children}
-    </div>
-  );
+export default async function Layout({
+  children,
+}: {
+  children: React.ReactNode
+}) {
+  const navigation = await generateNavigation();
+  
+  return <DocsLayout navigation={navigation}>{children as any}</DocsLayout>;
 }

@@ -1,0 +1,30 @@
+{
+  "extends": "@workspace/typescript-config/nextjs.json",
+  "compilerOptions": {
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["./*"],
+      "@workspace/ui/*": ["../../packages/ui/src/*"],
+      "@workspace/supabase-config/*": ["../../packages/supabase-config/src/*"],
+      "@workspace/voids-oai-provider/*": [
+        "../../packages/voids-oai-provider/src/*"
+      ],
+      "@workspace/voids-ap-provider/*": [
+        "../../packages/voids-ap-provider/src/*"
+      ]
+    },
+    "plugins": [
+      {
+        "name": "next"
+      }
+    ]
+  },
+  "include": [
+    "next-env.d.ts",
+    "next.config.ts",
+    "**/*.ts",
+    "**/*.tsx",
+    ".next/types/**/*.ts"
+  ],
+  "exclude": ["node_modules"]
+}

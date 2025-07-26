@@ -1,7 +1,23 @@
-import type { NextConfig } from "next";
+import { NextConfig } from "next";
+import createMDX from '@next/mdx';
 
 const nextConfig: NextConfig = {
-  /* config options here */
+  pageExtensions: ['js', 'jsx', 'ts', 'tsx', 'md', 'mdx'],
+  turbopack: {
+    rules: {
+      "*.svg": {
+        loaders: ["@svgr/webpack"],
+        as: "*.js",
+      },
+    },
+  },
 };
 
-export default nextConfig;
+const withMDX = createMDX({
+  options: {
+    remarkPlugins: [],
+    rehypePlugins: [],
+  },
+});
+
+export default withMDX(nextConfig);
