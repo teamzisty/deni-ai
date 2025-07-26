@@ -8,6 +8,7 @@ import "@workspace/ui/styles/globals.css";
 import "katex/dist/katex.min.css";
 import { ReactScan } from "@/components/react-scan";
 import { BRAND_NAME } from "@/lib/constants";
+import { Analytics } from "@vercel/analytics/next";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -53,6 +54,8 @@ export default async function LocaleLayout({
         >
           <NextIntlClientProvider locale={locale} messages={messages}>
             {children}
+
+            <Analytics />
           </NextIntlClientProvider>
         </ThemeProvider>
       </body>

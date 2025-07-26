@@ -1,148 +1,58 @@
-# Deni AI Documentation Site
+# My Docsfly App
 
-A comprehensive documentation website for Deni AI built with Next.js 15, featuring blog functionality, version management, i18n support, and modern design.
+A documentation website built with [Docsfly](https://github.com/usedocsfly/docsfly).
 
-## Features
+## Getting Started
 
-- 📖 **Documentation**: Dynamic documentation pages with MDX support
-- 📝 **Blog**: Full-featured blog with posts and categories
-- 🌍 **Internationalization**: Multi-language support (English/Japanese)
-- 🔍 **Search**: Fast client-side search across all content
-- 🌙 **Dark Mode**: Built-in theme switching
-- 📱 **Responsive**: Mobile-first responsive design
-- ⚡ **Performance**: Optimized with Next.js 15 and Turbopack
-
-## Tech Stack
-
-- **Framework**: Next.js 15 with App Router
-- **Styling**: Tailwind CSS 4 with Typography plugin
-- **Content**: Markdown with frontmatter parsing
-- **Icons**: Lucide React
-- **Theme**: next-themes for dark/light mode
-- **Package Manager**: bun
-
-## Development
-
-### Prerequisites
-
-- Node.js 18+
-- bun
-
-### Setup
-
-1. Install dependencies:
-
-   ```bash
-   bun install
-   ```
-
-2. Start development server:
-
-   ```bash
-   bun dev
-   ```
-
-3. Open [http://localhost:3000](http://localhost:3000)
-
-### Build
+First, install the dependencies:
 
 ```bash
-bun build
-bun start
+bun install
 ```
 
-## Content Structure
+Then, run the development server:
 
-```
-content/
-├── blog/           # Blog posts (.md files)
-├── docs/           # Documentation pages (.md files)
-├── versions/       # Version information
-└── ja/            # Japanese translations
+```bash
+bun run dev
 ```
 
-### Blog Posts
+Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
-Blog posts should be placed in `content/blog/` with frontmatter:
+## Writing Documentation
+
+Create new MDX files in the `docs/` directory. Each file will automatically become a route.
+
+Example:
 
 ```markdown
 ---
-title: "Post Title"
-description: "Post description"
-date: "2025-01-01"
-author: "Author Name"
-tags: ["tag1", "tag2"]
----
-
-Your content here...
-```
-
-### Documentation Pages
-
-Documentation pages should be placed in `content/docs/` with frontmatter:
-
-```markdown
----
-title: "Page Title"
-description: "Page description"
+title: My Page
+description: This is my documentation page
 order: 1
-category: "Category"
-date: "2025-01-01"
-author: "Author Name"
 ---
 
-Your content here...
+# My Page
+
+This is the content of my page.
 ```
-
-## Key Components
-
-- **Header**: Navigation with search, theme toggle, and locale selector
-- **SearchDialog**: Full-text search across blog and docs
-- **LocaleSelector**: Language switching component
-- **RecentPosts**: Dynamic recent blog posts display
-- **ThemeProvider**: Dark/light mode management
-
-## API Routes
-
-The site uses Next.js App Router with:
-
-- Dynamic routes for blog posts: `/blog/[slug]`
-- Dynamic routes for docs: `/docs/[slug]`
-- Static generation for optimal performance
 
 ## Customization
 
-### Adding New Languages
+Edit `docsfly.config.ts` to customize your documentation site:
 
-1. Add locale to `lib/i18n.ts`
-2. Create content directory: `content/[locale]/`
-3. Translate content files
-
-### Styling
-
-Tailwind classes are configured with:
-
-- Custom typography styles in `globals.css`
-- Dark mode support throughout
-- Responsive design utilities
-
-### Content Processing
-
-Content is processed using:
-
-- `gray-matter` for frontmatter parsing
-- `remark` with GFM for markdown processing
-- Reading time calculation
-- Automatic excerpt generation
+- Site metadata
+- Theme colors
+- Navigation
+- And more!
 
 ## Deployment
 
-The site can be deployed to any Next.js compatible platform:
+The easiest way to deploy your Docsfly app is to use the [Vercel Platform](https://vercel.com/new).
 
-- **Vercel**: Automatic deployment
-- **Netlify**: Static site generation
-- **Self-hosted**: Docker or traditional hosting
+Check out the [deployment documentation](https://nextjs.org/docs/deployment) for more details.
 
-## License
+## Learn More
 
-Part of the Deni AI project - see the main repository for license information.
+- [Docsfly Documentation](https://docsfly.rai.bio)
+- [Next.js Documentation](https://nextjs.org/docs)
+- [MDX Documentation](https://mdxjs.com/)

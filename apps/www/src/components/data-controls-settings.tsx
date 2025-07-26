@@ -1,7 +1,6 @@
 "use client";
 
 import { Button } from "@workspace/ui/components/button";
-import { Switch } from "@workspace/ui/components/switch";
 import {
   Card,
   CardContent,
@@ -12,11 +11,10 @@ import {
   Trash2,
   Download,
   Upload,
-  Shield,
   Database,
   FileText,
 } from "lucide-react";
-import { useState, useEffect, useRef } from "react";
+import { useState } from "react";
 import { toast } from "sonner";
 import {
   AlertDialog,
@@ -35,28 +33,12 @@ import { Label } from "@workspace/ui/components/label";
 import { useTranslations } from "@/hooks/use-translations";
 
 export default function DataControlsSettings() {
-  const [dataCollection, setDataCollection] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [showReauthDialog, setShowReauthDialog] = useState(false);
   const [password, setPassword] = useState("");
   const [reauthError, setReauthError] = useState("");
   const { user, supabase } = useSupabase();
   const t = useTranslations("dataControls");
-
-  useEffect(() => {
-    // Read the 'analytics-consent' cookie on component mount
-    const cookieValue = document.cookie
-      .split("; ")
-      .find((row) => row.startsWith("analytics-consent="))
-      ?.split("=")[1];
-
-    if (cookieValue === "true") {
-      setDataCollection(true);
-    } else {
-      // If cookie is "false", not set, or any other value, default dataCollection to false
-      setDataCollection(false);
-    }
-  }, []); // Runs once on mount
 
   const saveFile = (jsonData: string, fileName: string) => {
     const blob = new Blob([jsonData], {
@@ -207,39 +189,8 @@ export default function DataControlsSettings() {
     setShowReauthDialog(true);
   };
 
-  const toggleDataCollection = async (checked: boolean) => {
-    setDataCollection(checked);
-    const cookieValue = checked ? "true" : "false";
-    document.cookie = `analytics-consent=${cookieValue}; path=/; max-age=31536000`; // 1 year
-  };
-
   return (
     <div className="space-y-6">
-      {/* Data Control Settings */}
-      <Card className="!gap-2">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Shield className="h-5 w-5" />
-            {t("dataCollection.title")}
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="flex items-center justify-between">
-            <div className="flex-grow">
-              <p className="text-sm text-muted-foreground">
-                {t("dataCollection.description")}
-              </p>
-            </div>
-            <Switch
-              className="scale-125"
-              name="dataCollection"
-              checked={dataCollection}
-              onCheckedChange={toggleDataCollection}
-            />
-          </div>
-        </CardContent>
-      </Card>
-
       {/* Data Export/Import */}
       <Card className="!gap-2">
         <CardHeader>

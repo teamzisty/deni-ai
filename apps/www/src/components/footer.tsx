@@ -20,14 +20,6 @@ export function Footer() {
                   {t('search')}
                 </Link>
               </li>
-              <li>
-                <Link
-                  href="/features/intellipulse"
-                  className="hover:text-foreground hover:underline hover:underline-offset-4 transition-colors duration-200"
-                >
-                  {t('intellipulse')}
-                </Link>
-              </li>
             </ul>
           </div>
           <div>

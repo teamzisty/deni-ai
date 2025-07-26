@@ -7,8 +7,6 @@
     "features": "機能",
     "search": "検索",
     "searchDescription": "AIで検索する。",
-    "intellipulse": "Intellipulse",
-    "intellipulseDescription": "新世代のVibe Coding",
     "resources": "リソース",
     "docs": "ドキュメント",
     "gettingStarted": "はじめに",
@@ -519,10 +517,6 @@
     "conversation_removed_from_hub": "会話がハブから正常に削除されました"
   },
   "dataControls": {
-    "dataCollection": {
-      "title": "データ収集",
-      "description": "分析と使用状況データの収集を許可する"
-    },
     "export": {
       "title": "データのエクスポート",
       "description": "会話とデータをエクスポート",
@@ -590,7 +584,6 @@
   "footer": {
     "features": "機能",
     "search": "検索",
-    "intellipulse": "Intellipulse",
     "resources": "リソース",
     "docs": "ドキュメント",
     "gettingStarted": "はじめに",
@@ -608,100 +601,6 @@
     "projects": "プロジェクト",
     "copyright": "© {year} Veltrix.",
     "status": "ステータス"
-  },
-  "intellipulse": {
-    "title": "Intellipulse",
-    "subtitle": "新世代のVibe Coding",
-    "description": "あなたのフローを理解し、生産性を向上させるAI搭載アシスタンスで、コーディングの未来を体験してください",
-    "features": {
-      "webBased": {
-        "title": "ウェブベース",
-        "description": "強力なウェブインターフェースでどこでもコーディング",
-        "content": "インストール不要。ブラウザですぐにコーディングを開始し、完全なAIアシスタンスを利用できます。"
-      },
-      "vsCodeExtension": {
-        "title": "VS Code拡張機能",
-        "description": "Intellipulseをお気に入りのエディタに直接導入",
-        "content": "使い慣れた環境を好む開発者のための、VS Codeとのシームレスな統合。",
-        "comingSoon": "近日公開"
-      },
-      "freeUnlimited": {
-        "title": "無料＆無制限",
-        "description": "制限なし、サブスクリプションなし、純粋なコーディングの喜び",
-        "content": "制限や有料の壁なしに、無制限のAI搭載コーディングアシスタンスをお楽しみください。"
-      }
-    },
-    "keyFeatures": {
-      "title": "Intellipulseの特別な点は？",
-      "vibeBasedCoding": {
-        "title": "Vibeベースのコーディング",
-        "description": "あなたのコーディングスタイルを理解し、ワークフローに適応するAI"
-      },
-      "intelligentSuggestions": {
-        "title": "インテリジェントな提案",
-        "description": "コンテキストを認識したコード補完とリファクタリング提案"
-      },
-      "multiLanguageSupport": {
-        "title": "多言語サポート",
-        "description": "すべての人気プログラミング言語とフレームワークで動作"
-      },
-      "realTimeCollaboration": {
-        "title": "リアルタイムコラボレーション",
-        "description": "コーディングセッションを共有し、コミュニティからヘルプを得る"
-      },
-      "privacyFirst": {
-        "title": "プライバシー優先",
-        "description": "あなたのコードはローカルにあり、私たちはデータを保存または共有することはありません。"
-      },
-      "zeroSetup": {
-        "title": "ゼロセットアップ",
-        "description": "設定なしですぐにコーディングを開始"
-      }
-    },
-    "cta": {
-      "title": "コーディングの未来を体験する準備はできましたか？",
-      "subtitle": "すでにIntellipulseでコーディングしている何千人もの開発者に参加しましょう",
-      "tryWebVersion": "ウェブ版を試す",
-      "vsCodeExtension": "VS Code拡張機能（近日公開）"
-    }
-  },
-  "intellipulseHomePage": {
-    "title": "Intellipulse",
-    "button": "新しいセッションを開始",
-    "welcomeTitle": "Intellipulseへようこそ",
-    "welcomeDescription": "開発セッションを開始するために会話を始めましょう。質問をしたり、コードの支援を受けたり、アイデアを探求したりしてください。",
-    "inputPlaceholder": "新しいセッションを開始するためにメッセージを入力してください...",
-    "sendButton": "送信",
-    "quickStartSuggestions": {
-      "createReactComponent": {
-        "title": "Reactコンポーネント作成",
-        "description": "新しいReactコンポーネントの構築をサポート",
-        "prompt": "新しいReactコンポーネントの作成を手伝ってください"
-      },
-      "debugCode": {
-        "title": "コードデバッグ",
-        "description": "コードの問題を見つけて修正",
-        "prompt": "コードの問題をデバッグしてください"
-      },
-      "explainCode": {
-        "title": "コード解説",
-        "description": "コードの動作を理解",
-        "prompt": "このコードを説明してください"
-      },
-      "optimizePerformance": {
-        "title": "パフォーマンスのヒント",
-        "description": "アプリのパフォーマンスを向上",
-        "prompt": "アプリケーションのパフォーマンスを最適化してください"
-      }
-    }
-  },
-  "intellipulseSidebar": {
-    "newIntellipulseChat": "新しいIntellipulseチャット",
-    "intellipulse": "Intellipulse",
-    "backToHome": "ホームに戻る",
-    "quickActions": "クイックアクション",
-    "recentSessions": "最近のセッション",
-    "publicBeta": "パブリックベータ：期待通りに動作しない場合があります"
   },
   "sidebar": {
     "today": "今日",
@@ -961,36 +860,6 @@
     "recognitionEnded": "音声認識を終了しました",
     "speakingReleaseToStop": "話しています...離すと停止します",
     "holdToSpeak": "長押しして話す"
-  },
-  "intellipulseSessions": {
-    "sessionsCleared": "すべてのセッションが正常にクリアされました",
-    "sessionsImported": "{count}個のセッションが正常にインポートされました",
-    "importError": "セッションのインポートに失敗しました"
-  },
-  "intellipulseMessageLog": {
-    "writeAction": "ファイル書き込み: {path}",
-    "readAction": "ファイル読み取り: {path}",
-    "listAction": "ディレクトリ一覧: {path}",
-    "genericAction": "アクション: {action}",
-    "actionLabel": "アクション",
-    "commandLabel": "コマンド",
-    "pathLabel": "パス",
-    "dependsOnLabel": "依存関係",
-    "executionPlan": "実行プラン",
-    "stepsCount": "{count}ステップ",
-    "executing": "実行中",
-    "executeSequence": "順次実行",
-    "statusRunning": "（実行中）",
-    "statusCompleted": "（完了）",
-    "statusFailed": "（失敗）",
-    "toggleOutput": "出力を表示",
-    "executionNote": "実行ボタンをクリックして、これらのステップを順次実行してください。"
-  },
-  "intellipulseChat": {
-    "initialMessageSent": "初期メッセージが正常に送信されました",
-    "sendMessageLog": "メッセージを送信中: {message}",
-    "sendImageLog": "画像付きメッセージを送信中",
-    "regenerateWarning": "異なるモデルで再生成中"
   },
   "messageLog": {
     "reasoning": "推論中...",

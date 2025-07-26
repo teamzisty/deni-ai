@@ -1,7 +1,7 @@
 export const BRAND_NAME = "Deni AI"; // Change your brand
 
 export const VERSION = {
-  version: "5.0.1",
+  version: "5.1.3",
   codename: "Tulip"
 } // Version
 
