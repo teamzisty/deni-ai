@@ -517,10 +517,6 @@
     "conversation_removed_from_hub": "会話がハブから正常に削除されました"
   },
   "dataControls": {
-    "dataCollection": {
-      "title": "データ収集",
-      "description": "分析と使用状況データの収集を許可する"
-    },
     "export": {
       "title": "データのエクスポート",
       "description": "会話とデータをエクスポート",

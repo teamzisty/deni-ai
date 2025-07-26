@@ -543,10 +543,6 @@
     "conversation_removed_from_hub": "Conversation removed from hub successfully"
   },
   "dataControls": {
-    "dataCollection": {
-      "title": "Data Collection",
-      "description": "Allow analytics and usage data collection"
-    },
     "export": {
       "title": "Export Data",
       "description": "Export your conversations and data",
