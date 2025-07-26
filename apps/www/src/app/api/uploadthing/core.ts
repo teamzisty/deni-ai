@@ -22,10 +22,11 @@ export const ourFileRouter: FileRouter = {
     .middleware(async ({ req }) => {
       // This code runs on your server before upload
       const authResult = await authCheck(req);
-      const t = await getApiTranslations(req, 'common');
+      const t = await getApiTranslations(req, "common");
 
       // If you throw, the user will not be able to upload
-      if (!authResult.success || !authResult.user) throw new UploadThingError(t('unauthorized'));
+      if (!authResult.success || !authResult.user)
+        throw new UploadThingError(t("unauthorized"));
 
       // Whatever is returned here is accessible in onUploadComplete as `metadata`
       return { userId: authResult.user.id };

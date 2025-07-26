@@ -8,7 +8,7 @@
   - "refactor: [description of the refactor]"
   - "test: [description of the test update]"
   - "chore: [description of the chore]"
-  And after, add a brief description of the change in the body of the commit message.
+    And after, add a brief description of the change in the body of the commit message.
 
 ---
 

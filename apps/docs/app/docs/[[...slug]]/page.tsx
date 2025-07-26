@@ -1,4 +1,4 @@
-import { getAllDocs, getDocBySlug, DocsListing, DocsPage  } from "docsfly";
+import { getAllDocs, getDocBySlug, DocsListing, DocsPage } from "docsfly";
 
 export default async function Page({
   params: _params,
@@ -12,7 +12,7 @@ export default async function Page({
     const docs = await getAllDocs();
     return <DocsListing docs={docs} />;
   }
-  
+
   return (
     <DocsPage
       title={post.meta.title}

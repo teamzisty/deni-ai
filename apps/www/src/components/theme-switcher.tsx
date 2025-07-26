@@ -27,9 +27,7 @@ export function ThemeSwitcher() {
         {themes.map((t) => (
           <DropdownMenuItem key={t} onClick={() => setTheme(t)}>
             {t.charAt(0).toUpperCase() + t.slice(1)}
-            {theme === t && (
-              <Check className="ml-auto" />
-            )}
+            {theme === t && <Check className="ml-auto" />}
           </DropdownMenuItem>
         ))}
       </DropdownMenuContent>

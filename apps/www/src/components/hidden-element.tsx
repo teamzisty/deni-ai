@@ -69,16 +69,16 @@ export function HiddenElement() {
         <AlertDialogHeader>
           <AlertDialogTitle>Delete all conversations?</AlertDialogTitle>
           <AlertDialogDescription>
-            Congrats. You found the Secret! But this is a dangerous action. <br />
-            Are you sure you want to delete all conversations? This action cannot be undone.
+            Congrats. You found the Secret! But this is a dangerous action.{" "}
+            <br />
+            Are you sure you want to delete all conversations? This action
+            cannot be undone.
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
           <AlertDialogCancel>Cancel</AlertDialogCancel>
           <AlertDialogAction asChild onClick={handleClearConversations}>
-            <Button variant="destructive">
-              Delete
-            </Button>
+            <Button variant="destructive">Delete</Button>
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>

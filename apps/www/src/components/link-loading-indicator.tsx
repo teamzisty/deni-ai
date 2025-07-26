@@ -10,5 +10,9 @@ export default function LoadingIndicator({
   children?: React.ReactNode;
 }) {
   const { pending } = useLinkStatus();
-  return pending ? <Loader2 className={cn("animate-spin", className)} /> : children;
+  return pending ? (
+    <Loader2 className={cn("animate-spin", className)} />
+  ) : (
+    children
+  );
 }

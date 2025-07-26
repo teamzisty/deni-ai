@@ -29,9 +29,7 @@ export async function POST(request: Request) {
     console.error("Invalid request body:", parsed.error);
     return new Response("common.invalid_request", { status: 400 });
   }
-  const {
-    messages,
-  } = parsed.data;
+  const { messages } = parsed.data;
 
   const coreMessages = convertToCoreMessages(messages);
 

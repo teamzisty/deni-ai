@@ -14,16 +14,22 @@ interface BranchButtonProps {
   messageIndex?: number;
 }
 
-export function BranchButton({ conversationId, messageIndex }: BranchButtonProps) {
+export function BranchButton({
+  conversationId,
+  messageIndex,
+}: BranchButtonProps) {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isCreating, setIsCreating] = useState(false);
   const { secureFetch } = useSupabase();
   const router = useRouter();
   const t = useTranslations();
 
-  const handleCreateBranch = async (branchName: string, includeMessages: boolean) => {
+  const handleCreateBranch = async (
+    branchName: string,
+    includeMessages: boolean,
+  ) => {
     setIsCreating(true);
-    
+
     try {
       const response = await secureFetch("/api/conversations/branches", {
         method: "POST",
@@ -42,7 +48,7 @@ export function BranchButton({ conversationId, messageIndex }: BranchButtonProps
       }
 
       const result = await response.json();
-      
+
       if (result.success) {
         // Navigate to the new branch
         router.push(`/chat/${result.data.id}`);
@@ -74,7 +80,7 @@ export function BranchButton({ conversationId, messageIndex }: BranchButtonProps
         )}
         {t("chat.branch.branchButton")}
       </Button>
-      
+
       <BranchDialog
         open={isDialogOpen}
         onOpenChange={setIsDialogOpen}

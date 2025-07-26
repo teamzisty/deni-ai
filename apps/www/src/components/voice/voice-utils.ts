@@ -14,7 +14,7 @@ export const generateSpeech = async (text: string): Promise<Blob> => {
       if (errorData.fallback) {
         playBrowserSpeech(text);
         // Return empty blob since browser TTS plays directly
-        return new Blob([], { type: 'audio/wav' });
+        return new Blob([], { type: "audio/wav" });
       }
     }
 
@@ -26,12 +26,12 @@ export const generateSpeech = async (text: string): Promise<Blob> => {
   } catch (error) {
     console.error("Gemini TTS failed, using browser fallback:", error);
     playBrowserSpeech(text);
-    return new Blob([], { type: 'audio/wav' });
+    return new Blob([], { type: "audio/wav" });
   }
 };
 
 export const playBrowserSpeech = (text: string): void => {
-  if (!('speechSynthesis' in window)) {
+  if (!("speechSynthesis" in window)) {
     console.error("Browser TTS not supported");
     return;
   }
@@ -46,10 +46,11 @@ export const playBrowserSpeech = (text: string): void => {
 
   // Find a good voice (prefer English or Japanese)
   const voices = speechSynthesis.getVoices();
-  const preferredVoice = voices.find(voice => 
-    voice.lang.includes('en') || voice.lang.includes('ja')
-  ) || voices[0];
-  
+  const preferredVoice =
+    voices.find(
+      (voice) => voice.lang.includes("en") || voice.lang.includes("ja"),
+    ) || voices[0];
+
   if (preferredVoice) {
     utterance.voice = preferredVoice;
   }
@@ -71,43 +72,54 @@ export const playAudioBlob = (audioBlob: Blob): Promise<void> => {
 
     // Validate blob has content and reasonable size
     if (audioBlob.size < 100) {
-      console.warn("Audio blob suspiciously small, falling back to browser TTS");
+      console.warn(
+        "Audio blob suspiciously small, falling back to browser TTS",
+      );
       reject(new Error("Invalid audio data"));
       return;
     }
 
     const audioUrl = URL.createObjectURL(audioBlob);
     const audio = new Audio();
-    
+
     // Set up event listeners before setting src
     audio.onloadstart = () => {
       console.log("Audio loading started");
     };
-    
+
     audio.oncanplay = () => {
       console.log("Audio can start playing");
     };
-    
+
     audio.onended = () => {
       URL.revokeObjectURL(audioUrl);
       resolve();
     };
-    
+
     audio.onerror = (e) => {
-      console.error("Audio playback error:", e, "Audio error details:", audio.error);
+      console.error(
+        "Audio playback error:",
+        e,
+        "Audio error details:",
+        audio.error,
+      );
       URL.revokeObjectURL(audioUrl);
-      reject(new Error(`Media resource error: ${audio.error?.message || 'Invalid media format or corrupted data'}`));
+      reject(
+        new Error(
+          `Media resource error: ${audio.error?.message || "Invalid media format or corrupted data"}`,
+        ),
+      );
     };
 
     audio.onabort = () => {
       URL.revokeObjectURL(audioUrl);
       reject(new Error("Audio playback aborted"));
     };
-    
+
     // Set audio properties for better compatibility
     audio.preload = "metadata"; // Change from "auto" to "metadata" for better compatibility
     // Remove crossOrigin as it's not needed for blob URLs
-    
+
     try {
       audio.src = audioUrl;
     } catch (error) {
@@ -116,7 +128,7 @@ export const playAudioBlob = (audioBlob: Blob): Promise<void> => {
       reject(new Error(`Failed to set audio source: ${error}`));
       return;
     }
-    
+
     // Try to play with error handling
     audio.play().catch((playError) => {
       console.error("Play failed:", playError);

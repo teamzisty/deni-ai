@@ -1,6 +1,6 @@
 "use client";
 
-import { usePathname, } from "next/navigation"
+import { usePathname } from "next/navigation";
 import { useRouter } from "@/i18n/navigation";
 import { useTransition } from "react";
 import { useLocale } from "next-intl";
@@ -45,7 +45,9 @@ export function LanguageSwitcher() {
           className="relative"
         >
           <Languages className="h-4 w-4" />
-          <span className="sr-only">{t("languageSwitcher.switchLanguage")}</span>
+          <span className="sr-only">
+            {t("languageSwitcher.switchLanguage")}
+          </span>
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="min-w-[150px]">

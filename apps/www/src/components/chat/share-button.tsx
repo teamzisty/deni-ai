@@ -25,7 +25,7 @@ export const ShareButton: FC<ShareButtonProps> = ({
 }) => {
   const { secureFetch } = useSupabase();
   const t = useTranslations();
-  
+
   const handleShare = async () => {
     if (!conversation || !user) {
       toast.error(t("chat.share.loginRequired"));
@@ -68,15 +68,16 @@ export const ShareButton: FC<ShareButtonProps> = ({
     } catch (error) {
       console.error(error);
       toast.error(t("chat.share.shareFailed"), {
-        description: error instanceof Error ? error.message : t("chat.share.unknownError"),
+        description:
+          error instanceof Error ? error.message : t("chat.share.unknownError"),
       });
     }
   };
 
   return (
-    <Button 
-      onClick={handleShare} 
-      variant="ghost" 
+    <Button
+      onClick={handleShare}
+      variant="ghost"
       size="sm"
       className="flex items-center gap-2"
     >

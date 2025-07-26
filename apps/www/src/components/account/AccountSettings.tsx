@@ -84,7 +84,11 @@ export function AccountSettings() {
   });
 
   const uploadImage = (file?: File) => {
-    return new Promise<{ status: string; data?: { url: string }; error?: { message: string; code: string } }>((resolve) => {
+    return new Promise<{
+      status: string;
+      data?: { url: string };
+      error?: { message: string; code: string };
+    }>((resolve) => {
       if (!file) {
         resolve({
           status: "error",
@@ -107,11 +111,11 @@ export function AccountSettings() {
         }
         setTimeout(async () => {
           try {
-            const data = await startUpload([
+            const data = (await startUpload([
               new File([file!], `${crypto.randomUUID()}.png`, {
                 type: file!.type,
               }),
-            ]) as any;
+            ])) as any;
 
             if (!data) {
               resolve({
@@ -246,7 +250,7 @@ export function AccountSettings() {
         throw new Error(t("account.fetchConversationsFailed"));
       }
       const conversations = await response.json();
-      
+
       const userData = {
         user: {
           user_id: user?.id,
@@ -366,11 +370,12 @@ export function AccountSettings() {
 
   return (
     <div className="space-y-6">
-
       <Card>
         <CardHeader>
           <CardTitle>{t("account.profileInformation")}</CardTitle>
-          <CardDescription>{t("account.profileInformationDescription")}</CardDescription>
+          <CardDescription>
+            {t("account.profileInformationDescription")}
+          </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
           <div className="flex flex-col md:flex-row md:items-center gap-4">
@@ -470,7 +475,9 @@ export function AccountSettings() {
             <Lock className="h-5 w-5" />
             {t("account.changePassword")}
           </CardTitle>
-          <CardDescription>{t("account.changePasswordDescription")}</CardDescription>
+          <CardDescription>
+            {t("account.changePasswordDescription")}
+          </CardDescription>
         </CardHeader>
         <CardContent>
           <Button onClick={() => setShowPasswordDialog(true)}>
@@ -482,12 +489,16 @@ export function AccountSettings() {
       <Card>
         <CardHeader>
           <CardTitle>{t("account.dataPrivacy")}</CardTitle>
-          <CardDescription>{t("account.dataPrivacyDescription")}</CardDescription>
+          <CardDescription>
+            {t("account.dataPrivacyDescription")}
+          </CardDescription>
         </CardHeader>
         <CardContent>
           <Button onClick={handleDownloadData} disabled={isDownloading}>
             {isDownloading ? <Loader2 /> : <DownloadIcon />}
-            {isDownloading ? t("account.downloading") : t("account.downloadMyData")}
+            {isDownloading
+              ? t("account.downloading")
+              : t("account.downloadMyData")}
           </Button>
         </CardContent>
       </Card>
@@ -495,7 +506,9 @@ export function AccountSettings() {
       <Card>
         <CardHeader>
           <CardTitle>{t("account.deleteAccount")}</CardTitle>
-          <CardDescription>{t("account.deleteAccountDescription")}</CardDescription>
+          <CardDescription>
+            {t("account.deleteAccountDescription")}
+          </CardDescription>
         </CardHeader>
         <CardContent>
           <Button
@@ -626,7 +639,9 @@ export function AccountSettings() {
               onClick={handlePasswordChange}
               disabled={isChangingPassword || !newPassword || !confirmPassword}
             >
-              {isChangingPassword ? t("account.changing") : t("account.changePassword")}
+              {isChangingPassword
+                ? t("account.changing")
+                : t("account.changePassword")}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -639,7 +654,9 @@ export function AccountSettings() {
       >
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>{t("account.confirmAccountDeletion")}</AlertDialogTitle>
+            <AlertDialogTitle>
+              {t("account.confirmAccountDeletion")}
+            </AlertDialogTitle>
             <AlertDialogDescription>
               {t("account.confirmAccountDeletionDescription")}
             </AlertDialogDescription>

@@ -6,7 +6,7 @@ import { ComponentType } from "react";
  */
 export function withIntl<P extends object>(
   Component: ComponentType<P>,
-  IntlComponent: ComponentType<P>
+  IntlComponent: ComponentType<P>,
 ): ComponentType<P> {
   // For now, return the internationalized component
   // In production, you might want to check locale or feature flags

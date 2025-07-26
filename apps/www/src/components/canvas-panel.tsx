@@ -2,7 +2,19 @@
 
 import { useState, useRef, useEffect } from "react";
 import { Button } from "@workspace/ui/components/button";
-import { X, Plus, Edit, Trash2, GripVertical, Hash, Type, Code2, List, Eye, Download } from "lucide-react";
+import {
+  X,
+  Plus,
+  Edit,
+  Trash2,
+  GripVertical,
+  Hash,
+  Type,
+  Code2,
+  List,
+  Eye,
+  Download,
+} from "lucide-react";
 import { motion, Reorder } from "framer-motion";
 import ReactMarkdown, { Components } from "react-markdown";
 import remarkGfm from "remark-gfm";
@@ -23,7 +35,7 @@ interface CanvasPanelProps {
   initialContent?: string;
 }
 
-type ViewMode = 'view' | 'edit';
+type ViewMode = "view" | "edit";
 
 // Parse markdown into blocks
 function parseMarkdownToBlocks(markdown: string): Block[] {
@@ -42,36 +54,46 @@ function parseMarkdownToBlocks(markdown: string): Block[] {
           id: (id++).toString(),
           type: "heading",
           content: token.text,
-          level: token.depth
+          level: token.depth,
         });
         break;
       case "paragraph":
         blocks.push({
           id: (id++).toString(),
           type: "paragraph",
-          content: token.text
+          content: token.text,
         });
         break;
       case "code":
         blocks.push({
           id: (id++).toString(),
           type: "code",
-          content: `\`\`\`${token.lang || ''}\n${token.text}\n\`\`\``
+          content: `\`\`\`${token.lang || ""}\n${token.text}\n\`\`\``,
         });
         break;
       case "list":
-        const listItems: string = token.items.map((item: { text: string }) => item.text).join('\n');
+        const listItems: string = token.items
+          .map((item: { text: string }) => item.text)
+          .join("\n");
         blocks.push({
           id: (id++).toString(),
           type: "list",
-          content: token.ordered ? listItems.split('\n').map((item, i) => `${i + 1}. ${item}`).join('\n') : listItems.split('\n').map(item => `- ${item}`).join('\n')
+          content: token.ordered
+            ? listItems
+                .split("\n")
+                .map((item, i) => `${i + 1}. ${item}`)
+                .join("\n")
+            : listItems
+                .split("\n")
+                .map((item) => `- ${item}`)
+                .join("\n"),
         });
         break;
       case "blockquote":
         blocks.push({
           id: (id++).toString(),
           type: "quote",
-          content: token.text
+          content: token.text,
         });
         break;
       default:
@@ -79,59 +101,72 @@ function parseMarkdownToBlocks(markdown: string): Block[] {
           blocks.push({
             id: (id++).toString(),
             type: "paragraph",
-            content: token.raw.trim()
+            content: token.raw.trim(),
           });
         }
     }
   });
 
-  return blocks.length > 0 ? blocks : [{ id: "1", type: "paragraph", content: "" }];
+  return blocks.length > 0
+    ? blocks
+    : [{ id: "1", type: "paragraph", content: "" }];
 }
 
 // Convert blocks back to markdown
 function blocksToMarkdown(blocks: Block[]): string {
-  return blocks.map(block => {
-    switch (block.type) {
-      case "heading":
-        return `${'#'.repeat(block.level || 1)} ${block.content}`;
-      case "code":
-        return block.content;
-      case "quote":
-        return `> ${block.content}`;
-      case "list":
-        return block.content;
-      case "paragraph":
-      default:
-        return block.content;
-    }
-  }).join('\n\n');
+  return blocks
+    .map((block) => {
+      switch (block.type) {
+        case "heading":
+          return `${"#".repeat(block.level || 1)} ${block.content}`;
+        case "code":
+          return block.content;
+        case "quote":
+          return `> ${block.content}`;
+        case "list":
+          return block.content;
+        case "paragraph":
+        default:
+          return block.content;
+      }
+    })
+    .join("\n\n");
 }
 
 // Detect block type from content
-function detectBlockType(content: string): { type: Block['type'], level?: number } {
+function detectBlockType(content: string): {
+  type: Block["type"];
+  level?: number;
+} {
   const trimmed = content.trim();
-  
-  if (trimmed.startsWith('#')) {
+
+  if (trimmed.startsWith("#")) {
     const level = trimmed.match(/^#+/)?.[0].length || 1;
-    return { type: 'heading', level: Math.min(level, 6) };
+    return { type: "heading", level: Math.min(level, 6) };
   }
-  if (trimmed.startsWith('```')) {
-    return { type: 'code' };
+  if (trimmed.startsWith("```")) {
+    return { type: "code" };
   }
-  if (trimmed.startsWith('>')) {
-    return { type: 'quote' };
+  if (trimmed.startsWith(">")) {
+    return { type: "quote" };
   }
   if (trimmed.match(/^[-*+]\s/) || trimmed.match(/^\d+\.\s/)) {
-    return { type: 'list' };
+    return { type: "list" };
   }
-  return { type: 'paragraph' };
+  return { type: "paragraph" };
 }
 
-export function CanvasPanel({ isOpen, onClose, initialContent = "" }: CanvasPanelProps) {
+export function CanvasPanel({
+  isOpen,
+  onClose,
+  initialContent = "",
+}: CanvasPanelProps) {
   const t = useTranslations("canvas");
-  const [blocks, setBlocks] = useState<Block[]>(() => parseMarkdownToBlocks(initialContent));
+  const [blocks, setBlocks] = useState<Block[]>(() =>
+    parseMarkdownToBlocks(initialContent),
+  );
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [viewMode, setViewMode] = useState<ViewMode>('view');
+  const [viewMode, setViewMode] = useState<ViewMode>("view");
   const [panelWidth, setPanelWidth] = useState(400);
   const [isResizing, setIsResizing] = useState(false);
   const resizeRef = useRef<HTMLDivElement>(null);
@@ -146,11 +181,11 @@ export function CanvasPanel({ isOpen, onClose, initialContent = "" }: CanvasPane
   // Download markdown file
   const downloadMarkdown = () => {
     const markdown = blocksToMarkdown(blocks);
-    const blob = new Blob([markdown], { type: 'text/markdown' });
+    const blob = new Blob([markdown], { type: "text/markdown" });
     const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
+    const a = document.createElement("a");
     a.href = url;
-    a.download = t('fileName');
+    a.download = t("fileName");
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
@@ -170,61 +205,70 @@ export function CanvasPanel({ isOpen, onClose, initialContent = "" }: CanvasPane
 
     const handleMouseUp = () => {
       setIsResizing(false);
-      document.removeEventListener('mousemove', handleMouseMove);
-      document.removeEventListener('mouseup', handleMouseUp);
+      document.removeEventListener("mousemove", handleMouseMove);
+      document.removeEventListener("mouseup", handleMouseUp);
     };
 
-    document.addEventListener('mousemove', handleMouseMove);
-    document.addEventListener('mouseup', handleMouseUp);
+    document.addEventListener("mousemove", handleMouseMove);
+    document.addEventListener("mouseup", handleMouseUp);
   };
 
-  const addBlock = (afterId?: string, type: Block['type'] = 'paragraph') => {
-    if (viewMode === 'view') return;
-    
+  const addBlock = (afterId?: string, type: Block["type"] = "paragraph") => {
+    if (viewMode === "view") return;
+
     const newBlock: Block = {
       id: Date.now().toString(),
       type,
-      content: ""
+      content: "",
     };
-    
+
     if (afterId) {
-      const index = blocks.findIndex(b => b.id === afterId);
+      const index = blocks.findIndex((b) => b.id === afterId);
       const newBlocks = [...blocks];
       newBlocks.splice(index + 1, 0, newBlock);
       setBlocks(newBlocks);
     } else {
       setBlocks([...blocks, newBlock]);
     }
-    
+
     setEditingId(newBlock.id);
   };
 
   const updateBlock = (id: string, content: string) => {
-    if (viewMode === 'view') return;
-    
+    if (viewMode === "view") return;
+
     const detectedType = detectBlockType(content);
-    setBlocks(blocks.map(block => 
-      block.id === id ? { 
-        ...block, 
-        content, 
-        type: detectedType.type,
-        level: detectedType.level 
-      } : block
-    ));
+    setBlocks(
+      blocks.map((block) =>
+        block.id === id
+          ? {
+              ...block,
+              content,
+              type: detectedType.type,
+              level: detectedType.level,
+            }
+          : block,
+      ),
+    );
   };
 
   const deleteBlock = (id: string) => {
-    if (viewMode === 'view' || blocks.length <= 1) return;
-    setBlocks(blocks.filter(block => block.id !== id));
+    if (viewMode === "view" || blocks.length <= 1) return;
+    setBlocks(blocks.filter((block) => block.id !== id));
   };
 
-  const getBlockIcon = (type: Block['type']) => {
+  const getBlockIcon = (type: Block["type"]) => {
     switch (type) {
-      case 'heading': return <Hash className="h-4 w-4" />;
-      case 'code': return <Code2 className="h-4 w-4" />;
-      case 'list': return <List className="h-4 w-4" />;
-      case 'quote': return <Type className="h-4 w-4" />;
-      default: return <Type className="h-4 w-4" />;
+      case "heading":
+        return <Hash className="h-4 w-4" />;
+      case "code":
+        return <Code2 className="h-4 w-4" />;
+      case "list":
+        return <List className="h-4 w-4" />;
+      case "quote":
+        return <Type className="h-4 w-4" />;
+      default:
+        return <Type className="h-4 w-4" />;
     }
   };
 
@@ -237,15 +281,15 @@ export function CanvasPanel({ isOpen, onClose, initialContent = "" }: CanvasPane
         textareaRef.current.focus();
         textareaRef.current.setSelectionRange(
           textareaRef.current.value.length,
-          textareaRef.current.value.length
+          textareaRef.current.value.length,
         );
       }
     }, [editingId, block.id]);
 
     const handleKeyDown = (e: React.KeyboardEvent) => {
-      if (viewMode === 'view') return;
-      
-      if (e.key === "Enter" && !e.shiftKey && block.type !== 'code') {
+      if (viewMode === "view") return;
+
+      if (e.key === "Enter" && !e.shiftKey && block.type !== "code") {
         e.preventDefault();
         setEditingId(null);
         addBlock(block.id);
@@ -260,7 +304,7 @@ export function CanvasPanel({ isOpen, onClose, initialContent = "" }: CanvasPane
         return (
           <div className="text-muted-foreground text-sm">
             {getBlockIcon(block.type)}
-            <span className="ml-2">{t('clickToEdit')}</span>
+            <span className="ml-2">{t("clickToEdit")}</span>
           </div>
         );
       }
@@ -274,10 +318,9 @@ export function CanvasPanel({ isOpen, onClose, initialContent = "" }: CanvasPane
             }}
             remarkPlugins={[remarkGfm]}
           >
-            {block.type === 'heading' && block.level ? 
-              `${'#'.repeat(block.level)} ${block.content}` : 
-              block.content
-            }
+            {block.type === "heading" && block.level
+              ? `${"#".repeat(block.level)} ${block.content}`
+              : block.content}
           </ReactMarkdown>
         </div>
       );
@@ -294,13 +337,13 @@ export function CanvasPanel({ isOpen, onClose, initialContent = "" }: CanvasPane
             <div className="text-muted-foreground">
               {getBlockIcon(block.type)}
             </div>
-            {viewMode === 'edit' && (
+            {viewMode === "edit" && (
               <GripVertical className="h-4 w-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity cursor-grab" />
             )}
           </div>
-          
+
           <div className="flex-1 min-w-0">
-            {editingId === block.id && viewMode === 'edit' ? (
+            {editingId === block.id && viewMode === "edit" ? (
               <textarea
                 ref={textareaRef}
                 value={block.content}
@@ -308,14 +351,16 @@ export function CanvasPanel({ isOpen, onClose, initialContent = "" }: CanvasPane
                 onBlur={() => setEditingId(null)}
                 onKeyDown={handleKeyDown}
                 className="w-full bg-transparent resize-none outline-none border-none text-sm leading-relaxed font-mono"
-                rows={Math.max(1, block.content.split('\n').length)}
-                placeholder={t('typeSomething')}
+                rows={Math.max(1, block.content.split("\n").length)}
+                placeholder={t("typeSomething")}
               />
             ) : (
               <div
-                onClick={() => viewMode === 'edit' && setEditingId(block.id)}
+                onClick={() => viewMode === "edit" && setEditingId(block.id)}
                 className={`leading-relaxed min-h-[1.5rem] p-1 -m-1 rounded transition-colors ${
-                  viewMode === 'edit' ? 'cursor-text hover:bg-muted/50' : 'cursor-default'
+                  viewMode === "edit"
+                    ? "cursor-text hover:bg-muted/50"
+                    : "cursor-default"
                 }`}
               >
                 {renderPreview()}
@@ -323,7 +368,7 @@ export function CanvasPanel({ isOpen, onClose, initialContent = "" }: CanvasPane
             )}
           </div>
 
-          {isHovered && viewMode === 'edit' && (
+          {isHovered && viewMode === "edit" && (
             <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
               <Button
                 size="sm"
@@ -376,25 +421,25 @@ export function CanvasPanel({ isOpen, onClose, initialContent = "" }: CanvasPane
       />
       <div className="flex items-center justify-between p-4 border-b border-border">
         <div className="flex items-center gap-2">
-          <h2 className="text-lg font-semibold">{t('title')}</h2>
+          <h2 className="text-lg font-semibold">{t("title")}</h2>
           <div className="flex items-center gap-1">
             <Button
               size="sm"
-              variant={viewMode === 'view' ? 'default' : 'ghost'}
-              onClick={() => setViewMode('view')}
+              variant={viewMode === "view" ? "default" : "ghost"}
+              onClick={() => setViewMode("view")}
               className="h-7 px-2"
             >
               <Eye className="h-3 w-3 mr-1" />
-              {t('view')}
+              {t("view")}
             </Button>
             <Button
               size="sm"
-              variant={viewMode === 'edit' ? 'default' : 'ghost'}
-              onClick={() => setViewMode('edit')}
+              variant={viewMode === "edit" ? "default" : "ghost"}
+              onClick={() => setViewMode("edit")}
               className="h-7 px-2"
             >
               <Edit className="h-3 w-3 mr-1" />
-              {t('edit')}
+              {t("edit")}
             </Button>
           </div>
         </div>
@@ -404,7 +449,7 @@ export function CanvasPanel({ isOpen, onClose, initialContent = "" }: CanvasPane
             variant="ghost"
             onClick={downloadMarkdown}
             className="h-8 w-8 p-0"
-            title={t('downloadAsMarkdown')}
+            title={t("downloadAsMarkdown")}
           >
             <Download className="h-4 w-4" />
           </Button>
@@ -421,7 +466,7 @@ export function CanvasPanel({ isOpen, onClose, initialContent = "" }: CanvasPane
 
       <div className="flex-1 overflow-y-auto">
         <div className="p-4 space-y-4">
-          {viewMode === 'edit' ? (
+          {viewMode === "edit" ? (
             <Reorder.Group
               axis="y"
               values={blocks}
@@ -444,56 +489,60 @@ export function CanvasPanel({ isOpen, onClose, initialContent = "" }: CanvasPane
         </div>
       </div>
 
-      {viewMode === 'edit' && (
+      {viewMode === "edit" && (
         <div className="p-4 border-t border-border space-y-2">
           <div className="grid grid-cols-2 gap-2">
             <Button
-              onClick={() => addBlock(undefined, 'paragraph')}
+              onClick={() => addBlock(undefined, "paragraph")}
               variant="outline"
               size="sm"
               className="flex items-center gap-1"
             >
               <Type className="h-3 w-3" />
-              {t('text')}
+              {t("text")}
             </Button>
             <Button
-              onClick={() => addBlock(undefined, 'heading')}
+              onClick={() => addBlock(undefined, "heading")}
               variant="outline"
               size="sm"
               className="flex items-center gap-1"
             >
               <Hash className="h-3 w-3" />
-              {t('heading')}
+              {t("heading")}
             </Button>
             <Button
-              onClick={() => addBlock(undefined, 'code')}
+              onClick={() => addBlock(undefined, "code")}
               variant="outline"
               size="sm"
               className="flex items-center gap-1"
             >
               <Code2 className="h-3 w-3" />
-              {t('code')}
+              {t("code")}
             </Button>
             <Button
-              onClick={() => addBlock(undefined, 'list')}
+              onClick={() => addBlock(undefined, "list")}
               variant="outline"
               size="sm"
               className="flex items-center gap-1"
             >
               <List className="h-3 w-3" />
-              {t('list')}
+              {t("list")}
             </Button>
           </div>
           <div className="text-xs text-muted-foreground text-center">
-            {t('export')}: {t('charactersCount', { count: blocksToMarkdown(blocks).length })}
+            {t("export")}:{" "}
+            {t("charactersCount", { count: blocksToMarkdown(blocks).length })}
           </div>
         </div>
       )}
-      
-      {viewMode === 'view' && (
+
+      {viewMode === "view" && (
         <div className="p-4 border-t border-border">
           <div className="text-xs text-muted-foreground text-center">
-            {t('status', { characters: blocksToMarkdown(blocks).length, blocks: blocks.length })}
+            {t("status", {
+              characters: blocksToMarkdown(blocks).length,
+              blocks: blocks.length,
+            })}
           </div>
         </div>
       )}

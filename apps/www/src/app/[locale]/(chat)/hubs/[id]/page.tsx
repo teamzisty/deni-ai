@@ -30,7 +30,7 @@ import {
   Loader2,
 } from "lucide-react";
 import { useSupabase } from "@/context/supabase-context";
-import { useParams, } from "next/navigation"
+import { useParams } from "next/navigation";
 import { useRouter } from "@/i18n/navigation";
 import { useConversations } from "@/hooks/use-conversations";
 import { useHubs } from "@/hooks/use-hubs";
@@ -62,7 +62,8 @@ interface ClientHub {
 export default function HubPage() {
   const [hub, setHub] = useState<ClientHub | null>(null);
   const { user, secureFetch, loading } = useSupabase();
-  const { createConversation, loading: conversationLoading } = useConversations();
+  const { createConversation, loading: conversationLoading } =
+    useConversations();
   const { deleteHub } = useHubs();
   const [isLoading, setIsLoading] = useState(true);
   const [isConversationCreating, setIsConversationCreating] = useState(false);
@@ -162,7 +163,7 @@ export default function HubPage() {
 
   const handleDeleteHub = async () => {
     if (!hub) return;
-    
+
     setIsDeleting(true);
     try {
       const success = await deleteHub(hub.id);
@@ -250,7 +251,9 @@ export default function HubPage() {
                 <div className="flex items-center justify-between">
                   <div className="flex items-center justify-center w-full gap-4 text-sm text-muted-foreground">
                     <div className="flex flex-col items-center h-full justify-between">
-                      <p className="text-lg text-foreground">{hub.files.length}</p>
+                      <p className="text-lg text-foreground">
+                        {hub.files.length}
+                      </p>
                       <p className="font-medium">Files</p>
                     </div>
                     <div className="h-4 w-px bg-border" />
@@ -283,7 +286,10 @@ export default function HubPage() {
                     Start Chat with Hub
                   </Button>
 
-                  <Button variant="outline" onClick={() => router.push("/hubs")}>
+                  <Button
+                    variant="outline"
+                    onClick={() => router.push("/hubs")}
+                  >
                     Return to Hubs
                   </Button>
                 </div>
@@ -337,7 +343,7 @@ export default function HubPage() {
                       <Save className="w-4 h-4 mr-2" />
                       {isSaving ? "Saving..." : "Save Changes"}
                     </Button>
-                    
+
                     <AlertDialog>
                       <AlertDialogTrigger asChild>
                         <Button variant="destructive" disabled={isDeleting}>
@@ -349,8 +355,10 @@ export default function HubPage() {
                         <AlertDialogHeader>
                           <AlertDialogTitle>Delete Hub</AlertDialogTitle>
                           <AlertDialogDescription>
-                            Are you sure you want to delete this hub? This action cannot be undone.
-                            All conversations associated with this hub will be removed from the hub.
+                            Are you sure you want to delete this hub? This
+                            action cannot be undone. All conversations
+                            associated with this hub will be removed from the
+                            hub.
                           </AlertDialogDescription>
                         </AlertDialogHeader>
                         <AlertDialogFooter>
@@ -405,7 +413,9 @@ export default function HubPage() {
                               {file.name || `File ${index + 1}`}
                             </p>
                             <p className="text-xs text-muted-foreground">
-                              {file.size ? `${Math.round(file.size / 1024)} KB` : 'Unknown size'}
+                              {file.size
+                                ? `${Math.round(file.size / 1024)} KB`
+                                : "Unknown size"}
                             </p>
                           </div>
                           <div className="flex gap-1">

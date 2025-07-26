@@ -6,14 +6,12 @@ import { getTranslations } from "next-intl/server";
 
 export default async function ContactPage() {
   const t = await getTranslations("contact");
-  
+
   return (
     <div className="container mx-auto max-w-4xl px-4 py-8">
       <div className="text-center">
         <h1 className="text-4xl font-bold tracking-tight mb-4">{t("title")}</h1>
-        <p className="text-xl text-muted-foreground mb-8">
-          {t("subtitle")}
-        </p>
+        <p className="text-xl text-muted-foreground mb-8">{t("subtitle")}</p>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
@@ -46,9 +44,7 @@ export default async function ContactPage() {
               </div>
             </div>
             <h2 className="text-xl font-semibold mb-2">{t("x.title")}</h2>
-            <p className="text-muted-foreground mb-4">
-              {t("x.description")}
-            </p>
+            <p className="text-muted-foreground mb-4">{t("x.description")}</p>
             <a
               href={`https://x.com/${t("x.handle").substring(1)}`}
               className="inline-flex items-center gap-2 text-primary hover:underline font-medium"
@@ -61,9 +57,7 @@ export default async function ContactPage() {
       </div>
 
       <div className="mt-12 text-center">
-        <p className="text-muted-foreground">
-          {t("responseTime")}
-        </p>
+        <p className="text-muted-foreground">{t("responseTime")}</p>
       </div>
 
       <div className="text-center mt-16">

@@ -81,9 +81,7 @@ export const AccountDropdownMenu = memo(
       return (
         <Button variant="outline" className="rounded-full">
           <User2 size="16" />
-          <span className="group-data-[collapsible=icon]:hidden">
-            Login
-          </span>
+          <span className="group-data-[collapsible=icon]:hidden">Login</span>
         </Button>
       );
     }

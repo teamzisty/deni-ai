@@ -22,11 +22,11 @@ export async function createServer() {
         },
         setAll(cookiesToSet) {
           cookiesToSet.forEach(({ name, value, options }) =>
-            cookieStore.set(name, value, options)
+            cookieStore.set(name, value, options),
           );
         },
       },
-    }
+    },
   );
 }
 
@@ -37,7 +37,10 @@ export async function createServer() {
  * @returns {Promise<SupabaseClient>} A promise that resolves to a Supabase client instance.
  */
 export async function createSupabaseServer() {
-  return createClient(env.NEXT_PUBLIC_SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_KEY);
+  return createClient(
+    env.NEXT_PUBLIC_SUPABASE_URL,
+    env.SUPABASE_SERVICE_ROLE_KEY,
+  );
 }
 
 export async function authCheck(req: Request) {

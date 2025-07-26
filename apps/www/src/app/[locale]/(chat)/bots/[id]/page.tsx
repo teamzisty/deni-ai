@@ -28,14 +28,14 @@ import {
 } from "lucide-react";
 import { useSupabase } from "@/context/supabase-context";
 import { Bot, ClientBot } from "@/lib/bot";
-import { useParams, } from "next/navigation"
+import { useParams } from "next/navigation";
 import { useRouter } from "@/i18n/navigation";
 import { Link } from "@/i18n/navigation";
 import { useConversations } from "@/hooks/use-conversations";
 
 export default function BotPage() {
   const [bot, setBot] = useState<ClientBot | null>(null);
-  const { user, secureFetch, loading } = useSupabase();
+  const { user, supabase, loading } = useSupabase();
   const { createConversation, loading: conversationLoading } =
     useConversations();
   const [isLoading, setIsLoading] = useState(true);
@@ -74,18 +74,36 @@ export default function BotPage() {
   }, [bot]);
 
   const fetchBot = async () => {
+    if (!user) return;
+    
     try {
-      const response = await secureFetch(`/api/bots/${params.id}`);
-      if (response.ok) {
-        const data = await response.json();
-        if (data.success) {
-          setBot(data.data);
-        } else {
-          router.push("/bots");
-        }
-      } else {
+      const { data, error } = await supabase
+        .from("bots")
+        .select("*")
+        .eq("id", params.id)
+        .single();
+
+      if (error || !data) {
+        console.error("Failed to fetch bot:", error);
         router.push("/bots");
+        return;
       }
+
+      // Transform to ClientBot format
+      const clientBot: ClientBot = {
+        id: data.id,
+        name: data.name,
+        description: data.description,
+        instructions: data.instructions || [],
+        created_by: {
+          name: user.user_metadata?.full_name || user.email || "Unknown User",
+          verified: user.email_confirmed_at !== null,
+          id: user.id,
+        },
+        created_at: new Date(data.created_at).getTime(),
+      };
+
+      setBot(clientBot);
     } catch (error) {
       console.error("Failed to fetch bot:", error);
       router.push("/bots");
@@ -95,32 +113,40 @@ export default function BotPage() {
   };
 
   const saveBot = async () => {
-    if (!bot) return;
+    if (!bot || !user) return;
 
     setIsSaving(true);
     try {
-      const response = await secureFetch(`/api/bots/${bot.id}`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(editData),
-      });
+      const { data, error } = await supabase
+        .from("bots")
+        .update({
+          name: editData.name,
+          description: editData.description,
+          system_instruction: editData.system_instruction,
+          instructions: editData.instructions,
+          updated_at: new Date().toISOString(),
+        })
+        .eq("id", bot.id)
+        .eq("user_id", user.id) // Ensure user owns the bot
+        .select("*")
+        .single();
 
-      if (response.ok) {
-        const updatedBot = await response.json();
-        if (updatedBot.success) {
-          setBot((prev) =>
-            prev
-              ? {
-                  ...prev,
-                  name: editData.name || prev.name,
-                  description: editData.description || prev.description,
-                }
-              : null,
-          );
-        }
+      if (error) {
+        console.error("Failed to update bot:", error);
+        return;
       }
+
+      // Update local state
+      setBot((prev) =>
+        prev
+          ? {
+              ...prev,
+              name: editData.name || prev.name,
+              description: editData.description || prev.description,
+              instructions: editData.instructions || prev.instructions,
+            }
+          : null,
+      );
     } catch (error) {
       console.error("Failed to update bot:", error);
     } finally {

@@ -7,13 +7,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@workspace/ui/components/card";
-import {
-  Trash2,
-  Download,
-  Upload,
-  Database,
-  FileText,
-} from "lucide-react";
+import { Trash2, Download, Upload, Database, FileText } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import {
@@ -250,7 +244,9 @@ export default function DataControlsSettings() {
               </AlertDialogTrigger>
               <AlertDialogContent>
                 <AlertDialogHeader>
-                  <AlertDialogTitle>{t("deleteAll.dialogTitle")}</AlertDialogTitle>
+                  <AlertDialogTitle>
+                    {t("deleteAll.dialogTitle")}
+                  </AlertDialogTitle>
                   <AlertDialogDescription>
                     {t("deleteAll.dialogDescription")}
                   </AlertDialogDescription>
@@ -294,7 +290,9 @@ export default function DataControlsSettings() {
               </AlertDialogTrigger>
               <AlertDialogContent>
                 <AlertDialogHeader>
-                  <AlertDialogTitle>{t("deleteAccount.dialogTitle")}</AlertDialogTitle>
+                  <AlertDialogTitle>
+                    {t("deleteAccount.dialogTitle")}
+                  </AlertDialogTitle>
                   <AlertDialogDescription>
                     {t("deleteAccount.dialogDescription")}
                   </AlertDialogDescription>
@@ -306,7 +304,9 @@ export default function DataControlsSettings() {
                     className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
                     disabled={isDeleting}
                   >
-                    {isDeleting ? t("deleteAccount.deleting") : t("deleteAccount.confirmButton")}
+                    {isDeleting
+                      ? t("deleteAccount.deleting")
+                      : t("deleteAccount.confirmButton")}
                   </AlertDialogAction>
                 </AlertDialogFooter>
               </AlertDialogContent>
@@ -340,7 +340,9 @@ export default function DataControlsSettings() {
               <p className="text-sm text-destructive">{reauthError}</p>
             )}
             <div className="flex flex-col gap-2">
-              <Button onClick={handleReauth}>{t("reauth.continueButton")}</Button>
+              <Button onClick={handleReauth}>
+                {t("reauth.continueButton")}
+              </Button>
               <Button
                 variant="outline"
                 onClick={() => setShowReauthDialog(false)}

@@ -1,41 +1,41 @@
-import { DocsflyConfig } from 'docsfly'
+import { DocsflyConfig } from "docsfly";
 
 const config: DocsflyConfig = {
   site: {
-    name: 'Deni AI Docs',
-    description: 'A documentation website built with Docsfly',
-    url: 'https://docs.deniai.app',
+    name: "Deni AI Docs",
+    description: "A documentation website built with Docsfly",
+    url: "https://docs.deniai.app",
   },
   header: {
-    title: 'Deni AI Docs',
+    title: "Deni AI Docs",
     navigation: [
       {
-        label: 'Home',
-        href: '/',
+        label: "Home",
+        href: "/",
       },
       {
-        label: 'Blog',
-        href: '/blog',
+        label: "Blog",
+        href: "/blog",
       },
       {
-        label: 'Docs',
-        href: '/docs',
+        label: "Docs",
+        href: "/docs",
       },
       {
-        label: 'GitHub',
-        href: 'https://github.com/usedocsfly/docsfly',
+        label: "GitHub",
+        href: "https://github.com/usedocsfly/docsfly",
       },
     ],
     showSearch: true,
   },
   docs: {
-    dir: 'docs',
+    dir: "docs",
   },
   blog: {
     enabled: true,
-    dir: 'blog',
+    dir: "blog",
     authors: {
-      "rai": {
+      rai: {
         name: "Rai",
         title: "Developer",
         image_url: "https://github.com/raicdev.png",
@@ -49,12 +49,10 @@ const config: DocsflyConfig = {
   },
   navigation: {
     logo: {
-      text: 'Deni AI Docs',
+      text: "Deni AI Docs",
     },
-    links: [
-
-    ],
+    links: [],
   },
-}
+};
 
-export default config
+export default config;

@@ -73,7 +73,7 @@ export function BranchDialog({
               <Checkbox
                 id="include-messages"
                 checked={includeMessages}
-                onCheckedChange={(checked) => 
+                onCheckedChange={(checked) =>
                   setIncludeMessages(checked as boolean)
                 }
               />
@@ -91,7 +91,9 @@ export function BranchDialog({
               {t("common.actions.cancel")}
             </Button>
             <Button type="submit" disabled={!branchName.trim() || isCreating}>
-              {isCreating ? t("chat.branch.creating") : t("chat.branch.createButton")}
+              {isCreating
+                ? t("chat.branch.creating")
+                : t("chat.branch.createButton")}
             </Button>
           </DialogFooter>
         </form>

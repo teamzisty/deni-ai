@@ -11,19 +11,20 @@ import React, {
 import { Conversation } from "@/lib/conversations";
 import { supabase } from "@/lib/supabase/client";
 import { ClientBot } from "@/lib/bot";
+import { useSupabase } from "@/context/supabase-context";
 interface ConversationsContextType {
   conversations: Conversation[];
   loading: boolean;
   error: string | null;
-  createConversation: (bot?: ClientBot, hubId?: string) => Promise<Conversation | null>;
+  createConversation: (
+    bot?: ClientBot,
+    hubId?: string,
+  ) => Promise<Conversation | null>;
   updateConversation: (
     id: string,
     data: Partial<Conversation>,
   ) => Promise<Conversation | null>;
-  updateConversationTitle: (
-    id: string,
-    title: string,
-  ) => Promise<boolean>;
+  updateConversationTitle: (id: string, title: string) => Promise<boolean>;
   deleteConversation: (id: string) => Promise<boolean>;
   deleteAllConversations: () => Promise<boolean>;
   getConversation: (id: string) => Promise<Conversation | null>;
@@ -44,101 +45,98 @@ export function ConversationsProvider({
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-
-  const secureFetch = useCallback(
-    async (url: string, options?: RequestInit) => {
-      const {
-        data: { session },
-        error,
-      } = await supabase.auth.getSession();
-      if (error) {
-        throw new Error("Failed to get session");
-      }
-      const response = await fetch(url, {
-        ...options,
-        headers: {
-          ...options?.headers,
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${session?.access_token || ""}`,
-        },
-      });
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || "Network response was not ok");
-      }
-      return response.json();
-    },
-    [],
-  );
+  const { user } = useSupabase();
 
   const fetchConversations = useCallback(async () => {
+    if (!user) return;
+    
     setLoading(true);
     setError(null);
 
     try {
-      const result = await secureFetch("/api/conversations");
-      if (!result.success) {
-        setError(result.error);
+      const { data, error } = await supabase
+        .from("chat_sessions")
+        .select("*")
+        .eq("user_id", user.id)
+        .order("created_at", { ascending: false });
+
+      if (error) {
+        console.error("Error fetching conversations:", error);
+        setError("Failed to fetch conversations");
         return;
       }
 
-      setConversations(result.data);
+      setConversations(data || []);
     } catch (err) {
       setError("Failed to fetch conversations");
     } finally {
       setLoading(false);
     }
-  }, [secureFetch]);
+  }, [user]);
 
-  const createConversation =
-    useCallback(async (bot?: ClientBot, hubId?: string): Promise<Conversation | null> => {
+  const createConversation = useCallback(
+    async (bot?: ClientBot, hubId?: string): Promise<Conversation | null> => {
+      if (!user) return null;
+      
       setError(null);
 
       try {
-        const response = await secureFetch("/api/conversations", {
-          method: "PUT",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ bot, hub_id: hubId }),
-        });
+        const { data, error } = await supabase
+          .from("chat_sessions")
+          .insert({
+            user_id: user.id,
+            title: "New Session",
+            messages: [],
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+            bot,
+            hub_id: hubId,
+          })
+          .select("*")
+          .single();
 
-        if (!response.success) {
-          setError(response.error);
+        if (error) {
+          console.error("Error creating conversation:", error);
+          setError("Failed to create conversation");
           return null;
         }
 
-        const newConversation = response.data;
+        const newConversation = data;
         setConversations((prev) => [newConversation, ...prev]);
         return newConversation;
       } catch (err) {
         setError("Failed to create conversation");
         return null;
       }
-    }, [secureFetch]);
+    },
+    [user],
+  );
 
   const updateConversation = useCallback(
     async (
       id: string,
-      data: Partial<Conversation>,
+      updates: Partial<Conversation>,
     ): Promise<Conversation | null> => {
       setError(null);
 
       try {
-        const response = await secureFetch("/api/conversations", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ id, ...data }),
-        });
+        const { data, error } = await supabase
+          .from("chat_sessions")
+          .update({
+            ...updates,
+            updated_at: new Date().toISOString(),
+          })
+          .eq("id", id)
+          .select("*")
+          .single();
 
-        if (!response.success) {
-          setError(response.error);
+        if (error) {
+          console.error("Error updating conversation:", error);
+          setError("Failed to update conversation");
           return null;
         }
 
-        const updatedConversation = response.data;
+        const updatedConversation = data;
         setConversations((prev) =>
           prev.map((conv) => (conv.id === id ? updatedConversation : conv)),
         );
@@ -148,7 +146,7 @@ export function ConversationsProvider({
         return null;
       }
     },
-    [secureFetch],
+    [],
   );
 
   const updateConversationTitle = useCallback(
@@ -175,12 +173,14 @@ export function ConversationsProvider({
       setError(null);
 
       try {
-        const response = await secureFetch(`/api/conversations/${id}`, {
-          method: "DELETE",
-        });
+        const { error } = await supabase
+          .from("chat_sessions")
+          .delete()
+          .eq("id", id);
 
-        if (!response.success) {
-          setError(response.error);
+        if (error) {
+          console.error("Error deleting conversation:", error);
+          setError("Failed to delete conversation");
           return false;
         }
 
@@ -191,19 +191,23 @@ export function ConversationsProvider({
         return false;
       }
     },
-    [secureFetch],
+    [],
   );
 
   const deleteAllConversations = useCallback(async (): Promise<boolean> => {
+    if (!user) return false;
+    
     setError(null);
 
     try {
-      const response = await secureFetch("/api/conversations", {
-        method: "DELETE",
-      });
+      const { error } = await supabase
+        .from("chat_sessions")
+        .delete()
+        .eq("user_id", user.id);
 
-      if (!response.success) {
-        setError(response.error);
+      if (error) {
+        console.error("Error deleting all conversations:", error);
+        setError("Failed to delete all conversations");
         return false;
       }
 
@@ -213,26 +217,32 @@ export function ConversationsProvider({
       setError("Failed to delete all conversations");
       return false;
     }
-  }, [secureFetch]);
+  }, [user]);
 
   const getConversation = useCallback(
     async (id: string): Promise<Conversation | null> => {
       setError(null);
 
       try {
-        const response = await secureFetch(`/api/conversations/${id}`);
-        if (!response.success) {
-          setError(response.error);
+        const { data, error } = await supabase
+          .from("chat_sessions")
+          .select("*")
+          .eq("id", id)
+          .single();
+
+        if (error) {
+          console.error("Error fetching conversation:", error);
+          setError("Failed to get conversation");
           return null;
         }
 
-        return response.data;
+        return data;
       } catch (err) {
         setError("Failed to get conversation");
         return null;
       }
     },
-    [secureFetch],
+    [],
   );
 
   const refreshConversations = useCallback(async () => {

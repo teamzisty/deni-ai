@@ -17,7 +17,7 @@ import { models } from "@/lib/constants";
 
 export default function UsageSettings() {
   const { usage } = useSupabase();
-  const t = useTranslations('settings.usage');
+  const t = useTranslations("settings.usage");
   const [visibleUsage, setVisibleUsage] = useState(usage || []);
   const [premiumOnly, setPremiumOnly] = useState(false);
   const [showUsed, setShowUsed] = useState(false);
@@ -66,19 +66,19 @@ export default function UsageSettings() {
         <CardHeader className="flex items-center justify-between">
           <CardTitle className="flex items-center gap-2">
             <BarChart3 className="h-5 w-5" />
-            {t('title')}
+            {t("title")}
           </CardTitle>
 
           {/* Actions */}
           <div className="flex items-center gap-2">
             <Button size="sm" onClick={toggleShowUsed}>
               {showUsed ? <Check /> : <Eye />}
-              {t('showUsedOnly')}
+              {t("showUsedOnly")}
             </Button>
 
             <Button size="sm" onClick={togglePremiumOnly}>
               {premiumOnly ? <Check /> : <Crown />}
-              {t('premiumOnly')}
+              {t("premiumOnly")}
             </Button>
           </div>
         </CardHeader>
@@ -94,13 +94,13 @@ export default function UsageSettings() {
                     {modelUsage.premium && (
                       <Badge variant="secondary" className="text-xs">
                         <Zap className="h-3 w-3 mr-1" />
-                        {t('premium')}
+                        {t("premium")}
                       </Badge>
                     )}
                   </div>
                   <div className="text-sm text-muted-foreground">
                     {modelUsage.limit === -1 ? (
-                      <span>{t('unlimited')}</span>
+                      <span>{t("unlimited")}</span>
                     ) : (
                       <span>
                         {modelUsage.count} / {modelUsage.limit}
@@ -115,14 +115,18 @@ export default function UsageSettings() {
                       className="h-2"
                     />
                     <div className="flex justify-between text-xs text-muted-foreground">
-                      <span>{t('used')}: {modelUsage.count}</span>
-                      <span>{t('remaining')}: {modelUsage.remaining}</span>
+                      <span>
+                        {t("used")}: {modelUsage.count}
+                      </span>
+                      <span>
+                        {t("remaining")}: {modelUsage.remaining}
+                      </span>
                     </div>
                   </div>
                 )}
                 {!modelUsage.canUse && (
                   <div className="text-sm text-destructive">
-                    {t('usageLimitExceeded')}
+                    {t("usageLimitExceeded")}
                   </div>
                 )}
               </div>

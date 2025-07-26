@@ -1,9 +1,9 @@
-import { BlogLayout } from 'docsfly'
+import { BlogLayout } from "docsfly";
 
 export default async function Layout({
   children,
 }: {
-  children: React.ReactNode
-}) {  
+  children: React.ReactNode;
+}) {
   return <BlogLayout>{children as any}</BlogLayout>;
 }

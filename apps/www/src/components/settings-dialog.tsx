@@ -50,45 +50,35 @@ export function SettingsDialog() {
               value="general"
             >
               <MenuIcon className="md:mr-2" />
-              <span className="hidden md:inline">
-                {t("tabs.general")}
-              </span>
+              <span className="hidden md:inline">{t("tabs.general")}</span>
             </TabsTrigger>
             <TabsTrigger
               className="flex-1 justify-start w-full p-4 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
               value="account"
             >
               <User className="md:mr-2" />
-              <span className="hidden md:inline">
-              {t("tabs.account")}
-              </span>
+              <span className="hidden md:inline">{t("tabs.account")}</span>
             </TabsTrigger>
             <TabsTrigger
               className="flex-1 justify-start w-full p-4 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
               value="customize"
             >
               <Settings2 className="md:mr-2" />
-              <span className="hidden md:inline">
-              {t("tabs.customize")}
-              </span>
+              <span className="hidden md:inline">{t("tabs.customize")}</span>
             </TabsTrigger>
             <TabsTrigger
               className="flex-1 justify-start w-full p-4 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
               value="model"
             >
               <Bot className="md:mr-2" />
-              <span className="hidden md:inline">
-              {t("tabs.models")}
-              </span>
+              <span className="hidden md:inline">{t("tabs.models")}</span>
             </TabsTrigger>
             <TabsTrigger
               className="flex-1 justify-start w-full p-4 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
               value="dataControls"
             >
               <Database className="md:mr-2" />
-              <span className="hidden md:inline">
-              {t("tabs.dataControls")}
-              </span>
+              <span className="hidden md:inline">{t("tabs.dataControls")}</span>
             </TabsTrigger>
           </TabsList>
 

@@ -10,7 +10,7 @@ import { Badge } from "@workspace/ui/components/badge";
 import { LockIcon, Rocket, Zap } from "lucide-react";
 import { BRAND_NAME, GITHUB_URL } from "@/lib/constants";
 import { getTranslations } from "next-intl/server";
-import Link from "next/link";
+import { Link } from "@/i18n/navigation";
 
 export default async function Home() {
   const t = await getTranslations("landing");
@@ -30,7 +30,7 @@ export default async function Home() {
         </Badge>
         <div className="flex flex-col sm:flex-row gap-4 justify-center">
           <Button size="lg" asChild>
-            <Link href="/docs">{t("hero.getStarted")}</Link>
+            <Link href="/chat">{t("hero.getStarted")}</Link>
           </Button>
         </div>
       </section>

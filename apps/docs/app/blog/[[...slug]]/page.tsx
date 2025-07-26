@@ -1,4 +1,4 @@
-import { BlogMain  } from "docsfly/components";
+import { BlogMain } from "docsfly/components";
 
 export default async function Page({
   params,

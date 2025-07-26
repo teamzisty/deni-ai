@@ -20,10 +20,10 @@ interface PreProps
   children?: ReactNode;
 }
 
-type CodeComponentProps = ComponentProps<'code'> & ExtraProps;
-type MarkdownSize = 'default' | 'small';
+type CodeComponentProps = ComponentProps<"code"> & ExtraProps;
+type MarkdownSize = "default" | "small";
 
-const MarkdownSizeContext = createContext<MarkdownSize>('default');
+const MarkdownSizeContext = createContext<MarkdownSize>("default");
 
 // Type guard to check if value is a non-null object
 const isObject = (value: unknown): value is Record<string, unknown> => {
@@ -98,18 +98,22 @@ export const Pre = memo(({ children, ...props }: PreProps) => {
 });
 Pre.displayName = "Pre";
 
-export function CodeBlock({ children, className, ...props }: CodeComponentProps) {
+export function CodeBlock({
+  children,
+  className,
+  ...props
+}: CodeComponentProps) {
   const size = useContext(MarkdownSizeContext);
-  const match = /language-(\w+)/.exec(className || '');
+  const match = /language-(\w+)/.exec(className || "");
 
   if (match) {
     return <>{children}</>;
   }
 
   const inlineCodeClasses =
-    size === 'small'
-      ? 'mx-0.5 overflow-auto rounded-md px-1 py-0.5 bg-primary/10 text-foreground font-mono text-xs'
-      : 'mx-0.5 overflow-auto rounded-md px-2 py-1 bg-primary/10 text-foreground font-mono';
+    size === "small"
+      ? "mx-0.5 overflow-auto rounded-md px-1 py-0.5 bg-primary/10 text-foreground font-mono text-xs"
+      : "mx-0.5 overflow-auto rounded-md px-2 py-1 bg-primary/10 text-foreground font-mono";
 
   return (
     <code className={inlineCodeClasses} {...props}>

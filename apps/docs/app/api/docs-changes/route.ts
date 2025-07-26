@@ -1,3 +1,3 @@
 import { GET, POST } from "docsfly";
 
-export { GET, POST }
+export { GET, POST };

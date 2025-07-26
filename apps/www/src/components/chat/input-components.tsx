@@ -118,7 +118,7 @@ export const CanvasButton = React.memo<{
   setCanvas: (canvas: boolean) => void;
 }>(function CanvasButton({ canvas, setCanvas }) {
   const t = useTranslations("canvas");
-  
+
   return (
     <Button
       type="button"
@@ -137,7 +137,7 @@ export const SearchButton = React.memo<{
   setSearch: (search: boolean) => void;
 }>(function SearchButton({ search, setSearch }) {
   const t = useTranslations("common.actions");
-  
+
   return (
     <Button
       type="button"
@@ -178,12 +178,12 @@ export const ThinkingEffortButton = React.memo<{
   setThinkingEffort: (effort: "disabled" | "low" | "medium" | "high") => void;
 }>(function ThinkingEffortButton({ model, thinkingEffort, setThinkingEffort }) {
   const t = useTranslations("chat.input");
-  
+
   const effortMapping: Record<"disabled" | "low" | "medium" | "high", string> =
     {
       disabled: t("disabled"),
       low: "Low",
-      medium: "Medium", 
+      medium: "Medium",
       high: "High",
     };
 
@@ -262,7 +262,7 @@ export const ResearchModeButton = React.memo<{
   );
 
   const t = useTranslations("chat.input");
-  
+
   const researchModes = useMemo(
     () => [
       {
@@ -351,21 +351,24 @@ export const ModelSelector = React.memo<{
 }>(function ModelSelector({ model, setModel }) {
   const [open, setOpen] = useState(false);
   const { settings } = useSettings();
-  
+
   // Filter models based on visibility settings
   const visibleModels = useMemo(() => {
     if (!settings.modelVisibility) {
       // If no visibility settings, show all models
       return Object.keys(models);
     }
-    return Object.keys(models).filter(modelId => 
-      settings.modelVisibility?.[modelId] !== false
+    return Object.keys(models).filter(
+      (modelId) => settings.modelVisibility?.[modelId] !== false,
     );
   }, [settings.modelVisibility]);
 
   const getShortModelName = useCallback((model: string) => {
-    return model.replace("GPT-", "").replace("Gemini ", "").replace("Claude ", "")
-  }, [])
+    return model
+      .replace("GPT-", "")
+      .replace("Gemini ", "")
+      .replace("Claude ", "");
+  }, []);
 
   return (
     <div className="flex flex-row gap-2">
@@ -373,7 +376,8 @@ export const ModelSelector = React.memo<{
         <PopoverTrigger asChild>
           <Button type="button" variant="outline" className="rounded-full">
             {(() => {
-              if (models[model]?.premium) return <Gem className="h-4 w-4 text-primary" />;
+              if (models[model]?.premium)
+                return <Gem className="h-4 w-4 text-primary" />;
               switch (models[model]?.author) {
                 case "OpenAI":
                   return <SiOpenai className="h-4 w-4" />;
@@ -570,7 +574,12 @@ const ToolsDropdown = React.memo<{
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button type="button" variant="ghost" size="icon" className="rounded-full">
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon"
+          className="rounded-full"
+        >
           <Settings className="h-5 w-5" />
         </Button>
       </DropdownMenuTrigger>
@@ -598,7 +607,9 @@ const ToolsDropdown = React.memo<{
             >
               <X className="h-4 w-4 mr-2" />
               {researchModeMapping.disabled}
-              {researchMode === "disabled" && <CheckIcon className="h-4 w-4 ml-auto" />}
+              {researchMode === "disabled" && (
+                <CheckIcon className="h-4 w-4 ml-auto" />
+              )}
             </DropdownMenuItem>
             <DropdownMenuItem
               onClick={() => setResearchMode("shallow")}
@@ -606,7 +617,9 @@ const ToolsDropdown = React.memo<{
             >
               <Zap className="h-4 w-4 mr-2" />
               {researchModeMapping.shallow}
-              {researchMode === "shallow" && <CheckIcon className="h-4 w-4 ml-auto" />}
+              {researchMode === "shallow" && (
+                <CheckIcon className="h-4 w-4 ml-auto" />
+              )}
             </DropdownMenuItem>
             <DropdownMenuItem
               onClick={() => setResearchMode("deep")}
@@ -614,7 +627,9 @@ const ToolsDropdown = React.memo<{
             >
               <Telescope className="h-4 w-4 mr-2" />
               {researchModeMapping.deep}
-              {researchMode === "deep" && <CheckIcon className="h-4 w-4 ml-auto" />}
+              {researchMode === "deep" && (
+                <CheckIcon className="h-4 w-4 ml-auto" />
+              )}
             </DropdownMenuItem>
             <DropdownMenuItem
               onClick={() => setResearchMode("deeper")}
@@ -622,7 +637,9 @@ const ToolsDropdown = React.memo<{
             >
               <Telescope className="h-4 w-4 mr-2" />
               {researchModeMapping.deeper}
-              {researchMode === "deeper" && <CheckIcon className="h-4 w-4 ml-auto" />}
+              {researchMode === "deeper" && (
+                <CheckIcon className="h-4 w-4 ml-auto" />
+              )}
             </DropdownMenuItem>
           </>
         )}
@@ -669,14 +686,14 @@ export const InputActions = React.memo<InputActionsProps>(
         setThinkingEffort("medium");
       }
     }, [model, thinkingEffort, setThinkingEffort]);
-    
+
     return (
       <>
         <UploadButton
           handleImageUpload={handleImageUpload}
           isUploading={isUploading}
         />
-        
+
         {/* Desktop layout */}
         <div className="hidden md:flex md:items-center md:gap-2">
           {canvas !== undefined && setCanvas && (
@@ -693,7 +710,7 @@ export const InputActions = React.memo<InputActionsProps>(
             />
           )}
         </div>
-        
+
         {/* Mobile tools dropdown */}
         <div className="md:hidden">
           <ToolsDropdown
@@ -717,7 +734,7 @@ export const InputActions = React.memo<InputActionsProps>(
               />
             )}
           </div>
-          
+
           {/* Desktop thinking effort and model selector */}
           <div className="hidden md:flex md:items-center md:gap-4">
             {thinkingEffort !== undefined && setThinkingEffort && (

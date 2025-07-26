@@ -18,7 +18,7 @@ export const researchModeMapping = {
 
 export const useResearchModeMappingIntl = () => {
   const t = useTranslations("chat.input");
-  
+
   return {
     disabled: t("disabled"),
     shallow: t("shallow"),
