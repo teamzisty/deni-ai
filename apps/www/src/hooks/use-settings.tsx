@@ -36,7 +36,7 @@ const DEFAULT_SETTINGS: Settings = {
   branch: true,
   voice: true,
   conversationsPrivacyMode: false,
-  colorTheme: 'blue',
+  colorTheme: "blue",
 };
 
 const SUPABASE_TABLE = "user_settings";
@@ -64,7 +64,7 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
   const [settings, setSettings] = useState<Settings>(DEFAULT_SETTINGS);
   const [isLoading, setIsLoading] = useState(true);
   const [recordExists, setRecordExists] = useState(false);
-  
+
   // Load settings from Supabase or localStorage
   useEffect(() => {
     const loadSettings = async () => {
@@ -127,8 +127,8 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
       }
     };
     loadSettings();
-  }, [user, supabase]); 
-  
+  }, [user, supabase]);
+
   // Update a single setting
   const updateSetting = useCallback(
     async <K extends keyof Settings>(key: K, value: Settings[K]) => {
@@ -197,7 +197,7 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
     },
     [user, supabase, recordExists],
   );
-  
+
   // Reset settings to defaults
   const resetSettings = useCallback(async () => {
     try {

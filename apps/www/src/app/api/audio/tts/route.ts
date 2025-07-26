@@ -2,12 +2,12 @@ import { NextRequest, NextResponse } from "next/server";
 import { getApiTranslations } from "@/lib/api-i18n";
 
 export async function POST(request: NextRequest) {
-  const t = await getApiTranslations(request, 'common');
+  const t = await getApiTranslations(request, "common");
   try {
     const { text } = await request.json();
 
     if (!text || typeof text !== "string") {
-      return NextResponse.json({ error: t('text_required') }, { status: 400 });
+      return NextResponse.json({ error: t("text_required") }, { status: 400 });
     }
 
     const apiKey =
@@ -15,7 +15,7 @@ export async function POST(request: NextRequest) {
 
     if (!apiKey) {
       return NextResponse.json(
-        { error: t('api_key_not_configured') },
+        { error: t("api_key_not_configured") },
         { status: 500 },
       );
     }
@@ -94,7 +94,7 @@ export async function POST(request: NextRequest) {
 
       // Fallback to browser TTS if Gemini fails
       return NextResponse.json(
-        { error: t('tts_browser_fallback'), fallback: true },
+        { error: t("tts_browser_fallback"), fallback: true },
         { status: 422 },
       );
     }
@@ -103,7 +103,7 @@ export async function POST(request: NextRequest) {
     if (!audioData || typeof audioData !== "string") {
       console.error("Invalid audio data received from API");
       return NextResponse.json(
-        { error: t('invalid_audio_data'), fallback: true },
+        { error: t("invalid_audio_data"), fallback: true },
         { status: 422 },
       );
     }
@@ -114,7 +114,7 @@ export async function POST(request: NextRequest) {
     } catch (error) {
       console.error("Failed to decode base64 audio data:", error);
       return NextResponse.json(
-        { error: t('audio_decode_failed'), fallback: true },
+        { error: t("audio_decode_failed"), fallback: true },
         { status: 422 },
       );
     }
@@ -123,7 +123,7 @@ export async function POST(request: NextRequest) {
     if (audioBuffer.length < 100) {
       console.error("Audio buffer too small:", audioBuffer.length, "bytes");
       return NextResponse.json(
-        { error: t('invalid_audio_size'), fallback: true },
+        { error: t("invalid_audio_size"), fallback: true },
         { status: 422 },
       );
     }
@@ -200,7 +200,7 @@ export async function POST(request: NextRequest) {
     console.error("TTS API error:", error);
     return NextResponse.json(
       {
-        error: t('tts_generation_failed'),
+        error: t("tts_generation_failed"),
         fallback: true,
       },
       { status: 422 },

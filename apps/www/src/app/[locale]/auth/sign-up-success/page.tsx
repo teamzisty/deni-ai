@@ -4,12 +4,12 @@ import {
   CardDescription,
   CardHeader,
   CardTitle,
-} from '@workspace/ui/components/card'
-import { getTranslations } from "next-intl/server"
+} from "@workspace/ui/components/card";
+import { getTranslations } from "next-intl/server";
 
 export default async function Page() {
-  const t = await getTranslations("auth.signUpSuccess")
-  
+  const t = await getTranslations("auth.signUpSuccess");
+
   return (
     <div className="flex min-h-svh w-full items-center justify-center p-6 md:p-10">
       <div className="w-full max-w-sm">
@@ -20,13 +20,11 @@ export default async function Page() {
               <CardDescription>{t("subtitle")}</CardDescription>
             </CardHeader>
             <CardContent>
-              <p className="text-sm text-muted-foreground">
-                {t("message")}
-              </p>
+              <p className="text-sm text-muted-foreground">{t("message")}</p>
             </CardContent>
           </Card>
         </div>
       </div>
     </div>
-  )
+  );
 }

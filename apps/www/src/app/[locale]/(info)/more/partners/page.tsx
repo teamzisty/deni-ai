@@ -13,7 +13,11 @@ import { Button } from "@workspace/ui/components/button";
 import { BRAND_NAME } from "@/lib/constants";
 import { getTranslations } from "next-intl/server";
 
-export async function generateMetadata({ params: { locale } }: { params: { locale: string } }) {
+export async function generateMetadata({
+  params: { locale },
+}: {
+  params: { locale: string };
+}) {
   const t = await getTranslations({ locale, namespace: "partners" });
   return {
     title: t("metadata.title", { brandName: BRAND_NAME }),
@@ -23,7 +27,7 @@ export async function generateMetadata({ params: { locale } }: { params: { local
 
 export default async function PartnersPage() {
   const t = await getTranslations("partners");
-  
+
   const partners = [
     {
       id: 1,
@@ -123,11 +127,15 @@ export default async function PartnersPage() {
             <CardContent>
               <div className="space-y-3">
                 <div className="flex justify-between text-sm">
-                  <span className="text-muted-foreground">{t("stats.partnership")}</span>
+                  <span className="text-muted-foreground">
+                    {t("stats.partnership")}
+                  </span>
                   <span className="font-medium">{partner.partnership}</span>
                 </div>
                 <div className="flex justify-between text-sm">
-                  <span className="text-muted-foreground">{t("stats.established")}</span>
+                  <span className="text-muted-foreground">
+                    {t("stats.established")}
+                  </span>
                   <span className="font-medium">{partner.established}</span>
                 </div>
                 <div className="pt-3 border-t">
@@ -155,7 +163,9 @@ export default async function PartnersPage() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           <Card>
             <CardHeader>
-              <CardTitle className="text-lg">{t("benefits.privateCloud.title")}</CardTitle>
+              <CardTitle className="text-lg">
+                {t("benefits.privateCloud.title")}
+              </CardTitle>
             </CardHeader>
             <CardContent>
               <p className="text-muted-foreground">
@@ -165,7 +175,9 @@ export default async function PartnersPage() {
           </Card>
           <Card>
             <CardHeader>
-              <CardTitle className="text-lg">{t("benefits.freeUnlimited.title")}</CardTitle>
+              <CardTitle className="text-lg">
+                {t("benefits.freeUnlimited.title")}
+              </CardTitle>
             </CardHeader>
             <CardContent>
               <p className="text-muted-foreground">
@@ -175,7 +187,9 @@ export default async function PartnersPage() {
           </Card>
           <Card>
             <CardHeader>
-              <CardTitle className="text-lg">{t("benefits.customApi.title")}</CardTitle>
+              <CardTitle className="text-lg">
+                {t("benefits.customApi.title")}
+              </CardTitle>
             </CardHeader>
             <CardContent>
               <p className="text-muted-foreground">
@@ -189,16 +203,15 @@ export default async function PartnersPage() {
       {/* Partnership Inquiry */}
       <Card className="bg-primary/5 border-primary/20">
         <CardContent className="p-8 text-center">
-          <h3 className="text-2xl font-bold mb-4">
-            {t("cta.title")}
-          </h3>
+          <h3 className="text-2xl font-bold mb-4">{t("cta.title")}</h3>
           <p className="text-muted-foreground mb-6 max-w-2xl mx-auto">
             {t("cta.description")}
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Button disabled>
               {/* <Link href="mailto:partnerships@deni-ai.com"> */}
-                {t("cta.contactTeam")} <Badge variant="secondary">{t("cta.soon")}</Badge>
+              {t("cta.contactTeam")}{" "}
+              <Badge variant="secondary">{t("cta.soon")}</Badge>
               {/* </Link> */}
             </Button>
             <Button variant="outline" asChild>

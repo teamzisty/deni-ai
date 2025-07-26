@@ -59,7 +59,6 @@ const MemoizedMarkdownBlock = memo(
 
 MemoizedMarkdownBlock.displayName = "MemoizedMarkdownBlock";
 
-
 export const MemoizedMarkdown = memo(
   ({ content, id }: { content: string; id: string }) => {
     const blocks = useMemo(() => parseMarkdownIntoBlocks(content), [content]);
@@ -182,7 +181,8 @@ const Message = memo<MessageProps>(({ message, conversationId }) => {
                     const canvasContent =
                       part.toolInvocation.args?.content || "";
                     const canvasTitle =
-                      part.toolInvocation.args?.title || t("chat.message.canvas");
+                      part.toolInvocation.args?.title ||
+                      t("chat.message.canvas");
                     return (
                       <div key={index} className="bg-secondary rounded-2xl p-4">
                         <div className="flex items-center justify-between">
@@ -207,9 +207,13 @@ const Message = memo<MessageProps>(({ message, conversationId }) => {
                           key={index}
                           className="bg-secondary rounded-2xl p-4 my-1"
                         >
-                          <h3 className="font-semibold">{t("chat.message.searchResults")}</h3>
+                          <h3 className="font-semibold">
+                            {t("chat.message.searchResults")}
+                          </h3>
                           <span className="text-muted-foreground">
-                            {t("chat.message.searchingWith", { query: part.toolInvocation.args?.query })}
+                            {t("chat.message.searchingWith", {
+                              query: part.toolInvocation.args?.query,
+                            })}
                           </span>
                           <div className="mt-2">
                             <p className="!m-0 animate-pulse text-muted-foreground">
@@ -229,7 +233,9 @@ const Message = memo<MessageProps>(({ message, conversationId }) => {
                         >
                           <Globe className="h-4 w-4" />
                           <span>
-                            {t("chat.message.searchedWebsites", { count: part.toolInvocation.result.length })}
+                            {t("chat.message.searchedWebsites", {
+                              count: part.toolInvocation.result.length,
+                            })}
                           </span>
                         </Button>
 
@@ -247,13 +253,20 @@ const Message = memo<MessageProps>(({ message, conversationId }) => {
                           style={{ overflow: "hidden" }}
                         >
                           <div className="flex items-center justify-between">
-                            <h3 className="font-semibold">{t("chat.message.searchResults")}</h3>
+                            <h3 className="font-semibold">
+                              {t("chat.message.searchResults")}
+                            </h3>
                             <button className="text-sm text-muted-foreground hover:text-foreground transition-colors">
-                              {t("chat.message.searchedWebsites", { count: part.toolInvocation.result.length })}
+                              {t("chat.message.searchedWebsites", {
+                                count: part.toolInvocation.result.length,
+                              })}
                             </button>
                           </div>
                           <span className="text-muted-foreground">
-                            {t("chat.message.foundResults", { count: part.toolInvocation.result.length, query: part.toolInvocation.args.query })}
+                            {t("chat.message.foundResults", {
+                              count: part.toolInvocation.result.length,
+                              query: part.toolInvocation.args.query,
+                            })}
                           </span>
                           <details className="mt-2" open={true}>
                             {" "}
@@ -294,7 +307,12 @@ const Message = memo<MessageProps>(({ message, conversationId }) => {
                                   <div className="mt-2">
                                     <details className="mt-2">
                                       <summary className="cursor-pointer text-sm text-foreground/80 hover:text-foreground transition-colors">
-                                        {t("chat.message.pageSummary", { model: internalModels["search-summary-model"]?.name || "" })}
+                                        {t("chat.message.pageSummary", {
+                                          model:
+                                            internalModels[
+                                              "search-summary-model"
+                                            ]?.name || "",
+                                        })}
                                       </summary>
                                       <MemoizedMarkdownBlock
                                         key={`${message.id}-search-result-${index}-${idx}`}

@@ -13,7 +13,7 @@ export function Tip({
   children: React.ReactNode;
 } & React.ComponentProps<typeof TooltipContent>) {
   return (
-    <Tooltip >
+    <Tooltip>
       <TooltipTrigger asChild>{children}</TooltipTrigger>
       <TooltipContent {...props}>
         {typeof content === "string" ? <p>{content}</p> : content}

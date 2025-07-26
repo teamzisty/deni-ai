@@ -3,7 +3,7 @@
 import { useChat } from "@ai-sdk/react";
 import { useEffect, useState, useCallback, memo } from "react";
 import ChatInput from "./chat/input";
-import { redirect, } from "next/navigation"
+import { redirect } from "next/navigation";
 import { useRouter } from "@/i18n/navigation";
 import { Loader2 } from "lucide-react";
 import { loading_words } from "@/lib/constants";
@@ -63,7 +63,9 @@ const Chat = memo(() => {
       <div className="w-full max-w-4xl">
         {/* Header */}
         <div className="text-center mb-12">
-          <h1 className="text-4xl font-bold mb-4">{t("chat.welcome.default")}</h1>
+          <h1 className="text-4xl font-bold mb-4">
+            {t("chat.welcome.default")}
+          </h1>
         </div>
 
         {/* Chat Input */}

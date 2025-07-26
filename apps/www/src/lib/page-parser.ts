@@ -1,4 +1,4 @@
-import { JSDOM, VirtualConsole } from 'jsdom';
+import { JSDOM, VirtualConsole } from "jsdom";
 
 export interface ParsedContent {
   content: string;

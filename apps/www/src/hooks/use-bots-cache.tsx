@@ -20,7 +20,7 @@ interface BotsCacheProviderProps {
 export function BotsCacheProvider({ children }: BotsCacheProviderProps) {
   const [cache, setCache] = useState<Map<string, Bot>>(new Map());
   const [loading, setLoading] = useState<Set<string>>(new Set());
-  const { secureFetch } = useSupabase();
+  const { supabase } = useSupabase();
 
   const getBot = useCallback(
     async (botId: string): Promise<Bot | null> => {
@@ -50,12 +50,22 @@ export function BotsCacheProvider({ children }: BotsCacheProviderProps) {
       setLoading((prev) => new Set(prev).add(botId));
 
       try {
-        const response = await secureFetch(`/api/bots/${botId}`);
-        const bot = await response.json() as Bot;
+        const { data, error } = await supabase
+          .from("bots")
+          .select("*")
+          .eq("id", botId)
+          .single();
+
+        if (error) {
+          console.error("Failed to fetch bot:", error);
+          return null;
+        }
+
+        const bot = data as Bot;
 
         // Cache the result
         setCache((prev) => new Map(prev).set(botId, bot));
-        
+
         return bot;
       } catch (error) {
         console.error("Failed to fetch bot:", error);
@@ -69,7 +79,7 @@ export function BotsCacheProvider({ children }: BotsCacheProviderProps) {
         });
       }
     },
-    [cache, loading, secureFetch],
+    [cache, loading, supabase],
   );
 
   const isLoading = useCallback(

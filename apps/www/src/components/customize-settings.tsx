@@ -9,31 +9,41 @@ import {
   CardHeader,
   CardTitle,
 } from "@workspace/ui/components/card";
-  import { Search, Users, ScrollText, GitBranch, Bot, Mic, Monitor, Moon, Sun } from "lucide-react";
+import {
+  Search,
+  Users,
+  ScrollText,
+  GitBranch,
+  Bot,
+  Mic,
+  Monitor,
+  Moon,
+  Sun,
+} from "lucide-react";
 import { Badge } from "@workspace/ui/components/badge";
 import { Button } from "@workspace/ui/components/button";
 import { useTheme } from "next-themes";
 
 export default function CustomizeSettings() {
   const { settings, updateSetting } = useSettings();
-  const t = useTranslations('settings.customize');
+  const t = useTranslations("settings.customize");
   const { theme, setTheme } = useTheme();
 
   const themeOptions = [
-    { value: 'light', label: 'Light', icon: Sun },
-    { value: 'dark', label: 'Dark', icon: Moon },
-    { value: 'system', label: 'System', icon: Monitor },
+    { value: "light", label: "Light", icon: Sun },
+    { value: "dark", label: "Dark", icon: Moon },
+    { value: "system", label: "System", icon: Monitor },
   ];
 
   const colorThemes = [
-    { value: 'blue', label: 'Blue', color: 'bg-blue-500' },
-    { value: 'purple', label: 'Purple', color: 'bg-purple-500' },
-    { value: 'green', label: 'Green', color: 'bg-green-500' },
-    { value: 'orange', label: 'Orange', color: 'bg-orange-500' },
-    { value: 'red', label: 'Red', color: 'bg-red-500' },
-    { value: 'pink', label: 'Pink', color: 'bg-pink-500' },
-    { value: 'indigo', label: 'Indigo', color: 'bg-indigo-500' },
-    { value: 'yellow', label: 'Yellow', color: 'bg-yellow-500' },
+    { value: "blue", label: "Blue", color: "bg-blue-500" },
+    { value: "purple", label: "Purple", color: "bg-purple-500" },
+    { value: "green", label: "Green", color: "bg-green-500" },
+    { value: "orange", label: "Orange", color: "bg-orange-500" },
+    { value: "red", label: "Red", color: "bg-red-500" },
+    { value: "pink", label: "Pink", color: "bg-pink-500" },
+    { value: "indigo", label: "Indigo", color: "bg-indigo-500" },
+    { value: "yellow", label: "Yellow", color: "bg-yellow-500" },
   ];
 
   return (
@@ -42,13 +52,13 @@ export default function CustomizeSettings() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Monitor className="h-5 w-5" />
-            {t('theme.title')}
+            {t("theme.title")}
           </CardTitle>
         </CardHeader>
         <CardContent>
           <div className="space-y-3">
             <p className="text-sm text-muted-foreground">
-              {t('theme.description')}
+              {t("theme.description")}
             </p>
             <div className="flex flex-wrap gap-2">
               {themeOptions.map((option) => {
@@ -56,7 +66,7 @@ export default function CustomizeSettings() {
                 return (
                   <Button
                     key={option.value}
-                    variant={theme === option.value ? 'default' : 'outline'}
+                    variant={theme === option.value ? "default" : "outline"}
                     size="sm"
                     onClick={() => setTheme(option.value)}
                     className="flex items-center gap-2"
@@ -75,13 +85,13 @@ export default function CustomizeSettings() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Monitor className="h-5 w-5" />
-            {t('colorTheme.title')}
+            {t("colorTheme.title")}
           </CardTitle>
         </CardHeader>
         <CardContent>
           <div className="space-y-3">
             <p className="text-sm text-muted-foreground">
-              {t('colorTheme.description')}
+              {t("colorTheme.description")}
             </p>
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
               {colorThemes.map((colorTheme) => {
@@ -92,11 +102,13 @@ export default function CustomizeSettings() {
                     variant={isSelected ? "default" : "outline"}
                     className="h-auto p-3 justify-start"
                     onClick={() => {
-                      updateSetting('colorTheme', colorTheme.value);
+                      updateSetting("colorTheme", colorTheme.value);
                     }}
                   >
                     <div className="flex items-center gap-2">
-                      <div className={`w-4 h-4 rounded-full ${colorTheme.color}`} />
+                      <div
+                        className={`w-4 h-4 rounded-full ${colorTheme.color}`}
+                      />
                       <span className="text-sm">{colorTheme.label}</span>
                     </div>
                   </Button>
@@ -111,14 +123,14 @@ export default function CustomizeSettings() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Search className="h-5 w-5" />
-            {t('advancedSearch.title')}
+            {t("advancedSearch.title")}
           </CardTitle>
         </CardHeader>
         <CardContent>
           <div className="flex items-center justify-between">
             <div className="flex-grow">
               <p className="text-sm text-muted-foreground">
-                {t('advancedSearch.description')}
+                {t("advancedSearch.description")}
               </p>
             </div>
             <Switch
@@ -136,14 +148,14 @@ export default function CustomizeSettings() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <ScrollText className="h-5 w-5" />
-            {t('autoScroll.title')}
+            {t("autoScroll.title")}
           </CardTitle>
         </CardHeader>
         <CardContent>
           <div className="flex items-center justify-between">
             <div className="flex-grow">
               <p className="text-sm text-muted-foreground">
-                {t('autoScroll.description')}
+                {t("autoScroll.description")}
               </p>
             </div>
             <Switch
@@ -161,14 +173,16 @@ export default function CustomizeSettings() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Mic className="h-5 w-5" />
-            {t('voiceMode.title')}
-            <Badge>{t('soon')}</Badge>
+            {t("voiceMode.title")}
+            <Badge>{t("soon")}</Badge>
           </CardTitle>
         </CardHeader>
         <CardContent>
           <div className="flex items-center justify-between">
             <div className="flex-grow">
-              <p className="text-sm text-muted-foreground">{t('voiceMode.description')}</p>
+              <p className="text-sm text-muted-foreground">
+                {t("voiceMode.description")}
+              </p>
             </div>
             <Switch
               id="voice"
@@ -185,14 +199,14 @@ export default function CustomizeSettings() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Bot className="h-5 w-5" />
-            {t('bots.title')}
+            {t("bots.title")}
           </CardTitle>
         </CardHeader>
         <CardContent>
           <div className="flex items-center justify-between">
             <div className="flex-grow">
               <p className="text-sm text-muted-foreground">
-                {t('bots.description')}
+                {t("bots.description")}
               </p>
             </div>
             <Switch
@@ -210,14 +224,14 @@ export default function CustomizeSettings() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Users className="h-5 w-5" />
-            {t('hubs.title')}
+            {t("hubs.title")}
           </CardTitle>
         </CardHeader>
         <CardContent>
           <div className="flex items-center justify-between">
             <div className="flex-grow">
               <p className="text-sm text-muted-foreground">
-                {t('hubs.description')}
+                {t("hubs.description")}
               </p>
             </div>
             <Switch
@@ -235,14 +249,14 @@ export default function CustomizeSettings() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <GitBranch className="h-5 w-5" />
-            {t('branchConversations.title')}
+            {t("branchConversations.title")}
           </CardTitle>
         </CardHeader>
         <CardContent>
           <div className="flex items-center justify-between">
             <div className="flex-grow">
               <p className="text-sm text-muted-foreground">
-                {t('branchConversations.description')}
+                {t("branchConversations.description")}
               </p>
             </div>
             <Switch

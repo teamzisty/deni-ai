@@ -4,7 +4,11 @@ import { useState, useCallback } from "react";
 import { Button } from "@workspace/ui/components/button";
 import { Headphones } from "lucide-react";
 import { VoiceInput } from "./voice-input";
-import { generateSpeech, playAudioBlob, playBrowserSpeech } from "./voice-utils";
+import {
+  generateSpeech,
+  playAudioBlob,
+  playBrowserSpeech,
+} from "./voice-utils";
 import { toast } from "sonner";
 import { useTranslations } from "@/hooks/use-translations";
 
@@ -26,11 +30,14 @@ export const VoiceModeButton: React.FC<VoiceModeButtonProps> = ({
   const [isPlayingTTS, setIsPlayingTTS] = useState(false);
   const t = useTranslations();
 
-  const handleVoiceTranscript = useCallback((transcript: string) => {
-    if (transcript.trim()) {
-      onVoiceInput?.(transcript);
-    }
-  }, [onVoiceInput]);
+  const handleVoiceTranscript = useCallback(
+    (transcript: string) => {
+      if (transcript.trim()) {
+        onVoiceInput?.(transcript);
+      }
+    },
+    [onVoiceInput],
+  );
 
   const handlePlayLastMessage = useCallback(async () => {
     if (!lastMessage?.trim()) {
@@ -79,7 +86,7 @@ export const VoiceModeButton: React.FC<VoiceModeButtonProps> = ({
         <Headphones className="h-5 w-5" />
         <div className="hidden md:inline">{t("voice.voiceButton")}</div>
       </Button>
-      
+
       {voiceMode && (
         <>
           <VoiceInput

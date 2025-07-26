@@ -10,17 +10,14 @@ interface ShareRequest {
 }
 
 export async function POST(req: Request) {
-  const t = await getApiTranslations(req, 'common');
+  const t = await getApiTranslations(req, "common");
   try {
     const authorization = req.headers
       .get("Authorization")
       ?.replace("Bearer ", "");
 
     if (!authorization) {
-      return NextResponse.json(
-        { error: t('unauthorized') },
-        { status: 401 },
-      );
+      return NextResponse.json({ error: t("unauthorized") }, { status: 401 });
     }
     const supabase = await createSupabaseServer();
 
@@ -30,16 +27,16 @@ export async function POST(req: Request) {
     } = await supabase.auth.getUser(authorization);
 
     if (authError || !user) {
-      return NextResponse.json(
-        { error: t('unauthorized') },
-        { status: 401 },
-      );
+      return NextResponse.json({ error: t("unauthorized") }, { status: 401 });
     }
 
     const { sessionId, title, messages }: ShareRequest = await req.json();
 
     if (!sessionId || !title || !messages || messages.length === 0) {
-      return NextResponse.json({ error: t('invalid_request') }, { status: 400 });
+      return NextResponse.json(
+        { error: t("invalid_request") },
+        { status: 400 },
+      );
     }
 
     const shareId = crypto.randomUUID();
@@ -56,7 +53,7 @@ export async function POST(req: Request) {
 
     if (error) {
       console.error("Supabase error:", error);
-      return NextResponse.json({ error: t('database_error') }, { status: 500 });
+      return NextResponse.json({ error: t("database_error") }, { status: 500 });
     }
 
     return NextResponse.json({
@@ -66,19 +63,19 @@ export async function POST(req: Request) {
     });
   } catch (error) {
     console.error(error);
-    return NextResponse.json({ error: t('internal_error') }, { status: 500 });
+    return NextResponse.json({ error: t("internal_error") }, { status: 500 });
   }
 }
 
 export async function GET(req: Request) {
-  const t = await getApiTranslations(req, 'common');
+  const t = await getApiTranslations(req, "common");
   try {
     const url = new URL(req.url);
     const shareId = url.searchParams.get("id");
 
     if (!shareId) {
       return NextResponse.json(
-        { error: t('share_id_required') },
+        { error: t("share_id_required") },
         { status: 400 },
       );
     }
@@ -92,7 +89,7 @@ export async function GET(req: Request) {
 
     if (fetchError || !sharedChatData) {
       return NextResponse.json(
-        { error: t('shared_chat_not_found') },
+        { error: t("shared_chat_not_found") },
         { status: 404 },
       );
     }
@@ -119,6 +116,6 @@ export async function GET(req: Request) {
     });
   } catch (error) {
     console.error(error);
-    return NextResponse.json({ error: t('internal_error') }, { status: 500 });
+    return NextResponse.json({ error: t("internal_error") }, { status: 500 });
   }
 }

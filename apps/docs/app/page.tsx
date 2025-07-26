@@ -14,8 +14,7 @@ export default function Home() {
       <div className="container mx-auto px-4 py-16">
         <div className="text-center mb-16">
           <h1 className="text-4xl font-bold tracking-tight text-foreground/80 sm:text-6xl">
-            Build Docs with{" "}
-            <span className="text-foreground">Docsfly</span>
+            Build Docs with <span className="text-foreground">Docsfly</span>
           </h1>
           <p className="mt-6 text-lg leading-8 text-muted-foreground">
             A best method for creating beautiful, fast, and developer-friendly
@@ -87,4 +86,3 @@ export default function Home() {
     </div>
   );
 }
-  

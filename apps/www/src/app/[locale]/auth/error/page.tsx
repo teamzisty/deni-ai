@@ -1,9 +1,18 @@
-import { Card, CardContent, CardHeader, CardTitle } from '@workspace/ui/components/card'
-import { getTranslations } from "next-intl/server"
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "@workspace/ui/components/card";
+import { getTranslations } from "next-intl/server";
 
-export default async function Page({ searchParams }: { searchParams: Promise<{ error: string }> }) {
-  const params = await searchParams
-  const t = await getTranslations("auth.error")
+export default async function Page({
+  searchParams,
+}: {
+  searchParams: Promise<{ error: string }>;
+}) {
+  const params = await searchParams;
+  const t = await getTranslations("auth.error");
 
   return (
     <div className="flex min-h-svh w-full items-center justify-center p-6 md:p-10">
@@ -15,14 +24,18 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ e
             </CardHeader>
             <CardContent>
               {params?.error ? (
-                <p className="text-sm text-muted-foreground">{t("codeError", { error: params.error })}</p>
+                <p className="text-sm text-muted-foreground">
+                  {t("codeError", { error: params.error })}
+                </p>
               ) : (
-                <p className="text-sm text-muted-foreground">{t("unspecifiedError")}</p>
+                <p className="text-sm text-muted-foreground">
+                  {t("unspecifiedError")}
+                </p>
               )}
             </CardContent>
           </Card>
         </div>
       </div>
     </div>
-  )
+  );
 }

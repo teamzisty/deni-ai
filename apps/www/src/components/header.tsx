@@ -154,11 +154,10 @@ export default function Header() {
                           <ul>
                             {link.items?.map((item, itemIndex) => (
                               <li key={itemIndex}>
-                                <NavigationMenuItem
-                                  asChild
-                                  className="py-1.5"
-                                >
-                                  <Link href={item.href || "/"}>{item.label}</Link>
+                                <NavigationMenuItem asChild className="py-1.5">
+                                  <Link href={item.href || "/"}>
+                                    {item.label}
+                                  </Link>
                                 </NavigationMenuItem>
                               </li>
                             ))}

@@ -32,35 +32,35 @@ export const VoiceInput: React.FC<VoiceInputProps> = ({
   const t = useTranslations();
 
   useEffect(() => {
-    const SpeechRecognition = 
+    const SpeechRecognition =
       window.SpeechRecognition || window.webkitSpeechRecognition;
-    
+
     if (SpeechRecognition) {
       setIsSupported(true);
       recognitionRef.current = new SpeechRecognition();
-      
+
       const recognition = recognitionRef.current;
       recognition.continuous = true; // Keep listening while holding
       recognition.interimResults = true;
       recognition.lang = "en-US"; // English
       recognition.maxAlternatives = 1;
-      
+
       // More aggressive settings for better detection
-      if ('webkitSpeechRecognition' in window) {
+      if ("webkitSpeechRecognition" in window) {
         // @ts-ignore - Chrome specific settings
-        recognition.serviceURI = '';
+        recognition.serviceURI = "";
       }
-      
+
       recognition.onstart = () => {
         console.log(t("voice.recognitionStarted"));
         setIsListening(true);
         onStart?.();
       };
-      
+
       recognition.onresult = (event) => {
         let finalTranscript = "";
         let interimTranscript = "";
-        
+
         for (let i = event.resultIndex; i < event.results.length; i++) {
           const result = event.results[i];
           if (result && result[0]) {
@@ -72,19 +72,19 @@ export const VoiceInput: React.FC<VoiceInputProps> = ({
             }
           }
         }
-        
+
         console.log("Speech result:", { finalTranscript, interimTranscript });
-        
+
         // Send both final and interim results for better user experience
         const transcript = finalTranscript || interimTranscript;
         if (transcript.trim()) {
           onTranscript?.(transcript);
         }
       };
-      
+
       recognition.onerror = (event) => {
         console.error("Speech recognition error:", event.error);
-        
+
         // Handle different types of errors
         switch (event.error) {
           case "not-allowed":
@@ -121,12 +121,12 @@ export const VoiceInput: React.FC<VoiceInputProps> = ({
             break;
         }
       };
-      
+
       recognition.onend = () => {
         console.log(t("voice.recognitionEnded"));
         setIsListening(false);
         onStop?.();
-        
+
         // Restart recognition if user is still holding the button
         if (isHoldingRef.current) {
           console.log("User still holding, restarting recognition...");
@@ -144,7 +144,7 @@ export const VoiceInput: React.FC<VoiceInputProps> = ({
     } else {
       onError?.(t("voice.errors.browserNotSupported"));
     }
-    
+
     return () => {
       if (recognitionRef.current) {
         recognitionRef.current.stop();
@@ -158,7 +158,7 @@ export const VoiceInput: React.FC<VoiceInputProps> = ({
   const requestMicrophonePermission = useCallback(async () => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      stream.getTracks().forEach(track => track.stop()); // Stop the stream immediately
+      stream.getTracks().forEach((track) => track.stop()); // Stop the stream immediately
       return true;
     } catch (error) {
       console.error("Microphone permission denied:", error);
@@ -169,11 +169,11 @@ export const VoiceInput: React.FC<VoiceInputProps> = ({
 
   const startListening = useCallback(async () => {
     if (!recognitionRef.current) return;
-    
+
     // Request microphone permission first
     const hasPermission = await requestMicrophonePermission();
     if (!hasPermission) return;
-    
+
     try {
       // Only start if not already listening
       if (!isListening) {
@@ -200,7 +200,7 @@ export const VoiceInput: React.FC<VoiceInputProps> = ({
 
   const handleMouseDown = useCallback(() => {
     if (disabled) return;
-    
+
     console.log("Mouse down - starting to hold");
     setIsHolding(true);
     isHoldingRef.current = true;
@@ -222,15 +222,21 @@ export const VoiceInput: React.FC<VoiceInputProps> = ({
   }, [stopListening]);
 
   // Handle touch events for mobile
-  const handleTouchStart = useCallback((e: React.TouchEvent) => {
-    e.preventDefault();
-    handleMouseDown();
-  }, [handleMouseDown]);
+  const handleTouchStart = useCallback(
+    (e: React.TouchEvent) => {
+      e.preventDefault();
+      handleMouseDown();
+    },
+    [handleMouseDown],
+  );
 
-  const handleTouchEnd = useCallback((e: React.TouchEvent) => {
-    e.preventDefault();
-    handleMouseUp();
-  }, [handleMouseUp]);
+  const handleTouchEnd = useCallback(
+    (e: React.TouchEvent) => {
+      e.preventDefault();
+      handleMouseUp();
+    },
+    [handleMouseUp],
+  );
 
   if (!isSupported) {
     return (
@@ -256,7 +262,7 @@ export const VoiceInput: React.FC<VoiceInputProps> = ({
         "rounded-full select-none transition-all duration-200",
         isHolding && "scale-110 shadow-lg ring-2 ring-blue-400",
         isListening && "animate-pulse",
-        className
+        className,
       )}
       onMouseDown={handleMouseDown}
       onMouseUp={handleMouseUp}
@@ -264,7 +270,9 @@ export const VoiceInput: React.FC<VoiceInputProps> = ({
       onTouchStart={handleTouchStart}
       onTouchEnd={handleTouchEnd}
       disabled={disabled}
-      title={isListening ? t("voice.speakingReleaseToStop") : t("voice.holdToSpeak")}
+      title={
+        isListening ? t("voice.speakingReleaseToStop") : t("voice.holdToSpeak")
+      }
     >
       {isListening ? (
         <div className="relative">

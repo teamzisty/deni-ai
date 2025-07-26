@@ -34,12 +34,12 @@ export const GeminiVoiceInput: React.FC<GeminiVoiceInputProps> = ({
 
   const requestMicrophonePermission = useCallback(async () => {
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ 
+      const stream = await navigator.mediaDevices.getUserMedia({
         audio: {
           echoCancellation: true,
           noiseSuppression: true,
           autoGainControl: true,
-        } 
+        },
       });
       return stream;
     } catch (error) {
@@ -49,42 +49,48 @@ export const GeminiVoiceInput: React.FC<GeminiVoiceInputProps> = ({
     }
   }, [onError]);
 
-  const transcribeAudio = useCallback(async (audioBlob: Blob) => {
-    setIsProcessing(true);
-    try {
-      const formData = new FormData();
-      formData.append("audio", audioBlob, "recording.wav");
+  const transcribeAudio = useCallback(
+    async (audioBlob: Blob) => {
+      setIsProcessing(true);
+      try {
+        const formData = new FormData();
+        formData.append("audio", audioBlob, "recording.wav");
 
-      const response = await fetch("/api/audio/transcribe", {
-        method: "POST",
-        body: formData,
-      });
+        const response = await fetch("/api/audio/transcribe", {
+          method: "POST",
+          body: formData,
+        });
 
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const result = await response.json();
+
+        if (result.error) {
+          throw new Error(result.error);
+        }
+
+        const transcript = result.transcript?.trim();
+        if (transcript) {
+          onTranscript?.(transcript);
+        } else {
+          toast.warning(t("voice.noSpeechDetected"));
+        }
+      } catch (error) {
+        console.error("Transcription error:", error);
+        const errorMessage =
+          error instanceof Error
+            ? error.message
+            : t("voice.transcriptionFailed");
+        onError?.(errorMessage);
+        toast.error(t("voice.transcriptionFailed"));
+      } finally {
+        setIsProcessing(false);
       }
-
-      const result = await response.json();
-      
-      if (result.error) {
-        throw new Error(result.error);
-      }
-
-      const transcript = result.transcript?.trim();
-      if (transcript) {
-        onTranscript?.(transcript);
-      } else {
-        toast.warning(t("voice.noSpeechDetected"));
-      }
-    } catch (error) {
-      console.error("Transcription error:", error);
-      const errorMessage = error instanceof Error ? error.message : t("voice.transcriptionFailed");
-      onError?.(errorMessage);
-      toast.error(t("voice.transcriptionFailed"));
-    } finally {
-      setIsProcessing(false);
-    }
-  }, [onTranscript, onError]);
+    },
+    [onTranscript, onError],
+  );
 
   const startRecording = useCallback(async () => {
     const stream = await requestMicrophonePermission();
@@ -95,11 +101,11 @@ export const GeminiVoiceInput: React.FC<GeminiVoiceInputProps> = ({
       audioChunksRef.current = [];
 
       const mediaRecorder = new MediaRecorder(stream, {
-        mimeType: MediaRecorder.isTypeSupported("audio/webm") 
-          ? "audio/webm" 
-          : "audio/mp4"
+        mimeType: MediaRecorder.isTypeSupported("audio/webm")
+          ? "audio/webm"
+          : "audio/mp4",
       });
-      
+
       mediaRecorderRef.current = mediaRecorder;
 
       mediaRecorder.ondataavailable = (event) => {
@@ -109,17 +115,17 @@ export const GeminiVoiceInput: React.FC<GeminiVoiceInputProps> = ({
       };
 
       mediaRecorder.onstop = () => {
-        const audioBlob = new Blob(audioChunksRef.current, { 
-          type: audioChunksRef.current[0]?.type || "audio/wav" 
+        const audioBlob = new Blob(audioChunksRef.current, {
+          type: audioChunksRef.current[0]?.type || "audio/wav",
         });
-        
+
         if (audioBlob.size > 0) {
           transcribeAudio(audioBlob);
         }
-        
+
         // Clean up stream
         if (streamRef.current) {
-          streamRef.current.getTracks().forEach(track => track.stop());
+          streamRef.current.getTracks().forEach((track) => track.stop());
           streamRef.current = null;
         }
       };
@@ -130,10 +136,10 @@ export const GeminiVoiceInput: React.FC<GeminiVoiceInputProps> = ({
     } catch (error) {
       console.error("Failed to start recording:", error);
       onError?.(t("voice.failedToStartRecording"));
-      
+
       // Clean up on error
       if (streamRef.current) {
-        streamRef.current.getTracks().forEach(track => track.stop());
+        streamRef.current.getTracks().forEach((track) => track.stop());
         streamRef.current = null;
       }
     }
@@ -149,7 +155,7 @@ export const GeminiVoiceInput: React.FC<GeminiVoiceInputProps> = ({
 
   const handleMouseDown = useCallback(() => {
     if (disabled || isProcessing) return;
-    
+
     setIsHolding(true);
     startRecording();
   }, [disabled, isProcessing, startRecording]);
@@ -165,15 +171,21 @@ export const GeminiVoiceInput: React.FC<GeminiVoiceInputProps> = ({
   }, [stopRecording]);
 
   // Handle touch events for mobile
-  const handleTouchStart = useCallback((e: React.TouchEvent) => {
-    e.preventDefault();
-    handleMouseDown();
-  }, [handleMouseDown]);
+  const handleTouchStart = useCallback(
+    (e: React.TouchEvent) => {
+      e.preventDefault();
+      handleMouseDown();
+    },
+    [handleMouseDown],
+  );
 
-  const handleTouchEnd = useCallback((e: React.TouchEvent) => {
-    e.preventDefault();
-    handleMouseUp();
-  }, [handleMouseUp]);
+  const handleTouchEnd = useCallback(
+    (e: React.TouchEvent) => {
+      e.preventDefault();
+      handleMouseUp();
+    },
+    [handleMouseUp],
+  );
 
   const isActive = isRecording || isProcessing;
 
@@ -187,7 +199,7 @@ export const GeminiVoiceInput: React.FC<GeminiVoiceInputProps> = ({
         isHolding && "scale-110 shadow-lg ring-2 ring-blue-400",
         isActive && "animate-pulse",
         isProcessing && "opacity-75",
-        className
+        className,
       )}
       onMouseDown={handleMouseDown}
       onMouseUp={handleMouseUp}
@@ -196,10 +208,10 @@ export const GeminiVoiceInput: React.FC<GeminiVoiceInputProps> = ({
       onTouchEnd={handleTouchEnd}
       disabled={disabled || isProcessing}
       title={
-        isProcessing 
-          ? t("voice.processingAudio") 
-          : isRecording 
-            ? t("voice.recordingReleaseToTranscribe") 
+        isProcessing
+          ? t("voice.processingAudio")
+          : isRecording
+            ? t("voice.recordingReleaseToTranscribe")
             : t("voice.holdToRecordGemini")
       }
     >

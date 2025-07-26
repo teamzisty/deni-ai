@@ -25,7 +25,7 @@ import {
   Plus,
   Trash2,
 } from "lucide-react";
-import { Link } from "@/i18n/navigation"
+import { Link } from "@/i18n/navigation";
 import {
   ContextMenu,
   ContextMenuContent,
@@ -33,7 +33,7 @@ import {
   ContextMenuSeparator,
   ContextMenuTrigger,
 } from "@workspace/ui/components/context-menu";
-import { useParams, } from "next/navigation"
+import { useParams } from "next/navigation";
 import { useRouter } from "@/i18n/navigation";
 import { toast } from "sonner";
 import React, { useEffect } from "react";
@@ -233,7 +233,9 @@ function DraggableConversation({
                   )}
                 </LoadingIndicator>
                 {(() => {
-                  const title = conversation.title || t("chat.sidebar.untitledConversation");
+                  const title =
+                    conversation.title ||
+                    t("chat.sidebar.untitledConversation");
                   const botName = conversation.bot?.name;
                   const hubId = conversation.hub_id;
 
@@ -350,8 +352,9 @@ function ChatSidebarContent() {
         if (success) {
           toast.success(
             t("chat.sidebar.addedToHub", {
-              title: conversation.title || t("chat.sidebar.untitledConversation"),
-              hubName: hub.name
+              title:
+                conversation.title || t("chat.sidebar.untitledConversation"),
+              hubName: hub.name,
             }),
           );
         } else {
@@ -501,7 +504,9 @@ function ChatSidebarContent() {
             </SidebarGroupContent>
           </SidebarGroup>
           <SidebarGroup>
-            <SidebarGroupLabel>{t("chat.sidebar.conversations")}</SidebarGroupLabel>
+            <SidebarGroupLabel>
+              {t("chat.sidebar.conversations")}
+            </SidebarGroupLabel>
             <SidebarGroupContent>
               <SidebarMenu>
                 {loading && (
@@ -530,7 +535,8 @@ function ChatSidebarContent() {
                 <MessageCircle className="h-4 w-4" />
               )}
               <span className="text-sm font-medium">
-                {activeConversation.title || t("chat.sidebar.untitledConversation")}
+                {activeConversation.title ||
+                  t("chat.sidebar.untitledConversation")}
               </span>
             </div>
           </div>

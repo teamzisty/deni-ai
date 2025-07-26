@@ -13,7 +13,7 @@ import { getTranslations } from "next-intl/server";
 
 export default async function StudentBenefitsPage() {
   const t = await getTranslations("student");
-  
+
   const benefits = [
     {
       icon: <Zap className="h-6 w-6" />,
@@ -41,9 +41,7 @@ export default async function StudentBenefitsPage() {
           {t("badge")}
         </Badge>
         <h1 className="text-4xl font-bold mb-4">{t("title")}</h1>
-        <p className="text-xl text-muted-foreground mb-6">
-          {t("subtitle")}
-        </p>
+        <p className="text-xl text-muted-foreground mb-6">{t("subtitle")}</p>
       </div>
 
       <div className="grid md:grid-cols-3 gap-6 mb-12">
@@ -65,9 +63,7 @@ export default async function StudentBenefitsPage() {
       <Card className="mb-8">
         <CardHeader>
           <CardTitle className="text-2xl">{t("included.title")}</CardTitle>
-          <CardDescription>
-            {t("included.description")}
-          </CardDescription>
+          <CardDescription>{t("included.description")}</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="grid md:grid-cols-2 gap-4">
@@ -84,9 +80,7 @@ export default async function StudentBenefitsPage() {
       <Card className="bg-gradient-to-r from-primary/10 to-secondary/10 border-primary/20">
         <CardContent className="p-8 text-center">
           <h3 className="text-2xl font-bold mb-4">{t("cta.title")}</h3>
-          <p className="text-muted-foreground mb-6">
-            {t("cta.description")}
-          </p>
+          <p className="text-muted-foreground mb-6">{t("cta.description")}</p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Button disabled size="lg">
               {t("cta.apply")}

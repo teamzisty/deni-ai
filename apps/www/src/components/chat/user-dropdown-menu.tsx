@@ -19,7 +19,12 @@ import { useSupabase } from "@/context/supabase-context";
 import { toast } from "sonner";
 import { useRouter } from "@/i18n/navigation";
 import { LogOut, SettingsIcon, User } from "lucide-react";
-import { BRAND_NAME, models, PREMIUM_USES_LIMIT, VERSION } from "@/lib/constants";
+import {
+  BRAND_NAME,
+  models,
+  PREMIUM_USES_LIMIT,
+  VERSION,
+} from "@/lib/constants";
 import { useSettingsDialog } from "@/context/settings-dialog-context";
 import { useTranslations } from "@/hooks/use-translations";
 
@@ -101,9 +106,18 @@ export function UserDropdownMenu() {
                     <div key={u.model} className="space-y-1 w-full">
                       <div className="flex justify-between text-xs">
                         <span>{models[u.model]?.name}</span>
-                        <span>{t("chat.userMenu.uses", { count: u.count })}</span>
+                        <span>
+                          {t("chat.userMenu.uses", { count: u.count })}
+                        </span>
                       </div>
-                      <Progress value={u.count} max={PREMIUM_USES_LIMIT === -1 ? Infinity : PREMIUM_USES_LIMIT} />
+                      <Progress
+                        value={u.count}
+                        max={
+                          PREMIUM_USES_LIMIT === -1
+                            ? Infinity
+                            : PREMIUM_USES_LIMIT
+                        }
+                      />
                     </div>
                   ))}
               </div>

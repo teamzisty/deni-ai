@@ -91,9 +91,7 @@ export default async function UpgradePage() {
     return (
       <div className="h-full w-full flex items-center justify-center">
         <div className="text-center">
-          <h1 className="text-3xl font-bold mb-4">
-            {t("notReady.title")}
-          </h1>
+          <h1 className="text-3xl font-bold mb-4">{t("notReady.title")}</h1>
           <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
             {t("notReady.description")}
           </p>
@@ -159,7 +157,9 @@ export default async function UpgradePage() {
                 }
                 disabled={plan.current}
               >
-                {plan.current ? t("currentPlan") : t("upgradeTo", { planName: plan.name })}
+                {plan.current
+                  ? t("currentPlan")
+                  : t("upgradeTo", { planName: plan.name })}
               </Button>
             </CardContent>
           </Card>
@@ -193,7 +193,9 @@ export default async function UpgradePage() {
                   className="w-full mt-auto"
                   variant={plan.name === "Team" ? "default" : "outline"}
                 >
-                  {plan.name === t("plans.team.name") ? t("upgradeToTeam") : t("contactUs")}
+                  {plan.name === t("plans.team.name")
+                    ? t("upgradeToTeam")
+                    : t("contactUs")}
                 </Button>
               </CardContent>
             </Card>
@@ -202,9 +204,7 @@ export default async function UpgradePage() {
       </div>
 
       <div className="text-center mt-12">
-        <p className="text-muted-foreground">
-          {t("trialInfo")}
-        </p>
+        <p className="text-muted-foreground">{t("trialInfo")}</p>
       </div>
     </div>
   );

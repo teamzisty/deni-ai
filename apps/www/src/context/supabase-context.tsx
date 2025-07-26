@@ -51,12 +51,21 @@ export function SupabaseProvider({ children }: { children: React.ReactNode }) {
     const target = usage?.find((u) => u.model === model);
     if (target) {
       const updatedUsage = usage?.map((u) =>
-        u.model === model ? { ...u, count: u.count + 1, remaining: u.remaining - 1 } : u,
+        u.model === model
+          ? { ...u, count: u.count + 1, remaining: u.remaining - 1 }
+          : u,
       );
       if (!updatedUsage) return;
       setUsage(updatedUsage);
     } else {
-      const newUsage = { model, count: 1, limit: 30, canUse: true, premium: models[model]?.premium || false, remaining: 29 } as UsageInfo;
+      const newUsage = {
+        model,
+        count: 1,
+        limit: 30,
+        canUse: true,
+        premium: models[model]?.premium || false,
+        remaining: 29,
+      } as UsageInfo;
       setUsage((prev) => (prev ? [...prev, newUsage] : [newUsage]));
       console.log(`Added new usage for model ${model}: 1 use`);
     }
@@ -65,33 +74,76 @@ export function SupabaseProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange(async (event, session) => {
-      setSession(session);
-      setUser(session?.user ?? null);
+    } = supabase.auth.onAuthStateChange(async (event, newSession) => {
+      if (newSession?.user?.id === session?.user?.id) return;
+      setSession(newSession);
+      setUser(newSession?.user ?? null);
       setLoading(false);
 
-
-      if (session?.user) {
+      if (newSession?.user) {
         const getSsData = async () => {
           try {
-            // Check if we have server-side user data
-            const ssData = await secureFetch("/api/user");
-            if (ssData.ok) {
-              const { user } = await ssData.json();
-              setSsUserData(user);
+            // Get user data directly from Supabase
+            const { data, error } = await supabase
+              .from("users")
+              .select("*")
+              .eq("id", newSession.user.id)
+              .single();
+
+            if (error) {
+              console.error("Supabase error:", error);
+              return;
             }
+
+            setSsUserData(data);
           } catch (error) {
             console.error(error);
           }
         };
         const getUsage = async () => {
           try {
-            // Fetch usage information
-            const usageData = await secureFetch("/api/user/usage");
-            if (usageData.ok) {
-              const { usage } = await usageData.json();
-              setUsage(usage);
+            const today = new Date().toISOString().split("T")[0];
+
+            // Get all usage data for today in a single query
+            const { data: usageData, error } = await supabase
+              .from("uses")
+              .select("model, count")
+              .eq("user_id", newSession.user.id)
+              .eq("date", today);
+
+            if (error) {
+              console.error("Supabase error:", error);
+              return;
             }
+
+            // Create a map for quick lookup
+            const usageMap = new Map<string, number>();
+            if (usageData) {
+              for (const usage of usageData) {
+                usageMap.set(usage.model, usage.count);
+              }
+            }
+
+            // Generate results for all models - simplified version
+            const results: UsageInfo[] = [];
+            for (const [modelKey, modelData] of Object.entries(models)) {
+              const currentCount = usageMap.get(modelKey) ?? 0;
+              const premium = models[modelKey]?.premium || false;
+              const limit = premium ? 30 : -1; // Simplified: 30 for premium, unlimited for others
+              const canUse = limit === -1 || currentCount < limit;
+              const remaining = limit === -1 ? -1 : Math.max(0, limit - currentCount);
+
+              results.push({
+                model: modelKey,
+                count: currentCount,
+                limit,
+                premium,
+                canUse,
+                remaining,
+              });
+            }
+
+            setUsage(results);
           } catch (error) {
             console.error(error);
           }

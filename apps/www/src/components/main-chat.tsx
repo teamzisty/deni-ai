@@ -4,7 +4,7 @@ import { Message, useChat, UseChatOptions } from "@ai-sdk/react";
 import { useEffect, useRef, useState, useCallback, useMemo, memo } from "react";
 import ChatInput from "./chat/input";
 import { MobileModelSelector } from "./chat/input-components";
-import { redirect, } from "next/navigation"
+import { redirect } from "next/navigation";
 import { useRouter } from "@/i18n/navigation";
 import { AlertTriangle, Dot, Loader2 } from "lucide-react";
 import { ERROR_MAPPING, loading_words } from "@/lib/constants";
@@ -59,8 +59,8 @@ const MainChat = memo<MainChatProps>(
         setImage(res[0]?.ufsUrl || null);
       },
       onUploadError: (error: Error) => {
-        toast.error(t('chat.imageUpload.failed'), {
-          description: `${t('chat.imageUpload.errorOccurred')}: ${error.message}`,
+        toast.error(t("chat.imageUpload.failed"), {
+          description: `${t("chat.imageUpload.errorOccurred")}: ${error.message}`,
         });
       },
     });
@@ -159,7 +159,7 @@ const MainChat = memo<MainChatProps>(
         setTitleApplied(true);
         updateConversationTitle(
           initialConversation.id,
-          (title as string) || t('chat.message.untitledConversation'),
+          (title as string) || t("chat.message.untitledConversation"),
         );
       }
     }, [data]);
@@ -167,7 +167,7 @@ const MainChat = memo<MainChatProps>(
     useEffect(() => {
       setLoadingWord(
         loading_words[Math.floor(Math.random() * loading_words.length)] ||
-          t('common.loading'),
+          t("common.loading"),
       );
     }, [t]);
 
@@ -178,8 +178,8 @@ const MainChat = memo<MainChatProps>(
         try {
           await startUpload([file]);
         } catch (error) {
-          toast.error(t('chat.imageUpload.failed'), {
-            description: `${t('chat.imageUpload.errorOccurred')}: ${error}`,
+          toast.error(t("chat.imageUpload.failed"), {
+            description: `${t("chat.imageUpload.errorOccurred")}: ${error}`,
           });
         }
       },
@@ -192,15 +192,15 @@ const MainChat = memo<MainChatProps>(
 
     const welcomeMessage = useMemo(() => {
       if (researchMode !== "disabled") {
-        return t('chat.welcome.research');
+        return t("chat.welcome.research");
       }
       if (search) {
-        return t('chat.welcome.search');
+        return t("chat.welcome.search");
       }
       if (canvas) {
-        return t('chat.welcome.canvas');
+        return t("chat.welcome.canvas");
       }
-      return t('chat.welcome.default');
+      return t("chat.welcome.default");
     }, [researchMode, search, canvas, t]);
 
     if (loading && loadingWord) {
@@ -216,7 +216,7 @@ const MainChat = memo<MainChatProps>(
       <main className="h-full flex flex-col relative">
         {/* Mobile model selector at top center */}
         <MobileModelSelector model={model} setModel={setModel} />
-        
+
         {messages.length === 0 && (
           <div className="text-center mb-12 w-full h-full flex items-center justify-center flex-col">
             <h1
@@ -230,19 +230,20 @@ const MainChat = memo<MainChatProps>(
                 <span className="bg-gradient-to-r from-pink-400 to-sky-500 bg-clip-text text-transparent capitalize">
                   {ssUserData?.plan}
                 </span>{" "}
-                {t('chat.welcome.planActive')}
+                {t("chat.welcome.planActive")}
               </span>
             )}
             {(!ssUserData?.plan ||
               !ssUserData ||
               ssUserData?.plan === "free") && (
               <div className="flex items-center font-semibold text-sm">
-                {t('chat.welcome.freePlan')} <Dot size={16} className="text-foreground" />{" "}
+                {t("chat.welcome.freePlan")}{" "}
+                <Dot size={16} className="text-foreground" />{" "}
                 <Link
                   href="/upgrade"
                   className="text-blue-500 dark:text-blue-400 underline-offset-3 hover:underline"
                 >
-                  {t('chat.welcome.upgradePlan')}
+                  {t("chat.welcome.upgradePlan")}
                 </Link>
               </div>
             )}
@@ -279,7 +280,7 @@ const MainChat = memo<MainChatProps>(
               </div>
               <div className="flex-1">
                 <h3 className="text-sm font-medium text-destructive">
-                  {t('common.error.title')}
+                  {t("common.error.title")}
                 </h3>
                 <p className="text-sm text-muted-foreground">
                   {ERROR_MAPPING[error.message] || error.message}
@@ -316,7 +317,7 @@ const MainChat = memo<MainChatProps>(
           />
           {initialConversation?.bot && (
             <div className="text-center text-sm mt-2 text-muted-foreground">
-              {t('chat.botSession.message')}
+              {t("chat.botSession.message")}
             </div>
           )}
         </div>

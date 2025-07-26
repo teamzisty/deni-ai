@@ -57,13 +57,16 @@ export default function GeneralSettings() {
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
                 <DropdownMenuItem onClick={() => setTheme("light")}>
-                  {t("light")} {theme === "light" && <Check className="ml-auto" />}
+                  {t("light")}{" "}
+                  {theme === "light" && <Check className="ml-auto" />}
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={() => setTheme("dark")}>
-                  {t("dark")} {theme === "dark" && <Check className="ml-auto" />}
+                  {t("dark")}{" "}
+                  {theme === "dark" && <Check className="ml-auto" />}
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={() => setTheme("system")}>
-                  {t("system")} {theme === "system" && <Check className="ml-auto" />}
+                  {t("system")}{" "}
+                  {theme === "system" && <Check className="ml-auto" />}
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
