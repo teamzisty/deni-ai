@@ -17,7 +17,6 @@ import { toast } from "sonner";
 import { Link } from "@/i18n/navigation";
 import { BranchTree } from "./chat/branch-tree";
 import { ShareButton } from "./chat/share-button";
-import { SidebarTrigger } from "@workspace/ui/components/sidebar";
 import { useTranslations } from "@/hooks/use-translations";
 
 interface MainChatProps {
@@ -186,6 +185,10 @@ const MainChat = memo<MainChatProps>(
       },
       [startUpload, t],
     );
+
+    if (!initialConversation) {
+      redirect("/chat");
+    }
 
     const welcomeMessage = useMemo(() => {
       if (researchMode !== "disabled") {

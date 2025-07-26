@@ -2,8 +2,7 @@
 
 import { useState, useRef, useEffect } from "react";
 import { Button } from "@workspace/ui/components/button";
-import { Card } from "@workspace/ui/components/card";
-import { X, Plus, Edit, Trash2, GripVertical, Hash, Type, Code2, List, Eye, Download, Maximize2, Minimize2 } from "lucide-react";
+import { X, Plus, Edit, Trash2, GripVertical, Hash, Type, Code2, List, Eye, Download } from "lucide-react";
 import { motion, Reorder } from "framer-motion";
 import ReactMarkdown, { Components } from "react-markdown";
 import remarkGfm from "remark-gfm";

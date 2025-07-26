@@ -5,22 +5,18 @@ import { useConversations } from "@/hooks/use-conversations";
 import { loading_words } from "@/lib/constants";
 import { Loader2 } from "lucide-react";
 import { useParams, useSearchParams } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 
 export default function ChatPage() {
   const params = useParams();
   const searchParams = useSearchParams();
 
-  const [loadingWord, setLoadingWord] = useState<string>("");
+  const [loadingWord] = useState<string>(
+    loading_words[Math.floor(Math.random() * loading_words.length)] ||
+      "Please wait...",
+  );
 
   const { conversations, loading } = useConversations();
-
-  useEffect(() => {
-    setLoadingWord(
-      loading_words[Math.floor(Math.random() * loading_words.length)] ||
-        "Please wait...",
-    );
-  }, []);
 
   if (loading && loadingWord) {
     return (

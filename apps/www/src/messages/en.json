@@ -7,8 +7,6 @@
     "features": "Features",
     "search": "Search",
     "searchDescription": "Search the web with AI.",
-    "intellipulse": "Intellipulse",
-    "intellipulseDescription": "The new generation of vibe coding.",
     "resources": "Resources",
     "docs": "Docs",
     "gettingStarted": "Getting Started",
@@ -616,7 +614,6 @@
   "footer": {
     "features": "Features",
     "search": "Search",
-    "intellipulse": "Intellipulse",
     "resources": "Resources",
     "docs": "Docs",
     "gettingStarted": "Getting Started",
@@ -634,100 +631,6 @@
     "projects": "Projects",
     "copyright": "© {year} Veltrix.",
     "status": "Status"
-  },
-  "intellipulse": {
-    "title": "Intellipulse",
-    "subtitle": "The new generation of vibe coding",
-    "description": "Experience the future of coding with AI-powered assistance that understands your flow and enhances your productivity",
-    "features": {
-      "webBased": {
-        "title": "Web-Based",
-        "description": "Code anywhere with our powerful web interface",
-        "content": "No installation required. Start coding instantly in your browser with full AI assistance."
-      },
-      "vsCodeExtension": {
-        "title": "VS Code Extension",
-        "description": "Bring Intellipulse directly to your favorite editor",
-        "content": "Seamless integration with VS Code for developers who prefer their familiar environment.",
-        "comingSoon": "Coming Soon"
-      },
-      "freeUnlimited": {
-        "title": "Free & Unlimited",
-        "description": "No limits, no subscriptions, just pure coding joy",
-        "content": "Enjoy unlimited AI-powered coding assistance without any restrictions or paywalls."
-      }
-    },
-    "keyFeatures": {
-      "title": "What makes Intellipulse special?",
-      "vibeBasedCoding": {
-        "title": "Vibe-Based Coding",
-        "description": "AI that understands your coding style and adapts to your workflow"
-      },
-      "intelligentSuggestions": {
-        "title": "Intelligent Suggestions",
-        "description": "Context-aware code completions and refactoring suggestions"
-      },
-      "multiLanguageSupport": {
-        "title": "Multi-Language Support",
-        "description": "Works with all popular programming languages and frameworks"
-      },
-      "realTimeCollaboration": {
-        "title": "Real-time Collaboration",
-        "description": "Share your coding sessions and get help from the community"
-      },
-      "privacyFirst": {
-        "title": "Privacy First",
-        "description": "Your code is in local, we never store or share your data."
-      },
-      "zeroSetup": {
-        "title": "Zero Setup",
-        "description": "Start coding immediately without any configuration"
-      }
-    },
-    "cta": {
-      "title": "Ready to experience the future of coding?",
-      "subtitle": "Join thousands of developers who are already coding with Intellipulse",
-      "tryWebVersion": "Try Web Version",
-      "vsCodeExtension": "VS Code Extension (Coming Soon)"
-    }
-  },
-  "intellipulseHomePage": {
-    "title": "Intellipulse",
-    "button": "Start New Session",
-    "welcomeTitle": "Welcome to Intellipulse",
-    "welcomeDescription": "Start a conversation to begin your development session. Ask questions, get code assistance, or explore ideas.",
-    "inputPlaceholder": "Type your message to start a new session...",
-    "sendButton": "Send",
-    "quickStartSuggestions": {
-      "createReactComponent": {
-        "title": "Create React Component",
-        "description": "Get help building a new React component",
-        "prompt": "Help me create a new React component"
-      },
-      "debugCode": {
-        "title": "Debug Code",
-        "description": "Find and fix issues in your code",
-        "prompt": "Debug my code issue"
-      },
-      "explainCode": {
-        "title": "Code Explanation",
-        "description": "Understand how code works",
-        "prompt": "Explain this code to me"
-      },
-      "optimizePerformance": {
-        "title": "Performance Tips",
-        "description": "Improve your app's performance",
-        "prompt": "Optimize my application performance"
-      }
-    }
-  },
-  "intellipulseSidebar": {
-    "newIntellipulseChat": "New Intellipulse Chat",
-    "intellipulse": "Intellipulse",
-    "backToHome": "Back to Home",
-    "quickActions": "Quick Actions",
-    "recentSessions": "Recent Sessions",
-    "publicBeta": "Public Beta: May not work as expected"
   },
   "sidebar": {
     "today": "Today",
@@ -966,36 +869,6 @@
         }
       }
     }
-  },
-  "intellipulseSessions": {
-    "sessionsCleared": "All sessions cleared successfully",
-    "sessionsImported": "{count} sessions imported successfully",
-    "importError": "Failed to import sessions"
-  },
-  "intellipulseMessageLog": {
-    "writeAction": "Write file: {path}",
-    "readAction": "Read file: {path}",
-    "listAction": "List directory: {path}",
-    "genericAction": "Action: {action}",
-    "actionLabel": "Action",
-    "commandLabel": "Command",
-    "pathLabel": "Path",
-    "dependsOnLabel": "Depends on",
-    "executionPlan": "Execution Plan",
-    "stepsCount": "{count} steps",
-    "executing": "Executing",
-    "executeSequence": "Execute Sequence",
-    "statusRunning": "(Running)",
-    "statusCompleted": "(Completed)",
-    "statusFailed": "(Failed)",
-    "toggleOutput": "View Output",
-    "executionNote": "Click the execute button to run these steps sequentially."
-  },
-  "intellipulseChat": {
-    "initialMessageSent": "Initial message sent successfully",
-    "sendMessageLog": "Sending message: {message}",
-    "sendImageLog": "Sending image with message",
-    "regenerateWarning": "Regenerating with different model"
   },
   "voice": {
     "authRequired": {

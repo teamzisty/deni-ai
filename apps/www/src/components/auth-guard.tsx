@@ -24,7 +24,8 @@ export function AuthGuard({
 
   useEffect(() => {
     setLoadingWord(
-      loading_words[Math.floor(Math.random() * loading_words.length)],
+      loading_words[Math.floor(Math.random() * loading_words.length)] ||
+        "Please wait...",
     );
     if (!loading && !user) {
       router.push(redirectTo);

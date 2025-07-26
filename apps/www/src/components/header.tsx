@@ -48,11 +48,6 @@ export default function Header() {
           label: t("search"),
           description: t("searchDescription"),
         },
-        {
-          href: "/features/intellipulse",
-          label: t("intellipulse"),
-          description: t("intellipulseDescription"),
-        },
       ],
     },
     {

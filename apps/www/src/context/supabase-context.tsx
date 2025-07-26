@@ -68,6 +68,8 @@ export function SupabaseProvider({ children }: { children: React.ReactNode }) {
     } = supabase.auth.onAuthStateChange(async (event, session) => {
       setSession(session);
       setUser(session?.user ?? null);
+      setLoading(false);
+
 
       if (session?.user) {
         const getSsData = async () => {
@@ -96,7 +98,6 @@ export function SupabaseProvider({ children }: { children: React.ReactNode }) {
         };
         await Promise.all([getSsData(), getUsage()]);
       }
-      setLoading(false);
     });
 
     return () => subscription.unsubscribe();
