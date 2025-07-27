@@ -361,7 +361,9 @@ export default async function Home() {
           <br />
           {t("cta.title", { brandName: BRAND_NAME })}
         </p>
-        <Button size="lg">{t("cta.gettingStarted")}</Button>
+        <Button size="lg">
+          <Link href="/chat">{t("cta.gettingStarted")}</Link>
+        </Button>
       </section>
 
       {/* Final CTA with Large Button */}
@@ -369,7 +371,7 @@ export default async function Home() {
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <h2 className="text-3xl font-bold mb-8">{t("cta.startChatting")}</h2>
           <Button variant="secondary" size="lg">
-            {t("cta.getStartedFree")}
+            <Link href="/chat">{t("cta.getStartedFree")}</Link>
           </Button>
         </div>
       </section>
