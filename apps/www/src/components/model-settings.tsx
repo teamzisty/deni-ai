@@ -53,7 +53,7 @@ export default function ModelSettings() {
     features: {
       vision: false,
       fast: false,
-      reasoning: false,
+      reasoningText: false,
       tools: false,
       experimental: false,
     },
@@ -91,7 +91,7 @@ export default function ModelSettings() {
       features: {
         vision: false,
         fast: false,
-        reasoning: false,
+        reasoningText: false,
         tools: false,
         experimental: false,
       },
@@ -266,7 +266,7 @@ export default function ModelSettings() {
                     <div className="flex items-center space-x-2">
                       <Checkbox
                         id="reasoning"
-                        checked={filters.features.reasoning}
+                        checked={filters.features.reasoningText}
                         onCheckedChange={() =>
                           toggleFilter("features", "reasoning")
                         }

@@ -8,38 +8,11 @@ import {
   useContext,
   ReactNode,
 } from "react";
-import { useSupabase } from "@/context/supabase-context";
+import { useAuth } from "@/context/auth-context";
 import { toast } from "sonner";
+import { trpc } from "@/trpc/client";
+import { Settings, DEFAULT_SETTINGS } from "@/lib/schemas/settings";
 
-// Define the settings interface
-export interface Settings {
-  advancedSearch: boolean;
-  autoScroll: boolean;
-  privacyMode: boolean;
-  hubs: boolean;
-  bots: boolean;
-  branch: boolean;
-  voice: boolean;
-  conversationsPrivacyMode: boolean;
-  modelVisibility?: Record<string, boolean>;
-  colorTheme?: string;
-  // Add more settings here as needed
-}
-
-// Default settings
-const DEFAULT_SETTINGS: Settings = {
-  advancedSearch: false,
-  autoScroll: true,
-  privacyMode: false,
-  bots: true,
-  hubs: true,
-  branch: true,
-  voice: true,
-  conversationsPrivacyMode: false,
-  colorTheme: "blue",
-};
-
-const SUPABASE_TABLE = "user_settings";
 const LOCAL_STORAGE_KEY = "settings";
 
 // Define context interface
@@ -60,184 +33,42 @@ const SettingsContext = createContext<SettingsContextValue | undefined>(
 
 // Provider component
 export function SettingsProvider({ children }: { children: ReactNode }) {
-  const { user, supabase } = useSupabase();
+  const { user } = useAuth();
   const [settings, setSettings] = useState<Settings>(DEFAULT_SETTINGS);
-  const [isLoading, setIsLoading] = useState(true);
-  const [recordExists, setRecordExists] = useState(false);
-
-  // Load settings from Supabase or localStorage
-  useEffect(() => {
-    const loadSettings = async () => {
-      setIsLoading(true);
-
-      try {
-        if (user && user.id && supabase) {
-          // Try to load from Supabase
-          const { data, error } = await supabase
-            .from(SUPABASE_TABLE)
-            .select("settings")
-            .eq("user_id", user.id)
-            .single();
-          if (!error && data) {
-            // Ensure data.settings is properly parsed if it's a string
-            let parsedSettings = data.settings;
-            if (typeof data.settings === "string") {
-              try {
-                parsedSettings = JSON.parse(data.settings);
-              } catch (e) {
-                console.error("Error parsing settings from Supabase:", e);
-                parsedSettings = {};
-              }
-            }
-
-            // Merge with defaults to ensure all properties exist
-            const loadedSettings = {
-              ...DEFAULT_SETTINGS,
-              ...parsedSettings,
-            };
-            setSettings(loadedSettings);
-            setRecordExists(true);
-          } else {
-            // No settings in Supabase yet, use defaults
-            setSettings(DEFAULT_SETTINGS);
-            setRecordExists(false);
-          }
-        } else {
-          // Try to load from localStorage
-          const storedSettings = localStorage.getItem(LOCAL_STORAGE_KEY);
-          if (storedSettings) {
-            try {
-              const parsedSettings = JSON.parse(storedSettings);
-              // Merge with defaults to ensure all properties exist
-              setSettings({ ...DEFAULT_SETTINGS, ...parsedSettings });
-            } catch (error) {
-              console.error("Error parsing settings from localStorage", error);
-              setSettings(DEFAULT_SETTINGS);
-            }
-          } else {
-            setSettings(DEFAULT_SETTINGS);
-          }
-        }
-      } catch (error) {
-        console.error("Failed to load settings:", error);
-        // Fallback to defaults
-        setSettings(DEFAULT_SETTINGS);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-    loadSettings();
-  }, [user, supabase]);
+  const { data: userSettingsData, isLoading: isLoading } = trpc.settings.getSettings.useQuery();
+  const { mutateAsync: updateSettings } = trpc.settings.updateSettings.useMutation();
 
   // Update a single setting
   const updateSetting = useCallback(
-    async <K extends keyof Settings>(key: K, value: Settings[K]) => {
-      // Use functional update to get current settings
-      setSettings((currentSettings) => {
-        // Ensure currentSettings is a proper object, not a string
-        let validCurrentSettings = currentSettings;
-        if (typeof currentSettings === "string") {
-          try {
-            validCurrentSettings = JSON.parse(currentSettings);
-          } catch (e) {
-            console.error("Error parsing current settings:", e);
-            validCurrentSettings = DEFAULT_SETTINGS;
-          }
-        }
-
-        const newSettings = {
-          ...validCurrentSettings,
-          [key]: value,
-        };
-
-        console.log("New settings to save:", newSettings);
-
-        // Save to the appropriate storage (async operation)
-        (async () => {
-          try {
-            if (user && user.id && supabase) {
-              // Save to Supabase - update existing record or create new one
-              if (recordExists) {
-                // Update existing record
-                const { error } = await supabase
-                  .from(SUPABASE_TABLE)
-                  .update({
-                    settings: newSettings,
-                  })
-                  .eq("user_id", user.id);
-
-                if (error) throw error;
-              } else {
-                // Create new record
-                const { error } = await supabase.from(SUPABASE_TABLE).insert({
-                  user_id: user.id,
-                  settings: newSettings,
-                });
-
-                if (error) throw error;
-                setRecordExists(true);
-              }
-            } else {
-              // Save to localStorage
-              localStorage.setItem(
-                LOCAL_STORAGE_KEY,
-                JSON.stringify(newSettings),
-              );
-            }
-          } catch (error) {
-            console.error(`Failed to save setting ${String(key)}:`, error);
-            toast.error("Failed to save settings");
-            // Revert state on error
-            setSettings(validCurrentSettings);
-          }
-        })();
-
-        return newSettings;
-      });
+    async (key: keyof Settings, value: Settings[keyof Settings]) => {
+      try {
+        const newSettings = { ...settings, [key]: value };
+        setSettings(newSettings);
+        await updateSettings(newSettings);
+      } catch (error) {
+        console.error("Failed to update setting:", error);
+        toast.error("Failed to update setting");
+      }
     },
-    [user, supabase, recordExists],
+    [user, settings],
   );
 
   // Reset settings to defaults
   const resetSettings = useCallback(async () => {
     try {
-      if (user && user.id && supabase) {
-        // Reset in Supabase - update existing record or create new one
-        if (recordExists) {
-          // Update existing record
-          const { error } = await supabase
-            .from(SUPABASE_TABLE)
-            .update({
-              settings: DEFAULT_SETTINGS,
-            })
-            .eq("user_id", user.id);
-
-          if (error) throw error;
-        } else {
-          // Create new record
-          const { error } = await supabase.from(SUPABASE_TABLE).insert({
-            user_id: user.id,
-            settings: DEFAULT_SETTINGS,
-          });
-
-          if (error) throw error;
-          setRecordExists(true);
-        }
-      } else {
-        // Reset in localStorage
-        localStorage.setItem(
-          LOCAL_STORAGE_KEY,
-          JSON.stringify(DEFAULT_SETTINGS),
-        );
-      }
-
+      await updateSettings(DEFAULT_SETTINGS);
       setSettings(DEFAULT_SETTINGS);
-      toast.success("Settings reset successfully");
     } catch (error) {
       console.error("Failed to reset settings:", error);
       toast.error("Failed to reset settings");
     }
-  }, [user, supabase, recordExists]);
+  }, [updateSettings]);
+
+  useEffect(() => {
+    if (userSettingsData) {
+      setSettings(userSettingsData.settings as unknown as Settings);
+    }
+  }, [userSettingsData]);
 
   // Create context value
   const value: SettingsContextValue = {

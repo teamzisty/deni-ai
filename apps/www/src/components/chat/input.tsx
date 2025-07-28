@@ -1,6 +1,6 @@
 "use client";
 
-import { UseChatHelpers } from "@ai-sdk/react";
+import { UIMessage, UseChatHelpers } from "@ai-sdk/react";
 import { useState, memo, useCallback, useRef, useEffect } from "react";
 import { InputActions } from "./input-components";
 import { Button } from "@workspace/ui/components/button";
@@ -28,9 +28,9 @@ export const useResearchModeMappingIntl = () => {
 };
 
 interface ChatInputProps {
-  handleSubmit: UseChatHelpers["handleSubmit"];
-  handleInputChange: UseChatHelpers["handleInputChange"];
-  input: UseChatHelpers["input"];
+  input: string;
+  sendMessage: UseChatHelpers<UIMessage>["sendMessage"];
+  setInput: (input: string) => void;
   thinkingEffort?: "disabled" | "low" | "medium" | "high";
   model?: string;
   canvas?: boolean;
@@ -58,8 +58,8 @@ const ChatInput = memo<ChatInputProps>(
     image = null,
     isUploading = false,
     handleImageUpload,
-    handleSubmit,
-    handleInputChange,
+    sendMessage,
+    setInput,
     setModel,
     setCanvas,
     setSearch,
@@ -87,13 +87,15 @@ const ChatInput = memo<ChatInputProps>(
       (event: React.KeyboardEvent<HTMLTextAreaElement>) => {
         if (event.key === "Enter" && !event.shiftKey) {
           event.preventDefault();
-          handleSubmit(event, {
-            experimental_attachments: image
+          sendMessage({
+            text: input,
+            files: image
               ? [
                   {
-                    name: "image",
-                    contentType: "image/*",
+                    type: "file",
                     url: image,
+                    filename: "image.png",
+                    mediaType: "image/*"
                   },
                 ]
               : undefined,
@@ -104,7 +106,7 @@ const ChatInput = memo<ChatInputProps>(
           }
         }
       },
-      [handleSubmit, image, setImage],
+      [sendMessage, image, setImage, input],
     );
 
     return (
@@ -113,13 +115,15 @@ const ChatInput = memo<ChatInputProps>(
         <div>
           <form
             onSubmit={(event) => {
-              handleSubmit(event, {
-                experimental_attachments: image
+              sendMessage({
+                text: input,
+                files: image
                   ? [
                       {
-                        name: "image",
-                        contentType: "image/*",
+                        type: "file",
                         url: image,
+                        filename: "image.png",
+                        mediaType: "image/*"
                       },
                     ]
                   : undefined,
@@ -156,7 +160,7 @@ const ChatInput = memo<ChatInputProps>(
                 ref={textareaRef}
                 value={input}
                 onChange={(e) => {
-                  handleInputChange(e);
+                  setInput(e.target.value);
                   adjustHeight();
                 }}
                 onKeyDown={handleKeyDown}

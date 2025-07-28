@@ -1,16 +1,17 @@
 import z from "zod/v4";
-import { createSupabaseServer } from "./supabase/server";
+import { db, bots } from "./db";
+import { eq } from "drizzle-orm";
 
 export interface Bot {
   id: string;
-  user_id: string;
+  userId: string;
   name: string;
   description: string;
-  system_instruction: string;
+  systemInstruction: string;
   instructions: { content: string }[];
   // visibility: "public" | "unlisted" | "private";
-  created_at: string;
-  updated_at: string;
+  createdAt: Date;
+  updatedAt: Date;
 }
 
 export interface ClientBot {
@@ -28,30 +29,38 @@ export interface ClientBot {
 
 export const BotSchema = z.object({
   id: z.string(),
-  user_id: z.string(),
+  userId: z.string(),
   name: z.string(),
   description: z.string(),
-  system_instruction: z.string(),
+  systemInstruction: z.string(),
   instructions: z.array(z.object({ content: z.string() })),
   visibility: z.enum(["public", "unlisted", "private"]),
-  created_at: z.string(),
-  updated_at: z.string(),
+  createdAt: z.date(),
+  updatedAt: z.date(),
 });
 
 export const getBot = async (id: string): Promise<Bot | null> => {
   try {
-    const supabase = await createSupabaseServer();
-    const { data, error } = await supabase
-      .from("bots")
-      .select("*")
-      .eq("id", id)
-      .single();
-    if (error || !data) {
+    const [bot] = await db
+      .select()
+      .from(bots)
+      .where(eq(bots.id, id))
+      .limit(1);
+
+    if (!bot) {
       return null;
     }
-    const bot = data as Bot;
 
-    return bot;
+    return {
+      id: bot.id,
+      userId: bot.userId,
+      name: bot.name,
+      description: bot.description || "",
+      systemInstruction: bot.systemInstruction || "",
+      instructions: (bot.instructions as { content: string }[]) || [],
+      createdAt: bot.createdAt!,
+      updatedAt: bot.updatedAt!,
+    };
   } catch (error) {
     console.error("Error fetching bot:", error);
     return null;

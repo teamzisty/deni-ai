@@ -5,25 +5,24 @@ import { Button } from "@workspace/ui/components/button";
 import { Share2 } from "lucide-react";
 import { toast } from "sonner";
 import { Conversation } from "@/lib/conversations";
-import { User } from "@supabase/supabase-js";
-import { Message } from "ai";
-import { useSupabase } from "@/context/supabase-context";
+import { UIMessage } from "ai";
+import { useAuth } from "@/context/auth-context";
 import { useTranslations } from "@/hooks/use-translations";
+import { User } from "better-auth";
+import { trpc } from "@/trpc/client";
 
 interface ShareButtonProps {
   conversation: Conversation | undefined;
   user: User | null;
-  messages: Message[];
-  authToken: string;
+  messages: UIMessage[];
 }
 
 export const ShareButton: FC<ShareButtonProps> = ({
   conversation,
   user,
   messages,
-  authToken,
 }) => {
-  const { secureFetch } = useSupabase();
+  const { mutateAsync: shareConversation } = trpc.conversation.shareConversation.useMutation();
   const t = useTranslations();
 
   const handleShare = async () => {
@@ -38,32 +37,21 @@ export const ShareButton: FC<ShareButtonProps> = ({
     }
 
     try {
-      const response = await secureFetch("/api/share", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${authToken}`,
-        },
-        body: JSON.stringify({
-          sessionId: conversation.id,
-          title: conversation.title || t("chat.message.untitledConversation"),
-          messages: messages,
-        }),
+      const sharedConversation = await shareConversation({
+        conversationId: conversation.id,
       });
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || t("chat.share.shareFailed"));
+      if (!sharedConversation) {
+        toast.error(t("chat.share.shareFailed"));
+        return;
       }
 
-      const data = await response.json();
-
       // Copy URL to clipboard
-      const shareUrl = `${window.location.origin}${data.shareUrl}`;
+      const shareUrl = `${window.location.origin}/share/${sharedConversation?.id}`;
       await navigator.clipboard.writeText(shareUrl);
 
       toast.success(t("chat.share.shareSuccess"), {
-        description: t("chat.share.linkCopied"),
+        description: t("chat.share.linkCopied", { shareUrl }),
       });
     } catch (error) {
       console.error(error);

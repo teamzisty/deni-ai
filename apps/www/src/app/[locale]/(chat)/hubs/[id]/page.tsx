@@ -29,7 +29,7 @@ import {
   MessageCircleMore,
   Loader2,
 } from "lucide-react";
-import { useSupabase } from "@/context/supabase-context";
+import { useAuth } from "@/context/auth-context";
 import { useParams } from "next/navigation";
 import { useRouter } from "@/i18n/navigation";
 import { useConversations } from "@/hooks/use-conversations";
@@ -45,27 +45,31 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@workspace/ui/components/alert-dialog";
+import { trpc } from "@/trpc/client";
+import { toast } from "sonner";
 
 interface ClientHub {
   id: string;
   name: string;
   description: string;
   files: any[];
-  created_by: {
+  author: {
     name: string;
     verified: boolean;
     id: string;
   };
-  created_at: number;
+  createdAt: number;
 }
 
 export default function HubPage() {
-  const [hub, setHub] = useState<ClientHub | null>(null);
-  const { user, secureFetch, loading } = useSupabase();
-  const { createConversation, loading: conversationLoading } =
-    useConversations();
-  const { deleteHub } = useHubs();
-  const [isLoading, setIsLoading] = useState(true);
+  const params = useParams();
+  const router = useRouter();
+
+  const { user, isPending } = useAuth();
+  const { createConversation } = useConversations();
+  const { data: hub, isLoading: isHubLoading } = trpc.hub.getHub.useQuery({ id: params.id as string });
+  const { mutateAsync: updateHub, isPending: isUpdatingHub } = trpc.hub.updateHub.useMutation();
+  const { mutateAsync: deleteHub, isPending: isDeletingHub } = trpc.hub.deleteHub.useMutation();
   const [isConversationCreating, setIsConversationCreating] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [editData, setEditData] = useState<Partial<ClientHub>>({
@@ -74,73 +78,31 @@ export default function HubPage() {
     files: [],
   });
   const [isSaving, setIsSaving] = useState(false);
-  const params = useParams();
-
-  const router = useRouter();
 
   useEffect(() => {
-    if (loading || !user) return;
-    fetchHub();
-  }, [loading, user, params.id]);
-
-  useEffect(() => {
-    if (hub && hub.created_by.id === user?.id) {
+    if (hub && hub.author?.id === user?.id) {
       setEditData({
         name: hub.name,
-        description: hub.description,
-        files: hub.files || [],
+        description: hub.description || "",
+        files: hub.files as any[] || [],
       });
     }
   }, [hub]);
-
-  const fetchHub = async () => {
-    try {
-      const response = await secureFetch(`/api/hubs/${params.id}`);
-      if (response.ok) {
-        const data = await response.json();
-        if (data.success) {
-          setHub(data.data);
-        } else {
-          router.push("/hubs");
-        }
-      } else {
-        router.push("/hubs");
-      }
-    } catch (error) {
-      console.error("Failed to fetch hub:", error);
-      router.push("/hubs");
-    } finally {
-      setIsLoading(false);
-    }
-  };
 
   const saveHub = async () => {
     if (!hub) return;
 
     setIsSaving(true);
     try {
-      const response = await secureFetch(`/api/hubs/${hub.id}`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(editData),
+      const updatedHub = await updateHub({
+        id: hub.id,
+        name: editData.name || "",
+        description: editData.description || "",
       });
 
-      if (response.ok) {
-        const updatedHub = await response.json();
-        if (updatedHub.success) {
-          setHub((prev) =>
-            prev
-              ? {
-                  ...prev,
-                  name: editData.name || prev.name,
-                  description: editData.description || prev.description,
-                  files: editData.files || prev.files,
-                }
-              : null,
-          );
-        }
+      if (updatedHub) {
+        toast.success("Hub updated successfully");
+        router.push("/hubs");
       }
     } catch (error) {
       console.error("Failed to update hub:", error);
@@ -150,7 +112,7 @@ export default function HubPage() {
   };
 
   const isAuthor = () => {
-    return user && hub && hub.created_by.id === user.id;
+    return user && hub && hub.author?.id === user.id;
   };
 
   const handleCreateHubChat = async () => {
@@ -166,7 +128,7 @@ export default function HubPage() {
 
     setIsDeleting(true);
     try {
-      const success = await deleteHub(hub.id);
+      const success = await deleteHub({ id: hub.id });
       if (success) {
         router.push("/hubs");
       }
@@ -177,7 +139,7 @@ export default function HubPage() {
     }
   };
 
-  if (isLoading || loading || conversationLoading) {
+  if (isPending || isHubLoading || isDeletingHub) {
     return (
       <div className="container mx-auto p-4">
         <Card className="animate-pulse">
@@ -236,9 +198,9 @@ export default function HubPage() {
                   {hub.name}
                 </CardTitle>
                 <CardDescription className="flex flex-col items-center text-center">
-                  {hub.created_by && (
+                  {hub.author && (
                     <div className="text-base text-muted-foreground flex items-center gap-1">
-                      <span>{hub.created_by.name || "Unknown User"}</span>
+                      <span>{hub.author.name || "Unknown User"}</span>
                     </div>
                   )}
 
@@ -252,21 +214,21 @@ export default function HubPage() {
                   <div className="flex items-center justify-center w-full gap-4 text-sm text-muted-foreground">
                     <div className="flex flex-col items-center h-full justify-between">
                       <p className="text-lg text-foreground">
-                        {hub.files.length}
+                        {(hub.files as any[])?.length}
                       </p>
                       <p className="font-medium">Files</p>
                     </div>
                     <div className="h-4 w-px bg-border" />
                     <div className="flex flex-col items-center h-full justify-between">
                       <p className="text-lg text-foreground">
-                        {new Date(hub.created_at).toLocaleDateString()}
+                        {new Date(hub.createdAt || "").toLocaleDateString()}
                       </p>
                       <p className="font-medium">Created at</p>
                     </div>
                     <div className="h-4 w-px bg-border" />
                     <div className="flex flex-col items-center justify-between h-full">
                       <p className="text-lg text-foreground">
-                        {hub.created_by?.verified ? "Verified" : "No flags"}
+                        {hub.author?.emailVerified ? "Verified" : "No flags"}
                       </p>
                       <p className="font-medium">User Flags</p>
                     </div>
@@ -395,7 +357,7 @@ export default function HubPage() {
                   </div>
                 )}
 
-                {hub.files.length === 0 ? (
+                {(hub.files as any[])?.length === 0 ? (
                   <div className="text-center py-8">
                     <FileText className="w-8 h-8 mx-auto mb-4 text-muted-foreground" />
                     <p className="text-sm text-muted-foreground">
@@ -404,7 +366,7 @@ export default function HubPage() {
                   </div>
                 ) : (
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {hub.files.map((file, index) => (
+                    {(hub.files as any[])?.map((file, index) => (
                       <Card key={index} className="p-4">
                         <div className="flex items-center gap-3">
                           <FileText className="w-5 h-5 text-muted-foreground" />

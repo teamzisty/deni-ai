@@ -1,15 +1,12 @@
 {
   "name": "@workspace/supabase-config",
   "version": "1.0.0",
-  "description": "Supabase configuration for the project.",
-  "private": true,
-  "type": "module",
   "main": "./src/index.ts",
-  "types": "./src/index.ts",
   "peerDependencies": {
     "typescript": "^5.8.3"
   },
-  "dependencies": {
-    "@supabase/supabase-js": "^2.52.1"
-  }
+  "description": "Supabase configuration for the project.",
+  "private": true,
+  "type": "module",
+  "types": "./src/index.ts"
 }

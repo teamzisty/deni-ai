@@ -15,7 +15,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@workspace/ui/components/dropdown-menu";
-import { useSupabase } from "@/context/supabase-context";
+import { useAuth } from "@/context/auth-context";
 import { toast } from "sonner";
 import { useRouter } from "@/i18n/navigation";
 import { LogOut, SettingsIcon, User } from "lucide-react";
@@ -27,9 +27,10 @@ import {
 } from "@/lib/constants";
 import { useSettingsDialog } from "@/context/settings-dialog-context";
 import { useTranslations } from "@/hooks/use-translations";
+import { signOut } from "@/lib/auth-client";
 
 export function UserDropdownMenu() {
-  const { supabase, user, usage, ssUserData, loading } = useSupabase();
+  const { user, usage, isPending, serverUserData } = useAuth();
   const { openDialog } = useSettingsDialog();
   const router = useRouter();
   const t = useTranslations();
@@ -45,7 +46,7 @@ export function UserDropdownMenu() {
   };
 
   const handleLogout = async () => {
-    const { error } = await supabase.auth.signOut();
+    const { error } = await signOut();
     if (error) {
       toast.error(t("chat.userMenu.logOutFailed"));
     } else {
@@ -53,7 +54,7 @@ export function UserDropdownMenu() {
     }
   };
 
-  if (loading) return null;
+  if (isPending) return null;
 
   return (
     <DropdownMenu>
@@ -64,11 +65,11 @@ export function UserDropdownMenu() {
         >
           <Avatar className="h-8 w-8">
             <AvatarImage
-              src={user?.user_metadata.avatar_url}
-              alt={user?.user_metadata.full_name}
+              src={user?.image || ""}
+              alt={user?.name}
             />
             <AvatarFallback>
-              {getInitials(user?.user_metadata.full_name)}
+              {getInitials(user?.name || "U")}
             </AvatarFallback>
           </Avatar>
         </Button>
@@ -77,7 +78,7 @@ export function UserDropdownMenu() {
         <DropdownMenuLabel className="font-normal">
           <div className="flex flex-col space-y-1">
             <p className="text-sm font-medium leading-none">
-              {user?.user_metadata.full_name}
+              {user?.name}
             </p>
             <p className="text-xs leading-none text-muted-foreground">
               {user?.email}
@@ -92,9 +93,9 @@ export function UserDropdownMenu() {
               <div className="flex flex-col space-y-2 w-full">
                 <span className="text-muted-foreground">
                   {t("chat.userMenu.yourPlan")}{" "}
-                  {ssUserData?.plan && ssUserData?.plan != "free" ? (
+                  {serverUserData?.plan && serverUserData?.plan != "free" ? (
                     <span className="bg-gradient-to-r from-pink-400 to-sky-500 bg-clip-text text-transparent capitalize">
-                      {ssUserData?.plan}
+                      {serverUserData?.plan}
                     </span>
                   ) : (
                     <span>{t("chat.userMenu.free")}</span>

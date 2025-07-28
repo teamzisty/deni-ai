@@ -1,8 +1,8 @@
 "use client";
 
-import { useSupabase } from "@/context/supabase-context";
-import { useRouter } from "@/i18n/navigation";
-import { useEffect, useState } from "react";
+import { useAuth } from "@/context/auth-context";
+import { useRouter } from "next/navigation";
+import { useState } from "react";
 import { Loader2 } from "lucide-react";
 import { loading_words } from "@/lib/constants";
 
@@ -17,22 +17,15 @@ export function AuthGuard({
   fallback,
   redirectTo = "/auth/login",
 }: AuthGuardProps) {
-  const { user, loading } = useSupabase();
-
-  const [loadingWord, setLoadingWord] = useState<string | undefined>();
+  const { user, isPending } = useAuth();
   const router = useRouter();
+  
+  const [loadingWord] = useState<string | undefined>(
+    loading_words[Math.floor(Math.random() * loading_words.length)] ||
+      "Please wait...",
+  );
 
-  useEffect(() => {
-    setLoadingWord(
-      loading_words[Math.floor(Math.random() * loading_words.length)] ||
-        "Please wait...",
-    );
-    if (!loading && !user) {
-      router.push(redirectTo);
-    }
-  }, [loading, user, router, redirectTo]);
-
-  if (loading) {
+  if (isPending) {
     return (
       fallback || (
         <div className="h-screen w-screen flex items-center justify-center">
@@ -43,8 +36,9 @@ export function AuthGuard({
     );
   }
 
-  if (!user) {
-    return null; // Will redirect in useEffect
+  if (!user && !isPending) {
+    router.push(redirectTo);
+    return null;
   }
 
   return <>{children}</>;

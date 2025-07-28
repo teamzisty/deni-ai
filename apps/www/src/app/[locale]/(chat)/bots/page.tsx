@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Button } from "@workspace/ui/components/button";
 import {
   Card,
@@ -22,95 +22,42 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@workspace/ui/components/dialog";
-import { Plus, Bot, Edit, Trash2, Eye } from "lucide-react";
-import { useSupabase } from "@/context/supabase-context";
-import { ClientBot } from "@/lib/bot";
+import { Plus, Bot, Eye } from "lucide-react";
+import { useAuth } from "@/context/auth-context";
 import { useRouter } from "@/i18n/navigation";
 import { Link } from "@/i18n/navigation";
+import { trpc } from "@/trpc/client";
+import { toast } from "sonner";
 
 export default function BotsPage() {
-  const [bots, setBots] = useState<ClientBot[]>([]);
-  const { user, supabase, loading } = useSupabase();
-  const [isLoading, setIsLoading] = useState(true);
+  const { user, isPending } = useAuth();
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [newBot, setNewBot] = useState({ name: "", description: "" });
 
   const router = useRouter();
 
-  useEffect(() => {
-    if (loading || !user) return;
-    fetchBots();
-  }, [loading, user]);
+  const { data: bots, isLoading: isBotsLoading } = trpc.bot.getBots.useQuery();
+  const { mutateAsync: createBot, isPending: isCreatingBot } = trpc.bot.createBot.useMutation();
 
-  const fetchBots = async () => {
-    if (!user) return;
-    
-    try {
-      // Get user's own bots from Supabase (limit to 20)
-      const { data: botsData, error } = await supabase
-        .from("bots")
-        .select("*")
-        .eq("user_id", user.id)
-        .order("created_at", { ascending: false })
-        .limit(20);
-
-      if (error) {
-        console.error("Supabase error:", error);
-        return;
-      }
-
-      const bots: ClientBot[] = [];
-
-      for (const bot of botsData || []) {
-        bots.push({
-          id: bot.id,
-          name: bot.name,
-          description: bot.description,
-          instructions: bot.instructions || [],
-          created_by: {
-            name: user.user_metadata?.full_name || user.email || "Unknown User",
-            verified: user.email_confirmed_at !== null,
-            id: user.id,
-          },
-          created_at: new Date(bot.created_at).getTime(),
-        });
-      }
-
-      setBots(bots);
-    } catch (error) {
-      console.error("Failed to fetch bots:", error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const createBot = async () => {
+  const handleCreateBot = async () => {
     if (!user || !newBot.name.trim() || !newBot.description.trim()) return;
     
     try {
-      // Create bot id (random UUID)
-      const botId = crypto.randomUUID();
-
-      // Save bot data to Supabase
-      const { error } = await supabase.from("bots").insert({
-        id: botId,
+      const bot = await createBot({
         name: newBot.name,
         description: newBot.description,
-        user_id: user.id,
         instructions: [],
-        created_at: new Date().toISOString(),
       });
+      if (bot) {
+        toast.success("Bot created successfully");
 
-      if (error) {
-        console.error("Supabase error:", error);
-        return;
+        router.push(`/bots/${bot.id}`);
+        setIsCreateDialogOpen(false);
+        setNewBot({ name: "", description: "" });
       }
-
-      router.push(`/bots/${botId}`);
-      setIsCreateDialogOpen(false);
-      setNewBot({ name: "", description: "" });
     } catch (error) {
       console.error("Failed to create bot:", error);
+      toast.error("Failed to create bot");
     }
   };
 
@@ -159,7 +106,7 @@ export default function BotsPage() {
             </div>
             <DialogFooter>
               <Button
-                onClick={createBot}
+                onClick={handleCreateBot}
                 disabled={!newBot.name.trim() || !newBot.description.trim()}
               >
                 Create Bot
@@ -169,7 +116,7 @@ export default function BotsPage() {
         </Dialog>
       </div>
 
-      {isLoading || loading || !bots ? (
+      {isPending || isBotsLoading || !bots ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 w-full">
           {[...Array(6)].map((_, i) => (
             <Card key={i} className="animate-pulse">
@@ -208,7 +155,7 @@ export default function BotsPage() {
               </CardHeader>
               <CardContent>
                 <p className="text-sm text-gray-500">
-                  Created: {new Date(bot.created_at).toLocaleDateString()}
+                  Created: {new Date(bot.createdAt || "").toLocaleDateString()}
                 </p>
               </CardContent>
               <CardFooter className="flex gap-2 mt-auto">

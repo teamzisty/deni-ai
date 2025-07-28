@@ -2,29 +2,28 @@ import { generateText, tool } from "ai";
 import { BraveSearchSDK } from "./brave-search";
 import { z } from "zod";
 import { PageParser } from "./page-parser";
-import { openai } from "@ai-sdk/openai";
 import { internalModels } from "./constants";
 import { google } from "@ai-sdk/google";
 
+
 export const canvas = tool({
-  description: "Create documents using Canvas.",
-  parameters: z.object({
-    title: z.string().describe("The title of the document"),
-    content: z.string().describe("The content of the document"),
+  description: 'Create documents using Canvas.',
+  inputSchema: z.object({
+    title: z.string().describe('The title of the document'),
+    content: z.string().describe('The content of the document'),
   }),
   execute: async ({ title, content }) => {
     if (!title || !content) {
-      return "Title and content are required to create a document.";
+      return 'Title and content are required to create a document.';
     }
-
-    return "Created document successfully with title: " + title;
+    return `Created document successfully with title: ${title}`;
   },
 });
 
 export const search = tool({
   description:
     "Search the web using Brave Search. Use this for finding current information, research, and web content.",
-  parameters: z.object({
+  inputSchema: z.object({
     query: z.string().describe("The search query to execute"),
     language: z
       .string()
@@ -86,7 +85,7 @@ export const search = tool({
           prompt: content.content,
           model: google(
             internalModels["search-summary-model"]?.id ||
-              "gemini-2.5-flash-lite-preview-06-17",
+            "gemini-2.5-flash-lite-preview-06-17",
           ),
           system:
             "You are a helpful assistant that summarizes web pages. respond as markdown, no concise.",

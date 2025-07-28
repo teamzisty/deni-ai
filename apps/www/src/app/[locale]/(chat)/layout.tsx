@@ -1,4 +1,4 @@
-import { SupabaseProvider } from "@/context/supabase-context";
+import { AuthProvider } from "@/context/auth-context";
 import { CanvasProvider } from "@/context/canvas-context";
 import { ConversationsProvider } from "@/hooks/use-conversations";
 import { SidebarProvider } from "@workspace/ui/components/sidebar";
@@ -21,7 +21,7 @@ export default async function ChatLayout({
 
   return (
     <SidebarProvider defaultOpen={defaultOpen}>
-      <SupabaseProvider>
+      <AuthProvider>
         <ConversationsProvider>
           <AuthGuard>
             <CanvasProvider>
@@ -40,7 +40,7 @@ export default async function ChatLayout({
             </CanvasProvider>
           </AuthGuard>
         </ConversationsProvider>
-      </SupabaseProvider>
+      </AuthProvider>
     </SidebarProvider>
   );
 }

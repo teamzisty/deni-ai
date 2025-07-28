@@ -2,7 +2,6 @@ import { internalModels, models } from "@/lib/constants";
 import {
   getConversation,
   updateConversation,
-  updateConversationMessages,
 } from "@/lib/conversations";
 import { search as baseSearch, canvas } from "@/lib/tools";
 import { openai, OpenAIResponsesProviderOptions } from "@ai-sdk/openai";
@@ -12,14 +11,16 @@ import { xai } from "@ai-sdk/xai";
 import { openrouter } from "@openrouter/ai-sdk-provider";
 import { groq } from "@ai-sdk/groq";
 import {
-  appendResponseMessages,
-  convertToCoreMessages,
-  createDataStreamResponse,
+  convertToModelMessages,
+  createUIMessageStream,
+  createUIMessageStreamResponse,
+  generateId,
   generateText,
-  LanguageModelV1,
+  LanguageModel,
+  stepCountIs,
   streamText,
 } from "ai";
-import { authCheck } from "@/lib/supabase/server";
+import { auth } from "@/lib/auth";
 import { canUseModel, recordUsage } from "@/lib/usage";
 import z from "zod/v4";
 import { Bot, getBot } from "@/lib/bot";
@@ -36,8 +37,10 @@ const chatRequestSchema = z.object({
 });
 
 export async function POST(request: Request) {
-  const { user, success } = await authCheck(request);
-  if (!success && !user) {
+  const session = await auth.api.getSession({
+    headers: request.headers,
+  });
+  if (!session?.user) {
     return new Response("common.unauthorized", { status: 401 });
   }
 
@@ -68,7 +71,7 @@ export async function POST(request: Request) {
   }
   const modelId = model.id;
 
-  let sdkModel: LanguageModelV1;
+  let sdkModel: LanguageModel;
   switch (model.provider) {
     case "openai":
       sdkModel = openai.responses(modelId);
@@ -92,9 +95,9 @@ export async function POST(request: Request) {
       return new Response("common.invalid_request", { status: 400 });
   }
 
-  const coreMessages = convertToCoreMessages(messages);
+  const coreMessages = convertToModelMessages(messages);
   try {
-    const canUse = await canUseModel(user!.id, _model);
+    const canUse = await canUseModel(session.user.id, _model);
     if (!canUse) {
       return new Response("chat.model_limit_reached", { status: 403 });
     }
@@ -136,55 +139,56 @@ export async function POST(request: Request) {
     }
   }
 
-  if (shouldGenerateTitle) {
-    const lastMessageContent = coreMessages[coreMessages.length - 1]?.content;
-    const promptText =
-      typeof lastMessageContent === "string"
-        ? lastMessageContent
-        : Array.isArray(lastMessageContent)
-          ? lastMessageContent
-              .map((part) => ("text" in part ? part.text : ""))
-              .join(" ")
-          : "Simple conversation";
+  const stream = createUIMessageStream({
+    execute: async ({ writer }) => {
+      if (shouldGenerateTitle) {
+        const lastMessageContent = coreMessages[coreMessages.length - 1]?.content;
+        const promptText =
+          typeof lastMessageContent === "string"
+            ? lastMessageContent
+            : Array.isArray(lastMessageContent)
+              ? lastMessageContent
+                .map((part) => ("text" in part ? part.text : ""))
+                .join(" ")
+              : "Simple conversation";
 
-    // Generate title asynchronously to avoid blocking the stream
-    titleGeneration = generateText({
-      prompt: promptText || "Simple conversation",
-      model: google(
-        internalModels["title-model"]?.id ||
-          "gemini-2.5-flash-lite-preview-06-17",
-      ),
-      system:
-        "generates titles for conversations. simple and concise, no more than 5 words. no punctuation. no sorry, generate a title related user message.",
-    })
-      .then(async (generatedTitle) => {
-        await updateConversation(id, {
-          title: generatedTitle.text,
-        });
-        return generatedTitle.text;
-      })
-      .catch(() => "Untitled Conversation");
-  }
+        // Generate title asynchronously to avoid blocking the stream
+        titleGeneration = generateText({
+          prompt: promptText || "Simple conversation",
+          model: google(
+            internalModels["title-model"]?.id ||
+            "gemini-2.5-flash-lite-preview-06-17",
+          ),
+          system:
+            "generates titles for conversations. simple and concise, no more than 5 words. no punctuation. no sorry, generate a title related user message.",
+        })
+          .then(async (generatedTitle) => {
+            await updateConversation(id, {
+              title: generatedTitle.text,
+            });
 
-  const thinkingBudget = thinkingEffort
-    ? thinkingEffort === "disabled"
-      ? 0
-      : thinkingEffort === "low"
-        ? 2500
-        : thinkingEffort === "medium"
-          ? 5000
-          : 10000
-    : 0;
 
-  // Process the chat request here
-  return createDataStreamResponse({
-    execute: async (dataStream) => {
-      // Send title when it's ready
-      if (shouldGenerateTitle && titleGeneration) {
-        titleGeneration.then((generatedTitle) => {
-          dataStream.writeData({ title: generatedTitle });
-        });
+            const statusId = generateId();
+            writer.write({
+              type: "data-status",
+              id: statusId,
+              data: [{ title: generatedTitle.text }],
+            });
+
+            return generatedTitle.text;
+          })
+          .catch(() => "Untitled Conversation");
       }
+
+      const thinkingBudget = thinkingEffort
+        ? thinkingEffort === "disabled"
+          ? 0
+          : thinkingEffort === "low"
+            ? 2500
+            : thinkingEffort === "medium"
+              ? 5000
+              : 10000
+        : 0;
 
       // Configure tools based on user settings
       const tools: any = {};
@@ -195,7 +199,7 @@ export async function POST(request: Request) {
           execute: async (params: any, options: any) => {
             const depth =
               researchMode !== "disabled" ? researchMode : undefined;
-            return baseSearch.execute({ ...params, depth }, options);
+            return baseSearch.execute?.({ ...params, depth }, options) || [];
           },
         };
       }
@@ -206,6 +210,10 @@ export async function POST(request: Request) {
       // Add research-specific system prompts
       let systemPrompt = "You are Deni AI.";
 
+      if (bot) {
+        systemPrompt = bot.systemInstruction;
+      }
+
       coreMessages.unshift({
         role: "system",
         content: systemPrompt,
@@ -215,8 +223,7 @@ export async function POST(request: Request) {
         messages: coreMessages,
         model: sdkModel,
         tools,
-        toolCallStreaming: true,
-        maxSteps: 30,
+        stopWhen: stepCountIs(30),
         providerOptions: {
           openai: {
             thinkingEffort: thinkingEffort || "medium",
@@ -235,33 +242,19 @@ export async function POST(request: Request) {
             },
           } as AnthropicProviderOptions,
         },
-        onFinish: async ({ response: result }) => {
-          await updateConversationMessages(
-            id,
-            appendResponseMessages({
-              messages,
-              responseMessages: result.messages,
-            }),
-          );
-          await recordUsage(user!.id, _model);
-        },
       });
 
-      response.consumeStream();
-
-      response.mergeIntoDataStream(dataStream, {
-        sendReasoning: true,
-        sendUsage: false,
+      writer.merge(response.toUIMessageStream());
+    },
+    originalMessages: messages,
+    onFinish: async ({ messages }) => {
+      await updateConversation(id, {
+        messages: messages,
       });
     },
-    onError: (error) => {
-      if (process.env.NODE_ENV === "development") {
-        console.error("Error: " + error);
-        return "Error: " + error;
-      } else {
-        console.error("Error in chat response:", error);
-        return "An error occurred while processing your request.";
-      }
-    },
+  });
+
+  return createUIMessageStreamResponse({
+    stream
   });
 }

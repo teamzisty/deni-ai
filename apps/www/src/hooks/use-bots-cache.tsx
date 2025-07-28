@@ -2,7 +2,6 @@
 
 import React, { createContext, useContext, useState, useCallback } from "react";
 import { Bot } from "@/lib/bot";
-import { useSupabase } from "@/context/supabase-context";
 
 interface BotsCacheContextType {
   getBot: (botId: string) => Promise<Bot | null>;
@@ -20,7 +19,6 @@ interface BotsCacheProviderProps {
 export function BotsCacheProvider({ children }: BotsCacheProviderProps) {
   const [cache, setCache] = useState<Map<string, Bot>>(new Map());
   const [loading, setLoading] = useState<Set<string>>(new Set());
-  const { supabase } = useSupabase();
 
   const getBot = useCallback(
     async (botId: string): Promise<Bot | null> => {
@@ -50,18 +48,11 @@ export function BotsCacheProvider({ children }: BotsCacheProviderProps) {
       setLoading((prev) => new Set(prev).add(botId));
 
       try {
-        const { data, error } = await supabase
-          .from("bots")
-          .select("*")
-          .eq("id", botId)
-          .single();
-
-        if (error) {
-          console.error("Failed to fetch bot:", error);
+        const bot = await getBot(botId);
+        if (!bot) {
+          console.error("Failed to fetch bot: Bot not found");
           return null;
         }
-
-        const bot = data as Bot;
 
         // Cache the result
         setCache((prev) => new Map(prev).set(botId, bot));
@@ -79,7 +70,7 @@ export function BotsCacheProvider({ children }: BotsCacheProviderProps) {
         });
       }
     },
-    [cache, loading, supabase],
+    [cache, loading],
   );
 
   const isLoading = useCallback(

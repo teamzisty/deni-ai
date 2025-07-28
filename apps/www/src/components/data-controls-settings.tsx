@@ -21,7 +21,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@workspace/ui/components/alert-dialog";
-import { useSupabase } from "@/context/supabase-context";
+import { useAuth } from "@/context/auth-context";
 import { Input } from "@workspace/ui/components/input";
 import { Label } from "@workspace/ui/components/label";
 import { useTranslations } from "@/hooks/use-translations";
@@ -31,7 +31,7 @@ export default function DataControlsSettings() {
   const [showReauthDialog, setShowReauthDialog] = useState(false);
   const [password, setPassword] = useState("");
   const [reauthError, setReauthError] = useState("");
-  const { user, supabase } = useSupabase();
+  const { user } = useAuth();
   const t = useTranslations("dataControls");
 
   const saveFile = (jsonData: string, fileName: string) => {
@@ -106,72 +106,34 @@ export default function DataControlsSettings() {
     }
   };
 
-  const reauthenticateWithPassword = async () => {
-    if (!user || !user.email || !supabase) return false;
+  // const deleteAccount = async () => {
+  //   if (!user) return;
 
-    try {
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email: user.email,
-        password: password,
-      });
+  //   try {
+  //     setIsDeleting(true);
 
-      if (error) {
-        console.error("Password reauth error:", error);
-        setReauthError(error.message);
-        return false;
-      }
+  //     // Delete the user account using Supabase admin API
+  //     const { error } = await deleteUser(user.id);
 
-      return true;
-    } catch (error: unknown) {
-      console.error("Password reauth error:", error);
-      setReauthError((error as Error).message);
-      return false;
-    }
-  };
+  //     if (error) {
+  //       throw new Error(error.message);
+  //     }
 
-  const handleReauth = async () => {
-    setReauthError("");
+  //     // Clear all local storage data
+  //     localStorage.clear();
+  //     sessionStorage.clear();
 
-    if (!user) {
-      setReauthError(t("reauth.authRequired"));
-      return;
-    }
+  //     // Sign out
+  //     await supabase.auth.signOut();
 
-    const success = await reauthenticateWithPassword();
-    if (success) {
-      setShowReauthDialog(false);
-      await deleteAccount();
-    }
-  };
-
-  const deleteAccount = async () => {
-    if (!user || !supabase) return;
-
-    try {
-      setIsDeleting(true);
-
-      // Delete the user account using Supabase admin API
-      const { error } = await supabase.auth.admin.deleteUser(user.id);
-
-      if (error) {
-        throw new Error(error.message);
-      }
-
-      // Clear all local storage data
-      localStorage.clear();
-      sessionStorage.clear();
-
-      // Sign out
-      await supabase.auth.signOut();
-
-      toast.success(t("deleteAccount.success"));
-    } catch (error: unknown) {
-      console.error("Account deletion error:", error);
-      toast.error(t("deleteAccount.failed"));
-    } finally {
-      setIsDeleting(false);
-    }
-  };
+  //     toast.success(t("deleteAccount.success"));
+  //   } catch (error: unknown) {
+  //     console.error("Account deletion error:", error);
+  //     toast.error(t("deleteAccount.failed"));
+  //   } finally {
+  //     setIsDeleting(false);
+  //   }
+  // };
 
   const handleDeleteAccount = async () => {
     if (!user) {
@@ -340,9 +302,11 @@ export default function DataControlsSettings() {
               <p className="text-sm text-destructive">{reauthError}</p>
             )}
             <div className="flex flex-col gap-2">
+              {/* Todo: Add reauth logic
               <Button onClick={handleReauth}>
                 {t("reauth.continueButton")}
               </Button>
+               */}
               <Button
                 variant="outline"
                 onClick={() => setShowReauthDialog(false)}

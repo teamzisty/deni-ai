@@ -7,7 +7,6 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
 } from "@workspace/ui/components/dropdown-menu";
-import { Switch } from "@workspace/ui/components/switch";
 import {
   Card,
   CardContent,
@@ -16,11 +15,7 @@ import {
 } from "@workspace/ui/components/card";
 import { Check, Globe, Palette } from "lucide-react";
 import { useTheme } from "next-themes";
-import {
-  useParams,
-  useRouter as nextRouter,
-  usePathname,
-} from "next/navigation";
+import { useParams, useRouter as nextRouter, usePathname } from "next/navigation";
 import UsageSettings from "./usage-settings";
 import { useTranslations } from "@/hooks/use-translations";
 

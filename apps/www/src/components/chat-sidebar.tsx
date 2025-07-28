@@ -46,13 +46,10 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-  AlertDialogTrigger,
 } from "@workspace/ui/components/alert-dialog";
 import { Input } from "@workspace/ui/components/input";
 import { Conversation } from "@/lib/conversations";
-import { useSupabase } from "@/context/supabase-context";
-import { Bot } from "@/lib/bot";
-import { useBotsCache, BotsCacheProvider } from "@/hooks/use-bots-cache";
+import { BotsCacheProvider } from "@/hooks/use-bots-cache";
 import {
   DndContext,
   closestCenter,
@@ -226,7 +223,7 @@ function DraggableConversation({
                 <LoadingIndicator>
                   {conversation.bot ? (
                     <BotIcon />
-                  ) : conversation.hub_id ? (
+                  ) : conversation.hubId ? (
                     <FolderOpen />
                   ) : (
                     <MessageCircle />
@@ -237,7 +234,7 @@ function DraggableConversation({
                     conversation.title ||
                     t("chat.sidebar.untitledConversation");
                   const botName = conversation.bot?.name;
-                  const hubId = conversation.hub_id;
+                  const hubId = conversation.hubId;
 
                   // Find hub name if conversation belongs to a hub
                   const hub = hubId ? hubs.find((h) => h.id === hubId) : null;
@@ -440,15 +437,6 @@ function ChatSidebarContent() {
                   </Button>
                 </SidebarMenuItem>
 
-                {settings.voice && (
-                  <SidebarMenuItem>
-                    <Button className="w-full" variant="outline" disabled>
-                      <Headphones />
-                      {t("chat.sidebar.newVoiceChat")}
-                    </Button>
-                  </SidebarMenuItem>
-                )}
-
                 {settings.bots && (
                   <SidebarMenuItem>
                     <Button className="w-full" variant={"secondary"} asChild>
@@ -514,7 +502,7 @@ function ChatSidebarContent() {
                     <Loader2 className="animate-spin" />
                   </div>
                 )}
-                {conversations.map((conversation) => (
+                {conversations && conversations.map((conversation) => (
                   <SidebarConversation
                     key={conversation.id}
                     conversation={conversation}

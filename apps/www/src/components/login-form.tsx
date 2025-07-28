@@ -1,7 +1,6 @@
 "use client";
 
 import { cn } from "@workspace/ui/lib/utils";
-import { supabase } from "@/lib/supabase";
 import { Button } from "@workspace/ui/components/button";
 import {
   Card,
@@ -17,8 +16,8 @@ import { useRouter } from "@/i18n/navigation";
 import { useState } from "react";
 import { SiGoogle, SiRefinedgithub } from "@icons-pack/react-simple-icons";
 import { useTranslations } from "@/hooks/use-translations";
-import { Provider } from "@supabase/supabase-js";
 import { toast } from "sonner";
+import { signIn } from "@/lib/auth-client";
 
 export function LoginFormIntl({
   className,
@@ -38,10 +37,10 @@ export function LoginFormIntl({
     setError(null);
 
     try {
-      const { error } = await supabase.auth.signInWithPassword({
+      const { error } = await signIn.email({
         email,
         password,
-      });
+      }); 
       if (error) throw error;
       router.push("/chat");
     } catch (error: unknown) {
@@ -51,10 +50,10 @@ export function LoginFormIntl({
     }
   };
 
-  const signInWithSocial = async (provider: Provider) => {
-    const { error } = await supabase.auth.signInWithOAuth({
+  const signInWithSocial = async (provider: string) => {
+    const { error } = await signIn.social({
       provider,
-      options: { redirectTo: `${window.location.origin}/chat` },
+      callbackURL: `${window.location.origin}/chat`,
     });
     if (error) {
       console.error(error);
