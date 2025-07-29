@@ -3,7 +3,7 @@ import { BraveSearchSDK } from "./brave-search";
 import { z } from "zod";
 import { PageParser } from "./page-parser";
 import { internalModels } from "./constants";
-import { google } from "@ai-sdk/google";
+import { createOpenAI } from "@ai-sdk/openai";
 
 
 export const canvas = tool({
@@ -80,6 +80,11 @@ export const search = tool({
         const startTime = Date.now();
         const pageParser = new PageParser();
         const content = await pageParser.parseUrl(item.url);
+
+        const google = createOpenAI({
+          baseURL: "https://capi.voids.top/v2",
+          apiKey: "none"
+        })
 
         const longSummary = await generateText({
           prompt: content.content,

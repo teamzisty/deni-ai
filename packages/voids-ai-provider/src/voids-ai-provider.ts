@@ -1,26 +1,21 @@
-import type { LanguageModelV1 } from "@ai-sdk/provider";
-import type { VoidsOAIChatModelId } from "./voids-oai-chat-settings";
-import type { VoidsOAIChatSettings } from "./voids-oai-chat-settings";
-import { OpenAICompatibleChatLanguageModel } from "@ai-sdk/openai-compatible";
+import type { LanguageModelV2 } from "@ai-sdk/provider";
+import type { VoidsAIChatModelId } from "./voids-ai-chat-settings";
+import { OpenAICompatibleChatLanguageModel} from "@ai-sdk/openai-compatible";
 import {
   type FetchFunction,
   withoutTrailingSlash,
 } from "@ai-sdk/provider-utils";
 // Import your model id and settings here.
 
-export interface VoidsOAIProviderSettings {
+export interface VoidsAIProviderSettings {
   /**
-VoidsOAI API key.
+VoidsAI API key.
 */
   apiKey?: string;
   /**
 Base URL for the API calls.
 */
   baseURL?: string;
-  /**
-Is Canary
-*/
-  isCanary?: boolean;
   /**
 Custom headers to include in the requests.
 */
@@ -36,29 +31,29 @@ or to provide a custom fetch implementation for e.g. testing.
   fetch?: FetchFunction;
 }
 
-export interface VoidsOAIProvider {
+export interface VoidsAIProvider {
   /**
 Creates a model for text generation.
 */
   (
-    modelId: VoidsOAIChatModelId,
-    settings?: VoidsOAIChatSettings,
-  ): LanguageModelV1;
+    modelId: VoidsAIChatModelId,
+    settings?: VoidsAIProviderSettings,
+  ): LanguageModelV2;
 
   /**
 Creates a chat model for text generation.
 */
   chatModel(
-    modelId: VoidsOAIChatModelId,
-    settings?: VoidsOAIChatSettings,
-  ): LanguageModelV1;
+    modelId: VoidsAIChatModelId,
+    settings?: VoidsAIProviderSettings,
+  ): LanguageModelV2;
 }
 
-export function createVoidsOAI(
-  options: VoidsOAIProviderSettings = {},
-): VoidsOAIProvider {
+export function createVoidsAI(
+  options: VoidsAIProviderSettings = {},
+): VoidsAIProvider {
   const baseURL = withoutTrailingSlash(
-    options.baseURL ?? "https://capi.voids.top/v1/",
+    options.baseURL ?? "https://capi.voids.top/v2/",
   );
 
   interface CommonModelConfig {
@@ -81,7 +76,7 @@ export function createVoidsOAI(
       const headers: Record<string, string> = {
         "Content-Type": "application/json",
         Accept: "application/json",
-        "User-Agent": "deni-ai v2^",
+        "User-Agent": "Vercel AI SDK / @workspace/voids-ai-provider",
       };
       if (options.headers) {
         Object.assign(headers, options.headers);
@@ -92,18 +87,15 @@ export function createVoidsOAI(
   });
 
   const createChatModel = (
-    modelId: VoidsOAIChatModelId,
-    settings: VoidsOAIChatSettings = {},
+    modelId: VoidsAIChatModelId,
+    settings: VoidsAIProviderSettings = {},
   ) => {
-    return new OpenAICompatibleChatLanguageModel(modelId, settings, {
-      ...getCommonModelConfig("chat"),
-      defaultObjectGenerationMode: "tool",
-    });
+    return new OpenAICompatibleChatLanguageModel(modelId, getCommonModelConfig("chat"));
   };
 
   const provider = (
-    modelId: VoidsOAIChatModelId,
-    settings?: VoidsOAIChatSettings,
+    modelId: VoidsAIChatModelId,
+    settings?: VoidsAIProviderSettings,
   ) => createChatModel(modelId, settings);
 
   provider.chatModel = createChatModel;
@@ -112,4 +104,4 @@ export function createVoidsOAI(
 }
 
 // Export default instance
-export const VoidsOAI = createVoidsOAI();
+export const VoidsAI = createVoidsAI();

@@ -4,12 +4,11 @@ import {
   updateConversation,
 } from "@/lib/conversations";
 import { search as baseSearch, canvas } from "@/lib/tools";
-import { openai, OpenAIResponsesProviderOptions } from "@ai-sdk/openai";
-import { anthropic, AnthropicProviderOptions } from "@ai-sdk/anthropic";
-import { google, GoogleGenerativeAIProviderOptions } from "@ai-sdk/google";
+import { VoidsAI } from "@workspace/voids-ai-provider"
+import { createOpenAI, openai } from "@ai-sdk/openai";
+import { anthropic } from "@ai-sdk/anthropic";
+import { google } from "@ai-sdk/google";
 import { xai } from "@ai-sdk/xai";
-import { openrouter } from "@openrouter/ai-sdk-provider";
-import { groq } from "@ai-sdk/groq";
 import {
   convertToModelMessages,
   createUIMessageStream,
@@ -26,7 +25,7 @@ import z from "zod/v4";
 import { Bot, getBot } from "@/lib/bot";
 
 const chatRequestSchema = z.object({
-  id: z.string(),
+  conversationId: z.string(),
   messages: z.any(),
   model: z.string(),
   botId: z.string().optional(),
@@ -56,7 +55,7 @@ export async function POST(request: Request) {
     return new Response("common.invalid_request", { status: 400 });
   }
   const {
-    id,
+    conversationId,
     messages,
     botId,
     model: _model,
@@ -65,34 +64,34 @@ export async function POST(request: Request) {
     search: enableSearch,
     researchMode,
   } = parsed.data;
+  console.log("Received model from client:", _model);
   const model = models[_model];
   if (!model) {
+    console.log("Model not found in models object:", _model);
     return new Response("common.invalid_request", { status: 404 });
   }
   const modelId = model.id;
 
   let sdkModel: LanguageModel;
+  console.log("Using modelId:", modelId, "provider:", model.provider);
   switch (model.provider) {
-    case "openai":
-      sdkModel = openai.responses(modelId);
-      break;
-    case "anthropic":
-      sdkModel = anthropic(modelId);
-      break;
-    case "google":
-      sdkModel = google(modelId);
-      break;
-    case "xai":
-      sdkModel = xai(modelId);
-      break;
-    case "openrouter":
-      sdkModel = openrouter(modelId);
-      break;
-    case "groq":
-      sdkModel = groq(modelId);
+    // case "openai":
+    //   sdkModel = openai.responses(modelId);
+    //   break;
+    // case "anthropic":
+    //   sdkModel = anthropic(modelId);
+    //   break;
+    // case "google":
+    //   sdkModel = google(modelId);
+    //   break;
+    // case "xai":
+    //   sdkModel = xai(modelId);
+    //   break;
+    case "voids":
+      sdkModel = VoidsAI(modelId);
       break;
     default:
-      return new Response("common.invalid_request", { status: 400 });
+      sdkModel = VoidsAI(modelId);
   }
 
   const coreMessages = convertToModelMessages(messages);
@@ -110,10 +109,11 @@ export async function POST(request: Request) {
   let bot: Bot | undefined | null;
   let titleGeneration: Promise<string> | undefined;
 
-  if (id) {
+  if (conversationId) {
     try {
-      const conversation = await getConversation(id);
+      const conversation = await getConversation(conversationId);
       if (!conversation) {
+        console.log("conversation not found", conversationId);
         return new Response("common.invalid_request", { status: 404 });
       }
 
@@ -155,7 +155,7 @@ export async function POST(request: Request) {
         // Generate title asynchronously to avoid blocking the stream
         titleGeneration = generateText({
           prompt: promptText || "Simple conversation",
-          model: google(
+          model: VoidsAI(
             internalModels["title-model"]?.id ||
             "gemini-2.5-flash-lite-preview-06-17",
           ),
@@ -163,7 +163,7 @@ export async function POST(request: Request) {
             "generates titles for conversations. simple and concise, no more than 5 words. no punctuation. no sorry, generate a title related user message.",
         })
           .then(async (generatedTitle) => {
-            await updateConversation(id, {
+            await updateConversation(conversationId, {
               title: generatedTitle.text,
             });
 
@@ -224,31 +224,31 @@ export async function POST(request: Request) {
         model: sdkModel,
         tools,
         stopWhen: stepCountIs(30),
-        providerOptions: {
-          openai: {
-            thinkingEffort: thinkingEffort || "medium",
-            reasoningSummary: "detailed",
-          } as OpenAIResponsesProviderOptions,
-          google: {
-            thinkingConfig: {
-              thinkingBudget: thinkingBudget,
-              includeThoughts: true,
-            },
-          } as GoogleGenerativeAIProviderOptions,
-          anthropic: {
-            thinking: {
-              type: thinkingEffort === "disabled" ? "disabled" : "enabled",
-              budgetTokens: thinkingBudget,
-            },
-          } as AnthropicProviderOptions,
-        },
+        // providerOptions: {
+        //   openai: {
+        //     thinkingEffort: thinkingEffort || "medium",
+        //     reasoningSummary: "detailed",
+        //   } as OpenAIResponsesProviderOptions,
+        //   google: {
+        //     thinkingConfig: {
+        //       thinkingBudget: thinkingBudget,
+        //       includeThoughts: true,
+        //     },
+        //   } as GoogleGenerativeAIProviderOptions,
+        //   anthropic: {
+        //     thinking: {
+        //       type: thinkingEffort === "disabled" ? "disabled" : "enabled",
+        //       budgetTokens: thinkingBudget,
+        //     },
+        //   } as AnthropicProviderOptions,
+        // },
       });
 
       writer.merge(response.toUIMessageStream());
     },
     originalMessages: messages,
     onFinish: async ({ messages }) => {
-      await updateConversation(id, {
+      await updateConversation(conversationId, {
         messages: messages,
       });
     },

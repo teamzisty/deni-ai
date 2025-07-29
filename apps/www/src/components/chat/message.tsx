@@ -250,11 +250,13 @@ const Message = memo<MessageProps>(({ message, conversationId }) => {
                         <h3 className="font-semibold">
                           {t("chat.message.searchResults")}
                         </h3>
-                        <span className="text-muted-foreground">
-                          {t("chat.message.searchingWith", {
-                            query: (part.input as any).query,
-                          })}
-                        </span>
+                        {part.input ? (
+                          <span className="text-muted-foreground">
+                            {t("chat.message.searchingWith", {
+                              query: (part.input as { query: string }).query,
+                            })}
+                          </span>
+                        ) : null}
                         <div className="mt-2">
                           <p className="!m-0 animate-pulse text-muted-foreground">
                             {t("chat.message.searching")}
@@ -263,6 +265,8 @@ const Message = memo<MessageProps>(({ message, conversationId }) => {
                       </div>
                     );
                   }
+
+                  if (!part.output) return null;
 
                   return (
                     <div key={index}>
@@ -274,7 +278,7 @@ const Message = memo<MessageProps>(({ message, conversationId }) => {
                         <Globe className="h-4 w-4" />
                         <span>
                           {t("chat.message.searchedWebsites", {
-                            count: (part.output as any).result.length,
+                            count: (part.output as any).length,
                           })}
                         </span>
                       </Button>
@@ -298,13 +302,13 @@ const Message = memo<MessageProps>(({ message, conversationId }) => {
                           </h3>
                           <button className="text-sm text-muted-foreground hover:text-foreground transition-colors">
                             {t("chat.message.searchedWebsites", {
-                              count: (part.output as any).result.length,
+                              count: (part.output as any).length,
                             })}
                           </button>
                         </div>
                         <span className="text-muted-foreground">
                           {t("chat.message.foundResults", {
-                            count: (part.output as any).result.length,
+                            count: (part.output as any).length,
                             query: (part.input as any).query,
                           })}
                         </span>
@@ -316,7 +320,7 @@ const Message = memo<MessageProps>(({ message, conversationId }) => {
                           </summary>
                           <div className="mt-2">
                             {(
-                              (part.output as any).result as SearchResult[]
+                              (part.output as any) as SearchResult[]
                             ).map((result, idx) => (
                               <div
                                 key={idx}

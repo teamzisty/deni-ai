@@ -30,12 +30,8 @@ const projectDirectories: ProjectDir[] = [
   { path: "packages/typescript-config", name: "TypeScript Config Package" },
   { path: "packages/eslint-config", name: "ESLint Config Package" },
   {
-    path: "packages/voids-oai-provider",
-    name: "Voids OpenAI Provider Package",
-  },
-  {
-    path: "packages/voids-ap-provider",
-    name: "Voids Anthropic Provider Package",
+    path: "packages/voids-ai-provider",
+    name: "Voids AI Provider Package",
   },
   { path: "scripts", name: "Scripts" },
 ];

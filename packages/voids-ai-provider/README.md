@@ -1,6 +1,6 @@
-# `@workspace/voids-oai-provider`
+# `@workspace/voids-ai-provider`
 
-Voids OAI Provider is a package that provides an interface for interacting with voids.top OpenAI models.
+Voids AI Provider is a package that provides an interface for interacting with voids.top OpenAI models.
 
 ## Project Structure
 

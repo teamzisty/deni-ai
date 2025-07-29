@@ -25,6 +25,11 @@ interface MainChatProps {
 const MainChat = memo<MainChatProps>(
   ({ initialConversation, initialInput }) => {
     const [model, setModel] = useState("gpt-4o");
+  
+  // Debug model changes
+  useEffect(() => {
+    console.log("Model state changed to:", model);
+  }, [model]);
     const [canvas, setCanvas] = useState<boolean>(false);
     const [search, setSearch] = useState<boolean>(false);
     const { user, isPending, clientAddUses, serverUserData } = useAuth();
@@ -58,21 +63,71 @@ const MainChat = memo<MainChatProps>(
         });
       },
     });
+    // Use refs to access current state values in fetch
+    const modelRef = useRef(model);
+    const thinkingEffortRef = useRef(thinkingEffort);
+    const canvasRef = useRef(canvas);
+    const searchRef = useRef(search);
+    const researchModeRef = useRef(researchMode);
+    
+    // Update refs when state changes
+    useEffect(() => {
+      modelRef.current = model;
+    }, [model]);
+    
+    useEffect(() => {
+      thinkingEffortRef.current = thinkingEffort;
+    }, [thinkingEffort]);
+    
+    useEffect(() => {
+      canvasRef.current = canvas;
+    }, [canvas]);
+    
+    useEffect(() => {
+      searchRef.current = search;
+    }, [search]);
+    
+    useEffect(() => {
+      researchModeRef.current = researchMode;
+    }, [researchMode]);
+    
+    // Create a custom fetch that includes our body
+    const customFetch = useCallback(
+      async (input: RequestInfo | URL, init?: RequestInit) => {
+        const url = typeof input === 'string' ? input : input instanceof URL ? input.toString() : input.url;
+        const options = init || {};
+        
+        if (options.body) {
+          const body = JSON.parse(options.body as string);
+          const updatedBody = {
+            ...body,
+            conversationId: initialConversation?.id || "",
+            thinkingEffort: thinkingEffortRef.current,
+            botId: initialConversation?.bot?.id,
+            model: modelRef.current,
+            canvas: canvasRef.current,
+            search: searchRef.current,
+            researchMode: researchModeRef.current,
+          };
+          console.log("Sending to API with model:", modelRef.current, "Full body:", updatedBody);
+          
+          return fetch(url, {
+            ...options,
+            body: JSON.stringify(updatedBody),
+          });
+        }
+        
+        return fetch(input, init);
+      },
+      [initialConversation]
+    );
+    
     const { messages, error, sendMessage, status } = useChat({
       transport: new DefaultChatTransport({
         api: "/api/chat",
         credentials: "include",
-        body: {
-          id: initialConversation?.id || "",
-          thinkingEffort,
-          botId: initialConversation?.bot?.id,
-          model,
-          canvas,
-          search,
-          researchMode,
-        },
+        fetch: customFetch as typeof fetch,
       }),
-
       messages: initialConversation?.messages || [],
     });
 
@@ -85,6 +140,7 @@ const MainChat = memo<MainChatProps>(
       if (user && !isPending) {
         // Send message
         if (initialInput && initialConversation?.messages.length === 0) {
+          setInput("");
           // Prevent sending if there are existing messages
           sendMessage({
             text: input,
@@ -131,9 +187,9 @@ const MainChat = memo<MainChatProps>(
       [startUpload, t],
     );
 
-    if (!initialConversation) {
-      router.push("/chat");
-    }
+    // if (!initialConversation) {
+    //   router.push("/chat");
+    // }
 
     const welcomeMessage = useMemo(() => {
       if (researchMode !== "disabled") {

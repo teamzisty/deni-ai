@@ -101,6 +101,8 @@ const ChatInput = memo<ChatInputProps>(
               : undefined,
           });
 
+          setInput("");
+
           if (setImage) {
             setImage(null); // Clear image after submission
           }
@@ -115,6 +117,7 @@ const ChatInput = memo<ChatInputProps>(
         <div>
           <form
             onSubmit={(event) => {
+              event.preventDefault();
               sendMessage({
                 text: input,
                 files: image
@@ -128,6 +131,8 @@ const ChatInput = memo<ChatInputProps>(
                     ]
                   : undefined,
               });
+
+              setInput("");
 
               if (setImage) {
                 setImage(null); // Clear image after submission

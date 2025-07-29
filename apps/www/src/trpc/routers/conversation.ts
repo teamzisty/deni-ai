@@ -28,9 +28,7 @@ export const conversationRouter = createTRPCRouter({
         const conversation = await db.insert(chatSessions).values({
             userId: ctx.user.id,
             title: input.title,
-            bot: {
-                id: input.botId,
-            },
+            ...(input.botId ? { bot: { id: input.botId } } : {}),
             hubId: input.hubId,
         }).returning();
         return conversation[0];
