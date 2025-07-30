@@ -1,5 +1,5 @@
 import { UIMessage } from "ai";
-import { memo, useMemo, useState } from "react";
+import { memo, useMemo, useState, useEffect } from "react";
 import ReactMarkdown, { Components } from "react-markdown";
 import remarkGfm from "remark-gfm";
 import remarkMath from "remark-math";
@@ -73,8 +73,26 @@ MemoizedMarkdown.displayName = "MemoizedMarkdown";
 const Message = memo<MessageProps>(({ message, conversationId }) => {
   const [showSearchResults, setShowSearchResults] = useState(false);
   const [showReasoning, setShowReasoning] = useState(false);
-  const { openCanvas } = useCanvas();
+  const { openCanvas, isCanvasOpen } = useCanvas();
   const t = useTranslations();
+  
+  // Track which canvas contents have been auto-opened
+  const [autoOpenedCanvas, setAutoOpenedCanvas] = useState<Set<string>>(new Set());
+  
+  // Auto-open canvas for new tool-canvas outputs
+  useEffect(() => {
+    message.parts.forEach((part, index) => {
+      if (part.type === "tool-canvas" && part.input) {
+        const content = (part.input as any).content;
+        const partKey = `${message.id}-${index}`;
+        
+        if (content && !autoOpenedCanvas.has(partKey)) {
+          openCanvas(content);
+          setAutoOpenedCanvas(prev => new Set(prev).add(partKey));
+        }
+      }
+    });
+  }, [message.parts, message.id, openCanvas, autoOpenedCanvas]);
 
   const toggleSearchResults = () => {
     setShowSearchResults(!showSearchResults);
@@ -162,83 +180,27 @@ const Message = memo<MessageProps>(({ message, conversationId }) => {
             {message.parts.map((part, index) => {
               switch (part.type) {
                 case "tool-canvas":
-                  switch (part.state) {
-                    case "output-available":
-                      var canvasContent = (part.input as any).content || "";
-                      var canvasTitle =
-                        (part.input as any).title || t("chat.message.canvas");
-                      return (
-                        <div
-                          key={index}
-                          className="bg-secondary rounded-2xl p-4"
+                  if (!part.input) return null;
+                  var canvasContent = (part.input as any).content || "";
+                  var canvasTitle =
+                    (part.input as any).title || t("chat.message.canvas");
+                  
+                  return (
+                    <div key={index} className="bg-secondary rounded-2xl p-4">
+                      <div className="flex items-center justify-between">
+                        <h3 className="font-semibold">{canvasTitle}</h3>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => openCanvas(canvasContent as string)}
+                          className="flex items-center gap-1"
                         >
-                          <div className="flex items-center justify-between">
-                            <h3 className="font-semibold">{canvasTitle}</h3>
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={() =>
-                                openCanvas(canvasContent as string)
-                              }
-                              className="flex items-center gap-1"
-                            >
-                              <ExternalLink className="h-4 w-4" />
-                              {t("chat.message.openInCanvas")}
-                            </Button>
-                          </div>
-                        </div>
-                      );
-                    case "output-available":
-                      canvasContent = (part.input as any).content || "";
-                      canvasTitle =
-                        (part.input as any).title || t("chat.message.canvas");
-                      return (
-                        <div
-                          key={index}
-                          className="bg-secondary rounded-2xl p-4"
-                        >
-                          <div className="flex items-center justify-between">
-                            <h3 className="font-semibold">{canvasTitle}</h3>
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={() =>
-                                openCanvas(canvasContent as string)
-                              }
-                              className="flex items-center gap-1"
-                            >
-                              <ExternalLink className="h-4 w-4" />
-                              {t("chat.message.openInCanvas")}
-                            </Button>
-                          </div>
-                        </div>
-                      );
-                    case "output-available":
-                      canvasContent = (part.input as any).content || "";
-                      canvasTitle =
-                        (part.input as any).title || t("chat.message.canvas");
-                      return (
-                        <div
-                          key={index}
-                          className="bg-secondary rounded-2xl p-4"
-                        >
-                          <div className="flex items-center justify-between">
-                            <h3 className="font-semibold">{canvasTitle}</h3>
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={() =>
-                                openCanvas(canvasContent as string)
-                              }
-                              className="flex items-center gap-1"
-                            >
-                              <ExternalLink className="h-4 w-4" />
-                              {t("chat.message.openInCanvas")}
-                            </Button>
-                          </div>
-                        </div>
-                      );
-                  }
+                          <ExternalLink className="h-4 w-4" />
+                          {t("chat.message.openInCanvas")}
+                        </Button>
+                      </div>
+                    </div>
+                  );
 
                 case "tool-search":
                   if (part.state != "output-available") {
@@ -319,52 +281,53 @@ const Message = memo<MessageProps>(({ message, conversationId }) => {
                             {t("chat.message.viewSearchResults")}
                           </summary>
                           <div className="mt-2">
-                            {(
-                              (part.output as any) as SearchResult[]
-                            ).map((result, idx) => (
-                              <div
-                                key={idx}
-                                className="mb-2 border rounded-2xl p-2 w-full"
-                              >
-                                <div className="flex items-center gap-2">
-                                  <a
-                                    href={result.url}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="!text-foreground transition-colors"
-                                  >
-                                    {result.title}
-                                  </a>
-                                  {result.time && (
-                                    <span className="text-muted-foreground ml-auto">
-                                      {new Date(result.time).getSeconds()}
-                                      {"s"}
-                                    </span>
-                                  )}
+                            {(part.output as any as SearchResult[]).map(
+                              (result, idx) => (
+                                <div
+                                  key={idx}
+                                  className="mb-2 border rounded-2xl p-2 w-full"
+                                >
+                                  <div className="flex items-center gap-2">
+                                    <a
+                                      href={result.url}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      className="!text-foreground transition-colors"
+                                    >
+                                      {result.title}
+                                    </a>
+                                    {result.time && (
+                                      <span className="text-muted-foreground ml-auto">
+                                        {new Date(result.time).getSeconds()}
+                                        {"s"}
+                                      </span>
+                                    )}
+                                  </div>
+                                  <p
+                                    className="!m-0 text-muted-foreground"
+                                    dangerouslySetInnerHTML={{
+                                      __html: result.description,
+                                    }}
+                                  />
+                                  <div className="mt-2">
+                                    <details className="mt-2">
+                                      <summary className="cursor-pointer text-sm text-foreground/80 hover:text-foreground transition-colors">
+                                        {t("chat.message.pageSummary", {
+                                          model:
+                                            internalModels[
+                                              "search-summary-model"
+                                            ]?.name || "",
+                                        })}
+                                      </summary>
+                                      <MemoizedMarkdownBlock
+                                        key={`${message.id}-search-result-${index}-${idx}`}
+                                        content={result.content.long}
+                                      />
+                                    </details>
+                                  </div>
                                 </div>
-                                <p
-                                  className="!m-0 text-muted-foreground"
-                                  dangerouslySetInnerHTML={{
-                                    __html: result.description,
-                                  }}
-                                />
-                                <div className="mt-2">
-                                  <details className="mt-2">
-                                    <summary className="cursor-pointer text-sm text-foreground/80 hover:text-foreground transition-colors">
-                                      {t("chat.message.pageSummary", {
-                                        model:
-                                          internalModels["search-summary-model"]
-                                            ?.name || "",
-                                      })}
-                                    </summary>
-                                    <MemoizedMarkdownBlock
-                                      key={`${message.id}-search-result-${index}-${idx}`}
-                                      content={result.content.long}
-                                    />
-                                  </details>
-                                </div>
-                              </div>
-                            ))}
+                              ),
+                            )}
                           </div>
                         </details>
                       </motion.div>

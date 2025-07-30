@@ -13,11 +13,13 @@ import {
   convertToModelMessages,
   createUIMessageStream,
   createUIMessageStreamResponse,
+  extractReasoningMiddleware,
   generateId,
   generateText,
   LanguageModel,
   stepCountIs,
   streamText,
+  wrapLanguageModel,
 } from "ai";
 import { auth } from "@/lib/auth";
 import { canUseModel, recordUsage } from "@/lib/usage";
@@ -208,7 +210,7 @@ export async function POST(request: Request) {
       }
 
       // Add research-specific system prompts
-      let systemPrompt = "You are Deni AI.";
+      let systemPrompt = "You are powerful AI assistant.";
 
       if (bot) {
         systemPrompt = bot.systemInstruction;
@@ -219,9 +221,14 @@ export async function POST(request: Request) {
         content: systemPrompt,
       });
 
+      const wrappedModel = wrapLanguageModel({
+        model: sdkModel,
+        middleware: extractReasoningMiddleware({ tagName: "think" })
+      })
+
       const response = streamText({
         messages: coreMessages,
-        model: sdkModel,
+        model: wrappedModel,
         tools,
         stopWhen: stepCountIs(30),
         // providerOptions: {

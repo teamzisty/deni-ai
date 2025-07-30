@@ -213,6 +213,10 @@ const MainChat = memo<MainChatProps>(
       );
     }
 
+    if (!initialConversation) {
+      router.push("/chat");
+    }
+
     return (
       <main className="h-full flex flex-col relative">
         {/* Mobile model selector at top center */}
@@ -282,10 +286,9 @@ const MainChat = memo<MainChatProps>(
               </div>
             </div>
           )}
-          {status === "submitted" && (
-            <div className="flex items-center p-4 w-full max-w-4xl mx-auto text-sm">
-              <Loader2 className="animate-spin" />
-              <span className="ml-2">{loadingWord}</span>
+          {status === "submitted" || messages[messages.length - 1]?.parts.length === 0 && (
+            <div className="flex items-center py-4 w-full max-w-4xl mx-auto text-sm animate-pulse">
+              <span className="text-base font-medium">Thinking...</span>
             </div>
           )}
         </div>

@@ -46,7 +46,8 @@ export function ConversationsProvider({
   children,
 }: ConversationsProviderProps) {
   const [conversations, setConversations] = useState<Conversation[]>([]);
-  const { data: conversationsData, isLoading: isLoadingConversations } =
+  const [isLoadingConversations, setIsLoadingConversations] = useState(true);
+  const { data: conversationsData } =
     trpc.conversation.getConversations.useQuery();
   const { mutateAsync: createConversation } =
     trpc.conversation.createConversation.useMutation();
@@ -67,6 +68,7 @@ export function ConversationsProvider({
     setError(null);
     try {
       setConversations(conversationsData as unknown as Conversation[]);
+      setIsLoadingConversations(false);
     } catch (err) {
       console.error("Error fetching conversations:", err);
       setError("Failed to fetch conversations");
@@ -90,7 +92,6 @@ export function ConversationsProvider({
           return null;
         }
         // Fetch conversations after creating a new one to ensure we have the latest data
-        console.log("newConversation", newConversation);
         setConversations((prev) => [
           newConversation as unknown as Conversation,
           ...prev,

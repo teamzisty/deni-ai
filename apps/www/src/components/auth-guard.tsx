@@ -2,7 +2,6 @@
 
 import { useAuth } from "@/context/auth-context";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
 import { Loader2 } from "lucide-react";
 import { loading_words } from "@/lib/constants";
 
@@ -20,10 +19,7 @@ export function AuthGuard({
   const { user, isPending } = useAuth();
   const router = useRouter();
   
-  const [loadingWord] = useState<string | undefined>(
-    loading_words[Math.floor(Math.random() * loading_words.length)] ||
-      "Please wait...",
-  );
+  const loadingWord = loading_words[0] || "Please wait...";
 
   if (isPending) {
     return (
