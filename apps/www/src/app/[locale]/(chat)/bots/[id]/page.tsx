@@ -26,19 +26,26 @@ import {
   MessageCircleMore,
   Loader2,
 } from "lucide-react";
-import { useSupabase } from "@/context/supabase-context";
+import { useAuth } from "@/context/auth-context";
 import { Bot, ClientBot } from "@/lib/bot";
 import { useParams } from "next/navigation";
 import { useRouter } from "@/i18n/navigation";
 import { Link } from "@/i18n/navigation";
 import { useConversations } from "@/hooks/use-conversations";
+import { trpc } from "@/trpc/client";
 
 export default function BotPage() {
-  const [bot, setBot] = useState<ClientBot | null>(null);
-  const { user, supabase, loading } = useSupabase();
+  const params = useParams();
+  const router = useRouter();
+
+  const { data: bot, isLoading: isBotLoading } = trpc.bot.getBot.useQuery({
+    id: params.id as string,
+  });
+  const { mutate: updateBot, isPending: isUpdatingBot } =
+    trpc.bot.updateBot.useMutation();
+  const { user, isPending } = useAuth();
   const { createConversation, loading: conversationLoading } =
     useConversations();
-  const [isLoading, setIsLoading] = useState(true);
   const [isConversationCreating, setIsConversationCreating] = useState(false);
   const [editData, setEditData] = useState<
     Partial<
@@ -52,121 +59,49 @@ export default function BotPage() {
     system_instruction: "",
     instructions: [{ content: "" }],
   });
-  const [isSaving, setIsSaving] = useState(false);
-  const params = useParams();
-
-  const router = useRouter();
 
   useEffect(() => {
-    if (loading || !user) return;
-    fetchBot();
-  }, [loading, user, params.id]);
-
-  useEffect(() => {
-    if (bot && bot.created_by.id === user?.id) {
+    if (bot && bot.userId === user?.id) {
       setEditData({
         name: bot.name,
-        description: bot.description,
-        system_instruction: (bot as any).system_instruction,
-        instructions: bot.instructions || [{ content: "" }],
+        description: bot.description || "",
+        system_instruction: bot.systemInstruction || "",
+        instructions: (bot.instructions as { content: string }[]) || [
+          { content: "" },
+        ],
       });
     }
-  }, [bot]);
+  }, [bot, user]);
 
-  const fetchBot = async () => {
-    if (!user) return;
-    
-    try {
-      const { data, error } = await supabase
-        .from("bots")
-        .select("*")
-        .eq("id", params.id)
-        .single();
-
-      if (error || !data) {
-        console.error("Failed to fetch bot:", error);
-        router.push("/bots");
-        return;
-      }
-
-      // Transform to ClientBot format
-      const clientBot: ClientBot = {
-        id: data.id,
-        name: data.name,
-        description: data.description,
-        instructions: data.instructions || [],
-        created_by: {
-          name: user.user_metadata?.full_name || user.email || "Unknown User",
-          verified: user.email_confirmed_at !== null,
-          id: user.id,
-        },
-        created_at: new Date(data.created_at).getTime(),
-      };
-
-      setBot(clientBot);
-    } catch (error) {
-      console.error("Failed to fetch bot:", error);
-      router.push("/bots");
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
+  // todo: after trpc, add save bot
   const saveBot = async () => {
     if (!bot || !user) return;
+    if (!editData.name || !editData.description || !editData.system_instruction || !editData.instructions) return;
 
-    setIsSaving(true);
-    try {
-      const { data, error } = await supabase
-        .from("bots")
-        .update({
-          name: editData.name,
-          description: editData.description,
-          system_instruction: editData.system_instruction,
-          instructions: editData.instructions,
-          updated_at: new Date().toISOString(),
-        })
-        .eq("id", bot.id)
-        .eq("user_id", user.id) // Ensure user owns the bot
-        .select("*")
-        .single();
+    updateBot({
+      id: bot.id,
+      name: editData.name,
+      description: editData.description,
+      systemInstruction: editData.system_instruction,
+      instructions: editData.instructions,
+    });
 
-      if (error) {
-        console.error("Failed to update bot:", error);
-        return;
-      }
-
-      // Update local state
-      setBot((prev) =>
-        prev
-          ? {
-              ...prev,
-              name: editData.name || prev.name,
-              description: editData.description || prev.description,
-              instructions: editData.instructions || prev.instructions,
-            }
-          : null,
-      );
-    } catch (error) {
-      console.error("Failed to update bot:", error);
-    } finally {
-      setIsSaving(false);
-    }
+    setEditData(editData);
   };
 
   const isAuthor = () => {
-    return user && bot && bot.created_by.id === user.id;
+    return user && bot && bot.userId === user.id;
   };
 
   const handleCreateBotChat = async () => {
     setIsConversationCreating(true);
-    const conversation = await createConversation(bot!);
+    const conversation = await createConversation(bot! as unknown as ClientBot);
     if (conversation) {
       router.push(`/chat/${conversation.id}`);
     }
   };
 
-  if (isLoading || loading || conversationLoading) {
+  if (isPending || isBotLoading || conversationLoading) {
     return (
       <div className="container mx-auto p-4">
         <Card className="animate-pulse">
@@ -224,12 +159,9 @@ export default function BotPage() {
                   {bot.name}
                 </CardTitle>
                 <CardDescription className="flex flex-col items-center text-center">
-                  {bot.created_by && (
+                  {bot.userId && (
                     <div className="text-base text-muted-foreground flex items-center gap-1">
-                      <span>{bot.created_by.name || "Unknown User"}</span>
-                      {bot.created_by.verified && (
-                        <Verified size={"18"} className="text-blue-500" />
-                      )}
+                      <span>{bot.userId || "Unknown User"}</span>
                     </div>
                   )}
 
@@ -248,14 +180,14 @@ export default function BotPage() {
                     <div className="h-4 w-px bg-border" />
                     <div className="flex flex-col items-center h-full justify-between">
                       <p className="text-lg text-foreground">
-                        {new Date(bot.created_at).toLocaleDateString()}
+                        {new Date(bot.createdAt || "").toLocaleDateString()}
                       </p>
                       <p className="font-medium">Created at</p>
                     </div>
                     <div className="h-4 w-px bg-border" />
                     <div className="flex flex-col items-center justify-between h-full">
                       <p className="text-lg text-foreground">
-                        {bot.created_by?.verified ? "Verified" : "No flags"}
+                        {bot.userId ? "Verified" : "No flags"}
                       </p>
                       <p className="font-medium">User Flags</p>
                     </div>
@@ -280,7 +212,7 @@ export default function BotPage() {
                   </Button>
                 </div>
 
-                {bot.instructions && (
+                {bot && Array.isArray(bot.instructions) && (
                   <div>
                     <h3 className="text-lg font-semibold">Instructions</h3>
                     <p className="text-sm text-muted-foreground mb-2">
@@ -422,11 +354,11 @@ export default function BotPage() {
                     disabled={
                       !editData.name?.trim() ||
                       !editData.description?.trim() ||
-                      isSaving
+                      isUpdatingBot
                     }
                   >
                     <Save className="w-4 h-4 mr-2" />
-                    {isSaving ? "Saving..." : "Save Changes"}
+                    {isUpdatingBot ? "Saving..." : "Save Changes"}
                   </Button>
                 </CardContent>
               </TabsContent>

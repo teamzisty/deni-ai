@@ -156,7 +156,6 @@
       "renameSuccess": "会話の名前を変更しました！",
       "renameFailed": "会話の名前変更に失敗しました。もう一度お試しください。",
       "newChat": "新しいチャット",
-      "newVoiceChat": "新しい音声チャット",
       "bots": "ボット",
       "hubs": "ハブ",
       "conversations": "会話",
@@ -269,10 +268,6 @@
       "autoScroll": {
         "title": "自動スクロール",
         "description": "新しいメッセージに自動的にスクロールします"
-      },
-      "voiceMode": {
-        "title": "音声モード",
-        "description": "Deni AIと何でもお話しできます"
       },
       "bots": {
         "title": "ボット",
@@ -499,17 +494,8 @@
     "not_found": "見つかりません",
     "share_id_required": "共有IDが必要です",
     "shared_chat_not_found": "共有チャットが見つかりません",
-    "audio_file_required": "音声ファイルが提供されていません",
-    "audio_transcription_prompt": "以下の音声ファイルを文字起こししてください。音声は英語で、さまざまなアクセントが含まれている可能性があります。きれいで正確な文字起こしを提供してください。",
-    "audio_transcription_request": "以下の音声ファイルを文字起こししてください。",
-    "audio_transcription_failed": "音声の文字起こしに失敗しました",
     "text_required": "テキストが必要です",
     "api_key_not_configured": "APIキーが設定されていません",
-    "tts_browser_fallback": "ブラウザのTTSフォールバックを使用しています",
-    "invalid_audio_data": "無効な音声データ",
-    "audio_decode_failed": "音声データのデコードに失敗しました",
-    "invalid_audio_size": "無効な音声データサイズ",
-    "tts_generation_failed": "TTS生成に失敗しました、ブラウザのフォールバックを使用しています",
     "hub_not_found": "ハブが見つかりません",
     "conversation_not_found": "会話が見つかりません",
     "conversation_already_in_hub": "会話はすでにハブに含まれています",
@@ -839,27 +825,6 @@
         }
       }
     }
-  },
-  "voice": {
-    "authRequired": {
-      "title": "認証が必要です",
-      "description": "音声チャットを使用するにはログインしてください",
-      "loginButton": "ログイン"
-    },
-    "errors": {
-      "audioPlaybackFailed": "音声再生に失敗しました",
-      "voiceRecognition": "音声認識エラー: {error}",
-      "microphoneAccessDenied": "マイクへのアクセスが拒否されました",
-      "networkError": "ネットワークエラーが発生しました",
-      "microphoneProblem": "マイクの問題が検出されました",
-      "browserNotSupported": "ブラウザがサポートされていません",
-      "microphonePermissionRequired": "マイクの許可が必要です",
-      "failedToStart": "音声認識の開始に失敗しました"
-    },
-    "recognitionStarted": "音声認識を開始しました",
-    "recognitionEnded": "音声認識を終了しました",
-    "speakingReleaseToStop": "話しています...離すと停止します",
-    "holdToSpeak": "長押しして話す"
   },
   "messageLog": {
     "reasoning": "推論中...",

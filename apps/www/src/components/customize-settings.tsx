@@ -172,32 +172,6 @@ export default function CustomizeSettings() {
       <Card className="!gap-2">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <Mic className="h-5 w-5" />
-            {t("voiceMode.title")}
-            <Badge>{t("soon")}</Badge>
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="flex items-center justify-between">
-            <div className="flex-grow">
-              <p className="text-sm text-muted-foreground">
-                {t("voiceMode.description")}
-              </p>
-            </div>
-            <Switch
-              id="voice"
-              checked={settings.voice}
-              onCheckedChange={(checked) => {
-                updateSetting("voice", checked);
-              }}
-            />
-          </div>
-        </CardContent>
-      </Card>
-
-      <Card className="!gap-2">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
             <Bot className="h-5 w-5" />
             {t("bots.title")}
           </CardTitle>

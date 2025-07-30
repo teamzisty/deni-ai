@@ -9,6 +9,7 @@ import "katex/dist/katex.min.css";
 import { ReactScan } from "@/components/react-scan";
 import { BRAND_NAME } from "@/lib/constants";
 import { Analytics } from "@vercel/analytics/next";
+import { TRPCProvider } from "@/trpc/client";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -52,11 +53,13 @@ export default async function LocaleLayout({
           enableSystem
           disableTransitionOnChange
         >
-          <NextIntlClientProvider locale={locale} messages={messages}>
-            {children}
+          <TRPCProvider>
+            <NextIntlClientProvider locale={locale} messages={messages}>
+              {children}
 
-            <Analytics />
-          </NextIntlClientProvider>
+              <Analytics />
+            </NextIntlClientProvider>
+          </TRPCProvider>
         </ThemeProvider>
       </body>
     </html>

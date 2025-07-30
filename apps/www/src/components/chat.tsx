@@ -1,18 +1,17 @@
 "use client";
 
 import { useChat } from "@ai-sdk/react";
-import { useEffect, useState, useCallback, memo } from "react";
+import { useState, useCallback, memo } from "react";
 import ChatInput from "./chat/input";
-import { redirect } from "next/navigation";
 import { useRouter } from "@/i18n/navigation";
 import { Loader2 } from "lucide-react";
 import { loading_words } from "@/lib/constants";
-import { useSupabase } from "@/context/supabase-context";
+import { useAuth } from "@/context/auth-context";
 import { useConversations } from "@/hooks/use-conversations";
 import { useTranslations } from "@/hooks/use-translations";
 
 const Chat = memo(() => {
-  const { user, loading } = useSupabase();
+  const { user, isPending } = useAuth();
   const router = useRouter();
   const [loadingWord, setLoadingWord] = useState<string | undefined>(
     () => loading_words[Math.floor(Math.random() * loading_words.length)],
@@ -20,12 +19,6 @@ const Chat = memo(() => {
   const { createConversation } = useConversations();
   const [input, setInput] = useState("");
   const t = useTranslations();
-
-  useEffect(() => {
-    if (!loading && !user) {
-      redirect("/auth/login");
-    }
-  }, [loading, user]);
 
   const handleInputChange = useCallback(
     (
@@ -38,18 +31,18 @@ const Chat = memo(() => {
     [],
   );
 
-  const handleSubmit = useCallback(
-    async (event?: { preventDefault?: (() => void) | undefined }) => {
-      event?.preventDefault?.();
+  const sendMessage = useCallback(
+    async ({ text }: { text: string }) => {
+      if (!text) return;
       const conversation = await createConversation();
       router.push(
-        `/chat/${conversation?.id}?input=${encodeURIComponent(input)}`,
+        `/chat/${conversation?.id}?input=${encodeURIComponent(text)}`,
       );
     },
-    [createConversation, router, input],
+    [createConversation, router],
   );
 
-  if (loading && loadingWord) {
+  if (isPending && loadingWord) {
     return (
       <div className="h-full w-full flex items-center justify-center">
         <Loader2 className="animate-spin" />
@@ -70,8 +63,8 @@ const Chat = memo(() => {
 
         {/* Chat Input */}
         <ChatInput
-          handleSubmit={handleSubmit}
-          handleInputChange={handleInputChange}
+          sendMessage={sendMessage as any}
+          setInput={setInput}
           input={input}
         />
 

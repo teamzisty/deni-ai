@@ -156,7 +156,6 @@
       "renameSuccess": "Conversation renamed successfully!",
       "renameFailed": "Failed to rename conversation. Please try again.",
       "newChat": "New Chat",
-      "newVoiceChat": "New Voice Chat",
       "bots": "Bots",
       "hubs": "Hubs",
       "conversations": "Conversations",
@@ -277,10 +276,6 @@
       "autoScroll": {
         "title": "Auto Scroll",
         "description": "Automatically scroll to new messages"
-      },
-      "voiceMode": {
-        "title": "Voice Mode",
-        "description": "Talk to Deni AI about anything"
       },
       "bots": {
         "title": "Bots",
@@ -525,17 +520,8 @@
     "not_found": "Not found",
     "share_id_required": "Share ID is required",
     "shared_chat_not_found": "Shared chat not found",
-    "audio_file_required": "No audio file provided",
-    "audio_transcription_prompt": "Transcribe the following audio file. The audio is in English and may contain various accents. Provide a clean and accurate transcription.",
-    "audio_transcription_request": "Please transcribe the following audio file.",
-    "audio_transcription_failed": "Failed to transcribe audio",
     "text_required": "Text is required",
     "api_key_not_configured": "API key not configured",
-    "tts_browser_fallback": "Using browser TTS fallback",
-    "invalid_audio_data": "Invalid audio data",
-    "audio_decode_failed": "Failed to decode audio data",
-    "invalid_audio_size": "Invalid audio data size",
-    "tts_generation_failed": "TTS generation failed, using browser fallback",
     "hub_not_found": "Hub not found",
     "conversation_not_found": "Conversation not found",
     "conversation_already_in_hub": "Conversation already in hub",
@@ -865,26 +851,5 @@
         }
       }
     }
-  },
-  "voice": {
-    "authRequired": {
-      "title": "Authentication Required",
-      "description": "Please log in to use Voice Chat",
-      "loginButton": "Log In"
-    },
-    "errors": {
-      "audioPlaybackFailed": "Audio playback failed",
-      "voiceRecognition": "Voice recognition error: {error}",
-      "microphoneAccessDenied": "Microphone access denied",
-      "networkError": "Network error occurred",
-      "microphoneProblem": "Microphone problem detected",
-      "browserNotSupported": "Browser not supported",
-      "microphonePermissionRequired": "Microphone permission required",
-      "failedToStart": "Failed to start voice recognition"
-    },
-    "recognitionStarted": "Voice recognition started",
-    "recognitionEnded": "Voice recognition ended",
-    "speakingReleaseToStop": "Speaking... Release to stop",
-    "holdToSpeak": "Hold to speak"
   }
 }

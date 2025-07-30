@@ -1,9 +1,9 @@
-import { UseChatHelpers } from "@ai-sdk/react";
+import { UIMessage } from "@ai-sdk/react";
 import { memo } from "react";
 import Message from "./message";
 
 interface MessagesProps {
-  messages: UseChatHelpers["messages"];
+  messages: UIMessage[];
   conversationId?: string;
 }
 

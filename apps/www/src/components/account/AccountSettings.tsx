@@ -13,7 +13,7 @@ import {
   AvatarFallback,
   AvatarImage,
 } from "@workspace/ui/components/avatar";
-import { useSupabase } from "@/context/supabase-context";
+import { useAuth } from "@/context/auth-context";
 import { useRef, useState } from "react";
 import { toast } from "sonner";
 import { Badge } from "@workspace/ui/components/badge";
@@ -43,14 +43,16 @@ import { useSettings } from "@/hooks/use-settings";
 import { Switch } from "@workspace/ui/components/switch";
 import { Shield, Eye, Loader2, DownloadIcon, Lock } from "lucide-react";
 import { useTranslations } from "next-intl";
+import { deleteUser, updateUser } from "@/lib/auth-client";
+import { trpc } from "@/trpc/client";
 
 export function AccountSettings() {
   const t = useTranslations();
-  const { user, supabase, secureFetch } = useSupabase();
+  const { user } = useAuth();
   const { settings, updateSetting } = useSettings();
   const [isDeleting, setIsDeleting] = useState(false);
   const [isDownloading, setIsDownloading] = useState(false);
-  const [name, setName] = useState(user?.user_metadata?.display_name || "");
+  const [name, setName] = useState(user?.name || "");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [authToken, setAuthToken] = useState<string | null>(null);
@@ -72,10 +74,9 @@ export function AccountSettings() {
   const [isChangingPassword, setIsChangingPassword] = useState(false);
   const [passwordError, setPasswordError] = useState<string | null>(null);
 
+  const { mutateAsync: updatePassword, isPending: isUpdatingPassword } = trpc.user.updatePassword.useMutation();
+
   const { isUploading, startUpload } = useUploadThing("imageUploader", {
-    headers: {
-      Authorization: authToken || "",
-    },
     onUploadError: (error: Error) => {
       toast.error(t("account.uploadFailed"), {
         description: `${t("common.actions.error")}: ${error.message}`,
@@ -100,15 +101,6 @@ export function AccountSettings() {
         return;
       }
       async function upload() {
-        if (user && supabase) {
-          // Get Supabase session token instead of user.id
-          const {
-            data: { session },
-          } = await supabase!.auth.getSession();
-          if (session?.access_token) {
-            setAuthToken(`Bearer ${session.access_token}`);
-          }
-        }
         setTimeout(async () => {
           try {
             const data = (await startUpload([
@@ -162,7 +154,7 @@ export function AccountSettings() {
   };
 
   const handleChangeName = async () => {
-    if (!user || !supabase) return;
+    if (!user) return;
 
     if (!name) {
       toast.error(t("account.displayNameRequired"));
@@ -170,10 +162,8 @@ export function AccountSettings() {
     }
 
     try {
-      const { error } = await supabase.auth.updateUser({
-        data: {
-          display_name: name,
-        },
+      const { error } = await updateUser({
+        name,
       });
 
       if (error) throw error;
@@ -197,10 +187,10 @@ export function AccountSettings() {
   };
 
   const handleProfileSave = async () => {
-    if (!user || !supabase) return;
+    if (!user) return;
 
     try {
-      let photoURL = user.user_metadata?.avatar_url;
+      let photoURL = user.image;
 
       // Upload image if selected
       if (selectedImage) {
@@ -214,11 +204,9 @@ export function AccountSettings() {
       }
 
       // Update user profile
-      const { error } = await supabase.auth.updateUser({
-        data: {
-          display_name: name,
-          avatar_url: photoURL,
-        },
+      const { error } = await updateUser({
+        name,
+        image: photoURL || undefined,
       });
 
       if (error) throw error;
@@ -235,7 +223,7 @@ export function AccountSettings() {
   };
 
   const handleOpenEditDialog = () => {
-    setName(user?.user_metadata?.display_name || "");
+    setName(user?.name || "");
     setSelectedImage(null);
     setImagePreview(null);
     setIsDialogOpen(true);
@@ -245,7 +233,7 @@ export function AccountSettings() {
     setIsDownloading(true);
     try {
       // Fetch conversations from API
-      const response = await secureFetch("/api/conversations");
+      const response = await fetch("/api/conversations");
       if (!response.ok) {
         throw new Error(t("account.fetchConversationsFailed"));
       }
@@ -255,8 +243,8 @@ export function AccountSettings() {
         user: {
           user_id: user?.id,
           email: user?.email,
-          displayName: user?.user_metadata?.display_name,
-          photoURL: user?.user_metadata?.avatar_url,
+          displayName: user?.name,
+          photoURL: user?.image,
         },
         conversations: conversations,
       };
@@ -282,7 +270,7 @@ export function AccountSettings() {
   };
 
   const handlePasswordChange = async () => {
-    if (!supabase) return;
+    if (!user) return;
 
     // Reset error state
     setPasswordError(null);
@@ -307,11 +295,10 @@ export function AccountSettings() {
       setIsChangingPassword(true);
 
       // Update password using Supabase auth
-      const { error } = await supabase.auth.updateUser({
+
+      await updatePassword({
         password: newPassword,
       });
-
-      if (error) throw error;
 
       toast.success(t("account.passwordChangeSuccess"));
       setShowPasswordDialog(false);
@@ -331,21 +318,13 @@ export function AccountSettings() {
   };
 
   const proceedWithDeletion = async () => {
-    if (!user || !supabase) return;
+    if (!user) return;
 
     try {
       setIsDeleting(true);
       setShowDeleteReauthDialog(false);
 
-      // Delete user account via API
-      const response = await secureFetch("/api/user", {
-        method: "DELETE",
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || t("common.error.unexpectedError"));
-      }
+      const response = await deleteUser();
 
       router.push("/login");
 
@@ -366,7 +345,7 @@ export function AccountSettings() {
 
   // Get the first letter of the display name for the avatar fallback
   const nameInitial =
-    user.user_metadata?.display_name?.[0] || user.email?.[0] || "?";
+    user.name?.[0] || user.email?.[0] || "?";
 
   return (
     <div className="space-y-6">
@@ -381,7 +360,7 @@ export function AccountSettings() {
           <div className="flex flex-col md:flex-row md:items-center gap-4">
             <div className="flex gap-4 items-center">
               <Avatar className="h-20 w-20">
-                <AvatarImage src={user.user_metadata?.avatar_url || ""} />
+                <AvatarImage src={user.image || ""} />
                 <AvatarFallback className="text-2xl">
                   {nameInitial}
                 </AvatarFallback>
@@ -393,7 +372,7 @@ export function AccountSettings() {
                   {t("account.displayName")}
                 </div>
                 <p className="font-medium">
-                  {user.user_metadata?.display_name || t("account.notSet")}
+                  {user.name || t("account.notSet")}
                 </p>
               </div>
 
@@ -403,7 +382,7 @@ export function AccountSettings() {
                 </div>
                 <div className="flex items-center gap-2">
                   <p className="font-medium">{user.email}</p>
-                  {user.email_confirmed_at && (
+                  {user.emailVerified && (
                     <Badge variant="outline">{t("account.confirmed")}</Badge>
                   )}
                 </div>
@@ -536,7 +515,7 @@ export function AccountSettings() {
                 onClick={() => fileInputRef.current?.click()}
               >
                 <AvatarImage
-                  src={imagePreview || user.user_metadata?.avatar_url || ""}
+                  src={imagePreview || user.image || ""}
                 />
                 <AvatarFallback className="text-3xl">
                   {nameInitial}

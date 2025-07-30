@@ -1,5 +1,5 @@
 import { UIMessage } from "ai";
-import { memo, useMemo, useState } from "react";
+import { memo, useMemo, useState, useEffect } from "react";
 import ReactMarkdown, { Components } from "react-markdown";
 import remarkGfm from "remark-gfm";
 import remarkMath from "remark-math";
@@ -12,7 +12,6 @@ import { Button } from "@workspace/ui/components/button";
 import { Globe, ExternalLink, ArrowRight, ArrowDown } from "lucide-react";
 import { motion } from "framer-motion";
 import { useCanvas } from "@/context/canvas-context";
-import { BranchButton } from "./branch-button";
 import { useTranslations } from "@/hooks/use-translations";
 
 interface SearchResult {
@@ -74,8 +73,26 @@ MemoizedMarkdown.displayName = "MemoizedMarkdown";
 const Message = memo<MessageProps>(({ message, conversationId }) => {
   const [showSearchResults, setShowSearchResults] = useState(false);
   const [showReasoning, setShowReasoning] = useState(false);
-  const { openCanvas } = useCanvas();
+  const { openCanvas, isCanvasOpen } = useCanvas();
   const t = useTranslations();
+  
+  // Track which canvas contents have been auto-opened
+  const [autoOpenedCanvas, setAutoOpenedCanvas] = useState<Set<string>>(new Set());
+  
+  // Auto-open canvas for new tool-canvas outputs
+  useEffect(() => {
+    message.parts.forEach((part, index) => {
+      if (part.type === "tool-canvas" && part.input) {
+        const content = (part.input as any).content;
+        const partKey = `${message.id}-${index}`;
+        
+        if (content && !autoOpenedCanvas.has(partKey)) {
+          openCanvas(content);
+          setAutoOpenedCanvas(prev => new Set(prev).add(partKey));
+        }
+      }
+    });
+  }, [message.parts, message.id, openCanvas, autoOpenedCanvas]);
 
   const toggleSearchResults = () => {
     setShowSearchResults(!showSearchResults);
@@ -86,17 +103,17 @@ const Message = memo<MessageProps>(({ message, conversationId }) => {
       return (
         <div className="flex items-start gap-4 mb-4">
           <div className="prose ml-auto bg-secondary rounded-2xl p-4 w-fit max-w-[80%]">
-            {message.experimental_attachments &&
-              message.experimental_attachments.map((attachment, index) => (
-                <img
-                  key={index}
-                  src={attachment.url}
-                  alt={attachment.name}
-                  className="rounded-lg max-w-24 max-h-24 w-24 h-24 object-cover mb-2"
-                />
-              ))}
             {message.parts.map((part, index) => {
               switch (part.type) {
+                case "file":
+                  return (
+                    <img
+                      key={index}
+                      src={part.url}
+                      alt={part.filename}
+                      className="rounded-lg"
+                    />
+                  );
                 case "text":
                   return (
                     <MemoizedMarkdown
@@ -105,15 +122,7 @@ const Message = memo<MessageProps>(({ message, conversationId }) => {
                       id={`${message.id}-text_${index}`}
                     />
                   );
-                case "file":
-                  return (
-                    <img
-                      key={index}
-                      src={part.data}
-                      alt={t("chat.message.imageAlt")}
-                      className="rounded-lg"
-                    />
-                  );
+
                 default:
                   return null;
               }
@@ -125,12 +134,6 @@ const Message = memo<MessageProps>(({ message, conversationId }) => {
       return (
         <div className="flex items-start gap-4 mb-4 group">
           <div className="prose prose-sm max-w-none flex-1">
-            {/* Branch button - only show if we have a conversationId */}
-            {conversationId && (
-              <div className="flex justify-end mb-2">
-                <BranchButton conversationId={conversationId} />
-              </div>
-            )}
             {/* Reasoning Section */}
             {message.parts.some((part) => part.type === "reasoning") && (
               <div className="mb-4 not-prose" key={message.id}>
@@ -164,7 +167,7 @@ const Message = memo<MessageProps>(({ message, conversationId }) => {
                             className="text-sm text-muted-foreground space-y-2"
                           >
                             <MemoizedMarkdown
-                              content={part.reasoning}
+                              content={part.text}
                               id={`${message.id}-reasoning_${index}`}
                             />
                           </div>
@@ -176,108 +179,110 @@ const Message = memo<MessageProps>(({ message, conversationId }) => {
             )}
             {message.parts.map((part, index) => {
               switch (part.type) {
-                case "tool-invocation":
-                  if (part.toolInvocation.toolName === "canvas") {
-                    const canvasContent =
-                      part.toolInvocation.args?.content || "";
-                    const canvasTitle =
-                      part.toolInvocation.args?.title ||
-                      t("chat.message.canvas");
+                case "tool-canvas":
+                  if (!part.input) return null;
+                  var canvasContent = (part.input as any).content || "";
+                  var canvasTitle =
+                    (part.input as any).title || t("chat.message.canvas");
+                  
+                  return (
+                    <div key={index} className="bg-secondary rounded-2xl p-4">
+                      <div className="flex items-center justify-between">
+                        <h3 className="font-semibold">{canvasTitle}</h3>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => openCanvas(canvasContent as string)}
+                          className="flex items-center gap-1"
+                        >
+                          <ExternalLink className="h-4 w-4" />
+                          {t("chat.message.openInCanvas")}
+                        </Button>
+                      </div>
+                    </div>
+                  );
+
+                case "tool-search":
+                  if (part.state != "output-available") {
                     return (
-                      <div key={index} className="bg-secondary rounded-2xl p-4">
-                        <div className="flex items-center justify-between">
-                          <h3 className="font-semibold">{canvasTitle}</h3>
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => openCanvas(canvasContent)}
-                            className="flex items-center gap-1"
-                          >
-                            <ExternalLink className="h-4 w-4" />
-                            {t("chat.message.openInCanvas")}
-                          </Button>
+                      <div
+                        key={index}
+                        className="bg-secondary rounded-2xl p-4 my-1"
+                      >
+                        <h3 className="font-semibold">
+                          {t("chat.message.searchResults")}
+                        </h3>
+                        {part.input ? (
+                          <span className="text-muted-foreground">
+                            {t("chat.message.searchingWith", {
+                              query: (part.input as { query: string }).query,
+                            })}
+                          </span>
+                        ) : null}
+                        <div className="mt-2">
+                          <p className="!m-0 animate-pulse text-muted-foreground">
+                            {t("chat.message.searching")}
+                          </p>
                         </div>
                       </div>
                     );
                   }
-                  if (part.toolInvocation.toolName === "search") {
-                    if (part.toolInvocation.state != "result") {
-                      return (
-                        <div
-                          key={index}
-                          className="bg-secondary rounded-2xl p-4 my-1"
-                        >
+
+                  if (!part.output) return null;
+
+                  return (
+                    <div key={index}>
+                      <Button
+                        onClick={toggleSearchResults}
+                        variant="outline"
+                        className="flex items-center gap-1 my-1"
+                      >
+                        <Globe className="h-4 w-4" />
+                        <span>
+                          {t("chat.message.searchedWebsites", {
+                            count: (part.output as any).length,
+                          })}
+                        </span>
+                      </Button>
+
+                      {/* The large Search Results card, conditionally rendered and animated */}
+                      <motion.div
+                        className="bg-secondary rounded-2xl p-4 mt-2"
+                        initial={{ opacity: 0, height: 0 }}
+                        animate={{
+                          opacity: showSearchResults ? 1 : 0,
+                          height: showSearchResults ? "auto" : 0,
+                          marginTop: showSearchResults ? "0.5rem" : "0",
+                          padding: showSearchResults ? "1rem" : "0",
+                        }}
+                        transition={{ duration: 0.3, ease: "easeInOut" }}
+                        style={{ overflow: "hidden" }}
+                      >
+                        <div className="flex items-center justify-between">
                           <h3 className="font-semibold">
                             {t("chat.message.searchResults")}
                           </h3>
-                          <span className="text-muted-foreground">
-                            {t("chat.message.searchingWith", {
-                              query: part.toolInvocation.args?.query,
-                            })}
-                          </span>
-                          <div className="mt-2">
-                            <p className="!m-0 animate-pulse text-muted-foreground">
-                              {t("chat.message.searching")}
-                            </p>
-                          </div>
-                        </div>
-                      );
-                    }
-
-                    return (
-                      <div key={index}>
-                        <Button
-                          onClick={toggleSearchResults}
-                          variant="outline"
-                          className="flex items-center gap-1 my-1"
-                        >
-                          <Globe className="h-4 w-4" />
-                          <span>
+                          <button className="text-sm text-muted-foreground hover:text-foreground transition-colors">
                             {t("chat.message.searchedWebsites", {
-                              count: part.toolInvocation.result.length,
+                              count: (part.output as any).length,
                             })}
-                          </span>
-                        </Button>
-
-                        {/* The large Search Results card, conditionally rendered and animated */}
-                        <motion.div
-                          className="bg-secondary rounded-2xl p-4 mt-2"
-                          initial={{ opacity: 0, height: 0 }}
-                          animate={{
-                            opacity: showSearchResults ? 1 : 0,
-                            height: showSearchResults ? "auto" : 0,
-                            marginTop: showSearchResults ? "0.5rem" : "0",
-                            padding: showSearchResults ? "1rem" : "0",
-                          }}
-                          transition={{ duration: 0.3, ease: "easeInOut" }}
-                          style={{ overflow: "hidden" }}
-                        >
-                          <div className="flex items-center justify-between">
-                            <h3 className="font-semibold">
-                              {t("chat.message.searchResults")}
-                            </h3>
-                            <button className="text-sm text-muted-foreground hover:text-foreground transition-colors">
-                              {t("chat.message.searchedWebsites", {
-                                count: part.toolInvocation.result.length,
-                              })}
-                            </button>
-                          </div>
-                          <span className="text-muted-foreground">
-                            {t("chat.message.foundResults", {
-                              count: part.toolInvocation.result.length,
-                              query: part.toolInvocation.args.query,
-                            })}
-                          </span>
-                          <details className="mt-2" open={true}>
-                            {" "}
-                            {/* Set open to true to show content initially if animated */}
-                            <summary className="cursor-pointer text-sm text-foreground/80 hover:text-foreground transition-colors">
-                              {t("chat.message.viewSearchResults")}
-                            </summary>
-                            <div className="mt-2">
-                              {(
-                                part.toolInvocation.result as SearchResult[]
-                              ).map((result, idx) => (
+                          </button>
+                        </div>
+                        <span className="text-muted-foreground">
+                          {t("chat.message.foundResults", {
+                            count: (part.output as any).length,
+                            query: (part.input as any).query,
+                          })}
+                        </span>
+                        <details className="mt-2" open={true}>
+                          {" "}
+                          {/* Set open to true to show content initially if animated */}
+                          <summary className="cursor-pointer text-sm text-foreground/80 hover:text-foreground transition-colors">
+                            {t("chat.message.viewSearchResults")}
+                          </summary>
+                          <div className="mt-2">
+                            {(part.output as any as SearchResult[]).map(
+                              (result, idx) => (
                                 <div
                                   key={idx}
                                   className="mb-2 border rounded-2xl p-2 w-full"
@@ -321,13 +326,14 @@ const Message = memo<MessageProps>(({ message, conversationId }) => {
                                     </details>
                                   </div>
                                 </div>
-                              ))}
-                            </div>
-                          </details>
-                        </motion.div>
-                      </div>
-                    );
-                  }
+                              ),
+                            )}
+                          </div>
+                        </details>
+                      </motion.div>
+                    </div>
+                  );
+
                 case "step-start":
                   return <Separator key={index} className="my-4" />;
                 case "text":

@@ -68,7 +68,7 @@ export interface InputActionsProps {
   setSearch?: (search: boolean) => void;
   researchMode?: "disabled" | "shallow" | "deep" | "deeper";
   setResearchMode?: (mode: "disabled" | "shallow" | "deep" | "deeper") => void;
-  input: UseChatHelpers["input"];
+  input: string;
   thinkingEffort?: "disabled" | "low" | "medium" | "high";
   setThinkingEffort?: (effort: "disabled" | "low" | "medium" | "high") => void;
   handleImageUpload?: (file: File) => void;
@@ -421,14 +421,14 @@ export const ModelSelector = React.memo<{
                         // @ts-expect-error
                         content={
                           <div className="p-2 max-w-xs">
-                            <div className="font-semibold text-sm mb-1">
+                            <div className="font-semibold text-foreground text-sm mb-1">
                               {models[modelOption]?.name || modelOption}
                             </div>
                             <div className="text-xs text-muted-foreground mb-2">
                               by {models[modelOption]?.author}
                             </div>
                             {models[modelOption]?.description && (
-                              <div className="text-xs mb-2 w-full">
+                              <div className="text-xs text-muted-foreground mb-2 w-full">
                                 {models[modelOption].description}
                               </div>
                             )}

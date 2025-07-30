@@ -8,10 +8,13 @@ import React, {
   useCallback,
   ReactNode,
 } from "react";
-import { Conversation } from "@/lib/conversations";
-import { supabase } from "@/lib/supabase/client";
+import {
+  Conversation,
+} from "@/lib/conversations";
 import { ClientBot } from "@/lib/bot";
-import { useSupabase } from "@/context/supabase-context";
+import { useAuth } from "@/context/auth-context";
+import { trpc } from "@/trpc/client";
+
 interface ConversationsContextType {
   conversations: Conversation[];
   loading: boolean;
@@ -43,76 +46,67 @@ export function ConversationsProvider({
   children,
 }: ConversationsProviderProps) {
   const [conversations, setConversations] = useState<Conversation[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [isLoadingConversations, setIsLoadingConversations] = useState(true);
+  const { data: conversationsData } =
+    trpc.conversation.getConversations.useQuery();
+  const { mutateAsync: createConversation } =
+    trpc.conversation.createConversation.useMutation();
+  const { mutateAsync: updateConversation } =
+    trpc.conversation.updateConversation.useMutation();
+  const { mutateAsync: deleteConversation } =
+    trpc.conversation.deleteConversation.useMutation();
+  const { mutateAsync: deleteAllConversations } =
+    trpc.conversation.deleteAllConversations.useMutation();
+  const { mutateAsync: getConversation } =
+    trpc.conversation.getConversation.useMutation();
   const [error, setError] = useState<string | null>(null);
-  const { user } = useSupabase();
+  const { user } = useAuth();
 
   const fetchConversations = useCallback(async () => {
-    if (!user) return;
-    
-    setLoading(true);
+    if (!user || !conversationsData) return;
+
     setError(null);
-
     try {
-      const { data, error } = await supabase
-        .from("chat_sessions")
-        .select("*")
-        .eq("user_id", user.id)
-        .order("created_at", { ascending: false });
-
-      if (error) {
-        console.error("Error fetching conversations:", error);
-        setError("Failed to fetch conversations");
-        return;
-      }
-
-      setConversations(data || []);
+      setConversations(conversationsData as unknown as Conversation[]);
+      setIsLoadingConversations(false);
     } catch (err) {
+      console.error("Error fetching conversations:", err);
       setError("Failed to fetch conversations");
-    } finally {
-      setLoading(false);
     }
-  }, [user]);
+  }, [user, conversationsData]);
 
-  const createConversation = useCallback(
+  const createConversationFn = useCallback(
     async (bot?: ClientBot, hubId?: string): Promise<Conversation | null> => {
       if (!user) return null;
-      
+
       setError(null);
 
       try {
-        const { data, error } = await supabase
-          .from("chat_sessions")
-          .insert({
-            user_id: user.id,
-            title: "New Session",
-            messages: [],
-            created_at: new Date().toISOString(),
-            updated_at: new Date().toISOString(),
-            bot,
-            hub_id: hubId,
-          })
-          .select("*")
-          .single();
-
-        if (error) {
-          console.error("Error creating conversation:", error);
+        const newConversation = await createConversation({
+          title: bot?.name || "New Conversation",
+          botId: bot?.id || "",
+          hubId: hubId || "",
+        });
+        if (!newConversation) {
           setError("Failed to create conversation");
           return null;
         }
-
-        const newConversation = data;
-        setConversations((prev) => [newConversation, ...prev]);
-        return newConversation;
+        // Fetch conversations after creating a new one to ensure we have the latest data
+        setConversations((prev) => [
+          newConversation as unknown as Conversation,
+          ...prev,
+        ]);
+        return newConversation as unknown as Conversation;
       } catch (err) {
+        console.error("Error creating conversation:", err);
         setError("Failed to create conversation");
         return null;
       }
     },
-    [user],
+    [user, createConversation, fetchConversations],
   );
 
-  const updateConversation = useCallback(
+  const updateConversationFn = useCallback(
     async (
       id: string,
       updates: Partial<Conversation>,
@@ -120,28 +114,21 @@ export function ConversationsProvider({
       setError(null);
 
       try {
-        const { data, error } = await supabase
-          .from("chat_sessions")
-          .update({
-            ...updates,
-            updated_at: new Date().toISOString(),
-          })
-          .eq("id", id)
-          .select("*")
-          .single();
-
-        if (error) {
-          console.error("Error updating conversation:", error);
+        const updatedConversation = (await updateConversation({
+          id,
+          title: updates.title || "",
+        })) as unknown as Conversation;
+        if (!updatedConversation) {
           setError("Failed to update conversation");
           return null;
         }
 
-        const updatedConversation = data;
         setConversations((prev) =>
           prev.map((conv) => (conv.id === id ? updatedConversation : conv)),
         );
         return updatedConversation;
       } catch (err) {
+        console.error("Error updating conversation:", err);
         setError("Failed to update conversation");
         return null;
       }
@@ -168,18 +155,13 @@ export function ConversationsProvider({
     [conversations],
   );
 
-  const deleteConversation = useCallback(
+  const deleteConversationFn = useCallback(
     async (id: string): Promise<boolean> => {
       setError(null);
 
       try {
-        const { error } = await supabase
-          .from("chat_sessions")
-          .delete()
-          .eq("id", id);
-
-        if (error) {
-          console.error("Error deleting conversation:", error);
+        const success = await deleteConversation({ id });
+        if (!success) {
           setError("Failed to delete conversation");
           return false;
         }
@@ -187,6 +169,7 @@ export function ConversationsProvider({
         setConversations((prev) => prev.filter((conv) => conv.id !== id));
         return true;
       } catch (err) {
+        console.error("Error deleting conversation:", err);
         setError("Failed to delete conversation");
         return false;
       }
@@ -194,19 +177,14 @@ export function ConversationsProvider({
     [],
   );
 
-  const deleteAllConversations = useCallback(async (): Promise<boolean> => {
+  const deleteAllConversationsFn = useCallback(async (): Promise<boolean> => {
     if (!user) return false;
-    
+
     setError(null);
 
     try {
-      const { error } = await supabase
-        .from("chat_sessions")
-        .delete()
-        .eq("user_id", user.id);
-
-      if (error) {
-        console.error("Error deleting all conversations:", error);
+      const success = await deleteAllConversations();
+      if (!success) {
         setError("Failed to delete all conversations");
         return false;
       }
@@ -214,30 +192,26 @@ export function ConversationsProvider({
       setConversations([]);
       return true;
     } catch (err) {
+      console.error("Error deleting all conversations:", err);
       setError("Failed to delete all conversations");
       return false;
     }
-  }, [user]);
+  }, [user, deleteAllConversations]);
 
-  const getConversation = useCallback(
+  const getConversationFn = useCallback(
     async (id: string): Promise<Conversation | null> => {
       setError(null);
 
       try {
-        const { data, error } = await supabase
-          .from("chat_sessions")
-          .select("*")
-          .eq("id", id)
-          .single();
-
-        if (error) {
-          console.error("Error fetching conversation:", error);
+        const conversation = await getConversation({ id });
+        if (!conversation) {
           setError("Failed to get conversation");
           return null;
         }
 
-        return data;
+        return conversation as unknown as Conversation;
       } catch (err) {
+        console.error("Error fetching conversation:", err);
         setError("Failed to get conversation");
         return null;
       }
@@ -255,14 +229,14 @@ export function ConversationsProvider({
 
   const value: ConversationsContextType = {
     conversations,
-    loading,
+    loading: isLoadingConversations,
     error,
-    createConversation,
-    updateConversation,
+    createConversation: createConversationFn,
+    updateConversation: updateConversationFn,
     updateConversationTitle,
-    deleteConversation,
-    deleteAllConversations,
-    getConversation,
+    deleteConversation: deleteConversationFn,
+    deleteAllConversations: deleteAllConversationsFn,
+    getConversation: getConversationFn,
     refreshConversations,
   };
 

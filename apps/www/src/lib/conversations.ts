@@ -1,223 +1,191 @@
-import { Message, UIMessage } from "ai";
-import { createSupabaseServer } from "./supabase/server";
+import { UIMessage } from "@ai-sdk/react";
+import { db, chatSessions, ChatSession, NewChatSession } from "./db";
 import { BotSchema, ClientBot } from "./bot";
+import { eq, desc, asc } from "drizzle-orm";
 import z from "zod/v4";
 
 export interface Conversation {
   id: string;
-  user_id: string;
-  title: string;
+  userId: string | null;
+  title: string | null;
   messages: UIMessage[];
-  created_at: string;
-  updated_at: string;
+  createdAt: Date;
+  updatedAt: Date;
   bot?: ClientBot;
-  parentSessionId?: string;
-  branchName?: string;
-  hub_id?: string;
+  parentSessionId?: string | null;
+  branchName?: string | null;
+  hubId?: string | null;
 }
 
 export const ConversationSchema = z.object({
   id: z.string(),
-  user_id: z.string(),
-  title: z.string(),
+  userId: z.string().nullable(),
+  title: z.string().nullable(),
   messages: z.array(z.any()),
-  created_at: z.string(),
-  updated_at: z.string(),
+  createdAt: z.date(),
+  updatedAt: z.date(),
   bot: BotSchema.optional(),
-  parentSessionId: z.string().optional(),
-  branchName: z.string().optional(),
-  hub_id: z.string().optional(),
+  parentSessionId: z.string().nullable().optional(),
+  branchName: z.string().nullable().optional(),
+  hubId: z.string().nullable().optional(),
 });
-
-export async function createConversation(
-  userId: string,
-  bot?: ClientBot,
-): Promise<Conversation | null> {
-  const supabase = await createSupabaseServer();
-  const { data, error } = await supabase
-    .from("chat_sessions")
-    .insert({
-      user_id: userId,
-      title: "New Session",
-      messages: [],
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-      bot,
-    })
-    .select("*")
-    .single();
-
-  if (error) {
-    console.error("Error creating conversation:", error);
-    return null;
-  }
-
-  return data;
-}
-
-export async function createBranchConversation(
-  userId: string,
-  parentSessionId: string,
-  branchName: string,
-  parentMessages?: any[],
-): Promise<Conversation | null> {
-  const supabase = await createSupabaseServer();
-  const { data, error } = await supabase
-    .from("chat_sessions")
-    .insert({
-      user_id: userId,
-      title: `Branch: ${branchName}`,
-      messages: parentMessages || [],
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-      parentSessionId,
-      branchName,
-    })
-    .select("*")
-    .single();
-  if (error) {
-    console.error("Error creating branch conversation:", error);
-    return null;
-  }
-  return data;
-}
-
-export async function getBranches(
-  parentSessionId: string,
-): Promise<Conversation[]> {
-  const supabase = await createSupabaseServer();
-  const { data, error } = await supabase
-    .from("chat_sessions")
-    .select("*")
-    .eq("parentSessionId", parentSessionId)
-    .order("created_at", { ascending: true });
-
-  if (error) {
-    console.error("Error fetching branches:", error);
-    return [];
-  }
-
-  return data || [];
-}
-
-export async function getBranchTree(conversationId: string): Promise<{
-  root: Conversation | null;
-  branches: Conversation[];
-}> {
-  const supabase = await createSupabaseServer();
-
-  // Get the root conversation
-  const rootConversation = await getConversation(conversationId);
-
-  // Get all branches for this conversation
-  const branches = await getBranches(conversationId);
-
-  return {
-    root: rootConversation,
-    branches,
-  };
-}
 
 export async function updateConversation(
   id: string,
   updates: Partial<Conversation>,
 ): Promise<Conversation | null> {
-  const supabase = await createSupabaseServer();
-  const { data, error } = await supabase
-    .from("chat_sessions")
-    .update(updates)
-    .eq("id", id)
-    .select("*")
-    .single();
+  try {
+    const updateData: Partial<NewChatSession> = {};
+    
+    if (updates.title !== undefined) updateData.title = updates.title;
+    if (updates.messages !== undefined) updateData.messages = updates.messages;
+    if (updates.bot !== undefined) updateData.bot = updates.bot;
+    if (updates.parentSessionId !== undefined) updateData.parentSessionId = updates.parentSessionId;
+    if (updates.branchName !== undefined) updateData.branchName = updates.branchName;
+    if (updates.hubId !== undefined) updateData.hubId = updates.hubId;
+    
+    updateData.updatedAt = new Date();
 
-  if (error) {
+    const [conversation] = await db
+      .update(chatSessions)
+      .set(updateData)
+      .where(eq(chatSessions.id, id))
+      .returning();
+
+    if (!conversation) return null;
+
+    return {
+      id: conversation.id,
+      userId: conversation.userId,
+      title: conversation.title,
+      messages: (conversation.messages as UIMessage[]) || [],
+      createdAt: conversation.createdAt!,
+      updatedAt: conversation.updatedAt!,
+      bot: conversation.bot as ClientBot | undefined,
+      parentSessionId: conversation.parentSessionId,
+      branchName: conversation.branchName,
+      hubId: conversation.hubId,
+    };
+  } catch (error) {
     console.error("Error updating conversation:", error);
     return null;
   }
-
-  return data;
 }
 
 export async function updateConversationMessages(
   id: string,
-  messages: Message[],
+  messages: UIMessage[],
 ): Promise<Conversation | null> {
-  const supabase = await createSupabaseServer();
-  const { data, error } = await supabase
-    .from("chat_sessions")
-    .update({
-      messages: messages,
-      updated_at: new Date().toISOString(),
-    })
-    .eq("id", id)
-    .select("*")
-    .single();
-  if (error) {
+  try {
+    const [conversation] = await db
+      .update(chatSessions)
+      .set({
+        messages: messages,
+        updatedAt: new Date(),
+      })
+      .where(eq(chatSessions.id, id))
+      .returning();
+
+    if (!conversation) return null;
+
+    return {
+      id: conversation.id,
+      userId: conversation.userId,
+      title: conversation.title,
+      messages: (conversation.messages as UIMessage[]) || [],
+      createdAt: conversation.createdAt!,
+      updatedAt: conversation.updatedAt!,
+      bot: conversation.bot as ClientBot | undefined,
+      parentSessionId: conversation.parentSessionId,
+      branchName: conversation.branchName,
+      hubId: conversation.hubId,
+    };
+  } catch (error) {
     console.error("Error updating conversation messages:", error);
     return null;
   }
-  return data;
 }
 
 export async function getConversation(
   id: string,
 ): Promise<Conversation | null> {
-  const supabase = await createSupabaseServer();
-  const { data, error } = await supabase
-    .from("chat_sessions")
-    .select("*")
-    .eq("id", id)
-    .single();
+  try {
+    const [session] = await db
+      .select()
+      .from(chatSessions)
+      .where(eq(chatSessions.id, id))
+      .limit(1);
 
-  if (error) {
+    if (!session) return null;
+
+    return {
+      id: session.id,
+      userId: session.userId,
+      title: session.title,
+      messages: (session.messages as UIMessage[]) || [],
+      createdAt: session.createdAt!,
+      updatedAt: session.updatedAt!,
+      bot: session.bot as ClientBot | undefined,
+      parentSessionId: session.parentSessionId,
+      branchName: session.branchName,
+      hubId: session.hubId,
+    };
+  } catch (error) {
     console.error("Error fetching conversation:", error);
     return null;
   }
-
-  return data;
 }
 
 export async function getConversations(
   userId: string,
 ): Promise<Conversation[]> {
-  const supabase = await createSupabaseServer();
-  const { data, error } = await supabase
-    .from("chat_sessions")
-    .select("*")
-    .eq("user_id", userId)
-    .order("created_at", { ascending: false });
+  try {
+    const sessions = await db
+      .select()
+      .from(chatSessions)
+      .where(eq(chatSessions.userId, userId))
+      .orderBy(desc(chatSessions.createdAt));
 
-  if (error) {
+    return sessions.map(session => ({
+      id: session.id,
+      userId: session.userId,
+      title: session.title,
+      messages: (session.messages as UIMessage[]) || [],
+      createdAt: session.createdAt!,
+      updatedAt: session.updatedAt!,
+      bot: session.bot as ClientBot | undefined,
+      parentSessionId: session.parentSessionId,
+      branchName: session.branchName,
+      hubId: session.hubId,
+    }));
+  } catch (error) {
     console.error("Error fetching conversations:", error);
     return [];
   }
-
-  return data;
 }
 
 export async function deleteConversation(id: string): Promise<boolean> {
-  const supabase = await createSupabaseServer();
-  const { error } = await supabase.from("chat_sessions").delete().eq("id", id);
+  try {
+    await db
+      .delete(chatSessions)
+      .where(eq(chatSessions.id, id));
 
-  if (error) {
+    return true;
+  } catch (error) {
     console.error("Error deleting conversation:", error);
     return false;
   }
-
-  return true;
 }
 
 export async function deleteAllConversations(userId: string): Promise<boolean> {
-  const supabase = await createSupabaseServer();
-  const { error } = await supabase
-    .from("chat_sessions")
-    .delete()
-    .eq("user_id", userId);
+  try {
+    await db
+      .delete(chatSessions)
+      .where(eq(chatSessions.userId, userId));
 
-  if (error) {
+    return true;
+  } catch (error) {
     console.error("Error deleting all conversations:", error);
     return false;
   }
-
-  return true;
 }

@@ -1,19 +1,12 @@
 "use client";
 
 import React from "react";
-import { useSupabase } from "@/context/supabase-context";
-import { useIsMobile } from "@/hooks/use-mobile";
+import { useAuth } from "@/context/auth-context";
 import { Skeleton } from "@workspace/ui/components/skeleton";
 
 import { Button } from "@workspace/ui/components/button";
 import {
-  Code2,
-  CrownIcon,
-  Earth,
-  FolderSync,
   LogOut,
-  Notebook,
-  Settings,
   User2,
 } from "lucide-react";
 import {
@@ -26,23 +19,21 @@ import {
   DropdownMenuTrigger,
 } from "@workspace/ui/components/dropdown-menu";
 import Image from "next/image";
-import { memo, useEffect, useState } from "react";
-import { User } from "@supabase/supabase-js";
-import { Link } from "@/i18n/navigation";
-import { toast } from "sonner";
+import { memo } from "react";
 import { useSettingsDialog } from "@/context/settings-dialog-context";
-import { useRouter } from "@/i18n/navigation";
 import { useSettings } from "@/hooks/use-settings";
+import { signOut } from "@/lib/auth-client";
+import { User } from "better-auth";
 
 export const AccountManagement = () => {
-  const { user, loading: isLoading, supabase } = useSupabase();
+  const { user, isPending } = useAuth();
   const isMobile =
     typeof window !== "undefined"
       ? require("@/hooks/use-mobile").useIsMobile()
       : false;
   if (isMobile) return null;
 
-  if (isLoading && !supabase) {
+  if (isPending && !user) {
     return (
       <div className="flex items-center mt-2 gap-2">
         <Skeleton className="h-12 w-12 rounded-full" />
@@ -55,7 +46,7 @@ export const AccountManagement = () => {
       <AccountDropdownMenu
         user={user}
         handleAuth={async () => {
-          await supabase?.auth.signOut();
+          await signOut();
         }}
       />
     </div>
@@ -69,7 +60,7 @@ const truncateName = (name: string | null | undefined): string => {
 interface AccountDropdownMenuProps {
   user: User | null;
   isDisabled?: boolean;
-  handleAuth: () => void;
+  handleAuth: () => Promise<void>;
 }
 
 export const AccountDropdownMenu = memo(
@@ -91,10 +82,10 @@ export const AccountDropdownMenu = memo(
         <DropdownMenuTrigger asChild>
           {!isDisabled ? (
             <Button variant="ghost" className="h-16 p-2 ml-1 justify-start">
-              {user?.user_metadata.avatar_url ? (
+              {user?.image ? (
                 <Image
-                  src={user.user_metadata.avatar_url}
-                  alt={user.user_metadata.full_name || "User Avatar"}
+                  src={user.image || ""}
+                  alt={user.name || "User Avatar"}
                   width={40}
                   height={40}
                   className={`rounded-full ${settings.privacyMode && "blur-sm"}`}
@@ -119,10 +110,10 @@ export const AccountDropdownMenu = memo(
             {!isDisabled && (
               <DropdownMenuLabel>
                 <div className="h-16 justify-start flex items-center gap-2 md:max-w-[210px]">
-                  {user?.user_metadata.avatar_url ? (
+                  {user?.image ? (
                     <Image
-                      src={user?.user_metadata.avatar_url}
-                      alt={user?.user_metadata.full_name || "User Avatar"}
+                      src={user?.image || ""}
+                      alt={user?.name || "User Avatar"}
                       width={40}
                       height={40}
                       className={`rounded-full ${settings.privacyMode && "blur-sm"}`}
@@ -133,7 +124,7 @@ export const AccountDropdownMenu = memo(
                   )}
                   <div className="flex flex-col text-left">
                     <span className={`${settings.privacyMode && "blur-sm"}`}>
-                      {truncateName(user?.user_metadata.full_name)}
+                      {truncateName(user?.name)}
                     </span>
                   </div>
                 </div>

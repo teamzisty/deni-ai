@@ -1,23 +1,21 @@
 "use client";
 
-import { Message, useChat, UseChatOptions } from "@ai-sdk/react";
+import { UIMessage, useChat, UseChatOptions } from "@ai-sdk/react";
 import { useEffect, useRef, useState, useCallback, useMemo, memo } from "react";
 import ChatInput from "./chat/input";
 import { MobileModelSelector } from "./chat/input-components";
-import { redirect } from "next/navigation";
-import { useRouter } from "@/i18n/navigation";
+import { Link, useRouter } from "@/i18n/navigation";
 import { AlertTriangle, Dot, Loader2 } from "lucide-react";
 import { ERROR_MAPPING, loading_words } from "@/lib/constants";
 import Messages from "./chat/messages";
 import { Conversation } from "@/lib/conversations";
 import { useConversations } from "@/hooks/use-conversations";
-import { useSupabase } from "@/context/supabase-context";
+import { useAuth } from "@/context/auth-context";
 import { useUploadThing } from "@/lib/uploadthing";
 import { toast } from "sonner";
-import { Link } from "@/i18n/navigation";
-import { BranchTree } from "./chat/branch-tree";
 import { ShareButton } from "./chat/share-button";
 import { useTranslations } from "@/hooks/use-translations";
+import { DefaultChatTransport } from "ai";
 
 interface MainChatProps {
   initialConversation?: Conversation;
@@ -27,10 +25,14 @@ interface MainChatProps {
 const MainChat = memo<MainChatProps>(
   ({ initialConversation, initialInput }) => {
     const [model, setModel] = useState("gpt-4o");
+  
+  // Debug model changes
+  useEffect(() => {
+    console.log("Model state changed to:", model);
+  }, [model]);
     const [canvas, setCanvas] = useState<boolean>(false);
     const [search, setSearch] = useState<boolean>(false);
-    const { supabase, loading, user, ssUserData, clientAddUses } =
-      useSupabase();
+    const { user, isPending, clientAddUses, serverUserData } = useAuth();
     const [thinkingEffort, setThinkingEffort] = useState<
       "disabled" | "low" | "medium" | "high"
     >("disabled");
@@ -44,17 +46,14 @@ const MainChat = memo<MainChatProps>(
     const [loadingWord, setLoadingWord] = useState<string>("");
 
     const messagesRef = useRef<HTMLDivElement>(null);
-    const [authToken, setAuthToken] = useState<string>("");
 
     const [image, setImage] = useState<string | null>(null);
+
+    const [input, setInput] = useState<string>(initialInput || "");
 
     const router = useRouter();
 
     const { isUploading, startUpload } = useUploadThing("imageUploader", {
-      headers: {
-        // Use authToken prop
-        Authorization: authToken || "",
-      },
       onClientUploadComplete: (res) => {
         setImage(res[0]?.ufsUrl || null);
       },
@@ -64,77 +63,91 @@ const MainChat = memo<MainChatProps>(
         });
       },
     });
-
+    // Use refs to access current state values in fetch
+    const modelRef = useRef(model);
+    const thinkingEffortRef = useRef(thinkingEffort);
+    const canvasRef = useRef(canvas);
+    const searchRef = useRef(search);
+    const researchModeRef = useRef(researchMode);
+    
+    // Update refs when state changes
     useEffect(() => {
-      const getAuthToken = async () => {
-        const {
-          data: { session },
-        } = await supabase.auth.getSession();
-        setAuthToken(session?.access_token || "");
-      };
-      getAuthToken();
-    }, []);
-
-    const chatConfig = useMemo(
-      () =>
-        ({
-          headers: {
-            Authorization: `Bearer ${authToken}`,
-          },
-          sendExtraMessageFields: true,
-          body: {
-            id: initialConversation?.id || "",
-            thinkingEffort,
+      modelRef.current = model;
+    }, [model]);
+    
+    useEffect(() => {
+      thinkingEffortRef.current = thinkingEffort;
+    }, [thinkingEffort]);
+    
+    useEffect(() => {
+      canvasRef.current = canvas;
+    }, [canvas]);
+    
+    useEffect(() => {
+      searchRef.current = search;
+    }, [search]);
+    
+    useEffect(() => {
+      researchModeRef.current = researchMode;
+    }, [researchMode]);
+    
+    // Create a custom fetch that includes our body
+    const customFetch = useCallback(
+      async (input: RequestInfo | URL, init?: RequestInit) => {
+        const url = typeof input === 'string' ? input : input instanceof URL ? input.toString() : input.url;
+        const options = init || {};
+        
+        if (options.body) {
+          const body = JSON.parse(options.body as string);
+          const updatedBody = {
+            ...body,
+            conversationId: initialConversation?.id || "",
+            thinkingEffort: thinkingEffortRef.current,
             botId: initialConversation?.bot?.id,
-            model,
-            canvas,
-            search,
-            researchMode,
-          },
-          initialMessages: initialConversation?.messages || [],
-          initialInput: initialInput || "",
-          onFinish: async (message, options) => {
-            if (options.finishReason === "stop") {
-              await clientAddUses(model);
-            }
-          },
-        }) as UseChatOptions,
-      [
-        authToken,
-        initialConversation?.id,
-        model,
-        thinkingEffort,
-        canvas,
-        search,
-        researchMode,
-      ],
+            model: modelRef.current,
+            canvas: canvasRef.current,
+            search: searchRef.current,
+            researchMode: researchModeRef.current,
+          };
+          console.log("Sending to API with model:", modelRef.current, "Full body:", updatedBody);
+          
+          return fetch(url, {
+            ...options,
+            body: JSON.stringify(updatedBody),
+          });
+        }
+        
+        return fetch(input, init);
+      },
+      [initialConversation]
     );
-
-    const {
-      messages,
-      error,
-      data,
-      handleSubmit,
-      handleInputChange,
-      status,
-      input,
-    } = useChat(chatConfig);
+    
+    const { messages, error, sendMessage, status } = useChat({
+      transport: new DefaultChatTransport({
+        api: "/api/chat",
+        credentials: "include",
+        fetch: customFetch as typeof fetch,
+      }),
+      messages: initialConversation?.messages || [],
+    });
 
     const checkAuth = useCallback(async () => {
-      if (!user && !loading) {
+      if (!user && !isPending) {
         router.push("/auth/login");
+        return null;
       }
 
-      if (user && !loading) {
+      if (user && !isPending) {
         // Send message
         if (initialInput && initialConversation?.messages.length === 0) {
+          setInput("");
           // Prevent sending if there are existing messages
-          handleSubmit({
-            preventDefault: () => {},
+          sendMessage({
+            text: input,
           });
         }
       }
-    }, [supabase, loading, initialInput]);
+    }, [isPending, initialInput]);
 
     useEffect(() => {
       checkAuth();
@@ -151,18 +164,6 @@ const MainChat = memo<MainChatProps>(
     useEffect(() => {
       scrollToBottom();
     }, [messages, scrollToBottom]);
-
-    useEffect(() => {
-      if (data && initialConversation && !titleApplied) {
-        const title = (data.find((item) => item) as any).title;
-        if (!title) return;
-        setTitleApplied(true);
-        updateConversationTitle(
-          initialConversation.id,
-          (title as string) || t("chat.message.untitledConversation"),
-        );
-      }
-    }, [data]);
 
     useEffect(() => {
       setLoadingWord(
@@ -186,9 +187,9 @@ const MainChat = memo<MainChatProps>(
       [startUpload, t],
     );
 
-    if (!initialConversation) {
-      redirect("/chat");
-    }
+    // if (!initialConversation) {
+    //   router.push("/chat");
+    // }
 
     const welcomeMessage = useMemo(() => {
       if (researchMode !== "disabled") {
@@ -203,13 +204,17 @@ const MainChat = memo<MainChatProps>(
       return t("chat.welcome.default");
     }, [researchMode, search, canvas, t]);
 
-    if (loading && loadingWord) {
+    if (isPending && loadingWord) {
       return (
         <div className="h-full w-full flex items-center justify-center">
           <Loader2 className="animate-spin" />
           <span className="ml-2">{loadingWord}</span>
         </div>
       );
+    }
+
+    if (!initialConversation) {
+      router.push("/chat");
     }
 
     return (
@@ -225,17 +230,17 @@ const MainChat = memo<MainChatProps>(
             >
               {welcomeMessage}
             </h1>
-            {ssUserData?.plan && ssUserData?.plan !== "free" && (
+            {serverUserData?.plan && serverUserData?.plan !== "free" && (
               <span className="font-semibold opacity-80 hover:opacity-100 transition-all">
                 <span className="bg-gradient-to-r from-pink-400 to-sky-500 bg-clip-text text-transparent capitalize">
-                  {ssUserData?.plan}
+                  {serverUserData?.plan}
                 </span>{" "}
                 {t("chat.welcome.planActive")}
               </span>
             )}
-            {(!ssUserData?.plan ||
-              !ssUserData ||
-              ssUserData?.plan === "free") && (
+            {(!serverUserData?.plan ||
+              !serverUserData ||
+              serverUserData?.plan === "free") && (
               <div className="flex items-center font-semibold text-sm">
                 {t("chat.welcome.freePlan")}{" "}
                 <Dot size={16} className="text-foreground" />{" "}
@@ -254,17 +259,10 @@ const MainChat = memo<MainChatProps>(
           <div className="w-full max-w-4xl mx-auto mb-4">
             <div className="flex items-center justify-between pl-12 md:pl-0">
               {messages.length > 0 && initialConversation?.id && (
-                <BranchTree
-                  conversationId={initialConversation.id}
-                  currentConversationId={initialConversation.id}
-                />
-              )}
-              {messages.length > 0 && initialConversation?.id && (
                 <ShareButton
                   conversation={initialConversation}
                   user={user}
                   messages={messages}
-                  authToken={authToken}
                 />
               )}
             </div>
@@ -288,10 +286,9 @@ const MainChat = memo<MainChatProps>(
               </div>
             </div>
           )}
-          {status === "submitted" && (
-            <div className="flex items-center p-4 w-full max-w-4xl mx-auto text-sm">
-              <Loader2 className="animate-spin" />
-              <span className="ml-2">{loadingWord}</span>
+          {status === "submitted" || messages[messages.length - 1]?.parts.length === 0 && (
+            <div className="flex items-center py-4 w-full max-w-4xl mx-auto text-sm animate-pulse">
+              <span className="text-base font-medium">Thinking...</span>
             </div>
           )}
         </div>
@@ -305,8 +302,8 @@ const MainChat = memo<MainChatProps>(
             setSearch={setSearch}
             researchMode={researchMode}
             setResearchMode={setResearchMode}
-            handleSubmit={handleSubmit}
-            handleInputChange={handleInputChange}
+            sendMessage={sendMessage}
+            setInput={setInput}
             input={input}
             thinkingEffort={thinkingEffort}
             setThinkingEffort={setThinkingEffort}

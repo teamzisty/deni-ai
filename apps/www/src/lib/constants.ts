@@ -49,19 +49,21 @@ export type ModelFeature =
   | "reasoning"
   | "tools"
   | "experimental";
-export type ModelProvider =
-  | "openai"
-  | "anthropic"
-  | "google"
-  | "xai"
-  | "groq"
-  | "openrouter";
+// export type ModelProvider =
+//   | "openai"
+//   | "anthropic"
+//   | "google"
+//   | "xai"
+//   | "groq"
+//   | "openrouter";
 export type ModelAuthor =
   | "OpenAI"
   | "Anthropic"
   | "Google"
   | "xAI"
-  | "DeepSeek";
+  | "DeepSeek"
+  | "Kimi";
+export type ModelProvider = "openai" | "anthropic" | "google" | "xai" | "voids";
 export type ReasoningEffort = "disabled" | "low" | "medium" | "high";
 
 export interface Model {
@@ -89,7 +91,7 @@ export const languages = {
 
 export const models: Record<string, Model> = {
   "gpt-4o": {
-    id: "gpt-4o",
+    id: "gpt-4o-2024-11-20",
     name: "GPT-4o",
     description: "Fast, intelligent, flexible GPT model.",
     author: "OpenAI",
@@ -98,7 +100,7 @@ export const models: Record<string, Model> = {
     features: ["vision", "tools"],
   },
   "gpt-4o-mini": {
-    id: "gpt-4o-mini",
+    id: "gpt-4o-mini-2024-07-18",
     name: "GPT-4o mini",
     description: "Fast, affordable small model for focused tasks.",
     author: "OpenAI",
@@ -107,7 +109,7 @@ export const models: Record<string, Model> = {
     features: ["vision", "tools", "fast"],
   },
   "gpt-4.1": {
-    id: "gpt-4.1",
+    id: "gpt-4.1-2025-04-14",
     name: "GPT-4.1",
     description: "Flagship GPT model for complex tasks.",
     author: "OpenAI",
@@ -116,7 +118,7 @@ export const models: Record<string, Model> = {
     features: ["vision", "tools"],
   },
   "gpt-4.1-mini": {
-    id: "gpt-4.1-mini",
+    id: "gpt-4.1-mini-2025-04-14",
     name: "GPT-4.1 mini",
     description: "Balanced for intelligence, speed, and cost.",
     author: "OpenAI",
@@ -125,7 +127,7 @@ export const models: Record<string, Model> = {
     features: ["vision", "fast", "tools"],
   },
   "gpt-4.1-nano": {
-    id: "gpt-4.1-nano",
+    id: "gpt-4.1-nano-2025-04-14",
     name: "GPT-4.1 nano",
     description: "Fastest, most cost-effective GPT-4.1 model.",
     author: "OpenAI",
@@ -134,22 +136,22 @@ export const models: Record<string, Model> = {
     features: ["vision", "fast", "tools"],
   },
   "o4-mini": {
-    id: "o4-mini",
+    id: "o4-mini-2025-04-16",
     name: "o4-mini",
     description: "Faster, more affordable reasoning model from OpenAI.",
     author: "OpenAI",
-    provider: "openai",
     reasoning_efforts: ["low", "medium", "high"],
+    provider: "openai",
     context_window: 200000,
     features: ["vision", "reasoning", "tools"],
   },
   o3: {
-    id: "o3",
+    id: "o3-2025-04-16",
     name: "o3",
     description: "OpenAI's most powerful reasoning model.",
     author: "OpenAI",
-    provider: "openai",
     reasoning_efforts: ["low", "medium", "high"],
+    provider: "openai",
     context_window: 200000,
     features: ["vision", "reasoning", "tools"],
   },
@@ -158,8 +160,8 @@ export const models: Record<string, Model> = {
     name: "o3-pro",
     description: "Version of o3 with more compute for better responses.",
     author: "OpenAI",
-    provider: "openai",
     premium: true,
+    provider: "openai",
     context_window: 200000,
     features: ["vision", "reasoning", "tools"],
   },
@@ -168,8 +170,8 @@ export const models: Record<string, Model> = {
     name: "Gemini 2.5 Pro",
     description: "Google's most advanced reasoning Gemini model.",
     author: "Google",
-    provider: "google",
     reasoning_efforts: ["low", "medium", "high"],
+    provider: "google",
     context_window: 1048576,
     features: ["vision", "reasoning", "tools"],
   },
@@ -178,18 +180,18 @@ export const models: Record<string, Model> = {
     name: "Gemini 2.5 Flash",
     description: "Google's best model in terms of price and performance.",
     author: "Google",
-    provider: "google",
     reasoning_efforts: ["disabled", "low", "medium", "high"],
+    provider: "google",
     context_window: 1048576,
     features: ["vision", "reasoning", "fast", "tools"],
   },
   "gemini-2.5-flash-lite": {
-    id: "gemini-2.5-flash-lite-preview-06-17",
+    id: "gemini-2.5-flash-lite",
     name: "Gemini 2.5 Flash Lite",
     description: "Google's best model in terms of price and performance.",
     author: "Google",
-    provider: "google",
     reasoning_efforts: ["disabled", "low", "medium", "high"],
+    provider: "google",
     context_window: 1048576,
     features: ["vision", "reasoning", "fast", "tools", "experimental"],
   },
@@ -198,8 +200,8 @@ export const models: Record<string, Model> = {
     name: "Claude Sonnet 4",
     description: "Anthropic's hybrid reasoning model.",
     author: "Anthropic",
-    provider: "anthropic",
     reasoning_efforts: ["disabled", "low", "medium", "high"],
+    provider: "voids",
     context_window: 200000,
     features: ["vision", "reasoning", "tools"],
   },
@@ -208,9 +210,9 @@ export const models: Record<string, Model> = {
     name: "Claude Opus 4",
     description: "Anthropic's advanced reasoning model.",
     author: "Anthropic",
+    reasoning_efforts: ["disabled", "low", "medium", "high"],
     provider: "anthropic",
     premium: true,
-    reasoning_efforts: ["disabled", "low", "medium", "high"],
     context_window: 200000,
     features: ["vision", "reasoning", "tools"],
   },
@@ -223,14 +225,39 @@ export const models: Record<string, Model> = {
     context_window: 200000,
     features: ["vision", "fast", "tools"],
   },
+  "grok-4": {
+    id: "grok-4",
+    name: "Grok 4",
+    description: "Grok's advanced reasoning model.",
+    author: "xAI",
+    provider: "xai",
+  },
   "deepseek-r1": {
-    id: "deepseek-r1",
+    id: "deepseek-r1-0528",
     name: "DeepSeek R1",
     description: "DeepSeek's advanced reasoning model.",
     author: "DeepSeek",
-    provider: "groq",
-    context_window: 1048576,
+    provider: "voids",
+    context_window: 128000,
     features: ["vision", "reasoning", "tools"],
+  },
+  "deepseek-v3": {
+    id: "deepseek-v3-0324",
+    name: "DeepSeek V3",
+    description: "DeepSeek's fast chat model.",
+    author: "DeepSeek",
+    provider: "voids",
+    context_window: 128000,
+    features: ["vision", "tools"],
+  },
+  "kimi-k2": {
+    id: "kimi-k2-instruct",
+    name: "Kimi K2",
+    description: "Kimi's fast reasoning model.",
+    author: "Kimi",
+    provider: "voids",
+    context_window: 128000,
+    features: ["vision", "tools"],
   },
 };
 

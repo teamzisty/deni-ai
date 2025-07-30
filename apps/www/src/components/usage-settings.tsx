@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useSupabase } from "@/context/supabase-context";
+import { useAuth } from "@/context/auth-context";
 import { useTranslations } from "@/hooks/use-translations";
 import {
   Card,
@@ -16,7 +16,7 @@ import { Button } from "@workspace/ui/components/button";
 import { models } from "@/lib/constants";
 
 export default function UsageSettings() {
-  const { usage } = useSupabase();
+  const { usage } = useAuth();
   const t = useTranslations("settings.usage");
   const [visibleUsage, setVisibleUsage] = useState(usage || []);
   const [premiumOnly, setPremiumOnly] = useState(false);

@@ -23,9 +23,10 @@ import {
   DialogTrigger,
 } from "@workspace/ui/components/dialog";
 import { Plus, FolderOpen, Eye, FileText } from "lucide-react";
-import { useSupabase } from "@/context/supabase-context";
+import { useAuth } from "@/context/auth-context";
 import { useRouter } from "@/i18n/navigation";
 import { Link } from "@/i18n/navigation";
+import { trpc } from "@/trpc/client";
 
 interface ClientHub {
   id: string;
@@ -41,54 +42,25 @@ interface ClientHub {
 }
 
 export default function HubsPage() {
-  const [hubs, setHubs] = useState<ClientHub[]>([]);
-  const { user, secureFetch, loading } = useSupabase();
-  const [isLoading, setIsLoading] = useState(true);
+  const { user, isPending } = useAuth();
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [newHub, setNewHub] = useState({ name: "", description: "" });
 
   const router = useRouter();
 
-  useEffect(() => {
-    if (loading || !user) return;
-    fetchHubs();
-  }, [loading, user]);
+  const { data: hubs, isLoading: isHubsLoading } = trpc.hub.getHubs.useQuery();
 
-  const fetchHubs = async () => {
-    try {
-      const response = await secureFetch("/api/hubs");
-      if (response.ok) {
-        const data = await response.json();
-        if (!data.success) return;
+  const { mutateAsync: createHub, isPending: isCreatingHub } = trpc.hub.createHub.useMutation();
 
-        setHubs(data.data);
-      }
-    } catch (error) {
-      console.error("Failed to fetch hubs:", error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  const handleCreateHub = async () => {
+    const hub = await createHub({
+      name: newHub.name,
+      description: newHub.description,
+    });
 
-  const createHub = async () => {
-    try {
-      const response = await secureFetch("/api/hubs", {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(newHub),
-      });
-
-      if (response.ok) {
-        const createdHub = await response.json();
-        if (!createdHub.success) return;
-
-        router.push(`/hubs/${createdHub.hubId}`);
-        setIsCreateDialogOpen(false);
-      }
-    } catch (error) {
-      console.error("Failed to create hub:", error);
+    if (hub) {
+      router.push(`/hubs/${hub.id}`);
+      setIsCreateDialogOpen(false);
     }
   };
 
@@ -137,7 +109,7 @@ export default function HubsPage() {
             </div>
             <DialogFooter>
               <Button
-                onClick={createHub}
+                onClick={handleCreateHub}
                 disabled={!newHub.name.trim() || !newHub.description.trim()}
               >
                 Create Hub
@@ -147,7 +119,7 @@ export default function HubsPage() {
         </Dialog>
       </div>
 
-      {isLoading || loading || !hubs ? (
+      {isPending || isHubsLoading || !hubs ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 w-full">
           {[...Array(6)].map((_, i) => (
             <Card key={i} className="animate-pulse">
@@ -176,7 +148,7 @@ export default function HubsPage() {
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {hubs.map((hub) => (
+          {hubs && hubs.map((hub) => (
             <Card key={hub.id} className="hover:shadow-lg transition-shadow">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
@@ -188,10 +160,10 @@ export default function HubsPage() {
               <CardContent>
                 <div className="flex items-center gap-2 text-sm text-muted-foreground mb-2">
                   <FileText className="w-4 h-4" />
-                  {hub.files.length} files
+                  {(hub.files as any[])?.length} files
                 </div>
                 <p className="text-sm text-muted-foreground">
-                  Created: {new Date(hub.created_at).toLocaleDateString()}
+                  Created: {new Date(hub.createdAt || "").toLocaleDateString()}
                 </p>
               </CardContent>
               <CardFooter className="flex gap-2 mt-auto">
