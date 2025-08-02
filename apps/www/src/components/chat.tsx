@@ -56,7 +56,7 @@ const Chat = memo(() => {
       <div className="w-full max-w-4xl">
         {/* Header */}
         <div className="text-center mb-12">
-          <h1 className="text-4xl font-bold mb-4">
+          <h1 className="text-4xl font-bold  bg-gradient-to-r from-lime-400 via-sky-500 to-fuchsia-600 bg-clip-text text-transparent animate-welcome mb-4">
             {t("chat.welcome.default")}
           </h1>
         </div>

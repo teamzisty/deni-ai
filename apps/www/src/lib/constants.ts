@@ -1,8 +1,10 @@
+import { Bot } from "./bot";
+
 export const BRAND_NAME = "Deni AI"; // Change your brand
 
 export const VERSION = {
-  version: "5.1.3",
-  codename: "Tulip",
+  version: "5.2.2",
+  codename: "Iris",
 }; // Version
 
 export const GITHUB_URL = "https://github.com/raicdev/deni-ai"; // Change to your GitHub URL
@@ -32,13 +34,51 @@ export const SYSTEM_PROMPT = [
   "# Tools",
   "You have access to the following tools:",
   "- **Search**: Search the web for information.",
+  "> `query` is the search query to execute",
+  "> `language` is the language to use for the search (ex. 'en', 'fr', 'es', 'all')",
+  "> `country` is the country to use for the search (ex. 'us', 'uk', 'fr', 'all')",
+  "> `depth` is the depth of the search (ex. 'disabled', 'shallow', 'deep', 'deeper') (Research mode)",
   "- **Canvas**: Create and manipulate images.",
+  "> `title` is the title of Canvas.",
+  "> `content` is the content of Canvas.",
+  "# Research",
+  "Use the search tool to find information on the web deep and wide.",
+  "disabled: search once or twice",
+  "shallow: search 3 results",
+  "deep: search 4 results",
+  "deeper: search 5 results",
 ].join("\n");
+
+export const getSystemPrompt = (researchMode: "disabled" | "shallow" | "deep" | "deeper", features: { search: boolean, canvas: boolean }, bot?: Bot | null) => {
+  let systemPrompt = SYSTEM_PROMPT;
+  systemPrompt += "\n\n" + "Research mode is: " + researchMode;
+  systemPrompt += "\n\n" + "Please use the following features: " + JSON.stringify(features);
+  if (bot) {
+    systemPrompt += [
+      "\n\n",
+      "# Bot",
+      "Bot is a user-created agent. It is designed to assist with tasks and answer questions. Bot name is: " + bot.name,
+      bot.systemInstruction,
+    ].join("\n");
+  }
+  return systemPrompt;
+};
 
 export const ERROR_MAPPING: Record<string, string> = {
   "common.invalid_request": "Oops, something went wrong with your request.",
   "common.internal_error": "Oops, we are experiencing an issue.",
   "chat.model_limit_reached": "You've reached your usage limit for this model.",
+};
+
+export const languages = {
+  en: {
+    id: "en",
+    name: "English",
+  },
+  ja: {
+    id: "ja",
+    name: "日本語",
+  },
 };
 
 export const PREMIUM_USES_LIMIT = -1; // Default is 30 per day
@@ -76,18 +116,8 @@ export interface Model {
   premium?: boolean;
   context_window?: number;
   features?: ModelFeature[];
+  legacy?: boolean;
 }
-
-export const languages = {
-  en: {
-    id: "en",
-    name: "English",
-  },
-  ja: {
-    id: "ja",
-    name: "日本語",
-  },
-};
 
 export const models: Record<string, Model> = {
   "gpt-4o": {
@@ -226,7 +256,7 @@ export const models: Record<string, Model> = {
     features: ["vision", "fast", "tools"],
   },
   "grok-4": {
-    id: "grok-4",
+    id: "grok-4-0709",
     name: "Grok 4",
     description: "Grok's advanced reasoning model.",
     author: "xAI",
@@ -258,6 +288,51 @@ export const models: Record<string, Model> = {
     provider: "voids",
     context_window: 128000,
     features: ["vision", "tools"],
+  },
+  // Legacy models
+  "gemini-2.0-flash": {
+    id: "gemini-2.0-flash",
+    name: "Gemini 2.0 Flash",
+    description: "Gemini 2.0 Flash",
+    features: ["vision", "fast", "tools"],
+    author: "Google",
+    provider: "google",
+    legacy: true,
+  },
+  "gemini-2.0-flash-lite": {
+    id: "gemini-2.0-flash-lite",
+    name: "Gemini 2.0 Flash Lite",
+    description: "Gemini 2.0 Flash Lite",
+    author: "Google",
+    features: ["vision", "fast", "tools"],
+    provider: "google",
+    legacy: true,
+  },
+  "grok-3": {
+    id: "grok-3",
+    name: "Grok 3",
+    description: "Grok 3",
+    author: "xAI",
+    provider: "xai",
+    legacy: true,
+  },
+  "grok-3-mini": {
+    id: "grok-3-mini-high",
+    name: "Grok 3 Mini",
+    description: "Grok 3 Mini High",
+    author: "xAI",
+    provider: "xai",
+    legacy: true,
+  },
+  "claude-3-7-sonnet": {
+    id: "claude-3-7-sonnet-20250219",
+    name: "Claude 3.7 Sonnet",
+    description: "Claude 3.7 Sonnet",
+    features: ["vision", "reasoning", "tools"],
+    reasoning_efforts: ["disabled", "low", "medium", "high"],
+    author: "Anthropic",
+    provider: "anthropic",
+    legacy: true,
   },
 };
 

@@ -352,16 +352,19 @@ export const ModelSelector = React.memo<{
   const [open, setOpen] = useState(false);
   const { settings } = useSettings();
 
-  // Filter models based on visibility settings
-  const visibleModels = useMemo(() => {
-    if (!settings.modelVisibility) {
-      // If no visibility settings, show all models
-      return Object.keys(models);
-    }
-    return Object.keys(models).filter(
-      (modelId) => settings.modelVisibility?.[modelId] !== false,
-    );
-  }, [settings.modelVisibility]);
+    // Filter models based on visibility settings
+    const visibleModels = useMemo(() => {
+      // Always show legacy models only if enableLegacyModels is true
+      return Object.keys(models).filter((modelId) => {
+        const isLegacy = !!models[modelId]?.legacy;
+        const isVisible = settings.modelVisibility?.[modelId] !== false;
+        if (isLegacy) {
+          return settings.enableLegacyModels;
+        }
+        // Non-legacy models: show if visible (or no visibility settings at all)
+        return settings.modelVisibility ? isVisible : true;
+      });
+    }, [settings.modelVisibility, settings.enableLegacyModels]);
 
   const getShortModelName = useCallback((model: string) => {
     return model
@@ -377,7 +380,9 @@ export const ModelSelector = React.memo<{
           <Button type="button" variant="outline" className="rounded-full">
             {(() => {
               if (models[model]?.premium)
-                return <Gem className="h-4 w-4 text-primary" />;
+                return (
+                  <Gem className="h-4 w-4 dark:text-[#9466ff] text-primary" />
+                );
               switch (models[model]?.author) {
                 case "OpenAI":
                   return <SiOpenai className="h-4 w-4" />;
@@ -450,7 +455,7 @@ export const ModelSelector = React.memo<{
                               )}
                           </div>
                         }
-                        className="bg-muted/50 max-w-xs min-w-xs w-xs"
+                        className="bg-muted max-w-xs min-w-xs w-xs"
                         side="left"
                       >
                         <div className="flex items-center w-full">
@@ -460,6 +465,12 @@ export const ModelSelector = React.memo<{
                           {models[modelOption]?.author &&
                             modelOption !== model &&
                             (() => {
+                              if (models[modelOption]?.premium) {
+                                return (
+                                  <Gem className="h-4 w-4 mr-2 dark:text-[#9466ff] text-primary" />
+                                );
+                              }
+
                               switch (models[modelOption].author) {
                                 case "OpenAI":
                                   return <SiOpenai className="mr-2 h-4 w-4" />;
@@ -520,9 +531,6 @@ export const ModelSelector = React.memo<{
                               }
                             })}
                           </div>
-                          {models[modelOption]?.premium && (
-                            <Gem className="ml-1 text-primary" />
-                          )}
                         </div>
                       </Tip>
                     </CommandItem>

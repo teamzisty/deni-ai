@@ -37,9 +37,6 @@ export default async function StudentBenefitsPage() {
   return (
     <div className="container mx-auto px-4 py-8 max-w-4xl">
       <div className="text-center mb-12">
-        <Badge variant="secondary" className="mb-4">
-          {t("badge")}
-        </Badge>
         <h1 className="text-4xl font-bold mb-4">{t("title")}</h1>
         <p className="text-xl text-muted-foreground mb-6">{t("subtitle")}</p>
       </div>

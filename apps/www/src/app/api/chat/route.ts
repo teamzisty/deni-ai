@@ -1,14 +1,13 @@
-import { internalModels, models } from "@/lib/constants";
+import { getSystemPrompt, internalModels, models, SYSTEM_PROMPT } from "@/lib/constants";
 import {
   getConversation,
   updateConversation,
 } from "@/lib/conversations";
 import { search as baseSearch, canvas } from "@/lib/tools";
 import { VoidsAI } from "@workspace/voids-ai-provider"
-import { createOpenAI, openai, OpenAIResponsesProviderOptions } from "@ai-sdk/openai";
+import { openai, OpenAIResponsesProviderOptions } from "@ai-sdk/openai";
 import { anthropic, AnthropicProviderOptions } from "@ai-sdk/anthropic";
 import { google, GoogleGenerativeAIProviderOptions } from "@ai-sdk/google";
-import { xai } from "@ai-sdk/xai";
 import {
   convertToModelMessages,
   createUIMessageStream,
@@ -20,11 +19,13 @@ import {
   stepCountIs,
   streamText,
   wrapLanguageModel,
+  smoothStream,
 } from "ai";
 import { auth } from "@/lib/auth";
-import { canUseModel, recordUsage } from "@/lib/usage";
+import { canUseModel } from "@/lib/usage";
 import z from "zod/v4";
 import { Bot, getBot } from "@/lib/bot";
+import { features } from "process";
 
 const chatRequestSchema = z.object({
   conversationId: z.string(),
@@ -75,7 +76,6 @@ export async function POST(request: Request) {
   const modelId = model.id;
 
   let sdkModel: LanguageModel;
-  console.log("Using modelId:", modelId, "provider:", model.provider);
   switch (model.provider) {
     case "openai":
       sdkModel = openai.responses(modelId);
@@ -117,7 +117,7 @@ export async function POST(request: Request) {
       }
 
       shouldGenerateTitle =
-        conversation.title === "New Session" && coreMessages.length > 0;
+        conversation.title === "New Conversation" && coreMessages.length >= 1;
     } catch (error) {
       console.error("Error fetching conversation:", error);
       return new Response("common.internal_error", { status: 500 });
@@ -179,7 +179,7 @@ export async function POST(request: Request) {
           .catch(() => "Untitled Conversation");
       }
 
-      const thinkingBudget = thinkingEffort
+      const thinkingBudget = model.features?.includes("reasoning") && thinkingEffort
         ? thinkingEffort === "disabled"
           ? 0
           : thinkingEffort === "low"
@@ -187,31 +187,26 @@ export async function POST(request: Request) {
             : thinkingEffort === "medium"
               ? 5000
               : 10000
-        : 0;
+        : 0; // If model doesn't support reasoning, set thinking budget to 0
 
       // Configure tools based on user settings
       const tools: any = {};
-      if (enableSearch || researchMode !== "disabled") {
-        // Create a search tool that automatically uses the research mode depth
-        tools.search = {
-          ...baseSearch,
-          execute: async (params: any, options: any) => {
-            const depth =
-              researchMode !== "disabled" ? researchMode : undefined;
-            return baseSearch.execute?.({ ...params, depth }, options) || [];
-          },
-        };
-      }
-      if (enableCanvas) {
-        tools.canvas = canvas;
-      }
+      // Create a search tool that automatically uses the research mode depth
+      tools.search = {
+        ...baseSearch,
+        execute: async (params: any, options: any) => {
+          const depth =
+            researchMode !== "disabled" ? researchMode : undefined;
+          return baseSearch.execute?.({ ...params, depth }, options) || [];
+        },
+      };
+      tools.canvas = canvas;
 
-      // Add research-specific system prompts
-      let systemPrompt = "You are powerful AI assistant.";
-
-      if (bot) {
-        systemPrompt = bot.systemInstruction;
+      const features = {
+        search: enableSearch || false,
+        canvas: enableCanvas || false,
       }
+      let systemPrompt = getSystemPrompt(researchMode, features, bot);
 
       coreMessages.unshift({
         role: "system",
@@ -228,6 +223,9 @@ export async function POST(request: Request) {
         model: wrappedModel,
         tools,
         stopWhen: stepCountIs(30),
+        experimental_transform: smoothStream({
+          delayInMs: 5,
+        }),
         providerOptions: {
           openai: {
             thinkingEffort: thinkingEffort || "medium",

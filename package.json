@@ -23,15 +23,15 @@
     "drizzle-kit": "^0.31.4",
     "prettier": "^3.6.2",
     "turbo": "^2.5.5",
-    "typescript": "5.8.3"
+    "typescript": "5.9.2"
   },
   "engines": {
     "node": ">=20"
   },
   "packageManager": "bun@1.2.17",
   "dependencies": {
-    "drizzle-orm": "^0.44.3",
+    "drizzle-orm": "^0.44.4",
     "postgres": "^3.4.7",
-    "zod": "^4.0.10"
+    "zod": "^4.0.14"
   }
 }

@@ -102,8 +102,8 @@ export default function Header() {
   ];
 
   return (
-    <header className="border-b px-4 md:px-6">
-      <div className="flex h-16 items-center justify-between gap-4">
+    <header className="px-4 md:px-6 fixed top-0 z-50 w-full flex justify-center">
+      <div className="flex h-16 items-center justify-between gap-4 bg-background/40 backdrop-blur-xs rounded-full px-16 mt-4 shadow-sm">
         {/* Left side */}
         <div className="flex items-center gap-2">
           {/* Mobile menu trigger */}
@@ -154,11 +154,15 @@ export default function Header() {
                           <ul>
                             {link.items?.map((item, itemIndex) => (
                               <li key={itemIndex}>
-                                <NavigationMenuItem asChild className="py-1.5">
+                                <NavigationMenuLink
+                                  href={item.href}
+                                  className="py-1.5 px-3 text-sm rounded-md hover:bg-accent w-full"
+                                  asChild
+                                >
                                   <Link href={item.href || "/"}>
                                     {item.label}
                                   </Link>
-                                </NavigationMenuItem>
+                                </NavigationMenuLink>
                               </li>
                             ))}
                           </ul>
@@ -179,8 +183,7 @@ export default function Header() {
                             !navigationLinks[index + 1]?.submenu) ||
                           (link.submenu &&
                             navigationLinks[index + 1]?.submenu &&
-                            link.type !==
-                              navigationLinks[index + 1]?.type)) && (
+                            link.type !== navigationLinks[index + 1]?.type)) && (
                           <div
                             role="separator"
                             aria-orientation="horizontal"
@@ -198,9 +201,9 @@ export default function Header() {
           <div className="flex items-center gap-6">
             <Link
               href="/"
-              className="text-foreground hover:text-foreground/80 transition-colors duration-200"
+              className="text-foreground hover:text-foreground/80 transition-colors duration-200 hidden md:block"
             >
-              <Logo />
+              <Logo type="deni-ai" />
             </Link>
             {/* Navigation menu */}
             <NavigationMenu viewport={false} className="max-md:hidden">
@@ -297,7 +300,7 @@ export default function Header() {
         <div className="flex items-center gap-2">
           <ThemeSwitcher />
           <LanguageSwitcher />
-          <Button asChild variant="ghost" size="sm" className="text-sm">
+          <Button asChild variant="ghost" size="sm" className="text-sm hidden md:flex">
             <Link href="/auth/login">{t("signIn")}</Link>
           </Button>
           <Button asChild size="sm" className="text-sm">

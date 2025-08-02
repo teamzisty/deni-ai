@@ -8,6 +8,7 @@ export const settingsSchema = z.object({
   bots: z.boolean(),
   branch: z.boolean(),
   conversationsPrivacyMode: z.boolean(),
+  enableLegacyModels: z.boolean(),
   modelVisibility: z.record(z.string(), z.boolean()).optional(),
   colorTheme: z.string().optional(),
 });
@@ -23,5 +24,6 @@ export const DEFAULT_SETTINGS: Settings = {
   hubs: true,
   branch: true,
   conversationsPrivacyMode: false,
+  enableLegacyModels: false,
   colorTheme: "blue",
 };
