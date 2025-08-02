@@ -1,5 +1,19 @@
 import { getAllDocs, getDocBySlug, DocsListing, DocsPage } from "docsfly";
 
+export async function generateStaticParams() {
+  const docs = await getAllDocs();
+  
+  // Generate params for all docs
+  const params = docs.map((doc) => ({
+    slug: doc.slug.split("/"),
+  }));
+  
+  // Add the root page (no slug)
+  params.push({ slug: [] });
+  
+  return params;
+}
+
 export default async function Page({
   params: _params,
 }: {

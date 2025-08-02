@@ -289,7 +289,11 @@
         "title": "Branch Conversations",
         "description": "Enable conversation branching feature"
       },
-      "soon": "Soon"
+      "soon": "Soon",
+      "enableLegacyModels": {
+        "title": "Enable Legacy Models",
+        "description": "Enable legacy models that are outdated"
+      }
     },
     "usage": {
       "title": "Usage Statistics",
@@ -356,7 +360,8 @@
   },
   "landing": {
     "hero": {
-      "title": "AI Chatbot with Your flavor",
+      "title": "AI Chatbot with",
+      "title2": "Your flavor",
       "subtitle": "Fully customizable AI chatbot. It is free and have unlimited uses (exclude premium models). No credit card required.",
       "badge": "New rewrite is here!",
       "getStarted": "Get Started"
@@ -381,6 +386,18 @@
       "freeAndOpen": {
         "title": "Free, Unlimited Uses, Open Source",
         "description": "No limits on usage(*exclude premium models). No credit card required. Fully open source."
+      },
+      "fast": {
+        "title": "Blazing Fast",
+        "description": "Get responses at lightning speed."
+      },
+      "smart": {
+        "title": "Smarter Responses",
+        "description": "Powered by the latest AI models."
+      },
+      "customizable": {
+        "title": "Fully Customizable",
+        "description": "Customize the look and feel to match your brand."
       },
       "pricing": {
         "title": "Compare with competitors",
@@ -850,6 +867,145 @@
           "privateInstance": "Private instance"
         }
       }
+    }
+  },
+  "legal": {
+    "privacy": {
+      "title": "Privacy Policy",
+      "subtitle": "How we handle your data and protect your privacy",
+      "introduction": {
+        "title": "Introduction",
+        "content": "This Privacy Policy describes how your personal information is collected, used, and shared when you use our {brandName} service.",
+        "operatedBy": "{brandName} is operated by the Veltrix team."
+      },
+      "informationCollection": {
+        "title": "Information We Collect",
+        "content": "When you use our service, we may collect several types of information:",
+        "items": {
+          "personalInfo": "Personal information you provide to us, such as your name, email address, and profile picture when you create an account",
+          "usage": "Information about how you use our service, including your conversation history, queries, and interactions with AI models",
+          "technical": "Technical information such as your IP address, browser type, device information, and cookies"
+        }
+      },
+      "informationUse": {
+        "title": "How We Use Your Information",
+        "content": "We use the information we collect for various purposes, including:",
+        "items": {
+          "service": "To provide, maintain, and improve our services",
+          "improvement": "To develop new features and enhance user experience",
+          "communication": "To communicate with you about updates, security alerts, and support",
+          "security": "To detect, prevent, and address technical issues and security threats"
+        }
+      },
+      "dataSharing": {
+        "title": "Information Sharing and Disclosure",
+        "content": "We do not sell your personal information. We may share information in the following circumstances:",
+        "items": {
+          "serviceProviders": "With service providers who help us operate our service, such as cloud hosting providers",
+          "legal": "When required by law, such as to comply with a subpoena or similar legal process",
+          "business": "In connection with a merger, acquisition, or sale of assets"
+        }
+      },
+      "dataSecurity": {
+        "title": "Data Security",
+        "content": "We take reasonable measures to help protect your personal information from loss, theft, misuse, unauthorized access, disclosure, alteration, and destruction."
+      },
+      "userRights": {
+        "title": "Your Rights",
+        "content": "Depending on your location, you may have certain rights regarding your personal information, including:",
+        "items": {
+          "access": "The right to access personal information we hold about you",
+          "rectification": "The right to request correction of inaccurate information",
+          "deletion": "The right to request deletion of your personal information",
+          "restriction": "The right to restrict or object to our processing of your information"
+        }
+      },
+      "cookies": {
+        "title": "Cookies and Similar Technologies",
+        "content": "We use cookies and similar tracking technologies to track activity on our service and hold certain information. You can instruct your browser to refuse all cookies or to indicate when a cookie is being sent."
+      },
+      "changes": {
+        "title": "Changes to This Privacy Policy",
+        "content": "We may update this privacy policy from time to time to reflect changes to our practices or for other operational, legal, or regulatory reasons. We will notify you of any material changes by posting the new policy on this page."
+      },
+      "contact": {
+        "title": "Contact Us",
+        "content": "If you have any questions about this Privacy Policy, please contact us via our GitHub repository or through our support channels."
+      },
+      "lastUpdated": "Last Updated: {date}"
+    },
+    "terms": {
+      "title": "Terms of Service",
+      "subtitle": "Please read these terms carefully before using our service",
+      "introduction": {
+        "title": "Introduction",
+        "content": "Welcome to {brandName}. These Terms of Service govern your use of our website, products, and services.",
+        "operatedBy": "{brandName} is operated by the Veltrix team."
+      },
+      "acceptance": {
+        "title": "Acceptance of Terms",
+        "content": "By accessing or using our service, you agree to be bound by these Terms of Service. If you disagree with any part of the terms, you may not access the service."
+      },
+      "eligibility": {
+        "title": "Eligibility",
+        "content": "You must be at least 13 years of age to use this service. By using our service, you represent and warrant that you meet this requirement."
+      },
+      "account": {
+        "title": "Account Registration and Security",
+        "content": "When you create an account with us, you must provide accurate information. You are responsible for maintaining the security of your account, and you agree to:",
+        "items": {
+          "accurate": "Provide accurate and complete registration information",
+          "secure": "Maintain the security of your account password",
+          "responsible": "Be responsible for all activities that occur under your account",
+          "notification": "Notify us immediately of any unauthorized use of your account"
+        }
+      },
+      "userConduct": {
+        "title": "User Conduct",
+        "content": "You agree not to use our service to:",
+        "items": {
+          "illegal": "Violate any applicable laws or regulations",
+          "harmful": "Post or transmit harmful, threatening, abusive, or unlawful content",
+          "impersonation": "Impersonate any person or entity",
+          "privacy": "Violate the privacy of others",
+          "spam": "Distribute spam, chain letters, or promote pyramid schemes",
+          "security": "Attempt to gain unauthorized access to our systems or networks"
+        }
+      },
+      "intellectualProperty": {
+        "title": "Intellectual Property Rights",
+        "content": "The service and its original content, features, and functionality are and will remain the exclusive property of {brandName} and its licensors. The service is protected by copyright, trademark, and other laws."
+      },
+      "userContent": {
+        "title": "User Content",
+        "content": "You retain all your ownership rights to your content. However, by submitting content to our service, you grant us a worldwide, non-exclusive, royalty-free license to use, reproduce, adapt, publish, and distribute your content.",
+        "license": "This license continues until you remove your content from our service."
+      },
+      "disclaimers": {
+        "title": "Disclaimers",
+        "content": "Your use of our service is at your sole risk. The service is provided on an 'AS IS' and 'AS AVAILABLE' basis. We expressly disclaim all warranties of any kind, whether express or implied."
+      },
+      "limitation": {
+        "title": "Limitation of Liability",
+        "content": "In no event shall Deni AI, nor its directors, employees, partners, agents, suppliers, or affiliates, be liable for any indirect, incidental, special, consequential or punitive damages resulting from your use of the service."
+      },
+      "indemnification": {
+        "title": "Indemnification",
+        "content": "You agree to defend, indemnify, and hold harmless Deni AI and its licensors from and against any claims, liabilities, damages, judgments, awards, losses, costs, expenses, or fees arising out of your use of the service."
+      },
+      "termination": {
+        "title": "Termination",
+        "content": "We may terminate or suspend your account and bar access to the service immediately, without prior notice or liability, for any reason whatsoever, including without limitation if you breach the Terms."
+      },
+      "changes": {
+        "title": "Changes to Terms",
+        "content": "We reserve the right to modify or replace these Terms at any time. It is your responsibility to review these Terms periodically for changes."
+      },
+      "contact": {
+        "title": "Contact Us",
+        "content": "If you have any questions about these Terms, please contact us via our GitHub repository or through our support channels."
+      },
+      "lastUpdated": "Last Updated: {date}"
     }
   }
 }

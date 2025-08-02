@@ -1,6 +1,5 @@
 import Header from "@/components/header";
 import Footer from "@/components/footer";
-import SmoothScroller from "@/components/smooth-scroller";
 
 export default function RootLayout({
   children,
@@ -8,12 +7,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <div className="min-h-screen flex flex-col">
-      <Header />
+    <div className="min-h-screen flex flex-col pt-16">
       {children}
-      <SmoothScroller />
-
-      <Footer />
     </div>
   );
 }

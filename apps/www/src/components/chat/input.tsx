@@ -95,7 +95,7 @@ const ChatInput = memo<ChatInputProps>(
                     type: "file",
                     url: image,
                     filename: "image.png",
-                    mediaType: "image/*"
+                    mediaType: "image/*",
                   },
                 ]
               : undefined,
@@ -109,6 +109,26 @@ const ChatInput = memo<ChatInputProps>(
         }
       },
       [sendMessage, image, setImage, input],
+    );
+
+    const handlePaste = useCallback(
+      (event: React.ClipboardEvent<HTMLTextAreaElement>) => {
+        const items = event.clipboardData?.items;
+        if (!items) return;
+
+        for (let i = 0; i < items.length; i++) {
+          const item = items[i];
+          if (item && item.type.indexOf("image") !== -1) {
+            event.preventDefault();
+            const file = item.getAsFile();
+            if (file && handleImageUpload) {
+              handleImageUpload(file);
+            }
+            break;
+          }
+        }
+      },
+      [handleImageUpload],
     );
 
     return (
@@ -126,7 +146,7 @@ const ChatInput = memo<ChatInputProps>(
                         type: "file",
                         url: image,
                         filename: "image.png",
-                        mediaType: "image/*"
+                        mediaType: "image/*",
                       },
                     ]
                   : undefined,
@@ -169,6 +189,7 @@ const ChatInput = memo<ChatInputProps>(
                   adjustHeight();
                 }}
                 onKeyDown={handleKeyDown}
+                onPaste={handlePaste}
                 placeholder={t("placeholder", { brandName: BRAND_NAME })}
                 className="flex-1 border-none outline-none resize-none w-full bg-transparent min-h-[24px] max-h-[100px] sm:max-h-[200px] overflow-y-auto"
                 rows={1}

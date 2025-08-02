@@ -8,6 +8,7 @@ export interface UserSettings {
   hubs: boolean;
   bots: boolean;
   branch: boolean;
+  enableLegacyModels: boolean;
   conversationsPrivacyMode: boolean;
 }
 
@@ -18,5 +19,6 @@ export const defaultSettings: UserSettings = {
   bots: true,
   hubs: true,
   branch: true,
+  enableLegacyModels: false,
   conversationsPrivacyMode: false,
 };

@@ -6,10 +6,11 @@ import { Share2 } from "lucide-react";
 import { toast } from "sonner";
 import { Conversation } from "@/lib/conversations";
 import { UIMessage } from "ai";
-import { useAuth } from "@/context/auth-context";
 import { useTranslations } from "@/hooks/use-translations";
 import { User } from "better-auth";
 import { trpc } from "@/trpc/client";
+import { useIsMobile } from "@/hooks/use-mobile";
+import { cn } from "@workspace/ui/lib/utils";
 
 interface ShareButtonProps {
   conversation: Conversation | undefined;
@@ -22,8 +23,10 @@ export const ShareButton: FC<ShareButtonProps> = ({
   user,
   messages,
 }) => {
-  const { mutateAsync: shareConversation } = trpc.conversation.shareConversation.useMutation();
+  const { mutateAsync: shareConversation } =
+    trpc.conversation.shareConversation.useMutation();
   const t = useTranslations();
+  const isMobile = useIsMobile();
 
   const handleShare = async () => {
     if (!conversation || !user) {
@@ -67,7 +70,10 @@ export const ShareButton: FC<ShareButtonProps> = ({
       onClick={handleShare}
       variant="ghost"
       size="sm"
-      className="flex items-center gap-2"
+      className={cn(
+        "flex items-center gap-2 fixed bg-background/40 backdrop-blur-xs shadow-sm rounded-full mt-3.5 md:mt-4 top-0",
+        isMobile && "left-12",
+      )}
     >
       <Share2 className="h-4 w-4" />
       <span>{t("chat.share.shareButton")}</span>

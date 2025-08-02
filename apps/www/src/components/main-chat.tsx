@@ -25,11 +25,7 @@ interface MainChatProps {
 const MainChat = memo<MainChatProps>(
   ({ initialConversation, initialInput }) => {
     const [model, setModel] = useState("gpt-4o");
-  
-  // Debug model changes
-  useEffect(() => {
-    console.log("Model state changed to:", model);
-  }, [model]);
+
     const [canvas, setCanvas] = useState<boolean>(false);
     const [search, setSearch] = useState<boolean>(false);
     const { user, isPending, clientAddUses, serverUserData } = useAuth();
@@ -69,34 +65,27 @@ const MainChat = memo<MainChatProps>(
     const canvasRef = useRef(canvas);
     const searchRef = useRef(search);
     const researchModeRef = useRef(researchMode);
-    
+
     // Update refs when state changes
     useEffect(() => {
       modelRef.current = model;
-    }, [model]);
-    
-    useEffect(() => {
       thinkingEffortRef.current = thinkingEffort;
-    }, [thinkingEffort]);
-    
-    useEffect(() => {
       canvasRef.current = canvas;
-    }, [canvas]);
-    
-    useEffect(() => {
       searchRef.current = search;
-    }, [search]);
-    
-    useEffect(() => {
       researchModeRef.current = researchMode;
-    }, [researchMode]);
-    
+    }, [model, thinkingEffort, canvas, search, researchMode]);
+
     // Create a custom fetch that includes our body
     const customFetch = useCallback(
       async (input: RequestInfo | URL, init?: RequestInit) => {
-        const url = typeof input === 'string' ? input : input instanceof URL ? input.toString() : input.url;
+        const url =
+          typeof input === "string"
+            ? input
+            : input instanceof URL
+              ? input.toString()
+              : input.url;
         const options = init || {};
-        
+
         if (options.body) {
           const body = JSON.parse(options.body as string);
           const updatedBody = {
@@ -109,19 +98,18 @@ const MainChat = memo<MainChatProps>(
             search: searchRef.current,
             researchMode: researchModeRef.current,
           };
-          console.log("Sending to API with model:", modelRef.current, "Full body:", updatedBody);
-          
+
           return fetch(url, {
             ...options,
             body: JSON.stringify(updatedBody),
           });
         }
-        
+
         return fetch(input, init);
       },
-      [initialConversation]
+      [initialConversation],
     );
-    
+
     const { messages, error, sendMessage, status } = useChat({
       transport: new DefaultChatTransport({
         api: "/api/chat",
@@ -230,43 +218,21 @@ const MainChat = memo<MainChatProps>(
             >
               {welcomeMessage}
             </h1>
-            {serverUserData?.plan && serverUserData?.plan !== "free" && (
-              <span className="font-semibold opacity-80 hover:opacity-100 transition-all">
-                <span className="bg-gradient-to-r from-pink-400 to-sky-500 bg-clip-text text-transparent capitalize">
-                  {serverUserData?.plan}
-                </span>{" "}
-                {t("chat.welcome.planActive")}
-              </span>
-            )}
-            {(!serverUserData?.plan ||
-              !serverUserData ||
-              serverUserData?.plan === "free") && (
-              <div className="flex items-center font-semibold text-sm">
-                {t("chat.welcome.freePlan")}{" "}
-                <Dot size={16} className="text-foreground" />{" "}
-                <Link
-                  href="/upgrade"
-                  className="text-blue-500 dark:text-blue-400 underline-offset-3 hover:underline"
-                >
-                  {t("chat.welcome.upgradePlan")}
-                </Link>
-              </div>
-            )}
           </div>
         )}
         <div className="flex-1 overflow-y-auto" ref={messagesRef}>
           {/* Sidebar toggle, branch tree and share button */}
-          <div className="w-full max-w-4xl mx-auto mb-4">
-            <div className="flex items-center justify-between pl-12 md:pl-0">
-              {messages.length > 0 && initialConversation?.id && (
-                <ShareButton
-                  conversation={initialConversation}
-                  user={user}
-                  messages={messages}
-                />
-              )}
-            </div>
+
+          <div className="relative w-full max-w-4xl mx-auto">
+            {messages.length > 0 && initialConversation?.id && (
+              <ShareButton
+                conversation={initialConversation}
+                user={user}
+                messages={messages}
+              />
+            )}
           </div>
+
           <Messages
             messages={messages}
             conversationId={initialConversation?.id}
@@ -286,11 +252,12 @@ const MainChat = memo<MainChatProps>(
               </div>
             </div>
           )}
-          {status === "submitted" || messages[messages.length - 1]?.parts.length === 0 && (
-            <div className="flex items-center py-4 w-full max-w-4xl mx-auto text-sm animate-pulse">
-              <span className="text-base font-medium">Thinking...</span>
-            </div>
-          )}
+          {status === "submitted" ||
+            (messages[messages.length - 1]?.parts.length === 0 && (
+              <div className="flex items-center py-4 w-full max-w-4xl mx-auto text-sm animate-pulse">
+                <span className="text-base font-medium">Thinking...</span>
+              </div>
+            ))}
         </div>
         <div className="w-full max-w-4xl mx-auto">
           <ChatInput

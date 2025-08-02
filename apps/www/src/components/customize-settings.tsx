@@ -15,10 +15,10 @@ import {
   ScrollText,
   GitBranch,
   Bot,
-  Mic,
   Monitor,
   Moon,
   Sun,
+  Lock,
 } from "lucide-react";
 import { Badge } from "@workspace/ui/components/badge";
 import { Button } from "@workspace/ui/components/button";
@@ -238,6 +238,31 @@ export default function CustomizeSettings() {
               checked={settings.branch}
               onCheckedChange={(checked) => {
                 updateSetting("branch", checked);
+              }}
+            />
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card className="!gap-2">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Lock className="h-5 w-5" />
+            {t("enableLegacyModels.title")}
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="flex items-center justify-between">
+            <div className="flex-grow">
+              <p className="text-sm text-muted-foreground">
+                {t("enableLegacyModels.description")}
+              </p>
+            </div>
+            <Switch
+              id="enableLegacyModels"
+              checked={settings.enableLegacyModels}
+              onCheckedChange={(checked) => {
+                updateSetting("enableLegacyModels", checked);
               }}
             />
           </div>

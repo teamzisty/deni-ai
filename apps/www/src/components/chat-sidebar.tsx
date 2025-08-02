@@ -240,7 +240,7 @@ function DraggableConversation({
                   const hub = hubId ? hubs.find((h) => h.id === hubId) : null;
                   const hubName = hub?.name;
 
-                  let visualTitle = <>{title}</>;
+                  let visualTitle = <span className="truncate">{title}</span>;
 
                   if (hubName) {
                     // Show Hubs icon + Hub name > conversation icon + conversation name
@@ -249,7 +249,7 @@ function DraggableConversation({
                         <span className="text-muted-foreground">{hubName}</span>
                         <ArrowRight className="inline mx-1 w-4 h-4" />
                         <MessageCircle className="inline mr-1 w-4 h-4" />
-                        {title}
+                        <span className="truncate">{title}</span>
                       </span>
                     );
                   } else if (botName) {
@@ -257,7 +257,7 @@ function DraggableConversation({
                       <span className="flex items-center">
                         <span className="text-muted-foreground">{botName}</span>
                         <ArrowRight className="inline mx-1 w-4 h-4" />
-                        {title}
+                        <span className="truncate">{title}</span>
                       </span>
                     );
                   }
@@ -461,56 +461,59 @@ function ChatSidebarContent() {
               </SidebarMenu>
             </SidebarGroupContent>
           </SidebarGroup>
-          <SidebarGroup className={cn({ hidden: !settings.hubs })}>
-            <SidebarGroupLabel className="flex items-center justify-between">
-              {t("chat.sidebar.hubs")}
-              <Button
-                size="sm"
-                variant="ghost"
-                onClick={handleNewHub}
-                disabled={isCreatingHub}
-                className="h-6 w-6 p-0"
-              >
-                {isCreatingHub ? (
-                  <Loader2 className="h-3 w-3 animate-spin" />
-                ) : (
-                  <Plus className="h-3 w-3" />
-                )}
-              </Button>
-            </SidebarGroupLabel>
-            <SidebarGroupContent>
-              <SidebarMenu>
-                {hubsLoading && (
-                  <div className="flex justify-center w-full py-2">
-                    <Loader2 className="animate-spin" />
-                  </div>
-                )}
-                {hubs.map((hub) => (
-                  <DroppableHub key={hub.id} hub={hub} />
-                ))}
-              </SidebarMenu>
-            </SidebarGroupContent>
-          </SidebarGroup>
-          <SidebarGroup>
-            <SidebarGroupLabel>
-              {t("chat.sidebar.conversations")}
-            </SidebarGroupLabel>
-            <SidebarGroupContent>
-              <SidebarMenu>
-                {loading && (
-                  <div className="flex justify-center w-full py-2">
-                    <Loader2 className="animate-spin" />
-                  </div>
-                )}
-                {conversations && conversations.map((conversation) => (
-                  <SidebarConversation
-                    key={conversation.id}
-                    conversation={conversation}
-                  />
-                ))}
-              </SidebarMenu>
-            </SidebarGroupContent>
-          </SidebarGroup>
+          <div className="flex-1 overflow-y-auto">
+            <SidebarGroup className={cn({ hidden: !settings.hubs })}>
+              <SidebarGroupLabel className="flex items-center justify-between">
+                {t("chat.sidebar.hubs")}
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  onClick={handleNewHub}
+                  disabled={isCreatingHub}
+                  className="h-6 w-6 p-0"
+                >
+                  {isCreatingHub ? (
+                    <Loader2 className="h-3 w-3 animate-spin" />
+                  ) : (
+                    <Plus className="h-3 w-3" />
+                  )}
+                </Button>
+              </SidebarGroupLabel>
+              <SidebarGroupContent>
+                <SidebarMenu>
+                  {hubsLoading && (
+                    <div className="flex justify-center w-full py-2">
+                      <Loader2 className="animate-spin" />
+                    </div>
+                  )}
+                  {hubs.map((hub) => (
+                    <DroppableHub key={hub.id} hub={hub} />
+                  ))}
+                </SidebarMenu>
+              </SidebarGroupContent>
+            </SidebarGroup>
+            <SidebarGroup>
+              <SidebarGroupLabel>
+                {t("chat.sidebar.conversations")}
+              </SidebarGroupLabel>
+              <SidebarGroupContent>
+                <SidebarMenu>
+                  {loading && (
+                    <div className="flex justify-center w-full py-2">
+                      <Loader2 className="animate-spin" />
+                    </div>
+                  )}
+                  {conversations &&
+                    conversations.map((conversation) => (
+                      <SidebarConversation
+                        key={conversation.id}
+                        conversation={conversation}
+                      />
+                    ))}
+                </SidebarMenu>
+              </SidebarGroupContent>
+            </SidebarGroup>
+          </div>
         </SidebarContent>
       </Sidebar>
       <DragOverlay>
@@ -522,7 +525,7 @@ function ChatSidebarContent() {
               ) : (
                 <MessageCircle className="h-4 w-4" />
               )}
-              <span className="text-sm font-medium">
+              <span className="text-sm font-medium w-full">
                 {activeConversation.title ||
                   t("chat.sidebar.untitledConversation")}
               </span>
