@@ -55,7 +55,7 @@
         "clsx": "^2.1.1",
         "cmdk": "^1.1.1",
         "date-fns": "^4.1.0",
-        "docsfly": "^1.5.1-beta.20250802185422",
+        "docsfly": "^1.5.1-beta.20250802185924",
         "embla-carousel-react": "^8.6.0",
         "input-otp": "^1.4.2",
         "lucide-react": "^0.536.0",
@@ -1367,7 +1367,7 @@
 
     "docs": ["docs@workspace:apps/docs"],
 
-    "docsfly": ["docsfly@1.5.1-beta.20250802185422", "", { "dependencies": { "@mdx-js/mdx": "^3.1.0", "@mdx-js/react": "^3.1.0", "chokidar": "^4.0.3", "class-variance-authority": "^0.7.1", "clsx": "^2.1.1", "gray-matter": "^4.0.3", "lucide-react": "^0.525.0", "next-mdx-remote-client": "^2.1.0", "next-themes": "^0.4.6", "radix-ui": "^1.4.2", "react-shiki": "^0.7.1", "remark-gfm": "^4.0.1", "tailwind-merge": "^3.3.1" }, "peerDependencies": { "next": "^15.3.5", "react": "^19.1.0", "react-dom": "^19.1.0" } }, "sha512-Me2NWPuiNhlChR92S14Rg4OP23yOS/4KuhGayHQvGt5X1Mz1y6UokPhwUm4nlB57S5tb1sP65y8EBu2ycMD7JQ=="],
+    "docsfly": ["docsfly@1.5.1-beta.20250802185924", "", { "dependencies": { "@mdx-js/mdx": "^3.1.0", "@mdx-js/react": "^3.1.0", "chokidar": "^4.0.3", "class-variance-authority": "^0.7.1", "clsx": "^2.1.1", "gray-matter": "^4.0.3", "lucide-react": "^0.525.0", "next-mdx-remote-client": "^2.1.0", "next-themes": "^0.4.6", "radix-ui": "^1.4.2", "react-shiki": "^0.7.1", "remark-gfm": "^4.0.1", "tailwind-merge": "^3.3.1" }, "peerDependencies": { "next": "^15.3.5", "react": "^19.1.0", "react-dom": "^19.1.0" } }, "sha512-ELqMGa7Q7sGEMnRPWqQ/NTk5+QyPHBzII94gCRbIpS1WCnejF9dw0Oo1E8gLMhffTQPnzO7GrmwP32dVKm0czw=="],
 
     "doctrine": ["doctrine@2.1.0", "", { "dependencies": { "esutils": "^2.0.2" } }, "sha512-35mSku4ZXK0vfCuHEDAwt55dg2jNajHZ1odvF+8SSr82EsZY4QmXfuWso8oEd8zRhVObSN18aM0CjSdoBX7zIw=="],
 
