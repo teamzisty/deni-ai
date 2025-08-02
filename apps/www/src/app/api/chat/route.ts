@@ -5,9 +5,9 @@ import {
 } from "@/lib/conversations";
 import { search as baseSearch, canvas } from "@/lib/tools";
 import { VoidsAI } from "@workspace/voids-ai-provider"
-import { createOpenAI, openai } from "@ai-sdk/openai";
-import { anthropic } from "@ai-sdk/anthropic";
-import { google } from "@ai-sdk/google";
+import { createOpenAI, openai, OpenAIResponsesProviderOptions } from "@ai-sdk/openai";
+import { anthropic, AnthropicProviderOptions } from "@ai-sdk/anthropic";
+import { google, GoogleGenerativeAIProviderOptions } from "@ai-sdk/google";
 import { xai } from "@ai-sdk/xai";
 import {
   convertToModelMessages,
@@ -77,18 +77,15 @@ export async function POST(request: Request) {
   let sdkModel: LanguageModel;
   console.log("Using modelId:", modelId, "provider:", model.provider);
   switch (model.provider) {
-    // case "openai":
-    //   sdkModel = openai.responses(modelId);
-    //   break;
-    // case "anthropic":
-    //   sdkModel = anthropic(modelId);
-    //   break;
-    // case "google":
-    //   sdkModel = google(modelId);
-    //   break;
-    // case "xai":
-    //   sdkModel = xai(modelId);
-    //   break;
+    case "openai":
+      sdkModel = openai.responses(modelId);
+      break;
+    case "anthropic":
+      sdkModel = anthropic(modelId);
+      break;
+    case "google":
+      sdkModel = google(modelId);
+      break;
     case "voids":
       sdkModel = VoidsAI(modelId);
       break;
@@ -231,24 +228,24 @@ export async function POST(request: Request) {
         model: wrappedModel,
         tools,
         stopWhen: stepCountIs(30),
-        // providerOptions: {
-        //   openai: {
-        //     thinkingEffort: thinkingEffort || "medium",
-        //     reasoningSummary: "detailed",
-        //   } as OpenAIResponsesProviderOptions,
-        //   google: {
-        //     thinkingConfig: {
-        //       thinkingBudget: thinkingBudget,
-        //       includeThoughts: true,
-        //     },
-        //   } as GoogleGenerativeAIProviderOptions,
-        //   anthropic: {
-        //     thinking: {
-        //       type: thinkingEffort === "disabled" ? "disabled" : "enabled",
-        //       budgetTokens: thinkingBudget,
-        //     },
-        //   } as AnthropicProviderOptions,
-        // },
+        providerOptions: {
+          openai: {
+            thinkingEffort: thinkingEffort || "medium",
+            reasoningSummary: "detailed",
+          } as OpenAIResponsesProviderOptions,
+          google: {
+            thinkingConfig: {
+              thinkingBudget: thinkingBudget,
+              includeThoughts: true,
+            },
+          } as GoogleGenerativeAIProviderOptions,
+          anthropic: {
+            thinking: {
+              type: thinkingEffort === "disabled" ? "disabled" : "enabled",
+              budgetTokens: thinkingBudget,
+            },
+          } as AnthropicProviderOptions,
+        },
       });
 
       writer.merge(response.toUIMessageStream());
