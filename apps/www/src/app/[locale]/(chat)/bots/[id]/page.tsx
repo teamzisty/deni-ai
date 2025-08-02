@@ -174,7 +174,7 @@ export default function BotPage() {
                 <div className="flex items-center justify-between">
                   <div className="flex items-center justify-center w-full gap-4 text-sm text-muted-foreground">
                     <div className="flex flex-col items-center h-full justify-between">
-                      <p className="text-lg text-foreground">Rai</p>
+                      <p className="text-lg text-foreground">{bot.author?.name || "No Name"}</p>
                       <p className="font-medium">Created by</p>
                     </div>
                     <div className="h-4 w-px bg-border" />
