@@ -43,7 +43,10 @@ export const protectedProcedure = baseProcedure.use(async (opts) => {
   return opts.next({
       ctx: {
           ...opts.ctx,
-          user: session.user,
+          user: {
+            ...session.user,
+            id: session.user.id
+          },
       },
   });
 });
