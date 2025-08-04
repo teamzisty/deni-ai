@@ -82,6 +82,10 @@ export async function getAllUsage(
         )
       );
 
+    if (!usageData) {
+      return [];
+    }
+
     // Create a map for quick lookup
     const usageMap = new Map<string, number>();
     for (const usage of usageData) {

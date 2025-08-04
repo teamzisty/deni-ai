@@ -21,14 +21,25 @@ export const appRouter = createTRPCRouter({
   settings: settingsRouter,
   user: {
     getUser: protectedProcedure.query(async ({ ctx }) => {
-      const user = await db.query.users.findFirst({
-        where: eq(users.id, ctx.user.id),
-      });
-      return user;
+      if (!ctx.user.id) return null;
+      try {
+        const user = await db.query.users.findFirst({
+          where: eq(users.id, ctx.user.id),
+        });
+        return user || null;
+      } catch (error) {
+        console.error(error);
+        return null;
+      }
     }),
     getUsage: protectedProcedure.query(async ({ ctx }) => {
-      const usage = await getAllUsage(ctx.user.id);
-      return usage;
+      try {
+        const usage = await getAllUsage(ctx.user.id);
+        return usage;
+      } catch (error) {
+        console.error(error);
+        return [];
+      }
     }),
     updatePassword: protectedProcedure.input(z.object({
       password: z.string(),

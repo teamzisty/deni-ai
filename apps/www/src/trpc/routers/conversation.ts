@@ -8,30 +8,45 @@ export const conversationRouter = createTRPCRouter({
     getConversation: protectedProcedure.input(z.object({
         id: z.string(),
     })).mutation(async ({ input, ctx }) => {
-        const conversation = await db.query.chatSessions.findFirst({
-            where: eq(chatSessions.id, input.id),
-        });
-        return conversation;
+        try {
+            const conversation = await db.query.chatSessions.findFirst({
+                where: eq(chatSessions.id, input.id),
+            });
+            return conversation;
+        } catch (error) {
+            console.error(error);
+            return null;
+        }
     }),
     getConversations: protectedProcedure.query(async ({ ctx }) => {
-        const conversations = await db.query.chatSessions.findMany({
-            where: eq(chatSessions.userId, ctx.user.id),
-            orderBy: desc(chatSessions.createdAt),
-        });
-        return conversations;
+        try {
+            const conversations = await db.query.chatSessions.findMany({
+                where: eq(chatSessions.userId, ctx.user.id),
+                orderBy: desc(chatSessions.createdAt),
+            });
+            return conversations;
+        } catch (error) {
+            console.error(error);
+            return [];
+        }
     }),
     createConversation: protectedProcedure.input(z.object({
         title: z.string(),
         botId: z.string().optional(),
         hubId: z.string().optional(),
     })).mutation(async ({ input, ctx }) => {
-        const conversation = await db.insert(chatSessions).values({
-            userId: ctx.user.id,
-            title: input.title,
+        try {
+            const conversation = await db.insert(chatSessions).values({
+                userId: ctx.user.id,
+                title: input.title,
             ...(input.botId ? { bot: { id: input.botId } } : {}),
             hubId: input.hubId,
-        }).returning();
-        return conversation[0];
+            }).returning();
+            return conversation[0];
+        } catch (error) {
+            console.error(error);
+            throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR' });
+        }
     }),
     updateConversation: protectedProcedure.input(z.object({
         id: z.string(),

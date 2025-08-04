@@ -5,16 +5,27 @@ import { TRPCError } from '@trpc/server'
 import { eq } from 'drizzle-orm';
 
 export const hubRouter = createTRPCRouter({
-    getHubs: protectedProcedure.query(async () => {
-        const hubs = await db.query.hubs.findMany();
-        return hubs;
+    getHubs: protectedProcedure.query(async ({ ctx }) => {
+        try {
+            const hubsList = await db.query.hubs.findMany({
+                where: eq(hubs.userId, ctx.user.id),
+            });
+            return hubsList;
+        } catch (error) {
+            console.error(error);
+            return [];
+        }
     }),
-    getHub: protectedProcedure.input(z.object({ id: z.string() })).query(async ({ input }) => {
+    getHub: protectedProcedure.input(z.object({ id: z.string() })).query(async ({ input, ctx }) => {
+        // Only allow access to own hub
         const hub = await db.query.hubs.findFirst({
             where: eq(hubs.id, input.id),
         });
         if (!hub) {
             throw new TRPCError({ code: 'NOT_FOUND' });
+        }
+        if (hub.userId !== ctx.user.id) {
+            throw new TRPCError({ code: 'FORBIDDEN' });
         }
         const author = await db.query.user.findFirst({
             where: eq(user.id, hub.userId),
