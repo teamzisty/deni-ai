@@ -403,9 +403,7 @@ const Message = memo<MessageProps>(({ message, conversationId }) => {
                                       <summary className="cursor-pointer text-sm text-foreground/80 hover:text-foreground transition-colors">
                                         {t("chat.message.pageSummary", {
                                           model:
-                                            internalModels[
-                                              "search-summary-model"
-                                            ]?.name || "",
+                                            models[internalModels["search-summary-model"]?.id || "gpt-5"]?.name || "",
                                         })}
                                       </summary>
                                       <MemoizedMarkdownBlock
