@@ -31,7 +31,7 @@ interface ChatInputProps {
   input: string;
   sendMessage: UseChatHelpers<UIMessage>["sendMessage"];
   setInput: (input: string) => void;
-  thinkingEffort?: "disabled" | "low" | "medium" | "high";
+  thinkingEffort?: "disabled" | "minimal" | "low" | "medium" | "high";
   model?: string;
   canvas?: boolean;
   search?: boolean;
@@ -39,7 +39,7 @@ interface ChatInputProps {
   image?: string | null;
   isUploading?: boolean;
   handleImageUpload?: (file: File) => void;
-  setThinkingEffort?: (effort: "disabled" | "low" | "medium" | "high") => void;
+  setThinkingEffort?: (effort: "disabled" | "minimal" | "low" | "medium" | "high") => void;
   setModel?: (model: string) => void;
   setCanvas?: (canvas: boolean) => void;
   setSearch?: (search: boolean) => void;
@@ -50,7 +50,7 @@ interface ChatInputProps {
 const ChatInput = memo<ChatInputProps>(
   ({
     input,
-    model = "gpt-4o",
+    model = "gpt-5",
     canvas = false,
     search = false,
     researchMode = "disabled",

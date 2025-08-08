@@ -69,16 +69,17 @@ export interface InputActionsProps {
   researchMode?: "disabled" | "shallow" | "deep" | "deeper";
   setResearchMode?: (mode: "disabled" | "shallow" | "deep" | "deeper") => void;
   input: string;
-  thinkingEffort?: "disabled" | "low" | "medium" | "high";
-  setThinkingEffort?: (effort: "disabled" | "low" | "medium" | "high") => void;
+  thinkingEffort?: "disabled" | "minimal" | "low" | "medium" | "high";
+  setThinkingEffort?: (effort: "disabled" | "minimal" | "low" | "medium" | "high") => void;
   handleImageUpload?: (file: File) => void;
   isUploading?: boolean;
 }
 
 export const UploadButton = React.memo<{
+  model?: string;
   handleImageUpload?: (file: File) => void;
   isUploading?: boolean;
-}>(function UploadButton({ handleImageUpload, isUploading }) {
+}>(function UploadButton({ model, handleImageUpload, isUploading }) {
   const inputRef = useRef<HTMLInputElement>(null);
   return (
     <div>
@@ -101,7 +102,7 @@ export const UploadButton = React.memo<{
         size="icon"
         className="rounded-full"
         onClick={() => inputRef.current?.click()}
-        disabled={isUploading}
+        disabled={isUploading || !models[model || "gpt-5"]?.features?.includes("vision")}
       >
         {isUploading ? (
           <Loader2 className="h-5 w-5 animate-spin" />
@@ -174,14 +175,15 @@ export function ThinkingButton({
 
 export const ThinkingEffortButton = React.memo<{
   model: string;
-  thinkingEffort: "disabled" | "low" | "medium" | "high";
-  setThinkingEffort: (effort: "disabled" | "low" | "medium" | "high") => void;
+  thinkingEffort: "disabled" | "minimal" | "low" | "medium" | "high";
+  setThinkingEffort: (effort: "disabled" | "minimal" | "low" | "medium" | "high") => void;
 }>(function ThinkingEffortButton({ model, thinkingEffort, setThinkingEffort }) {
   const t = useTranslations("chat.input");
 
-  const effortMapping: Record<"disabled" | "low" | "medium" | "high", string> =
+  const effortMapping: Record<"disabled" | "minimal" | "low" | "medium" | "high", string> =
     {
       disabled: t("disabled"),
+      minimal: "Minimal",
       low: "Low",
       medium: "Medium",
       high: "High",
@@ -685,7 +687,7 @@ export const InputActions = React.memo<InputActionsProps>(
   }) {
     useEffect(() => {
       if (
-        !models[model || "gpt-4o"]?.reasoning_efforts?.find(
+        !models[model || "gpt-5"]?.reasoning_efforts?.find(
           (effort) => effort === "disabled",
         ) &&
         thinkingEffort === "disabled" &&
@@ -698,6 +700,7 @@ export const InputActions = React.memo<InputActionsProps>(
     return (
       <>
         <UploadButton
+        model={model}
           handleImageUpload={handleImageUpload}
           isUploading={isUploading}
         />
