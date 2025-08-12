@@ -176,7 +176,7 @@ export const models: Record<string, Model> = {
     features: ["vision", "fast", "reasoning", "tools"],
   },
   "gpt-oss-120b": {
-    id: "gpt-oss-120b",
+    id: "openai/gpt-oss-120b",
     name: "gpt-oss-120b",
     description: "Most powerful open-source GPT model.",
     author: "OpenAI",
@@ -185,7 +185,7 @@ export const models: Record<string, Model> = {
     features: ["fast", "tools"],
   },
   "gpt-oss-20b": {
-    id: "gpt-oss-20b",
+    id: "openai/gpt-oss-20b",
     name: "gpt-oss-20b",
     description: "Medium-sized open-source GPT model.",
     author: "OpenAI",
