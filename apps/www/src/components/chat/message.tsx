@@ -22,6 +22,7 @@ import { useCanvas } from "@/context/canvas-context";
 import { useTranslations } from "@/hooks/use-translations";
 import { cn } from "@workspace/ui/lib/utils";
 import { MessageControls } from "./message-controls";
+import { models } from "@/lib/constants";
 
 interface SearchResult {
   title: string;
@@ -403,9 +404,7 @@ const Message = memo<MessageProps>(({ message, conversationId }) => {
                                       <summary className="cursor-pointer text-sm text-foreground/80 hover:text-foreground transition-colors">
                                         {t("chat.message.pageSummary", {
                                           model:
-                                            internalModels[
-                                              "search-summary-model"
-                                            ]?.name || "",
+                                            models[internalModels["search-summary-model"] || "gpt-5"]?.name || "",
                                         })}
                                       </summary>
                                       <MemoizedMarkdownBlock

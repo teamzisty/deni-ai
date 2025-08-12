@@ -11,7 +11,7 @@
   "dependencies": {
     "@ai-sdk/anthropic": "^2.0.0",
     "@ai-sdk/google": "^2.0.0",
-    "@ai-sdk/groq": "^2.0.0",
+    "@ai-sdk/groq": "^2.0.0-beta.12",
     "@ai-sdk/openai": "^2.0.0",
     "@ai-sdk/react": "^2.0.0",
     "@ai-sdk/xai": "^2.0.0",
@@ -21,7 +21,7 @@
     "@dnd-kit/utilities": "^3.2.2",
     "@icons-pack/react-simple-icons": "^13.7.0",
     "@monaco-editor/react": "^4.7.0",
-    "@openrouter/ai-sdk-provider": "^0.7.3",
+    "@openrouter/ai-sdk-provider": "^1.0.0-beta.7",
     "@radix-ui/react-label": "^2.1.7",
     "@radix-ui/react-popover": "^1.1.14",
     "@radix-ui/react-slot": "^1.2.3",

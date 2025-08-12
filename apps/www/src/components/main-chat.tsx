@@ -24,13 +24,13 @@ interface MainChatProps {
 
 const MainChat = memo<MainChatProps>(
   ({ initialConversation, initialInput }) => {
-    const [model, setModel] = useState("gpt-4o");
+    const [model, setModel] = useState("gpt-5");
 
     const [canvas, setCanvas] = useState<boolean>(false);
     const [search, setSearch] = useState<boolean>(false);
     const { user, isPending, clientAddUses, serverUserData } = useAuth();
     const [thinkingEffort, setThinkingEffort] = useState<
-      "disabled" | "low" | "medium" | "high"
+      "disabled" | "minimal" | "low" | "medium" | "high"
     >("disabled");
     const [researchMode, setResearchMode] = useState<
       "disabled" | "shallow" | "deep" | "deeper"

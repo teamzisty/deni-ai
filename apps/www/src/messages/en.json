@@ -628,7 +628,7 @@
     "team": "Team",
     "homePage": "Home Page",
     "projects": "Projects",
-    "copyright": "© {year} Veltrix.",
+    "copyright": "© {year} Zisty.",
     "status": "Status"
   },
   "sidebar": {
@@ -876,7 +876,7 @@
       "introduction": {
         "title": "Introduction",
         "content": "This Privacy Policy describes how your personal information is collected, used, and shared when you use our {brandName} service.",
-        "operatedBy": "{brandName} is operated by the Veltrix team."
+        "operatedBy": "{brandName} is operated by the Zisty."
       },
       "informationCollection": {
         "title": "Information We Collect",
@@ -940,7 +940,7 @@
       "introduction": {
         "title": "Introduction",
         "content": "Welcome to {brandName}. These Terms of Service govern your use of our website, products, and services.",
-        "operatedBy": "{brandName} is operated by the Veltrix team."
+        "operatedBy": "{brandName} is operated by the Zisty."
       },
       "acceptance": {
         "title": "Acceptance of Terms",

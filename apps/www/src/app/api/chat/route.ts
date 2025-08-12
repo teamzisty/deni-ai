@@ -1,10 +1,12 @@
-import { getSystemPrompt, internalModels, models, SYSTEM_PROMPT } from "@/lib/constants";
+import { createModel, getSystemPrompt, internalModels, models, SYSTEM_PROMPT } from "@/lib/constants";
 import {
   getConversation,
   updateConversation,
 } from "@/lib/conversations";
 import { search as baseSearch, canvas } from "@/lib/tools";
 import { VoidsAI } from "@workspace/voids-ai-provider"
+import { openrouter } from "@openrouter/ai-sdk-provider";
+import { groq } from "@ai-sdk/groq";
 import { openai, OpenAIResponsesProviderOptions } from "@ai-sdk/openai";
 import { anthropic, AnthropicProviderOptions } from "@ai-sdk/anthropic";
 import { google, GoogleGenerativeAIProviderOptions } from "@ai-sdk/google";
@@ -86,6 +88,12 @@ export async function POST(request: Request) {
     case "google":
       sdkModel = google(modelId);
       break;
+    case "openrouter":
+      sdkModel = openrouter(modelId);
+      break;
+    case "groq":
+      sdkModel = groq(modelId);
+      break;
     case "voids":
       sdkModel = VoidsAI(modelId);
       break;
@@ -152,12 +160,15 @@ export async function POST(request: Request) {
               : "Simple conversation";
 
         // Generate title asynchronously to avoid blocking the stream
+        const titleModelId = internalModels["title-model"];
+        if (!titleModelId || !models[titleModelId]) {
+          console.error("Title model not found");
+          return;
+        }
+        
         titleGeneration = generateText({
           prompt: promptText || "Simple conversation",
-          model: VoidsAI(
-            internalModels["title-model"]?.id ||
-            "gemini-2.5-flash-lite-preview-06-17",
-          ),
+          model: createModel(models[titleModelId]),
           system:
             "generates titles for conversations. simple and concise, no more than 5 words. no punctuation. no sorry, generate a title related user message.",
         })

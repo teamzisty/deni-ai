@@ -2,7 +2,7 @@ import { generateText, tool } from "ai";
 import { BraveSearchSDK } from "./brave-search";
 import { z } from "zod";
 import { PageParser } from "./page-parser";
-import { internalModels } from "./constants";
+import { createModel, internalModels, models } from "./constants";
 import { createOpenAI } from "@ai-sdk/openai";
 
 
@@ -86,12 +86,15 @@ export const search = tool({
           apiKey: "none"
         })
 
+        const modelId = internalModels["search-summary-model"] || "gpt-oss-20b";
+        const modelConfig = models[modelId];
+        if (!modelConfig) {
+          throw new Error(`Model ${modelId} not found`);
+        }
+        
         const longSummary = await generateText({
           prompt: content.content,
-          model: google(
-            internalModels["search-summary-model"]?.id ||
-            "gemini-2.5-flash-lite-preview-06-17",
-          ),
+          model: createModel(modelConfig),
           system:
             "You are a helpful assistant that summarizes web pages. respond as markdown, no concise.",
         });

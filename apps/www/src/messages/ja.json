@@ -600,7 +600,7 @@
     "team": "チーム",
     "homePage": "ホームページ",
     "projects": "プロジェクト",
-    "copyright": "© {year} Veltrix.",
+    "copyright": "© {year} Zisty.",
     "status": "ステータス"
   },
   "sidebar": {
@@ -859,7 +859,7 @@
       "introduction": {
         "title": "はじめに",
         "content": "このプライバシーポリシーは、Deni AIサービスをご利用いただく際に、お客様の個人情報がどのように収集、使用、共有されるかについて説明しています。",
-        "operatedBy": "Deni AIはVeltrixチームによって運営されています。"
+        "operatedBy": "Deni AIはZistyによって運営されています。"
       },
       "informationCollection": {
         "title": "収集する情報",
@@ -923,7 +923,7 @@
       "introduction": {
         "title": "はじめに",
         "content": "Deni AIへようこそ。この利用規約は、当社のウェブサイト、製品、およびサービスの利用に適用されます。",
-        "operatedBy": "Deni AIはVeltrixチームによって運営されています。"
+        "operatedBy": "Deni AIはZistyによって運営されています。"
       },
       "acceptance": {
         "title": "規約の承認",

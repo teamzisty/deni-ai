@@ -1,4 +1,11 @@
+import { LanguageModel } from "ai";
 import { Bot } from "./bot";
+import { openai } from "@ai-sdk/openai";
+import { anthropic } from "@ai-sdk/anthropic";
+import { google } from "@ai-sdk/google";
+import { groq } from "@ai-sdk/groq";
+import { openrouter } from "@openrouter/ai-sdk-provider";
+import { VoidsAI } from "@workspace/voids-ai-provider/voids-ai-provider";
 
 export const BRAND_NAME = "Deni AI"; // Change your brand
 
@@ -30,7 +37,7 @@ export const loading_words = [
 
 export const SYSTEM_PROMPT = [
   `You are a helpful AI assistant on ${BRAND_NAME}. Your task is to assist users with their questions and provide accurate information based on the context provided.`,
-  "",
+  "You can use markdown to format your responses. Use markdown to better format your responses. Must use markdown.",
   "# Tools",
   "You have access to the following tools:",
   "- **Search**: Search the web for information.",
@@ -49,15 +56,21 @@ export const SYSTEM_PROMPT = [
   "deeper: search 5 results",
 ].join("\n");
 
-export const getSystemPrompt = (researchMode: "disabled" | "shallow" | "deep" | "deeper", features: { search: boolean, canvas: boolean }, bot?: Bot | null) => {
+export const getSystemPrompt = (
+  researchMode: "disabled" | "shallow" | "deep" | "deeper",
+  features: { search: boolean; canvas: boolean },
+  bot?: Bot | null,
+) => {
   let systemPrompt = SYSTEM_PROMPT;
   systemPrompt += "\n\n" + "Research mode is: " + researchMode;
-  systemPrompt += "\n\n" + "Please use the following features: " + JSON.stringify(features);
+  systemPrompt +=
+    "\n\n" + "Please use the following features: " + JSON.stringify(features);
   if (bot) {
     systemPrompt += [
       "\n\n",
       "# Bot",
-      "Bot is a user-created agent. It is designed to assist with tasks and answer questions. Bot name is: " + bot.name,
+      "Bot is a user-created agent. It is designed to assist with tasks and answer questions. Bot name is: " +
+        bot.name,
       bot.systemInstruction,
     ].join("\n");
   }
@@ -103,8 +116,19 @@ export type ModelAuthor =
   | "xAI"
   | "DeepSeek"
   | "Kimi";
-export type ModelProvider = "openai" | "anthropic" | "google" | "xai" | "voids";
-export type ReasoningEffort = "disabled" | "low" | "medium" | "high";
+export type ModelProvider =
+  | "openai"
+  | "anthropic"
+  | "google"
+  | "openrouter"
+  | "groq"
+  | "voids";
+export type ReasoningEffort =
+  | "disabled"
+  | "minimal"
+  | "low"
+  | "medium"
+  | "high";
 
 export interface Model {
   id: string;
@@ -115,85 +139,59 @@ export interface Model {
   reasoning_efforts?: ReasoningEffort[];
   premium?: boolean;
   context_window?: number;
+  new?: boolean;
   features?: ModelFeature[];
   legacy?: boolean;
 }
 
 export const models: Record<string, Model> = {
-  "gpt-4o": {
-    id: "gpt-4o-2024-11-20",
-    name: "GPT-4o",
-    description: "Fast, intelligent, flexible GPT model.",
+  "gpt-5": {
+    id: "gpt-5-2025-08-07",
+    name: "GPT-5",
+    description: "OpenAI's flagship model for complex tasks.",
     author: "OpenAI",
+    reasoning_efforts: ["minimal", "low", "medium", "high"],
     provider: "openai",
-    context_window: 128000,
+    context_window: 400000,
     features: ["vision", "tools"],
   },
-  "gpt-4o-mini": {
-    id: "gpt-4o-mini-2024-07-18",
-    name: "GPT-4o mini",
-    description: "Fast, affordable small model for focused tasks.",
+  "gpt-5-mini": {
+    id: "gpt-5-mini-2025-08-07",
+    name: "GPT-5 mini",
+    description: "Faster, more cost-effective GPT-5 model.",
     author: "OpenAI",
+    reasoning_efforts: ["minimal", "low", "medium", "high"],
     provider: "openai",
+    context_window: 400000,
+    features: ["vision", "fast", "reasoning", "tools"],
+  },
+  "gpt-5-nano": {
+    id: "gpt-5-nano-2025-08-07",
+    name: "GPT-5 nano",
+    description: "Fastest and cheapest GPT-5 model.",
+    author: "OpenAI",
+    reasoning_efforts: ["minimal", "low", "medium", "high"],
+    provider: "openai",
+    context_window: 400000,
+    features: ["vision", "fast", "reasoning", "tools"],
+  },
+  "gpt-oss-120b": {
+    id: "gpt-oss-120b",
+    name: "gpt-oss-120b",
+    description: "Most powerful open-source GPT model.",
+    author: "OpenAI",
+    provider: "groq",
     context_window: 128000,
-    features: ["vision", "tools", "fast"],
+    features: ["fast", "tools"],
   },
-  "gpt-4.1": {
-    id: "gpt-4.1-2025-04-14",
-    name: "GPT-4.1",
-    description: "Flagship GPT model for complex tasks.",
+  "gpt-oss-20b": {
+    id: "gpt-oss-20b",
+    name: "gpt-oss-20b",
+    description: "Medium-sized open-source GPT model.",
     author: "OpenAI",
-    provider: "openai",
-    context_window: 1047576,
-    features: ["vision", "tools"],
-  },
-  "gpt-4.1-mini": {
-    id: "gpt-4.1-mini-2025-04-14",
-    name: "GPT-4.1 mini",
-    description: "Balanced for intelligence, speed, and cost.",
-    author: "OpenAI",
-    provider: "openai",
-    context_window: 1047576,
-    features: ["vision", "fast", "tools"],
-  },
-  "gpt-4.1-nano": {
-    id: "gpt-4.1-nano-2025-04-14",
-    name: "GPT-4.1 nano",
-    description: "Fastest, most cost-effective GPT-4.1 model.",
-    author: "OpenAI",
-    provider: "openai",
-    context_window: 1047576,
-    features: ["vision", "fast", "tools"],
-  },
-  "o4-mini": {
-    id: "o4-mini-2025-04-16",
-    name: "o4-mini",
-    description: "Faster, more affordable reasoning model from OpenAI.",
-    author: "OpenAI",
-    reasoning_efforts: ["low", "medium", "high"],
-    provider: "openai",
-    context_window: 200000,
-    features: ["vision", "reasoning", "tools"],
-  },
-  o3: {
-    id: "o3-2025-04-16",
-    name: "o3",
-    description: "OpenAI's most powerful reasoning model.",
-    author: "OpenAI",
-    reasoning_efforts: ["low", "medium", "high"],
-    provider: "openai",
-    context_window: 200000,
-    features: ["vision", "reasoning", "tools"],
-  },
-  "o3-pro": {
-    id: "o3-pro",
-    name: "o3-pro",
-    description: "Version of o3 with more compute for better responses.",
-    author: "OpenAI",
-    premium: true,
-    provider: "openai",
-    context_window: 200000,
-    features: ["vision", "reasoning", "tools"],
+    provider: "groq",
+    context_window: 128000,
+    features: ["fast", "tools"],
   },
   "gemini-2.5-pro": {
     id: "gemini-2.5-pro",
@@ -260,7 +258,7 @@ export const models: Record<string, Model> = {
     name: "Grok 4",
     description: "Grok's advanced reasoning model.",
     author: "xAI",
-    provider: "xai",
+    provider: "voids",
   },
   "deepseek-r1": {
     id: "deepseek-r1-0528",
@@ -290,6 +288,89 @@ export const models: Record<string, Model> = {
     features: ["vision", "tools"],
   },
   // Legacy models
+  "gpt-4o": {
+    id: "gpt-4o-2024-11-20",
+    name: "GPT-4o",
+    description: "Fast, intelligent, flexible GPT model.",
+    author: "OpenAI",
+    provider: "openai",
+    context_window: 128000,
+    legacy: true,
+    features: ["vision", "tools"],
+  },
+  "gpt-4o-mini": {
+    id: "gpt-4o-mini-2024-07-18",
+    name: "GPT-4o mini",
+    description: "Fast, affordable small model for focused tasks.",
+    author: "OpenAI",
+    provider: "openai",
+    context_window: 128000,
+    legacy: true,
+    features: ["vision", "tools", "fast"],
+  },
+  "gpt-4.1": {
+    id: "gpt-4.1-2025-04-14",
+    name: "GPT-4.1",
+    description: "Flagship GPT model for complex tasks.",
+    author: "OpenAI",
+    provider: "openai",
+    context_window: 1047576,
+    legacy: true,
+    features: ["vision", "tools"],
+  },
+  "gpt-4.1-mini": {
+    id: "gpt-4.1-mini-2025-04-14",
+    name: "GPT-4.1 mini",
+    description: "Balanced for intelligence, speed, and cost.",
+    author: "OpenAI",
+    provider: "openai",
+    context_window: 1047576,
+    legacy: true,
+    features: ["vision", "fast", "tools"],
+  },
+  "gpt-4.1-nano": {
+    id: "gpt-4.1-nano-2025-04-14",
+    name: "GPT-4.1 nano",
+    description: "Fastest, most cost-effective GPT-4.1 model.",
+    author: "OpenAI",
+    provider: "openai",
+    context_window: 1047576,
+    legacy: true,
+    features: ["vision", "fast", "tools"],
+  },
+  "o4-mini": {
+    id: "o4-mini-2025-04-16",
+    name: "o4-mini",
+    description: "Faster, more affordable reasoning model from OpenAI.",
+    author: "OpenAI",
+    reasoning_efforts: ["low", "medium", "high"],
+    provider: "openai",
+    context_window: 200000,
+    legacy: true,
+    features: ["vision", "reasoning", "tools"],
+  },
+  o3: {
+    id: "o3-2025-04-16",
+    name: "o3",
+    description: "OpenAI's most powerful reasoning model.",
+    author: "OpenAI",
+    reasoning_efforts: ["low", "medium", "high"],
+    provider: "openai",
+    context_window: 200000,
+    legacy: true,
+    features: ["vision", "reasoning", "tools"],
+  },
+  "o3-pro": {
+    id: "o3-pro",
+    name: "o3-pro",
+    description: "Version of o3 with more compute for better responses.",
+    author: "OpenAI",
+    premium: true,
+    provider: "openai",
+    context_window: 200000,
+    legacy: true,
+    features: ["vision", "reasoning", "tools"],
+  },
   "gemini-2.0-flash": {
     id: "gemini-2.0-flash",
     name: "Gemini 2.0 Flash",
@@ -313,7 +394,7 @@ export const models: Record<string, Model> = {
     name: "Grok 3",
     description: "Grok 3",
     author: "xAI",
-    provider: "xai",
+    provider: "voids",
     legacy: true,
   },
   "grok-3-mini": {
@@ -321,7 +402,7 @@ export const models: Record<string, Model> = {
     name: "Grok 3 Mini",
     description: "Grok 3 Mini High",
     author: "xAI",
-    provider: "xai",
+    provider: "voids",
     legacy: true,
   },
   "claude-3-7-sonnet": {
@@ -336,8 +417,27 @@ export const models: Record<string, Model> = {
   },
 };
 
-export const internalModels: Record<string, Model> = {
-  "title-model": models["gemini-2.5-flash-lite"]!,
-  "search-summary-model": models["gemini-2.5-flash-lite"]!,
-  "research-summary-model": models["gemini-2.5-flash"]!,
+export const createModel = (model: Model): LanguageModel => {
+  switch (model.provider) {
+    case "openai":
+      return openai.responses(model.id);
+    case "anthropic":
+      return anthropic(model.id);
+    case "google":
+      return google(model.id);
+    case "openrouter":
+      return openrouter(model.id);
+    case "groq":
+      return groq(model.id);
+    case "voids":
+      return VoidsAI(model.id);
+    default:
+      throw new Error(`Unsupported model provider: ${model.provider}`);
+  }
+};
+
+export const internalModels: Record<string, string> = {
+  "title-model": "gpt-oss-20b",
+  "search-summary-model": "gpt-oss-20b",
+  "research-summary-model": "gpt-oss-20b",
 };
