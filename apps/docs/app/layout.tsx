@@ -7,8 +7,8 @@ import { MainLayout } from "docsfly/components";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "My Docsfly App",
-  description: "A documentation website built with Docsfly",
+  title: "Deni AI Docs",
+  description: "Deni AI Documentation",
 };
 
 export default function RootLayout({
