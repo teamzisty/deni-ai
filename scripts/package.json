@@ -2,7 +2,7 @@
   "name": "scripts",
   "private": true,
   "devDependencies": {
-    "@types/bun": "^1.2.19"
+    "@types/bun": "^1.2.21"
   },
   "peerDependencies": {
     "typescript": "^5.9.2"

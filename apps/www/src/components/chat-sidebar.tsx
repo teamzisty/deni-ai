@@ -378,6 +378,7 @@ function ChatSidebarContent() {
     setIsCreating(false);
   };
 
+
   const handleNewHub = async () => {
     if (isCreatingHub) return; // Prevent multiple clicks
     setIsCreatingHub(true);

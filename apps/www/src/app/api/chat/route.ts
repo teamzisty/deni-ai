@@ -1,13 +1,19 @@
-import { createModel, getSystemPrompt, internalModels, models, SYSTEM_PROMPT } from "@/lib/constants";
 import {
-  getConversation,
-  updateConversation,
-} from "@/lib/conversations";
+  createModel,
+  getSystemPrompt,
+  internalModels,
+  models,
+  SYSTEM_PROMPT,
+} from "@/lib/constants";
+import { getConversation, updateConversation } from "@/lib/conversations";
 import { search as baseSearch, canvas } from "@/lib/tools";
-import { VoidsAI } from "@workspace/voids-ai-provider"
 import { openrouter } from "@openrouter/ai-sdk-provider";
 import { groq } from "@ai-sdk/groq";
-import { openai, OpenAIResponsesProviderOptions } from "@ai-sdk/openai";
+import {
+  createOpenAI,
+  openai,
+  OpenAIResponsesProviderOptions,
+} from "@ai-sdk/openai";
 import { anthropic, AnthropicProviderOptions } from "@ai-sdk/anthropic";
 import { google, GoogleGenerativeAIProviderOptions } from "@ai-sdk/google";
 import {
@@ -77,6 +83,10 @@ export async function POST(request: Request) {
   }
   const modelId = model.id;
 
+  const voidsAI = createOpenAI({
+    baseURL: "https://capi.voids.top/v2",
+  });
+
   let sdkModel: LanguageModel;
   switch (model.provider) {
     case "openai":
@@ -95,10 +105,10 @@ export async function POST(request: Request) {
       sdkModel = groq(modelId);
       break;
     case "voids":
-      sdkModel = VoidsAI(modelId);
+      sdkModel = voidsAI(modelId);
       break;
     default:
-      sdkModel = VoidsAI(modelId);
+      sdkModel = voidsAI(modelId);
   }
 
   const coreMessages = convertToModelMessages(messages);
@@ -149,14 +159,15 @@ export async function POST(request: Request) {
   const stream = createUIMessageStream({
     execute: async ({ writer }) => {
       if (shouldGenerateTitle) {
-        const lastMessageContent = coreMessages[coreMessages.length - 1]?.content;
+        const lastMessageContent =
+          coreMessages[coreMessages.length - 1]?.content;
         const promptText =
           typeof lastMessageContent === "string"
             ? lastMessageContent
             : Array.isArray(lastMessageContent)
               ? lastMessageContent
-                .map((part) => ("text" in part ? part.text : ""))
-                .join(" ")
+                  .map((part) => ("text" in part ? part.text : ""))
+                  .join(" ")
               : "Simple conversation";
 
         // Generate title asynchronously to avoid blocking the stream
@@ -165,7 +176,7 @@ export async function POST(request: Request) {
           console.error("Title model not found");
           return;
         }
-        
+
         titleGeneration = generateText({
           prompt: promptText || "Simple conversation",
           model: createModel(models[titleModelId]),
@@ -176,7 +187,6 @@ export async function POST(request: Request) {
             await updateConversation(conversationId, {
               title: generatedTitle.text,
             });
-
 
             const statusId = generateId();
             writer.write({
@@ -190,15 +200,16 @@ export async function POST(request: Request) {
           .catch(() => "Untitled Conversation");
       }
 
-      const thinkingBudget = model.features?.includes("reasoning") && thinkingEffort
-        ? thinkingEffort === "disabled"
-          ? 0
-          : thinkingEffort === "low"
-            ? 2500
-            : thinkingEffort === "medium"
-              ? 5000
-              : 10000
-        : 0; // If model doesn't support reasoning, set thinking budget to 0
+      const thinkingBudget =
+        model.features?.includes("reasoning") && thinkingEffort
+          ? thinkingEffort === "disabled"
+            ? 0
+            : thinkingEffort === "low"
+              ? 2500
+              : thinkingEffort === "medium"
+                ? 5000
+                : 10000
+          : 0; // If model doesn't support reasoning, set thinking budget to 0
 
       // Configure tools based on user settings
       const tools: any = {};
@@ -206,8 +217,7 @@ export async function POST(request: Request) {
       tools.search = {
         ...baseSearch,
         execute: async (params: any, options: any) => {
-          const depth =
-            researchMode !== "disabled" ? researchMode : undefined;
+          const depth = researchMode !== "disabled" ? researchMode : undefined;
           return baseSearch.execute?.({ ...params, depth }, options) || [];
         },
       };
@@ -216,7 +226,7 @@ export async function POST(request: Request) {
       const features = {
         search: enableSearch || false,
         canvas: enableCanvas || false,
-      }
+      };
       let systemPrompt = getSystemPrompt(researchMode, features, bot);
 
       coreMessages.unshift({
@@ -226,8 +236,8 @@ export async function POST(request: Request) {
 
       const wrappedModel = wrapLanguageModel({
         model: sdkModel,
-        middleware: extractReasoningMiddleware({ tagName: "think" })
-      })
+        middleware: extractReasoningMiddleware({ tagName: "think" }),
+      });
 
       const response = streamText({
         messages: coreMessages,
@@ -268,6 +278,6 @@ export async function POST(request: Request) {
   });
 
   return createUIMessageStreamResponse({
-    stream
+    stream,
   });
 }
