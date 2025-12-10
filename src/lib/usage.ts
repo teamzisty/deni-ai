@@ -221,7 +221,7 @@ export async function consumeUsage({
       periodEnd: state.targetPeriodEnd,
     })
     .onConflictDoUpdate({
-      target: usageQuota.userCategoryIdx,
+      target: [usageQuota.userId, usageQuota.category],
       set: {
         planTier: tierInfo.tier,
         limitAmount: limit,
