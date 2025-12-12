@@ -31,7 +31,7 @@ const USAGE_LIMITS: Record<
   },
   premium: {
     free: 50,
-    pro: 200,
+    pro: 1000,
     max: null, // unlimited
   },
 };

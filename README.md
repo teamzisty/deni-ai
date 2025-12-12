@@ -54,11 +54,6 @@ Add these keys to `.env` to enable the billing page:
 
 ```
 STRIPE_SECRET_KEY=sk_live_or_test
-STRIPE_PRICE_PRO_MONTHLY=price_xxx
-STRIPE_PRICE_PRO_QUARTERLY=price_xxx
-STRIPE_PRICE_PRO_YEARLY=price_xxx
-STRIPE_PRICE_MAX_YEARLY=price_xxx
-STRIPE_PRICE_MAX_LIFETIME=price_xxx
 STRIPE_WEBHOOK_SECRET=whsec_xxx
 ```
 

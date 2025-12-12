@@ -11,6 +11,8 @@ import type { UIMessage } from "ai";
 import { DefaultChatTransport } from "ai";
 import {
   ArrowBigUpDash,
+  ArrowUpRight,
+  Ban,
   Bot,
   BrainCircuit,
   CheckIcon,
@@ -21,10 +23,10 @@ import {
   RefreshCcwIcon,
   Sparkle,
   StarIcon,
+  TriangleAlert,
 } from "lucide-react";
 import Link from "next/link";
-import { useTheme } from "next-themes";
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import {
   Conversation,
   ConversationContent,
@@ -58,8 +60,10 @@ import {
 } from "@/components/ai-elements/sources";
 import { Composer, type ComposerMessage } from "@/components/chat/composer";
 import { featureMap, models } from "@/lib/constants";
+import { trpc } from "@/lib/trpc/react";
 import { cn } from "@/lib/utils";
 import { Shimmer } from "../ai-elements/shimmer";
+import { Alert, AlertDescription, AlertTitle } from "../ui/alert";
 import { Badge } from "../ui/badge";
 import { Button } from "../ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
@@ -69,6 +73,23 @@ import {
   CollapsibleTrigger,
 } from "../ui/collapsible";
 import { Separator } from "../ui/separator";
+
+type SearchResult = {
+  title: string;
+  url: string;
+  description: string;
+};
+
+const isSearchResultArray = (value: unknown): value is SearchResult[] =>
+  Array.isArray(value) &&
+  value.every(
+    (item) =>
+      item !== null &&
+      typeof item === "object" &&
+      "title" in item &&
+      "url" in item &&
+      "description" in item,
+  );
 
 interface ChatInterfaceProps {
   id: string;
@@ -197,9 +218,12 @@ export function ChatInterface({
   initialMessages = [],
 }: ChatInterfaceProps) {
   const [input, setInput] = useState("");
-  const [isOpen, setIsOpen] = useState(false);
   const [model, setModel] = useState(models[0].value);
   const [webSearch, setWebSearch] = useState(false);
+  const usageQuery = trpc.billing.usage.useQuery(undefined, {
+    refetchOnWindowFocus: true,
+    staleTime: 30000,
+  });
 
   const requestBody = useMemo(
     () => ({
@@ -232,25 +256,67 @@ export function ChatInterface({
     transport,
   });
 
+  const selectedModel = models.find((m) => m.value === model);
+  const usageCategory = selectedModel?.premium ? "premium" : "basic";
+  const categoryUsage = usageQuery.data?.usage.find(
+    (usage) => usage.category === usageCategory,
+  );
+  const remainingUsage = categoryUsage?.remaining;
+  const usageLimit = categoryUsage?.limit;
+  const usageTier = usageQuery.data?.tier ?? "free";
+  const lowUsageThreshold = useMemo(() => {
+    if (
+      remainingUsage === null ||
+      remainingUsage === undefined ||
+      usageLimit === null ||
+      usageLimit === undefined
+    ) {
+      return null;
+    }
+    const computed = Math.ceil(usageLimit * 0.1);
+    return Math.max(3, Math.min(20, computed));
+  }, [remainingUsage, usageLimit]);
+  const isUsageLow =
+    remainingUsage !== null &&
+    remainingUsage !== undefined &&
+    usageLimit !== null &&
+    usageLimit !== undefined &&
+    lowUsageThreshold !== null &&
+    remainingUsage > 0 &&
+    remainingUsage <= lowUsageThreshold;
+  const isUsageBlocked =
+    remainingUsage !== null &&
+    remainingUsage !== undefined &&
+    remainingUsage <= 0;
+  const usageTierLabel = usageTier.charAt(0).toUpperCase() + usageTier.slice(1);
+  const usageLabel =
+    remainingUsage === null || remainingUsage === undefined
+      ? null
+      : `${remainingUsage} request${remainingUsage === 1 ? "" : "s"}`;
+
   const handleSubmit = (message: ComposerMessage) => {
+    if (isUsageBlocked) {
+      return;
+    }
     const attachments =
       message.files && message.files.length > 0 ? message.files : undefined;
 
     if (message.text) {
-      sendMessage(
-        {
-          text: message.text,
-          files: attachments,
-        },
-        {
-          body: requestBody,
-        },
-      );
+      Promise.resolve(
+        sendMessage(
+          {
+            text: message.text,
+            files: attachments,
+          },
+          {
+            body: requestBody,
+          },
+        ),
+      ).finally(() => usageQuery.refetch());
       setInput("");
     }
   };
 
-  const selectedModel = models.find((m) => m.value === model);
   const goodModels = models.filter(
     (m) =>
       m.value !== model &&
@@ -265,12 +331,6 @@ export function ChatInterface({
   const otherModels = models.filter(
     (m) => m.value !== model && m.default === false,
   );
-
-  useEffect(() => {
-    if (status === "ready") {
-      setIsOpen(false);
-    }
-  }, [status]);
 
   return (
     <div className="flex h-full flex-1 min-h-0 flex-col w-full max-w-3xl mx-auto p-4 overflow-hidden">
@@ -308,6 +368,7 @@ export function ChatInterface({
                             {i === (message.parts?.length ?? 0) - 1 && (
                               <MessageActions>
                                 <MessageAction
+                                  disabled={isUsageBlocked}
                                   onClick={() =>
                                     regenerate({
                                       body: requestBody,
@@ -347,7 +408,7 @@ export function ChatInterface({
                             <ReasoningContent>{part.text}</ReasoningContent>
                           </Reasoning>
                         );
-                      case "tool-search":
+                      case "tool-search": {
                         if (
                           part.state !== "output-available" &&
                           part.state !== "output-error"
@@ -382,6 +443,10 @@ export function ChatInterface({
                           );
                         }
 
+                        const searchResults = isSearchResultArray(part.output)
+                          ? part.output
+                          : [];
+
                         return (
                           <div
                             className="w-full my-4"
@@ -391,9 +456,8 @@ export function ChatInterface({
                             <Collapsible>
                               <CollapsibleTrigger className="flex items-center gap-2 text-muted-foreground text-sm transition-colors hover:text-foreground">
                                 <Globe className="size-4" />
-                                Searched {(part.output as any[]).length}{" "}
-                                websites
-                                {(part.output as any[]).length !== 0 && (
+                                Searched {searchResults.length} websites
+                                {searchResults.length !== 0 && (
                                   <ChevronDownIcon
                                     className={cn(
                                       "size-4 ml-auto transition-transform",
@@ -409,56 +473,44 @@ export function ChatInterface({
                                 )}
                               >
                                 <div className="space-y-4 mt-4">
-                                  {Array.isArray((part as any).output) &&
-                                    (part as any).output.length > 0 &&
-                                    (part as any).output.map(
-                                      (
-                                        result: {
-                                          title: string;
-                                          url: string;
-                                          description: string;
-                                        },
-                                        idx: number,
-                                      ) => (
-                                        <div
-                                          key={result.url}
-                                          className="p-0! bg-accent/40 hover:bg-accent rounded-md transition-colors"
+                                  {searchResults.length > 0 &&
+                                    searchResults.map((result) => (
+                                      <div
+                                        key={result.url}
+                                        className="p-0! bg-accent/40 hover:bg-accent rounded-md transition-colors"
+                                      >
+                                        <Link
+                                          href={result.url}
+                                          className="block p-3"
                                         >
-                                          <Link
-                                            href={result.url}
-                                            className="block p-3"
-                                          >
-                                            <p className="text-sm text-primary mb-1 line-clamp-2">
-                                              <span className="text-muted-foreground">
-                                                {`${new URL(result.url).protocol}//`}
-                                              </span>
-                                              {new URL(result.url).hostname}
-                                              <span className="text-muted-foreground">
-                                                {`${new URL(result.url).pathname.slice(0, 50)}${new URL(result.url).pathname.length > 50 ? "..." : ""}`}
-                                              </span>
-                                            </p>
-                                            <p className="font-medium text-sm text-primary mb-1 line-clamp-2">
-                                              {result.title}
-                                            </p>
-                                            <div className="p-0">
-                                              <div className="text-xs text-muted-foreground line-clamp-3 mb-1">
-                                                {result.description.slice(
-                                                  0,
-                                                  100,
-                                                )}
-                                                {result.description.length >
-                                                  100 && "..."}
-                                              </div>
+                                          <p className="text-sm text-primary mb-1 line-clamp-2">
+                                            <span className="text-muted-foreground">
+                                              {`${new URL(result.url).protocol}//`}
+                                            </span>
+                                            {new URL(result.url).hostname}
+                                            <span className="text-muted-foreground">
+                                              {`${new URL(result.url).pathname.slice(0, 50)}${new URL(result.url).pathname.length > 50 ? "..." : ""}`}
+                                            </span>
+                                          </p>
+                                          <p className="font-medium text-sm text-primary mb-1 line-clamp-2">
+                                            {result.title}
+                                          </p>
+                                          <div className="p-0">
+                                            <div className="text-xs text-muted-foreground line-clamp-3 mb-1">
+                                              {result.description.slice(0, 100)}
+                                              {result.description.length >
+                                                100 && "..."}
                                             </div>
-                                          </Link>
-                                        </div>
-                                      ),
-                                    )}
+                                          </div>
+                                        </Link>
+                                      </div>
+                                    ))}
                                 </div>
                               </CollapsibleContent>
                             </Collapsible>
                           </div>
                         );
+                      }
                       default:
                         return null;
                     }
@@ -513,6 +565,47 @@ export function ChatInterface({
         <ConversationScrollButton />
       </Conversation>
 
+      {(isUsageLow || isUsageBlocked) && (
+        <Alert
+          className={cn(
+            "mt-3 border-amber-500/50 bg-amber-100/40 text-amber-900 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-50",
+            isUsageBlocked &&
+              "border-destructive/40 bg-destructive/10 text-destructive-foreground dark:border-destructive/30",
+          )}
+        >
+          {isUsageBlocked ? (
+            <Ban className="mt-0.5 size-4" />
+          ) : (
+            <TriangleAlert className="mt-0.5 size-4" />
+          )}
+          <AlertTitle>
+            {isUsageBlocked ? "Usage limit reached" : "You are running low"}
+          </AlertTitle>
+          <AlertDescription className="flex flex-col gap-2">
+            <p>
+              {isUsageBlocked
+                ? `You've hit the ${usageCategory} usage limit on your ${usageTierLabel} plan.`
+                : `Only ${usageLabel ?? "a few"} ${usageCategory} requests left on your ${usageTierLabel} plan.`}
+            </p>
+            <div className="flex flex-wrap gap-2">
+              <Button size="sm" asChild>
+                <Link href="/settings/billing">
+                  Upgrade plan
+                  <ArrowUpRight className="ml-1.5 size-3.5" />
+                </Link>
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => usageQuery.refetch()}
+              >
+                Refresh usage
+              </Button>
+            </div>
+          </AlertDescription>
+        </Alert>
+      )}
+
       <Composer
         onSubmit={handleSubmit}
         className="mt-4"
@@ -524,6 +617,7 @@ export function ChatInterface({
         webSearch={webSearch}
         onToggleWebSearch={() => setWebSearch(!webSearch)}
         status={status}
+        isSubmitDisabled={isUsageBlocked}
         tools={
           <PromptInputSelect
             onValueChange={(value) => {
@@ -531,7 +625,7 @@ export function ChatInterface({
             }}
             value={model}
           >
-            <PromptInputSelectTrigger>
+            <PromptInputSelectTrigger size="sm">
               <PromptInputSelectValue>
                 {(() => {
                   switch (models.find((m) => m.value === model)?.author) {

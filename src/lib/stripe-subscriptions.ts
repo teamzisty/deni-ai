@@ -6,24 +6,23 @@ type SubscriptionLike =
   | null
   | undefined;
 
-function extractCurrentPeriodEnd(subscription: SubscriptionLike) {
-  const periodEnd =
-    (subscription as { current_period_end?: number | null } | null | undefined)
-      ?.current_period_end;
-
-  return typeof periodEnd === "number" ? periodEnd : null;
-}
-
 export function getSubscriptionPeriodEnd(
   subscription: SubscriptionLike,
 ): number | null {
-  return extractCurrentPeriodEnd(subscription);
+  console.log(subscription);
+  const item = subscription?.items.data[0];
+
+  console.log(item?.current_period_end);
+
+  return item?.current_period_end || null;
 }
 
 export function getSubscriptionPeriodEndDate(
   subscription: SubscriptionLike,
 ): Date | null {
-  const periodEnd = extractCurrentPeriodEnd(subscription);
+  const periodEnd = getSubscriptionPeriodEnd(subscription);
 
-  return periodEnd ? new Date(periodEnd * 1000) : null;
+  console.log(periodEnd ? new Date(Math.floor(periodEnd * 1000)) : null);
+
+  return periodEnd ? new Date(Math.floor(periodEnd * 1000)) : null;
 }

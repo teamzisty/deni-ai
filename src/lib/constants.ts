@@ -94,14 +94,14 @@ export const models = [
   },
   {
     name: "Claude Sonnet 4.5",
-    value: "claude-sonnet-4-5-20250929",
+    value: "claude-sonnet-4-5",
     description: "Hybrid reasoning model",
     author: "anthropic",
     features: ["reasoning", "smart", "fast"],
   },
   {
     name: "Claude Opus 4.5",
-    value: "claude-opus-4-5@20251101",
+    value: "claude-opus-4-5",
     description: "All-around professional model",
     author: "anthropic",
     premium: true,

@@ -1,11 +1,12 @@
-import { NextResponse } from "next/server";
 import { eq } from "drizzle-orm";
+import { NextResponse } from "next/server";
+import type Stripe from "stripe";
+import { db } from "@/db/drizzle";
 import { billing } from "@/db/schema";
 import { env } from "@/env";
-import { findPlanById, findPlanByPriceId } from "@/lib/billing";
+import { findPlanByLookupKey } from "@/lib/billing";
 import { stripe } from "@/lib/stripe";
 import { getSubscriptionPeriodEnd } from "@/lib/stripe-subscriptions";
-import { db } from "@/db/drizzle";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -14,13 +15,14 @@ type SubscriptionPayload = {
   userId: string;
   customerId: string;
   subscriptionId: string;
+  lookupKey: string | null | undefined;
   priceId: string | null | undefined;
   status: string | null;
   currentPeriodEnd: number | null;
 };
 
 async function saveSubscription(payload: SubscriptionPayload) {
-  const plan = findPlanByPriceId(payload.priceId ?? undefined);
+  const plan = findPlanByLookupKey(payload.lookupKey ?? undefined);
 
   const updates = {
     stripeCustomerId: payload.customerId,
@@ -44,42 +46,6 @@ async function saveSubscription(payload: SubscriptionPayload) {
       target: billing.userId,
       set: {
         ...updates,
-        updatedAt: new Date(),
-      },
-    });
-}
-
-async function saveLifetimePayment({
-  userId,
-  customerId,
-  priceId,
-  status,
-}: {
-  userId: string;
-  customerId: string;
-  priceId: string | null | undefined;
-  status: string | null;
-}) {
-  const plan = findPlanByPriceId(priceId ?? undefined);
-
-  await db
-    .insert(billing)
-    .values({
-      userId,
-      stripeCustomerId: customerId,
-      priceId: priceId ?? null,
-      planId: plan?.id ?? "max-lifetime",
-      status: status ?? "paid",
-      mode: "payment",
-    })
-    .onConflictDoUpdate({
-      target: billing.userId,
-      set: {
-        stripeCustomerId: customerId,
-        priceId: priceId ?? null,
-        planId: plan?.id ?? "max-lifetime",
-        status: status ?? "paid",
-        mode: "payment",
         updatedAt: new Date(),
       },
     });
@@ -160,7 +126,7 @@ export async function POST(req: Request) {
 
   const body = Buffer.from(await req.arrayBuffer());
 
-  let event;
+  let event: Stripe.Event;
   try {
     event = stripe.webhooks.constructEvent(
       body,
@@ -177,46 +143,75 @@ export async function POST(req: Request) {
     switch (event.type) {
       case "customer.subscription.deleted": {
         const subscription = event.data.object;
-        if (typeof subscription !== "object" || !("customer" in subscription)) {
+        if (
+          typeof subscription !== "object" ||
+          subscription === null ||
+          subscription.object !== "subscription"
+        ) {
+          break;
+        }
+
+        const customerId =
+          typeof subscription.customer === "string"
+            ? subscription.customer
+            : subscription.customer?.id;
+        if (!customerId) {
           break;
         }
 
         const userId = await resolveUserIdFromCustomer(
-          subscription.customer as string,
+          customerId,
           subscription.metadata?.userId,
         );
 
         if (!userId) {
-          console.warn("[stripe:webhook] missing userId for deleted subscription", {
-            subscriptionId: subscription.id,
-          });
+          console.warn(
+            "[stripe:webhook] missing userId for deleted subscription",
+            {
+              subscriptionId: subscription.id,
+            },
+          );
           break;
         }
 
-        console.log("[stripe:webhook] deleting plan data for canceled subscription", {
-          userId,
-          subscriptionId: subscription.id,
-        });
+        console.log(
+          "[stripe:webhook] deleting plan data for canceled subscription",
+          {
+            userId,
+            subscriptionId: subscription.id,
+          },
+        );
 
         await clearPlanData({
           userId,
-          customerId: subscription.customer as string,
+          customerId,
         });
         break;
       }
       case "customer.subscription.created":
-      case "customer.subscription.updated":
-      {
+      case "customer.subscription.updated": {
         const subscription = event.data.object;
-        if (typeof subscription !== "object" || !("customer" in subscription)) {
+        if (
+          typeof subscription !== "object" ||
+          subscription === null ||
+          subscription.object !== "subscription"
+        ) {
           break;
         }
 
-        const priceId =
-          subscription.items?.data?.[0]?.price?.id ??
-          (subscription as any).price?.id;
+        const customerId =
+          typeof subscription.customer === "string"
+            ? subscription.customer
+            : subscription.customer?.id;
+        if (!customerId) {
+          break;
+        }
+
+        const price = subscription.items?.data?.[0]?.price ?? null;
+        const priceId = price?.id ?? null;
+        const lookupKey = price?.lookup_key ?? null;
         const userId = await resolveUserIdFromCustomer(
-          subscription.customer as string,
+          customerId,
           subscription.metadata?.userId,
         );
         const isCanceled =
@@ -225,7 +220,7 @@ export async function POST(req: Request) {
           Boolean(subscription.cancel_at);
         const computedStatus = isCanceled
           ? "canceled"
-          : subscription.status ?? null;
+          : (subscription.status ?? null);
 
         if (!userId) {
           console.warn("[stripe:webhook] missing userId for subscription", {
@@ -243,8 +238,9 @@ export async function POST(req: Request) {
 
         await saveSubscription({
           userId,
-          customerId: subscription.customer as string,
+          customerId,
           subscriptionId: subscription.id,
+          lookupKey,
           priceId,
           status: computedStatus,
           currentPeriodEnd: getSubscriptionPeriodEnd(subscription),
@@ -284,42 +280,18 @@ export async function POST(req: Request) {
               status: computedStatus,
               cancelAtPeriodEnd: subscription.cancel_at_period_end,
             });
+            const price =
+              subscription.items.data.at(0)?.price ??
+              session.line_items?.data.at(0)?.price ??
+              null;
             await saveSubscription({
               userId,
               customerId: session.customer as string,
               subscriptionId: subscription.id,
-              priceId:
-                subscription.items.data.at(0)?.price?.id ??
-                session.line_items?.data.at(0)?.price?.id,
+              lookupKey: price?.lookup_key ?? null,
+              priceId: price?.id ?? null,
               status: computedStatus,
               currentPeriodEnd: getSubscriptionPeriodEnd(subscription),
-            });
-          }
-        } else if (session.mode === "payment") {
-          const paymentIntent =
-            session.payment_intent && typeof session.payment_intent !== "string"
-              ? session.payment_intent
-              : null;
-          const userId =
-            session.metadata?.userId ??
-            (paymentIntent as any)?.metadata?.userId ??
-            null;
-
-          if (userId) {
-            console.log("[stripe:webhook] checkout payment completed", {
-              userId,
-              priceId:
-                session.line_items?.data.at(0)?.price?.id ??
-                (paymentIntent as any)?.metadata?.priceId,
-              status: session.payment_status,
-            });
-            await saveLifetimePayment({
-              userId,
-              customerId: session.customer as string,
-              priceId:
-                session.line_items?.data.at(0)?.price?.id ??
-                (paymentIntent as any)?.metadata?.priceId,
-              status: session.payment_status ?? "paid",
             });
           }
         }

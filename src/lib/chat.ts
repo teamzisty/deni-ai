@@ -2,7 +2,6 @@ import "server-only";
 
 import type { UIMessage } from "ai";
 import { eq } from "drizzle-orm";
-import { z } from "zod";
 import { db } from "@/db/drizzle";
 import { chats } from "@/db/schema";
 

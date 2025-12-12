@@ -29,7 +29,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Progress } from "@/components/ui/progress";
 import { Switch } from "@/components/ui/switch";
+import { useThemePreset } from "@/hooks/use-theme-preset";
 import { authClient } from "@/lib/auth-client";
+import { type ThemeName, themePresets } from "@/lib/theme-presets";
 
 const texts = ["Welcome", "to", "Deni", "AI"];
 const segmentMs = 1000;
@@ -120,7 +122,7 @@ function SetupScreen({
     {
       key: "theme",
       title: "Theme",
-      description: "Choose Light, Dark, or System",
+      description: "Pick your chat vibe",
     },
     {
       key: "features",
@@ -346,35 +348,23 @@ function AccountStep({
 
 function ThemeStep() {
   const { theme, setTheme } = useTheme();
+  const { preset, setPreset } = useThemePreset();
+  const activeTheme = preset;
+  const themes = themePresets;
 
-  const themes: Array<{
-    key: string;
-    title: string;
-    subtitle?: string;
-    preview: string[]; // tailwind bg classes for little bars
-  }> = [
-    {
-      key: "custom",
-      title: "Custom Theme",
-      subtitle: "",
-      preview: ["bg-[#3b82f6]", "bg-[#10b981]", "bg-[#f59e0b]", "bg-[#ef4444]"],
-    },
-    {
-      key: "mono",
-      title: "Mono",
-      preview: ["bg-[#171717]", "bg-[#404040]", "bg-[#a3a3a3]"],
-    },
-    {
-      key: "t3-chat",
-      title: "T3 Chat",
-      preview: ["bg-[#ec4899]", "bg-[#a855f7]", "bg-[#6b7280]"],
-    },
-    {
-      key: "tangerine",
-      title: "Tangerine",
-      preview: ["bg-[#fb923c]", "bg-[#f97316]", "bg-[#1f2937]"],
-    },
-  ];
+  useEffect(() => {
+    const isStandardTheme =
+      theme === "light" || theme === "dark" || theme === "system";
+    const isCustomPreset =
+      preset === "t3-chat" || preset === "tangerine" || preset === "mono";
+    if (isStandardTheme && !isCustomPreset) {
+      setPreset(theme as ThemeName);
+    }
+  }, [preset, setPreset, theme]);
+
+  const handleSelect = (value: ThemeName) => {
+    setPreset(value);
+  };
 
   return (
     <div className="w-full grid gap-6">
@@ -406,14 +396,16 @@ function ThemeStep() {
 
         <fieldset className="grid grid-cols-2 gap-4">
           {themes.map((t) => {
-            const selected = theme === t.key;
+            const selected = activeTheme === t.key;
             return (
               <Button
                 key={t.key}
                 variant={selected ? "default" : "outline"}
-                className={`flex flex-col items-start justify-between rounded-xl border-2 p-4 text-left transition h-full ${
+                className={`flex flex-col items-start justify-between rounded-md border-2 p-4 text-left transition h-full ${
                   selected ? "border-primary" : "border-secondary"
                 }`}
+                onClick={() => handleSelect(t.key)}
+                aria-pressed={selected}
               >
                 <div className="flex w-full items-start justify-between">
                   <h3 className="font-semibold">{t.title}</h3>
@@ -426,10 +418,11 @@ function ThemeStep() {
                     </motion.span>
                   )}
                 </div>
+                <p className="text-sm text-muted-foreground">{t.description}</p>
                 <div className="flex w-full gap-1.5" aria-hidden>
-                  {t.preview.map((bar, _i) => (
+                  {t.preview?.map((bar, _i) => (
                     <div
-                      key={bar} // bar is unique enough
+                      key={bar}
                       className={`h-1.5 flex-1 rounded-full ${bar}`}
                     />
                   ))}
@@ -480,7 +473,7 @@ function FeatureCard({
   description: string;
 }) {
   return (
-    <div className="rounded-xl border bg-muted/30 p-4 shadow-sm transition-all will-change-transform hover:bg-muted/40 data-[active=true]:animate-in data-[active=true]:fade-in-0 data-[active=true]:slide-in-from-bottom-2">
+    <div className="rounded-md border bg-muted/30 p-4 shadow-sm transition-all will-change-transform hover:bg-muted/40 data-[active=true]:animate-in data-[active=true]:fade-in-0 data-[active=true]:slide-in-from-bottom-2">
       <div className="mb-2 flex items-center gap-2">
         <Icon className="size-4" />
         <p className="font-medium">{title}</p>

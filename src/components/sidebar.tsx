@@ -234,10 +234,10 @@ export function AppSidebar() {
               </SidebarMenuItem>
               <SidebarMenuItem>
                 <Link
-                  href="/settings/keys"
+                  href="/settings/appearance"
                   className="text-sm text-muted-foreground hover:text-foreground"
                 >
-                  API Keys
+                  Appearance
                 </Link>
               </SidebarMenuItem>
               <SidebarMenuItem>
@@ -295,9 +295,7 @@ export function AppSidebar() {
               disabled={deleteAllChats.isPending}
               onClick={handleDeleteAllChats}
             >
-              {deleteAllChats.isPending ? (
-                <Spinner className="mr-2" />
-              ) : null}
+              {deleteAllChats.isPending ? <Spinner className="mr-2" /> : null}
               Delete all chats
             </AlertDialogAction>
           </AlertDialogFooter>

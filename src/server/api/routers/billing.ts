@@ -4,18 +4,22 @@ import type Stripe from "stripe";
 import { z } from "zod";
 import { billing, user } from "@/db/schema";
 import { env } from "@/env";
-import { billingPlans, findPlanById, findPlanByPriceId } from "@/lib/billing";
+import {
+  type BillingPlan,
+  billingPlans,
+  findPlanById,
+  findPlanByLookupKey,
+} from "@/lib/billing";
 import { stripe } from "@/lib/stripe";
 import { getSubscriptionPeriodEndDate } from "@/lib/stripe-subscriptions";
 import { getUsageSummary } from "@/lib/usage";
 import { type ProtectedContext, protectedProcedure, router } from "../trpc";
 
 const planIdSchema = z.enum([
-  "pro-monthly",
-  "pro-quarterly",
-  "pro-yearly",
-  "max-yearly",
-  "max-lifetime",
+  "pro_monthly",
+  "pro_quarterly",
+  "pro_yearly",
+  "max_yearly",
 ]);
 
 type BillingRecord = typeof billing.$inferSelect;
@@ -26,6 +30,37 @@ const ACTIVE_SUB_STATUSES = new Set([
   "incomplete",
   "unpaid",
 ]);
+
+function deriveModeFromPrice(
+  price: Stripe.Price | null | undefined,
+): "subscription" | "payment" {
+  if (!price) {
+    return "subscription";
+  }
+  return price.recurring ? "subscription" : "payment";
+}
+
+async function getPriceForPlan(plan: BillingPlan) {
+  const prices = await stripe.prices.list({
+    lookup_keys: [plan.lookupKey],
+    active: true,
+    limit: 1,
+  });
+
+  const price = prices.data.at(0);
+  if (!price) {
+    throw new TRPCError({
+      code: "BAD_REQUEST",
+      message: `Unable to load ${plan.name} price. Configure lookup_key=${plan.lookupKey} in Stripe.`,
+    });
+  }
+
+  return price;
+}
+
+function getPlanFromPrice(price: Stripe.Price | null | undefined) {
+  return findPlanByLookupKey(price?.lookup_key ?? undefined);
+}
 
 async function fetchUserProfile(ctx: ProtectedContext, userId: string) {
   const [profile] = await ctx.db
@@ -131,41 +166,26 @@ async function syncSubscription(ctx: ProtectedContext, userId: string) {
     expand: ["data.default_payment_method"],
   });
 
-  const subscription = subscriptions.data.at(0);
+  const subscriptionId = subscriptions.data.at(0)?.id;
+
+  const subscription = await stripe.subscriptions.retrieve(subscriptionId!);
   const updates: Partial<BillingRecord> = {};
 
   if (subscription) {
-    const priceId = subscription.items.data.at(0)?.price?.id;
-    const plan = findPlanByPriceId(priceId ?? undefined);
+    const price = subscription.items.data.at(0)?.price ?? null;
+    const plan =
+      findPlanById(subscription.metadata?.planId ?? "") ??
+      getPlanFromPrice(price);
     const status = subscription.status;
 
     updates.stripeSubscriptionId = subscription.id;
-    updates.priceId = priceId;
+    updates.priceId = price?.id;
     updates.planId = plan?.id ?? billingRecord.planId;
     updates.cancelAt = subscription.cancel_at;
     updates.status = status;
-    updates.mode = "subscription";
+    updates.mode = deriveModeFromPrice(price);
     updates.currentPeriodEnd = getSubscriptionPeriodEndDate(subscription);
-  } else {
-    const intents = await stripe.paymentIntents.list({
-      customer: billingRecord.stripeCustomerId,
-      limit: 10,
-    });
-
-    const lifetimePayment = intents.data.find(
-      (intent) =>
-        intent.metadata?.planId === "max-lifetime" &&
-        intent.status === "succeeded",
-    );
-
-    if (lifetimePayment) {
-      updates.planId = "max-lifetime";
-      updates.priceId = lifetimePayment.metadata?.priceId ?? undefined;
-      updates.status = "paid";
-      updates.mode = "payment";
-    }
   }
-
   if (Object.keys(updates).length === 0) {
     return billingRecord;
   }
@@ -194,27 +214,17 @@ export const billingRouter = router({
   plans: protectedProcedure.query(async () => {
     const plans = await Promise.all(
       billingPlans.map(async (plan) => {
-        const price = await stripe.prices
-          .retrieve(plan.priceId)
-          .catch((error) => {
-            console.error("Failed to load Stripe price", {
-              planId: plan.id,
-              priceId: plan.priceId,
-              error,
-            });
-            throw new TRPCError({
-              code: "BAD_REQUEST",
-              message: `Unable to load ${plan.name} price. Check your STRIPE_PRICE_* envs.`,
-            });
-          });
+        const price = await getPriceForPlan(plan);
+        const mode = deriveModeFromPrice(price);
         return {
           id: plan.id,
+          lookupKey: plan.lookupKey,
           name: plan.name,
           tagline: plan.tagline,
           highlights: plan.highlights,
           badge: plan.badge,
-          mode: plan.mode,
-          priceId: plan.priceId,
+          mode,
+          priceId: price.id,
           amount: price.unit_amount,
           currency: price.currency,
           interval: price.recurring?.interval ?? null,
@@ -227,7 +237,6 @@ export const billingRouter = router({
   }),
   status: protectedProcedure.query(async ({ ctx }) => {
     const subscription = await syncSubscription(ctx, ctx.userId);
-
     return {
       planId: subscription.planId ?? null,
       status: subscription.status ?? null,
@@ -253,21 +262,14 @@ export const billingRouter = router({
         });
       }
 
-      const current = await syncSubscription(ctx, ctx.userId);
-      if (
-        current.planId === "max-lifetime" &&
-        (current.status === "paid" || current.status === "active")
-      ) {
-        throw new TRPCError({
-          code: "BAD_REQUEST",
-          message:
-            "Lifetime plan is active. No additional plans can be purchased.",
-        });
-      }
+      await syncSubscription(ctx, ctx.userId);
 
       const billingRecord = await ensureBillingRecord(ctx, ctx.userId);
 
-      if (plan.mode === "subscription") {
+      const price = await getPriceForPlan(plan);
+      const mode = deriveModeFromPrice(price);
+
+      if (mode === "subscription") {
         const existingSubs = await stripe.subscriptions.list({
           customer: billingRecord.stripeCustomerId,
           status: "all",
@@ -290,12 +292,12 @@ export const billingRouter = router({
       }
 
       const session = await stripe.checkout.sessions.create({
-        mode: plan.mode === "payment" ? "payment" : "subscription",
+        mode: mode === "payment" ? "payment" : "subscription",
         customer: billingRecord.stripeCustomerId,
         client_reference_id: ctx.userId,
         line_items: [
           {
-            price: plan.priceId,
+            price: price.id,
             quantity: 1,
           },
         ],
@@ -304,7 +306,7 @@ export const billingRouter = router({
           planId: plan.id,
         },
         subscription_data:
-          plan.mode === "subscription"
+          mode === "subscription"
             ? {
                 metadata: {
                   userId: ctx.userId,
@@ -313,12 +315,12 @@ export const billingRouter = router({
               }
             : undefined,
         payment_intent_data:
-          plan.mode === "payment"
+          mode === "payment"
             ? {
                 metadata: {
                   userId: ctx.userId,
                   planId: plan.id,
-                  priceId: plan.priceId,
+                  priceId: price.id,
                 },
               }
             : undefined,
@@ -333,18 +335,18 @@ export const billingRouter = router({
           userId: ctx.userId,
           stripeCustomerId: billingRecord.stripeCustomerId,
           planId: plan.id,
-          priceId: plan.priceId,
+          priceId: price.id,
           status: "pending",
-          mode: plan.mode,
+          mode,
           checkoutSessionId: session.id,
         })
         .onConflictDoUpdate({
           target: billing.userId,
           set: {
             planId: plan.id,
-            priceId: plan.priceId,
+            priceId: price.id,
             status: "pending",
-            mode: plan.mode,
+            mode,
             checkoutSessionId: session.id,
             updatedAt: new Date(),
           },
@@ -382,26 +384,28 @@ export const billingRouter = router({
       const paymentIntent = session.payment_intent;
 
       const linePrice =
-        session.line_items?.data.at(0)?.price?.id ??
+        session.line_items?.data.at(0)?.price ??
         (subscription &&
         typeof subscription !== "string" &&
         "items" in subscription
-          ? subscription.items.data.at(0)?.price?.id
+          ? subscription.items.data.at(0)?.price
           : undefined);
 
       const plan =
         findPlanById((session.metadata?.planId as string) ?? "") ??
-        findPlanByPriceId(linePrice ?? undefined);
+        getPlanFromPrice(linePrice ?? null);
+
+      const resolvedMode =
+        deriveModeFromPrice(linePrice ?? null) ??
+        (session.mode === "payment" ? "payment" : "subscription");
 
       const updates: Partial<BillingRecord> = {
         stripeCustomerId:
           (session.customer as string | null | undefined) ??
           billingRecord.stripeCustomerId,
         planId: plan?.id ?? billingRecord.planId,
-        priceId: plan?.priceId ?? billingRecord.priceId ?? linePrice,
-        mode:
-          plan?.mode ??
-          (session.mode === "payment" ? "payment" : "subscription"),
+        priceId: linePrice?.id ?? billingRecord.priceId,
+        mode: resolvedMode,
         checkoutSessionId: session.id,
       };
 
@@ -463,7 +467,16 @@ export const billingRouter = router({
     )
     .mutation(async ({ ctx, input }) => {
       const plan = findPlanById(input.planId);
-      if (!plan || plan.mode !== "subscription") {
+      if (!plan) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "Target plan must be a subscription plan.",
+        });
+      }
+
+      const price = await getPriceForPlan(plan);
+      const mode = deriveModeFromPrice(price);
+      if (mode !== "subscription") {
         throw new TRPCError({
           code: "BAD_REQUEST",
           message: "Target plan must be a subscription plan.",
@@ -471,16 +484,6 @@ export const billingRouter = router({
       }
 
       const subscriptionState = await syncSubscription(ctx, ctx.userId);
-      if (
-        subscriptionState.planId === "max-lifetime" &&
-        (subscriptionState.status === "paid" ||
-          subscriptionState.status === "active")
-      ) {
-        throw new TRPCError({
-          code: "BAD_REQUEST",
-          message: "Lifetime plan is active. No changes allowed.",
-        });
-      }
       if (!subscriptionState.stripeSubscriptionId) {
         throw new TRPCError({
           code: "BAD_REQUEST",
@@ -502,15 +505,15 @@ export const billingRouter = router({
       }
 
       const updated = await stripe.subscriptions.update(subscription.id, {
-        items: [{ id: item.id, price: plan.priceId }],
+        items: [{ id: item.id, price: price.id }],
         metadata: { userId: ctx.userId, planId: plan.id },
         proration_behavior: "always_invoice",
       });
 
       const updates: Partial<BillingRecord> = {
         planId: plan.id,
-        priceId: plan.priceId,
-        mode: "subscription",
+        priceId: price.id,
+        mode,
         status: updated.cancel_at_period_end ? "canceled" : updated.status,
         currentPeriodEnd: getSubscriptionPeriodEndDate(updated),
         stripeSubscriptionId: updated.id,
@@ -598,18 +601,21 @@ export const billingRouter = router({
       { cancel_at_period_end: false },
     );
 
+    const price = resumed.items.data.at(0)?.price ?? null;
+    const plan =
+      getPlanFromPrice(price) ??
+      findPlanById(resumed.metadata?.planId ?? "") ??
+      (subscriptionState.planId
+        ? findPlanById(subscriptionState.planId)
+        : null);
+
     const updates: Partial<BillingRecord> = {
       status: resumed.status,
       currentPeriodEnd: getSubscriptionPeriodEndDate(resumed),
       stripeSubscriptionId: resumed.id,
-      priceId: resumed.items.data.at(0)?.price?.id ?? subscriptionState.priceId,
-      planId:
-        findPlanByPriceId(
-          resumed.items.data.at(0)?.price?.id ??
-            subscriptionState.priceId ??
-            undefined,
-        )?.id ?? subscriptionState.planId,
-      mode: "subscription",
+      priceId: price?.id ?? subscriptionState.priceId,
+      planId: plan?.id ?? subscriptionState.planId,
+      mode: deriveModeFromPrice(price),
     };
 
     const [saved] = await ctx.db
@@ -647,7 +653,16 @@ export const billingRouter = router({
     )
     .query(async ({ ctx, input }) => {
       const plan = findPlanById(input.planId);
-      if (!plan || plan.mode !== "subscription") {
+      if (!plan) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "Target plan must be a subscription plan.",
+        });
+      }
+
+      const price = await getPriceForPlan(plan);
+      const mode = deriveModeFromPrice(price);
+      if (mode !== "subscription") {
         throw new TRPCError({
           code: "BAD_REQUEST",
           message: "Target plan must be a subscription plan.",
@@ -655,16 +670,6 @@ export const billingRouter = router({
       }
 
       const subscriptionState = await syncSubscription(ctx, ctx.userId);
-      if (
-        subscriptionState.planId === "max-lifetime" &&
-        (subscriptionState.status === "paid" ||
-          subscriptionState.status === "active")
-      ) {
-        throw new TRPCError({
-          code: "BAD_REQUEST",
-          message: "Lifetime plan is active. No changes allowed.",
-        });
-      }
 
       if (!subscriptionState.stripeSubscriptionId) {
         throw new TRPCError({
@@ -685,7 +690,7 @@ export const billingRouter = router({
         });
       }
 
-      if (item.price?.id === plan.priceId) {
+      if (item.price?.id === price.id) {
         return {
           amountDue: 0,
           currency: item.price?.currency ?? subscription.currency ?? null,
@@ -699,7 +704,7 @@ export const billingRouter = router({
           items: [
             {
               id: item.id,
-              price: plan.priceId,
+              price: price.id,
             },
           ],
           proration_behavior: "always_invoice",

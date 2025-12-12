@@ -33,6 +33,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "../ui/tabs";
 const ACTIVE_STATUSES = new Set(["active", "trialing", "paid"]);
 
 function formatPriceLabel(plan: ClientPlan) {
+  const mode = plan.mode ?? "subscription";
   if (!plan.amount || !plan.currency) {
     return "Set price in Stripe";
   }
@@ -45,7 +46,7 @@ function formatPriceLabel(plan: ClientPlan) {
   });
 
   const base = formatter.format(amount);
-  if (plan.mode === "payment") {
+  if (mode === "payment") {
     return `${base} one-time`;
   }
 
@@ -158,7 +159,6 @@ export function BillingPage() {
   }, [confirmCheckout, sessionId]);
 
   const statusLabel = statusQuery.data?.status ?? "inactive";
-  console.log(statusQuery.data);
   const rawPlanId = (statusQuery.data?.planId as BillingPlanId) ?? undefined;
   const activePlanId = statusLabel !== "active" ? undefined : rawPlanId;
   const usage = usageQuery.data?.usage ?? [];
@@ -173,10 +173,6 @@ export function BillingPage() {
   const currentPlan = activePlanId ? planMap.get(activePlanId) : undefined;
   const isSubscribed = ACTIVE_STATUSES.has(statusLabel);
   const isSubscription = statusQuery.data?.mode === "subscription";
-  const isLifetime =
-    isSubscribed &&
-    activePlanId === "max-lifetime" &&
-    statusQuery.data?.mode === "payment";
   const hasActiveSubscription = isSubscribed && isSubscription;
   const cancelDate = isSubscription && statusQuery.data?.cancelAt;
 
@@ -186,7 +182,7 @@ export function BillingPage() {
   const proPlans = useMemo(
     () =>
       (plansQuery.data?.plans ?? []).filter((plan) =>
-        plan.id.startsWith("pro-"),
+        plan.id.startsWith("pro_"),
       ),
     [plansQuery.data?.plans],
   );
@@ -194,16 +190,15 @@ export function BillingPage() {
   const maxPlans = useMemo(
     () =>
       (plansQuery.data?.plans ?? []).filter((plan) =>
-        plan.id.startsWith("max-"),
+        plan.id.startsWith("max_"),
       ),
     [plansQuery.data?.plans],
   );
 
-  const tabValue =
-    activePlanId && activePlanId.startsWith("max-") ? "max" : "pro";
+  const tabValue = activePlanId?.startsWith("max_") ? "max" : "pro";
 
   const planChangeQuote = trpc.billing.estimatePlanChange.useQuery(
-    { planId: changeTarget?.id ?? "pro-monthly" },
+    { planId: changeTarget?.id ?? "pro_monthly" },
     {
       enabled: Boolean(changeTarget?.id),
       refetchOnWindowFocus: false,
@@ -213,6 +208,7 @@ export function BillingPage() {
 
   const renderPlanCard = (plan: ClientPlan | undefined) => {
     if (!plan) return;
+    const mode = plan.mode ?? "subscription";
     const isCurrent = plan.id === activePlanId && isSubscribed;
     const isChanging =
       changePlan.isPending && changePlan.variables?.planId === plan.id;
@@ -224,8 +220,7 @@ export function BillingPage() {
       hasActiveSubscription &&
       !cancelDate &&
       !isCurrent &&
-      plan.mode === "subscription";
-    const isBlockedByLifetime = isLifetime && plan.id !== "max-lifetime";
+      mode === "subscription";
     const isBlockedByCancel =
       Number.isInteger(cancelDate) && Boolean(activePlanId) && !isCurrent;
 
@@ -255,19 +250,8 @@ export function BillingPage() {
             ))}
           </ul>
           <Button
-            disabled={
-              isCurrent ||
-              processing ||
-              isBlockedByLifetime ||
-              isBlockedByCancel
-            }
+            disabled={isCurrent || processing || isBlockedByCancel}
             onClick={() => {
-              if (isBlockedByLifetime) {
-                toast.error(
-                  "Lifetime plan is active. No additional plans available.",
-                );
-                return;
-              }
               if (isBlockedByCancel) {
                 toast.error("Resume your subscription to change plans.");
                 return;
@@ -283,15 +267,11 @@ export function BillingPage() {
             {processing ? <Spinner /> : null}
             {isCurrent
               ? "Current plan"
-              : isBlockedByLifetime
-                ? "Lifetime active"
-                : isBlockedByCancel
-                  ? "Resume to change"
-                  : canChangeInPortal
-                    ? "Change plan"
-                    : plan.mode === "payment"
-                      ? "Purchase lifetime"
-                      : "Subscribe"}
+              : isBlockedByCancel
+                ? "Resume to change"
+                : canChangeInPortal
+                  ? "Change plan"
+                  : "Subscribe"}
           </Button>
         </CardContent>
       </Card>
@@ -365,7 +345,7 @@ export function BillingPage() {
             <CardTitle>Current plan {cancelDate && "(Canceled)"}</CardTitle>
             <CardDescription>
               {currentPlan
-                ? `${currentPlan.id.split("-")[0][0].toUpperCase() + currentPlan.id.split("-")[0].slice(1)} - ${currentPlan.name}`
+                ? `${currentPlan.id.split("_")[0][0].toUpperCase() + currentPlan.id.split("_")[0].slice(1)} - ${currentPlan.name}`
                 : "Not subscribed"}
               {cancelDate &&
                 ` - Cancel at ${new Date(cancelDate * 1000).toLocaleDateString()}`}
@@ -384,7 +364,6 @@ export function BillingPage() {
             ) : null}
             <Button
               variant="outline"
-              size="sm"
               disabled={portal.isPending || !statusQuery.data?.stripeCustomerId}
               onClick={() => portal.mutate()}
             >
@@ -393,9 +372,7 @@ export function BillingPage() {
             </Button>
             {hasActiveSubscription && !cancelDate ? (
               <Button
-                variant="ghost"
-                size="sm"
-                className="text-destructive"
+                variant="destructive"
                 disabled={cancel.isPending}
                 onClick={() => cancel.mutate()}
               >
@@ -406,7 +383,6 @@ export function BillingPage() {
             {cancelDate ? (
               <Button
                 variant="default"
-                size="sm"
                 disabled={resume.isPending}
                 onClick={() => resume.mutate()}
               >
@@ -475,12 +451,12 @@ export function BillingPage() {
             </TabsTrigger>
           </TabsList>
           <TabsContent value="pro">
-            <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+            <div className="grid gap-4 md:grid-cols-2">
               {proPlans.map((plan) => renderPlanCard(plan))}
             </div>
           </TabsContent>
           <TabsContent value="max">
-            <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+            <div className="grid gap-4 md:grid-cols-2">
               {maxPlans.map((plan) => renderPlanCard(plan))}
             </div>
           </TabsContent>

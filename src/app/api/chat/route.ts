@@ -14,6 +14,7 @@ import {
   tool,
   type UIMessage,
 } from "ai";
+import { checkBotId } from "botid/server";
 import { headers } from "next/headers";
 import { NextResponse } from "next/server";
 import { searchDuckDuckGo } from "ts-duckduckgo-search";
@@ -21,13 +22,27 @@ import { z } from "zod";
 import { auth } from "@/lib/auth";
 import { updateChat } from "@/lib/chat";
 import { models } from "@/lib/constants";
-import { consumeUsage, UsageLimitError } from "@/lib/usage";
+import {
+  consumeUsage,
+  getUsageSummary,
+  type UsageCategory,
+  UsageLimitError,
+} from "@/lib/usage";
 
 const UIMessagesSchema = z
   .array(z.record(z.string(), z.unknown()))
   .transform((value) => value as unknown as UIMessage[]);
 
 export async function POST(req: Request) {
+  const verification = await checkBotId();
+
+  if (verification.isBot) {
+    return NextResponse.json(
+      { error: "Could not verify you are human." },
+      { status: 403 },
+    );
+  }
+
   const headersList = await headers();
   const session = await auth.api.getSession({ headers: headersList });
   const userId = session?.session?.userId;
@@ -75,12 +90,19 @@ export async function POST(req: Request) {
   });
 
   const selectedModel = models.find((m) => m.value === baseModel);
+  const usageCategory: UsageCategory = selectedModel?.premium
+    ? "premium"
+    : "basic";
 
   try {
-    await consumeUsage({
-      userId,
-      category: selectedModel?.premium ? "premium" : "basic",
-    });
+    const usageSummary = await getUsageSummary({ userId });
+    const categoryUsage = usageSummary.usage.find(
+      (usage) => usage.category === usageCategory,
+    );
+
+    if (categoryUsage?.remaining && categoryUsage.remaining <= 0) {
+      throw new UsageLimitError("You've hit the usage limit for your plan.");
+    }
   } catch (error) {
     if (error instanceof UsageLimitError) {
       return NextResponse.json(
@@ -89,9 +111,9 @@ export async function POST(req: Request) {
       );
     }
 
-    console.error("Failed to record usage", error);
+    console.error("Failed to check usage", error);
     return NextResponse.json(
-      { error: "Unable to record usage" },
+      { error: "Unable to check usage" },
       { status: 500 },
     );
   }
@@ -160,6 +182,15 @@ export async function POST(req: Request) {
     sendReasoning: true,
     onFinish: async ({ messages: updatedMessages }) => {
       await updateChat(id, updatedMessages);
+
+      try {
+        await consumeUsage({
+          userId,
+          category: usageCategory,
+        });
+      } catch (error) {
+        console.error("Failed to record usage", error);
+      }
     },
   });
 }
