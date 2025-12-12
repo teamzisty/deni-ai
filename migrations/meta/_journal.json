@@ -1,0 +1,48 @@
+{
+  "version": "7",
+  "dialect": "postgresql",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "7",
+      "when": 1763974519830,
+      "tag": "0000_colorful_switch",
+      "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1763978378164,
+      "tag": "0001_medical_warlock",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1764477310030,
+      "tag": "0002_demonic_cerebro",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1764484053112,
+      "tag": "0003_parallel_risque",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1764489336544,
+      "tag": "0004_calm_talos",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1764495844168,
+      "tag": "0005_mysterious_firestar",
+      "breakpoints": true
+    }
+  ]
+}

@@ -1,0 +1,161 @@
+"use client";
+
+import { InfoIcon, TriangleAlert } from "lucide-react";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import type React from "react";
+import { useEffect, useState } from "react";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Badge } from "@/components/ui/badge";
+import { Card, CardContent } from "@/components/ui/card";
+import { Spinner } from "@/components/ui/spinner";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { trpc } from "@/lib/trpc/react";
+import { cn } from "@/lib/utils";
+import { Progress } from "./ui/progress";
+
+const settingsTabs = [
+  {
+    label: "Account",
+    value: "account",
+    href: "/settings/account",
+  },
+  {
+    label: "Billing",
+    value: "billing",
+    href: "/settings/billing",
+  },
+  {
+    label: "Workspace",
+    value: "workspace",
+    href: "/settings/workspace",
+  },
+];
+
+export default function SettingsWrapper({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  const pathname = usePathname();
+  const statusQuery = trpc.billing.status.useQuery(undefined, {
+    refetchInterval: 15000,
+    refetchOnWindowFocus: true,
+  });
+  const usageQuery = trpc.billing.usage.useQuery(undefined, {
+    refetchInterval: 30000,
+    refetchOnWindowFocus: true,
+  });
+
+  if (usageQuery.isLoading || statusQuery.isLoading) return <Spinner />;
+
+  const status = statusQuery.data;
+  const usage = usageQuery.data;
+  const usages = usage?.usage;
+
+  // Determine current tab value based on pathname
+  const currentTab =
+    settingsTabs.find((tab) => pathname?.startsWith(tab.href))?.value ||
+    settingsTabs[0].value;
+
+  return (
+    <div className="flex gap-2 mx-auto w-full space-y-6 pb-12 pt-4">
+      <div className="flex flex-col gap-2 w-full h-full max-w-xs shrink-0">
+        <Card className="border-muted-foreground/10 bg-muted/60 shadow-none">
+          <CardContent>
+            <div className="flex flex-col gap-1">
+              <span className="font-medium text-muted-foreground">
+                Your Plan
+              </span>
+              <span className="text-sm">
+                {status?.planId}x Renews on{" "}
+                {new Intl.DateTimeFormat("en-US", {
+                  month: "short",
+                  day: "numeric",
+                  year: "numeric",
+                }).format(new Date(status?.currentPeriodEnd || Date.now()))}
+              </span>
+
+              <span className="block text-xs font-medium">
+                <InfoIcon
+                  size="16"
+                  className="-mt-0.5 mr-1 inline-flex size-3 shrink-0"
+                />
+                Successfully sent messages are counted as one each. There is no
+                consumption per re-request, such as tool calls.
+              </span>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="border-muted-foreground/10 bg-muted/60 shadow-none">
+          <CardContent>
+            <div className="flex flex-col gap-1">
+              <span className="font-medium text-muted-foreground">Usage</span>
+              <span className="text-sm">
+                Resets on{" "}
+                {new Intl.DateTimeFormat("en-US", {
+                  month: "short",
+                  day: "numeric",
+                  year: "numeric",
+                }).format(new Date(usages?.[0]?.periodEnd || Date.now()))}
+              </span>
+              {usages?.map((usage) => (
+                <div key={usage.category} className="space-y-2 text-sm py-1">
+                  <div className="flex items-center justify-between">
+                    <span className="capitalize">
+                      {usage.category.replace(/_/g, " ")}
+                    </span>
+                    {usage.limit !== null ? (
+                      <span className="tabular-nums text-muted-foreground">
+                        {Math.max(usage.used ?? 0, 0).toLocaleString()} /{" "}
+                        {Math.max(usage.limit ?? 0, 0).toLocaleString()}
+                      </span>
+                    ) : (
+                      <span className="tabular-nums text-muted-foreground">
+                        {Math.max(usage.used ?? 0, 0).toLocaleString()} /
+                        Unlimited
+                      </span>
+                    )}
+                  </div>
+                  <Progress value={usage.used || 0} max={usage.limit || 0} />
+                  <span className="text-sm">
+                    {Math.max(usage.remaining ?? 0, 0).toLocaleString()} left
+                  </span>
+                </div>
+              ))}
+
+              <span className="block text-xs font-medium">
+                <InfoIcon
+                  size="16"
+                  className="-mt-0.5 mr-1 inline-flex size-3 shrink-0"
+                />
+                Successfully sent messages are counted as one each. There is no
+                consumption per re-request, such as tool calls.
+              </span>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+      <Tabs value={currentTab} className="w-full">
+        <div className="flex items-center justify-between mb-2">
+          <TabsList>
+            {settingsTabs.map((tab) => (
+              <TabsTrigger
+                key={tab.value}
+                value={tab.value}
+                asChild
+                className={cn("capitalize")}
+              >
+                <Link href={tab.href}>{tab.label}</Link>
+              </TabsTrigger>
+            ))}
+          </TabsList>
+        </div>
+        <Card>
+          <CardContent className="pt-6 pb-4">{children}</CardContent>
+        </Card>
+      </Tabs>
+    </div>
+  );
+}
