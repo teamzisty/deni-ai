@@ -2,6 +2,7 @@ export type ThemeName =
   | "light"
   | "dark"
   | "system"
+  | "default"
   | "t3-chat"
   | "tangerine"
   | "mono";
@@ -14,6 +15,11 @@ type ThemePreset = {
 };
 
 export const themePresets: ThemePreset[] = [
+  {
+    key: "default",
+    title: "Default",
+    description: "The default theme",
+  },
   {
     key: "t3-chat",
     title: "T3 Chat",

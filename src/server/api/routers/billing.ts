@@ -17,8 +17,8 @@ import { type ProtectedContext, protectedProcedure, router } from "../trpc";
 
 const planIdSchema = z.enum([
   "pro_monthly",
-  "pro_quarterly",
   "pro_yearly",
+  "max_monthly",
   "max_yearly",
 ]);
 
@@ -167,8 +167,11 @@ async function syncSubscription(ctx: ProtectedContext, userId: string) {
   });
 
   const subscriptionId = subscriptions.data.at(0)?.id;
+  if (!subscriptionId) {
+    return billingRecord;
+  }
 
-  const subscription = await stripe.subscriptions.retrieve(subscriptionId!);
+  const subscription = await stripe.subscriptions.retrieve(subscriptionId);
   const updates: Partial<BillingRecord> = {};
 
   if (subscription) {
@@ -325,8 +328,8 @@ export const billingRouter = router({
               }
             : undefined,
         allow_promotion_codes: true,
-        success_url: `${env.BETTER_AUTH_URL}/settings/billing?session_id={CHECKOUT_SESSION_ID}`,
-        cancel_url: `${env.BETTER_AUTH_URL}/settings/billing`,
+        success_url: `${env.NEXT_PUBLIC_BETTER_AUTH_URL}/settings/billing?session_id={CHECKOUT_SESSION_ID}`,
+        cancel_url: `${env.NEXT_PUBLIC_BETTER_AUTH_URL}/settings/billing`,
       });
 
       await ctx.db
@@ -454,7 +457,7 @@ export const billingRouter = router({
 
     const portal = await stripe.billingPortal.sessions.create({
       customer: subscription.stripeCustomerId,
-      return_url: `${env.BETTER_AUTH_URL}/settings/billing`,
+      return_url: `${env.NEXT_PUBLIC_BETTER_AUTH_URL}/settings/billing`,
     });
 
     return { url: portal.url };

@@ -107,20 +107,8 @@ async function getTierInfo(userId: string, now: Date): Promise<TierInfo> {
   };
 }
 
-function resolvePeriodEnd(
-  tier: SubscriptionTier,
-  billingPeriodEnd: Date | null,
-  existingPeriodEnd: Date | null,
-  now: Date,
-) {
-  const preferred = billingPeriodEnd ?? existingPeriodEnd;
-  const validPreferred = preferred && preferred > now ? preferred : null;
-
-  if (tier === "max") {
-    return validPreferred;
-  }
-
-  return validPreferred ?? getDefaultPeriodEnd(now);
+function resolvePeriodEnd(now: Date) {
+  return getDefaultPeriodEnd(now);
 }
 
 async function calculateUsageState({
@@ -148,21 +136,14 @@ async function calculateUsageState({
       .limit(1)
       .then((rows) => rows[0]));
 
-  const targetPeriodEnd = resolvePeriodEnd(
-    tierInfo.tier,
-    tierInfo.periodEnd,
-    current?.periodEnd ?? null,
-    now,
-  );
+  const targetPeriodEnd = resolvePeriodEnd(now);
 
   const shouldReset =
     !current ||
     current.planTier !== tierInfo.tier ||
     current.limitAmount !== limit ||
-    (current.periodEnd && current.periodEnd <= now) ||
-    (targetPeriodEnd &&
-      (!current.periodEnd ||
-        current.periodEnd.getTime() !== targetPeriodEnd.getTime()));
+    !current.periodEnd ||
+    current.periodEnd <= now;
 
   const used =
     limit === null

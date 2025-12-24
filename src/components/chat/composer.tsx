@@ -38,6 +38,7 @@ type ComposerProps = Pick<PromptInputProps, "globalDrop" | "multiple"> & {
   searchLabel?: ReactNode;
   webSearch?: boolean;
   onToggleWebSearch?: () => void;
+  actionMenuItems?: ReactNode;
   status?: PromptInputSubmitProps["status"];
   tools?: ReactNode;
   isSubmitDisabled?: boolean;
@@ -54,6 +55,7 @@ export function Composer({
   searchLabel = "Search",
   webSearch = false,
   onToggleWebSearch,
+  actionMenuItems,
   status,
   tools,
   isSubmitDisabled,
@@ -88,6 +90,7 @@ export function Composer({
             <PromptInputActionMenuTrigger />
             <PromptInputActionMenuContent>
               <PromptInputActionAddAttachments />
+              {actionMenuItems}
             </PromptInputActionMenuContent>
           </PromptInputActionMenu>
           {onToggleWebSearch ? (

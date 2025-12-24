@@ -1,10 +1,16 @@
-export type Author = "openai" | "anthropic" | "google" | "xAI";
+export type Author =
+  | "openai"
+  | "anthropic"
+  | "google"
+  | "xai"
+  | "openai_compatible";
 
 export enum AuthorEnum {
   openai = "OpenAI",
   anthropic = "Anthropic",
   google = "Google",
   xai = "xAI",
+  openai_compatible = "OpenAI-compatible",
 }
 
 export type Models = {
@@ -27,8 +33,8 @@ export const featureMap = {
 
 export const models = [
   {
-    name: "GPT-5.1",
-    value: "gpt-5.1-2025-11-13",
+    name: "GPT-5.2",
+    value: "gpt-5.2-2025-12-11",
     description: "General purpose OpenAI model",
     author: "openai",
     features: ["reasoning", "smart", "fast"],

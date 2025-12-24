@@ -1,9 +1,17 @@
 "use client";
 
-import { MoreHorizontal, Pencil, Trash2 } from "lucide-react";
+import {
+  compareDesc,
+  isThisMonth,
+  isThisWeek,
+  isThisYear,
+  isToday,
+  isYesterday,
+} from "date-fns";
+import { MoreHorizontal, Pencil, Share2, Trash2 } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { useEffect, useRef, useState } from "react";
+import { Fragment, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import {
   AlertDialog,
@@ -40,6 +48,7 @@ import {
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
 import { trpc } from "@/lib/trpc/react";
+import { ShareDialog } from "./chat/share-dialog";
 import { Button } from "./ui/button";
 import { Spinner } from "./ui/spinner";
 
@@ -56,11 +65,73 @@ const KONAMI_SEQUENCE = [
   "a",
 ] as const;
 
+type ChatRecencyBucketKey =
+  | "today"
+  | "yesterday"
+  | "thisWeek"
+  | "thisMonth"
+  | "thisYear"
+  | "older";
+
+function getRecencyBucketKey(date: Date): ChatRecencyBucketKey {
+  if (isToday(date)) {
+    return "today";
+  }
+  if (isYesterday(date)) {
+    return "yesterday";
+  }
+  if (isThisWeek(date, { weekStartsOn: 1 })) {
+    return "thisWeek";
+  }
+  if (isThisMonth(date)) {
+    return "thisMonth";
+  }
+  if (isThisYear(date)) {
+    return "thisYear";
+  }
+  return "older";
+}
+
+function groupChatsByRecency<T extends { updated_at: Date }>(items: T[]) {
+  const bucketOrder: Array<{ key: ChatRecencyBucketKey; label: string }> = [
+    { key: "today", label: "Today" },
+    { key: "yesterday", label: "Yesterday" },
+    { key: "thisWeek", label: "This week" },
+    { key: "thisMonth", label: "This month" },
+    { key: "thisYear", label: "This year" },
+    { key: "older", label: "Older" },
+  ];
+
+  const buckets = new Map<ChatRecencyBucketKey, T[]>();
+  const sorted = [...items].sort((a, b) =>
+    compareDesc(a.updated_at, b.updated_at),
+  );
+
+  for (const item of sorted) {
+    const key = getRecencyBucketKey(item.updated_at);
+    const existing = buckets.get(key);
+    if (existing) {
+      existing.push(item);
+      continue;
+    }
+    buckets.set(key, [item]);
+  }
+
+  return bucketOrder.flatMap(({ key, label }) => {
+    const bucketItems = buckets.get(key);
+    if (!bucketItems?.length) {
+      return [];
+    }
+    return [{ key, label, items: bucketItems }] as const;
+  });
+}
+
 function ChatItem({ item }: { item: { id: string; title: string | null } }) {
   const pathname = usePathname();
   const router = useRouter();
   const utils = trpc.useUtils();
   const [isRenameOpen, setIsRenameOpen] = useState(false);
+  const [isShareOpen, setIsShareOpen] = useState(false);
   const [newTitle, setNewTitle] = useState(item.title ?? "Untitled");
 
   const deleteChat = trpc.chat.deleteChat.useMutation({
@@ -103,6 +174,10 @@ function ChatItem({ item }: { item: { id: string; title: string | null } }) {
               <Pencil className="mr-2 size-4" />
               <span>Rename</span>
             </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => setIsShareOpen(true)}>
+              <Share2 className="mr-2 size-4" />
+              <span>Share</span>
+            </DropdownMenuItem>
             <DropdownMenuItem
               onClick={() => deleteChat.mutate({ id: item.id })}
               className="text-destructive focus:text-destructive"
@@ -141,6 +216,12 @@ function ChatItem({ item }: { item: { id: string; title: string | null } }) {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <ShareDialog
+        chatId={item.id}
+        isOpen={isShareOpen}
+        onOpenChange={setIsShareOpen}
+      />
     </>
   );
 }
@@ -152,6 +233,7 @@ export function AppSidebar() {
   const [isDeleteAllDialogOpen, setIsDeleteAllDialogOpen] = useState(false);
   const konamiIndexRef = useRef(0);
   const { isLoading, error, data } = trpc.chat.getChats.useQuery();
+  const chatGroups = useMemo(() => groupChatsByRecency(data ?? []), [data]);
   const createConversion = trpc.chat.createChat.useMutation({
     onSuccess: async (res) => {
       await utils.chat.getChats.invalidate();
@@ -248,6 +330,14 @@ export function AppSidebar() {
                   Billing
                 </Link>
               </SidebarMenuItem>
+              <SidebarMenuItem>
+                <Link
+                  href="/settings/sharing"
+                  className="text-sm text-muted-foreground hover:text-foreground"
+                >
+                  Sharing
+                </Link>
+              </SidebarMenuItem>
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
@@ -259,13 +349,22 @@ export function AppSidebar() {
           <SidebarGroup>
             <SidebarGroupContent>
               <SidebarMenu>
-                {data?.length === 0 && (
+                {(data?.length ?? 0) === 0 && (
                   <div className="text-sm text-center text-muted-foreground">
                     No chats found.
                   </div>
                 )}
-                {data?.map((item) => (
-                  <ChatItem key={item.id} item={item} />
+                {chatGroups.map((group) => (
+                  <Fragment key={group.key}>
+                    <SidebarMenuItem className="mt-3 first:mt-0">
+                      <div className="px-2 pt-2 text-xs font-medium text-muted-foreground">
+                        {group.label}
+                      </div>
+                    </SidebarMenuItem>
+                    {group.items.map((item) => (
+                      <ChatItem key={item.id} item={item} />
+                    ))}
+                  </Fragment>
                 ))}
               </SidebarMenu>
             </SidebarGroupContent>

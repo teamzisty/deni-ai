@@ -37,6 +37,7 @@ export const billingPlans: BillingPlan[] = [
     highlights: [
       "Get 4x usage for basic models",
       "Get 10x usage for premium models",
+      "With priority support",
       "For trying Deni AI",
     ],
   },
@@ -48,6 +49,7 @@ export const billingPlans: BillingPlan[] = [
     highlights: [
       "Get 4x usage for basic models",
       "Get 10x usage for premium models",
+      "With priority support",
       "Most cost-effective",
     ],
   },
@@ -59,7 +61,7 @@ export const billingPlans: BillingPlan[] = [
     highlights: [
       "Get 10x usage for basic model",
       "Get 20x usage for premium models",
-      "Free Max forever if you use all limits",
+      "Usage-based billing (coming soon)",
       "For power users",
     ],
   },
@@ -67,11 +69,11 @@ export const billingPlans: BillingPlan[] = [
     id: "max_yearly",
     lookupKey: "max_yearly",
     name: "Yearly",
-    tagline: "Get unlimited usage",
+    tagline: "You like us, and we like you too!",
     highlights: [
       "Get 10x usage for basic model",
       "Get 20x usage for premium models",
-      "Free Max forever if you use all limits",
+      "Usage-based billing (coming soon)",
       "For power users",
     ],
   },

@@ -28,7 +28,6 @@ export default function ChatHome() {
       <div className="w-full max-w-2xl text-left">
         <Composer
           onSubmit={handleSubmit}
-          className="w-full border rounded-md p-4 bg-background shadow-sm"
           globalDrop
           multiple
           value={input}

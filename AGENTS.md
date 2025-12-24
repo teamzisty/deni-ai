@@ -14,7 +14,7 @@ This file applies to the entire repository tree rooted here. Follow these rules,
 
 ■ Required Environment Variables (as enforced by `src/env.ts`)
 - `DATABASE_URL` (Postgres connection URL / required)
-- `BETTER_AUTH_URL` (public app URL, e.g., http://localhost:3000)
+- `NEXT_PUBLIC_BETTER_AUTH_URL` (public app URL, e.g., http://localhost:3000)
 - `BETTER_AUTH_SECRET` (32-character secret)
 - `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`
 - `GITHUB_CLIENT_ID`, `GITHUB_CLIENT_SECRET`

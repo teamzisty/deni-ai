@@ -1,5 +1,13 @@
-import { anthropic } from "@ai-sdk/anthropic";
-import { type GoogleGenerativeAIProviderOptions, google } from "@ai-sdk/google";
+import {
+  type AnthropicProviderOptions,
+  anthropic,
+  createAnthropic,
+} from "@ai-sdk/anthropic";
+import {
+  createGoogleGenerativeAI,
+  type GoogleGenerativeAIProviderOptions,
+  google,
+} from "@ai-sdk/google";
 import {
   createOpenAI,
   type OpenAIResponsesProviderOptions,
@@ -15,23 +23,135 @@ import {
   type UIMessage,
 } from "ai";
 import { checkBotId } from "botid/server";
+import { and, eq } from "drizzle-orm";
 import { headers } from "next/headers";
 import { NextResponse } from "next/server";
 import { searchDuckDuckGo } from "ts-duckduckgo-search";
 import { z } from "zod";
+import { db } from "@/db/drizzle";
+import { customModel, providerKey, providerSetting } from "@/db/schema";
+import { env } from "@/env";
 import { auth } from "@/lib/auth";
-import { updateChat } from "@/lib/chat";
+import { generateTitle, getChatById, updateChat } from "@/lib/chat";
 import { models } from "@/lib/constants";
+import { decryptFromB64 } from "@/lib/crypto";
 import {
   consumeUsage,
   getUsageSummary,
   type UsageCategory,
   UsageLimitError,
 } from "@/lib/usage";
+import {
+  veoAspectRatios,
+  veoDurations,
+  veoModels,
+  veoModelValues,
+  veoResolutions,
+} from "@/lib/veo";
+
+const VEO_BASE_URL = "https://generativelanguage.googleapis.com/v1beta";
+const VEO_POLL_INTERVAL_MS = 5000;
+const VEO_MAX_POLL_ATTEMPTS = 90;
 
 const UIMessagesSchema = z
   .array(z.record(z.string(), z.unknown()))
   .transform((value) => value as unknown as UIMessage[]);
+
+const veoToolInputSchema = z.object({
+  prompt: z.string().min(1).max(4000).describe("Video prompt"),
+  model: z.enum(veoModelValues).optional().describe("Veo model"),
+  negativePrompt: z.string().max(2000).optional().describe("Negative prompt"),
+  aspectRatio: z.enum(veoAspectRatios).optional().describe("Aspect ratio"),
+  resolution: z.enum(veoResolutions).optional().describe("Resolution"),
+  durationSeconds: z
+    .number()
+    .int()
+    .refine((value) => veoDurations.some((duration) => duration === value), {
+      message: "Invalid duration",
+    })
+    .optional()
+    .describe("Duration in seconds"),
+  seed: z
+    .number()
+    .int()
+    .min(0)
+    .max(2_147_483_647)
+    .optional()
+    .describe("Optional seed"),
+});
+
+function extractVeoErrorMessage(
+  responseData: unknown,
+  fallback: string,
+): string {
+  if (typeof responseData === "object" && responseData !== null) {
+    const message = (responseData as { error?: { message?: string } }).error
+      ?.message;
+    return message || fallback;
+  }
+  return fallback;
+}
+
+async function pollVeoOperation(operationName: string) {
+  for (let attempt = 0; attempt < VEO_MAX_POLL_ATTEMPTS; attempt += 1) {
+    const response = await fetch(`${VEO_BASE_URL}/${operationName}`, {
+      headers: {
+        "x-goog-api-key": env.GOOGLE_GENERATIVE_AI_API_KEY,
+      },
+    });
+
+    let responseData: unknown = null;
+    try {
+      responseData = await response.json();
+    } catch {
+      responseData = null;
+    }
+
+    if (!response.ok) {
+      throw new Error(
+        extractVeoErrorMessage(responseData, "Failed to check video status."),
+      );
+    }
+
+    const done =
+      typeof responseData === "object" && responseData !== null
+        ? Boolean((responseData as { done?: boolean }).done)
+        : false;
+    const errorMessage =
+      typeof responseData === "object" && responseData !== null
+        ? (responseData as { error?: { message?: string } }).error?.message
+        : null;
+    const videoUri =
+      typeof responseData === "object" && responseData !== null
+        ? ((
+            responseData as {
+              response?: {
+                generateVideoResponse?: {
+                  generatedSamples?: Array<{ video?: { uri?: string } }>;
+                };
+              };
+            }
+          ).response?.generateVideoResponse?.generatedSamples?.[0]?.video
+            ?.uri ?? null)
+        : null;
+
+    if (done) {
+      if (errorMessage) {
+        throw new Error(errorMessage);
+      }
+
+      if (!videoUri) {
+        throw new Error("Video generation finished without a file.");
+      }
+
+      return videoUri;
+    }
+
+    await new Promise((resolve) => setTimeout(resolve, VEO_POLL_INTERVAL_MS));
+  }
+
+  throw new Error("Timed out waiting for the video.");
+}
 
 export async function POST(req: Request) {
   const verification = await checkBotId();
@@ -58,18 +178,25 @@ export async function POST(req: Request) {
       messages: UIMessagesSchema.optional(),
       model: z.string(),
       webSearch: z.boolean().optional(),
+      reasoningEffort: z.enum(["low", "medium", "high"]).optional(),
+      video: z.boolean().optional(),
     })
     .safeParse(body);
 
   if (!parsedBody.success) {
-    console.log(parsedBody.error);
     return NextResponse.json(
       { error: "Invalid request body" },
       { status: 400 },
     );
   }
 
-  const { id, messages: rawMessages = [], model: baseModel } = parsedBody.data;
+  const {
+    id,
+    messages: rawMessages = [],
+    model: baseModel,
+    reasoningEffort = "high",
+    video: videoMode = false,
+  } = parsedBody.data;
 
   const validatedMessages = await safeValidateUIMessages<UIMessage>({
     messages: rawMessages,
@@ -84,95 +211,354 @@ export async function POST(req: Request) {
 
   const messages = validatedMessages.data;
   const voids = createOpenAI({
-    apiKey:
-      "do you want to know the api key? this application is working without the api key",
-    baseURL: "https://capi.voids.top/v2",
+    apiKey: "no_api_key_needed",
+    baseURL: "https://capi.voids.top/v2", // safe custom openai-compatible api
   });
-
+  const isCustomModel = baseModel.startsWith("custom:");
+  const customModelId = isCustomModel
+    ? baseModel.slice("custom:".length)
+    : null;
   const selectedModel = models.find((m) => m.value === baseModel);
-  const usageCategory: UsageCategory = selectedModel?.premium
-    ? "premium"
-    : "basic";
+  const customEntry = customModelId
+    ? await db
+        .select()
+        .from(customModel)
+        .where(
+          and(
+            eq(customModel.userId, userId),
+            eq(customModel.id, customModelId),
+          ),
+        )
+        .limit(1)
+        .then((rows) => rows[0] ?? null)
+    : null;
 
-  try {
-    const usageSummary = await getUsageSummary({ userId });
-    const categoryUsage = usageSummary.usage.find(
-      (usage) => usage.category === usageCategory,
-    );
+  if (!selectedModel && !customEntry) {
+    return NextResponse.json({ error: "Unknown model" }, { status: 400 });
+  }
 
-    if (categoryUsage?.remaining && categoryUsage.remaining <= 0) {
-      throw new UsageLimitError("You've hit the usage limit for your plan.");
-    }
-  } catch (error) {
-    if (error instanceof UsageLimitError) {
+  const usageCategory: UsageCategory =
+    (customEntry?.premium ?? selectedModel?.premium) ? "premium" : "basic";
+
+  const [providerKeys, providerSettings] = await Promise.all([
+    db.select().from(providerKey).where(eq(providerKey.userId, userId)),
+    db.select().from(providerSetting).where(eq(providerSetting.userId, userId)),
+  ]);
+
+  const providerKeyMap = new Map(
+    providerKeys.map((entry) => [entry.provider, entry.keyEnc]),
+  );
+  const providerSettingMap = new Map(
+    providerSettings.map((entry) => [entry.provider, entry]),
+  );
+
+  const providerId = customEntry ? "openai_compatible" : selectedModel?.author;
+  if (!providerId) {
+    return NextResponse.json({ error: "Unknown provider" }, { status: 400 });
+  }
+
+  let useByok = false;
+  let byokApiKey: string | undefined;
+  let byokBaseUrl: string | undefined;
+  let byokApiStyle: "chat" | "responses" = "responses";
+
+  if (providerId === "openai_compatible") {
+    const compatKey = providerKeyMap.get("openai_compatible");
+    const compatSetting = providerSettingMap.get("openai_compatible");
+    const compatBaseUrl = compatSetting?.baseUrl ?? null;
+    if (!compatKey || !compatBaseUrl) {
       return NextResponse.json(
-        { error: error.message, reason: "usage_limit" },
-        { status: 402 },
+        { error: "OpenAI-compatible endpoint not configured.", reason: "byok" },
+        { status: 400 },
       );
     }
+    byokApiKey = await decryptFromB64(compatKey);
+    byokBaseUrl = compatBaseUrl;
+    byokApiStyle = compatSetting?.apiStyle === "chat" ? "chat" : "responses";
+    useByok = true;
+  } else {
+    const keyEnc = providerKeyMap.get(providerId);
+    const setting = providerSettingMap.get(providerId);
+    const preferByok = setting?.preferByok ?? false;
+    if (preferByok && keyEnc) {
+      byokApiKey = await decryptFromB64(keyEnc);
+      byokBaseUrl = setting?.baseUrl ?? undefined;
+      byokApiStyle =
+        setting?.apiStyle === "chat"
+          ? "chat"
+          : providerId === "xai"
+            ? "chat"
+            : "responses";
+      useByok = true;
+    }
+  }
 
-    console.error("Failed to check usage", error);
-    return NextResponse.json(
-      { error: "Unable to check usage" },
-      { status: 500 },
-    );
+  if (providerId === "xai" && useByok && !byokBaseUrl) {
+    byokBaseUrl = "https://api.x.ai/v1";
+  }
+
+  if (!useByok) {
+    try {
+      const usageSummary = await getUsageSummary({ userId });
+      const categoryUsage = usageSummary.usage.find(
+        (usage) => usage.category === usageCategory,
+      );
+
+      if (categoryUsage?.remaining && categoryUsage.remaining <= 0) {
+        throw new UsageLimitError("You've hit the usage limit for your plan.");
+      }
+    } catch (error) {
+      if (error instanceof UsageLimitError) {
+        return NextResponse.json(
+          { error: error.message, reason: "usage_limit" },
+          { status: 402 },
+        );
+      }
+
+      console.error("Failed to check usage", error);
+      return NextResponse.json(
+        { error: "Unable to check usage" },
+        { status: 500 },
+      );
+    }
+  }
+
+  const resolvedModelId = customEntry?.modelId ?? selectedModel?.value;
+  if (!resolvedModelId) {
+    return NextResponse.json({ error: "Unknown model" }, { status: 400 });
   }
 
   let model: LanguageModel;
-  switch (selectedModel?.author) {
-    case "openai":
-      model = openai(selectedModel.value);
+  switch (providerId) {
+    case "openai": {
+      if (useByok) {
+        const provider = createOpenAI({
+          apiKey: byokApiKey,
+          baseURL: byokBaseUrl,
+        });
+        model =
+          byokApiStyle === "chat"
+            ? provider.chat(resolvedModelId)
+            : provider.responses(resolvedModelId);
+      } else {
+        model = openai(resolvedModelId);
+      }
       break;
-    case "anthropic":
-      model = anthropic(selectedModel.value);
+    }
+    case "anthropic": {
+      if (useByok) {
+        const provider = createAnthropic({
+          apiKey: byokApiKey,
+          baseURL: byokBaseUrl,
+        });
+        model = provider(resolvedModelId);
+      } else {
+        model = anthropic(resolvedModelId);
+      }
       break;
-    case "google":
-      model = google(selectedModel.value);
+    }
+    case "google": {
+      if (useByok) {
+        const provider = createGoogleGenerativeAI({
+          apiKey: byokApiKey,
+          baseURL: byokBaseUrl,
+        });
+        model = provider(resolvedModelId);
+      } else {
+        model = google(resolvedModelId);
+      }
       break;
+    }
+    case "xai": {
+      if (useByok) {
+        const provider = createOpenAI({
+          apiKey: byokApiKey,
+          baseURL: byokBaseUrl,
+        });
+        model =
+          byokApiStyle === "chat"
+            ? provider.chat(resolvedModelId)
+            : provider.responses(resolvedModelId);
+      } else {
+        model = voids.chat(resolvedModelId);
+      }
+      break;
+    }
+    case "openai_compatible": {
+      const provider = createOpenAI({
+        apiKey: byokApiKey,
+        baseURL: byokBaseUrl,
+      });
+      model =
+        byokApiStyle === "chat"
+          ? provider.chat(resolvedModelId)
+          : provider.responses(resolvedModelId);
+      break;
+    }
     default:
-      model = voids.chat(selectedModel?.value ?? "gpt-5.1-2025-11-13");
+      model = voids.chat(resolvedModelId);
       break;
   }
 
+  const tools = {
+    search: tool({
+      description: "Surf web and get page summary",
+      inputSchema: z.object({
+        query: z.string().describe("Search query"),
+        amount: z
+          .number()
+          .min(5)
+          .max(15)
+          .describe("Number of search pages (min 5, max 15)"),
+      }),
+      execute: async ({ query, amount }) => {
+        console.log(query, amount);
+        const searchResults = await searchDuckDuckGo(query, {
+          maxResults: amount || 5,
+        });
+
+        return searchResults;
+      },
+    }),
+    ...(videoMode
+      ? {
+          video: tool({
+            description:
+              "Generate a short video with Veo. Provide a vivid visual prompt and optional settings.",
+            inputSchema: veoToolInputSchema,
+            execute: async ({
+              prompt,
+              model: requestedModel,
+              negativePrompt,
+              aspectRatio,
+              resolution,
+              durationSeconds,
+              seed,
+            }) => {
+              const model = requestedModel ?? veoModelValues[0];
+              const finalAspectRatio = aspectRatio ?? "16:9";
+              const finalResolution = resolution ?? "720p";
+              const finalDuration =
+                finalResolution === "1080p" ? 8 : (durationSeconds ?? 6);
+              const trimmedNegative = negativePrompt?.trim() || undefined;
+
+              const instances: Record<string, unknown>[] = [
+                {
+                  prompt,
+                },
+              ];
+
+              const parameters: Record<string, unknown> = {
+                aspectRatio: finalAspectRatio,
+                resolution: finalResolution,
+                durationSeconds: finalDuration,
+              };
+
+              if (trimmedNegative) {
+                parameters.negativePrompt = trimmedNegative;
+              }
+              if (seed !== undefined) {
+                parameters.seed = seed;
+              }
+
+              const response = await fetch(
+                `${VEO_BASE_URL}/models/${model}:predictLongRunning`,
+                {
+                  method: "POST",
+                  headers: {
+                    "Content-Type": "application/json",
+                    "x-goog-api-key": env.GOOGLE_GENERATIVE_AI_API_KEY,
+                  },
+                  body: JSON.stringify({ instances, parameters }),
+                },
+              );
+
+              let responseData: unknown = null;
+              try {
+                responseData = await response.json();
+              } catch {
+                responseData = null;
+              }
+
+              if (!response.ok) {
+                throw new Error(
+                  extractVeoErrorMessage(
+                    responseData,
+                    "Failed to start video generation.",
+                  ),
+                );
+              }
+
+              const operationName =
+                typeof responseData === "object" && responseData !== null
+                  ? (responseData as { name?: string }).name
+                  : undefined;
+
+              if (!operationName) {
+                throw new Error("Missing operation name.");
+              }
+
+              const videoUri = await pollVeoOperation(operationName);
+              const proxyUrl = `/api/veo/file?uri=${encodeURIComponent(
+                videoUri,
+              )}`;
+              const modelLabel =
+                veoModels.find((item) => item.value === model)?.label ?? model;
+
+              return {
+                videoUrl: proxyUrl,
+                operationName,
+                model,
+                modelLabel,
+                aspectRatio: finalAspectRatio,
+                resolution: finalResolution,
+                durationSeconds: finalDuration,
+                seed: seed ?? null,
+                negativePrompt: trimmedNegative ?? null,
+              };
+            },
+          }),
+        }
+      : {}),
+  };
+
+  const modelMessages = await convertToModelMessages(messages);
   const result = streamText({
     model: model,
-    messages: convertToModelMessages(messages),
+    messages: modelMessages,
     stopWhen: stepCountIs(50),
-    tools: {
-      search: tool({
-        description: "Surf web and get page summary",
-        inputSchema: z.object({
-          query: z.string().describe("Search query"),
-          amount: z
-            .number()
-            .min(5)
-            .max(15)
-            .describe("Number of search pages (min 5, max 15)"),
-        }),
-        execute: async ({ query, amount }) => {
-          console.log(query, amount);
-          const searchResults = await searchDuckDuckGo(query, {
-            maxResults: amount || 5,
-          });
-
-          return searchResults;
-        },
-      }),
-    },
+    tools,
+    toolChoice: videoMode ? { type: "tool", toolName: "video" } : undefined,
     providerOptions: {
       openai: {
-        reasoningEffort: "high",
+        reasoningEffort,
         reasoningSummary: "detailed",
       } satisfies OpenAIResponsesProviderOptions,
+      anthropic: {
+        thinking: {
+          type: "enabled",
+          budgetTokens:
+            reasoningEffort === "low"
+              ? 1024
+              : reasoningEffort === "high"
+                ? 16000
+                : 8192,
+        },
+      } satisfies AnthropicProviderOptions,
       google: {
         thinkingConfig: {
-          thinkingLevel: "high",
+          thinkingLevel: reasoningEffort,
           includeThoughts: true,
         },
       } satisfies GoogleGenerativeAIProviderOptions,
     },
-    system:
-      "You are a helpful assistant that can answer questions and help with tasks",
+    system: videoMode
+      ? [
+          "You are a helpful assistant that can answer questions and help with tasks.",
+          "Video mode is enabled. Always call the `video` tool exactly once using the user's message as the prompt.",
+          "Do not call other tools. After the tool returns, provide a short caption for the video.",
+        ].join(" ")
+      : "You are a helpful assistant that can answer questions and help with tasks",
   });
 
   // send sources and reasoning back to the client
@@ -181,15 +567,28 @@ export async function POST(req: Request) {
     sendSources: true,
     sendReasoning: true,
     onFinish: async ({ messages: updatedMessages }) => {
-      await updateChat(id, updatedMessages);
+      let newTitle: string | undefined;
 
       try {
-        await consumeUsage({
-          userId,
-          category: usageCategory,
-        });
+        const chat = await getChatById(id);
+        if (chat?.title === "New Chat") {
+          newTitle = await generateTitle(updatedMessages);
+        }
       } catch (error) {
-        console.error("Failed to record usage", error);
+        console.error("Failed to generate title", error);
+      }
+
+      await updateChat(id, updatedMessages, newTitle);
+
+      if (!useByok) {
+        try {
+          await consumeUsage({
+            userId,
+            category: usageCategory,
+          });
+        } catch (error) {
+          console.error("Failed to record usage", error);
+        }
       }
     },
   });

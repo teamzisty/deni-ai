@@ -12,7 +12,6 @@ import {
   XIcon,
 } from "lucide-react";
 import { nanoid } from "nanoid";
-import Image from "next/image";
 import {
   type ChangeEvent,
   type ChangeEventHandler,
@@ -309,15 +308,18 @@ export function PromptInputAttachment({
           {...props}
         >
           <div className="relative size-5 shrink-0">
-            <div className="absolute inset-0 flex size-5 items-center justify-center overflow-hidden rounded-md bg-background transition-opacity group-hover:opacity-0">
+            <div className="absolute inset-0 flex size-5 items-center justify-center overflow-hidden rounded bg-background transition-opacity group-hover:opacity-0">
               {isImage ? (
-                <Image
-                  alt={filename || "attachment"}
-                  className="size-5 object-cover"
-                  height={20}
-                  src={data.url}
-                  width={20}
-                />
+                <>
+                  {/* biome-ignore lint/performance/noImgElement: attachment previews can be blob/data URLs. */}
+                  <img
+                    alt={filename || "attachment"}
+                    className="size-5 object-cover"
+                    height={20}
+                    src={data.url}
+                    width={20}
+                  />
+                </>
               ) : (
                 <div className="flex size-5 items-center justify-center text-muted-foreground">
                   <PaperclipIcon className="size-3" />
@@ -326,7 +328,7 @@ export function PromptInputAttachment({
             </div>
             <Button
               aria-label="Remove attachment"
-              className="absolute inset-0 size-5 cursor-pointer rounded-md p-0 opacity-0 transition-opacity group-hover:pointer-events-auto group-hover:opacity-100 [&>svg]:size-2.5"
+              className="absolute inset-0 size-5 cursor-pointer rounded p-0 opacity-0 transition-opacity group-hover:pointer-events-auto group-hover:opacity-100 [&>svg]:size-2.5"
               onClick={(e) => {
                 e.stopPropagation();
                 attachments.remove(data.id);
@@ -346,7 +348,8 @@ export function PromptInputAttachment({
         <div className="w-auto space-y-3">
           {isImage && (
             <div className="flex max-h-96 w-96 items-center justify-center overflow-hidden rounded-md border">
-              <Image
+              {/* biome-ignore lint/performance/noImgElement: attachment previews can be blob/data URLs. */}
+              <img
                 alt={filename || "attachment preview"}
                 className="max-h-full max-w-full object-contain"
                 height={384}
@@ -494,11 +497,19 @@ export const PromptInput = ({
       if (!accept || accept.trim() === "") {
         return true;
       }
-      if (accept.includes("image/*")) {
-        return f.type.startsWith("image/");
-      }
-      // NOTE: keep simple; expand as needed
-      return true;
+
+      const patterns = accept
+        .split(",")
+        .map((s) => s.trim())
+        .filter(Boolean);
+
+      return patterns.some((pattern) => {
+        if (pattern.endsWith("/*")) {
+          const prefix = pattern.slice(0, -1); // e.g: image/* -> image/
+          return f.type.startsWith(prefix);
+        }
+        return f.type === pattern;
+      });
     },
     [accept],
   );
@@ -604,6 +615,7 @@ export const PromptInput = ({
   useEffect(() => {
     const form = formRef.current;
     if (!form) return;
+    if (globalDrop) return; // when global drop is on, let the document-level handler own drops
 
     const onDragOver = (e: DragEvent) => {
       if (e.dataTransfer?.types?.includes("Files")) {
@@ -624,7 +636,7 @@ export const PromptInput = ({
       form.removeEventListener("dragover", onDragOver);
       form.removeEventListener("drop", onDrop);
     };
-  }, [add]);
+  }, [add, globalDrop]);
 
   useEffect(() => {
     if (!globalDrop) return;
@@ -1256,7 +1268,7 @@ export const PromptInputSelectValue = ({
   className,
   ...props
 }: PromptInputSelectValueProps) => (
-  <SelectValue className={cn(className, "block truncate")} {...props} />
+  <SelectValue className={cn(className)} {...props} />
 );
 
 export type PromptInputHoverCardProps = ComponentProps<typeof HoverCard>;

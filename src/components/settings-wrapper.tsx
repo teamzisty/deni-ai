@@ -1,12 +1,9 @@
 "use client";
 
-import { InfoIcon, TriangleAlert } from "lucide-react";
+import { InfoIcon } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import type React from "react";
-import { useEffect, useState } from "react";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Spinner } from "@/components/ui/spinner";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -16,9 +13,14 @@ import { Progress } from "./ui/progress";
 
 const settingsTabs = [
   {
-    label: "Account",
-    value: "account",
-    href: "/settings/account",
+    label: "Appearance",
+    value: "appearance",
+    href: "/settings/appearance",
+  },
+  {
+    label: "Providers",
+    value: "providers",
+    href: "/settings/providers",
   },
   {
     label: "Billing",
@@ -26,9 +28,9 @@ const settingsTabs = [
     href: "/settings/billing",
   },
   {
-    label: "Workspace",
-    value: "workspace",
-    href: "/settings/workspace",
+    label: "Sharing",
+    value: "sharing",
+    href: "/settings/sharing",
   },
 ];
 
@@ -53,6 +55,12 @@ export default function SettingsWrapper({
   const usage = usageQuery.data;
   const usages = usage?.usage;
 
+  const plan =
+    status?.planId
+      ?.split("_")
+      .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+      .join(" ") || "";
+
   // Determine current tab value based on pathname
   const currentTab =
     settingsTabs.find((tab) => pathname?.startsWith(tab.href))?.value ||
@@ -67,23 +75,28 @@ export default function SettingsWrapper({
               <span className="font-medium text-muted-foreground">
                 Your Plan
               </span>
-              <span className="text-sm">
-                {status?.planId}x Renews on{" "}
-                {new Intl.DateTimeFormat("en-US", {
-                  month: "short",
-                  day: "numeric",
-                  year: "numeric",
-                }).format(new Date(status?.currentPeriodEnd || Date.now()))}
-              </span>
+              <div className="flex flex-col gap-0.5">
+                <span className="text-base font-semibold">{plan}</span>
+                <span className="text-xs text-muted-foreground">
+                  Next update:&nbsp;
+                  {status?.currentPeriodEnd
+                    ? new Intl.DateTimeFormat("en-US", {
+                        month: "short",
+                        day: "numeric",
+                        year: "numeric",
+                      }).format(new Date(status.currentPeriodEnd))
+                    : "—"}
+                </span>
+              </div>
 
-              <span className="block text-xs font-medium">
+              {/* <span className="block text-xs font-medium">
                 <InfoIcon
                   size="16"
                   className="-mt-0.5 mr-1 inline-flex size-3 shrink-0"
                 />
                 Successfully sent messages are counted as one each. There is no
                 consumption per re-request, such as tool calls.
-              </span>
+              </span> */}
             </div>
           </CardContent>
         </Card>

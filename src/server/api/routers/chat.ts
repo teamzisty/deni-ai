@@ -1,5 +1,5 @@
 import { TRPCError } from "@trpc/server";
-import { eq } from "drizzle-orm";
+import { desc, eq } from "drizzle-orm";
 import { z } from "zod";
 import { chats } from "@/db/schema";
 import { protectedProcedure, router } from "../trpc";
@@ -9,7 +9,8 @@ export const chatRouter = router({
     const userChats = await ctx.db
       .select()
       .from(chats)
-      .where(eq(chats.uid, ctx.userId));
+      .where(eq(chats.uid, ctx.userId))
+      .orderBy(desc(chats.updated_at));
     return userChats;
   }),
   createChat: protectedProcedure.mutation(async ({ ctx }) => {
@@ -60,10 +61,11 @@ export const chatRouter = router({
           message: "Chat ID is required",
         });
       }
+      const { id, ...fields } = input;
       const updatedChat = await ctx.db
         .update(chats)
-        .set(input)
-        .where(eq(chats.id, input.id))
+        .set({ ...fields, updated_at: new Date() })
+        .where(eq(chats.id, id))
         .returning();
       if (!updatedChat[0]) {
         throw new TRPCError({

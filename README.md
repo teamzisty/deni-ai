@@ -57,11 +57,11 @@ STRIPE_SECRET_KEY=sk_live_or_test
 STRIPE_WEBHOOK_SECRET=whsec_xxx
 ```
 
-Success/cancel URLs use `BETTER_AUTH_URL` (e.g. `http://localhost:3000`). Billing data is stored in the new `billing` table; run the Drizzle commands above after updating the schema.
+Success/cancel URLs use `NEXT_PUBLIC_BETTER_AUTH_URL` (e.g. `http://localhost:3000`). Billing data is stored in the new `billing` table; run the Drizzle commands above after updating the schema.
 
 ### Stripe webhook
 
-- Endpoint: `POST {BETTER_AUTH_URL}/api/stripe/webhook`
+- Endpoint: `POST {NEXT_PUBLIC_BETTER_AUTH_URL}/api/stripe/webhook`
 - In Stripe Dashboard → Developers → Webhooks, add the endpoint and subscribe to:
   - `checkout.session.completed`
   - `customer.subscription.created`
