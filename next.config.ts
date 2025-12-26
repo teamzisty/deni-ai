@@ -5,6 +5,9 @@ const nextConfig: NextConfig = {
   /* config options here */
   reactCompiler: true,
   transpilePackages: ["shiki"],
+  experimental: {
+    turbopackFileSystemCacheForBuild: true,
+  },
 };
 
 export default withBotId(nextConfig);
