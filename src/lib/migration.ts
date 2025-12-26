@@ -1,5 +1,5 @@
+import type { ReasoningUIPart, TextUIPart, UIMessage } from "ai";
 import { nanoid } from "nanoid";
-import type { UIMessage } from "ai";
 
 export type MigrationExport = {
   format: "deni-ai-message-export";
@@ -61,9 +61,7 @@ export function normalizeMigrationPayload(
     );
 
     if (!messages.length) {
-      allWarnings.push(
-        `conversation ${index + 1}: no valid messages found`,
-      );
+      allWarnings.push(`conversation ${index + 1}: no valid messages found`);
       return;
     }
 
@@ -140,7 +138,9 @@ function extractLegacyConversations(payload: unknown): {
         conversations: [
           {
             title:
-              typeof payload.title === "string" ? payload.title : "Imported Chat",
+              typeof payload.title === "string"
+                ? payload.title
+                : "Imported Chat",
             messages: payload.messages,
             createdAt: payload.createdAt,
             updatedAt: payload.updatedAt,
@@ -250,9 +250,15 @@ function normalizePartsArray(rawParts: unknown[]): UIMessage["parts"] {
       continue;
     }
 
-    if (type === "text" || type === "reasoning") {
+    if (type === "text") {
       const text = typeof rawPart.text === "string" ? rawPart.text : "";
-      parts.push({ ...rawPart, type, text });
+      parts.push(createTextPart(text));
+      continue;
+    }
+
+    if (type === "reasoning") {
+      const text = typeof rawPart.text === "string" ? rawPart.text : "";
+      parts.push(createReasoningPart(text));
       continue;
     }
 
@@ -323,8 +329,12 @@ function createTextMessage(role: UIMessage["role"], text: string): UIMessage {
   };
 }
 
-function createTextPart(text: string) {
+function createTextPart(text: string): TextUIPart {
   return { type: "text", text };
+}
+
+function createReasoningPart(text: string): ReasoningUIPart {
+  return { type: "reasoning", text };
 }
 
 function extractImageUrl(part: UnknownRecord): string | null {
