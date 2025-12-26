@@ -1,13 +1,7 @@
-import { headers } from "next/headers";
-import Link from "next/link";
+import { LoginButton } from "@/components/login-button";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { auth } from "@/lib/auth";
 
 export default async function Home() {
-  const hdrs = await headers();
-  const session = await auth.api.getSession({ headers: hdrs });
-
   return (
     <main className="flex min-h-screen flex-col items-center justify-center text-center">
       <Badge className="mb-4 px-3 py-1 text-sm">Welcome to Deni AI</Badge>
@@ -23,9 +17,8 @@ export default async function Home() {
         Deni AI is an AI chat app created for everyone (those who can't afford
         to spend money). You can use the latest AI models for free.
       </p>
-      <Button size="lg" asChild>
-        <Link href={session ? "/app" : "/auth/sign-in"}>Get Started</Link>
-      </Button>
+
+      <LoginButton />
     </main>
   );
 }
