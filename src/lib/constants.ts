@@ -103,6 +103,7 @@ export const models = [
     value: "claude-sonnet-4-5",
     description: "Hybrid reasoning model",
     author: "anthropic",
+    premium: true,
     features: ["reasoning", "smart", "fast"],
   },
   {

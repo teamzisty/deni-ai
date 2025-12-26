@@ -27,12 +27,12 @@ const USAGE_LIMITS: Record<
   basic: {
     free: 1500,
     pro: 6000,
-    max: null, // unlimited
+    max: 15000, // unlimited
   },
   premium: {
     free: 50,
-    pro: 1000,
-    max: null, // unlimited
+    pro: 500,
+    max: 1000, // unlimited
   },
 };
 
@@ -139,11 +139,7 @@ async function calculateUsageState({
   const targetPeriodEnd = resolvePeriodEnd(now);
 
   const shouldReset =
-    !current ||
-    current.planTier !== tierInfo.tier ||
-    current.limitAmount !== limit ||
-    !current.periodEnd ||
-    current.periodEnd <= now;
+    !current || !current.periodEnd || current.periodEnd <= now;
 
   const used =
     limit === null

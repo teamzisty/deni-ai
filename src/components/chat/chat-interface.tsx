@@ -23,9 +23,9 @@ import {
   Bot,
   BrainCircuit,
   BrainIcon,
-  CheckIcon,
   Code,
   CopyIcon,
+  Diamond,
   Film,
   Globe,
   Plug,
@@ -201,6 +201,10 @@ function ModelItem({
         <span className="flex items-center justify-between font-medium">
           <span className="flex items-center gap-1">
             {(() => {
+              if (model.premium) {
+                return <Diamond className="size-4" />;
+              }
+
               switch (model?.author) {
                 case "openai":
                   return <SiOpenai />;
@@ -266,9 +270,6 @@ function ModelItem({
               ))}
           </span>
         )}
-      </span>
-      <span className="items-center justify-center size-4">
-        {isSelected && <CheckIcon className="size-4" />}
       </span>
     </PromptInputSelectItem>
   );
@@ -1006,6 +1007,10 @@ export function ChatInterface({
               <PromptInputSelectTrigger>
                 <PromptInputSelectValue>
                   {(() => {
+                    if (selectedModel?.premium) {
+                      return <Diamond className="size-4" />;
+                    }
+
                     switch (selectedModel?.author) {
                       case "openai":
                         return <SiOpenai />;

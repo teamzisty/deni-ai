@@ -338,6 +338,14 @@ export function AppSidebar() {
                   Sharing
                 </Link>
               </SidebarMenuItem>
+              <SidebarMenuItem>
+                <Link
+                  href="/settings/migration"
+                  className="text-sm text-muted-foreground hover:text-foreground"
+                >
+                  Migration
+                </Link>
+              </SidebarMenuItem>
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>

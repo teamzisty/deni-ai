@@ -32,6 +32,11 @@ const settingsTabs = [
     value: "sharing",
     href: "/settings/sharing",
   },
+  {
+    label: "Migration",
+    value: "migration",
+    href: "/settings/migration",
+  },
 ];
 
 export default function SettingsWrapper({
