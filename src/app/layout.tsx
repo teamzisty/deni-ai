@@ -1,3 +1,4 @@
+import { GoogleAnalytics } from "@next/third-parties/google";
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { Providers } from "@/components/providers";
@@ -36,6 +37,7 @@ export default function RootLayout({
           <Toaster position="top-center" />
         </Providers>
       </body>
+      <GoogleAnalytics gaId="G-B5H8G73JTN" />
     </html>
   );
 }
