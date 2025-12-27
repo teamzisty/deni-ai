@@ -1,5 +1,6 @@
 "use client";
 
+import { UserButton } from "@daveyplate/better-auth-ui";
 import {
   compareDesc,
   isThisMonth,
@@ -8,7 +9,23 @@ import {
   isToday,
   isYesterday,
 } from "date-fns";
-import { MoreHorizontal, Pencil, Share2, Trash2 } from "lucide-react";
+import {
+  BookOpen,
+  ChevronRight,
+  HelpCircle,
+  LogOut,
+  MessageSquare,
+  MoreHorizontal,
+  Pencil,
+  Plus,
+  Settings,
+  Share2,
+  Sparkles,
+  Trash2,
+  UserCircle2,
+  UserIcon,
+  Users,
+} from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { Fragment, useEffect, useMemo, useRef, useState } from "react";
@@ -34,6 +51,7 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
@@ -47,6 +65,7 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
+import { authClient } from "@/lib/auth-client";
 import { trpc } from "@/lib/trpc/react";
 import { ShareDialog } from "./chat/share-dialog";
 import { Button } from "./ui/button";
@@ -232,6 +251,7 @@ export function AppSidebar() {
   const utils = trpc.useUtils();
   const [isDeleteAllDialogOpen, setIsDeleteAllDialogOpen] = useState(false);
   const konamiIndexRef = useRef(0);
+  const session = authClient.useSession();
   const { isLoading, error, data } = trpc.chat.getChats.useQuery();
   const chatGroups = useMemo(() => groupChatsByRecency(data ?? []), [data]);
   const createConversion = trpc.chat.createChat.useMutation({
@@ -314,38 +334,6 @@ export function AppSidebar() {
                   New Chat
                 </Button>
               </SidebarMenuItem>
-              <SidebarMenuItem>
-                <Link
-                  href="/settings/appearance"
-                  className="text-sm text-muted-foreground hover:text-foreground"
-                >
-                  Appearance
-                </Link>
-              </SidebarMenuItem>
-              <SidebarMenuItem>
-                <Link
-                  href="/settings/billing"
-                  className="text-sm text-muted-foreground hover:text-foreground"
-                >
-                  Billing
-                </Link>
-              </SidebarMenuItem>
-              <SidebarMenuItem>
-                <Link
-                  href="/settings/sharing"
-                  className="text-sm text-muted-foreground hover:text-foreground"
-                >
-                  Sharing
-                </Link>
-              </SidebarMenuItem>
-              <SidebarMenuItem>
-                <Link
-                  href="/settings/migration"
-                  className="text-sm text-muted-foreground hover:text-foreground"
-                >
-                  Migration
-                </Link>
-              </SidebarMenuItem>
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
@@ -378,6 +366,87 @@ export function AppSidebar() {
             </SidebarGroupContent>
           </SidebarGroup>
         )}
+
+        <SidebarGroup className="w-full mt-auto mb-4">
+          <SidebarGroupContent>
+            <SidebarMenu>
+              <SidebarMenuItem>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <SidebarMenuButton className="h-auto py-2">
+                      <div className="flex w-full items-center gap-2">
+                        <div className="flex size-8 items-center justify-center rounded-full bg-primary text-primary-foreground overflow-hidden">
+                          {session.data?.user?.image ? (
+                            <img
+                              src={session.data.user.image}
+                              alt={session.data.user.name ?? "User"}
+                              className="size-full object-cover"
+                            />
+                          ) : (
+                            (session.data?.user?.name
+                              ?.charAt(0)
+                              .toUpperCase() ?? "U")
+                          )}
+                        </div>
+                        <span className="flex-1 truncate text-sm">
+                          {session.data?.user?.name ?? "User"}
+                        </span>
+                      </div>
+                    </SidebarMenuButton>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent
+                    side="right"
+                    align="start"
+                    className="w-56"
+                  >
+                    <div className="flex items-center gap-2 px-2 py-1.5">
+                      <div className="flex size-6 items-center justify-center rounded-full bg-primary text-primary-foreground overflow-hidden text-xs">
+                        {session.data?.user?.image ? (
+                          <img
+                            src={session.data.user.image}
+                            alt={session.data.user.name ?? "User"}
+                            className="size-full object-cover"
+                          />
+                        ) : (
+                          (session.data?.user?.name?.charAt(0).toUpperCase() ??
+                          "U")
+                        )}
+                      </div>
+                      <div className="flex-1 flex flex-col min-w-0">
+                        <span className="flex-1 truncate text-sm font-medium">
+                          {session.data?.user?.name ?? "User"}
+                        </span>
+                        <span className="flex-1 truncate text-sm">
+                          {session.data?.user?.email ?? "User"}
+                        </span>
+                      </div>
+                    </div>
+                    <DropdownMenuItem className="gap-2 text-sm" asChild>
+                      <Link href="/account" className="flex w-full">
+                        <UserIcon className="size-4" />
+                        <span className="flex-1">Account</span>
+                      </Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem className="gap-2 text-sm" asChild>
+                      <Link href="/settings" className="flex w-full">
+                        <Settings className="size-4" />
+                        <span className="flex-1">Settings</span>
+                      </Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem
+                      className="gap-2 text-sm"
+                      onClick={() => authClient.signOut()}
+                    >
+                      <LogOut className="size-4" />
+                      <span>Logout</span>
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </SidebarMenuItem>
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
       </SidebarContent>
       <AlertDialog
         open={isDeleteAllDialogOpen}

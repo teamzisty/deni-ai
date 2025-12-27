@@ -339,7 +339,7 @@ export function ChatInterface({
     regenerate,
     status,
     error,
-    stop: _stop,
+    stop,
   } = useChat({
     id,
     messages: initialMessages,
@@ -855,14 +855,14 @@ export function ChatInterface({
           {status === "submitted" && <Loader />}
 
           {error && (
-            <Card className="my-4 border-destructive/30 bg-destructive/10">
+            <Card className="!gap-0 bg-destructive/10">
               <CardHeader>
-                <CardTitle className="text-destructive flex items-center gap-2">
+                <CardTitle className="flex items-center gap-2">
                   <span>Error</span>
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="text-destructive text-sm break-words">
+                <div className="text-sm break-words">
                   {typeof error === "string"
                     ? error
                     : error?.message || "An unexpected error occurred."}
@@ -948,6 +948,7 @@ export function ChatInterface({
 
       <Composer
         onSubmit={handleSubmit}
+        onStop={stop}
         className="mt-4"
         globalDrop
         multiple
@@ -1065,15 +1066,16 @@ export function ChatInterface({
               <PromptInputSelectTrigger>
                 <PromptInputSelectValue>
                   <BrainIcon className="size-4" />
-                  {reasoningEffort}
+                  {reasoningEffort.charAt(0).toUpperCase() +
+                    reasoningEffort.slice(1)}
                 </PromptInputSelectValue>
               </PromptInputSelectTrigger>
               <PromptInputSelectContent>
-                <PromptInputSelectItem value="low">low</PromptInputSelectItem>
+                <PromptInputSelectItem value="low">Low</PromptInputSelectItem>
                 <PromptInputSelectItem value="medium">
-                  medium
+                  Medium
                 </PromptInputSelectItem>
-                <PromptInputSelectItem value="high">high</PromptInputSelectItem>
+                <PromptInputSelectItem value="high">High</PromptInputSelectItem>
               </PromptInputSelectContent>
             </PromptInputSelect>
           </>

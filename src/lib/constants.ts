@@ -19,6 +19,7 @@ export type Models = {
     model: string;
     label: string;
     description: string;
+    provider: string;
   };
 };
 
@@ -64,16 +65,18 @@ export const models = [
   // },
   {
     name: "GPT-oss 120b",
-    value: "gpt-oss-120b",
+    value: "openai/gpt-oss-120b",
     description: "Most powerful open-weight model",
     author: "openai",
+    provider: "groq",
     features: ["reasoning", "fast"],
   },
   {
     name: "GPT-oss 20b",
-    value: "gpt-oss-20b",
+    value: "openai/gpt-oss-20b",
     description: "Medium-sized open-weight model",
     author: "openai",
+    provider: "groq",
     features: ["reasoning", "fastest", "fast"],
   },
   {

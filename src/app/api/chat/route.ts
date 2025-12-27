@@ -8,6 +8,7 @@ import {
   type GoogleGenerativeAIProviderOptions,
   google,
 } from "@ai-sdk/google";
+import { createGroq, groq } from "@ai-sdk/groq";
 import {
   createOpenAI,
   type OpenAIResponsesProviderOptions,
@@ -15,6 +16,7 @@ import {
 } from "@ai-sdk/openai";
 import {
   convertToModelMessages,
+  generateText,
   type LanguageModel,
   safeValidateUIMessages,
   stepCountIs,
@@ -23,6 +25,7 @@ import {
   type UIMessage,
 } from "ai";
 import { checkBotId } from "botid/server";
+import { load } from "cheerio";
 import { and, eq } from "drizzle-orm";
 import { headers } from "next/headers";
 import { NextResponse } from "next/server";
@@ -52,10 +55,18 @@ import {
 const VEO_BASE_URL = "https://generativelanguage.googleapis.com/v1beta";
 const VEO_POLL_INTERVAL_MS = 5000;
 const VEO_MAX_POLL_ATTEMPTS = 90;
+const DUCKDUCKGO_PROXY_BASE_URL =
+  "https://r.jina.ai/http://duckduckgo.com/html/";
 
 const UIMessagesSchema = z
   .array(z.record(z.string(), z.unknown()))
   .transform((value) => value as unknown as UIMessage[]);
+
+type SearchResult = {
+  title: string;
+  url: string;
+  description: string;
+};
 
 const veoToolInputSchema = z.object({
   prompt: z.string().min(1).max(4000).describe("Video prompt"),
@@ -151,6 +162,88 @@ async function pollVeoOperation(operationName: string) {
   }
 
   throw new Error("Timed out waiting for the video.");
+}
+
+function extractDuckDuckGoUrl(rawHref: string): string | undefined {
+  try {
+    if (rawHref.startsWith("/")) {
+      const [, queryString] = rawHref.split("?");
+      if (!queryString) {
+        return undefined;
+      }
+      const params = new URLSearchParams(queryString);
+      const encodedUrl = params.get("uddg") ?? params.get("rut");
+      if (!encodedUrl) {
+        return undefined;
+      }
+      return decodeURIComponent(encodedUrl);
+    }
+
+    const parsed = new URL(rawHref);
+    if (parsed.hostname.endsWith("duckduckgo.com")) {
+      const encodedUrl =
+        parsed.searchParams.get("uddg") ?? parsed.searchParams.get("rut");
+      if (encodedUrl) {
+        return decodeURIComponent(encodedUrl);
+      }
+    }
+
+    return rawHref;
+  } catch {
+    return undefined;
+  }
+}
+
+function parseDuckDuckGoHtml(html: string, maxResults: number): SearchResult[] {
+  const $ = load(html);
+  const results: SearchResult[] = [];
+
+  $("div.result").each((_, element) => {
+    if (results.length >= maxResults) {
+      return false;
+    }
+
+    const titleAnchor = $("a.result__a", element).first();
+    const descriptionBlock = $(".result__snippet", element).first();
+    const href = titleAnchor.attr("href");
+    const title = titleAnchor.text().trim();
+    const description = descriptionBlock.text().trim();
+
+    if (!href || !title) {
+      return;
+    }
+
+    const url = extractDuckDuckGoUrl(href);
+    if (!url) {
+      return;
+    }
+
+    results.push({ title, url, description });
+  });
+
+  return results;
+}
+
+async function searchDuckDuckGoViaProxy(
+  query: string,
+  maxResults: number,
+): Promise<SearchResult[]> {
+  const params = new URLSearchParams({ q: query });
+  const response = await fetch(
+    `${DUCKDUCKGO_PROXY_BASE_URL}?${params.toString()}`,
+    {
+      headers: {
+        "x-respond-with": "html",
+      },
+    },
+  );
+
+  if (!response.ok) {
+    throw new Error(`DuckDuckGo proxy responded with ${response.status}`);
+  }
+
+  const html = await response.text();
+  return parseDuckDuckGoHtml(html, maxResults);
 }
 
 export async function POST(req: Request) {
@@ -252,7 +345,9 @@ export async function POST(req: Request) {
     providerSettings.map((entry) => [entry.provider, entry]),
   );
 
-  const providerId = customEntry ? "openai_compatible" : selectedModel?.author;
+  const providerId = customEntry
+    ? "openai_compatible"
+    : (selectedModel?.provider ?? selectedModel?.author);
   if (!providerId) {
     return NextResponse.json({ error: "Unknown provider" }, { status: 400 });
   }
@@ -384,6 +479,20 @@ export async function POST(req: Request) {
       }
       break;
     }
+    case "groq": {
+      if (useByok) {
+        const provider = createGroq({
+          apiKey: byokApiKey,
+          baseURL: byokBaseUrl,
+        });
+        model = provider(resolvedModelId);
+      } else {
+        model = createGroq({
+          apiKey: env.GROQ_API_KEY,
+        })(resolvedModelId);
+      }
+      break;
+    }
     case "openai_compatible": {
       const provider = createOpenAI({
         apiKey: byokApiKey,
@@ -404,20 +513,104 @@ export async function POST(req: Request) {
     search: tool({
       description: "Surf web and get page summary",
       inputSchema: z.object({
-        query: z.string().describe("Search query"),
+        query: z.string().min(1).describe("Search query"),
         amount: z
           .number()
+          .int()
           .min(5)
           .max(15)
+          .optional()
           .describe("Number of search pages (min 5, max 15)"),
       }),
       execute: async ({ query, amount }) => {
-        console.log(query, amount);
-        const searchResults = await searchDuckDuckGo(query, {
-          maxResults: amount || 5,
-        });
+        const maxResults = Math.min(Math.max(amount ?? 10, 5), 15);
+        try {
+          const BRAVE_API_KEY = env.BRAVE_SEARCH_API_KEY;
+          if (!BRAVE_API_KEY) {
+            throw new Error("Brave Search API key not configured");
+          }
 
-        return searchResults;
+          const params = new URLSearchParams({
+            q: query,
+            count: maxResults.toString(),
+          });
+
+          const response = await fetch(
+            `https://api.search.brave.com/res/v1/web/search?${params.toString()}`,
+            {
+              headers: {
+                Accept: "application/json",
+                "Accept-Encoding": "gzip",
+                "X-Subscription-Token": BRAVE_API_KEY,
+              },
+            },
+          );
+
+          if (!response.ok) {
+            throw new Error(`Brave Search API error: ${response.status}`);
+          }
+
+          const data = await response.json();
+          const results: SearchResult[] = (data.web?.results ?? []).map(
+            (item: { title: string; url: string; description: string }) => ({
+              title: item.title,
+              url: item.url,
+              description: item.description,
+            }),
+          );
+
+          console.log("Brave search results:", results);
+
+          // Fetch and summarize each page
+          const summarizer = groq("openai/gpt-oss-20b");
+          const summarizedResults = await Promise.all(
+            results.map(async (result) => {
+              try {
+                const pageResponse = await fetch(result.url, {
+                  headers: {
+                    "User-Agent": "Mozilla/5.0 (compatible; DeniAI/1.0)",
+                  },
+                });
+
+                if (!pageResponse.ok) {
+                  return { ...result, summary: result.description };
+                }
+
+                const html = await pageResponse.text();
+                const $ = load(html);
+
+                // Extract text content
+                $("script, style, nav, footer, header").remove();
+                const textContent = $("body")
+                  .text()
+                  .replace(/\s+/g, " ")
+                  .trim()
+                  .slice(0, 8000); // Limit to 8000 chars
+
+                if (!textContent) {
+                  return { ...result, summary: result.description };
+                }
+
+                // Generate summary with AI
+                const { text: summary } = await generateText({
+                  model: summarizer,
+                  prompt: `Summarize the following webpage content detailed:\n\n${textContent}`,
+                  maxOutputTokens: 2000,
+                });
+
+                return { ...result, summary: summary.trim() };
+              } catch (error) {
+                console.error(`Failed to summarize ${result.url}:`, error);
+                return { ...result, summary: result.description };
+              }
+            }),
+          );
+
+          return summarizedResults;
+        } catch (error) {
+          console.error("Search tool error:", error);
+          throw new Error("Web search failed. Please try again later.");
+        }
       },
     }),
     ...(videoMode
@@ -523,6 +716,26 @@ export async function POST(req: Request) {
   };
 
   const modelMessages = await convertToModelMessages(messages);
+  const currentDate = new Date().toISOString().split("T")[0];
+  const systemPrompt = videoMode
+    ? [
+        "You are a helpful AI assistant.",
+        `Current date: ${currentDate}.`,
+        "Video mode is enabled. Always call the `video` tool exactly once using the user's message as the prompt.",
+        "Do not call other tools. After the tool returns, provide a short caption for the video.",
+      ].join(" ")
+    : [
+        "You are a helpful AI assistant.",
+        `Current date: ${currentDate}.`,
+        "Guidelines:",
+        "- Provide accurate, helpful, and concise responses.",
+        "- Use the search tool when you need current information or when the user asks about recent events.",
+        "- Always cite sources when using information from search results.",
+        "- If you're unsure about something, acknowledge the uncertainty rather than making up information.",
+        "- Format code blocks with appropriate syntax highlighting.",
+        "- Use markdown formatting for better readability.",
+      ].join(" ");
+
   const result = streamText({
     model: model,
     messages: modelMessages,
@@ -552,13 +765,7 @@ export async function POST(req: Request) {
         },
       } satisfies GoogleGenerativeAIProviderOptions,
     },
-    system: videoMode
-      ? [
-          "You are a helpful assistant that can answer questions and help with tasks.",
-          "Video mode is enabled. Always call the `video` tool exactly once using the user's message as the prompt.",
-          "Do not call other tools. After the tool returns, provide a short caption for the video.",
-        ].join(" ")
-      : "You are a helpful assistant that can answer questions and help with tasks",
+    system: systemPrompt,
   });
 
   // send sources and reasoning back to the client

@@ -25,6 +25,7 @@
     "@daveyplate/better-auth-ui": "^3.3.10",
     "@hookform/resolvers": "^5.2.2",
     "@icons-pack/react-simple-icons": "^13.8.0",
+    "@lingo.dev/compiler": "^0.1.2",
     "@neondatabase/serverless": "^1.0.2",
     "@next/third-parties": "^16.1.1",
     "@radix-ui/react-use-controllable-state": "^1.2.2",

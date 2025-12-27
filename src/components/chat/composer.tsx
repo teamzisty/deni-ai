@@ -31,6 +31,7 @@ type ComposerProps = Pick<PromptInputProps, "globalDrop" | "multiple"> & {
   value: string;
   onValueChange: (value: string) => void;
   onSubmit: (message: PromptInputMessage) => void;
+  onStop?: () => void;
   placeholder?: string;
   className?: string;
   headerClassName?: string;
@@ -48,6 +49,7 @@ export function Composer({
   value,
   onValueChange,
   onSubmit,
+  onStop,
   placeholder,
   className,
   headerClassName,
@@ -62,7 +64,8 @@ export function Composer({
   globalDrop,
   multiple,
 }: ComposerProps) {
-  const disabled = isSubmitDisabled ?? (!value && !status);
+  const disabled =
+    status === "streaming" ? false : isSubmitDisabled ?? (!value && !status);
 
   return (
     <PromptInput
@@ -104,7 +107,11 @@ export function Composer({
           ) : null}
           {tools}
         </PromptInputTools>
-        <PromptInputSubmit disabled={disabled} status={status} />
+        <PromptInputSubmit
+          disabled={disabled}
+          status={status}
+          onStop={onStop}
+        />
       </PromptInputFooter>
     </PromptInput>
   );

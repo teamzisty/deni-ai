@@ -6,31 +6,6 @@ import { normalizeMigrationPayload } from "@/lib/migration";
 import { protectedProcedure, router } from "../trpc";
 
 export const migrationRouter = router({
-  export: protectedProcedure.query(async ({ ctx }) => {
-    const rows = await ctx.db
-      .select()
-      .from(chats)
-      .where(eq(chats.uid, ctx.userId));
-
-    const payload: MigrationExport = {
-      format: "deni-ai-message-export",
-      version: 1,
-      exportedAt: new Date().toISOString(),
-      source: {
-        app: "deni-ai",
-        channel: "canary",
-      },
-      chats: rows.map((chat) => ({
-        id: chat.id,
-        title: chat.title ?? null,
-        createdAt: chat.created_at?.toISOString() ?? null,
-        updatedAt: chat.updated_at?.toISOString() ?? null,
-        messages: (chat.messages as unknown[]) ?? [],
-      })),
-    };
-
-    return payload;
-  }),
   import: protectedProcedure
     .input(
       z.object({

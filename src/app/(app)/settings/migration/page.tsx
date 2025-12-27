@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -27,34 +28,7 @@ export default function MigrationPage() {
   const [file, setFile] = useState<File | null>(null);
   const [result, setResult] = useState<ImportResult | null>(null);
 
-  const exportQuery = trpc.migration.export.useQuery(undefined, {
-    enabled: false,
-  });
   const importMutation = trpc.migration.import.useMutation();
-
-  const handleExport = async () => {
-    try {
-      const { data } = await exportQuery.refetch();
-      if (!data) {
-        toast.error("Export data not available.");
-        return;
-      }
-
-      const blob = new Blob([JSON.stringify(data, null, 2)], {
-        type: "application/json",
-      });
-      const url = URL.createObjectURL(blob);
-      const anchor = document.createElement("a");
-      anchor.href = url;
-      anchor.download = "message.json";
-      anchor.click();
-      URL.revokeObjectURL(url);
-      toast.success("message.json downloaded.");
-    } catch (error) {
-      console.error("Export failed", error);
-      toast.error("Export failed.");
-    }
-  };
 
   const handleImport = async () => {
     if (!file) {
@@ -103,27 +77,17 @@ export default function MigrationPage() {
 
       <Card className="border-border/80">
         <CardHeader>
-          <CardTitle>Step 1: Export from the old version</CardTitle>
+          <CardTitle>Step 1: Export from the migrator tool</CardTitle>
           <CardDescription>
-            Log into the legacy app and download a `message.json` file.
+            Log into the migrator app and download a `message.json` file.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="flex flex-wrap gap-2">
-            <Button
-              type="button"
-              variant="secondary"
-              onClick={handleExport}
-              disabled={exportQuery.isFetching}
-            >
-              {exportQuery.isFetching ? <Spinner className="mr-2" /> : null}
-              Download message.json
+            <Button type="button" variant="secondary" asChild>
+              <Link href="https://migrate.deniai.app">Go to migrator tool</Link>
             </Button>
           </div>
-          <p className="text-xs text-muted-foreground">
-            Open the old version in another tab and use this export button
-            there. The file will download after login.
-          </p>
         </CardContent>
       </Card>
 

@@ -1024,6 +1024,7 @@ export const PromptInputActionMenuItem = ({
 
 export type PromptInputSubmitProps = ComponentProps<typeof InputGroupButton> & {
   status?: ChatStatus;
+  onStop?: () => void;
 };
 
 export const PromptInputSubmit = ({
@@ -1031,9 +1032,12 @@ export const PromptInputSubmit = ({
   variant = "default",
   size = "icon-sm",
   status,
+  onStop,
   children,
+  onClick,
   ...props
 }: PromptInputSubmitProps) => {
+  const isStreaming = status === "streaming";
   let Icon = <CornerDownLeftIcon className="size-4" />;
 
   if (status === "submitted") {
@@ -1046,11 +1050,18 @@ export const PromptInputSubmit = ({
 
   return (
     <InputGroupButton
-      aria-label="Submit"
+      aria-label={isStreaming ? "Stop" : "Submit"}
       className={cn(className)}
       size={size}
-      type="submit"
+      type={isStreaming && onStop ? "button" : "submit"}
       variant={variant}
+      onClick={(event) => {
+        if (isStreaming && onStop) {
+          event.preventDefault();
+          onStop();
+        }
+        onClick?.(event);
+      }}
       {...props}
     >
       {children ?? Icon}

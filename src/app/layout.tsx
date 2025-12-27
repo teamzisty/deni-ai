@@ -1,3 +1,4 @@
+import { LingoProvider } from "@lingo.dev/compiler/react";
 import { GoogleAnalytics } from "@next/third-parties/google";
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
@@ -27,17 +28,19 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" suppressHydrationWarning>
-      <body
-        className={`${geistSans.variable} ${geistMono.variable} font-sans antialiased min-w-screen min-h-screen overflow-x-hidden transition-all duration-300`}
-      >
-        <Providers>
-          <div className="min-h-screen">{children}</div>
+    <LingoProvider>
+      <html lang="en" suppressHydrationWarning>
+        <body
+          className={`${geistSans.variable} ${geistMono.variable} font-sans antialiased min-w-screen min-h-screen overflow-x-hidden transition-all duration-300`}
+        >
+          <Providers>
+            <div className="min-h-screen">{children}</div>
 
-          <Toaster position="top-center" />
-        </Providers>
-      </body>
-      <GoogleAnalytics gaId="G-B5H8G73JTN" />
-    </html>
+            <Toaster position="top-center" />
+          </Providers>
+        </body>
+        <GoogleAnalytics gaId="G-B5H8G73JTN" />
+      </html>
+    </LingoProvider>
   );
 }

@@ -15,9 +15,12 @@ export const env = createEnv({
     ANTHROPIC_API_KEY: z.string(),
     GOOGLE_GENERATIVE_AI_API_KEY: z.string(),
     GROQ_API_KEY: z.string(),
+    BRAVE_SEARCH_API_KEY: z.string(),
+    TURNSTILE_SECRET_KEY: z.string(),
   },
   client: {
     NEXT_PUBLIC_BETTER_AUTH_URL: z.url(),
+    NEXT_PUBLIC_TURNSTILE_SITE_KEY: z.string(),
   },
   // If you're using Next.js < 13.4.4, you'll need to specify the runtimeEnv manually
   runtimeEnv: {
@@ -34,5 +37,8 @@ export const env = createEnv({
     ANTHROPIC_API_KEY: process.env.ANTHROPIC_API_KEY,
     GOOGLE_GENERATIVE_AI_API_KEY: process.env.GOOGLE_GENERATIVE_AI_API_KEY,
     GROQ_API_KEY: process.env.GROQ_API_KEY,
+    BRAVE_SEARCH_API_KEY: process.env.BRAVE_SEARCH_API_KEY,
+    TURNSTILE_SECRET_KEY: process.env.TURNSTILE_SECRET_KEY,
+    NEXT_PUBLIC_TURNSTILE_SITE_KEY: process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY,
   },
 });

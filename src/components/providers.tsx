@@ -6,6 +6,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import type { ReactNode } from "react";
+import { env } from "@/env";
 import { ThemePresetProvider } from "@/hooks/use-theme-preset";
 import { authClient } from "@/lib/auth-client";
 import { makeTRPCClient } from "@/lib/trpc/client";
@@ -52,6 +53,10 @@ export function Providers({ children }: { children: ReactNode }) {
                 }}
                 social={{ providers: ["google", "github"] }}
                 twoFactor={["totp"]}
+                captcha={{
+                  provider: "cloudflare-turnstile",
+                  siteKey: env.NEXT_PUBLIC_TURNSTILE_SITE_KEY,
+                }}
                 passkey
                 Link={Link}
               >
