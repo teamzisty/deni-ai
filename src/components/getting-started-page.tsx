@@ -13,6 +13,7 @@ import {
   Sun,
 } from "lucide-react";
 import { motion } from "motion/react";
+import { useExtracted } from "next-intl";
 import { useRouter } from "next/navigation";
 import { useTheme } from "next-themes";
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -33,9 +34,9 @@ import { useThemePreset } from "@/hooks/use-theme-preset";
 import { authClient } from "@/lib/auth-client";
 import { type ThemeName, themePresets } from "@/lib/theme-presets";
 
-const texts = ["Welcome", "to", "Deni", "AI"];
 const segmentMs = 1000;
-const totalMs = texts.length * segmentMs;
+const introSegments = 4;
+const totalMs = introSegments * segmentMs;
 const showSetupDelay = totalMs + 600;
 
 export default function GettingStartedPage() {
@@ -84,6 +85,8 @@ export default function GettingStartedPage() {
 }
 
 function Intro() {
+  const t = useExtracted();
+  const texts = [t("Welcome"), t("to"), t("Deni"), t("AI")];
   return (
     <div className="space-y-6">
       <div className="relative mx-auto w-full" style={{ height: 64 }}>
@@ -112,22 +115,23 @@ function SetupScreen({
   preloadName?: string;
   preloadImage?: string | null;
 }) {
+  const t = useExtracted();
   const router = useRouter();
   const steps = [
     {
       key: "account",
-      title: "Profile",
-      description: "Set up your profile",
+      title: t("Profile"),
+      description: t("Set up your profile"),
     },
     {
       key: "theme",
-      title: "Theme",
-      description: "Pick your chat vibe",
+      title: t("Theme"),
+      description: t("Pick your chat vibe"),
     },
     {
       key: "features",
-      title: "Features",
-      description: "A quick tour of what’s included",
+      title: t("Features"),
+      description: t("A quick tour of what’s included"),
     },
   ] as const;
 
@@ -156,10 +160,10 @@ function SetupScreen({
       {/* Header */}
       <div className="space-y-2 animate-fade-in">
         <h1 className="text-balance bg-gradient-to-br from-foreground to-foreground/60 bg-clip-text text-3xl font-semibold text-transparent md:text-4xl">
-          Let’s get your space ready
+          {t("Let’s get your space ready")}
         </h1>
         <p className="text-muted-foreground">
-          Let’s set up the AI chatbot for yours.
+          {t("Let’s set up the AI chatbot for yours.")}
         </p>
       </div>
 
@@ -201,7 +205,7 @@ function SetupScreen({
             disabled={!canPrev}
             onClick={() => carouselApi?.scrollPrev()}
           >
-            <ArrowLeft className="size-4" /> Previous
+            <ArrowLeft className="size-4" /> {t("Previous")}
           </Button>
           <div className="order-1 flex w-full flex-1 items-center justify-center gap-3 md:order-2">
             <Progress value={percentage} className="hidden h-1 w-64 sm:block" />
@@ -215,11 +219,11 @@ function SetupScreen({
           >
             {canNext ? (
               <>
-                Next <ArrowRight className="size-4" />
+                {t("Next")} <ArrowRight className="size-4" />
               </>
             ) : (
               <>
-                Finish <Sparkles className="size-4" />
+                {t("Finish")} <Sparkles className="size-4" />
               </>
             )}
           </Button>
@@ -236,6 +240,7 @@ function AccountStep({
   initialName?: string;
   initialImage?: string | null;
 }) {
+  const t = useExtracted();
   const { isPending, refetch } = authClient.useSession();
 
   const [name, setName] = useState(initialName ?? "");
@@ -263,9 +268,9 @@ function AccountStep({
       payload.image = avatarUrl ?? null;
       await authClient.updateUser(payload);
       refetch();
-      setSavedMsg("Saved");
+      setSavedMsg(t("Saved"));
     } catch (_e) {
-      setSavedMsg("Failed to save");
+      setSavedMsg(t("Failed to save"));
     } finally {
       setSaving(false);
       setTimeout(() => setSavedMsg(null), 2000);
@@ -275,10 +280,10 @@ function AccountStep({
   return (
     <div className="grid gap-6">
       <div className="space-y-4">
-        <Label>Profile image</Label>
+        <Label>{t("Profile image")}</Label>
         <Avatar className="size-20">
           {avatarUrl ? (
-            <AvatarImage src={avatarUrl} alt="avatar" />
+            <AvatarImage src={avatarUrl} alt={t("avatar")} />
           ) : (
             <AvatarFallback>
               {(name?.[0] ?? "D").toUpperCase()}
@@ -307,7 +312,7 @@ function AccountStep({
             onClick={() => fileInputRef.current?.click()}
             disabled={isPending || saving}
           >
-            Upload
+            {t("Upload")}
           </Button>
           {avatarUrl && (
             <Button
@@ -316,7 +321,7 @@ function AccountStep({
               onClick={() => setAvatarUrl(null)}
               disabled={isPending || saving}
             >
-              Remove
+              {t("Remove")}
             </Button>
           )}
         </div>
@@ -324,18 +329,18 @@ function AccountStep({
 
       <div className="space-y-4">
         <div className="space-y-2">
-          <Label htmlFor="display-name">Display name</Label>
+          <Label htmlFor="display-name">{t("Display name")}</Label>
           <Input
             id="display-name"
             value={name}
             onChange={(e) => setName(e.target.value)}
-            placeholder="e.g. Taro"
+            placeholder={t("e.g. Taro")}
             disabled={isPending || saving}
           />
         </div>
         <div className="flex items-center gap-3">
           <Button onClick={handleSave} disabled={isPending || saving}>
-            {saving ? "Saving..." : "Save"}
+            {saving ? t("Saving...") : t("Save")}
           </Button>
           {savedMsg && (
             <span className="text-xs text-muted-foreground">{savedMsg}</span>
@@ -347,6 +352,7 @@ function AccountStep({
 }
 
 function ThemeStep() {
+  const t = useExtracted();
   const { theme, setTheme } = useTheme();
   const { preset, setPreset } = useThemePreset();
   const activeTheme = preset;
@@ -366,11 +372,42 @@ function ThemeStep() {
     setPreset(value);
   };
 
+  const themeLabel =
+    theme === "system"
+      ? t("System")
+      : theme === "light"
+        ? t("Light")
+        : t("Dark");
+
+  const getPresetCopy = (key: ThemeName) => {
+    switch (key) {
+      case "default":
+        return { title: t("Default"), description: t("The default theme") };
+      case "t3-chat":
+        return {
+          title: t("T3 Chat"),
+          description: t("Pink & violet inspired chat vibe"),
+        };
+      case "tangerine":
+        return {
+          title: t("Tangerine"),
+          description: t("Bright, warm, and friendly"),
+        };
+      case "mono":
+        return {
+          title: t("Mono"),
+          description: t("Neutral grayscale, minimal distractions"),
+        };
+      default:
+        return { title: key, description: "" };
+    }
+  };
+
   return (
     <div className="w-full grid gap-6">
       <div className="w-full space-y-4">
         <div className="w-full flex items-center justify-between">
-          <Label>Choose theme</Label>
+          <Label>{t("Choose theme")}</Label>
           <Button
             size="sm"
             variant={"outline"}
@@ -387,28 +424,26 @@ function ThemeStep() {
             ) : (
               <Moon className="size-4" />
             )}
-            {
-              ((theme?.charAt(0).toUpperCase() as string) +
-                theme?.slice(1)) as string
-            }
+            {themeLabel}
           </Button>
         </div>
 
         <fieldset className="grid grid-cols-2 gap-4">
-          {themes.map((t) => {
-            const selected = activeTheme === t.key;
+          {themes.map((presetItem) => {
+            const selected = activeTheme === presetItem.key;
+            const copy = getPresetCopy(presetItem.key);
             return (
               <Button
-                key={t.key}
+                key={presetItem.key}
                 variant={selected ? "default" : "outline"}
                 className={`flex flex-col items-start justify-between rounded-md border-2 p-4 text-left transition h-full ${
                   selected ? "border-primary" : "border-secondary"
                 }`}
-                onClick={() => handleSelect(t.key)}
+                onClick={() => handleSelect(presetItem.key)}
                 aria-pressed={selected}
               >
                 <div className="flex w-full items-start justify-between">
-                  <h3 className="font-semibold">{t.title}</h3>
+                  <h3 className="font-semibold">{copy.title}</h3>
                   {selected && (
                     <motion.span
                       layoutId="tick"
@@ -418,9 +453,11 @@ function ThemeStep() {
                     </motion.span>
                   )}
                 </div>
-                <p className="text-sm text-muted-foreground">{t.description}</p>
+                <p className="text-sm text-muted-foreground">
+                  {copy.description}
+                </p>
                 <div className="flex w-full gap-1.5" aria-hidden>
-                  {t.preview?.map((bar, _i) => (
+                  {presetItem.preview?.map((bar, _i) => (
                     <div
                       key={bar}
                       className={`h-1.5 flex-1 rounded-full ${bar}`}
@@ -437,27 +474,36 @@ function ThemeStep() {
 }
 
 function FeaturesStep() {
+  const t = useExtracted();
   return (
     <div className="grid gap-4 sm:grid-cols-2">
       <FeatureCard
         icon={Cpu}
-        title="Latest Models"
-        description="Access cutting-edge AI like GPT-5 and Claude Sonnet 4 for powerful, intelligent conversations."
+        title={t("Latest Models")}
+        description={t(
+          "Access cutting-edge AI like GPT-5 and Claude Sonnet 4 for powerful, intelligent conversations.",
+        )}
       />
       <FeatureCard
         icon={Globe}
-        title="Internet Search"
-        description="Get real-time answers with live web search — even when built-in knowledge is limited."
+        title={t("Internet Search")}
+        description={t(
+          "Get real-time answers with live web search — even when built-in knowledge is limited.",
+        )}
       />
       <FeatureCard
         icon={ShieldCheck}
-        title="Privacy"
-        description="Protect your account with two-factor authentication and flexible data retention settings."
+        title={t("Privacy")}
+        description={t(
+          "Protect your account with two-factor authentication and flexible data retention settings.",
+        )}
       />
       <FeatureCard
         icon={Sparkles}
-        title="Feature-Rich"
-        description="Generate images, organize chats into folders, and attach files seamlessly."
+        title={t("Feature-Rich")}
+        description={t(
+          "Generate images, organize chats into folders, and attach files seamlessly.",
+        )}
       />
     </div>
   );
@@ -518,7 +564,11 @@ function _PreferenceToggle({
         <p className="text-sm font-medium">{title}</p>
         <p className="text-xs text-muted-foreground">{description}</p>
       </div>
-      <Switch id={id} defaultChecked={defaultChecked} aria-label={title} />
+      <Switch
+        id={id}
+        defaultChecked={defaultChecked}
+        aria-label={title}
+      />
     </div>
   );
 }

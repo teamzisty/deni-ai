@@ -1,5 +1,6 @@
 "use client";
 
+import { useExtracted } from "next-intl";
 import Link from "next/link";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -25,6 +26,7 @@ type ImportResult = {
 };
 
 export default function MigrationPage() {
+  const t = useExtracted();
   const [file, setFile] = useState<File | null>(null);
   const [result, setResult] = useState<ImportResult | null>(null);
 
@@ -32,7 +34,7 @@ export default function MigrationPage() {
 
   const handleImport = async () => {
     if (!file) {
-      toast.error("Select a message.json file to import.");
+      toast.error(t("Select a message.json file to import."));
       return;
     }
 
@@ -44,7 +46,7 @@ export default function MigrationPage() {
       payload = JSON.parse(text);
     } catch (error) {
       console.error("Failed to parse JSON file", error);
-      toast.error("message.json is not valid JSON.");
+      toast.error(t("message.json is not valid JSON."));
       return;
     }
 
@@ -53,14 +55,14 @@ export default function MigrationPage() {
       setResult(data);
 
       if (!data.success) {
-        toast.error(data.error || "Import failed.");
+        toast.error(data.error || t("Import failed."));
         return;
       }
 
-      toast.success("Import completed.");
+      toast.success(t("Import completed."));
     } catch (error) {
       console.error("Import failed", error);
-      toast.error("Import failed.");
+      toast.error(t("Import failed."));
     }
   };
 
@@ -68,24 +70,26 @@ export default function MigrationPage() {
     <div className="mx-auto flex w-full max-w-4xl flex-col gap-6">
       <div className="space-y-2">
         <h1 className="text-3xl font-semibold tracking-tight">
-          Message Migration
+          {t("Message Migration")}
         </h1>
         <p className="text-muted-foreground">
-          Move your chats from the old version into this canary build.
+          {t("Move your chats from the old version into this canary build.")}
         </p>
       </div>
 
       <Card className="border-border/80">
         <CardHeader>
-          <CardTitle>Step 1: Export from the migrator tool</CardTitle>
+          <CardTitle>{t("Step 1: Export from the migrator tool")}</CardTitle>
           <CardDescription>
-            Log into the migrator app and download a `message.json` file.
+            {t("Log into the migrator app and download a `message.json` file.")}
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="flex flex-wrap gap-2">
             <Button type="button" variant="secondary" asChild>
-              <Link href="https://migrate.deniai.app">Go to migrator tool</Link>
+              <Link href="https://migrate.deniai.app">
+                {t("Go to migrator tool")}
+              </Link>
             </Button>
           </div>
         </CardContent>
@@ -93,14 +97,14 @@ export default function MigrationPage() {
 
       <Card className="border-border/80">
         <CardHeader>
-          <CardTitle>Step 2: Import into canary</CardTitle>
+          <CardTitle>{t("Step 2: Import into canary")}</CardTitle>
           <CardDescription>
-            Upload the `message.json` file to create new chats.
+            {t("Upload the `message.json` file to create new chats.")}
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="message-file">message.json</Label>
+            <Label htmlFor="message-file">{t("message.json")}</Label>
             <Input
               id="message-file"
               type="file"
@@ -113,21 +117,24 @@ export default function MigrationPage() {
           </div>
           <Button onClick={handleImport} disabled={importMutation.isPending}>
             {importMutation.isPending ? <Spinner className="mr-2" /> : null}
-            Import messages
+            {t("Import messages")}
           </Button>
 
           {result ? (
             <div className="rounded-md border border-border/70 p-4 text-sm">
-              <div className="font-medium">Import summary</div>
+              <div className="font-medium">{t("Import summary")}</div>
               <div className="text-muted-foreground">
-                Chats: {result.importedChats} / Messages:{" "}
-                {result.importedMessages}
+                {t("Chats: {chats} / Messages: {messages}", {
+                  chats: result.importedChats.toLocaleString(),
+                  messages: result.importedMessages.toLocaleString(),
+                })}
               </div>
               {result.warnings?.length ? (
                 <details className="mt-3 text-xs text-muted-foreground">
                   <summary className="cursor-pointer">
-                    {result.warnings.length} warning
-                    {result.warnings.length === 1 ? "" : "s"}
+                    {t("{count, plural, one {# warning} other {# warnings}}", {
+                      count: result.warnings.length,
+                    })}
                   </summary>
                   <ul className="mt-2 list-disc space-y-1 pl-4">
                     {result.warnings.map((warning) => (

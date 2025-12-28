@@ -34,6 +34,7 @@ import {
   useRef,
   useState,
 } from "react";
+import { useExtracted } from "next-intl";
 import { Button } from "@/components/ui/button";
 import {
   Command,
@@ -286,6 +287,7 @@ export function PromptInputAttachment({
   className,
   ...props
 }: PromptInputAttachmentProps) {
+  const t = useExtracted();
   const attachments = usePromptInputAttachments();
 
   const filename = data.filename || "";
@@ -294,7 +296,8 @@ export function PromptInputAttachment({
     data.mediaType?.startsWith("image/") && data.url ? "image" : "file";
   const isImage = mediaType === "image";
 
-  const attachmentLabel = filename || (isImage ? "Image" : "Attachment");
+  const attachmentLabel =
+    filename || (isImage ? t("Image") : t("Attachment"));
 
   return (
     <PromptInputHoverCard>
@@ -313,7 +316,7 @@ export function PromptInputAttachment({
                 <>
                   {/* biome-ignore lint/performance/noImgElement: attachment previews can be blob/data URLs. */}
                   <img
-                    alt={filename || "attachment"}
+                    alt={filename || t("attachment")}
                     className="size-5 object-cover"
                     height={20}
                     src={data.url}
@@ -327,7 +330,7 @@ export function PromptInputAttachment({
               )}
             </div>
             <Button
-              aria-label="Remove attachment"
+              aria-label={t("Remove attachment")}
               className="absolute inset-0 size-5 cursor-pointer rounded p-0 opacity-0 transition-opacity group-hover:pointer-events-auto group-hover:opacity-100 [&>svg]:size-2.5"
               onClick={(e) => {
                 e.stopPropagation();
@@ -337,7 +340,7 @@ export function PromptInputAttachment({
               variant="ghost"
             >
               <XIcon />
-              <span className="sr-only">Remove</span>
+              <span className="sr-only">{t("Remove")}</span>
             </Button>
           </div>
 
@@ -350,7 +353,7 @@ export function PromptInputAttachment({
             <div className="flex max-h-96 w-96 items-center justify-center overflow-hidden rounded-md border">
               {/* biome-ignore lint/performance/noImgElement: attachment previews can be blob/data URLs. */}
               <img
-                alt={filename || "attachment preview"}
+                alt={filename || t("attachment preview")}
                 className="max-h-full max-w-full object-contain"
                 height={384}
                 src={data.url}
@@ -361,7 +364,7 @@ export function PromptInputAttachment({
           <div className="flex items-center gap-2.5">
             <div className="min-w-0 flex-1 space-y-1 px-0.5">
               <h4 className="truncate font-semibold text-sm leading-none">
-                {filename || (isImage ? "Image" : "Attachment")}
+                {filename || (isImage ? t("Image") : t("Attachment"))}
               </h4>
               {data.mediaType && (
                 <p className="truncate font-mono text-muted-foreground text-xs">
@@ -413,10 +416,12 @@ export type PromptInputActionAddAttachmentsProps = ComponentProps<
 };
 
 export const PromptInputActionAddAttachments = ({
-  label = "Add photos or files",
+  label,
   ...props
 }: PromptInputActionAddAttachmentsProps) => {
+  const t = useExtracted();
   const attachments = usePromptInputAttachments();
+  const effectiveLabel = label ?? t("Add photos or files");
 
   return (
     <DropdownMenuItem
@@ -426,7 +431,7 @@ export const PromptInputActionAddAttachments = ({
         attachments.openFileDialog();
       }}
     >
-      <ImageIcon className="mr-2 size-4" /> {label}
+      <ImageIcon className="mr-2 size-4" /> {effectiveLabel}
     </DropdownMenuItem>
   );
 };
@@ -472,6 +477,7 @@ export const PromptInput = ({
   children,
   ...props
 }: PromptInputProps) => {
+  const t = useExtracted();
   // Try to use a provider controller if present
   const controller = useOptionalPromptInputController();
   const usingProvider = !!controller;
@@ -521,7 +527,7 @@ export const PromptInput = ({
       if (incoming.length && accepted.length === 0) {
         onError?.({
           code: "accept",
-          message: "No files match the accepted types.",
+          message: t("No files match the accepted types."),
         });
         return;
       }
@@ -531,7 +537,7 @@ export const PromptInput = ({
       if (accepted.length > 0 && sized.length === 0) {
         onError?.({
           code: "max_file_size",
-          message: "All files exceed the maximum size.",
+          message: t("All files exceed the maximum size."),
         });
         return;
       }
@@ -546,7 +552,7 @@ export const PromptInput = ({
         if (typeof capacity === "number" && sized.length > capacity) {
           onError?.({
             code: "max_files",
-            message: "Too many files. Some were not added.",
+            message: t("Too many files. Some were not added."),
           });
         }
         const next: (FileUIPart & { id: string })[] = [];
@@ -779,12 +785,12 @@ export const PromptInput = ({
     <>
       <input
         accept={accept}
-        aria-label="Upload files"
+        aria-label={t("Upload files")}
         className="hidden"
         multiple={multiple}
         onChange={handleChange}
         ref={inputRef}
-        title="Upload files"
+        title={t("Upload files")}
         type="file"
       />
       <form
@@ -823,12 +829,15 @@ export type PromptInputTextareaProps = ComponentProps<
 export const PromptInputTextarea = ({
   onChange,
   className,
-  placeholder = "What would you like to know?",
+  placeholder,
   ...props
 }: PromptInputTextareaProps) => {
+  const t = useExtracted();
   const controller = useOptionalPromptInputController();
   const attachments = usePromptInputAttachments();
   const [isComposing, setIsComposing] = useState(false);
+  const effectivePlaceholder =
+    placeholder ?? t("What would you like to know?");
 
   const handleKeyDown: KeyboardEventHandler<HTMLTextAreaElement> = (e) => {
     if (e.key === "Enter") {
@@ -910,7 +919,7 @@ export const PromptInputTextarea = ({
       onCompositionStart={() => setIsComposing(true)}
       onKeyDown={handleKeyDown}
       onPaste={handlePaste}
-      placeholder={placeholder}
+      placeholder={effectivePlaceholder}
       {...props}
       {...controlledProps}
     />
@@ -1037,6 +1046,7 @@ export const PromptInputSubmit = ({
   onClick,
   ...props
 }: PromptInputSubmitProps) => {
+  const t = useExtracted();
   const isStreaming = status === "streaming";
   let Icon = <CornerDownLeftIcon className="size-4" />;
 
@@ -1050,7 +1060,7 @@ export const PromptInputSubmit = ({
 
   return (
     <InputGroupButton
-      aria-label={isStreaming ? "Stop" : "Submit"}
+      aria-label={isStreaming ? t("Stop") : t("Submit")}
       className={cn(className)}
       size={size}
       type={isStreaming && onStop ? "button" : "submit"}

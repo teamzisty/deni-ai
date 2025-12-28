@@ -2,6 +2,7 @@
 
 import { type LucideIcon, XIcon } from "lucide-react";
 import type { ComponentProps, HTMLAttributes } from "react";
+import { useExtracted } from "next-intl";
 import { Button } from "@/components/ui/button";
 import {
   Tooltip,
@@ -58,9 +59,14 @@ export const ArtifactClose = ({
     {...props}
   >
     {children ?? <XIcon className="size-4" />}
-    <span className="sr-only">Close</span>
+    <ArtifactCloseLabel />
   </Button>
 );
+
+const ArtifactCloseLabel = () => {
+  const t = useExtracted();
+  return <span className="sr-only">{t("Close")}</span>;
+};
 
 export type ArtifactTitleProps = HTMLAttributes<HTMLParagraphElement>;
 

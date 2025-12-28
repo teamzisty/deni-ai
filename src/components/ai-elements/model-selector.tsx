@@ -1,4 +1,5 @@
 import type { ComponentProps, ReactNode } from "react";
+import { useExtracted } from "next-intl";
 import {
   Command,
   CommandDialog,
@@ -37,16 +38,20 @@ export type ModelSelectorContentProps = ComponentProps<typeof DialogContent> & {
 export const ModelSelectorContent = ({
   className,
   children,
-  title = "Model Selector",
+  title,
   ...props
-}: ModelSelectorContentProps) => (
-  <DialogContent className={cn("p-0", className)} {...props}>
-    <DialogTitle className="sr-only">{title}</DialogTitle>
-    <Command className="**:data-[slot=command-input-wrapper]:h-auto">
-      {children}
-    </Command>
-  </DialogContent>
-);
+}: ModelSelectorContentProps) => {
+  const t = useExtracted();
+  const resolvedTitle = title ?? t("Model Selector");
+  return (
+    <DialogContent className={cn("p-0", className)} {...props}>
+      <DialogTitle className="sr-only">{resolvedTitle}</DialogTitle>
+      <Command className="**:data-[slot=command-input-wrapper]:h-auto">
+        {children}
+      </Command>
+    </DialogContent>
+  );
+};
 
 export type ModelSelectorDialogProps = ComponentProps<typeof CommandDialog>;
 
@@ -169,17 +174,20 @@ export const ModelSelectorLogo = ({
   provider,
   className,
   ...props
-}: ModelSelectorLogoProps) => (
-  // biome-ignore lint/performance/noImgElement: SVG logos are tiny and already optimized.
-  <img
-    {...props}
-    alt={`${provider} logo`}
-    className={cn("size-3 dark:invert", className)}
-    height={12}
-    src={`https://models.dev/logos/${provider}.svg`}
-    width={12}
-  />
-);
+}: ModelSelectorLogoProps) => {
+  const t = useExtracted();
+  return (
+    // biome-ignore lint/performance/noImgElement: SVG logos are tiny and already optimized.
+    <img
+      {...props}
+      alt={t("{provider} logo", { provider })}
+      className={cn("size-3 dark:invert", className)}
+      height={12}
+      src={`https://models.dev/logos/${provider}.svg`}
+      width={12}
+    />
+  );
+};
 
 export type ModelSelectorLogoGroupProps = ComponentProps<"div">;
 

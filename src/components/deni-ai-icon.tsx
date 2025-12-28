@@ -1,6 +1,9 @@
 import type React from "react";
+import { useExtracted } from "next-intl";
 
 const DeniAIIcon: React.FC<React.SVGProps<SVGSVGElement>> = (props) => {
+  const t = useExtracted();
+
   return (
     <svg
       x="0px"
@@ -11,7 +14,7 @@ const DeniAIIcon: React.FC<React.SVGProps<SVGSVGElement>> = (props) => {
       xmlSpace="preserve"
       {...props}
     >
-      <title>Deni AI Icon</title>
+      <title>{t("Deni AI Icon")}</title>
       <path
         fill="currentColor"
         stroke="none"

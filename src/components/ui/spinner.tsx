@@ -1,12 +1,14 @@
 import { Loader2Icon } from "lucide-react";
+import { useExtracted } from "next-intl";
 
 import { cn } from "@/lib/utils";
 
 function Spinner({ className, ...props }: React.ComponentProps<"svg">) {
+  const t = useExtracted();
   return (
     <Loader2Icon
       role="status"
-      aria-label="Loading"
+      aria-label={t("Loading")}
       className={cn("size-4 animate-spin", className)}
       {...props}
     />

@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 import type { ComponentProps, ReactNode } from "react";
 import { isValidElement } from "react";
+import { useExtracted } from "next-intl";
 import { Badge } from "@/components/ui/badge";
 import {
   Collapsible,
@@ -36,15 +37,18 @@ export type ToolHeaderProps = {
   className?: string;
 };
 
-const getStatusBadge = (status: ToolUIPart["state"]) => {
+const getStatusBadge = (
+  t: ReturnType<typeof useExtracted>,
+  status: ToolUIPart["state"],
+) => {
   const labels: Record<ToolUIPart["state"], string> = {
-    "input-streaming": "Pending",
-    "input-available": "Running",
-    "approval-requested": "Awaiting Approval",
-    "approval-responded": "Responded",
-    "output-available": "Completed",
-    "output-error": "Error",
-    "output-denied": "Denied",
+    "input-streaming": t("Pending"),
+    "input-available": t("Running"),
+    "approval-requested": t("Awaiting Approval"),
+    "approval-responded": t("Responded"),
+    "output-available": t("Completed"),
+    "output-error": t("Error"),
+    "output-denied": t("Denied"),
   };
 
   const icons: Record<ToolUIPart["state"], ReactNode> = {
@@ -71,24 +75,27 @@ export const ToolHeader = ({
   type,
   state,
   ...props
-}: ToolHeaderProps) => (
-  <CollapsibleTrigger
-    className={cn(
-      "flex w-full items-center justify-between gap-4 p-3",
-      className,
-    )}
-    {...props}
-  >
-    <div className="flex items-center gap-2">
-      <WrenchIcon className="size-4 text-muted-foreground" />
-      <span className="font-medium text-sm">
-        {title ?? type.split("-").slice(1).join("-")}
-      </span>
-      {getStatusBadge(state)}
-    </div>
-    <ChevronDownIcon className="size-4 text-muted-foreground transition-transform group-data-[state=open]:rotate-180" />
-  </CollapsibleTrigger>
-);
+}: ToolHeaderProps) => {
+  const t = useExtracted();
+  return (
+    <CollapsibleTrigger
+      className={cn(
+        "flex w-full items-center justify-between gap-4 p-3",
+        className,
+      )}
+      {...props}
+    >
+      <div className="flex items-center gap-2">
+        <WrenchIcon className="size-4 text-muted-foreground" />
+        <span className="font-medium text-sm">
+          {title ?? type.split("-").slice(1).join("-")}
+        </span>
+        {getStatusBadge(t, state)}
+      </div>
+      <ChevronDownIcon className="size-4 text-muted-foreground transition-transform group-data-[state=open]:rotate-180" />
+    </CollapsibleTrigger>
+  );
+};
 
 export type ToolContentProps = ComponentProps<typeof CollapsibleContent>;
 
@@ -106,16 +113,19 @@ export type ToolInputProps = ComponentProps<"div"> & {
   input: ToolUIPart["input"];
 };
 
-export const ToolInput = ({ className, input, ...props }: ToolInputProps) => (
-  <div className={cn("space-y-2 overflow-hidden p-4", className)} {...props}>
-    <h4 className="font-medium text-muted-foreground text-xs uppercase tracking-wide">
-      Parameters
-    </h4>
-    <div className="rounded-md bg-muted/50">
-      <CodeBlock code={JSON.stringify(input, null, 2)} language="json" />
+export const ToolInput = ({ className, input, ...props }: ToolInputProps) => {
+  const t = useExtracted();
+  return (
+    <div className={cn("space-y-2 overflow-hidden p-4", className)} {...props}>
+      <h4 className="font-medium text-muted-foreground text-xs uppercase tracking-wide">
+        {t("Parameters")}
+      </h4>
+      <div className="rounded-md bg-muted/50">
+        <CodeBlock code={JSON.stringify(input, null, 2)} language="json" />
+      </div>
     </div>
-  </div>
-);
+  );
+};
 
 export type ToolOutputProps = ComponentProps<"div"> & {
   output: ToolUIPart["output"];
@@ -128,6 +138,7 @@ export const ToolOutput = ({
   errorText,
   ...props
 }: ToolOutputProps) => {
+  const t = useExtracted();
   if (!(output || errorText)) {
     return null;
   }
@@ -145,7 +156,7 @@ export const ToolOutput = ({
   return (
     <div className={cn("space-y-2 p-4", className)} {...props}>
       <h4 className="font-medium text-muted-foreground text-xs uppercase tracking-wide">
-        {errorText ? "Error" : "Result"}
+        {errorText ? t("Error") : t("Result")}
       </h4>
       <div
         className={cn(

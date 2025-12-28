@@ -10,6 +10,7 @@ import {
   useRef,
   useState,
 } from "react";
+import { useExtracted } from "next-intl";
 import { type BundledLanguage, codeToHtml, type ShikiTransformer } from "shiki";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -143,12 +144,13 @@ export const CodeBlockCopyButton = ({
   className,
   ...props
 }: CodeBlockCopyButtonProps) => {
+  const t = useExtracted();
   const [isCopied, setIsCopied] = useState(false);
   const { code } = useContext(CodeBlockContext);
 
   const copyToClipboard = async () => {
     if (typeof window === "undefined" || !navigator?.clipboard?.writeText) {
-      onError?.(new Error("Clipboard API not available"));
+      onError?.(new Error(t("Clipboard API not available")));
       return;
     }
 

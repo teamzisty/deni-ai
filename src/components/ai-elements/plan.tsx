@@ -3,6 +3,7 @@
 import { ChevronsUpDownIcon } from "lucide-react";
 import type { ComponentProps } from "react";
 import { createContext, useContext } from "react";
+import { useExtracted } from "next-intl";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -136,7 +137,12 @@ export const PlanTrigger = ({ className, ...props }: PlanTriggerProps) => (
       {...props}
     >
       <ChevronsUpDownIcon className="size-4" />
-      <span className="sr-only">Toggle plan</span>
+      <PlanToggleLabel />
     </Button>
   </CollapsibleTrigger>
 );
+
+const PlanToggleLabel = () => {
+  const t = useExtracted();
+  return <span className="sr-only">{t("Toggle plan")}</span>;
+};

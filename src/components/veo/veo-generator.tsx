@@ -1,5 +1,6 @@
 "use client";
 
+import { useExtracted } from "next-intl";
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
   Conversation,
@@ -53,6 +54,7 @@ type ImagePayload = {
 };
 
 export function VeoGenerator() {
+  const t = useExtracted();
   const [prompt, setPrompt] = useState("");
   const [negativePrompt, setNegativePrompt] = useState("");
   const [submittedPrompt, setSubmittedPrompt] = useState<string | null>(null);
@@ -69,7 +71,7 @@ export function VeoGenerator() {
     durationSeconds: VeoDurationSeconds;
     seed: string | null;
   } | null>(null);
-  const [model, setModel] = useState<VeoModel>(veoModels[0].value);
+  const [model, setModel] = useState<VeoModel>(veoModels[0]);
   const [aspectRatio, setAspectRatio] = useState<VeoAspectRatio>("16:9");
   const [resolution, setResolution] = useState<VeoResolution>("720p");
   const [durationSeconds, setDurationSeconds] = useState<VeoDurationSeconds>(6);
@@ -87,6 +89,22 @@ export function VeoGenerator() {
   const effectiveDuration = useMemo(
     () => (resolution === "1080p" ? 8 : durationSeconds),
     [resolution, durationSeconds],
+  );
+
+  const modelOptions = useMemo(
+    () => [
+      {
+        value: "veo-3.1-generate-preview",
+        label: t("Veo 3.1"),
+        description: t("Highest quality output."),
+      },
+      {
+        value: "veo-3.1-fast-generate-preview",
+        label: t("Veo 3.1 Fast"),
+        description: t("Lower latency output."),
+      },
+    ],
+    [t],
   );
 
   const isBusy = status === "submitting" || status === "polling";
@@ -113,14 +131,14 @@ export function VeoGenerator() {
     }
 
     if (!file.type.startsWith("image/")) {
-      setError("Please select an image file.");
+      setError(t("Please select an image file."));
       event.target.value = "";
       setImage(null);
       return;
     }
 
     if (file.size > MAX_IMAGE_BYTES) {
-      setError("Image file is too large. Max size is 20MB.");
+      setError(t("Image file is too large. Max size is 20MB."));
       event.target.value = "";
       setImage(null);
       return;
@@ -129,12 +147,12 @@ export function VeoGenerator() {
     const reader = new FileReader();
     reader.onload = () => {
       if (typeof reader.result !== "string") {
-        setError("Unable to read image file.");
+        setError(t("Unable to read image file."));
         return;
       }
       const [, base64] = reader.result.split(",", 2);
       if (!base64) {
-        setError("Unable to read image file.");
+        setError(t("Unable to read image file."));
         return;
       }
       setImage({
@@ -146,7 +164,7 @@ export function VeoGenerator() {
       });
     };
     reader.onerror = () => {
-      setError("Unable to read image file.");
+      setError(t("Unable to read image file."));
     };
     reader.readAsDataURL(file);
   };
@@ -188,7 +206,7 @@ export function VeoGenerator() {
       };
 
       if (!response.ok) {
-        throw new Error(data?.error || "Failed to check video status.");
+        throw new Error(data?.error || t("Failed to check video status."));
       }
 
       if (data.done) {
@@ -197,7 +215,7 @@ export function VeoGenerator() {
         }
 
         if (!data.videoUri) {
-          throw new Error("Video generation finished without a file.");
+          throw new Error(t("Video generation finished without a file."));
         }
 
         const proxyUrl = `/api/veo/file?uri=${encodeURIComponent(
@@ -211,7 +229,7 @@ export function VeoGenerator() {
       await new Promise((resolve) => setTimeout(resolve, POLL_INTERVAL_MS));
     }
 
-    throw new Error("Timed out waiting for the video.");
+    throw new Error(t("Timed out waiting for the video."));
   };
 
   const handleGenerate = async () => {
@@ -221,14 +239,14 @@ export function VeoGenerator() {
 
     const promptValue = prompt.trim();
     if (!promptValue) {
-      setError("Prompt is required.");
+      setError(t("Prompt is required."));
       return;
     }
 
     const seedText = seed.trim();
     const seedValue = seedText ? Number(seedText) : undefined;
     if (seedValue !== undefined && Number.isNaN(seedValue)) {
-      setError("Seed must be a number.");
+      setError(t("Seed must be a number."));
       return;
     }
 
@@ -273,11 +291,11 @@ export function VeoGenerator() {
       };
 
       if (!response.ok) {
-        throw new Error(data?.error || "Video generation failed.");
+        throw new Error(data?.error || t("Video generation failed."));
       }
 
       if (!data.operationName) {
-        throw new Error("Missing operation name in response.");
+        throw new Error(t("Missing operation name in response."));
       }
 
       setOperationName(data.operationName);
@@ -287,24 +305,24 @@ export function VeoGenerator() {
         return;
       }
       setStatus("error");
-      setError(err instanceof Error ? err.message : "Unexpected error.");
+      setError(err instanceof Error ? err.message : t("Unexpected error."));
     }
   };
 
   const statusLabel = useMemo(() => {
     switch (status) {
       case "submitting":
-        return "Submitting";
+        return t("Submitting");
       case "polling":
-        return "Generating";
+        return t("Generating");
       case "done":
-        return "Complete";
+        return t("Complete");
       case "error":
-        return "Failed";
+        return t("Failed");
       default:
-        return submittedPrompt ? "Standing by" : "Ready";
+        return submittedPrompt ? t("Standing by") : t("Ready");
     }
-  }, [status, submittedPrompt]);
+  }, [status, submittedPrompt, t]);
 
   const statusVariant =
     status === "error"
@@ -323,18 +341,22 @@ export function VeoGenerator() {
     seed: seed.trim() || null,
   };
   const modelLabel =
-    veoModels.find((item) => item.value === settingsSnapshot.model)?.label ??
+    modelOptions.find((item) => item.value === settingsSnapshot.model)?.label ??
     settingsSnapshot.model;
 
   return (
     <div className="mx-auto flex w-full max-w-6xl flex-col gap-6">
       <div className="space-y-2">
         <div className="flex flex-wrap items-center gap-2">
-          <h1 className="text-3xl font-semibold tracking-tight">Veo Studio</h1>
-          <Badge variant="secondary">Veo 3.1 Preview</Badge>
+          <h1 className="text-3xl font-semibold tracking-tight">
+            {t("Veo Studio")}
+          </h1>
+          <Badge variant="secondary">{t("Veo 3.1 Preview")}</Badge>
         </div>
         <p className="text-muted-foreground">
-          Generate short videos with Veo 3.1. Prompts can include audio cues.
+          {t(
+            "Generate short videos with Veo 3.1. Prompts can include audio cues.",
+          )}
         </p>
       </div>
 
@@ -342,9 +364,9 @@ export function VeoGenerator() {
         <Card className="flex min-h-[640px] flex-col border-border/80">
           <CardHeader className="flex flex-row items-start justify-between gap-3">
             <div className="space-y-1">
-              <CardTitle>Veo chat</CardTitle>
+              <CardTitle>{t("Veo chat")}</CardTitle>
               <p className="text-sm text-muted-foreground">
-                Talk through your idea and generate a short video reply.
+                {t("Talk through your idea and generate a short video reply.")}
               </p>
             </div>
             <Badge variant={statusVariant}>{statusLabel}</Badge>
@@ -354,8 +376,10 @@ export function VeoGenerator() {
               <ConversationContent>
                 {!submittedPrompt && (
                   <ConversationEmptyState
-                    title="Start a prompt"
-                    description="Describe the scene to generate a video response."
+                    title={t("Start a prompt")}
+                    description={t(
+                      "Describe the scene to generate a video response.",
+                    )}
                   />
                 )}
 
@@ -367,7 +391,7 @@ export function VeoGenerator() {
                         {submittedNegativePrompt && (
                           <div className="rounded-md border border-border/60 bg-background/80 px-3 py-2 text-xs">
                             <p className="text-xs font-medium text-foreground">
-                              Negative prompt
+                              {t("Negative prompt")}
                             </p>
                             <p className="text-muted-foreground">
                               {submittedNegativePrompt}
@@ -379,7 +403,7 @@ export function VeoGenerator() {
                             {/* biome-ignore lint/performance/noImgElement: preview URLs can be blob/data. */}
                             <img
                               src={submittedImage.previewUrl}
-                              alt="Input preview"
+                              alt={t("Input preview")}
                               className="h-auto w-full object-cover"
                             />
                           </div>
@@ -391,7 +415,7 @@ export function VeoGenerator() {
                       <MessageContent className="gap-3 group-[.is-assistant]:rounded-lg group-[.is-assistant]:border group-[.is-assistant]:border-border/60 group-[.is-assistant]:bg-background/90 group-[.is-assistant]:px-4 group-[.is-assistant]:py-3">
                         {status === "error" && error ? (
                           <Alert className="border-destructive/50 bg-destructive/10 text-destructive">
-                            <AlertTitle>Error</AlertTitle>
+                            <AlertTitle>{t("Error")}</AlertTitle>
                             <AlertDescription>{error}</AlertDescription>
                           </Alert>
                         ) : videoUrl ? (
@@ -406,7 +430,7 @@ export function VeoGenerator() {
                             </div>
                             <Button asChild variant="outline">
                               <a href={videoUrl} download>
-                                Download video
+                                {t("Download video")}
                               </a>
                             </Button>
                           </div>
@@ -416,19 +440,21 @@ export function VeoGenerator() {
                               {isBusy && <Spinner className="size-4" />}
                               <span>
                                 {status === "submitting"
-                                  ? "Submitting request..."
+                                  ? t("Submitting request...")
                                   : status === "polling"
-                                    ? "Generating video..."
+                                    ? t("Generating video...")
                                     : status === "done"
-                                      ? "Video ready."
+                                      ? t("Video ready.")
                                       : status === "error"
-                                        ? "Generation failed."
-                                        : "Ready for another prompt."}
+                                        ? t("Generation failed.")
+                                        : t("Ready for another prompt.")}
                               </span>
                             </div>
                             {operationName && (
                               <p className="break-words text-xs">
-                                Operation: {operationName}
+                                {t("Operation: {name}", {
+                                  name: operationName,
+                                })}
                               </p>
                             )}
                           </div>
@@ -447,7 +473,9 @@ export function VeoGenerator() {
                           <Badge variant="outline">{modelLabel}</Badge>
                           {settingsSnapshot.seed && (
                             <Badge variant="outline">
-                              Seed {settingsSnapshot.seed}
+                              {t("Seed {seed}", {
+                                seed: settingsSnapshot.seed,
+                              })}
                             </Badge>
                           )}
                         </div>
@@ -461,7 +489,7 @@ export function VeoGenerator() {
 
             {error && status !== "error" && (
               <Alert className="border-destructive/50 bg-destructive/10 text-destructive">
-                <AlertTitle>Error</AlertTitle>
+                <AlertTitle>{t("Error")}</AlertTitle>
                 <AlertDescription>{error}</AlertDescription>
               </Alert>
             )}
@@ -470,24 +498,26 @@ export function VeoGenerator() {
               <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
                 <div className="flex-1 space-y-2">
                   <Label className="sr-only" htmlFor="veo-prompt">
-                    Prompt
+                    {t("Prompt")}
                   </Label>
                   <Textarea
                     id="veo-prompt"
                     value={prompt}
                     onChange={(event) => setPrompt(event.target.value)}
-                    placeholder="Describe the scene, camera movement, lighting, and any audio cues."
+                    placeholder={t(
+                      "Describe the scene, camera movement, lighting, and any audio cues.",
+                    )}
                     className="min-h-[110px]"
                   />
                 </div>
                 <div className="flex items-center gap-2">
                   <Button onClick={handleGenerate} disabled={isBusy}>
                     {isBusy && <Spinner className="mr-2" />}
-                    Send
+                    {t("Send")}
                   </Button>
                   {isBusy && (
                     <Button variant="ghost" onClick={handleCancel}>
-                      Cancel
+                      {t("Cancel")}
                     </Button>
                   )}
                 </div>
@@ -498,35 +528,37 @@ export function VeoGenerator() {
 
         <Card className="border-border/80">
           <CardHeader>
-            <CardTitle>Generation settings</CardTitle>
+            <CardTitle>{t("Generation settings")}</CardTitle>
           </CardHeader>
           <CardContent className="space-y-5">
             <div className="space-y-2">
-              <Label htmlFor="veo-negative">Negative prompt</Label>
+              <Label htmlFor="veo-negative">{t("Negative prompt")}</Label>
               <Textarea
                 id="veo-negative"
                 value={negativePrompt}
                 onChange={(event) => setNegativePrompt(event.target.value)}
-                placeholder="cartoon, low quality, blurry"
+                placeholder={t("cartoon, low quality, blurry")}
                 className="min-h-[72px]"
               />
             </div>
 
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="space-y-2">
-                <Label>Model</Label>
+                <Label>{t("Model")}</Label>
                 <Select
                   value={model}
                   onValueChange={(value) => setModel(value as VeoModel)}
                 >
                   <SelectTrigger className="w-full">
-                    <SelectValue placeholder="Select model" />
+                    <SelectValue placeholder={t("Select model")} />
                   </SelectTrigger>
                   <SelectContent>
-                    {veoModels.map((option) => (
+                    {modelOptions.map((option) => (
                       <SelectItem key={option.value} value={option.value}>
                         <span className="flex flex-col">
-                          <span className="font-medium">{option.label}</span>
+                          <span className="font-medium">
+                            {option.label}
+                          </span>
                           <span className="text-xs text-muted-foreground">
                             {option.description}
                           </span>
@@ -538,7 +570,7 @@ export function VeoGenerator() {
               </div>
 
               <div className="space-y-2">
-                <Label>Aspect ratio</Label>
+                <Label>{t("Aspect ratio")}</Label>
                 <Select
                   value={aspectRatio}
                   onValueChange={(value) =>
@@ -546,7 +578,7 @@ export function VeoGenerator() {
                   }
                 >
                   <SelectTrigger className="w-full">
-                    <SelectValue placeholder="Select ratio" />
+                    <SelectValue placeholder={t("Select ratio")} />
                   </SelectTrigger>
                   <SelectContent>
                     {veoAspectRatios.map((ratio) => (
@@ -561,7 +593,7 @@ export function VeoGenerator() {
 
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="space-y-2">
-                <Label>Resolution</Label>
+                <Label>{t("Resolution")}</Label>
                 <Select
                   value={resolution}
                   onValueChange={(value) =>
@@ -569,7 +601,7 @@ export function VeoGenerator() {
                   }
                 >
                   <SelectTrigger className="w-full">
-                    <SelectValue placeholder="Select resolution" />
+                    <SelectValue placeholder={t("Select resolution")} />
                   </SelectTrigger>
                   <SelectContent>
                     {veoResolutions.map((res) => (
@@ -581,13 +613,13 @@ export function VeoGenerator() {
                 </Select>
                 {resolution === "1080p" && (
                   <p className="text-xs text-muted-foreground">
-                    1080p output requires 8s duration.
+                    {t("1080p output requires 8s duration.")}
                   </p>
                 )}
               </div>
 
               <div className="space-y-2">
-                <Label>Duration</Label>
+                <Label>{t("Duration")}</Label>
                 <Select
                   value={String(effectiveDuration)}
                   onValueChange={(value) => {
@@ -600,7 +632,7 @@ export function VeoGenerator() {
                   disabled={resolution === "1080p"}
                 >
                   <SelectTrigger className="w-full">
-                    <SelectValue placeholder="Select duration" />
+                    <SelectValue placeholder={t("Select duration")} />
                   </SelectTrigger>
                   <SelectContent>
                     {veoDurations.map((duration) => (
@@ -619,18 +651,18 @@ export function VeoGenerator() {
 
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="space-y-2">
-                <Label htmlFor="veo-seed">Seed (optional)</Label>
+                <Label htmlFor="veo-seed">{t("Seed (optional)")}</Label>
                 <Input
                   id="veo-seed"
                   value={seed}
                   onChange={(event) => setSeed(event.target.value)}
-                  placeholder="e.g. 42"
+                  placeholder={t("e.g. 42")}
                   inputMode="numeric"
                 />
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="veo-image">Image (optional)</Label>
+                <Label htmlFor="veo-image">{t("Image (optional)")}</Label>
                 <Input
                   ref={fileInputRef}
                   id="veo-image"
@@ -652,7 +684,7 @@ export function VeoGenerator() {
                       size="sm"
                       onClick={handleClearImage}
                     >
-                      Remove
+                      {t("Remove")}
                     </Button>
                   </div>
                 )}
@@ -661,12 +693,12 @@ export function VeoGenerator() {
 
             {image?.previewUrl && (
               <div className="space-y-2">
-                <Label>Input preview</Label>
+                <Label>{t("Input preview")}</Label>
                 <div className="overflow-hidden rounded-lg border border-border/70 bg-muted/30">
                   {/* biome-ignore lint/performance/noImgElement: preview URLs can be blob/data. */}
                   <img
                     src={image.previewUrl}
-                    alt="Input preview"
+                    alt={t("Input preview")}
                     className="h-auto w-full object-cover"
                   />
                 </div>

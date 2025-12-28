@@ -7,19 +7,11 @@ export type BillingPlanId =
 export type BillingPlan = {
   id: BillingPlanId;
   lookupKey: string;
-  name: string;
-  tagline: string;
-  highlights: string[];
-  badge?: string;
 };
 
 export type ClientPlan = {
   id: BillingPlanId;
   lookupKey: string;
-  name: string;
-  tagline: string;
-  highlights: string[];
-  badge?: string;
   priceId: string | null;
   mode: "subscription" | "payment" | null;
   amount: number | null;
@@ -32,50 +24,18 @@ export const billingPlans: BillingPlan[] = [
   {
     id: "pro_monthly",
     lookupKey: "pro_monthly",
-    name: "Monthly",
-    tagline: "Get unbelievable usage limits",
-    highlights: [
-      "Get 4x usage for basic models",
-      "Get 10x usage for premium models",
-      "With priority support",
-      "For trying Deni AI",
-    ],
   },
   {
     id: "pro_yearly",
     lookupKey: "pro_yearly",
-    name: "Yearly",
-    tagline: "Incredible deal",
-    highlights: [
-      "Get 4x usage for basic models",
-      "Get 10x usage for premium models",
-      "With priority support",
-      "Most cost-effective",
-    ],
   },
   {
     id: "max_monthly",
     lookupKey: "max_monthly",
-    name: "Monthly",
-    tagline: "Great deals even for power users",
-    highlights: [
-      "Get 10x usage for basic model",
-      "Get 20x usage for premium models",
-      "Usage-based billing (coming soon)",
-      "For power users",
-    ],
   },
   {
     id: "max_yearly",
     lookupKey: "max_yearly",
-    name: "Yearly",
-    tagline: "You like us, and we like you too!",
-    highlights: [
-      "Get 10x usage for basic model",
-      "Get 20x usage for premium models",
-      "Usage-based billing (coming soon)",
-      "For power users",
-    ],
   },
 ];
 

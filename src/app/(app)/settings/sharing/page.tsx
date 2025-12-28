@@ -11,6 +11,7 @@ import {
   Users,
 } from "lucide-react";
 import Link from "next/link";
+import { useExtracted } from "next-intl";
 import { useState } from "react";
 import { toast } from "sonner";
 import {
@@ -64,13 +65,14 @@ function ShareItem({
     allowFork: boolean,
   ) => void;
 }) {
+  const t = useExtracted();
   const [copied, setCopied] = useState(false);
   const shareUrl = `${typeof window !== "undefined" ? window.location.origin : ""}/shared/${share.id}`;
 
   const handleCopy = async () => {
     await navigator.clipboard.writeText(shareUrl);
     setCopied(true);
-    toast.success("Link copied");
+    toast.success(t("Link copied"));
     setTimeout(() => setCopied(false), 2000);
   };
 
@@ -91,7 +93,7 @@ function ShareItem({
             href={`/chat/${chat.id}`}
             className="font-medium truncate hover:underline"
           >
-            {chat.title || "Untitled"}
+            {chat.title || t("Untitled")}
           </Link>
           <TooltipProvider>
             <Tooltip>
@@ -108,20 +110,21 @@ function ShareItem({
                     {share.visibility === "public" ? (
                       <>
                         <Globe className="size-3 mr-1" />
-                        Public
+                        {t("Public")}
                       </>
                     ) : (
                       <>
                         <Lock className="size-3 mr-1" />
-                        Private
+                        {t("Private")}
                       </>
                     )}
                   </Badge>
                 </button>
               </TooltipTrigger>
               <TooltipContent>
-                Click to switch to{" "}
-                {share.visibility === "public" ? "Private" : "Public"}
+                {share.visibility === "public"
+                  ? t("Click to switch to Private")
+                  : t("Click to switch to Public")}
               </TooltipContent>
             </Tooltip>
           </TooltipProvider>
@@ -137,12 +140,14 @@ function ShareItem({
                     variant={share.allowFork ? "outline" : "secondary"}
                     className="shrink-0 cursor-pointer hover:opacity-80 transition-opacity"
                   >
-                    {share.allowFork ? "Fork OK" : "No Fork"}
+                    {share.allowFork ? t("Fork OK") : t("No Fork")}
                   </Badge>
                 </button>
               </TooltipTrigger>
               <TooltipContent>
-                Click to {share.allowFork ? "disable" : "enable"} forking
+                {share.allowFork
+                  ? t("Click to disable forking")
+                  : t("Click to enable forking")}
               </TooltipContent>
             </Tooltip>
           </TooltipProvider>
@@ -155,7 +160,9 @@ function ShareItem({
           {share.visibility === "private" && recipients.length > 0 && (
             <span className="flex items-center gap-1">
               <Users className="size-3" />
-              {recipients.length} user{recipients.length !== 1 ? "s" : ""}
+              {t("{count, plural, one {# user} other {# users}}", {
+                count: recipients.length,
+              })}
             </span>
           )}
         </div>
@@ -173,7 +180,7 @@ function ShareItem({
                 )}
               </Button>
             </TooltipTrigger>
-            <TooltipContent>Copy link</TooltipContent>
+            <TooltipContent>{t("Copy link")}</TooltipContent>
           </Tooltip>
         </TooltipProvider>
 
@@ -186,7 +193,7 @@ function ShareItem({
                 </Link>
               </Button>
             </TooltipTrigger>
-            <TooltipContent>Open shared view</TooltipContent>
+            <TooltipContent>{t("Open shared view")}</TooltipContent>
           </Tooltip>
         </TooltipProvider>
 
@@ -202,7 +209,7 @@ function ShareItem({
                 <Trash2 className="size-4" />
               </Button>
             </TooltipTrigger>
-            <TooltipContent>Revoke access</TooltipContent>
+            <TooltipContent>{t("Revoke access")}</TooltipContent>
           </Tooltip>
         </TooltipProvider>
       </div>
@@ -211,6 +218,7 @@ function ShareItem({
 }
 
 export default function SharingSettingsPage() {
+  const t = useExtracted();
   const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
   const utils = trpc.useUtils();
 
@@ -220,7 +228,7 @@ export default function SharingSettingsPage() {
   const updateShare = trpc.share.createShare.useMutation({
     onSuccess: () => {
       utils.share.getMyShares.invalidate();
-      toast.success("Settings updated");
+      toast.success(t("Settings updated"));
     },
     onError: (error) => {
       toast.error(error.message);
@@ -230,7 +238,7 @@ export default function SharingSettingsPage() {
   const deleteShare = trpc.share.deleteShare.useMutation({
     onSuccess: () => {
       utils.share.getMyShares.invalidate();
-      toast.success("Share revoked");
+      toast.success(t("Share revoked"));
       setDeleteTarget(null);
     },
     onError: (error) => {
@@ -259,17 +267,21 @@ export default function SharingSettingsPage() {
   return (
     <div className="mx-auto flex max-w-4xl w-full flex-col gap-6">
       <div className="space-y-2">
-        <h1 className="text-3xl font-semibold tracking-tight">Sharing</h1>
+        <h1 className="text-3xl font-semibold tracking-tight">
+          {t("Sharing")}
+        </h1>
         <p className="text-muted-foreground">
-          Manage your shared conversations and access shared links from others.
+          {t(
+            "Manage your shared conversations and access shared links from others.",
+          )}
         </p>
       </div>
 
       <Card className="border-border/80">
         <CardHeader>
-          <CardTitle>My Shared Links</CardTitle>
+          <CardTitle>{t("My Shared Links")}</CardTitle>
           <CardDescription>
-            Conversations you&apos;ve shared with others.
+            {t("Conversations you've shared with others.")}
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -280,9 +292,9 @@ export default function SharingSettingsPage() {
           ) : myShares.data?.length === 0 ? (
             <div className="text-center py-8 text-muted-foreground">
               <Link2 className="size-8 mx-auto mb-2 opacity-50" />
-              <p>No shared conversations yet.</p>
+              <p>{t("No shared conversations yet.")}</p>
               <p className="text-sm">
-                Share a conversation from the chat menu to create a link.
+                {t("Share a conversation from the chat menu to create a link.")}
               </p>
             </div>
           ) : (
@@ -304,9 +316,9 @@ export default function SharingSettingsPage() {
 
       <Card className="border-border/80">
         <CardHeader>
-          <CardTitle>Shared With Me</CardTitle>
+          <CardTitle>{t("Shared With Me")}</CardTitle>
           <CardDescription>
-            Conversations others have shared with you.
+            {t("Conversations others have shared with you.")}
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -317,7 +329,7 @@ export default function SharingSettingsPage() {
           ) : sharedWithMe.data?.length === 0 ? (
             <div className="text-center py-8 text-muted-foreground">
               <Users className="size-8 mx-auto mb-2 opacity-50" />
-              <p>No one has shared conversations with you yet.</p>
+              <p>{t("No one has shared conversations with you yet.")}</p>
             </div>
           ) : (
             <div className="space-y-3">
@@ -329,17 +341,21 @@ export default function SharingSettingsPage() {
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2">
                       <span className="font-medium truncate">
-                        {item.chat.title || "Untitled"}
+                        {item.chat.title || t("Untitled")}
                       </span>
                     </div>
                     <div className="flex items-center gap-4 mt-1 text-xs text-muted-foreground">
-                      <span>From: {item.owner.name || "Unknown"}</span>
+                      <span>
+                        {t("From: {name}", {
+                          name: item.owner.name || t("Unknown"),
+                        })}
+                      </span>
                     </div>
                   </div>
                   <Button size="sm" variant="outline" asChild>
                     <Link href={`/shared/${item.share.id}`}>
                       <ExternalLink className="size-4 mr-2" />
-                      View
+                      {t("View")}
                     </Link>
                   </Button>
                 </div>
@@ -355,15 +371,16 @@ export default function SharingSettingsPage() {
       >
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Revoke shared access?</AlertDialogTitle>
+            <AlertDialogTitle>{t("Revoke shared access?")}</AlertDialogTitle>
             <AlertDialogDescription>
-              This will disable the share link. Anyone with the link will no
-              longer be able to view this conversation.
+              {t(
+                "This will disable the share link. Anyone with the link will no longer be able to view this conversation.",
+              )}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel disabled={deleteShare.isPending}>
-              Cancel
+              {t("Cancel")}
             </AlertDialogCancel>
             <AlertDialogAction
               onClick={confirmDelete}
@@ -371,7 +388,7 @@ export default function SharingSettingsPage() {
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
               {deleteShare.isPending && <Spinner className="mr-2" />}
-              Revoke Access
+              {t("Revoke Access")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

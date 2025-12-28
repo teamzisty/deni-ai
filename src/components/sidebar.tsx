@@ -28,6 +28,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
+import { useExtracted } from "next-intl";
 import { Fragment, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import {
@@ -112,13 +113,13 @@ function getRecencyBucketKey(date: Date): ChatRecencyBucketKey {
 }
 
 function groupChatsByRecency<T extends { updated_at: Date }>(items: T[]) {
-  const bucketOrder: Array<{ key: ChatRecencyBucketKey; label: string }> = [
-    { key: "today", label: "Today" },
-    { key: "yesterday", label: "Yesterday" },
-    { key: "thisWeek", label: "This week" },
-    { key: "thisMonth", label: "This month" },
-    { key: "thisYear", label: "This year" },
-    { key: "older", label: "Older" },
+  const bucketOrder: ChatRecencyBucketKey[] = [
+    "today",
+    "yesterday",
+    "thisWeek",
+    "thisMonth",
+    "thisYear",
+    "older",
   ];
 
   const buckets = new Map<ChatRecencyBucketKey, T[]>();
@@ -136,22 +137,23 @@ function groupChatsByRecency<T extends { updated_at: Date }>(items: T[]) {
     buckets.set(key, [item]);
   }
 
-  return bucketOrder.flatMap(({ key, label }) => {
+  return bucketOrder.flatMap((key) => {
     const bucketItems = buckets.get(key);
     if (!bucketItems?.length) {
       return [];
     }
-    return [{ key, label, items: bucketItems }] as const;
+    return [{ key, items: bucketItems }] as const;
   });
 }
 
 function ChatItem({ item }: { item: { id: string; title: string | null } }) {
+  const t = useExtracted();
   const pathname = usePathname();
   const router = useRouter();
   const utils = trpc.useUtils();
   const [isRenameOpen, setIsRenameOpen] = useState(false);
   const [isShareOpen, setIsShareOpen] = useState(false);
-  const [newTitle, setNewTitle] = useState(item.title ?? "Untitled");
+  const [newTitle, setNewTitle] = useState(item.title ?? t("Untitled"));
 
   const deleteChat = trpc.chat.deleteChat.useMutation({
     onSuccess: async () => {
@@ -178,31 +180,31 @@ function ChatItem({ item }: { item: { id: string; title: string | null } }) {
       <SidebarMenuItem>
         <SidebarMenuButton isActive={pathname === `/chat/${item.id}`} asChild>
           <Link href={`/chat/${item.id}`}>
-            <span>{item.title ?? "Untitled"}</span>
+            <span>{item.title ?? t("Untitled")}</span>
           </Link>
         </SidebarMenuButton>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <SidebarMenuAction>
               <MoreHorizontal className="size-4" />
-              <span className="sr-only">More</span>
+              <span className="sr-only">{t("More")}</span>
             </SidebarMenuAction>
           </DropdownMenuTrigger>
           <DropdownMenuContent side="right" align="start">
             <DropdownMenuItem onClick={() => setIsRenameOpen(true)}>
               <Pencil className="mr-2 size-4" />
-              <span>Rename</span>
+              <span>{t("Rename")}</span>
             </DropdownMenuItem>
             <DropdownMenuItem onClick={() => setIsShareOpen(true)}>
               <Share2 className="mr-2 size-4" />
-              <span>Share</span>
+              <span>{t("Share")}</span>
             </DropdownMenuItem>
             <DropdownMenuItem
               onClick={() => deleteChat.mutate({ id: item.id })}
               className="text-destructive focus:text-destructive"
             >
               <Trash2 className="mr-2 size-4" />
-              <span>Delete</span>
+              <span>{t("Delete")}</span>
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
@@ -211,7 +213,7 @@ function ChatItem({ item }: { item: { id: string; title: string | null } }) {
       <Dialog open={isRenameOpen} onOpenChange={setIsRenameOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Rename Chat</DialogTitle>
+            <DialogTitle>{t("Rename Chat")}</DialogTitle>
           </DialogHeader>
           <div className="py-4">
             <Input
@@ -226,11 +228,11 @@ function ChatItem({ item }: { item: { id: string; title: string | null } }) {
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setIsRenameOpen(false)}>
-              Cancel
+              {t("Cancel")}
             </Button>
             <Button onClick={handleRename} disabled={renameChat.isPending}>
               {renameChat.isPending && <Spinner />}
-              Save
+              {t("Save")}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -246,6 +248,7 @@ function ChatItem({ item }: { item: { id: string; title: string | null } }) {
 }
 
 export function AppSidebar() {
+  const t = useExtracted();
   const router = useRouter();
   const pathname = usePathname();
   const utils = trpc.useUtils();
@@ -269,11 +272,11 @@ export function AppSidebar() {
       if (pathname?.startsWith("/chat/")) {
         router.push("/app");
       }
-      toast.success("All conversations have been deleted.");
+      toast.success(t("All conversations have been deleted."));
     },
     onError: (mutationError) => {
       console.error("Failed to delete all chats", mutationError);
-      toast.error("Failed to delete conversations. Please try again.");
+      toast.error(t("Failed to delete conversations. Please try again."));
     },
   });
 
@@ -315,12 +318,31 @@ export function AppSidebar() {
     deleteAllChats.mutate();
   };
 
+  const getRecencyLabel = (key: ChatRecencyBucketKey) => {
+    switch (key) {
+      case "today":
+        return t("Today");
+      case "yesterday":
+        return t("Yesterday");
+      case "thisWeek":
+        return t("This week");
+      case "thisMonth":
+        return t("This month");
+      case "thisYear":
+        return t("This year");
+      case "older":
+        return t("Older");
+      default:
+        return key;
+    }
+  };
+
   return (
     <Sidebar>
       <SidebarContent className="px-3">
         <SidebarGroup>
           <h1 className="py-3 mx-auto text-2xl font-semibold tracking-tighter">
-            Deni AI
+            {t("Deni AI")}
           </h1>
           <SidebarGroupContent>
             <SidebarMenu>
@@ -331,7 +353,7 @@ export function AppSidebar() {
                   onClick={handleNewChat}
                 >
                   {createConversion.isPending ? <Spinner /> : null}
-                  New Chat
+                  {t("New Chat")}
                 </Button>
               </SidebarMenuItem>
             </SidebarMenu>
@@ -340,21 +362,23 @@ export function AppSidebar() {
         {isLoading ? (
           <Spinner className="mx-auto mt-3" />
         ) : error ? (
-          <div>Error: {error.message}</div>
+          <div>
+            {t("Error")}: {error.message}
+          </div>
         ) : (
-          <SidebarGroup>
-            <SidebarGroupContent>
+          <SidebarGroup className="flex-1 overflow-hidden">
+            <SidebarGroupContent className="h-full overflow-y-auto">
               <SidebarMenu>
                 {(data?.length ?? 0) === 0 && (
                   <div className="text-sm text-center text-muted-foreground">
-                    No chats found.
+                    {t("No chats found.")}
                   </div>
                 )}
                 {chatGroups.map((group) => (
                   <Fragment key={group.key}>
                     <SidebarMenuItem className="mt-3 first:mt-0">
                       <div className="px-2 pt-2 text-xs font-medium text-muted-foreground">
-                        {group.label}
+                        {getRecencyLabel(group.key)}
                       </div>
                     </SidebarMenuItem>
                     {group.items.map((item) => (
@@ -379,7 +403,7 @@ export function AppSidebar() {
                           {session.data?.user?.image ? (
                             <img
                               src={session.data.user.image}
-                              alt={session.data.user.name ?? "User"}
+                              alt={session.data.user.name ?? t("User")}
                               className="size-full object-cover"
                             />
                           ) : (
@@ -389,7 +413,7 @@ export function AppSidebar() {
                           )}
                         </div>
                         <span className="flex-1 truncate text-sm">
-                          {session.data?.user?.name ?? "User"}
+                          {session.data?.user?.name ?? t("User")}
                         </span>
                       </div>
                     </SidebarMenuButton>
@@ -404,7 +428,7 @@ export function AppSidebar() {
                         {session.data?.user?.image ? (
                           <img
                             src={session.data.user.image}
-                            alt={session.data.user.name ?? "User"}
+                            alt={session.data.user.name ?? t("User")}
                             className="size-full object-cover"
                           />
                         ) : (
@@ -414,23 +438,23 @@ export function AppSidebar() {
                       </div>
                       <div className="flex-1 flex flex-col min-w-0">
                         <span className="flex-1 truncate text-sm font-medium">
-                          {session.data?.user?.name ?? "User"}
+                          {session.data?.user?.name ?? t("User")}
                         </span>
                         <span className="flex-1 truncate text-sm">
-                          {session.data?.user?.email ?? "User"}
+                          {session.data?.user?.email ?? t("User")}
                         </span>
                       </div>
                     </div>
                     <DropdownMenuItem className="gap-2 text-sm" asChild>
-                      <Link href="/account" className="flex w-full">
+                      <Link href="/account/settings" className="flex w-full">
                         <UserIcon className="size-4" />
-                        <span className="flex-1">Account</span>
+                        <span className="flex-1">{t("Account")}</span>
                       </Link>
                     </DropdownMenuItem>
                     <DropdownMenuItem className="gap-2 text-sm" asChild>
-                      <Link href="/settings" className="flex w-full">
+                      <Link href="/settings/appearance" className="flex w-full">
                         <Settings className="size-4" />
-                        <span className="flex-1">Settings</span>
+                        <span className="flex-1">{t("Settings")}</span>
                       </Link>
                     </DropdownMenuItem>
                     <DropdownMenuSeparator />
@@ -439,7 +463,7 @@ export function AppSidebar() {
                       onClick={() => authClient.signOut()}
                     >
                       <LogOut className="size-4" />
-                      <span>Logout</span>
+                      <span>{t("Logout")}</span>
                     </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
@@ -455,16 +479,17 @@ export function AppSidebar() {
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>
-              Delete all conversations with Deni AI?
+              {t("Delete all conversations with Deni AI?")}
             </AlertDialogTitle>
             <AlertDialogDescription>
-              This will permanently remove every chat in your history. This
-              action cannot be undone.
+              {t(
+                "This will permanently remove every chat in your history. This action cannot be undone.",
+              )}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel disabled={deleteAllChats.isPending}>
-              Cancel
+              {t("Cancel")}
             </AlertDialogCancel>
             <AlertDialogAction
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
@@ -472,7 +497,7 @@ export function AppSidebar() {
               onClick={handleDeleteAllChats}
             >
               {deleteAllChats.isPending ? <Spinner className="mr-2" /> : null}
-              Delete all chats
+              {t("Delete all chats")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

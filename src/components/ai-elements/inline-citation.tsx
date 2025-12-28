@@ -9,6 +9,7 @@ import {
   useEffect,
   useState,
 } from "react";
+import { useExtracted } from "next-intl";
 import { Badge } from "@/components/ui/badge";
 import {
   Carousel,
@@ -61,24 +62,27 @@ export const InlineCitationCardTrigger = ({
   sources,
   className,
   ...props
-}: InlineCitationCardTriggerProps) => (
-  <HoverCardTrigger asChild>
-    <Badge
-      className={cn("ml-1 rounded-full", className)}
-      variant="secondary"
-      {...props}
-    >
-      {sources[0] ? (
-        <>
-          {new URL(sources[0]).hostname}{" "}
-          {sources.length > 1 && `+${sources.length - 1}`}
-        </>
-      ) : (
-        "unknown"
-      )}
-    </Badge>
-  </HoverCardTrigger>
-);
+}: InlineCitationCardTriggerProps) => {
+  const t = useExtracted();
+  return (
+    <HoverCardTrigger asChild>
+      <Badge
+        className={cn("ml-1 rounded-full", className)}
+        variant="secondary"
+        {...props}
+      >
+        {sources[0] ? (
+          <>
+            {new URL(sources[0]).hostname}{" "}
+            {sources.length > 1 && `+${sources.length - 1}`}
+          </>
+        ) : (
+          t("unknown")
+        )}
+      </Badge>
+    </HoverCardTrigger>
+  );
+};
 
 export type InlineCitationCardBodyProps = ComponentProps<"div">;
 
@@ -154,6 +158,7 @@ export const InlineCitationCarouselIndex = ({
   className,
   ...props
 }: InlineCitationCarouselIndexProps) => {
+  const t = useExtracted();
   const api = useCarouselApi();
   const [current, setCurrent] = useState(0);
   const [count, setCount] = useState(0);
@@ -179,7 +184,11 @@ export const InlineCitationCarouselIndex = ({
       )}
       {...props}
     >
-      {children ?? `${current}/${count}`}
+      {children ??
+        t("{current}/{total}", {
+          current: current.toString(),
+          total: count.toString(),
+        })}
     </div>
   );
 };
@@ -190,6 +199,7 @@ export const InlineCitationCarouselPrev = ({
   className,
   ...props
 }: InlineCitationCarouselPrevProps) => {
+  const t = useExtracted();
   const api = useCarouselApi();
 
   const handleClick = useCallback(() => {
@@ -200,7 +210,7 @@ export const InlineCitationCarouselPrev = ({
 
   return (
     <button
-      aria-label="Previous"
+      aria-label={t("Previous")}
       className={cn("shrink-0", className)}
       onClick={handleClick}
       type="button"
@@ -217,6 +227,7 @@ export const InlineCitationCarouselNext = ({
   className,
   ...props
 }: InlineCitationCarouselNextProps) => {
+  const t = useExtracted();
   const api = useCarouselApi();
 
   const handleClick = useCallback(() => {
@@ -227,7 +238,7 @@ export const InlineCitationCarouselNext = ({
 
   return (
     <button
-      aria-label="Next"
+      aria-label={t("Next")}
       className={cn("shrink-0", className)}
       onClick={handleClick}
       type="button"

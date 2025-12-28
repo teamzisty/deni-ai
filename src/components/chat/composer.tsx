@@ -1,6 +1,7 @@
 "use client";
 
 import { GlobeIcon } from "lucide-react";
+import { useExtracted } from "next-intl";
 import type { ReactNode } from "react";
 import type {
   PromptInputMessage,
@@ -54,7 +55,7 @@ export function Composer({
   className,
   headerClassName,
   textareaClassName,
-  searchLabel = "Search",
+  searchLabel,
   webSearch = false,
   onToggleWebSearch,
   actionMenuItems,
@@ -64,8 +65,10 @@ export function Composer({
   globalDrop,
   multiple,
 }: ComposerProps) {
+  const t = useExtracted();
   const disabled =
     status === "streaming" ? false : isSubmitDisabled ?? (!value && !status);
+  const resolvedSearchLabel = searchLabel ?? t("Search");
 
   return (
     <PromptInput
@@ -102,7 +105,7 @@ export function Composer({
               onClick={onToggleWebSearch}
             >
               <GlobeIcon size={16} />
-              {searchLabel}
+              {resolvedSearchLabel}
             </PromptInputButton>
           ) : null}
           {tools}

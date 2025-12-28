@@ -2,6 +2,7 @@
 
 import { BookIcon, ChevronDownIcon } from "lucide-react";
 import type { ComponentProps } from "react";
+import { useExtracted } from "next-intl";
 import {
   Collapsible,
   CollapsibleContent,
@@ -32,14 +33,21 @@ export const SourcesTrigger = ({
     className={cn("flex items-center gap-2", className)}
     {...props}
   >
-    {children ?? (
-      <>
-        <p className="font-medium">Used {count} sources</p>
-        <ChevronDownIcon className="h-4 w-4" />
-      </>
-    )}
+    {children ?? <SourcesTriggerLabel count={count} />}
   </CollapsibleTrigger>
 );
+
+const SourcesTriggerLabel = ({ count }: { count: number }) => {
+  const t = useExtracted();
+  return (
+    <>
+      <p className="font-medium">
+        {t("Used {count} sources", { count: count.toString() })}
+      </p>
+      <ChevronDownIcon className="h-4 w-4" />
+    </>
+  );
+};
 
 export type SourcesContentProps = ComponentProps<typeof CollapsibleContent>;
 

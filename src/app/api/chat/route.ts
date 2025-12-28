@@ -29,7 +29,6 @@ import { load } from "cheerio";
 import { and, eq } from "drizzle-orm";
 import { headers } from "next/headers";
 import { NextResponse } from "next/server";
-import { searchDuckDuckGo } from "ts-duckduckgo-search";
 import { z } from "zod";
 import { db } from "@/db/drizzle";
 import { customModel, providerKey, providerSetting } from "@/db/schema";
@@ -47,7 +46,6 @@ import {
 import {
   veoAspectRatios,
   veoDurations,
-  veoModels,
   veoModelValues,
   veoResolutions,
 } from "@/lib/veo";
@@ -695,8 +693,7 @@ export async function POST(req: Request) {
               const proxyUrl = `/api/veo/file?uri=${encodeURIComponent(
                 videoUri,
               )}`;
-              const modelLabel =
-                veoModels.find((item) => item.value === model)?.label ?? model;
+              const modelLabel = model;
 
               return {
                 videoUrl: proxyUrl,

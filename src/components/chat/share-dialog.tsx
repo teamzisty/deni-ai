@@ -1,6 +1,7 @@
 "use client";
 
 import { Check, Copy, Globe, Lock, Share2, UserPlus, X } from "lucide-react";
+import { useExtracted } from "next-intl";
 import { useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -30,6 +31,7 @@ export function ShareDialog({
   isOpen,
   onOpenChange,
 }: ShareDialogProps) {
+  const t = useExtracted();
   const [copied, setCopied] = useState(false);
   const [recipientEmail, setRecipientEmail] = useState("");
   const utils = trpc.useUtils();
@@ -42,7 +44,7 @@ export function ShareDialog({
   const createShare = trpc.share.createShare.useMutation({
     onSuccess: () => {
       utils.share.getShareSettings.invalidate({ chatId });
-      toast.success("Share settings updated");
+      toast.success(t("Share settings updated"));
     },
     onError: (error) => {
       toast.error(error.message);
@@ -52,7 +54,7 @@ export function ShareDialog({
   const deleteShare = trpc.share.deleteShare.useMutation({
     onSuccess: () => {
       utils.share.getShareSettings.invalidate({ chatId });
-      toast.success("Share link revoked");
+      toast.success(t("Share link revoked"));
     },
     onError: (error) => {
       toast.error(error.message);
@@ -63,7 +65,7 @@ export function ShareDialog({
     onSuccess: () => {
       utils.share.getShareSettings.invalidate({ chatId });
       setRecipientEmail("");
-      toast.success("Recipient added");
+      toast.success(t("Recipient added"));
     },
     onError: (error) => {
       toast.error(error.message);
@@ -73,7 +75,7 @@ export function ShareDialog({
   const removeRecipient = trpc.share.removeRecipient.useMutation({
     onSuccess: () => {
       utils.share.getShareSettings.invalidate({ chatId });
-      toast.success("Recipient removed");
+      toast.success(t("Recipient removed"));
     },
     onError: (error) => {
       toast.error(error.message);
@@ -88,7 +90,7 @@ export function ShareDialog({
   const handleCopy = async () => {
     await navigator.clipboard.writeText(shareUrl);
     setCopied(true);
-    toast.success("Link copied to clipboard");
+    toast.success(t("Link copied to clipboard"));
     setTimeout(() => setCopied(false), 2000);
   };
 
@@ -126,10 +128,10 @@ export function ShareDialog({
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Share2 className="size-5" />
-            Share Conversation
+            {t("Share Conversation")}
           </DialogTitle>
           <DialogDescription>
-            Share this conversation via link or with specific users.
+            {t("Share this conversation via link or with specific users.")}
           </DialogDescription>
         </DialogHeader>
 
@@ -140,7 +142,7 @@ export function ShareDialog({
         ) : !share ? (
           <div className="space-y-4">
             <p className="text-sm text-muted-foreground">
-              Choose how you want to share this conversation:
+              {t("Choose how you want to share this conversation:")}
             </p>
             <div className="grid gap-4">
               <Button
@@ -151,9 +153,9 @@ export function ShareDialog({
               >
                 <Globe className="mr-3 size-5" />
                 <div className="text-left">
-                  <div className="font-medium">Public Link</div>
+                  <div className="font-medium">{t("Public Link")}</div>
                   <div className="text-xs text-muted-foreground">
-                    Anyone with the link can view
+                    {t("Anyone with the link can view")}
                   </div>
                 </div>
               </Button>
@@ -165,9 +167,9 @@ export function ShareDialog({
               >
                 <Lock className="mr-3 size-5" />
                 <div className="text-left">
-                  <div className="font-medium">Private Share</div>
+                  <div className="font-medium">{t("Private Share")}</div>
                   <div className="text-xs text-muted-foreground">
-                    Only specific users can view
+                    {t("Only specific users can view")}
                   </div>
                 </div>
               </Button>
@@ -183,17 +185,17 @@ export function ShareDialog({
             <TabsList className="grid w-full grid-cols-2">
               <TabsTrigger value="public">
                 <Globe className="mr-2 size-4" />
-                Public
+                {t("Public")}
               </TabsTrigger>
               <TabsTrigger value="private">
                 <Lock className="mr-2 size-4" />
-                Private
+                {t("Private")}
               </TabsTrigger>
             </TabsList>
 
             <div className="mt-4 space-y-4">
               <div className="space-y-2">
-                <Label>Share Link</Label>
+                <Label>{t("Share Link")}</Label>
                 <div className="flex gap-2">
                   <Input value={shareUrl} readOnly className="text-xs" />
                   <Button size="icon" variant="outline" onClick={handleCopy}>
@@ -208,9 +210,9 @@ export function ShareDialog({
 
               <div className="flex items-center justify-between">
                 <div>
-                  <Label>Allow Forking</Label>
+                  <Label>{t("Allow Forking")}</Label>
                   <p className="text-xs text-muted-foreground">
-                    Let viewers continue the conversation
+                    {t("Let viewers continue the conversation")}
                   </p>
                 </div>
                 <Switch
@@ -221,10 +223,10 @@ export function ShareDialog({
 
               <TabsContent value="private" className="mt-0 space-y-4">
                 <div className="space-y-2">
-                  <Label>Share with Users</Label>
+                  <Label>{t("Share with Users")}</Label>
                   <div className="flex gap-2">
                     <Input
-                      placeholder="Enter email address"
+                      placeholder={t("Enter email address")}
                       value={recipientEmail}
                       onChange={(e) => setRecipientEmail(e.target.value)}
                       onKeyDown={(e) => {
@@ -297,7 +299,7 @@ export function ShareDialog({
               disabled={deleteShare.isPending}
             >
               {deleteShare.isPending && <Spinner className="mr-2" />}
-              Revoke Access
+              {t("Revoke Access")}
             </Button>
           )}
         </DialogFooter>

@@ -51,7 +51,7 @@ async function getPriceForPlan(plan: BillingPlan) {
   if (!price) {
     throw new TRPCError({
       code: "BAD_REQUEST",
-      message: `Unable to load ${plan.name} price. Configure lookup_key=${plan.lookupKey} in Stripe.`,
+      message: `Unable to load ${plan.lookupKey} price. Configure lookup_key=${plan.lookupKey} in Stripe.`,
     });
   }
 
@@ -222,10 +222,6 @@ export const billingRouter = router({
         return {
           id: plan.id,
           lookupKey: plan.lookupKey,
-          name: plan.name,
-          tagline: plan.tagline,
-          highlights: plan.highlights,
-          badge: plan.badge,
           mode,
           priceId: price.id,
           amount: price.unit_amount,

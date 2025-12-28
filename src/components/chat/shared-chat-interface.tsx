@@ -4,6 +4,7 @@ import type { UIMessage } from "ai";
 import { ChevronDownIcon, CopyIcon, GitFork, Globe, User } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useExtracted } from "next-intl";
 import { toast } from "sonner";
 import {
   Conversation,
@@ -90,11 +91,12 @@ export function SharedChatInterface({
   isOwner: _isOwner,
   isLoggedIn,
 }: SharedChatInterfaceProps) {
+  const t = useExtracted();
   const router = useRouter();
 
   const forkChat = trpc.share.forkChat.useMutation({
     onSuccess: (forkedChat) => {
-      toast.success("Conversation forked!");
+      toast.success(t("Conversation forked!"));
       router.push(`/chat/${forkedChat.id}`);
     },
     onError: (error) => {
@@ -110,6 +112,20 @@ export function SharedChatInterface({
     forkChat.mutate({ shareId });
   };
 
+  const resolveVeoModelLabel = (
+    model?: string | null,
+    modelLabel?: string | null,
+  ) => {
+    switch (model) {
+      case "veo-3.1-generate-preview":
+        return t("Veo 3.1");
+      case "veo-3.1-fast-generate-preview":
+        return t("Veo 3.1 Fast");
+      default:
+        return modelLabel ?? model ?? null;
+    }
+  };
+
   return (
     <div className="flex h-full flex-1 min-h-0 flex-col w-full max-w-3xl mx-auto p-4 overflow-hidden">
       <div className="flex items-center justify-between mb-4 pb-4 border-b">
@@ -117,25 +133,25 @@ export function SharedChatInterface({
           <Avatar className="size-8">
             <AvatarImage src={owner?.image ?? undefined} />
             <AvatarFallback>
-              <User className="size-4" />
-            </AvatarFallback>
-          </Avatar>
-          <div>
-            <h1 className="font-semibold">{chat.title || "Untitled"}</h1>
+            <User className="size-4" />
+          </AvatarFallback>
+        </Avatar>
+        <div>
+            <h1 className="font-semibold">{chat.title || t("Untitled")}</h1>
             <p className="text-xs text-muted-foreground">
-              Shared by {owner?.name || "Unknown"}
+              {t("Shared by {name}", { name: owner?.name || t("Unknown") })}
             </p>
-          </div>
         </div>
+      </div>
 
-        {allowFork && (
-          <Button onClick={handleFork} disabled={forkChat.isPending}>
+      {allowFork && (
+        <Button onClick={handleFork} disabled={forkChat.isPending}>
             {forkChat.isPending ? (
               <Spinner className="mr-2" />
             ) : (
               <GitFork className="mr-2 size-4" />
             )}
-            {isLoggedIn ? "Fork & Continue" : "Sign in to Fork"}
+            {isLoggedIn ? t("Fork & Continue") : t("Sign in to Fork")}
           </Button>
         )}
       </div>
@@ -177,7 +193,7 @@ export function SharedChatInterface({
                                   onClick={() =>
                                     navigator.clipboard.writeText(part.text)
                                   }
-                                  label="Copy"
+                                  label={t("Copy")}
                                 >
                                   <CopyIcon className="size-3.5" />
                                 </MessageAction>
@@ -206,7 +222,7 @@ export function SharedChatInterface({
                               className="flex items-center gap-2 text-muted-foreground text-sm transition-colors hover:text-foreground"
                             >
                               <Globe className="size-4" />
-                              <Shimmer>Searching...</Shimmer>
+                              <Shimmer>{t("Searching...")}</Shimmer>
                             </div>
                           );
                         }
@@ -218,7 +234,7 @@ export function SharedChatInterface({
                               className="flex items-center gap-2 text-muted-foreground text-sm"
                             >
                               <Globe className="size-4" />
-                              Search failed
+                              {t("Search failed")}
                             </div>
                           );
                         }
@@ -235,7 +251,9 @@ export function SharedChatInterface({
                             <Collapsible>
                               <CollapsibleTrigger className="flex items-center gap-2 text-muted-foreground text-sm transition-colors hover:text-foreground">
                                 <Globe className="size-4" />
-                                Searched {searchResults.length} websites
+                                {t("Searched {count} websites", {
+                                  count: searchResults.length.toString(),
+                                })}
                                 {searchResults.length !== 0 && (
                                   <ChevronDownIcon
                                     className={cn(
@@ -301,7 +319,7 @@ export function SharedChatInterface({
                               <MessageContent className="w-full gap-2 rounded-lg border border-border/60 bg-muted/20 px-4 py-3 text-sm text-muted-foreground">
                                 <div className="flex items-center gap-2">
                                   <Spinner className="size-4" />
-                                  <span>Generating video...</span>
+                                  <span>{t("Generating video...")}</span>
                                 </div>
                               </MessageContent>
                             </Message>
@@ -315,7 +333,7 @@ export function SharedChatInterface({
                               from={message.role}
                             >
                               <MessageContent className="w-full text-sm text-destructive">
-                                Video generation failed.
+                                {t("Video generation failed.")}
                               </MessageContent>
                             </Message>
                           );
@@ -332,11 +350,16 @@ export function SharedChatInterface({
                               from={message.role}
                             >
                               <MessageContent className="w-full text-sm text-destructive">
-                                Video output unavailable.
+                                {t("Video output unavailable.")}
                               </MessageContent>
                             </Message>
                           );
                         }
+
+                        const resolvedModelLabel = resolveVeoModelLabel(
+                          output.model,
+                          output.modelLabel,
+                        );
 
                         return (
                           <Message
@@ -347,7 +370,7 @@ export function SharedChatInterface({
                               {output.negativePrompt && (
                                 <div className="rounded-md border border-border/60 bg-muted/30 px-3 py-2 text-xs">
                                   <p className="text-xs font-medium text-foreground">
-                                    Negative prompt
+                                    {t("Negative prompt")}
                                   </p>
                                   <p className="text-muted-foreground">
                                     {output.negativePrompt}
@@ -378,27 +401,31 @@ export function SharedChatInterface({
                                     {output.durationSeconds}s
                                   </Badge>
                                 )}
-                                {output.modelLabel || output.model ? (
+                                {resolvedModelLabel ? (
                                   <Badge variant="outline">
-                                    {output.modelLabel ?? output.model}
+                                    {resolvedModelLabel}
                                   </Badge>
                                 ) : null}
                                 {output.seed !== null &&
                                   output.seed !== undefined && (
                                     <Badge variant="outline">
-                                      Seed {output.seed}
+                                      {t("Seed {seed}", {
+                                        seed: output.seed.toString(),
+                                      })}
                                     </Badge>
                                   )}
                               </div>
                               {output.operationName && (
                                 <p className="break-words text-xs text-muted-foreground">
-                                  Operation: {output.operationName}
+                                  {t("Operation: {name}", {
+                                    name: output.operationName,
+                                  })}
                                 </p>
                               )}
                               <div>
                                 <Button asChild size="sm" variant="outline">
                                   <a href={output.videoUrl} download>
-                                    Download video
+                                    {t("Download video")}
                                   </a>
                                 </Button>
                               </div>

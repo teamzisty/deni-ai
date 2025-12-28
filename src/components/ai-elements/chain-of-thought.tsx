@@ -9,6 +9,7 @@ import {
 } from "lucide-react";
 import type { ComponentProps, ReactNode } from "react";
 import { createContext, memo, useContext, useMemo } from "react";
+import { useExtracted } from "next-intl";
 import { Badge } from "@/components/ui/badge";
 import {
   Collapsible,
@@ -81,6 +82,7 @@ export type ChainOfThoughtHeaderProps = ComponentProps<
 
 export const ChainOfThoughtHeader = memo(
   ({ className, children, ...props }: ChainOfThoughtHeaderProps) => {
+    const t = useExtracted();
     const { isOpen, setIsOpen } = useChainOfThought();
 
     return (
@@ -94,7 +96,7 @@ export const ChainOfThoughtHeader = memo(
         >
           <BrainIcon className="size-4" />
           <span className="flex-1 text-left">
-            {children ?? "Chain of Thought"}
+            {children ?? t("Chain of Thought")}
           </span>
           <ChevronDownIcon
             className={cn(

@@ -3,6 +3,7 @@
 import { InfoIcon } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useExtracted } from "next-intl";
 import type React from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Spinner } from "@/components/ui/spinner";
@@ -11,39 +12,12 @@ import { trpc } from "@/lib/trpc/react";
 import { cn } from "@/lib/utils";
 import { Progress } from "./ui/progress";
 
-const settingsTabs = [
-  {
-    label: "Appearance",
-    value: "appearance",
-    href: "/settings/appearance",
-  },
-  {
-    label: "Providers",
-    value: "providers",
-    href: "/settings/providers",
-  },
-  {
-    label: "Billing",
-    value: "billing",
-    href: "/settings/billing",
-  },
-  {
-    label: "Sharing",
-    value: "sharing",
-    href: "/settings/sharing",
-  },
-  {
-    label: "Migration",
-    value: "migration",
-    href: "/settings/migration",
-  },
-];
-
 export default function SettingsWrapper({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  const t = useExtracted();
   const pathname = usePathname();
   const statusQuery = trpc.billing.status.useQuery(undefined, {
     refetchInterval: 15000,
@@ -66,6 +40,34 @@ export default function SettingsWrapper({
       .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
       .join(" ") || "";
 
+  const settingsTabs = [
+    {
+      label: t("Appearance"),
+      value: "appearance",
+      href: "/settings/appearance",
+    },
+    {
+      label: t("Providers"),
+      value: "providers",
+      href: "/settings/providers",
+    },
+    {
+      label: t("Billing"),
+      value: "billing",
+      href: "/settings/billing",
+    },
+    {
+      label: t("Sharing"),
+      value: "sharing",
+      href: "/settings/sharing",
+    },
+    {
+      label: t("Migration"),
+      value: "migration",
+      href: "/settings/migration",
+    },
+  ];
+
   // Determine current tab value based on pathname
   const currentTab =
     settingsTabs.find((tab) => pathname?.startsWith(tab.href))?.value ||
@@ -78,19 +80,20 @@ export default function SettingsWrapper({
           <CardContent>
             <div className="flex flex-col gap-1">
               <span className="font-medium text-muted-foreground">
-                Your Plan
+                {t("Your Plan")}
               </span>
               <div className="flex flex-col gap-0.5">
                 <span className="text-base font-semibold">{plan}</span>
                 <span className="text-xs text-muted-foreground">
-                  Next update:&nbsp;
-                  {status?.currentPeriodEnd
-                    ? new Intl.DateTimeFormat("en-US", {
-                        month: "short",
-                        day: "numeric",
-                        year: "numeric",
-                      }).format(new Date(status.currentPeriodEnd))
-                    : "—"}
+                  {t("Next update: {date}", {
+                    date: status?.currentPeriodEnd
+                      ? new Intl.DateTimeFormat("en-US", {
+                          month: "short",
+                          day: "numeric",
+                          year: "numeric",
+                        }).format(new Date(status.currentPeriodEnd))
+                      : "—",
+                  })}
                 </span>
               </div>
 
@@ -109,20 +112,25 @@ export default function SettingsWrapper({
         <Card className="border-muted-foreground/10 bg-muted/60 shadow-none">
           <CardContent>
             <div className="flex flex-col gap-1">
-              <span className="font-medium text-muted-foreground">Usage</span>
+              <span className="font-medium text-muted-foreground">
+                {t("Usage")}
+              </span>
               <span className="text-sm">
-                Resets on{" "}
-                {new Intl.DateTimeFormat("en-US", {
-                  month: "short",
-                  day: "numeric",
-                  year: "numeric",
-                }).format(new Date(usages?.[0]?.periodEnd || Date.now()))}
+                {t("Resets on {date}", {
+                  date: new Intl.DateTimeFormat("en-US", {
+                    month: "short",
+                    day: "numeric",
+                    year: "numeric",
+                  }).format(new Date(usages?.[0]?.periodEnd || Date.now())),
+                })}
               </span>
               {usages?.map((usage) => (
                 <div key={usage.category} className="space-y-2 text-sm py-1">
                   <div className="flex items-center justify-between">
                     <span className="capitalize">
-                      {usage.category.replace(/_/g, " ")}
+                      {usage.category === "basic"
+                        ? t("Basic")
+                        : t("Premium")}
                     </span>
                     {usage.limit !== null ? (
                       <span className="tabular-nums text-muted-foreground">
@@ -131,14 +139,17 @@ export default function SettingsWrapper({
                       </span>
                     ) : (
                       <span className="tabular-nums text-muted-foreground">
-                        {Math.max(usage.used ?? 0, 0).toLocaleString()} /
-                        Unlimited
+                        {t("{used} / Unlimited", {
+                          used: Math.max(usage.used ?? 0, 0).toLocaleString(),
+                        })}
                       </span>
                     )}
                   </div>
                   <Progress value={usage.used || 0} max={usage.limit || 0} />
                   <span className="text-sm">
-                    {Math.max(usage.remaining ?? 0, 0).toLocaleString()} left
+                    {t("{count} left", {
+                      count: Math.max(usage.remaining ?? 0, 0).toLocaleString(),
+                    })}
                   </span>
                 </div>
               ))}
@@ -148,8 +159,9 @@ export default function SettingsWrapper({
                   size="16"
                   className="-mt-0.5 mr-1 inline-flex size-3 shrink-0"
                 />
-                Successfully sent messages are counted as one each. There is no
-                consumption per re-request, such as tool calls.
+                {t(
+                  "Successfully sent messages are counted as one each. There is no consumption per re-request, such as tool calls.",
+                )}
               </span>
             </div>
           </CardContent>

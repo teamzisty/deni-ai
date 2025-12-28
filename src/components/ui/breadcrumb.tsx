@@ -1,11 +1,15 @@
 import type * as React from "react";
 import { Slot as SlotPrimitive } from "radix-ui";
 import { ChevronRight, MoreHorizontal } from "lucide-react";
+import { useExtracted } from "next-intl";
 
 import { cn } from "@/lib/utils";
 
 function Breadcrumb({ ...props }: React.ComponentProps<"nav">) {
-  return <nav aria-label="breadcrumb" data-slot="breadcrumb" {...props} />;
+  const t = useExtracted();
+  return (
+    <nav aria-label={t("Breadcrumb")} data-slot="breadcrumb" {...props} />
+  );
 }
 
 function BreadcrumbList({ className, ...props }: React.ComponentProps<"ol">) {
@@ -84,6 +88,7 @@ function BreadcrumbEllipsis({
   className,
   ...props
 }: React.ComponentProps<"span">) {
+  const t = useExtracted();
   return (
     <span
       data-slot="breadcrumb-ellipsis"
@@ -93,7 +98,7 @@ function BreadcrumbEllipsis({
       {...props}
     >
       <MoreHorizontal className="size-4" />
-      <span className="sr-only">More</span>
+      <span className="sr-only">{t("More")}</span>
     </span>
   );
 }

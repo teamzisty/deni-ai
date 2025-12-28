@@ -36,6 +36,7 @@ import {
   XIcon,
 } from "lucide-react";
 import Link from "next/link";
+import { useExtracted } from "next-intl";
 import { useEffect, useMemo, useState } from "react";
 import {
   ChainOfThought,
@@ -72,7 +73,7 @@ import {
   SourcesTrigger,
 } from "@/components/ai-elements/sources";
 import { Composer, type ComposerMessage } from "@/components/chat/composer";
-import { featureMap, models } from "@/lib/constants";
+import { models } from "@/lib/constants";
 import { trpc } from "@/lib/trpc/react";
 import { cn } from "@/lib/utils";
 import { Shimmer } from "../ai-elements/shimmer";
@@ -148,12 +149,14 @@ type ToolChipProps = {
 };
 
 function ToolChip({ icon: Icon, label, onRemove }: ToolChipProps) {
+  const t = useExtracted();
+
   return (
     <Button
       variant="ghost"
       className="group flex items-center gap-1.5 rounded-md px-2 py-1 font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground"
       onClick={onRemove}
-      aria-label={`Remove ${label}`}
+      aria-label={t("Remove {label}", { label })}
     >
       <Icon className="size-3.5 group-hover:hidden" />
       <XIcon className="size-3.5 hidden group-hover:block" />
@@ -187,6 +190,66 @@ function ModelItem({
   model: ModelOption;
   isSelected: boolean;
 }) {
+  const t = useExtracted();
+
+  const getFeatureLabel = (feature: string) => {
+    switch (feature) {
+      case "reasoning":
+        return t("Reasoning");
+      case "smart":
+        return t("Smart");
+      case "fast":
+        return t("Fast");
+      case "coding":
+        return t("Coding");
+      case "fastest":
+        return t("Fastest");
+      case "smartest":
+        return t("Smartest");
+      default:
+        return feature;
+    }
+  };
+
+  const getModelDescription = (value: string) => {
+    switch (value) {
+      case "gpt-5.2-2025-12-11":
+        return t("General purpose OpenAI model");
+      case "gpt-5.1-codex":
+        return t("For complex coding tasks");
+      case "gpt-5.1-codex-mini":
+        return t("For quick coding tasks");
+      case "openai/gpt-oss-120b":
+        return t("Most powerful open-weight model");
+      case "openai/gpt-oss-20b":
+        return t("Medium-sized open-weight model");
+      case "gemini-3-pro-preview":
+        return t("Best for complex tasks");
+      case "gemini-2.5-flash":
+        return t("Best for everyday tasks");
+      case "gemini-2.5-flash-lite":
+        return t("Best for high volume tasks");
+      case "claude-sonnet-4-5":
+        return t("Hybrid reasoning model");
+      case "claude-opus-4-5":
+        return t("All-around professional model");
+      case "claude-opus-4-1-20250805":
+        return t("Legacy professional model");
+      case "grok-4-0709":
+        return t("xAI's most intelligent model");
+      case "grok-4-fast-reasoning":
+      case "grok-4-fast-non-reasoning":
+        return t("Fast and efficient model");
+      default:
+        return value;
+    }
+  };
+
+  const modelDescription =
+    "description" in model
+      ? model.description
+      : getModelDescription(model.value);
+
   return (
     <PromptInputSelectItem
       key={model.value}
@@ -223,7 +286,7 @@ function ModelItem({
             {model.name}
             {model.author === "openai_compatible" && (
               <Badge variant="secondary" className="bg-primary/10">
-                BYOK
+                {t("BYOK")}
               </Badge>
             )}
             {model.features
@@ -235,13 +298,13 @@ function ModelItem({
                   key={feature}
                 >
                   <StarIcon className="size-4 text-yellow-500 dark:fill-yellow-400" />
-                  {featureMap[feature as keyof typeof featureMap]}
+                  {getFeatureLabel(feature)}
                 </Badge>
               ))}
           </span>
         </span>
         <span className="text-xs text-muted-foreground">
-          {model.description}
+          {modelDescription}
         </span>
         {model.features.length > 0 && (
           <span className="flex gap-1 flex-wrap">
@@ -265,7 +328,7 @@ function ModelItem({
                         return <Code />;
                     }
                   })()}
-                  {featureMap[feature as keyof typeof featureMap]}
+                  {getFeatureLabel(feature)}
                 </Badge>
               ))}
           </span>
@@ -279,6 +342,7 @@ export function ChatInterface({
   id,
   initialMessages = [],
 }: ChatInterfaceProps) {
+  const t = useExtracted();
   const [input, setInput] = useState("");
   const [model, setModel] = useState(models[0].value);
   const [webSearch, setWebSearch] = useState(false);
@@ -299,14 +363,14 @@ export function ChatInterface({
     return (providersQuery.data?.customModels ?? []).map((entry) => ({
       name: entry.name,
       value: `custom:${entry.id}`,
-      description: entry.description ?? "Custom model",
+      description: entry.description ?? t("Custom model"),
       author: "openai_compatible",
       features: [],
       premium: entry.premium,
       default: false,
       source: "custom",
     }));
-  }, [providersQuery.data?.customModels]);
+  }, [providersQuery.data?.customModels, t]);
 
   const availableModels = useMemo<ModelOption[]>(
     () => [...models, ...customModels],
@@ -415,12 +479,37 @@ export function ChatInterface({
     remainingUsage !== null &&
     remainingUsage !== undefined &&
     remainingUsage <= 0;
-  const usageTierLabel = usageTier.charAt(0).toUpperCase() + usageTier.slice(1);
-  const usageLabel =
-    remainingUsage === null || remainingUsage === undefined
-      ? null
-      : `${remainingUsage} request${remainingUsage === 1 ? "" : "s"}`;
+  const usageCategoryLabel =
+    usageCategory === "premium" ? t("Premium") : t("Basic");
+  const usageTierLabel =
+    usageTier === "free" ? t("Free") : usageTier === "pro" ? t("Pro") : t("Max");
   const isSubmitBlocked = isUsageBlocked || isByokMissingConfig;
+  const reasoningEffortLabel = (() => {
+    switch (reasoningEffort) {
+      case "low":
+        return t("Low");
+      case "medium":
+        return t("Medium");
+      case "high":
+        return t("High");
+      default:
+        return reasoningEffort;
+    }
+  })();
+
+  const resolveVeoModelLabel = (
+    model?: string | null,
+    modelLabel?: string | null,
+  ) => {
+    switch (model) {
+      case "veo-3.1-generate-preview":
+        return t("Veo 3.1");
+      case "veo-3.1-fast-generate-preview":
+        return t("Veo 3.1 Fast");
+      default:
+        return modelLabel ?? model ?? null;
+    }
+  };
 
   const handleSubmit = (message: ComposerMessage) => {
     if (isSubmitBlocked) {
@@ -518,9 +607,9 @@ export function ChatInterface({
                         {status === "streaming" &&
                         message.id === messages.at(-1)?.id &&
                         !message.parts?.some((p) => p.type === "text") ? (
-                          <Shimmer duration={2}>Thinking...</Shimmer>
+                          <Shimmer duration={2}>{t("Thinking...")}</Shimmer>
                         ) : (
-                          "Thought process"
+                          t("Thought process")
                         )}
                       </ChainOfThoughtHeader>
                       <ChainOfThoughtContent>
@@ -555,8 +644,8 @@ export function ChatInterface({
 
                                 sections.push({
                                   title:
-                                    (currentTitle ?? "Reasoning").trim() ||
-                                    "Reasoning",
+                                    (currentTitle ?? t("Reasoning")).trim() ||
+                                    t("Reasoning"),
                                   content: currentContent,
                                 });
 
@@ -580,7 +669,7 @@ export function ChatInterface({
 
                               if (sections.length === 0) {
                                 sections.push({
-                                  title: "Reasoning",
+                                  title: t("Reasoning"),
                                   content: [],
                                 });
                               }
@@ -593,8 +682,8 @@ export function ChatInterface({
                                       <ChainOfThoughtStep
                                         key={`${message.id}-cot-${i}-${sIdx}`}
                                         icon={BrainIcon}
-                                        label={s.title || "Reasoning"}
-                                        description={content || "No details"}
+                                        label={s.title || t("Reasoning")}
+                                        description={content || t("No details")}
                                         className="whitespace-pre-wrap"
                                         status="complete"
                                       />
@@ -620,12 +709,14 @@ export function ChatInterface({
                                   label={
                                     isSearching ? (
                                       <Shimmer duration={2}>
-                                        Searching...
+                                        {t("Searching...")}
                                       </Shimmer>
                                     ) : part.state === "output-error" ? (
-                                      "Search failed"
+                                      t("Search failed")
                                     ) : (
-                                      `Found ${searchResults.length} results`
+                                      t("Found {count} results", {
+                                        count: searchResults.length.toString(),
+                                      })
                                     )
                                   }
                                   status={isSearching ? "active" : "complete"}
@@ -676,7 +767,7 @@ export function ChatInterface({
                                   body: requestBody,
                                 })
                               }
-                              label="Retry"
+                              label={t("Retry")}
                             >
                               <RefreshCcwIcon className="size-3.5" />
                             </MessageAction>
@@ -684,7 +775,7 @@ export function ChatInterface({
                               onClick={() =>
                                 navigator.clipboard.writeText(part.text)
                               }
-                              label="Copy"
+                              label={t("Copy")}
                             >
                               <CopyIcon className="size-3.5" />
                             </MessageAction>
@@ -706,7 +797,7 @@ export function ChatInterface({
                           <MessageContent className="w-full gap-2 rounded-lg border border-border/60 bg-muted/20 px-4 py-3 text-sm text-muted-foreground">
                             <div className="flex items-center gap-2">
                               <Spinner className="size-4" />
-                              <span>Generating video...</span>
+                              <span>{t("Generating video...")}</span>
                             </div>
                           </MessageContent>
                         </Message>
@@ -721,9 +812,9 @@ export function ChatInterface({
                         >
                           <MessageContent className="w-full">
                             <Alert className="border-destructive/50 bg-destructive/10 text-destructive">
-                              <AlertTitle>Video generation failed</AlertTitle>
+                              <AlertTitle>{t("Video generation failed")}</AlertTitle>
                               <AlertDescription>
-                                Please try again with a different prompt.
+                                {t("Please try again with a different prompt.")}
                               </AlertDescription>
                             </Alert>
                           </MessageContent>
@@ -744,16 +835,21 @@ export function ChatInterface({
                           <MessageContent className="w-full">
                             <Alert className="border-destructive/50 bg-destructive/10 text-destructive">
                               <AlertTitle>
-                                Video response unavailable
+                                {t("Video response unavailable")}
                               </AlertTitle>
                               <AlertDescription>
-                                The video output could not be displayed.
+                                {t("The video output could not be displayed.")}
                               </AlertDescription>
                             </Alert>
                           </MessageContent>
                         </Message>
                       );
                     }
+
+                    const resolvedModelLabel = resolveVeoModelLabel(
+                      output.model,
+                      output.modelLabel,
+                    );
 
                     return (
                       <Message
@@ -764,7 +860,7 @@ export function ChatInterface({
                           {output.negativePrompt && (
                             <div className="rounded-md border border-border/60 bg-muted/30 px-3 py-2 text-xs">
                               <p className="text-xs font-medium text-foreground">
-                                Negative prompt
+                                {t("Negative prompt")}
                               </p>
                               <p className="text-muted-foreground">
                                 {output.negativePrompt}
@@ -795,27 +891,31 @@ export function ChatInterface({
                                 {output.durationSeconds}s
                               </Badge>
                             )}
-                            {output.modelLabel || output.model ? (
+                            {resolvedModelLabel ? (
                               <Badge variant="outline">
-                                {output.modelLabel ?? output.model}
+                                {resolvedModelLabel}
                               </Badge>
                             ) : null}
                             {output.seed !== null &&
                               output.seed !== undefined && (
                                 <Badge variant="outline">
-                                  Seed {output.seed}
+                                  {t("Seed {seed}", {
+                                    seed: output.seed.toString(),
+                                  })}
                                 </Badge>
                               )}
                           </div>
                           {output.operationName && (
                             <p className="break-words text-xs text-muted-foreground">
-                              Operation: {output.operationName}
+                              {t("Operation: {name}", {
+                                name: output.operationName,
+                              })}
                             </p>
                           )}
                           <div>
                             <Button asChild size="sm" variant="outline">
                               <a href={output.videoUrl} download>
-                                Download video
+                                {t("Download video")}
                               </a>
                             </Button>
                           </div>
@@ -833,7 +933,7 @@ export function ChatInterface({
                             .length
                         }
                       >
-                        Sources
+                        {t("Sources")}
                       </SourcesTrigger>
                       <SourcesContent>
                         {message.parts
@@ -842,7 +942,7 @@ export function ChatInterface({
                             <Source
                               key={`${message.id}-source-${index}`}
                               href={part.url || "#"}
-                              title={part.title || part.url || "Source"}
+                              title={part.title || part.url || t("Source")}
                             />
                           ))}
                       </SourcesContent>
@@ -858,14 +958,14 @@ export function ChatInterface({
             <Card className="!gap-0 bg-destructive/10">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <span>Error</span>
+                  <span>{t("Error")}</span>
                 </CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="text-sm break-words">
                   {typeof error === "string"
                     ? error
-                    : error?.message || "An unexpected error occurred."}
+                    : error?.message || t("An unexpected error occurred.")}
                 </div>
               </CardContent>
             </Card>
@@ -877,16 +977,17 @@ export function ChatInterface({
       {isByokMissingConfig && (
         <Alert className="mt-3 border-destructive/40 bg-destructive/10 text-destructive-foreground dark:border-destructive/30">
           <Ban className="mt-0.5 size-4" />
-          <AlertTitle>Endpoint not configured</AlertTitle>
+          <AlertTitle>{t("Endpoint not configured")}</AlertTitle>
           <AlertDescription className="flex flex-col gap-2">
             <p>
-              Configure an OpenAI-compatible base URL and API key before using
-              this model.
+              {t(
+                "Configure an OpenAI-compatible base URL and API key before using this model.",
+              )}
             </p>
             <div className="flex flex-wrap gap-2">
               <Button size="sm" asChild>
                 <Link href="/settings/providers">
-                  Open settings
+                  {t("Open settings")}
                   <ArrowUpRight className="ml-1.5 size-3.5" />
                 </Link>
               </Button>
@@ -898,9 +999,11 @@ export function ChatInterface({
       {isByokActive && !isByokMissingConfig && (
         <Alert className="mt-3 border-emerald-500/40 bg-emerald-100/40 text-emerald-900 dark:border-emerald-500/30 dark:bg-emerald-500/10 dark:text-emerald-50">
           <Plug className="mt-0.5 size-4" />
-          <AlertTitle>BYOK active</AlertTitle>
+          <AlertTitle>{t("BYOK active")}</AlertTitle>
           <AlertDescription>
-            Requests use your own API key and do not count toward usage limits.
+            {t(
+              "Requests use your own API key and do not count toward usage limits.",
+            )}
           </AlertDescription>
         </Alert>
       )}
@@ -919,18 +1022,35 @@ export function ChatInterface({
             <TriangleAlert className="mt-0.5 size-4" />
           )}
           <AlertTitle>
-            {isUsageBlocked ? "Usage limit reached" : "You are running low"}
+            {isUsageBlocked
+              ? t("Usage limit reached")
+              : t("You are running low")}
           </AlertTitle>
           <AlertDescription className="flex flex-col gap-2">
             <p>
               {isUsageBlocked
-                ? `You've hit the ${usageCategory} usage limit on your ${usageTierLabel} plan.`
-                : `Only ${usageLabel ?? "a few"} ${usageCategory} requests left on your ${usageTierLabel} plan.`}
+                ? t(
+                    "You've hit the {category} usage limit on your {tier} plan.",
+                    { category: usageCategoryLabel, tier: usageTierLabel },
+                  )
+                : remainingUsage === null || remainingUsage === undefined
+                  ? t(
+                      "Only a few {category} requests left on your {tier} plan.",
+                      { category: usageCategoryLabel, tier: usageTierLabel },
+                    )
+                  : t(
+                      "Only {count, plural, one {#} other {#}} {category} requests left on your {tier} plan.",
+                      {
+                        count: remainingUsage,
+                        category: usageCategoryLabel,
+                        tier: usageTierLabel,
+                      },
+                    )}
             </p>
             <div className="flex flex-wrap gap-2">
               <Button size="sm" asChild>
                 <Link href="/settings/billing">
-                  Upgrade plan
+                  {t("Upgrade plan")}
                   <ArrowUpRight className="ml-1.5 size-3.5" />
                 </Link>
               </Button>
@@ -939,7 +1059,7 @@ export function ChatInterface({
                 size="sm"
                 onClick={() => usageQuery.refetch()}
               >
-                Refresh usage
+                {t("Refresh usage")}
               </Button>
             </div>
           </AlertDescription>
@@ -954,7 +1074,7 @@ export function ChatInterface({
         multiple
         placeholder={
           videoMode
-            ? "Describe the video scene, style, motion, and lighting."
+            ? t("Describe the video scene, style, motion, and lighting.")
             : undefined
         }
         headerClassName="py-0.5!"
@@ -970,7 +1090,7 @@ export function ChatInterface({
               onCheckedChange={(checked) => handleVideoToggle(Boolean(checked))}
             >
               <Film className="size-4" />
-              Video
+              {t("Video")}
             </DropdownMenuCheckboxItem>
             <DropdownMenuCheckboxItem
               checked={webSearch}
@@ -979,7 +1099,7 @@ export function ChatInterface({
               }
             >
               <Globe className="size-4" />
-              Search
+              {t("Search")}
             </DropdownMenuCheckboxItem>
           </>
         }
@@ -988,14 +1108,14 @@ export function ChatInterface({
             {videoMode && (
               <ToolChip
                 icon={Film}
-                label="Video"
+                label={t("Video")}
                 onRemove={() => handleVideoToggle(false)}
               />
             )}
             {webSearch && (
               <ToolChip
                 icon={Globe}
-                label="Search"
+                label={t("Search")}
                 onRemove={() => handleSearchToggle(false)}
               />
             )}
@@ -1027,10 +1147,10 @@ export function ChatInterface({
                         return <Bot />;
                     }
                   })()}
-                  {selectedModel?.name ?? "Select model"}
+                  {selectedModel?.name ?? t("Select model")}
                   {isByokActive && (
                     <Badge variant="secondary" className="bg-primary/10">
-                      BYOK
+                      {t("BYOK")}
                     </Badge>
                   )}
                 </PromptInputSelectValue>
@@ -1066,16 +1186,19 @@ export function ChatInterface({
               <PromptInputSelectTrigger>
                 <PromptInputSelectValue>
                   <BrainIcon className="size-4" />
-                  {reasoningEffort.charAt(0).toUpperCase() +
-                    reasoningEffort.slice(1)}
+                  {reasoningEffortLabel}
                 </PromptInputSelectValue>
               </PromptInputSelectTrigger>
               <PromptInputSelectContent>
-                <PromptInputSelectItem value="low">Low</PromptInputSelectItem>
-                <PromptInputSelectItem value="medium">
-                  Medium
+                <PromptInputSelectItem value="low">
+                  {t("Low")}
                 </PromptInputSelectItem>
-                <PromptInputSelectItem value="high">High</PromptInputSelectItem>
+                <PromptInputSelectItem value="medium">
+                  {t("Medium")}
+                </PromptInputSelectItem>
+                <PromptInputSelectItem value="high">
+                  {t("High")}
+                </PromptInputSelectItem>
               </PromptInputSelectContent>
             </PromptInputSelect>
           </>

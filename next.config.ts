@@ -1,6 +1,6 @@
-import { withLingo } from "@lingo.dev/compiler/next";
 import { withBotId } from "botid/next/config";
 import type { NextConfig } from "next";
+import createNextIntlPlugin from "next-intl/plugin";
 
 const nextConfig: NextConfig = {
   /* config options here */
@@ -12,11 +12,18 @@ const nextConfig: NextConfig = {
 
 const withBotIdConfig = withBotId(nextConfig);
 
-export default async function (): Promise<NextConfig> {
-  return await withLingo(withBotIdConfig, {
-    sourceRoot: "./src/app",
-    sourceLocale: "en",
-    targetLocales: ["ja"],
-    models: "lingo.dev",
-  });
-}
+const withNextIntl = createNextIntlPlugin({
+  experimental: {
+    srcPath: "./src",
+    extract: {
+      sourceLocale: "en",
+    },
+    messages: {
+      path: "./messages",
+      format: "json",
+      locales: ["en", "ja"],
+    },
+  },
+});
+
+export default withNextIntl(withBotIdConfig);

@@ -1,5 +1,6 @@
 "use client";
 
+import { useExtracted } from "next-intl";
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -32,54 +33,40 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { trpc } from "@/lib/trpc/react";
 
-const PROVIDERS = [
-  {
-    id: "openai",
-    label: "OpenAI",
-    description: "Use your own OpenAI API key.",
-  },
-  {
-    id: "anthropic",
-    label: "Anthropic",
-    description: "Use your own Anthropic API key.",
-  },
-  {
-    id: "google",
-    label: "Google",
-    description: "Use your own Google Generative AI key.",
-  },
-  {
-    id: "xai",
-    label: "xAI",
-    description: "Use your own xAI API key.",
-  },
-  {
-    id: "openai_compatible",
-    label: "OpenAI-compatible",
-    description: "Use any OpenAI-compatible endpoint (proxy, gateway, local).",
-  },
+const PROVIDER_IDS = [
+  "openai",
+  "anthropic",
+  "google",
+  "xai",
+  "openai_compatible",
 ] as const;
 
-type ProviderId = (typeof PROVIDERS)[number]["id"];
+type ProviderId = (typeof PROVIDER_IDS)[number];
+type ProviderConfig = {
+  id: ProviderId;
+  label: string;
+  description: string;
+};
 type ApiStyle = "chat" | "responses";
 
-const defaultKeyState = PROVIDERS.reduce(
-  (acc, provider) => {
-    acc[provider.id] = "";
+const defaultKeyState = PROVIDER_IDS.reduce(
+  (acc, providerId) => {
+    acc[providerId] = "";
     return acc;
   },
   {} as Record<ProviderId, string>,
 );
 
-const defaultPreferState = PROVIDERS.reduce(
-  (acc, provider) => {
-    acc[provider.id] = provider.id === "openai_compatible";
+const defaultPreferState = PROVIDER_IDS.reduce(
+  (acc, providerId) => {
+    acc[providerId] = providerId === "openai_compatible";
     return acc;
   },
   {} as Record<ProviderId, boolean>,
 );
 
 export default function ProvidersPage() {
+  const t = useExtracted();
   const utils = trpc.useUtils();
   const configQuery = trpc.providers.getConfig.useQuery();
   const upsertKey = trpc.providers.upsertKey.useMutation();
@@ -103,6 +90,38 @@ export default function ProvidersPage() {
   const [customInputPrice, setCustomInputPrice] = useState("");
   const [customOutputPrice, setCustomOutputPrice] = useState("");
   const [customReasoningPrice, setCustomReasoningPrice] = useState("");
+  const providers = useMemo<ProviderConfig[]>(
+    () => [
+      {
+        id: "openai",
+        label: t("OpenAI"),
+        description: t("Use your own OpenAI API key."),
+      },
+      {
+        id: "anthropic",
+        label: t("Anthropic"),
+        description: t("Use your own Anthropic API key."),
+      },
+      {
+        id: "google",
+        label: t("Google"),
+        description: t("Use your own Google Generative AI key."),
+      },
+      {
+        id: "xai",
+        label: t("xAI"),
+        description: t("Use your own xAI API key."),
+      },
+      {
+        id: "openai_compatible",
+        label: t("OpenAI-compatible"),
+        description: t(
+          "Use any OpenAI-compatible endpoint (proxy, gateway, local).",
+        ),
+      },
+    ],
+    [t],
+  );
 
   const settingsByProvider = useMemo(() => {
     const map = new Map<
@@ -130,10 +149,10 @@ export default function ProvidersPage() {
   useEffect(() => {
     if (!configQuery.data) return;
     const nextPrefer = { ...defaultPreferState };
-    for (const provider of PROVIDERS) {
-      const setting = settingsByProvider.get(provider.id);
-      nextPrefer[provider.id] =
-        setting?.preferByok ?? provider.id === "openai_compatible";
+    for (const providerId of PROVIDER_IDS) {
+      const setting = settingsByProvider.get(providerId);
+      nextPrefer[providerId] =
+        setting?.preferByok ?? providerId === "openai_compatible";
     }
     setPreferByok(nextPrefer);
 
@@ -145,7 +164,7 @@ export default function ProvidersPage() {
   const handleSaveKey = async (providerId: ProviderId) => {
     const value = keyInputs[providerId]?.trim();
     if (!value) {
-      toast.error("Enter an API key first.");
+      toast.error(t("Enter an API key first."));
       return;
     }
 
@@ -158,10 +177,10 @@ export default function ProvidersPage() {
       setPreferByok((prev) => ({ ...prev, [providerId]: true }));
       setKeyInputs((prev) => ({ ...prev, [providerId]: "" }));
       await utils.providers.getConfig.invalidate();
-      toast.success("API key saved.");
+      toast.success(t("API key saved."));
     } catch (error) {
       toast.error(
-        error instanceof Error ? error.message : "Failed to save API key.",
+        error instanceof Error ? error.message : t("Failed to save API key."),
       );
     }
   };
@@ -170,10 +189,10 @@ export default function ProvidersPage() {
     try {
       await deleteKey.mutateAsync({ provider: providerId });
       await utils.providers.getConfig.invalidate();
-      toast.success("API key removed.");
+      toast.success(t("API key removed."));
     } catch (error) {
       toast.error(
-        error instanceof Error ? error.message : "Failed to remove API key.",
+        error instanceof Error ? error.message : t("Failed to remove API key."),
       );
     }
   };
@@ -188,7 +207,9 @@ export default function ProvidersPage() {
       await utils.providers.getConfig.invalidate();
     } catch (error) {
       toast.error(
-        error instanceof Error ? error.message : "Failed to update preference.",
+        error instanceof Error
+          ? error.message
+          : t("Failed to update preference."),
       );
     }
   };
@@ -196,7 +217,7 @@ export default function ProvidersPage() {
   const handleSaveOpenAiCompat = async () => {
     const baseUrl = openAiCompatBaseUrl.trim();
     if (!baseUrl) {
-      toast.error("Base URL is required for OpenAI-compatible endpoints.");
+      toast.error(t("Base URL is required for OpenAI-compatible endpoints."));
       return;
     }
 
@@ -208,10 +229,10 @@ export default function ProvidersPage() {
         preferByok: true,
       });
       await utils.providers.getConfig.invalidate();
-      toast.success("Endpoint settings saved.");
+      toast.success(t("Endpoint settings saved."));
     } catch (error) {
       toast.error(
-        error instanceof Error ? error.message : "Failed to save endpoint.",
+        error instanceof Error ? error.message : t("Failed to save endpoint."),
       );
     }
   };
@@ -229,7 +250,7 @@ export default function ProvidersPage() {
     const name = customName.trim();
     const modelId = customModelId.trim();
     if (!name || !modelId) {
-      toast.error("Name and model ID are required.");
+      toast.error(t("Name and model ID are required."));
       return;
     }
 
@@ -238,15 +259,15 @@ export default function ProvidersPage() {
     const reasoningPriceMicros = parsePrice(customReasoningPrice);
 
     if (customInputPrice.trim() && inputPriceMicros === null) {
-      toast.error("Input price must be a non-negative integer.");
+      toast.error(t("Input price must be a non-negative integer."));
       return;
     }
     if (customOutputPrice.trim() && outputPriceMicros === null) {
-      toast.error("Output price must be a non-negative integer.");
+      toast.error(t("Output price must be a non-negative integer."));
       return;
     }
     if (customReasoningPrice.trim() && reasoningPriceMicros === null) {
-      toast.error("Reasoning price must be a non-negative integer.");
+      toast.error(t("Reasoning price must be a non-negative integer."));
       return;
     }
 
@@ -269,10 +290,12 @@ export default function ProvidersPage() {
       setCustomOutputPrice("");
       setCustomReasoningPrice("");
       await utils.providers.getConfig.invalidate();
-      toast.success("Custom model added.");
+      toast.success(t("Custom model added."));
     } catch (error) {
       toast.error(
-        error instanceof Error ? error.message : "Failed to add custom model.",
+        error instanceof Error
+          ? error.message
+          : t("Failed to add custom model."),
       );
     }
   };
@@ -281,12 +304,12 @@ export default function ProvidersPage() {
     try {
       await deleteCustomModel.mutateAsync({ id });
       await utils.providers.getConfig.invalidate();
-      toast.success("Custom model removed.");
+      toast.success(t("Custom model removed."));
     } catch (error) {
       toast.error(
         error instanceof Error
           ? error.message
-          : "Failed to remove custom model.",
+          : t("Failed to remove custom model."),
       );
     }
   };
@@ -299,27 +322,35 @@ export default function ProvidersPage() {
   const effectiveApiStyle =
     openAiCompatSetting?.apiStyle ?? openAiCompatApiStyle;
   const effectiveBaseUrl = openAiCompatSetting?.baseUrl ?? openAiCompatBaseUrl;
+  const apiStyleLabel =
+    effectiveApiStyle === "chat"
+      ? t("Chat Completions")
+      : t("Responses API");
 
   return (
     <div className="mx-auto flex max-w-4xl w-full flex-col gap-6">
       <div className="space-y-2">
-        <h1 className="text-3xl font-semibold tracking-tight">Providers</h1>
+        <h1 className="text-3xl font-semibold tracking-tight">
+          {t("Providers")}
+        </h1>
         <p className="text-muted-foreground">
-          Bring your own keys, configure OpenAI-compatible endpoints, and add
-          custom models.
+          {t(
+            "Bring your own keys, configure OpenAI-compatible endpoints, and add custom models.",
+          )}
         </p>
       </div>
 
       <Card>
         <CardHeader>
-          <CardTitle>BYOK keys</CardTitle>
+          <CardTitle>{t("BYOK keys")}</CardTitle>
           <CardDescription>
-            Saved keys are encrypted. Requests sent with BYOK are not counted
-            toward usage limits.
+            {t(
+              "Saved keys are encrypted. Requests sent with BYOK are not counted toward usage limits.",
+            )}
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          {PROVIDERS.map((provider) => {
+          {providers.map((provider) => {
             const configured = configuredProviders.has(provider.id);
             const prefer = preferByok[provider.id] ?? false;
             const isOpenAiCompat = provider.id === "openai_compatible";
@@ -342,7 +373,7 @@ export default function ProvidersPage() {
                         htmlFor={`prefer-${provider.id}`}
                         className="text-xs"
                       >
-                        Prefer BYOK
+                        {t("Prefer BYOK")}
                       </Label>
                       <Switch
                         id={`prefer-${provider.id}`}
@@ -357,12 +388,14 @@ export default function ProvidersPage() {
                 <div className="flex flex-col gap-2 md:flex-row md:items-center">
                   <div className="flex-1">
                     <Label htmlFor={inputId} className="sr-only">
-                      {provider.label} API key
+                      {t("{provider} API key", {
+                        provider: provider.label,
+                      })}
                     </Label>
                     <Input
                       id={inputId}
                       type="password"
-                      placeholder="sk-••••"
+                      placeholder={t("sk-••••")}
                       value={keyInputs[provider.id]}
                       onChange={(event) =>
                         setKeyInputs((prev) => ({
@@ -378,7 +411,7 @@ export default function ProvidersPage() {
                       onClick={() => handleSaveKey(provider.id)}
                       disabled={upsertKey.isPending}
                     >
-                      {configured ? "Update key" : "Save key"}
+                      {configured ? t("Update key") : t("Save key")}
                     </Button>
                     {configured && (
                       <Button
@@ -387,13 +420,15 @@ export default function ProvidersPage() {
                         onClick={() => handleDeleteKey(provider.id)}
                         disabled={deleteKey.isPending}
                       >
-                        Remove
+                        {t("Remove")}
                       </Button>
                     )}
                   </div>
                 </div>
                 <p className="text-xs text-muted-foreground">
-                  Status: {configured ? "Saved" : "Not configured"}
+                  {t("Status: {status}", {
+                    status: configured ? t("Saved") : t("Not configured"),
+                  })}
                 </p>
               </div>
             );
@@ -403,23 +438,25 @@ export default function ProvidersPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle>OpenAI-compatible endpoint</CardTitle>
+          <CardTitle>{t("OpenAI-compatible endpoint")}</CardTitle>
           <CardDescription>
-            Configure a base URL and API style for OpenAI-compatible providers.
+            {t(
+              "Configure a base URL and API style for OpenAI-compatible providers.",
+            )}
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="openai-compat-base-url">Base URL</Label>
+            <Label htmlFor="openai-compat-base-url">{t("Base URL")}</Label>
             <Input
               id="openai-compat-base-url"
-              placeholder="https://api.your-provider.com/v1"
+              placeholder={t("https://api.your-provider.com/v1")}
               value={openAiCompatBaseUrl}
               onChange={(event) => setOpenAiCompatBaseUrl(event.target.value)}
             />
           </div>
           <div className="space-y-2">
-            <Label>API style</Label>
+            <Label>{t("API style")}</Label>
             <Select
               value={openAiCompatApiStyle}
               onValueChange={(value) => {
@@ -429,11 +466,11 @@ export default function ProvidersPage() {
               }}
             >
               <SelectTrigger className="max-w-xs">
-                <SelectValue placeholder="Select API style" />
+                <SelectValue placeholder={t("Select API style")} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="responses">Responses API</SelectItem>
-                <SelectItem value="chat">Chat Completions</SelectItem>
+                <SelectItem value="responses">{t("Responses API")}</SelectItem>
+                <SelectItem value="chat">{t("Chat Completions")}</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -442,11 +479,13 @@ export default function ProvidersPage() {
               onClick={handleSaveOpenAiCompat}
               disabled={upsertSetting.isPending}
             >
-              Save endpoint
+              {t("Save endpoint")}
             </Button>
             <p className="text-xs text-muted-foreground">
-              Active: {effectiveBaseUrl ? "Yes" : "No"} · API:{" "}
-              {effectiveApiStyle}
+              {t("Active: {active} · API: {api}", {
+                active: effectiveBaseUrl ? t("Yes") : t("No"),
+                api: apiStyleLabel,
+              })}
             </p>
           </div>
         </CardContent>
@@ -454,16 +493,17 @@ export default function ProvidersPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle>Custom models</CardTitle>
+          <CardTitle>{t("Custom models")}</CardTitle>
           <CardDescription>
-            Add OpenAI-compatible models for your endpoint. These are available
-            in the chat model selector.
+            {t(
+              "Add OpenAI-compatible models for your endpoint. These are available in the chat model selector.",
+            )}
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
           <div className="grid gap-4 md:grid-cols-2">
             <div className="space-y-2">
-              <Label htmlFor="custom-model-name">Display name</Label>
+              <Label htmlFor="custom-model-name">{t("Display name")}</Label>
               <Input
                 id="custom-model-name"
                 value={customName}
@@ -471,7 +511,7 @@ export default function ProvidersPage() {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="custom-model-id">Model ID</Label>
+              <Label htmlFor="custom-model-id">{t("Model ID")}</Label>
               <Input
                 id="custom-model-id"
                 value={customModelId}
@@ -480,7 +520,9 @@ export default function ProvidersPage() {
             </div>
           </div>
           <div className="space-y-2">
-            <Label htmlFor="custom-model-description">Description</Label>
+            <Label htmlFor="custom-model-description">
+              {t("Description")}
+            </Label>
             <Textarea
               id="custom-model-description"
               value={customDescription}
@@ -494,12 +536,14 @@ export default function ProvidersPage() {
               onCheckedChange={(checked) => setCustomPremium(Boolean(checked))}
             />
             <Label htmlFor="custom-model-premium" className="text-sm">
-              Mark as premium
+              {t("Mark as premium")}
             </Label>
           </div>
           <div className="grid gap-4 md:grid-cols-3">
             <div className="space-y-2">
-              <Label htmlFor="custom-input-price">Input price (micros)</Label>
+              <Label htmlFor="custom-input-price">
+                {t("Input price (micros)")}
+              </Label>
               <Input
                 id="custom-input-price"
                 type="number"
@@ -509,7 +553,9 @@ export default function ProvidersPage() {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="custom-output-price">Output price (micros)</Label>
+              <Label htmlFor="custom-output-price">
+                {t("Output price (micros)")}
+              </Label>
               <Input
                 id="custom-output-price"
                 type="number"
@@ -520,7 +566,7 @@ export default function ProvidersPage() {
             </div>
             <div className="space-y-2">
               <Label htmlFor="custom-reasoning-price">
-                Reasoning price (micros)
+                {t("Reasoning price (micros)")}
               </Label>
               <Input
                 id="custom-reasoning-price"
@@ -538,10 +584,10 @@ export default function ProvidersPage() {
               onClick={handleCreateCustomModel}
               disabled={createCustomModel.isPending}
             >
-              Add model
+              {t("Add model")}
             </Button>
             <p className="text-xs text-muted-foreground">
-              Pricing fields are optional metadata for cost estimates.
+              {t("Pricing fields are optional metadata for cost estimates.")}
             </p>
           </div>
 
@@ -549,10 +595,12 @@ export default function ProvidersPage() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Name</TableHead>
-                  <TableHead>Model ID</TableHead>
-                  <TableHead>Tier</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
+                  <TableHead>{t("Name")}</TableHead>
+                  <TableHead>{t("Model ID")}</TableHead>
+                  <TableHead>{t("Tier")}</TableHead>
+                  <TableHead className="text-right">
+                    {t("Actions")}
+                  </TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -571,7 +619,9 @@ export default function ProvidersPage() {
                     <TableCell className="font-mono text-xs">
                       {model.modelId}
                     </TableCell>
-                    <TableCell>{model.premium ? "Premium" : "Basic"}</TableCell>
+                    <TableCell>
+                      {model.premium ? t("Premium") : t("Basic")}
+                    </TableCell>
                     <TableCell className="text-right">
                       <Button
                         size="sm"
@@ -579,7 +629,7 @@ export default function ProvidersPage() {
                         onClick={() => handleDeleteCustomModel(model.id)}
                         disabled={deleteCustomModel.isPending}
                       >
-                        Remove
+                        {t("Remove")}
                       </Button>
                     </TableCell>
                   </TableRow>
