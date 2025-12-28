@@ -1,17 +1,17 @@
 "use client";
 
+import { AuthQueryProvider } from "@daveyplate/better-auth-tanstack";
+import { AuthUIProviderTanstack } from "@daveyplate/better-auth-ui/tanstack";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useExtracted } from "next-intl";
+import type { ReactNode } from "react";
 import { env } from "@/env";
 import { ThemePresetProvider } from "@/hooks/use-theme-preset";
 import { authClient } from "@/lib/auth-client";
 import { makeTRPCClient } from "@/lib/trpc/client";
 import { trpc } from "@/lib/trpc/react";
-import { AuthQueryProvider } from "@daveyplate/better-auth-tanstack";
-import { AuthUIProviderTanstack } from "@daveyplate/better-auth-ui/tanstack";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { useExtracted } from "next-intl";
-import Link from "next/link";
-import { useRouter } from "next/navigation";
-import type { ReactNode } from "react";
 import { ThemeProvider } from "./ui/theme-provider";
 
 const queryClient = new QueryClient();

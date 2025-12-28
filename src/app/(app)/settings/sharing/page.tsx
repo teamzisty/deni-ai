@@ -387,7 +387,7 @@ export default function SharingSettingsPage() {
               disabled={deleteShare.isPending}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
-              {deleteShare.isPending && <Spinner className="mr-2" />}
+              {deleteShare.isPending && <Spinner />}
               {t("Revoke Access")}
             </AlertDialogAction>
           </AlertDialogFooter>

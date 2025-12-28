@@ -39,5 +39,5 @@ export default async function ChatPage({
     ? validatedMessages.data
     : [];
 
-  return <ChatInterface id={id} initialMessages={initialMessages} />;
+  return <ChatInterface key={id} id={id} initialMessages={initialMessages} />;
 }

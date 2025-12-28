@@ -298,7 +298,7 @@ export function ShareDialog({
               onClick={() => deleteShare.mutate({ chatId })}
               disabled={deleteShare.isPending}
             >
-              {deleteShare.isPending && <Spinner className="mr-2" />}
+              {deleteShare.isPending && <Spinner />}
               {t("Revoke Access")}
             </Button>
           )}

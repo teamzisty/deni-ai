@@ -512,7 +512,7 @@ export function VeoGenerator() {
                 </div>
                 <div className="flex items-center gap-2">
                   <Button onClick={handleGenerate} disabled={isBusy}>
-                    {isBusy && <Spinner className="mr-2" />}
+                    {isBusy && <Spinner />}
                     {t("Send")}
                   </Button>
                   {isBusy && (
@@ -556,9 +556,7 @@ export function VeoGenerator() {
                     {modelOptions.map((option) => (
                       <SelectItem key={option.value} value={option.value}>
                         <span className="flex flex-col">
-                          <span className="font-medium">
-                            {option.label}
-                          </span>
+                          <span className="font-medium">{option.label}</span>
                           <span className="text-xs text-muted-foreground">
                             {option.description}
                           </span>

@@ -73,6 +73,7 @@ import {
   SourcesTrigger,
 } from "@/components/ai-elements/sources";
 import { Composer, type ComposerMessage } from "@/components/chat/composer";
+import { authClient } from "@/lib/auth-client";
 import { models } from "@/lib/constants";
 import { trpc } from "@/lib/trpc/react";
 import { cn } from "@/lib/utils";
@@ -343,6 +344,8 @@ export function ChatInterface({
   initialMessages = [],
 }: ChatInterfaceProps) {
   const t = useExtracted();
+  const session = authClient.useSession();
+  const isAnonymous = Boolean(session.data?.user?.isAnonymous);
   const [input, setInput] = useState("");
   const [model, setModel] = useState(models[0].value);
   const [webSearch, setWebSearch] = useState(false);
@@ -372,10 +375,15 @@ export function ChatInterface({
     }));
   }, [providersQuery.data?.customModels, t]);
 
-  const availableModels = useMemo<ModelOption[]>(
-    () => [...models, ...customModels],
-    [customModels],
-  );
+  const availableModels = useMemo<ModelOption[]>(() => {
+    const baseModels = isAnonymous
+      ? models.filter((entry) => !entry.premium)
+      : models;
+    const filteredCustomModels = isAnonymous
+      ? customModels.filter((entry) => !entry.premium)
+      : customModels;
+    return [...baseModels, ...filteredCustomModels];
+  }, [customModels, isAnonymous]);
 
   const requestBody = useMemo(
     () => ({
@@ -984,14 +992,16 @@ export function ChatInterface({
                 "Configure an OpenAI-compatible base URL and API key before using this model.",
               )}
             </p>
-            <div className="flex flex-wrap gap-2">
-              <Button size="sm" asChild>
-                <Link href="/settings/providers">
-                  {t("Open settings")}
-                  <ArrowUpRight className="ml-1.5 size-3.5" />
-                </Link>
-              </Button>
-            </div>
+            {!isAnonymous && (
+              <div className="flex flex-wrap gap-2">
+                <Button size="sm" asChild>
+                  <Link href="/settings/providers">
+                    {t("Open settings")}
+                    <ArrowUpRight className="ml-1.5 size-3.5" />
+                  </Link>
+                </Button>
+              </div>
+            )}
           </AlertDescription>
         </Alert>
       )}
@@ -1048,12 +1058,14 @@ export function ChatInterface({
                     )}
             </p>
             <div className="flex flex-wrap gap-2">
-              <Button size="sm" asChild>
-                <Link href="/settings/billing">
-                  {t("Upgrade plan")}
-                  <ArrowUpRight className="ml-1.5 size-3.5" />
-                </Link>
-              </Button>
+              {!isAnonymous && (
+                <Button size="sm" asChild>
+                  <Link href="/settings/billing">
+                    {t("Upgrade plan")}
+                    <ArrowUpRight className="ml-1.5 size-3.5" />
+                  </Link>
+                </Button>
+              )}
               <Button
                 variant="ghost"
                 size="sm"

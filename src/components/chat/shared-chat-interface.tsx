@@ -133,21 +133,21 @@ export function SharedChatInterface({
           <Avatar className="size-8">
             <AvatarImage src={owner?.image ?? undefined} />
             <AvatarFallback>
-            <User className="size-4" />
-          </AvatarFallback>
-        </Avatar>
-        <div>
+              <User className="size-4" />
+            </AvatarFallback>
+          </Avatar>
+          <div>
             <h1 className="font-semibold">{chat.title || t("Untitled")}</h1>
             <p className="text-xs text-muted-foreground">
               {t("Shared by {name}", { name: owner?.name || t("Unknown") })}
             </p>
+          </div>
         </div>
-      </div>
 
-      {allowFork && (
-        <Button onClick={handleFork} disabled={forkChat.isPending}>
+        {allowFork && (
+          <Button onClick={handleFork} disabled={forkChat.isPending}>
             {forkChat.isPending ? (
-              <Spinner className="mr-2" />
+              <Spinner />
             ) : (
               <GitFork className="mr-2 size-4" />
             )}

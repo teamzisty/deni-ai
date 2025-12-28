@@ -8,7 +8,7 @@
     "start": "next start",
     "lint": "biome check",
     "format": "biome format --write",
-    "auth:generate": "bun run cli generate --output src/db/schema/auth-schema.ts --yes",
+    "auth:generate": "better-auth generate --output src/db/schema/auth-schema.ts --yes",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
     "db:push": "drizzle-kit push"

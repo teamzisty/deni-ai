@@ -1,7 +1,7 @@
 "use client";
 
-import { useExtracted } from "next-intl";
 import { useRouter } from "next/navigation";
+import { useExtracted } from "next-intl";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import type { BillingPlanId, ClientPlan } from "@/lib/billing";
@@ -36,9 +36,9 @@ const usageResetFormatter = new Intl.DateTimeFormat("en-US", {
   day: "numeric",
 });
 
-type TranslateFn = ReturnType<typeof useExtracted>;
+function formatPriceLabel(plan: ClientPlan) {
+  const t = useExtracted();
 
-function formatPriceLabel(plan: ClientPlan, t: TranslateFn) {
   const mode = plan.mode ?? "subscription";
   if (!plan.amount || !plan.currency) {
     return t("Set price in Stripe");
@@ -64,6 +64,8 @@ function formatPriceLabel(plan: ClientPlan, t: TranslateFn) {
       ? `${plan.intervalCount} ${plan.interval}s`
       : plan.interval;
 
+  console.log(base, interval);
+
   return t("{price}/{interval}", { price: base, interval });
 }
 
@@ -83,7 +85,9 @@ type PlanCopy = {
   badge?: string;
 };
 
-function getPlanCopy(planId: BillingPlanId, t: TranslateFn): PlanCopy {
+function getPlanCopy(planId: BillingPlanId): PlanCopy {
+  const t = useExtracted();
+
   switch (planId) {
     case "pro_monthly":
       return {
@@ -133,7 +137,10 @@ function getPlanCopy(planId: BillingPlanId, t: TranslateFn): PlanCopy {
   }
 }
 
-function getPlanIntervalLabel(planId: BillingPlanId, t: TranslateFn) {
+function getPlanIntervalLabel(
+  planId: BillingPlanId,
+  t: ReturnType<typeof useExtracted>,
+) {
   if (planId.endsWith("_monthly")) {
     return t("Monthly");
   }
@@ -173,7 +180,7 @@ function PlanCard({
   setIsChangePlanOpen: (open: boolean) => void;
 }) {
   const t = useExtracted();
-  const planCopy = getPlanCopy(plan.id, t);
+  const planCopy = getPlanCopy(plan.id);
   const mode = plan.mode ?? "subscription";
   const canChange =
     hasActiveSubscription &&
@@ -225,9 +232,7 @@ function PlanCard({
       </CardHeader>
       <CardContent className="flex flex-1 flex-col">
         <div className="flex-1">
-          <div className="text-2xl font-semibold">
-            {formatPriceLabel(plan, t)}
-          </div>
+          <div className="text-2xl font-semibold">{formatPriceLabel(plan)}</div>
           {planCopy.highlights.length > 0 && (
             <ul className="mt-4 space-y-1 text-sm text-muted-foreground">
               {planCopy.highlights.map((item) => (
@@ -252,7 +257,7 @@ function PlanCard({
             }
           }}
         >
-          {processing && <Spinner className="mr-2" />}
+          {processing && <Spinner />}
           {isCurrent
             ? t("Current plan")
             : isBlockedByCancel
@@ -546,7 +551,7 @@ export function BillingPage() {
                 disabled={portal.isPending}
                 onClick={() => portal.mutate()}
               >
-                {portal.isPending && <Spinner className="mr-2" />}
+                {portal.isPending && <Spinner />}
                 {t("Manage")}
               </Button>
             )}
@@ -557,7 +562,7 @@ export function BillingPage() {
                 disabled={cancel.isPending}
                 onClick={() => cancel.mutate()}
               >
-                {cancel.isPending && <Spinner className="mr-2" />}
+                {cancel.isPending && <Spinner />}
                 {t("Cancel")}
               </Button>
             )}
@@ -567,7 +572,7 @@ export function BillingPage() {
                 disabled={resume.isPending}
                 onClick={() => resume.mutate()}
               >
-                {resume.isPending && <Spinner className="mr-2" />}
+                {resume.isPending && <Spinner />}
                 {t("Resume")}
               </Button>
             )}
@@ -677,7 +682,7 @@ export function BillingPage() {
                 changeTarget && changePlan.mutate({ planId: changeTarget.id })
               }
             >
-              {changePlan.isPending && <Spinner className="mr-2" />}
+              {changePlan.isPending && <Spinner />}
               {t("Confirm")}
             </AlertDialogAction>
           </AlertDialogFooter>

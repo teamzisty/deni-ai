@@ -257,6 +257,7 @@ export async function POST(req: Request) {
   const headersList = await headers();
   const session = await auth.api.getSession({ headers: headersList });
   const userId = session?.session?.userId;
+  const isAnonymous = Boolean(session?.user?.isAnonymous);
 
   if (!userId) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -328,8 +329,18 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Unknown model" }, { status: 400 });
   }
 
-  const usageCategory: UsageCategory =
-    (customEntry?.premium ?? selectedModel?.premium) ? "premium" : "basic";
+  const isPremiumModel = Boolean(
+    (customEntry?.premium ?? selectedModel?.premium) ?? false,
+  );
+
+  if (isAnonymous && isPremiumModel) {
+    return NextResponse.json(
+      { error: "Premium models are not available for guest sessions." },
+      { status: 403 },
+    );
+  }
+
+  const usageCategory: UsageCategory = isPremiumModel ? "premium" : "basic";
 
   const [providerKeys, providerSettings] = await Promise.all([
     db.select().from(providerKey).where(eq(providerKey.userId, userId)),
@@ -392,12 +403,16 @@ export async function POST(req: Request) {
 
   if (!useByok) {
     try {
-      const usageSummary = await getUsageSummary({ userId });
+      const usageSummary = await getUsageSummary({ userId, isAnonymous });
       const categoryUsage = usageSummary.usage.find(
         (usage) => usage.category === usageCategory,
       );
 
-      if (categoryUsage?.remaining && categoryUsage.remaining <= 0) {
+      if (
+        categoryUsage?.remaining !== null &&
+        categoryUsage?.remaining !== undefined &&
+        categoryUsage.remaining <= 0
+      ) {
         throw new UsageLimitError("You've hit the usage limit for your plan.");
       }
     } catch (error) {
@@ -789,6 +804,7 @@ export async function POST(req: Request) {
           await consumeUsage({
             userId,
             category: usageCategory,
+            isAnonymous,
           });
         } catch (error) {
           console.error("Failed to record usage", error);

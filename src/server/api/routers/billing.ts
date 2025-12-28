@@ -641,7 +641,10 @@ export const billingRouter = router({
     };
   }),
   usage: protectedProcedure.query(async ({ ctx }) => {
-    const summary = await getUsageSummary({ userId: ctx.userId });
+    const summary = await getUsageSummary({
+      userId: ctx.userId,
+      isAnonymous: Boolean(ctx.session?.user?.isAnonymous),
+    });
     return summary;
   }),
   estimatePlanChange: protectedProcedure

@@ -1,7 +1,12 @@
 import { passkey } from "@better-auth/passkey";
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
-import { captcha, haveIBeenPwned, lastLoginMethod } from "better-auth/plugins";
+import {
+  anonymous,
+  captcha,
+  haveIBeenPwned,
+  lastLoginMethod,
+} from "better-auth/plugins";
 import { twoFactor } from "better-auth/plugins/two-factor";
 import { db } from "@/db/drizzle";
 import * as schema from "@/db/schema";
@@ -17,6 +22,7 @@ export const auth = betterAuth({
     enabled: true,
   },
   plugins: [
+    anonymous(),
     twoFactor(),
     passkey(),
     haveIBeenPwned(),

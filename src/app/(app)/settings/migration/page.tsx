@@ -1,7 +1,7 @@
 "use client";
 
-import { useExtracted } from "next-intl";
 import Link from "next/link";
+import { useExtracted } from "next-intl";
 import { useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -29,6 +29,7 @@ export default function MigrationPage() {
   const t = useExtracted();
   const [file, setFile] = useState<File | null>(null);
   const [result, setResult] = useState<ImportResult | null>(null);
+  const utils = trpc.useUtils();
 
   const importMutation = trpc.migration.import.useMutation();
 
@@ -59,6 +60,7 @@ export default function MigrationPage() {
         return;
       }
 
+      await utils.chat.getChats.invalidate();
       toast.success(t("Import completed."));
     } catch (error) {
       console.error("Import failed", error);
@@ -73,7 +75,7 @@ export default function MigrationPage() {
           {t("Message Migration")}
         </h1>
         <p className="text-muted-foreground">
-          {t("Move your chats from the old version into this canary build.")}
+          {t("Move your chats from the old version into this site.")}
         </p>
       </div>
 
@@ -97,7 +99,7 @@ export default function MigrationPage() {
 
       <Card className="border-border/80">
         <CardHeader>
-          <CardTitle>{t("Step 2: Import into canary")}</CardTitle>
+          <CardTitle>{t("Step 2: Import into this site")}</CardTitle>
           <CardDescription>
             {t("Upload the `message.json` file to create new chats.")}
           </CardDescription>
@@ -116,7 +118,7 @@ export default function MigrationPage() {
             />
           </div>
           <Button onClick={handleImport} disabled={importMutation.isPending}>
-            {importMutation.isPending ? <Spinner className="mr-2" /> : null}
+            {importMutation.isPending ? <Spinner /> : null}
             {t("Import messages")}
           </Button>
 

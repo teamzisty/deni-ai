@@ -36,6 +36,11 @@ const USAGE_LIMITS: Record<
   },
 };
 
+const GUEST_USAGE_LIMITS: Record<UsageCategory, number> = {
+  basic: 20,
+  premium: 0,
+};
+
 export class UsageLimitError extends Error {
   constructor(message: string) {
     super(message);
@@ -116,14 +121,18 @@ async function calculateUsageState({
   category,
   now,
   existingRecord,
+  isAnonymous = false,
 }: {
   userId: string;
   category: UsageCategory;
   now: Date;
   existingRecord?: UsageRecord;
+  isAnonymous?: boolean;
 }) {
   const tierInfo = await getTierInfo(userId, now);
-  const limit = USAGE_LIMITS[category][tierInfo.tier];
+  const limit = isAnonymous
+    ? GUEST_USAGE_LIMITS[category]
+    : USAGE_LIMITS[category][tierInfo.tier];
 
   const current =
     existingRecord ??
@@ -136,10 +145,13 @@ async function calculateUsageState({
       .limit(1)
       .then((rows) => rows[0]));
 
-  const targetPeriodEnd = resolvePeriodEnd(now);
+  const targetPeriodEnd = isAnonymous ? null : resolvePeriodEnd(now);
 
-  const shouldReset =
-    !current || !current.periodEnd || current.periodEnd <= now;
+  const shouldReset = !current
+    ? true
+    : isAnonymous
+      ? false
+      : !current.periodEnd || current.periodEnd <= now;
 
   const used =
     limit === null
@@ -164,12 +176,19 @@ export async function consumeUsage({
   userId,
   category,
   now = new Date(),
+  isAnonymous = false,
 }: {
   userId: string;
   category: UsageCategory;
   now?: Date;
+  isAnonymous?: boolean;
 }) {
-  const state = await calculateUsageState({ userId, category, now });
+  const state = await calculateUsageState({
+    userId,
+    category,
+    now,
+    isAnonymous,
+  });
   const { tierInfo, limit } = state;
 
   if (limit === null) {
@@ -180,7 +199,7 @@ export async function consumeUsage({
     };
   }
 
-  if (!state.shouldReset && state.used >= limit) {
+  if (limit <= 0 || (!state.shouldReset && state.used >= limit)) {
     throw new UsageLimitError("Usage limit reached for your plan.");
   }
 
@@ -237,9 +256,11 @@ export type UsageSummary = {
 export async function getUsageSummary({
   userId,
   now = new Date(),
+  isAnonymous = false,
 }: {
   userId: string;
   now?: Date;
+  isAnonymous?: boolean;
 }): Promise<UsageSummary> {
   const nowDate = now;
   const tierInfo = await getTierInfo(userId, nowDate);
@@ -256,6 +277,7 @@ export async function getUsageSummary({
         category,
         now: nowDate,
         existingRecord: records.find((row) => row.category === category),
+        isAnonymous,
       });
 
       if (state.limit === null) {

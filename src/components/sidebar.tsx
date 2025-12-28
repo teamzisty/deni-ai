@@ -255,6 +255,7 @@ export function AppSidebar() {
   const [isDeleteAllDialogOpen, setIsDeleteAllDialogOpen] = useState(false);
   const konamiIndexRef = useRef(0);
   const session = authClient.useSession();
+  const isAnonymous = Boolean(session.data?.user?.isAnonymous);
   const { isLoading, error, data } = trpc.chat.getChats.useQuery();
   const chatGroups = useMemo(() => groupChatsByRecency(data ?? []), [data]);
   const createConversion = trpc.chat.createChat.useMutation({
@@ -451,12 +452,17 @@ export function AppSidebar() {
                         <span className="flex-1">{t("Account")}</span>
                       </Link>
                     </DropdownMenuItem>
-                    <DropdownMenuItem className="gap-2 text-sm" asChild>
-                      <Link href="/settings/appearance" className="flex w-full">
-                        <Settings className="size-4" />
-                        <span className="flex-1">{t("Settings")}</span>
-                      </Link>
-                    </DropdownMenuItem>
+                    {!isAnonymous && (
+                      <DropdownMenuItem className="gap-2 text-sm" asChild>
+                        <Link
+                          href="/settings/appearance"
+                          className="flex w-full"
+                        >
+                          <Settings className="size-4" />
+                          <span className="flex-1">{t("Settings")}</span>
+                        </Link>
+                      </DropdownMenuItem>
+                    )}
                     <DropdownMenuSeparator />
                     <DropdownMenuItem
                       className="gap-2 text-sm"
@@ -496,7 +502,7 @@ export function AppSidebar() {
               disabled={deleteAllChats.isPending}
               onClick={handleDeleteAllChats}
             >
-              {deleteAllChats.isPending ? <Spinner className="mr-2" /> : null}
+              {deleteAllChats.isPending ? <Spinner /> : null}
               {t("Delete all chats")}
             </AlertDialogAction>
           </AlertDialogFooter>
