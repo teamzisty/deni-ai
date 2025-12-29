@@ -53,8 +53,6 @@ import {
 const VEO_BASE_URL = "https://generativelanguage.googleapis.com/v1beta";
 const VEO_POLL_INTERVAL_MS = 5000;
 const VEO_MAX_POLL_ATTEMPTS = 90;
-const DUCKDUCKGO_PROXY_BASE_URL =
-  "https://r.jina.ai/http://duckduckgo.com/html/";
 
 const UIMessagesSchema = z
   .array(z.record(z.string(), z.unknown()))
@@ -103,11 +101,14 @@ function extractVeoErrorMessage(
 
 async function pollVeoOperation(operationName: string) {
   for (let attempt = 0; attempt < VEO_MAX_POLL_ATTEMPTS; attempt += 1) {
-    const response = await fetch(`${VEO_BASE_URL}/${operationName}`, {
-      headers: {
-        "x-goog-api-key": env.GOOGLE_GENERATIVE_AI_API_KEY,
+    const response = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/${operationName}`,
+      {
+        headers: {
+          "x-goog-api-key": env.GOOGLE_GENERATIVE_AI_API_KEY,
+        },
       },
-    });
+    );
 
     let responseData: unknown = null;
     try {
@@ -160,88 +161,6 @@ async function pollVeoOperation(operationName: string) {
   }
 
   throw new Error("Timed out waiting for the video.");
-}
-
-function extractDuckDuckGoUrl(rawHref: string): string | undefined {
-  try {
-    if (rawHref.startsWith("/")) {
-      const [, queryString] = rawHref.split("?");
-      if (!queryString) {
-        return undefined;
-      }
-      const params = new URLSearchParams(queryString);
-      const encodedUrl = params.get("uddg") ?? params.get("rut");
-      if (!encodedUrl) {
-        return undefined;
-      }
-      return decodeURIComponent(encodedUrl);
-    }
-
-    const parsed = new URL(rawHref);
-    if (parsed.hostname.endsWith("duckduckgo.com")) {
-      const encodedUrl =
-        parsed.searchParams.get("uddg") ?? parsed.searchParams.get("rut");
-      if (encodedUrl) {
-        return decodeURIComponent(encodedUrl);
-      }
-    }
-
-    return rawHref;
-  } catch {
-    return undefined;
-  }
-}
-
-function parseDuckDuckGoHtml(html: string, maxResults: number): SearchResult[] {
-  const $ = load(html);
-  const results: SearchResult[] = [];
-
-  $("div.result").each((_, element) => {
-    if (results.length >= maxResults) {
-      return false;
-    }
-
-    const titleAnchor = $("a.result__a", element).first();
-    const descriptionBlock = $(".result__snippet", element).first();
-    const href = titleAnchor.attr("href");
-    const title = titleAnchor.text().trim();
-    const description = descriptionBlock.text().trim();
-
-    if (!href || !title) {
-      return;
-    }
-
-    const url = extractDuckDuckGoUrl(href);
-    if (!url) {
-      return;
-    }
-
-    results.push({ title, url, description });
-  });
-
-  return results;
-}
-
-async function searchDuckDuckGoViaProxy(
-  query: string,
-  maxResults: number,
-): Promise<SearchResult[]> {
-  const params = new URLSearchParams({ q: query });
-  const response = await fetch(
-    `${DUCKDUCKGO_PROXY_BASE_URL}?${params.toString()}`,
-    {
-      headers: {
-        "x-respond-with": "html",
-      },
-    },
-  );
-
-  if (!response.ok) {
-    throw new Error(`DuckDuckGo proxy responded with ${response.status}`);
-  }
-
-  const html = await response.text();
-  return parseDuckDuckGoHtml(html, maxResults);
 }
 
 export async function POST(req: Request) {
@@ -330,7 +249,7 @@ export async function POST(req: Request) {
   }
 
   const isPremiumModel = Boolean(
-    (customEntry?.premium ?? selectedModel?.premium) ?? false,
+    customEntry?.premium ?? selectedModel?.premium ?? false,
   );
 
   if (isAnonymous && isPremiumModel) {

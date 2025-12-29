@@ -3,40 +3,20 @@ import { NextResponse } from "next/server";
 import { env } from "@/env";
 import { auth } from "@/lib/auth";
 
-const ALLOWED_HOSTS = new Set(["generativelanguage.googleapis.com"]);
-
 export async function GET(req: Request) {
   const session = await auth.api.getSession({ headers: await headers() });
   if (!session?.session) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const { searchParams } = new URL(req.url);
-  const uri = searchParams.get("uri");
-
-  if (!uri) {
-    return NextResponse.json({ error: "Missing uri." }, { status: 400 });
-  }
-
-  let parsedUrl: URL;
-  try {
-    parsedUrl = new URL(uri);
-  } catch {
-    return NextResponse.json({ error: "Invalid uri." }, { status: 400 });
-  }
-
-  if (!ALLOWED_HOSTS.has(parsedUrl.host)) {
-    return NextResponse.json(
-      { error: "Unsupported uri host." },
-      { status: 400 },
-    );
-  }
-
-  const response = await fetch(parsedUrl.toString(), {
-    headers: {
-      "x-goog-api-key": env.GOOGLE_GENERATIVE_AI_API_KEY,
+  const response = await fetch(
+    "https://generativelanguage.googleapis.com/v1beta/videos:generate",
+    {
+      headers: {
+        "x-goog-api-key": env.GOOGLE_GENERATIVE_AI_API_KEY,
+      },
     },
-  });
+  );
 
   if (!response.ok) {
     let message = "Failed to download video.";
