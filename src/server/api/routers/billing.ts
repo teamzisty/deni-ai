@@ -4,6 +4,7 @@ import type Stripe from "stripe";
 import { z } from "zod";
 import { billing, user } from "@/db/schema";
 import { env } from "@/env";
+import { isBillingDisabled } from "@/lib/billing-config";
 import {
   type BillingPlan,
   billingPlans,
@@ -30,6 +31,15 @@ const ACTIVE_SUB_STATUSES = new Set([
   "incomplete",
   "unpaid",
 ]);
+const billingEnabledProcedure = protectedProcedure.use(({ next }) => {
+  if (isBillingDisabled) {
+    throw new TRPCError({
+      code: "PRECONDITION_FAILED",
+      message: "Billing is disabled.",
+    });
+  }
+  return next();
+});
 
 function deriveModeFromPrice(
   price: Stripe.Price | null | undefined,
@@ -214,7 +224,7 @@ async function syncSubscription(ctx: ProtectedContext, userId: string) {
 }
 
 export const billingRouter = router({
-  plans: protectedProcedure.query(async () => {
+  plans: billingEnabledProcedure.query(async () => {
     const plans = await Promise.all(
       billingPlans.map(async (plan) => {
         const price = await getPriceForPlan(plan);
@@ -234,7 +244,7 @@ export const billingRouter = router({
 
     return { plans };
   }),
-  status: protectedProcedure.query(async ({ ctx }) => {
+  status: billingEnabledProcedure.query(async ({ ctx }) => {
     const subscription = await syncSubscription(ctx, ctx.userId);
     return {
       planId: subscription.planId ?? null,
@@ -246,7 +256,7 @@ export const billingRouter = router({
       stripeCustomerId: subscription.stripeCustomerId,
     };
   }),
-  createCheckoutSession: protectedProcedure
+  createCheckoutSession: billingEnabledProcedure
     .input(
       z.object({
         planId: planIdSchema,
@@ -353,7 +363,7 @@ export const billingRouter = router({
 
       return { url: session.url };
     }),
-  confirmCheckout: protectedProcedure
+  confirmCheckout: billingEnabledProcedure
     .input(
       z.object({
         sessionId: z.string().min(1),
@@ -448,7 +458,7 @@ export const billingRouter = router({
         currentPeriodEnd: saved.currentPeriodEnd ?? null,
       };
     }),
-  createPortalSession: protectedProcedure.mutation(async ({ ctx }) => {
+  createPortalSession: billingEnabledProcedure.mutation(async ({ ctx }) => {
     const subscription = await syncSubscription(ctx, ctx.userId);
 
     const portal = await stripe.billingPortal.sessions.create({
@@ -458,7 +468,7 @@ export const billingRouter = router({
 
     return { url: portal.url };
   }),
-  changePlan: protectedProcedure
+  changePlan: billingEnabledProcedure
     .input(
       z.object({
         planId: planIdSchema,
@@ -541,7 +551,7 @@ export const billingRouter = router({
         currentPeriodEnd: saved.currentPeriodEnd ?? null,
       };
     }),
-  cancelSubscription: protectedProcedure.mutation(async ({ ctx }) => {
+  cancelSubscription: billingEnabledProcedure.mutation(async ({ ctx }) => {
     const subscriptionState = await syncSubscription(ctx, ctx.userId);
     if (!subscriptionState.stripeSubscriptionId) {
       throw new TRPCError({
@@ -586,7 +596,7 @@ export const billingRouter = router({
       currentPeriodEnd: saved.currentPeriodEnd ?? null,
     };
   }),
-  resumeSubscription: protectedProcedure.mutation(async ({ ctx }) => {
+  resumeSubscription: billingEnabledProcedure.mutation(async ({ ctx }) => {
     const subscriptionState = await syncSubscription(ctx, ctx.userId);
     if (!subscriptionState.stripeSubscriptionId) {
       throw new TRPCError({
@@ -647,7 +657,7 @@ export const billingRouter = router({
     });
     return summary;
   }),
-  estimatePlanChange: protectedProcedure
+  estimatePlanChange: billingEnabledProcedure
     .input(
       z.object({
         planId: planIdSchema,

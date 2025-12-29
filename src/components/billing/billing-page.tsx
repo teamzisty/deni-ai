@@ -5,6 +5,7 @@ import { useExtracted } from "next-intl";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import type { BillingPlanId, ClientPlan } from "@/lib/billing";
+import { isBillingDisabled } from "@/lib/billing-config";
 import { trpc } from "@/lib/trpc/react";
 import { cn } from "@/lib/utils";
 import {
@@ -365,7 +366,32 @@ function UsageRow({
   );
 }
 
-export function BillingPage() {
+function BillingDisabled() {
+  const t = useExtracted();
+
+  return (
+    <div className="mx-auto flex max-w-4xl w-full flex-col gap-6">
+      <div className="space-y-2">
+        <h1 className="text-3xl font-semibold tracking-tight">
+          {t("Billing")}
+        </h1>
+        <p className="text-muted-foreground">
+          {t("Billing is disabled for this environment.")}
+        </p>
+      </div>
+      <Card className="border-border/80">
+        <CardHeader>
+          <CardTitle>{t("Billing unavailable")}</CardTitle>
+          <CardDescription>
+            {t("Plans, checkout, and billing management are turned off.")}
+          </CardDescription>
+        </CardHeader>
+      </Card>
+    </div>
+  );
+}
+
+function BillingPageContent() {
   const t = useExtracted();
   const router = useRouter();
   const hasConfirmed = useRef(false);
@@ -690,4 +716,12 @@ export function BillingPage() {
       </AlertDialog>
     </div>
   );
+}
+
+export function BillingPage() {
+  if (isBillingDisabled) {
+    return <BillingDisabled />;
+  }
+
+  return <BillingPageContent />;
 }

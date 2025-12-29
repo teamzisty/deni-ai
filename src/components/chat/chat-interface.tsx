@@ -74,6 +74,7 @@ import {
 } from "@/components/ai-elements/sources";
 import { Composer, type ComposerMessage } from "@/components/chat/composer";
 import { authClient } from "@/lib/auth-client";
+import { isBillingDisabled } from "@/lib/billing-config";
 import { models } from "@/lib/constants";
 import { trpc } from "@/lib/trpc/react";
 import { cn } from "@/lib/utils";
@@ -346,6 +347,7 @@ export function ChatInterface({
   const t = useExtracted();
   const session = authClient.useSession();
   const isAnonymous = Boolean(session.data?.user?.isAnonymous);
+  const billingDisabled = isBillingDisabled;
   const [input, setInput] = useState("");
   const [model, setModel] = useState(models[0].value);
   const [webSearch, setWebSearch] = useState(false);
@@ -1058,7 +1060,7 @@ export function ChatInterface({
                     )}
             </p>
             <div className="flex flex-wrap gap-2">
-              {!isAnonymous && (
+              {!isAnonymous && !billingDisabled && (
                 <Button size="sm" asChild>
                   <Link href="/settings/billing">
                     {t("Upgrade plan")}

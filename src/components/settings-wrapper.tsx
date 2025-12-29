@@ -8,6 +8,7 @@ import type React from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Spinner } from "@/components/ui/spinner";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { isBillingDisabled } from "@/lib/billing-config";
 import { trpc } from "@/lib/trpc/react";
 import { cn } from "@/lib/utils";
 import { Progress } from "./ui/progress";
@@ -19,7 +20,9 @@ export default function SettingsWrapper({
 }) {
   const t = useExtracted();
   const pathname = usePathname();
+  const billingDisabled = isBillingDisabled;
   const statusQuery = trpc.billing.status.useQuery(undefined, {
+    enabled: !billingDisabled,
     refetchInterval: 15000,
     refetchOnWindowFocus: true,
   });
@@ -28,7 +31,9 @@ export default function SettingsWrapper({
     refetchOnWindowFocus: true,
   });
 
-  if (usageQuery.isLoading || statusQuery.isLoading) return <Spinner />;
+  if (usageQuery.isLoading || (!billingDisabled && statusQuery.isLoading)) {
+    return <Spinner />;
+  }
 
   const status = statusQuery.data;
   const usage = usageQuery.data;
@@ -66,7 +71,7 @@ export default function SettingsWrapper({
       value: "migration",
       href: "/settings/migration",
     },
-  ];
+  ].filter((tab) => !billingDisabled || tab.value !== "billing");
 
   // Determine current tab value based on pathname
   const currentTab =
@@ -76,38 +81,40 @@ export default function SettingsWrapper({
   return (
     <div className="flex gap-2 mx-auto w-full space-y-6 pb-12 pt-4">
       <div className="flex flex-col gap-2 w-full h-full max-w-xs shrink-0">
-        <Card className="border-muted-foreground/10 bg-muted/60 shadow-none">
-          <CardContent>
-            <div className="flex flex-col gap-1">
-              <span className="font-medium text-muted-foreground">
-                {t("Your Plan")}
-              </span>
-              <div className="flex flex-col gap-0.5">
-                <span className="text-base font-semibold">{plan}</span>
-                <span className="text-xs text-muted-foreground">
-                  {t("Next update: {date}", {
-                    date: status?.currentPeriodEnd
-                      ? new Intl.DateTimeFormat("en-US", {
-                          month: "short",
-                          day: "numeric",
-                          year: "numeric",
-                        }).format(new Date(status.currentPeriodEnd))
-                      : "—",
-                  })}
+        {!billingDisabled && (
+          <Card className="border-muted-foreground/10 bg-muted/60 shadow-none">
+            <CardContent>
+              <div className="flex flex-col gap-1">
+                <span className="font-medium text-muted-foreground">
+                  {t("Your Plan")}
                 </span>
-              </div>
+                <div className="flex flex-col gap-0.5">
+                  <span className="text-base font-semibold">{plan}</span>
+                  <span className="text-xs text-muted-foreground">
+                    {t("Next update: {date}", {
+                      date: status?.currentPeriodEnd
+                        ? new Intl.DateTimeFormat("en-US", {
+                            month: "short",
+                            day: "numeric",
+                            year: "numeric",
+                          }).format(new Date(status.currentPeriodEnd))
+                        : "—",
+                    })}
+                  </span>
+                </div>
 
-              {/* <span className="block text-xs font-medium">
-                <InfoIcon
-                  size="16"
-                  className="-mt-0.5 mr-1 inline-flex size-3 shrink-0"
-                />
-                Successfully sent messages are counted as one each. There is no
-                consumption per re-request, such as tool calls.
-              </span> */}
-            </div>
-          </CardContent>
-        </Card>
+                {/* <span className="block text-xs font-medium">
+                  <InfoIcon
+                    size="16"
+                    className="-mt-0.5 mr-1 inline-flex size-3 shrink-0"
+                  />
+                  Successfully sent messages are counted as one each. There is no
+                  consumption per re-request, such as tool calls.
+                </span> */}
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
         <Card className="border-muted-foreground/10 bg-muted/60 shadow-none">
           <CardContent>
@@ -128,9 +135,7 @@ export default function SettingsWrapper({
                 <div key={usage.category} className="space-y-2 text-sm py-1">
                   <div className="flex items-center justify-between">
                     <span className="capitalize">
-                      {usage.category === "basic"
-                        ? t("Basic")
-                        : t("Premium")}
+                      {usage.category === "basic" ? t("Basic") : t("Premium")}
                     </span>
                     {usage.limit !== null ? (
                       <span className="tabular-nums text-muted-foreground">
@@ -140,7 +145,10 @@ export default function SettingsWrapper({
                     ) : (
                       <span className="tabular-nums text-muted-foreground">
                         {t("{used} / Unlimited", {
-                          used: Math.max(usage.used ?? 0, 0).toLocaleString(),
+                          used: Math.max(
+                            usage.used ?? 0,
+                            0,
+                          ).toLocaleString(),
                         })}
                       </span>
                     )}
@@ -148,7 +156,10 @@ export default function SettingsWrapper({
                   <Progress value={usage.used || 0} max={usage.limit || 0} />
                   <span className="text-sm">
                     {t("{count} left", {
-                      count: Math.max(usage.remaining ?? 0, 0).toLocaleString(),
+                      count: Math.max(
+                        usage.remaining ?? 0,
+                        0,
+                      ).toLocaleString(),
                     })}
                   </span>
                 </div>
