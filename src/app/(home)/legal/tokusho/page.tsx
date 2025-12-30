@@ -34,7 +34,7 @@ export default function TokushoPage() {
           <div className="grid gap-2 border-border p-4 sm:grid-cols-3 sm:gap-6 sm:border-b">
             <dt className="text-sm font-medium">事業者名</dt>
             <dd className="text-sm text-muted-foreground sm:col-span-2">
-              実名については、請求があった場合は遅滞なく開示します。
+              雷 (※1)
             </dd>
           </div>
           <div className="grid gap-2 border-border p-4 sm:grid-cols-3 sm:gap-6 sm:border-b">
