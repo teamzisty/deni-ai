@@ -13,8 +13,8 @@ import {
   Sun,
 } from "lucide-react";
 import { motion } from "motion/react";
-import { useExtracted } from "next-intl";
 import { useRouter } from "next/navigation";
+import { useExtracted } from "next-intl";
 import { useTheme } from "next-themes";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";

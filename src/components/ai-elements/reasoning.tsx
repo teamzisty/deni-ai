@@ -2,9 +2,9 @@
 
 import { useControllableState } from "@radix-ui/react-use-controllable-state";
 import { BrainIcon, ChevronDownIcon } from "lucide-react";
+import { useExtracted } from "next-intl";
 import type { ComponentProps, ReactNode } from "react";
 import { createContext, memo, useContext, useEffect, useState } from "react";
-import { useExtracted } from "next-intl";
 import { Streamdown } from "streamdown";
 import {
   Collapsible,

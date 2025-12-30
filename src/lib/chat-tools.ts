@@ -55,14 +55,29 @@ function extractVeoErrorMessage(
   return fallback;
 }
 
-async function pollVeoOperation(operationName: string) {
+function createAbortError() {
+  if (typeof DOMException !== "undefined") {
+    return new DOMException("The operation was aborted.", "AbortError");
+  }
+  return new Error("operation aborted");
+}
+
+function throwIfAborted(signal?: AbortSignal) {
+  if (signal?.aborted) {
+    throw createAbortError();
+  }
+}
+
+async function pollVeoOperation(operationName: string, signal?: AbortSignal) {
   for (let attempt = 0; attempt < VEO_MAX_POLL_ATTEMPTS; attempt += 1) {
+    throwIfAborted(signal);
     const response = await fetch(
       `https://generativelanguage.googleapis.com/v1beta/${operationName}`,
       {
         headers: {
           "x-goog-api-key": env.GOOGLE_GENERATIVE_AI_API_KEY,
         },
+        signal,
       },
     );
 
@@ -114,6 +129,7 @@ async function pollVeoOperation(operationName: string) {
     }
 
     await new Promise((resolve) => setTimeout(resolve, VEO_POLL_INTERVAL_MS));
+    throwIfAborted(signal);
   }
 
   throw new Error("Timed out waiting for the video.");
@@ -237,15 +253,18 @@ export function createChatTools({ videoMode }: CreateChatToolsOptions) {
             description:
               "Generate a short video with Veo. Provide a vivid visual prompt and optional settings.",
             inputSchema: veoToolInputSchema,
-            execute: async ({
-              prompt,
-              model: requestedModel,
-              negativePrompt,
-              aspectRatio,
-              resolution,
-              durationSeconds,
-              seed,
-            }) => {
+            execute: async (
+              {
+                prompt,
+                model: requestedModel,
+                negativePrompt,
+                aspectRatio,
+                resolution,
+                durationSeconds,
+                seed,
+              },
+              { abortSignal },
+            ) => {
               const model = requestedModel ?? veoModelValues[0];
               const finalAspectRatio = aspectRatio ?? "16:9";
               const finalResolution = resolution ?? "720p";
@@ -309,7 +328,10 @@ export function createChatTools({ videoMode }: CreateChatToolsOptions) {
                 throw new Error("Missing operation name.");
               }
 
-              const videoUri = await pollVeoOperation(operationName);
+              const videoUri = await pollVeoOperation(
+                operationName,
+                abortSignal,
+              );
               const proxyUrl = `/api/veo/file?uri=${encodeURIComponent(
                 videoUri,
               )}`;

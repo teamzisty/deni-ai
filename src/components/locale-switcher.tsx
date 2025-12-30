@@ -1,7 +1,7 @@
 "use client";
 
 import { useExtracted, useLocale } from "next-intl";
-import { locales, type AppLocale } from "@/i18n/locales";
+import { type AppLocale, locales } from "@/i18n/locales";
 
 type LocaleSwitcherProps = {
   changeLocaleAction: (locale: AppLocale) => Promise<void>;

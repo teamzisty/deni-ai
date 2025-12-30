@@ -9,9 +9,9 @@ import {
   WrenchIcon,
   XCircleIcon,
 } from "lucide-react";
+import { useExtracted } from "next-intl";
 import type { ComponentProps, ReactNode } from "react";
 import { isValidElement } from "react";
-import { useExtracted } from "next-intl";
 import { Badge } from "@/components/ui/badge";
 import {
   Collapsible,

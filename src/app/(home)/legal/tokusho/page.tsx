@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import { useExtracted } from "next-intl";
 import { getExtracted } from "next-intl/server";
 
 export async function generateMetadata(): Promise<Metadata> {

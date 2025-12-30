@@ -1,8 +1,8 @@
 "use client";
 
 import { BookIcon, ChevronDownIcon } from "lucide-react";
-import type { ComponentProps } from "react";
 import { useExtracted } from "next-intl";
+import type { ComponentProps } from "react";
 import {
   Collapsible,
   CollapsibleContent,

@@ -12,6 +12,7 @@ import {
   XIcon,
 } from "lucide-react";
 import { nanoid } from "nanoid";
+import { useExtracted } from "next-intl";
 import {
   type ChangeEvent,
   type ChangeEventHandler,
@@ -34,7 +35,6 @@ import {
   useRef,
   useState,
 } from "react";
-import { useExtracted } from "next-intl";
 import { Button } from "@/components/ui/button";
 import {
   Command,
@@ -567,7 +567,7 @@ export const PromptInput = ({
         return prev.concat(next);
       });
     },
-    [matchesAccept, maxFiles, maxFileSize, onError],
+    [matchesAccept, maxFiles, maxFileSize, onError, t],
   );
 
   const removeLocal = useCallback(

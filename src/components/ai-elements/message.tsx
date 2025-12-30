@@ -7,9 +7,9 @@ import {
   PaperclipIcon,
   XIcon,
 } from "lucide-react";
+import { useExtracted } from "next-intl";
 import type { ComponentProps, HTMLAttributes, ReactElement } from "react";
 import { createContext, memo, useContext, useEffect, useState } from "react";
-import { useExtracted } from "next-intl";
 import { Streamdown } from "streamdown";
 import { Button } from "@/components/ui/button";
 import { ButtonGroup, ButtonGroupText } from "@/components/ui/button-group";

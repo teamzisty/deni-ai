@@ -1,6 +1,7 @@
 "use client";
 
 import { ArrowLeftIcon, ArrowRightIcon } from "lucide-react";
+import { useExtracted } from "next-intl";
 import {
   type ComponentProps,
   createContext,
@@ -9,7 +10,6 @@ import {
   useEffect,
   useState,
 } from "react";
-import { useExtracted } from "next-intl";
 import { Badge } from "@/components/ui/badge";
 import {
   Carousel,

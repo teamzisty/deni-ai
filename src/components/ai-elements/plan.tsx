@@ -1,9 +1,9 @@
 "use client";
 
 import { ChevronsUpDownIcon } from "lucide-react";
+import { useExtracted } from "next-intl";
 import type { ComponentProps } from "react";
 import { createContext, useContext } from "react";
-import { useExtracted } from "next-intl";
 import { Button } from "@/components/ui/button";
 import {
   Card,

@@ -53,7 +53,7 @@ export const auth = betterAuth({
         window: 10,
         max: 3,
       },
-      "/two-factor/*": async (request) => {
+      "/two-factor/*": async (_request) => {
         // custom function to return rate limit window and max
         return {
           window: 10,

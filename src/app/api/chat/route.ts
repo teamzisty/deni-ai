@@ -1,18 +1,15 @@
 import {
   type AnthropicProviderOptions,
-  anthropic,
   createAnthropic,
 } from "@ai-sdk/anthropic";
 import {
   createGoogleGenerativeAI,
   type GoogleGenerativeAIProviderOptions,
-  google,
 } from "@ai-sdk/google";
 import { createGroq } from "@ai-sdk/groq";
 import {
   createOpenAI,
   type OpenAIResponsesProviderOptions,
-  openai,
 } from "@ai-sdk/openai";
 import {
   createOpenRouter,

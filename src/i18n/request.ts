@@ -1,6 +1,6 @@
-import { getRequestConfig } from "next-intl/server";
 import { cookies, headers } from "next/headers";
-import { defaultLocale, locales, type AppLocale } from "@/i18n/locales";
+import { getRequestConfig } from "next-intl/server";
+import { type AppLocale, defaultLocale, locales } from "@/i18n/locales";
 
 const getPreferredLocaleFromHeader = (
   acceptLanguage: string | null,
