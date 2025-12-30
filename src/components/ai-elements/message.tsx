@@ -296,10 +296,10 @@ export const MessageBranchPage = ({
     <ButtonGroupText
       className={cn(
         "border-none bg-transparent text-muted-foreground shadow-none",
-      className,
-    )}
-    {...props}
-  >
+        className,
+      )}
+      {...props}
+    >
       {t("{current} of {total}", {
         current: (currentBranch + 1).toString(),
         total: totalBranches.toString(),
@@ -342,8 +342,7 @@ export function MessageAttachment({
   const mediaType =
     data.mediaType?.startsWith("image/") && data.url ? "image" : "file";
   const isImage = mediaType === "image";
-  const attachmentLabel =
-    filename || (isImage ? t("Image") : t("Attachment"));
+  const attachmentLabel = filename || (isImage ? t("Image") : t("Attachment"));
 
   return (
     <div

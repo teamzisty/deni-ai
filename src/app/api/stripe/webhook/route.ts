@@ -133,7 +133,6 @@ export async function POST(req: Request) {
       signature,
       env.STRIPE_WEBHOOK_SECRET,
     );
-    console.log("[stripe:webhook] received", event.type);
   } catch (error) {
     console.error("Stripe webhook signature verification failed", error);
     return NextResponse.json({ error: "Invalid signature" }, { status: 400 });
@@ -173,14 +172,6 @@ export async function POST(req: Request) {
           );
           break;
         }
-
-        console.log(
-          "[stripe:webhook] deleting plan data for canceled subscription",
-          {
-            userId,
-            subscriptionId: subscription.id,
-          },
-        );
 
         await clearPlanData({
           userId,
@@ -229,13 +220,6 @@ export async function POST(req: Request) {
           break;
         }
 
-        console.log("[stripe:webhook] upserting subscription", {
-          userId,
-          subscriptionId: subscription.id,
-          status: computedStatus,
-          cancelAtPeriodEnd: subscription.cancel_at_period_end,
-        });
-
         await saveSubscription({
           userId,
           customerId,
@@ -274,12 +258,6 @@ export async function POST(req: Request) {
               ? "canceled"
               : subscription.status;
 
-            console.log("[stripe:webhook] checkout subscription completed", {
-              userId,
-              subscriptionId: subscription.id,
-              status: computedStatus,
-              cancelAtPeriodEnd: subscription.cancel_at_period_end,
-            });
             const price =
               subscription.items.data.at(0)?.price ??
               session.line_items?.data.at(0)?.price ??

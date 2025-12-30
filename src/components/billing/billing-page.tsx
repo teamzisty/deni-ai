@@ -65,8 +65,6 @@ function formatPriceLabel(plan: ClientPlan) {
       ? `${plan.intervalCount} ${plan.interval}s`
       : plan.interval;
 
-  console.log(base, interval);
-
   return t("{price}/{interval}", { price: base, interval });
 }
 

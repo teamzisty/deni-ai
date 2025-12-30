@@ -145,10 +145,7 @@ export default function SettingsWrapper({
                     ) : (
                       <span className="tabular-nums text-muted-foreground">
                         {t("{used} / Unlimited", {
-                          used: Math.max(
-                            usage.used ?? 0,
-                            0,
-                          ).toLocaleString(),
+                          used: Math.max(usage.used ?? 0, 0).toLocaleString(),
                         })}
                       </span>
                     )}
@@ -156,10 +153,7 @@ export default function SettingsWrapper({
                   <Progress value={usage.used || 0} max={usage.limit || 0} />
                   <span className="text-sm">
                     {t("{count} left", {
-                      count: Math.max(
-                        usage.remaining ?? 0,
-                        0,
-                      ).toLocaleString(),
+                      count: Math.max(usage.remaining ?? 0, 0).toLocaleString(),
                     })}
                   </span>
                 </div>

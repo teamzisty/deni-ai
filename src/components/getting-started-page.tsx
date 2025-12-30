@@ -564,11 +564,7 @@ function _PreferenceToggle({
         <p className="text-sm font-medium">{title}</p>
         <p className="text-xs text-muted-foreground">{description}</p>
       </div>
-      <Switch
-        id={id}
-        defaultChecked={defaultChecked}
-        aria-label={title}
-      />
+      <Switch id={id} defaultChecked={defaultChecked} aria-label={title} />
     </div>
   );
 }

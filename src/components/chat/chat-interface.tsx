@@ -235,7 +235,7 @@ function ModelItem({
         return t("Hybrid reasoning model");
       case "claude-opus-4-5":
         return t("All-around professional model");
-      case "claude-opus-4-1-20250805":
+      case "claude-opus-4-1":
         return t("Legacy professional model");
       case "grok-4-0709":
         return t("xAI's most intelligent model");
@@ -513,9 +513,7 @@ export function ChatInterface({
       }}
       disabled={!supportsReasoningEffort}
     >
-      <PromptInputSelectTrigger
-        className={cn(triggerClassName)}
-      >
+      <PromptInputSelectTrigger className={cn(triggerClassName)}>
         <PromptInputSelectValue>
           <BrainIcon className="size-4" />
           {reasoningEffortLabel}

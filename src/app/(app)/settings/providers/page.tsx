@@ -323,9 +323,7 @@ export default function ProvidersPage() {
     openAiCompatSetting?.apiStyle ?? openAiCompatApiStyle;
   const effectiveBaseUrl = openAiCompatSetting?.baseUrl ?? openAiCompatBaseUrl;
   const apiStyleLabel =
-    effectiveApiStyle === "chat"
-      ? t("Chat Completions")
-      : t("Responses API");
+    effectiveApiStyle === "chat" ? t("Chat Completions") : t("Responses API");
 
   return (
     <div className="mx-auto flex max-w-4xl w-full flex-col gap-6">
@@ -520,9 +518,7 @@ export default function ProvidersPage() {
             </div>
           </div>
           <div className="space-y-2">
-            <Label htmlFor="custom-model-description">
-              {t("Description")}
-            </Label>
+            <Label htmlFor="custom-model-description">{t("Description")}</Label>
             <Textarea
               id="custom-model-description"
               value={customDescription}
@@ -598,9 +594,7 @@ export default function ProvidersPage() {
                   <TableHead>{t("Name")}</TableHead>
                   <TableHead>{t("Model ID")}</TableHead>
                   <TableHead>{t("Tier")}</TableHead>
-                  <TableHead className="text-right">
-                    {t("Actions")}
-                  </TableHead>
+                  <TableHead className="text-right">{t("Actions")}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>

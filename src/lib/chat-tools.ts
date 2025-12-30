@@ -174,18 +174,21 @@ export function createChatTools({ videoMode }: CreateChatToolsOptions) {
             }),
           );
 
-          console.log("Brave search results:", results);
-
           // Fetch and summarize each page
           const summarizer = groq("openai/gpt-oss-20b");
           const summarizedResults = await Promise.all(
             results.map(async (result) => {
               try {
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 10000);
                 const pageResponse = await fetch(result.url, {
                   headers: {
                     "User-Agent": "Mozilla/5.0 (compatible; DeniAI/1.0)",
                   },
+                  signal: controller.signal,
                 });
+
+                clearTimeout(timeoutId);
 
                 if (!pageResponse.ok) {
                   return { ...result, summary: result.description };
