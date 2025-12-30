@@ -513,9 +513,7 @@ export function ChatInterface({
       }}
       disabled={!supportsReasoningEffort}
     >
-      <PromptInputSelectTrigger
-        className={cn(triggerClassName)}
-      >
+      <PromptInputSelectTrigger className={cn(triggerClassName)}>
         <PromptInputSelectValue>
           <BrainIcon className="size-4" />
           {reasoningEffortLabel}

@@ -50,7 +50,6 @@ const UIMessagesSchema = z
   .array(z.record(z.string(), z.unknown()))
   .transform((value) => value as unknown as UIMessage[]);
 
-
 export async function POST(req: Request) {
   const verification = await checkBotId();
 
@@ -245,6 +244,7 @@ export async function POST(req: Request) {
 
   let model: LanguageModel;
   const openrouter = createOpenRouter({
+    apiKey: env.OPENROUTER_API_KEY,
     headers: {
       "X-Title": "Deni AI",
       "HTTP-Referer": "deniai.app",

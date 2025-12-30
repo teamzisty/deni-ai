@@ -28,17 +28,17 @@ export default function ChatHome() {
       </h1>
 
       <div className="w-full max-w-2xl text-left">
-          <Composer
-            onSubmit={handleSubmit}
-            globalDrop
-            multiple
-            value={input}
-            onValueChange={(value) => setInput(value)}
-            placeholder={t("Ask me anything...")}
-            textareaClassName="min-h-[60px]"
-            webSearch={webSearch}
-            onToggleWebSearch={() => setWebSearch(!webSearch)}
-          />
+        <Composer
+          onSubmit={handleSubmit}
+          globalDrop
+          multiple
+          value={input}
+          onValueChange={(value) => setInput(value)}
+          placeholder={t("Ask me anything...")}
+          textareaClassName="min-h-[60px]"
+          webSearch={webSearch}
+          onToggleWebSearch={() => setWebSearch(!webSearch)}
+        />
       </div>
     </main>
   );

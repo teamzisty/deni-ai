@@ -18,7 +18,11 @@ export default function LocaleSwitcher({
       {locales.map((option) => {
         const isActive = locale === option;
         const label =
-          option === "en" ? t("English") : option === "ja" ? t("日本語") : option;
+          option === "en"
+            ? t("English")
+            : option === "ja"
+              ? t("日本語")
+              : option;
         return (
           <button
             key={option}
