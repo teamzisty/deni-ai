@@ -25,9 +25,9 @@ export default function TokushoPage() {
 
         <dl className="overflow-hidden rounded-lg border border-border bg-card">
           <div className="grid gap-2 border-border p-4 sm:grid-cols-3 sm:gap-6 sm:border-b">
-            <dt className="text-sm font-medium">法人名</dt>
+            <dt className="text-sm font-medium">事業者名</dt>
             <dd className="text-sm text-muted-foreground sm:col-span-2">
-              請求があった場合は遅滞なく開示します
+              雷 (※1)
             </dd>
           </div>
           <div className="grid gap-2 border-border p-4 sm:grid-cols-3 sm:gap-6 sm:border-b">
