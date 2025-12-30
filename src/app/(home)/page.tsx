@@ -1,6 +1,6 @@
+import { TriangleAlert } from "lucide-react";
 import Link from "next/link";
 import { useExtracted } from "next-intl";
-import { TriangleAlert } from "lucide-react";
 import { LoginButton } from "@/components/login-button";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
@@ -15,10 +15,10 @@ export default function Home() {
         <TriangleAlert className="mt-0.5 size-4" />
         <AlertTitle>{t("Message Migration")}</AlertTitle>
         <AlertDescription className="gap-3">
+          <p>{t("Move your chats from the old version into this site.")}</p>
           <p>
-            {t("Move your chats from the old version into this site.")}
+            {t("Create a new account on this site to continue the migration.")}
           </p>
-          <p>{t("Create a new account on this site to continue the migration.")}</p>
           <Button size="sm" variant="secondary" asChild>
             <Link href="/migration">{t("Migration")}</Link>
           </Button>

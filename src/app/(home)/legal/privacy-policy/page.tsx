@@ -70,7 +70,9 @@ export default function PrivacyPolicyPage() {
             <li>{t("Provide, maintain, and improve the Service.")}</li>
             <li>{t("Authenticate users and secure accounts.")}</li>
             <li>{t("Monitor usage and prevent abuse or fraud.")}</li>
-            <li>{t("Communicate with you about updates, support, or billing.")}</li>
+            <li>
+              {t("Communicate with you about updates, support, or billing.")}
+            </li>
             <li>{t("Comply with legal obligations.")}</li>
           </ul>
         </section>

@@ -12,6 +12,7 @@ import {
   XIcon,
 } from "lucide-react";
 import { nanoid } from "nanoid";
+import { useExtracted } from "next-intl";
 import {
   type ChangeEvent,
   type ChangeEventHandler,
@@ -34,7 +35,6 @@ import {
   useRef,
   useState,
 } from "react";
-import { useExtracted } from "next-intl";
 import { Button } from "@/components/ui/button";
 import {
   Command,
@@ -296,8 +296,7 @@ export function PromptInputAttachment({
     data.mediaType?.startsWith("image/") && data.url ? "image" : "file";
   const isImage = mediaType === "image";
 
-  const attachmentLabel =
-    filename || (isImage ? t("Image") : t("Attachment"));
+  const attachmentLabel = filename || (isImage ? t("Image") : t("Attachment"));
 
   return (
     <PromptInputHoverCard>
@@ -568,7 +567,7 @@ export const PromptInput = ({
         return prev.concat(next);
       });
     },
-    [matchesAccept, maxFiles, maxFileSize, onError],
+    [matchesAccept, maxFiles, maxFileSize, onError, t],
   );
 
   const removeLocal = useCallback(
@@ -836,8 +835,7 @@ export const PromptInputTextarea = ({
   const controller = useOptionalPromptInputController();
   const attachments = usePromptInputAttachments();
   const [isComposing, setIsComposing] = useState(false);
-  const effectivePlaceholder =
-    placeholder ?? t("What would you like to know?");
+  const effectivePlaceholder = placeholder ?? t("What would you like to know?");
 
   const handleKeyDown: KeyboardEventHandler<HTMLTextAreaElement> = (e) => {
     if (e.key === "Enter") {

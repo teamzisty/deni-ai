@@ -1,7 +1,7 @@
 "use client";
 
-import { useTheme } from "next-themes";
 import { useExtracted } from "next-intl";
+import { useTheme } from "next-themes";
 import { Button } from "@/components/ui/button";
 import { useThemePreset } from "@/hooks/use-theme-preset";
 import { type ThemeName, themePresets } from "@/lib/theme-presets";

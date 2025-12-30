@@ -7,9 +7,9 @@ import {
   PaperclipIcon,
   XIcon,
 } from "lucide-react";
+import { useExtracted } from "next-intl";
 import type { ComponentProps, HTMLAttributes, ReactElement } from "react";
 import { createContext, memo, useContext, useEffect, useState } from "react";
-import { useExtracted } from "next-intl";
 import { Streamdown } from "streamdown";
 import { Button } from "@/components/ui/button";
 import { ButtonGroup, ButtonGroupText } from "@/components/ui/button-group";
@@ -296,10 +296,10 @@ export const MessageBranchPage = ({
     <ButtonGroupText
       className={cn(
         "border-none bg-transparent text-muted-foreground shadow-none",
-      className,
-    )}
-    {...props}
-  >
+        className,
+      )}
+      {...props}
+    >
       {t("{current} of {total}", {
         current: (currentBranch + 1).toString(),
         total: totalBranches.toString(),
@@ -342,8 +342,7 @@ export function MessageAttachment({
   const mediaType =
     data.mediaType?.startsWith("image/") && data.url ? "image" : "file";
   const isImage = mediaType === "image";
-  const attachmentLabel =
-    filename || (isImage ? t("Image") : t("Attachment"));
+  const attachmentLabel = filename || (isImage ? t("Image") : t("Attachment"));
 
   return (
     <div

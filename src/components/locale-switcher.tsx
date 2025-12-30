@@ -1,7 +1,7 @@
 "use client";
 
 import { useExtracted, useLocale } from "next-intl";
-import { locales, type AppLocale } from "@/i18n/locales";
+import { type AppLocale, locales } from "@/i18n/locales";
 
 type LocaleSwitcherProps = {
   changeLocaleAction: (locale: AppLocale) => Promise<void>;
@@ -18,7 +18,11 @@ export default function LocaleSwitcher({
       {locales.map((option) => {
         const isActive = locale === option;
         const label =
-          option === "en" ? t("English") : option === "ja" ? t("日本語") : option;
+          option === "en"
+            ? t("English")
+            : option === "ja"
+              ? t("日本語")
+              : option;
         return (
           <button
             key={option}

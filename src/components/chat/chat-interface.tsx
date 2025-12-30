@@ -215,7 +215,7 @@ function ModelItem({
 
   const getModelDescription = (value: string) => {
     switch (value) {
-      case "gpt-5.2-2025-12-11":
+      case "gpt-5.2":
         return t("General purpose OpenAI model");
       case "gpt-5.1-codex":
         return t("For complex coding tasks");
@@ -235,7 +235,7 @@ function ModelItem({
         return t("Hybrid reasoning model");
       case "claude-opus-4-5":
         return t("All-around professional model");
-      case "claude-opus-4-1-20250805":
+      case "claude-opus-4-1":
         return t("Legacy professional model");
       case "grok-4-0709":
         return t("xAI's most intelligent model");
@@ -407,14 +407,7 @@ export function ChatInterface({
     [id],
   );
 
-  const {
-    messages,
-    sendMessage,
-    regenerate,
-    status,
-    error,
-    stop,
-  } = useChat({
+  const { messages, sendMessage, regenerate, status, error, stop } = useChat({
     id,
     messages: initialMessages,
     transport,
@@ -492,7 +485,11 @@ export function ChatInterface({
   const usageCategoryLabel =
     usageCategory === "premium" ? t("Premium") : t("Basic");
   const usageTierLabel =
-    usageTier === "free" ? t("Free") : usageTier === "pro" ? t("Pro") : t("Max");
+    usageTier === "free"
+      ? t("Free")
+      : usageTier === "pro"
+        ? t("Pro")
+        : t("Max");
   const isSubmitBlocked = isUsageBlocked || isByokMissingConfig;
   const reasoningEffortLabel = (() => {
     switch (reasoningEffort) {
@@ -506,6 +503,31 @@ export function ChatInterface({
         return reasoningEffort;
     }
   })();
+  const renderReasoningEffortSelector = (triggerClassName?: string) => (
+    <PromptInputSelect
+      value={reasoningEffort}
+      onValueChange={(value) => {
+        if (isReasoningEffort(value)) {
+          setReasoningEffort(value);
+        }
+      }}
+      disabled={!supportsReasoningEffort}
+    >
+      <PromptInputSelectTrigger className={cn(triggerClassName)}>
+        <PromptInputSelectValue>
+          <BrainIcon className="size-4" />
+          {reasoningEffortLabel}
+        </PromptInputSelectValue>
+      </PromptInputSelectTrigger>
+      <PromptInputSelectContent>
+        <PromptInputSelectItem value="low">{t("Low")}</PromptInputSelectItem>
+        <PromptInputSelectItem value="medium">
+          {t("Medium")}
+        </PromptInputSelectItem>
+        <PromptInputSelectItem value="high">{t("High")}</PromptInputSelectItem>
+      </PromptInputSelectContent>
+    </PromptInputSelect>
+  );
 
   const resolveVeoModelLabel = (
     model?: string | null,
@@ -822,7 +844,9 @@ export function ChatInterface({
                         >
                           <MessageContent className="w-full">
                             <Alert className="border-destructive/50 bg-destructive/10 text-destructive">
-                              <AlertTitle>{t("Video generation failed")}</AlertTitle>
+                              <AlertTitle>
+                                {t("Video generation failed")}
+                              </AlertTitle>
                               <AlertDescription>
                                 {t("Please try again with a different prompt.")}
                               </AlertDescription>
@@ -1115,6 +1139,9 @@ export function ChatInterface({
               <Globe className="size-4" />
               {t("Search")}
             </DropdownMenuCheckboxItem>
+            <div className="px-2 py-1.5 md:hidden">
+              {renderReasoningEffortSelector("w-full justify-between")}
+            </div>
           </>
         }
         tools={
@@ -1187,34 +1214,9 @@ export function ChatInterface({
                 ))}
               </PromptInputSelectContent>
             </PromptInputSelect>
-
-            <PromptInputSelect
-              value={reasoningEffort}
-              onValueChange={(value) => {
-                if (isReasoningEffort(value)) {
-                  setReasoningEffort(value);
-                }
-              }}
-              disabled={!supportsReasoningEffort}
-            >
-              <PromptInputSelectTrigger>
-                <PromptInputSelectValue>
-                  <BrainIcon className="size-4" />
-                  {reasoningEffortLabel}
-                </PromptInputSelectValue>
-              </PromptInputSelectTrigger>
-              <PromptInputSelectContent>
-                <PromptInputSelectItem value="low">
-                  {t("Low")}
-                </PromptInputSelectItem>
-                <PromptInputSelectItem value="medium">
-                  {t("Medium")}
-                </PromptInputSelectItem>
-                <PromptInputSelectItem value="high">
-                  {t("High")}
-                </PromptInputSelectItem>
-              </PromptInputSelectContent>
-            </PromptInputSelect>
+            <div className="hidden md:block">
+              {renderReasoningEffortSelector()}
+            </div>
           </>
         }
       />

@@ -1,6 +1,7 @@
 "use client";
 
 import { CheckIcon, CopyIcon } from "lucide-react";
+import { useExtracted } from "next-intl";
 import {
   type ComponentProps,
   createContext,
@@ -10,7 +11,6 @@ import {
   useRef,
   useState,
 } from "react";
-import { useExtracted } from "next-intl";
 import { type BundledLanguage, codeToHtml, type ShikiTransformer } from "shiki";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";

@@ -73,7 +73,9 @@ export default function MigrationPage() {
                 {t("Step 2: Create a new account on this site")}
               </CardTitle>
               <CardDescription>
-                {t("Create a new account on this site to continue the migration.")}
+                {t(
+                  "Create a new account on this site to continue the migration.",
+                )}
               </CardDescription>
             </CardHeader>
             <CardContent className="flex flex-wrap gap-2">
@@ -92,9 +94,7 @@ export default function MigrationPage() {
             </CardHeader>
             <CardContent className="flex flex-wrap gap-2">
               <Button variant="outline" asChild>
-                <Link href="/settings/migration">
-                  {t("Import messages")}
-                </Link>
+                <Link href="/settings/migration">{t("Import messages")}</Link>
               </Button>
             </CardContent>
           </Card>

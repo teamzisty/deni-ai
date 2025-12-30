@@ -13,8 +13,8 @@ import {
   Sun,
 } from "lucide-react";
 import { motion } from "motion/react";
-import { useExtracted } from "next-intl";
 import { useRouter } from "next/navigation";
+import { useExtracted } from "next-intl";
 import { useTheme } from "next-themes";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -564,11 +564,7 @@ function _PreferenceToggle({
         <p className="text-sm font-medium">{title}</p>
         <p className="text-xs text-muted-foreground">{description}</p>
       </div>
-      <Switch
-        id={id}
-        defaultChecked={defaultChecked}
-        aria-label={title}
-      />
+      <Switch id={id} defaultChecked={defaultChecked} aria-label={title} />
     </div>
   );
 }

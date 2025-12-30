@@ -1,5 +1,5 @@
-import type { ComponentProps, ReactNode } from "react";
 import { useExtracted } from "next-intl";
+import type { ComponentProps, ReactNode } from "react";
 import {
   Command,
   CommandDialog,

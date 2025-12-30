@@ -2,7 +2,7 @@
 
 import type { VariantProps } from "class-variance-authority";
 import { useRouter } from "next/navigation";
-import { useExtracted, useTranslations } from "next-intl";
+import { useExtracted } from "next-intl";
 import { useState } from "react";
 import { toast } from "sonner";
 import { Button, type buttonVariants } from "@/components/ui/button";

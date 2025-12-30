@@ -1,8 +1,7 @@
 "use client";
 
-import { useRouter } from "next/navigation";
 import { useExtracted } from "next-intl";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useMemo, useState } from "react";
 import { toast } from "sonner";
 import type { BillingPlanId, ClientPlan } from "@/lib/billing";
 import { isBillingDisabled } from "@/lib/billing-config";
@@ -64,8 +63,6 @@ function formatPriceLabel(plan: ClientPlan) {
     plan.intervalCount && plan.intervalCount > 1
       ? `${plan.intervalCount} ${plan.interval}s`
       : plan.interval;
-
-  console.log(base, interval);
 
   return t("{price}/{interval}", { price: base, interval });
 }
@@ -393,8 +390,6 @@ function BillingDisabled() {
 
 function BillingPageContent() {
   const t = useExtracted();
-  const router = useRouter();
-  const hasConfirmed = useRef(false);
   const [isChangePlanOpen, setIsChangePlanOpen] = useState(false);
   const [changeTarget, setChangeTarget] = useState<ClientPlan | null>(null);
   const [proInterval, setProInterval] = useState<"monthly" | "yearly">(
@@ -476,7 +471,6 @@ function BillingPageContent() {
         return t("Pro");
       case "max":
         return t("Max");
-      case "free":
       default:
         return t("Free");
     }

@@ -25,7 +25,7 @@ export type Models = {
 export const models = [
   {
     name: "GPT-5.2",
-    value: "gpt-5.2-2025-12-11",
+    value: "gpt-5.2",
     author: "openai",
     features: ["reasoning", "smart", "fast"],
   },
@@ -99,7 +99,7 @@ export const models = [
   },
   {
     name: "Claude Opus 4.1",
-    value: "claude-opus-4-1-20250805",
+    value: "claude-opus-4-1",
     author: "anthropic",
     premium: true,
     features: ["reasoning"],

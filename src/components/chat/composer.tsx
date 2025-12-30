@@ -67,7 +67,7 @@ export function Composer({
 }: ComposerProps) {
   const t = useExtracted();
   const disabled =
-    status === "streaming" ? false : isSubmitDisabled ?? (!value && !status);
+    status === "streaming" ? false : (isSubmitDisabled ?? (!value && !status));
   const resolvedSearchLabel = searchLabel ?? t("Search");
 
   return (

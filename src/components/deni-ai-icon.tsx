@@ -1,5 +1,5 @@
-import type React from "react";
 import { useExtracted } from "next-intl";
+import type React from "react";
 
 const DeniAIIcon: React.FC<React.SVGProps<SVGSVGElement>> = (props) => {
   const t = useExtracted();
