@@ -6,6 +6,14 @@ export async function generateMetadata(): Promise<Metadata> {
   return {
     title: t("特定商取引法に基づく表記 | Deni AI"),
     description: t("特定商取引法に基づく表記です。"),
+    robots: {
+      index: false,
+      follow: false,
+      googleBot: {
+        index: false,
+        follow: false,
+      },
+    },
   };
 }
 
@@ -26,13 +34,13 @@ export default function TokushoPage() {
           <div className="grid gap-2 border-border p-4 sm:grid-cols-3 sm:gap-6 sm:border-b">
             <dt className="text-sm font-medium">事業者名</dt>
             <dd className="text-sm text-muted-foreground sm:col-span-2">
-              雷 (※1)
+              実名については、請求があった場合は遅滞なく開示します。
             </dd>
           </div>
           <div className="grid gap-2 border-border p-4 sm:grid-cols-3 sm:gap-6 sm:border-b">
             <dt className="text-sm font-medium">運営責任者</dt>
             <dd className="text-sm text-muted-foreground sm:col-span-2">
-              雷 (※1)
+              桃木 悠汰
             </dd>
           </div>
           <div className="grid gap-2 border-border p-4 sm:grid-cols-3 sm:gap-6 sm:border-b">
@@ -89,10 +97,6 @@ export default function TokushoPage() {
               なし
             </dd>
           </div>
-
-          <span className="block bg-accent px-4 py-2 text-sm font-medium text-muted-foreground sm:px-6">
-            ※1: 実名については、請求があった場合は遅滞なく開示します。
-          </span>
         </dl>
       </div>
     </main>
