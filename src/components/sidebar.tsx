@@ -1,29 +1,6 @@
 "use client";
 
 import {
-  compareDesc,
-  isThisMonth,
-  isThisWeek,
-  isThisYear,
-  isToday,
-  isYesterday,
-} from "date-fns";
-import {
-  LogOut,
-  MoreHorizontal,
-  Pencil,
-  Settings,
-  Share2,
-  Trash2,
-  UserIcon,
-} from "lucide-react";
-import Image from "next/image";
-import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
-import { useExtracted } from "next-intl";
-import { Fragment, useEffect, useMemo, useRef, useState } from "react";
-import { toast } from "sonner";
-import {
   AlertDialog,
   AlertDialogAction,
   AlertDialogCancel,
@@ -60,6 +37,30 @@ import {
 } from "@/components/ui/sidebar";
 import { authClient } from "@/lib/auth-client";
 import { trpc } from "@/lib/trpc/react";
+import { versions } from "@/lib/version";
+import {
+  compareDesc,
+  isThisMonth,
+  isThisWeek,
+  isThisYear,
+  isToday,
+  isYesterday,
+} from "date-fns";
+import {
+  LogOut,
+  MoreHorizontal,
+  Pencil,
+  Settings,
+  Share2,
+  Trash2,
+  UserIcon,
+} from "lucide-react";
+import { useExtracted } from "next-intl";
+import Image from "next/image";
+import Link from "next/link";
+import { usePathname, useRouter } from "next/navigation";
+import { Fragment, useEffect, useMemo, useRef, useState } from "react";
+import { toast } from "sonner";
 import { ShareDialog } from "./chat/share-dialog";
 import { Button } from "./ui/button";
 import { Spinner } from "./ui/spinner";
@@ -404,9 +405,8 @@ export function AppSidebar() {
                               unoptimized
                             />
                           ) : (
-                            (session.data?.user?.name
-                              ?.charAt(0)
-                              .toUpperCase() ?? "U")
+                            session.data?.user?.name?.charAt(0).toUpperCase() ??
+                            "U"
                           )}
                         </div>
                         <span className="flex-1 truncate text-sm">
@@ -433,8 +433,8 @@ export function AppSidebar() {
                             unoptimized
                           />
                         ) : (
-                          (session.data?.user?.name?.charAt(0).toUpperCase() ??
-                          "U")
+                          session.data?.user?.name?.charAt(0).toUpperCase() ??
+                          "U"
                         )}
                       </div>
                       <div className="flex-1 flex flex-col min-w-0">
@@ -446,6 +446,11 @@ export function AppSidebar() {
                         </span>
                       </div>
                     </div>
+                    {
+                      <span className="px-2 py-1 text-xs text-muted-foreground">
+                        Deni AI {versions.version}, {versions.date}
+                      </span>
+                    }
                     <DropdownMenuItem className="gap-2 text-sm" asChild>
                       <Link href="/account/settings" className="flex w-full">
                         <UserIcon className="size-4" />

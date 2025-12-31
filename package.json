@@ -11,7 +11,8 @@
     "auth:generate": "better-auth generate --output src/db/schema/auth-schema.ts --yes",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
-    "db:push": "drizzle-kit push"
+    "db:push": "drizzle-kit push",
+    "tools:codename": "bun ./tools/codename-generator.ts"
   },
   "dependencies": {
     "@ai-sdk/anthropic": "^3.0.1",
