@@ -92,7 +92,7 @@ TURNSTILE_SECRET_KEY=your-turnstile-secret
 NEXT_PUBLIC_TURNSTILE_SITE_KEY=your-turnstile-site-key
 
 # Optional: Disable billing
-NEXT_PUBLIC_BILLING_DISABLED=true
+NEXT_PUBLIC_BILLING_DISABLED=1
 ```
 
 #### Generate `BETTER_AUTH_SECRET`
@@ -159,41 +159,6 @@ Open [http://localhost:3000](http://localhost:3000) in your browser.
 | `bun run db:migrate` | Run database migrations |
 | `bun run db:push` | Push schema to database |
 | `bun run auth:generate` | Regenerate better-auth schema |
-
-## 📁 Project Structure
-
-```
-deni-ai/
-├── src/
-│   ├── app/                    # Next.js App Router pages
-│   │   ├── (app)/             # Authenticated app pages
-│   │   ├── (auth)/            # Authentication pages
-│   │   ├── (home)/            # Public landing pages
-│   │   ├── api/               # API routes (tRPC, auth, stripe)
-│   │   └── layout.tsx         # Root layout
-│   ├── components/            # React components
-│   │   ├── ui/               # shadcn/ui components (generated)
-│   │   └── ...               # Custom components
-│   ├── db/                    # Database layer
-│   │   └── schema/           # Drizzle schema definitions
-│   ├── hooks/                 # Custom React hooks
-│   ├── lib/                   # Utilities and configurations
-│   │   ├── auth.ts           # better-auth server config
-│   │   ├── auth-client.ts    # better-auth client
-│   │   └── utils.ts          # Shared utilities
-│   ├── server/                # Server-side code
-│   │   └── api/              # tRPC routers
-│   ├── i18n/                  # Internationalization
-│   └── env.ts                 # Environment validation (Zod)
-├── public/                    # Static assets
-├── migrations/                # Database migrations
-├── tools/                     # Development tools
-├── biome.json                # Biome configuration
-├── drizzle.config.ts         # Drizzle ORM configuration
-├── next.config.ts            # Next.js configuration
-├── tailwind.config.ts        # Tailwind CSS configuration
-└── tsconfig.json             # TypeScript configuration
-```
 
 ## 💳 Stripe Billing Setup (Optional)
 

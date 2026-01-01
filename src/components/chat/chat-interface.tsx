@@ -233,11 +233,11 @@ function ModelItem({
         return t("Best for everyday tasks");
       case "gemini-2.5-flash-lite":
         return t("Best for high volume tasks");
-      case "claude-sonnet-4-5":
+      case "claude-sonnet-4.5":
         return t("Hybrid reasoning model");
-      case "claude-opus-4-5":
+      case "claude-opus-4.5":
         return t("All-around professional model");
-      case "claude-opus-4-1":
+      case "claude-opus-4.1":
         return t("Legacy professional model");
       case "grok-4-0709":
         return t("xAI's most intelligent model");
