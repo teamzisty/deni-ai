@@ -242,6 +242,7 @@ export async function POST(req: Request) {
   let model: LanguageModel;
   const openrouter = createOpenRouter({
     apiKey: env.OPENROUTER_API_KEY,
+    compatibility: "strict",
     headers: {
       "X-Title": "Deni AI",
       "HTTP-Referer": "https://deniai.app",

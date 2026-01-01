@@ -91,6 +91,7 @@ import {
 } from "../ui/dropdown-menu";
 import { Separator } from "../ui/separator";
 import { Spinner } from "../ui/spinner";
+import { TooltipProvider } from "../ui/tooltip";
 
 type SearchResult = {
   title: string;
@@ -417,6 +418,7 @@ export function ChatInterface({
     messages: initialMessages,
     transport,
   });
+  const showMessageActions = status !== "streaming" && status !== "submitted";
 
   // Storage key for initial message data (must match home.tsx)
   const INITIAL_MESSAGE_STORAGE_KEY = "deni_initial_message";
@@ -909,7 +911,7 @@ export function ChatInterface({
                         <MessageContent>
                           <MessageResponse>{part.text}</MessageResponse>
                         </MessageContent>
-                        {i === textParts.length - 1 && (
+                        {i === textParts.length - 1 && showMessageActions && (
                           <MessageActions>
                             <MessageAction
                               disabled={isSubmitBlocked}
@@ -919,6 +921,7 @@ export function ChatInterface({
                                 })
                               }
                               label={t("Retry")}
+                              tooltip={t("Retry")}
                             >
                               <RefreshCcwIcon className="size-3.5" />
                             </MessageAction>
@@ -927,6 +930,7 @@ export function ChatInterface({
                                 navigator.clipboard.writeText(part.text)
                               }
                               label={t("Copy")}
+                              tooltip={t("Copy")}
                             >
                               <CopyIcon className="size-3.5" />
                             </MessageAction>

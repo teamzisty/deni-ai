@@ -63,9 +63,11 @@ export const MessageActions = ({
   children,
   ...props
 }: MessageActionsProps) => (
-  <div className={cn("flex items-center gap-1", className)} {...props}>
-    {children}
-  </div>
+  <TooltipProvider delayDuration={0} skipDelayDuration={400}>
+    <div className={cn("flex items-center gap-1", className)} {...props}>
+      {children}
+    </div>
+  </TooltipProvider>
 );
 
 export type MessageActionProps = ComponentProps<typeof Button> & {
@@ -90,14 +92,12 @@ export const MessageAction = ({
 
   if (tooltip) {
     return (
-      <TooltipProvider>
-        <Tooltip>
-          <TooltipTrigger asChild>{button}</TooltipTrigger>
-          <TooltipContent>
-            <p>{tooltip}</p>
-          </TooltipContent>
-        </Tooltip>
-      </TooltipProvider>
+      <Tooltip>
+        <TooltipTrigger asChild>{button}</TooltipTrigger>
+        <TooltipContent>
+          <p>{tooltip}</p>
+        </TooltipContent>
+      </Tooltip>
     );
   }
 
