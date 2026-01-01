@@ -1,44 +1,49 @@
 "use client";
 
-import { useExtracted, useLocale } from "next-intl";
+import { ChevronDown } from "lucide-react";
+import { useLocale } from "next-intl";
+import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { type AppLocale, locales } from "@/i18n/locales";
 
 type LocaleSwitcherProps = {
   changeLocaleAction: (locale: AppLocale) => Promise<void>;
 };
 
+const localeLabels: Record<AppLocale, string> = {
+  en: "English",
+  ja: "日本語",
+};
+
 export default function LocaleSwitcher({
   changeLocaleAction,
 }: LocaleSwitcherProps) {
-  const t = useExtracted();
-  const locale = useLocale();
+  const locale = useLocale() as AppLocale;
 
   return (
-    <div className="flex items-center gap-1 rounded-md border border-border/60 bg-background/80 p-1 text-xs shadow-sm">
-      {locales.map((option) => {
-        const isActive = locale === option;
-        const label =
-          option === "en"
-            ? t("English")
-            : option === "ja"
-              ? t("日本語")
-              : option;
-        return (
-          <button
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button variant="outline" size="sm" className="gap-1">
+          {localeLabels[locale] ?? locale}
+          <ChevronDown className="h-3 w-3" />
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end">
+        {locales.map((option) => (
+          <DropdownMenuItem
             key={option}
-            type="button"
             onClick={() => changeLocaleAction(option)}
-            aria-pressed={isActive}
-            className={`rounded-sm px-2 py-1 transition ${
-              isActive
-                ? "bg-accent text-foreground"
-                : "text-muted-foreground hover:text-foreground"
-            }`}
+            className={locale === option ? "bg-accent" : ""}
           >
-            {label}
-          </button>
-        );
-      })}
-    </div>
+            {localeLabels[option] ?? option}
+          </DropdownMenuItem>
+        ))}
+      </DropdownMenuContent>
+    </DropdownMenu>
   );
 }

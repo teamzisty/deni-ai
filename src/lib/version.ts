@@ -1,4 +1,4 @@
-export const appVersion = "6.2-beta.1";
+export const appVersion = "6.2-beta.2";
 export const appCodename = "Solar Hawk";
 export const appDate = "2026-1-1";
 

@@ -20,7 +20,9 @@ export default function NotFound() {
             {t("Page not found")}
           </h1>
           <p className="text-muted-foreground">
-            {t("The page you are looking for might have been moved or deleted.")}
+            {t(
+              "The page you are looking for might have been moved or deleted.",
+            )}
           </p>
         </div>
         <Button asChild>

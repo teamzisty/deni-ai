@@ -1,8 +1,8 @@
 export type BillingPlanId =
+  | "plus_monthly"
+  | "plus_yearly"
   | "pro_monthly"
-  | "pro_yearly"
-  | "max_monthly"
-  | "max_yearly";
+  | "pro_yearly";
 
 export type BillingPlan = {
   id: BillingPlanId;
@@ -22,20 +22,20 @@ export type ClientPlan = {
 
 export const billingPlans: BillingPlan[] = [
   {
+    id: "plus_monthly",
+    lookupKey: "plus_monthly",
+  },
+  {
+    id: "plus_yearly",
+    lookupKey: "plus_yearly",
+  },
+  {
     id: "pro_monthly",
     lookupKey: "pro_monthly",
   },
   {
     id: "pro_yearly",
     lookupKey: "pro_yearly",
-  },
-  {
-    id: "max_monthly",
-    lookupKey: "max_monthly",
-  },
-  {
-    id: "max_yearly",
-    lookupKey: "max_yearly",
   },
 ];
 

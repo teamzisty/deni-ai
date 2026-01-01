@@ -7,6 +7,7 @@ import {
   SiOpenai,
   SiX,
 } from "@icons-pack/react-simple-icons";
+import { sendGAEvent } from "@next/third-parties/google";
 import type {
   ToolUIPart,
   UIDataTypes,
@@ -36,8 +37,9 @@ import {
   XIcon,
 } from "lucide-react";
 import Link from "next/link";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useExtracted } from "next-intl";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   ChainOfThought,
   ChainOfThoughtContent,
@@ -75,7 +77,7 @@ import {
 import { Composer, type ComposerMessage } from "@/components/chat/composer";
 import { authClient } from "@/lib/auth-client";
 import { isBillingDisabled } from "@/lib/billing-config";
-import { models } from "@/lib/constants";
+import { GA_ID, models } from "@/lib/constants";
 import { trpc } from "@/lib/trpc/react";
 import { cn } from "@/lib/utils";
 import { Shimmer } from "../ai-elements/shimmer";
@@ -345,6 +347,8 @@ export function ChatInterface({
   initialMessages = [],
 }: ChatInterfaceProps) {
   const t = useExtracted();
+  const router = useRouter();
+  const searchParams = useSearchParams();
   const session = authClient.useSession();
   const isAnonymous = Boolean(session.data?.user?.isAnonymous);
   const billingDisabled = isBillingDisabled;
@@ -354,6 +358,7 @@ export function ChatInterface({
   const [videoMode, setVideoMode] = useState(false);
   const [reasoningEffort, setReasoningEffort] =
     useState<ReasoningEffort>("high");
+  const initialMessageSentRef = useRef(false);
   const utils = trpc.useUtils();
   const usageQuery = trpc.billing.usage.useQuery(undefined, {
     refetchOnWindowFocus: true,
@@ -412,6 +417,115 @@ export function ChatInterface({
     messages: initialMessages,
     transport,
   });
+
+  // Storage key for initial message data (must match home.tsx)
+  const INITIAL_MESSAGE_STORAGE_KEY = "deni_initial_message";
+
+  // Auto-send initial message from sessionStorage or query parameter
+  useEffect(() => {
+    if (initialMessageSentRef.current || initialMessages.length > 0) {
+      return;
+    }
+
+    // Try to get initial message from sessionStorage first (new method with file support)
+    const storedData = sessionStorage.getItem(INITIAL_MESSAGE_STORAGE_KEY);
+    if (storedData) {
+      try {
+        const parsed = JSON.parse(storedData) as {
+          text: string;
+          files: Array<{
+            type: "file";
+            filename?: string;
+            mediaType: string;
+            url: string;
+          }>;
+          webSearch: boolean;
+        };
+
+        initialMessageSentRef.current = true;
+
+        // Clear the stored data to prevent re-sending on refresh
+        sessionStorage.removeItem(INITIAL_MESSAGE_STORAGE_KEY);
+
+        // Set webSearch state if it was enabled
+        if (parsed.webSearch) {
+          setWebSearch(true);
+        }
+
+        // Send the message with files
+        Promise.resolve(
+          sendMessage(
+            {
+              text: parsed.text,
+              files: parsed.files.length > 0 ? parsed.files : undefined,
+            },
+            {
+              body: {
+                model,
+                webSearch: parsed.webSearch,
+                reasoningEffort: "high",
+                video: false,
+                id,
+              },
+            },
+          ),
+        ).finally(() => {
+          utils.chat.getChats.invalidate();
+        });
+
+        return;
+      } catch (e) {
+        console.error(
+          "Failed to parse initial message from sessionStorage:",
+          e,
+        );
+        sessionStorage.removeItem(INITIAL_MESSAGE_STORAGE_KEY);
+      }
+    }
+
+    // Fallback: check query parameters (legacy method, no file support)
+    const initialMessage = searchParams.get("message");
+    const initialWebSearch = searchParams.get("webSearch") === "true";
+
+    if (initialMessage) {
+      initialMessageSentRef.current = true;
+      const decodedMessage = decodeURIComponent(initialMessage);
+
+      // Set webSearch state if it was passed from home
+      if (initialWebSearch) {
+        setWebSearch(true);
+      }
+
+      // Remove the query params from URL to prevent re-sending on refresh
+      router.replace(`/chat/${id}`, { scroll: false });
+
+      // Send the message with the webSearch setting from query params
+      Promise.resolve(
+        sendMessage(
+          { text: decodedMessage },
+          {
+            body: {
+              model,
+              webSearch: initialWebSearch,
+              reasoningEffort: "high",
+              video: false,
+              id,
+            },
+          },
+        ),
+      ).finally(() => {
+        utils.chat.getChats.invalidate();
+      });
+    }
+  }, [
+    searchParams,
+    initialMessages.length,
+    sendMessage,
+    router,
+    id,
+    model,
+    utils.chat.getChats,
+  ]);
 
   const selectedModel = availableModels.find((m) => m.value === model);
   const supportsReasoningEffort =
@@ -487,9 +601,9 @@ export function ChatInterface({
   const usageTierLabel =
     usageTier === "free"
       ? t("Free")
-      : usageTier === "pro"
-        ? t("Pro")
-        : t("Max");
+      : usageTier === "plus"
+        ? t("Plus")
+        : t("Pro");
   const isSubmitBlocked = isUsageBlocked || isByokMissingConfig;
   const reasoningEffortLabel = (() => {
     switch (reasoningEffort) {
@@ -549,6 +663,15 @@ export function ChatInterface({
     }
     const attachments =
       message.files && message.files.length > 0 ? message.files : undefined;
+
+    if (GA_ID) {
+      // Log event to Google Analytics
+      sendGAEvent("chat_message_sent", {
+        event_category: "chat",
+        event_label: usageTier,
+        value: 1,
+      });
+    }
 
     if (message.text) {
       Promise.resolve(
@@ -706,23 +829,19 @@ export function ChatInterface({
                                 });
                               }
 
-                              return (
-                                <>
-                                  {sections.map((s, sIdx) => {
-                                    const content = s.content.join("\n").trim();
-                                    return (
-                                      <ChainOfThoughtStep
-                                        key={`${message.id}-cot-${i}-${sIdx}`}
-                                        icon={BrainIcon}
-                                        label={s.title || t("Reasoning")}
-                                        description={content || t("No details")}
-                                        className="whitespace-pre-wrap"
-                                        status="complete"
-                                      />
-                                    );
-                                  })}
-                                </>
-                              );
+                              return sections.map((s, sIdx) => {
+                                const content = s.content.join("\n").trim();
+                                return (
+                                  <ChainOfThoughtStep
+                                    key={`${message.id}-cot-${i}-${sIdx}`}
+                                    icon={BrainIcon}
+                                    label={s.title || t("Reasoning")}
+                                    description={content || t("No details")}
+                                    className="whitespace-pre-wrap"
+                                    status="complete"
+                                  />
+                                );
+                              });
                             }
 
                             if (part.type === "tool-search") {
@@ -986,7 +1105,11 @@ export function ChatInterface({
               )}
             </div>
           ))}
-          {status === "submitted" && <Loader />}
+          {status === "submitted" && (
+            <div className="min-h-6">
+              <Loader />
+            </div>
+          )}
 
           {error && (
             <Card className="!gap-0 bg-destructive/10">

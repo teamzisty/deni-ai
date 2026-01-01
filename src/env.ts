@@ -18,6 +18,7 @@ export const env = createEnv({
     OPENROUTER_API_KEY: z.string(),
     BRAVE_SEARCH_API_KEY: z.string(),
     TURNSTILE_SECRET_KEY: z.string(),
+    RESEND_API_KEY: z.string().optional(),
   },
   client: {
     NEXT_PUBLIC_BETTER_AUTH_URL: z.url(),
@@ -44,5 +45,6 @@ export const env = createEnv({
     BRAVE_SEARCH_API_KEY: process.env.BRAVE_SEARCH_API_KEY,
     TURNSTILE_SECRET_KEY: process.env.TURNSTILE_SECRET_KEY,
     NEXT_PUBLIC_TURNSTILE_SITE_KEY: process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY,
+    RESEND_API_KEY: process.env.RESEND_API_KEY,
   },
 });

@@ -5,6 +5,7 @@ import { NextIntlClientProvider } from "next-intl";
 import { getExtracted, getLocale, getMessages } from "next-intl/server";
 import { Providers } from "@/components/providers";
 import { Toaster } from "@/components/ui/sonner";
+import { GA_ID } from "@/lib/constants";
 import "./globals.css";
 import "./themes.css";
 
@@ -47,7 +48,7 @@ export default async function RootLayout({
           </Providers>
         </NextIntlClientProvider>
       </body>
-      <GoogleAnalytics gaId="G-B5H8G73JTN" />
+      <GoogleAnalytics gaId={GA_ID} />
     </html>
   );
 }

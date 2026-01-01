@@ -1,5 +1,7 @@
 import { AccountView } from "@daveyplate/better-auth-ui";
 import { accountViewPaths } from "@daveyplate/better-auth-ui/server";
+import Footer from "@/components/footer";
+import Header from "@/components/header";
 
 export const dynamicParams = false;
 
@@ -16,7 +18,9 @@ export default async function AccountPage({
 
   return (
     <main className="pt-24 px-8">
+      <Header />
       <AccountView path={path} />
+      <Footer />
     </main>
   );
 }

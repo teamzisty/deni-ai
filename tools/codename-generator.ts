@@ -1,7 +1,9 @@
 import { existsSync, readFileSync, writeFileSync } from "node:fs";
-import { join } from "node:path";
+import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
 
-const CODENAMES_FILE = join(import.meta.dir, "codenames.json");
+const __dirname = dirname(fileURLToPath(import.meta.url));
+const CODENAMES_FILE = join(__dirname, "codenames.json");
 
 const ADJECTIVES = [
   "swift",
@@ -119,12 +121,14 @@ export function getRemainingCount(): number {
 }
 
 // CLI usage
-if (import.meta.main) {
-  if (typeof Bun === "undefined") {
-    console.warn("This script is intended to be run with Bun.");
-    process.exit(1);
-  }
-  const args = Bun.argv.slice(2);
+const isMain =
+  typeof process !== "undefined" &&
+  process.argv[1] &&
+  (process.argv[1].endsWith("codename-generator.ts") ||
+    process.argv[1].endsWith("codename-generator.js"));
+
+if (isMain) {
+  const args = process.argv.slice(2);
   const command = args[0];
 
   switch (command) {

@@ -59,6 +59,8 @@ export function Providers({ children }: { children: ReactNode }) {
                   provider: "cloudflare-turnstile",
                   siteKey: env.NEXT_PUBLIC_TURNSTILE_SITE_KEY,
                 }}
+                credentials={{ forgotPassword: true }}
+                emailVerification
                 passkey
                 Link={Link}
               >
