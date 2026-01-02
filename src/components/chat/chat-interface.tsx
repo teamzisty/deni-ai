@@ -91,7 +91,6 @@ import {
 } from "../ui/dropdown-menu";
 import { Separator } from "../ui/separator";
 import { Spinner } from "../ui/spinner";
-import { TooltipProvider } from "../ui/tooltip";
 
 type SearchResult = {
   title: string;
