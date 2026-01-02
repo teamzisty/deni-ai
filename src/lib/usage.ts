@@ -15,7 +15,7 @@ const ACTIVE_BILLING_STATUSES = new Set([
 ]);
 
 export type UsageCategory = "basic" | "premium";
-export type SubscriptionTier = "free" | "pro" | "max";
+export type SubscriptionTier = "free" | "plus" | "pro";
 type UsageRecord = typeof usageQuota.$inferSelect;
 
 const USAGE_CATEGORIES: UsageCategory[] = ["basic", "premium"];
@@ -26,13 +26,13 @@ const USAGE_LIMITS: Record<
 > = {
   basic: {
     free: 1500,
-    pro: 6000,
-    max: 15000, // unlimited
+    plus: 6000,
+    pro: 15000,
   },
   premium: {
     free: 50,
-    pro: 500,
-    max: 1000, // unlimited
+    plus: 500,
+    pro: 1000,
   },
 };
 
@@ -102,10 +102,10 @@ async function getTierInfo(userId: string, now: Date): Promise<TierInfo> {
     };
   }
 
-  const isMax = (planId ?? "").startsWith("max");
+  const isPro = (planId ?? "").startsWith("pro");
 
   return {
-    tier: isMax ? "max" : "pro",
+    tier: isPro ? "pro" : "plus",
     planId,
     status: status ?? null,
     periodEnd: record.currentPeriodEnd ?? null,

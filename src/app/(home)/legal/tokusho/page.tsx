@@ -23,7 +23,7 @@ export default function TokushoPage() {
       <div className="mx-auto flex max-w-4xl flex-col gap-10 px-4 pb-16 pt-28 sm:px-6 lg:px-8">
         <div className="space-y-3">
           <p className="text-sm text-muted-foreground">
-            最終更新日: [2025-12-31]
+            最終更新日: 2025-12-31
           </p>
           <h1 className="text-3xl font-semibold tracking-tight sm:text-4xl">
             特定商取引法に基づく表記

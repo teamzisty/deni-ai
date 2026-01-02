@@ -79,8 +79,8 @@ export default function SettingsWrapper({
     settingsTabs[0].value;
 
   return (
-    <div className="flex gap-2 mx-auto w-full space-y-6 pb-12 pt-4">
-      <div className="flex flex-col gap-2 w-full h-full max-w-xs shrink-0">
+    <div className="flex flex-col lg:flex-row gap-4 mx-auto w-full pb-12 pt-4 px-4 lg:px-0">
+      <div className="flex flex-col gap-2 w-full lg:max-w-xs shrink-0">
         {!billingDisabled && (
           <Card className="border-muted-foreground/10 bg-muted/60 shadow-none">
             <CardContent>
@@ -172,15 +172,15 @@ export default function SettingsWrapper({
           </CardContent>
         </Card>
       </div>
-      <Tabs value={currentTab} className="w-full">
-        <div className="flex items-center justify-between mb-2">
-          <TabsList>
+      <Tabs value={currentTab} className="w-full min-w-0 overflow-hidden">
+        <div className="-mx-4 px-4 overflow-x-auto mb-2 lg:mx-0 lg:px-0">
+          <TabsList className="inline-flex w-max lg:w-auto">
             {settingsTabs.map((tab) => (
               <TabsTrigger
                 key={tab.value}
                 value={tab.value}
                 asChild
-                className={cn("capitalize")}
+                className={cn("capitalize whitespace-nowrap text-sm")}
               >
                 <Link href={tab.href}>{tab.label}</Link>
               </TabsTrigger>

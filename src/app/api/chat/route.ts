@@ -247,6 +247,14 @@ export async function POST(req: Request) {
       "HTTP-Referer": "https://deniai.app",
     },
   });
+  const getOpenRouterModel = () => {
+    return openrouter.chat(`${providerId}/${resolvedModelId}`, {
+      provider: {
+        allow_fallbacks: false,
+        only: ["openai", "anthropic", "google", "groq", "xai"],
+      },
+    });
+  };
   switch (providerId) {
     case "openai": {
       if (useByok) {
@@ -259,7 +267,7 @@ export async function POST(req: Request) {
             ? provider.chat(resolvedModelId)
             : provider.responses(resolvedModelId);
       } else {
-        model = openrouter.chat(`${providerId}/${resolvedModelId}`);
+        model = getOpenRouterModel();
       }
       break;
     }
@@ -269,9 +277,9 @@ export async function POST(req: Request) {
           apiKey: byokApiKey,
           baseURL: byokBaseUrl,
         });
-        model = provider(resolvedModelId);
+        model = provider(resolvedModelId.replace(".", "-")); // fix ex. "claude-sonnet-4.5" (openrouter id) to ex. "claude-sonnet-4-5" (anthropic id)
       } else {
-        model = openrouter.chat(`${providerId}/${resolvedModelId}`);
+        model = getOpenRouterModel();
       }
       break;
     }
@@ -283,7 +291,7 @@ export async function POST(req: Request) {
         });
         model = provider(resolvedModelId);
       } else {
-        model = openrouter.chat(`${providerId}/${resolvedModelId}`);
+        model = getOpenRouterModel();
       }
       break;
     }
@@ -323,8 +331,10 @@ export async function POST(req: Request) {
       });
       model =
         byokApiStyle === "chat"
-          ? provider.chat(resolvedModelId)
-          : provider.responses(resolvedModelId);
+          ? provider.chat(resolvedModelId.replace(".", "-"))
+          : provider.responses(resolvedModelId.replace(".", "-"));
+      // fix claude model ids for openai-compatible claude endpoints
+
       break;
     }
     default:

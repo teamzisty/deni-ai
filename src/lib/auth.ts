@@ -6,11 +6,16 @@ import {
   captcha,
   haveIBeenPwned,
   lastLoginMethod,
+  magicLink,
 } from "better-auth/plugins";
 import { twoFactor } from "better-auth/plugins/two-factor";
+import { Resend } from "resend";
 import { db } from "@/db/drizzle";
 import * as schema from "@/db/schema";
 import { env } from "@/env";
+import { EMAIL_FROM, emailTemplates } from "@/lib/constants";
+
+const resend = env.RESEND_API_KEY ? new Resend(env.RESEND_API_KEY) : null;
 
 export const auth = betterAuth({
   appName: "Deni AI",
@@ -20,7 +25,34 @@ export const auth = betterAuth({
   }),
   emailAndPassword: {
     enabled: true,
+    requireEmailVerification: !!resend,
+    sendResetPassword: resend
+      ? async ({ user, url }) => {
+          const template = emailTemplates.resetPassword(user.name, url);
+          await resend.emails.send({
+            from: EMAIL_FROM,
+            to: user.email,
+            subject: template.subject,
+            html: template.html,
+          });
+        }
+      : undefined,
   },
+  emailVerification: resend
+    ? {
+        sendVerificationEmail: async ({ user, url }) => {
+          const template = emailTemplates.verifyEmail(user.name, url);
+          await resend.emails.send({
+            from: EMAIL_FROM,
+            to: user.email,
+            subject: template.subject,
+            html: template.html,
+          });
+        },
+        sendOnSignUp: true,
+        autoSignInAfterVerification: true,
+      }
+    : undefined,
   plugins: [
     anonymous(),
     twoFactor(),
@@ -28,9 +60,24 @@ export const auth = betterAuth({
     haveIBeenPwned(),
     lastLoginMethod(),
     captcha({
-      provider: "cloudflare-turnstile", // or google-recaptcha, hcaptcha, captchafox
+      provider: "cloudflare-turnstile",
       secretKey: env.TURNSTILE_SECRET_KEY,
     }),
+    ...(resend
+      ? [
+          magicLink({
+            sendMagicLink: async ({ email, url }) => {
+              const template = emailTemplates.magicLink(url);
+              await resend.emails.send({
+                from: EMAIL_FROM,
+                to: email,
+                subject: template.subject,
+                html: template.html,
+              });
+            },
+          }),
+        ]
+      : []),
   ],
   socialProviders: {
     google: {

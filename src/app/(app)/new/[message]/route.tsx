@@ -14,8 +14,19 @@ export async function GET(
 
     const resolvedParams = await params;
     const baseUrl = new URL(request.url);
+
+    // Build redirect URL preserving query parameters from the original request
+    const redirectParams = new URLSearchParams();
+    redirectParams.set("message", resolvedParams.message);
+
+    // Forward webSearch parameter if present
+    const webSearch = baseUrl.searchParams.get("webSearch");
+    if (webSearch === "true") {
+      redirectParams.set("webSearch", "true");
+    }
+
     const redirectUrl = new URL(
-      `/chat/${chatId}?message=${encodeURIComponent(resolvedParams.message)}`,
+      `/chat/${chatId}?${redirectParams.toString()}`,
       baseUrl.origin,
     );
     return NextResponse.redirect(redirectUrl);

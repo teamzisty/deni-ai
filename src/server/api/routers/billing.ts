@@ -17,10 +17,10 @@ import { getUsageSummary } from "@/lib/usage";
 import { type ProtectedContext, protectedProcedure, router } from "../trpc";
 
 const planIdSchema = z.enum([
+  "plus_monthly",
+  "plus_yearly",
   "pro_monthly",
   "pro_yearly",
-  "max_monthly",
-  "max_yearly",
 ]);
 
 type BillingRecord = typeof billing.$inferSelect;

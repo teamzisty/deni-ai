@@ -87,43 +87,47 @@ function getPlanCopy(planId: BillingPlanId): PlanCopy {
   const t = useExtracted();
 
   switch (planId) {
-    case "pro_monthly":
+    case "plus_monthly":
       return {
         tagline: t("Get unbelievable usage limits"),
         highlights: [
           t("Get 4x usage for basic models"),
           t("Get 10x usage for premium models"),
           t("With priority support"),
+          t("Deni AI Code - Plus access"),
           t("For trying Deni AI"),
         ],
       };
-    case "pro_yearly":
+    case "plus_yearly":
       return {
         tagline: t("Incredible deal"),
         highlights: [
           t("Get 4x usage for basic models"),
           t("Get 10x usage for premium models"),
           t("With priority support"),
+          t("Deni AI Code - Plus access"),
           t("Most cost-effective"),
         ],
       };
-    case "max_monthly":
+    case "pro_monthly":
       return {
         tagline: t("Great deals even for power users"),
         highlights: [
           t("Get 10x usage for basic model"),
           t("Get 20x usage for premium models"),
           t("Usage-based billing (coming soon)"),
+          t("Deni AI Code - Pro access"),
           t("For power users"),
         ],
       };
-    case "max_yearly":
+    case "pro_yearly":
       return {
         tagline: t("You like us, and we like you too!"),
         highlights: [
           t("Get 10x usage for basic model"),
           t("Get 20x usage for premium models"),
           t("Usage-based billing (coming soon)"),
+          t("Deni AI Code - Pro access"),
           t("For power users"),
         ],
       };
@@ -191,7 +195,7 @@ function PlanCard({
     (checkout.isPending && checkout.variables?.planId === plan.id) ||
     (changePlan.isPending && changePlan.variables?.planId === plan.id);
 
-  const tierName = plan.id.startsWith("max_") ? t("Max") : t("Pro");
+  const tierName = plan.id.startsWith("pro_") ? t("Pro") : t("Plus");
 
   return (
     <Card
@@ -392,10 +396,10 @@ function BillingPageContent() {
   const t = useExtracted();
   const [isChangePlanOpen, setIsChangePlanOpen] = useState(false);
   const [changeTarget, setChangeTarget] = useState<ClientPlan | null>(null);
-  const [proInterval, setProInterval] = useState<"monthly" | "yearly">(
+  const [plusInterval, setPlusInterval] = useState<"monthly" | "yearly">(
     "monthly",
   );
-  const [maxInterval, setMaxInterval] = useState<"monthly" | "yearly">(
+  const [proInterval, setProInterval] = useState<"monthly" | "yearly">(
     "monthly",
   );
 
@@ -467,10 +471,10 @@ function BillingPageContent() {
   const usageTier = usageQuery.data?.tier ?? "free";
   const usageTierLabel = (() => {
     switch (usageTier) {
+      case "plus":
+        return t("Plus");
       case "pro":
         return t("Pro");
-      case "max":
-        return t("Max");
       default:
         return t("Free");
     }
@@ -495,13 +499,14 @@ function BillingPageContent() {
 
   const allPlans = plansQuery.data?.plans ?? [];
 
+  const plusMonthly = allPlans.find((p) => p.id === "plus_monthly");
+  const plusYearly = allPlans.find((p) => p.id === "plus_yearly");
   const proMonthly = allPlans.find((p) => p.id === "pro_monthly");
   const proYearly = allPlans.find((p) => p.id === "pro_yearly");
-  const maxMonthly = allPlans.find((p) => p.id === "max_monthly");
-  const maxYearly = allPlans.find((p) => p.id === "max_yearly");
 
+  const selectedPlusPlan =
+    plusInterval === "monthly" ? plusMonthly : plusYearly;
   const selectedProPlan = proInterval === "monthly" ? proMonthly : proYearly;
-  const selectedMaxPlan = maxInterval === "monthly" ? maxMonthly : maxYearly;
   const basicUsage = usage.find((entry) => entry.category === "basic");
   const premiumUsage = usage.find((entry) => entry.category === "premium");
 
@@ -526,15 +531,15 @@ function BillingPageContent() {
 
       {/* Current Plan */}
       <Card className="border-border/80">
-        <CardHeader className="flex flex-row items-center justify-between">
+        <CardHeader className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div className="space-y-1">
             <CardTitle>{t("Current Plan")}</CardTitle>
             <CardDescription>
               {currentPlan
                 ? t("{tier} {name}", {
-                    tier: activePlanId?.startsWith("max_")
-                      ? t("Max")
-                      : t("Pro"),
+                    tier: activePlanId?.startsWith("pro_")
+                      ? t("Pro")
+                      : t("Plus"),
                     name: getPlanIntervalLabel(currentPlan.id, t),
                   })
                 : t("Free")}{" "}
@@ -553,7 +558,7 @@ function BillingPageContent() {
               )}
             </CardDescription>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             {statusQuery.data?.currentPeriodEnd && !cancelDate && (
               <span className="text-xs text-muted-foreground">
                 {t("Renews {date}", {
@@ -636,13 +641,13 @@ function BillingPageContent() {
         </Card>
       ) : (
         <div className="grid gap-4 sm:grid-cols-2">
-          {/* Pro Plan Card */}
-          {selectedProPlan && (
+          {/* Plus Plan Card */}
+          {selectedPlusPlan && (
             <PlanCard
-              plan={selectedProPlan}
-              interval={proInterval}
-              onIntervalChange={setProInterval}
-              isCurrent={selectedProPlan.id === activePlanId && isSubscribed}
+              plan={selectedPlusPlan}
+              interval={plusInterval}
+              onIntervalChange={setPlusInterval}
+              isCurrent={selectedPlusPlan.id === activePlanId && isSubscribed}
               hasActiveSubscription={hasActiveSubscription}
               cancelDate={cancelDate}
               activePlanId={activePlanId}
@@ -653,13 +658,13 @@ function BillingPageContent() {
             />
           )}
 
-          {/* Max Plan Card */}
-          {selectedMaxPlan && (
+          {/* Pro Plan Card */}
+          {selectedProPlan && (
             <PlanCard
-              plan={selectedMaxPlan}
-              interval={maxInterval}
-              onIntervalChange={setMaxInterval}
-              isCurrent={selectedMaxPlan.id === activePlanId && isSubscribed}
+              plan={selectedProPlan}
+              interval={proInterval}
+              onIntervalChange={setProInterval}
+              isCurrent={selectedProPlan.id === activePlanId && isSubscribed}
               hasActiveSubscription={hasActiveSubscription}
               cancelDate={cancelDate}
               activePlanId={activePlanId}
@@ -687,7 +692,7 @@ function BillingPageContent() {
                   : "",
               })}
               <PlanChangeEstimate
-                planId={changeTarget?.id ?? "pro_monthly"}
+                planId={changeTarget?.id ?? "plus_monthly"}
                 enabled={Boolean(changeTarget?.id)}
               />
             </AlertDialogDescription>

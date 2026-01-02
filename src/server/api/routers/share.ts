@@ -104,7 +104,7 @@ export const shareRouter = router({
     .input(
       z.object({
         chatId: z.string(),
-        recipientEmail: z.string().email(),
+        recipientEmail: z.email(),
       }),
     )
     .mutation(async ({ ctx, input }) => {
