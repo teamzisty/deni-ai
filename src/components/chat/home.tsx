@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useExtracted } from "next-intl";
 import { useState } from "react";
+import { toast } from "sonner";
 import { Composer, type ComposerMessage } from "@/components/chat/composer";
 import { trpc } from "@/lib/trpc/react";
 
@@ -61,6 +62,7 @@ export default function ChatHome() {
       router.push(`/chat/${chatId}`);
     } catch (error) {
       console.error("Failed to create chat:", error);
+      toast.error(t("An error occurred while starting the chat."));
       setIsSubmitting(false);
     }
   };

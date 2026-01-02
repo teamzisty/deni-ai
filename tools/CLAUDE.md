@@ -1,3 +1,4 @@
+(This guidance applies only to standalone scripts in the tools/ directory)
 
 Default to using Bun instead of Node.js.
 

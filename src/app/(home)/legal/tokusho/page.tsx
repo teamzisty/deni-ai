@@ -23,7 +23,7 @@ export default function TokushoPage() {
       <div className="mx-auto flex max-w-4xl flex-col gap-10 px-4 pb-16 pt-28 sm:px-6 lg:px-8">
         <div className="space-y-3">
           <p className="text-sm text-muted-foreground">
-            最終更新日: [2025-12-31]
+            最終更新日: 2025-12-31
           </p>
           <h1 className="text-3xl font-semibold tracking-tight sm:text-4xl">
             特定商取引法に基づく表記
@@ -34,7 +34,7 @@ export default function TokushoPage() {
           <div className="grid gap-2 border-border p-4 sm:grid-cols-3 sm:gap-6 sm:border-b">
             <dt className="text-sm font-medium">事業者名</dt>
             <dd className="text-sm text-muted-foreground sm:col-span-2">
-              雷 (※1)
+              実名については、請求があった場合は遅滞なく開示します。
             </dd>
           </div>
           <div className="grid gap-2 border-border p-4 sm:grid-cols-3 sm:gap-6 sm:border-b">

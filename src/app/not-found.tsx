@@ -1,3 +1,5 @@
+"use client";
+
 import Link from "next/link";
 import { useExtracted } from "next-intl";
 import { Badge } from "@/components/ui/badge";
@@ -7,7 +9,7 @@ export default function NotFound() {
   const t = useExtracted();
 
   return (
-    <main className="min-h-screen bg-gradient-to-b from-background via-background to-muted/30">
+    <main className="min-h-screen bg-linear-to-b from-background via-background to-muted/30">
       <div className="mx-auto flex min-h-screen max-w-2xl flex-col items-center justify-center gap-8 px-6 py-16 text-center">
         <Badge
           variant="secondary"

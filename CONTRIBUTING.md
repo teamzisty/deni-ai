@@ -10,6 +10,8 @@ Thank you for your interest in contributing to Deni AI! This document provides g
 - [How to Contribute](#how-to-contribute)
 - [Pull Request Process](#pull-request-process)
 - [Coding Standards](#coding-standards)
+- [Internationalization](#internationalization)
+- [Customization](#customization)
 - [Reporting Issues](#reporting-issues)
 
 ## Code of Conduct
@@ -63,6 +65,17 @@ Refer to `src/env.ts` for the complete list of required environment variables. K
 
 ## How to Contribute
 
+### Quick Contribution Flow
+
+1. Fork the repository
+2. Create a feature branch: `git checkout -b feature/amazing-feature`
+3. Make your changes following the coding conventions in `AGENTS.md`
+4. Run linting: `bun run lint`
+5. Format code: `bun run format`
+6. Commit your changes: `git commit -m 'Add amazing feature'`
+7. Push to the branch: `git push origin feature/amazing-feature`
+8. Open a Pull Request
+
 ### Types of Contributions
 
 - **Bug fixes**: Help us squash bugs and improve stability
@@ -73,7 +86,7 @@ Refer to `src/env.ts` for the complete list of required environment variables. K
 
 ### Before You Start
 
-1. Check existing [issues](https://github.com/YOUR_ORG/deni-ai/issues) and [pull requests](https://github.com/YOUR_ORG/deni-ai/pulls)
+1. Check existing [issues](https://github.com/teamzisty/deni-ai/issues) and [pull requests](https://github.com/teamzisty/deni-ai/pulls)
 2. For major changes, open an issue first to discuss your proposal
 3. Ensure your contribution aligns with the project's goals
 
@@ -141,6 +154,37 @@ We follow [Conventional Commits](https://www.conventionalcommits.org/):
 - `test:` - Adding or updating tests
 - `chore:` - Maintenance tasks
 
+## Internationalization
+
+The app supports multiple languages via `next-intl`. Translation files are located in the `messages/` directory.
+
+To add a new language:
+
+1. Create a new JSON file in `messages/`
+2. Add translations following the existing structure
+3. Update locale configuration in `src/i18n/`
+
+## Customization
+
+### Adding UI Components
+
+This project uses shadcn/ui. To add new components:
+
+```bash
+bunx shadcn@latest add [component-name]
+```
+
+### Modifying Themes
+
+- Edit `src/app/themes.css` for theme colors
+- Tailwind configuration in `tailwind.config.ts`
+
+### Adding AI Providers
+
+1. Install the provider SDK (if not already included)
+2. Add API key to `src/env.ts` and `.env`
+3. Configure the provider in your AI service logic
+
 ## Reporting Issues
 
 ### Bug Reports
@@ -166,7 +210,7 @@ When requesting features, please include:
 
 If you have questions, feel free to:
 
-- Open a [Discussion](https://github.com/YOUR_ORG/deni-ai/discussions)
+- Open a [Discussion](https://github.com/teamzisty/deni-ai/discussions)
 - Check existing documentation
 - Reach out to maintainers
 

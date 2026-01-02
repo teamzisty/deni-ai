@@ -242,7 +242,6 @@ export async function POST(req: Request) {
   let model: LanguageModel;
   const openrouter = createOpenRouter({
     apiKey: env.OPENROUTER_API_KEY,
-    compatibility: "strict",
     headers: {
       "X-Title": "Deni AI",
       "HTTP-Referer": "https://deniai.app",
@@ -278,7 +277,7 @@ export async function POST(req: Request) {
           apiKey: byokApiKey,
           baseURL: byokBaseUrl,
         });
-        model = provider(resolvedModelId);
+        model = provider(resolvedModelId.replace(".", "-")); // fix ex. "claude-sonnet-4.5" (openrouter id) to ex. "claude-sonnet-4-5" (anthropic id)
       } else {
         model = getOpenRouterModel();
       }
@@ -332,8 +331,10 @@ export async function POST(req: Request) {
       });
       model =
         byokApiStyle === "chat"
-          ? provider.chat(resolvedModelId)
-          : provider.responses(resolvedModelId);
+          ? provider.chat(resolvedModelId.replace(".", "-"))
+          : provider.responses(resolvedModelId.replace(".", "-"));
+      // fix claude model ids for openai-compatible claude endpoints
+
       break;
     }
     default:

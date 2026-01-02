@@ -131,51 +131,73 @@ export const GA_ID = "G-B5H8G73JTN";
 // Email configuration
 export const EMAIL_FROM = "Deni AI <noreply@deniai.app>";
 
+const escapeHtml = (unsafe: string) =>
+  unsafe
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+
 // Email templates
 export const emailTemplates = {
   resetPassword: (name: string | null, url: string) => ({
     subject: "Reset your password - Deni AI",
-    html: `
+    html: (() => {
+      const escapedName = name ? escapeHtml(name) : "";
+      const escapedUrl = escapeHtml(url);
+
+      return `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
         <h2>Reset Your Password</h2>
-        <p>Hi${name ? ` ${name}` : ""},</p>
+        <p>Hi${escapedName ? ` ${escapedName}` : ""},</p>
         <p>We received a request to reset your password. Click the button below to create a new password:</p>
         <p style="margin: 24px 0;">
-          <a href="${url}" style="background-color: #000; color: #fff; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block;">Reset Password</a>
+          <a href="${escapedUrl}" style="background-color: #000; color: #fff; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block;">Reset Password</a>
         </p>
         <p>If you didn't request this, you can safely ignore this email.</p>
         <p>This link will expire in 1 hour.</p>
         <p>Best,<br>Deni AI Team</p>
       </div>
-    `,
+    `;
+    })(),
   }),
   verifyEmail: (name: string | null, url: string) => ({
     subject: "Verify your email - Deni AI",
-    html: `
+    html: (() => {
+      const escapedName = name ? escapeHtml(name) : "";
+      const escapedUrl = escapeHtml(url);
+
+      return `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
         <h2>Verify Your Email</h2>
-        <p>Hi${name ? ` ${name}` : ""},</p>
+        <p>Hi${escapedName ? ` ${escapedName}` : ""},</p>
         <p>Thank you for signing up for Deni AI! Please verify your email address by clicking the button below:</p>
         <p style="margin: 24px 0;">
-          <a href="${url}" style="background-color: #000; color: #fff; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block;">Verify Email</a>
+          <a href="${escapedUrl}" style="background-color: #000; color: #fff; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block;">Verify Email</a>
         </p>
         <p>If you didn't create an account, you can safely ignore this email.</p>
         <p>Best,<br>Deni AI Team</p>
       </div>
-    `,
+    `;
+    })(),
   }),
   magicLink: (url: string) => ({
     subject: "Sign in to Deni AI",
-    html: `
+    html: (() => {
+      const escapedUrl = escapeHtml(url);
+
+      return `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
         <h2>Sign In to Deni AI</h2>
         <p>Click the button below to sign in:</p>
         <p style="margin: 24px 0;">
-          <a href="${url}" style="background-color: #000; color: #fff; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block;">Sign In</a>
+          <a href="${escapedUrl}" style="background-color: #000; color: #fff; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block;">Sign In</a>
         </p>
         <p>If you didn't request this, you can safely ignore this email.</p>
         <p>Best,<br>Deni AI Team</p>
       </div>
-    `,
+    `;
+    })(),
   }),
 };
