@@ -66,6 +66,15 @@ NEXT_PUBLIC_TURNSTILE_SITE_KEY=your-turnstile-site-key
 NEXT_PUBLIC_BILLING_DISABLED=1
 ```
 
+Also edit constants.ts:
+```ts
+// Analytics + Email (optional)
+GA_ID=G-XXXXXXXXXX
+EMAIL_FROM="Deni AI <noreply@deniai.app>"
+```
+
+Note: when adding or updating supported AI providers/models, also update `src/lib/constants.ts`.
+
 #### Generate `BETTER_AUTH_SECRET`
 
 ```bash
