@@ -37,7 +37,7 @@ Please read and follow our [Code of Conduct](CODE_OF_CONDUCT.md). We expect all 
 
 ```bash
 # Clone your fork
-git clone https://github.com/YOUR_USERNAME/deni-ai.git
+git clone https://github.com/teamzisty/deni-ai.git
 cd deni-ai
 
 # Install dependencies
