@@ -16,9 +16,7 @@ export async function generateTitle(messages: UIMessage[]): Promise<string> {
 
   // Extract text content from parts
   const textParts = userMessage.parts
-    .filter(
-      (part): part is { type: "text"; text: string } => part.type === "text",
-    )
+    .filter((part): part is { type: "text"; text: string } => part.type === "text")
     .map((part) => part.text)
     .join(" ");
 
@@ -41,11 +39,7 @@ export async function getChatById(id: string) {
   return chat;
 }
 
-export async function updateChat(
-  id: string,
-  messages: UIMessage[],
-  title?: string,
-) {
+export async function updateChat(id: string, messages: UIMessage[], title?: string) {
   const updates: ChatUpdateFields = {
     // structuredClone keeps parts/metadata intact while ensuring the payload is serializable for JSONB
     messages: structuredClone(messages),

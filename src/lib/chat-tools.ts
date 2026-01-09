@@ -3,12 +3,7 @@ import { generateText, tool } from "ai";
 import { load } from "cheerio";
 import { z } from "zod";
 import { env } from "@/env";
-import {
-  veoAspectRatios,
-  veoDurations,
-  veoModelValues,
-  veoResolutions,
-} from "@/lib/veo";
+import { veoAspectRatios, veoDurations, veoModelValues, veoResolutions } from "@/lib/veo";
 
 const VEO_BASE_URL = "https://generativelanguage.googleapis.com/v1beta";
 const VEO_POLL_INTERVAL_MS = 5000;
@@ -34,22 +29,12 @@ const veoToolInputSchema = z.object({
     })
     .optional()
     .describe("Duration in seconds"),
-  seed: z
-    .number()
-    .int()
-    .min(0)
-    .max(2_147_483_647)
-    .optional()
-    .describe("Optional seed"),
+  seed: z.number().int().min(0).max(2_147_483_647).optional().describe("Optional seed"),
 });
 
-function extractVeoErrorMessage(
-  responseData: unknown,
-  fallback: string,
-): string {
+function extractVeoErrorMessage(responseData: unknown, fallback: string): string {
   if (typeof responseData === "object" && responseData !== null) {
-    const message = (responseData as { error?: { message?: string } }).error
-      ?.message;
+    const message = (responseData as { error?: { message?: string } }).error?.message;
     return message || fallback;
   }
   return fallback;
@@ -89,9 +74,7 @@ async function pollVeoOperation(operationName: string, signal?: AbortSignal) {
     }
 
     if (!response.ok) {
-      throw new Error(
-        extractVeoErrorMessage(responseData, "Failed to check video status."),
-      );
+      throw new Error(extractVeoErrorMessage(responseData, "Failed to check video status."));
     }
 
     const done =
@@ -112,8 +95,7 @@ async function pollVeoOperation(operationName: string, signal?: AbortSignal) {
                 };
               };
             }
-          ).response?.generateVideoResponse?.generatedSamples?.[0]?.video
-            ?.uri ?? null)
+          ).response?.generateVideoResponse?.generatedSamples?.[0]?.video?.uri ?? null)
         : null;
 
     if (done) {
@@ -215,11 +197,7 @@ export function createChatTools({ videoMode }: CreateChatToolsOptions) {
 
                 // Extract text content
                 $("script, style, nav, footer, header").remove();
-                const textContent = $("body")
-                  .text()
-                  .replace(/\s+/g, " ")
-                  .trim()
-                  .slice(0, 8000); // Limit to 8000 chars
+                const textContent = $("body").text().replace(/\s+/g, " ").trim().slice(0, 8000); // Limit to 8000 chars
 
                 if (!textContent) {
                   return { ...result, summary: result.description };
@@ -268,8 +246,7 @@ export function createChatTools({ videoMode }: CreateChatToolsOptions) {
               const model = requestedModel ?? veoModelValues[0];
               const finalAspectRatio = aspectRatio ?? "16:9";
               const finalResolution = resolution ?? "720p";
-              const finalDuration =
-                finalResolution === "1080p" ? 8 : (durationSeconds ?? 6);
+              const finalDuration = finalResolution === "1080p" ? 8 : (durationSeconds ?? 6);
               const trimmedNegative = negativePrompt?.trim() || undefined;
 
               const instances: Record<string, unknown>[] = [
@@ -291,17 +268,14 @@ export function createChatTools({ videoMode }: CreateChatToolsOptions) {
                 parameters.seed = seed;
               }
 
-              const response = await fetch(
-                `${VEO_BASE_URL}/models/${model}:predictLongRunning`,
-                {
-                  method: "POST",
-                  headers: {
-                    "Content-Type": "application/json",
-                    "x-goog-api-key": env.GOOGLE_GENERATIVE_AI_API_KEY,
-                  },
-                  body: JSON.stringify({ instances, parameters }),
+              const response = await fetch(`${VEO_BASE_URL}/models/${model}:predictLongRunning`, {
+                method: "POST",
+                headers: {
+                  "Content-Type": "application/json",
+                  "x-goog-api-key": env.GOOGLE_GENERATIVE_AI_API_KEY,
                 },
-              );
+                body: JSON.stringify({ instances, parameters }),
+              });
 
               let responseData: unknown = null;
               try {
@@ -312,10 +286,7 @@ export function createChatTools({ videoMode }: CreateChatToolsOptions) {
 
               if (!response.ok) {
                 throw new Error(
-                  extractVeoErrorMessage(
-                    responseData,
-                    "Failed to start video generation.",
-                  ),
+                  extractVeoErrorMessage(responseData, "Failed to start video generation."),
                 );
               }
 
@@ -328,13 +299,8 @@ export function createChatTools({ videoMode }: CreateChatToolsOptions) {
                 throw new Error("Missing operation name.");
               }
 
-              const videoUri = await pollVeoOperation(
-                operationName,
-                abortSignal,
-              );
-              const proxyUrl = `/api/veo/file?uri=${encodeURIComponent(
-                videoUri,
-              )}`;
+              const videoUri = await pollVeoOperation(operationName, abortSignal);
+              const proxyUrl = `/api/veo/file?uri=${encodeURIComponent(videoUri)}`;
               const modelLabel = model;
 
               return {

@@ -2,14 +2,7 @@
 
 import { useTheme } from "next-themes";
 import type { ReactNode } from "react";
-import {
-  createContext,
-  useCallback,
-  useContext,
-  useEffect,
-  useMemo,
-  useState,
-} from "react";
+import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
 import type { ThemeName } from "@/lib/theme-presets";
 
 const STORAGE_KEY = "deni-theme-preset";
@@ -79,11 +72,7 @@ export function ThemePresetProvider({ children }: { children: ReactNode }) {
     [applyAndPersist, preset],
   );
 
-  return (
-    <ThemePresetContext.Provider value={value}>
-      {children}
-    </ThemePresetContext.Provider>
-  );
+  return <ThemePresetContext.Provider value={value}>{children}</ThemePresetContext.Provider>;
 }
 
 export function useThemePreset() {

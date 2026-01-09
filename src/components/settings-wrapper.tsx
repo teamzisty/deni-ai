@@ -13,11 +13,7 @@ import { trpc } from "@/lib/trpc/react";
 import { cn } from "@/lib/utils";
 import { Progress } from "./ui/progress";
 
-export default function SettingsWrapper({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export default function SettingsWrapper({ children }: { children: React.ReactNode }) {
   const t = useExtracted();
   const pathname = usePathname();
   const billingDisabled = isBillingDisabled;
@@ -75,8 +71,7 @@ export default function SettingsWrapper({
 
   // Determine current tab value based on pathname
   const currentTab =
-    settingsTabs.find((tab) => pathname?.startsWith(tab.href))?.value ||
-    settingsTabs[0].value;
+    settingsTabs.find((tab) => pathname?.startsWith(tab.href))?.value || settingsTabs[0].value;
 
   return (
     <div className="flex flex-col lg:flex-row gap-4 mx-auto w-full pb-12 pt-4 px-4 lg:px-0">
@@ -85,9 +80,7 @@ export default function SettingsWrapper({
           <Card className="border-muted-foreground/10 bg-muted/60 shadow-none">
             <CardContent>
               <div className="flex flex-col gap-1">
-                <span className="font-medium text-muted-foreground">
-                  {t("Your Plan")}
-                </span>
+                <span className="font-medium text-muted-foreground">{t("Your Plan")}</span>
                 <div className="flex flex-col gap-0.5">
                   <span className="text-base font-semibold">{plan}</span>
                   <span className="text-xs text-muted-foreground">
@@ -119,9 +112,7 @@ export default function SettingsWrapper({
         <Card className="border-muted-foreground/10 bg-muted/60 shadow-none">
           <CardContent>
             <div className="flex flex-col gap-1">
-              <span className="font-medium text-muted-foreground">
-                {t("Usage")}
-              </span>
+              <span className="font-medium text-muted-foreground">{t("Usage")}</span>
               <span className="text-sm">
                 {t("Resets on {date}", {
                   date: new Intl.DateTimeFormat("en-US", {
@@ -160,10 +151,7 @@ export default function SettingsWrapper({
               ))}
 
               <span className="block text-xs font-medium">
-                <InfoIcon
-                  size="16"
-                  className="-mt-0.5 mr-1 inline-flex size-3 shrink-0"
-                />
+                <InfoIcon size="16" className="-mt-0.5 mr-1 inline-flex size-3 shrink-0" />
                 {t(
                   "Successfully sent messages are counted as one each. There is no consumption per re-request, such as tool calls.",
                 )}

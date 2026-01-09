@@ -18,20 +18,12 @@ import {
   MessageContent,
   MessageResponse,
 } from "@/components/ai-elements/message";
-import {
-  Reasoning,
-  ReasoningContent,
-  ReasoningTrigger,
-} from "@/components/ai-elements/reasoning";
+import { Reasoning, ReasoningContent, ReasoningTrigger } from "@/components/ai-elements/reasoning";
 import { Shimmer } from "@/components/ai-elements/shimmer";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from "@/components/ui/collapsible";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Spinner } from "@/components/ui/spinner";
 import { trpc } from "@/lib/trpc/react";
 import { cn } from "@/lib/utils";
@@ -112,10 +104,7 @@ export function SharedChatInterface({
     forkChat.mutate({ shareId });
   };
 
-  const resolveVeoModelLabel = (
-    model?: string | null,
-    modelLabel?: string | null,
-  ) => {
+  const resolveVeoModelLabel = (model?: string | null, modelLabel?: string | null) => {
     switch (model) {
       case "veo-3.1-generate-preview":
         return t("Veo 3.1");
@@ -146,11 +135,7 @@ export function SharedChatInterface({
 
         {allowFork && (
           <Button onClick={handleFork} disabled={forkChat.isPending}>
-            {forkChat.isPending ? (
-              <Spinner />
-            ) : (
-              <GitFork className="mr-2 size-4" />
-            )}
+            {forkChat.isPending ? <Spinner /> : <GitFork className="mr-2 size-4" />}
             {isLoggedIn ? t("Fork & Continue") : t("Sign in to Fork")}
           </Button>
         )}
@@ -163,14 +148,11 @@ export function SharedChatInterface({
               {message.role === "user" && (
                 <Message from="user">
                   <MessageContent>
-                    {message.parts[0]?.type === "text" &&
-                      message.parts[0].text && (
-                        <MessageResponse
-                          shikiTheme={["github-light", "github-dark"]}
-                        >
-                          {message.parts[0].text}
-                        </MessageResponse>
-                      )}
+                    {message.parts[0]?.type === "text" && message.parts[0].text && (
+                      <MessageResponse shikiTheme={["github-light", "github-dark"]}>
+                        {message.parts[0].text}
+                      </MessageResponse>
+                    )}
                   </MessageContent>
                 </Message>
               )}
@@ -180,19 +162,14 @@ export function SharedChatInterface({
                     switch (part.type) {
                       case "text":
                         return (
-                          <Message
-                            key={`${message.id}-${i}`}
-                            from={message.role}
-                          >
+                          <Message key={`${message.id}-${i}`} from={message.role}>
                             <MessageContent>
                               <MessageResponse>{part.text}</MessageResponse>
                             </MessageContent>
                             {i === (message.parts?.length ?? 0) - 1 && (
                               <MessageActions>
                                 <MessageAction
-                                  onClick={() =>
-                                    navigator.clipboard.writeText(part.text)
-                                  }
+                                  onClick={() => navigator.clipboard.writeText(part.text)}
                                   label={t("Copy")}
                                 >
                                   <CopyIcon className="size-3.5" />
@@ -203,19 +180,13 @@ export function SharedChatInterface({
                         );
                       case "reasoning":
                         return (
-                          <Reasoning
-                            key={`${message.id}-${i}`}
-                            className="w-full"
-                          >
+                          <Reasoning key={`${message.id}-${i}`} className="w-full">
                             <ReasoningTrigger />
                             <ReasoningContent>{part.text}</ReasoningContent>
                           </Reasoning>
                         );
                       case "tool-search": {
-                        if (
-                          part.state !== "output-available" &&
-                          part.state !== "output-error"
-                        ) {
+                        if (part.state !== "output-available" && part.state !== "output-error") {
                           return (
                             <div
                               key={part.toolCallId}
@@ -239,15 +210,10 @@ export function SharedChatInterface({
                           );
                         }
 
-                        const searchResults = isSearchResultArray(part.output)
-                          ? part.output
-                          : [];
+                        const searchResults = isSearchResultArray(part.output) ? part.output : [];
 
                         return (
-                          <div
-                            className="w-full my-4"
-                            key={`${message.id}-${i}`}
-                          >
+                          <div className="w-full my-4" key={`${message.id}-${i}`}>
                             <Collapsible>
                               <CollapsibleTrigger className="flex items-center gap-2 text-muted-foreground text-sm transition-colors hover:text-foreground">
                                 <Globe className="size-4" />
@@ -294,8 +260,7 @@ export function SharedChatInterface({
                                         </p>
                                         <div className="text-xs text-muted-foreground line-clamp-3">
                                           {result.description.slice(0, 100)}
-                                          {result.description.length > 100 &&
-                                            "..."}
+                                          {result.description.length > 100 && "..."}
                                         </div>
                                       </Link>
                                     </div>
@@ -307,15 +272,9 @@ export function SharedChatInterface({
                         );
                       }
                       case "tool-video": {
-                        if (
-                          part.state !== "output-available" &&
-                          part.state !== "output-error"
-                        ) {
+                        if (part.state !== "output-available" && part.state !== "output-error") {
                           return (
-                            <Message
-                              key={`${message.id}-${i}`}
-                              from={message.role}
-                            >
+                            <Message key={`${message.id}-${i}`} from={message.role}>
                               <MessageContent className="w-full gap-2 rounded-lg border border-border/60 bg-muted/20 px-4 py-3 text-sm text-muted-foreground">
                                 <div className="flex items-center gap-2">
                                   <Spinner className="size-4" />
@@ -328,10 +287,7 @@ export function SharedChatInterface({
 
                         if (part.state === "output-error") {
                           return (
-                            <Message
-                              key={`${message.id}-${i}`}
-                              from={message.role}
-                            >
+                            <Message key={`${message.id}-${i}`} from={message.role}>
                               <MessageContent className="w-full text-sm text-destructive">
                                 {t("Video generation failed.")}
                               </MessageContent>
@@ -339,16 +295,11 @@ export function SharedChatInterface({
                           );
                         }
 
-                        const output = isVideoToolOutput(part.output)
-                          ? part.output
-                          : null;
+                        const output = isVideoToolOutput(part.output) ? part.output : null;
 
                         if (!output) {
                           return (
-                            <Message
-                              key={`${message.id}-${i}`}
-                              from={message.role}
-                            >
+                            <Message key={`${message.id}-${i}`} from={message.role}>
                               <MessageContent className="w-full text-sm text-destructive">
                                 {t("Video output unavailable.")}
                               </MessageContent>
@@ -362,58 +313,40 @@ export function SharedChatInterface({
                         );
 
                         return (
-                          <Message
-                            key={`${message.id}-${i}`}
-                            from={message.role}
-                          >
+                          <Message key={`${message.id}-${i}`} from={message.role}>
                             <MessageContent className="w-full gap-3 rounded-lg border border-border/60 bg-background/90 px-4 py-3">
                               {output.negativePrompt && (
                                 <div className="rounded-md border border-border/60 bg-muted/30 px-3 py-2 text-xs">
                                   <p className="text-xs font-medium text-foreground">
                                     {t("Negative prompt")}
                                   </p>
-                                  <p className="text-muted-foreground">
-                                    {output.negativePrompt}
-                                  </p>
+                                  <p className="text-muted-foreground">{output.negativePrompt}</p>
                                 </div>
                               )}
                               <div className="overflow-hidden rounded-lg border border-border/70 bg-muted/30">
-                                {/* biome-ignore lint/a11y/useMediaCaption: generated videos don't include captions. */}
-                                <video
-                                  controls
-                                  src={output.videoUrl}
-                                  className="h-auto w-full"
-                                />
+                                {/* oxlint-disable-next-line: generated videos don't include captions. */}
+                                <video controls src={output.videoUrl} className="h-auto w-full" />
                               </div>
                               <div className="flex flex-wrap items-center gap-2 text-xs">
                                 {output.resolution && (
-                                  <Badge variant="secondary">
-                                    {output.resolution}
-                                  </Badge>
+                                  <Badge variant="secondary">{output.resolution}</Badge>
                                 )}
                                 {output.aspectRatio && (
-                                  <Badge variant="secondary">
-                                    {output.aspectRatio}
-                                  </Badge>
+                                  <Badge variant="secondary">{output.aspectRatio}</Badge>
                                 )}
                                 {output.durationSeconds && (
-                                  <Badge variant="secondary">
-                                    {output.durationSeconds}s
-                                  </Badge>
+                                  <Badge variant="secondary">{output.durationSeconds}s</Badge>
                                 )}
                                 {resolvedModelLabel ? (
-                                  <Badge variant="outline">
-                                    {resolvedModelLabel}
-                                  </Badge>
+                                  <Badge variant="outline">{resolvedModelLabel}</Badge>
                                 ) : null}
-                                {output.seed !== null &&
-                                  output.seed !== undefined && (
-                                    <Badge variant="outline">
-                                      {t("Seed {seed}", {
-                                        seed: output.seed.toString(),
-                                      })}
-                                    </Badge>
-                                  )}
+                                {output.seed !== null && output.seed !== undefined && (
+                                  <Badge variant="outline">
+                                    {t("Seed {seed}", {
+                                      seed: output.seed.toString(),
+                                    })}
+                                  </Badge>
+                                )}
                               </div>
                               {output.operationName && (
                                 <p className="break-words text-xs text-muted-foreground">

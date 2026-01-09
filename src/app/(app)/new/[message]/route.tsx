@@ -2,10 +2,7 @@ import { headers } from "next/headers";
 import { NextResponse } from "next/server";
 import { createChatFromRequest } from "@/server/chat-manager";
 
-export async function GET(
-  request: Request,
-  { params }: { params: Promise<{ message: string }> },
-) {
+export async function GET(request: Request, { params }: { params: Promise<{ message: string }> }) {
   try {
     const headersList = await headers();
 
@@ -25,10 +22,7 @@ export async function GET(
       redirectParams.set("webSearch", "true");
     }
 
-    const redirectUrl = new URL(
-      `/chat/${chatId}?${redirectParams.toString()}`,
-      baseUrl.origin,
-    );
+    const redirectUrl = new URL(`/chat/${chatId}?${redirectParams.toString()}`, baseUrl.origin);
     return NextResponse.redirect(redirectUrl);
   } catch (error) {
     if (error instanceof Error) {
@@ -37,9 +31,6 @@ export async function GET(
       }
     }
     console.error("[GET /new/[message]] Error creating chat:", error);
-    return NextResponse.json(
-      { error: "Failed to create chat" },
-      { status: 500 },
-    );
+    return NextResponse.json({ error: "Failed to create chat" }, { status: 500 });
   }
 }

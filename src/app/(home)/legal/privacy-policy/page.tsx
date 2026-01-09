@@ -16,9 +16,7 @@ export default function PrivacyPolicyPage() {
     <main className="min-h-screen bg-background">
       <div className="mx-auto flex max-w-4xl flex-col gap-10 px-4 pb-16 pt-28 sm:px-6 lg:px-8">
         <div className="space-y-3">
-          <p className="text-sm text-muted-foreground">
-            {t("Last updated: 2025-12-31")}
-          </p>
+          <p className="text-sm text-muted-foreground">{t("Last updated: 2025-12-31")}</p>
           <h1 className="text-3xl font-semibold tracking-tight sm:text-4xl">
             {t("Privacy Policy")}
           </h1>
@@ -30,20 +28,14 @@ export default function PrivacyPolicyPage() {
         </div>
 
         <section className="space-y-3">
-          <h2 className="text-xl font-semibold">
-            {t("1. Information We Collect")}
-          </h2>
+          <h2 className="text-xl font-semibold">{t("1. Information We Collect")}</h2>
           <ul className="list-disc space-y-2 pl-6 text-muted-foreground">
             <li>
               {t(
                 "Account information, such as your name, email address, and authentication provider identifiers.",
               )}
             </li>
-            <li>
-              {t(
-                "Content you submit, including prompts, messages, and files you upload.",
-              )}
-            </li>
+            <li>{t("Content you submit, including prompts, messages, and files you upload.")}</li>
             <li>
               {t(
                 "Usage data, such as logs, device information, IP address, and approximate location.",
@@ -63,24 +55,18 @@ export default function PrivacyPolicyPage() {
         </section>
 
         <section className="space-y-3">
-          <h2 className="text-xl font-semibold">
-            {t("2. How We Use Information")}
-          </h2>
+          <h2 className="text-xl font-semibold">{t("2. How We Use Information")}</h2>
           <ul className="list-disc space-y-2 pl-6 text-muted-foreground">
             <li>{t("Provide, maintain, and improve the Service.")}</li>
             <li>{t("Authenticate users and secure accounts.")}</li>
             <li>{t("Monitor usage and prevent abuse or fraud.")}</li>
-            <li>
-              {t("Communicate with you about updates, support, or billing.")}
-            </li>
+            <li>{t("Communicate with you about updates, support, or billing.")}</li>
             <li>{t("Comply with legal obligations.")}</li>
           </ul>
         </section>
 
         <section className="space-y-3">
-          <h2 className="text-xl font-semibold">
-            {t("3. How We Share Information")}
-          </h2>
+          <h2 className="text-xl font-semibold">{t("3. How We Share Information")}</h2>
           <p className="text-muted-foreground">
             {t(
               "We share information with trusted service providers who help us operate the Service, such as hosting, analytics, customer support, authentication, and payment processing. We may also share information if required by law or to protect the rights and safety of Deni AI or others.",
@@ -116,9 +102,7 @@ export default function PrivacyPolicyPage() {
         </section>
 
         <section className="space-y-3">
-          <h2 className="text-xl font-semibold">
-            {t("7. International Transfers")}
-          </h2>
+          <h2 className="text-xl font-semibold">{t("7. International Transfers")}</h2>
           <p className="text-muted-foreground">
             {t(
               "Your information may be processed in countries other than your own, where data protection laws may differ. We take steps to protect your information when it is transferred.",
@@ -127,9 +111,7 @@ export default function PrivacyPolicyPage() {
         </section>
 
         <section className="space-y-3">
-          <h2 className="text-xl font-semibold">
-            {t("8. Children's Privacy")}
-          </h2>
+          <h2 className="text-xl font-semibold">{t("8. Children's Privacy")}</h2>
           <p className="text-muted-foreground">
             {t(
               "The Service is not intended for children under 13. We do not knowingly collect personal information from children under 13.",
@@ -138,9 +120,7 @@ export default function PrivacyPolicyPage() {
         </section>
 
         <section className="space-y-3">
-          <h2 className="text-xl font-semibold">
-            {t("9. Changes to This Policy")}
-          </h2>
+          <h2 className="text-xl font-semibold">{t("9. Changes to This Policy")}</h2>
           <p className="text-muted-foreground">
             {t(
               "We may update this Policy from time to time. We will update the date above and, if required, provide additional notice.",

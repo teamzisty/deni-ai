@@ -53,10 +53,7 @@ export default function ChatHome() {
         webSearch,
       };
 
-      sessionStorage.setItem(
-        INITIAL_MESSAGE_STORAGE_KEY,
-        JSON.stringify(initialMessageData),
-      );
+      sessionStorage.setItem(INITIAL_MESSAGE_STORAGE_KEY, JSON.stringify(initialMessageData));
 
       // Navigate to the chat page
       router.push(`/chat/${chatId}`);

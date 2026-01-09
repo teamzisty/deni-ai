@@ -8,11 +8,7 @@ import { db } from "@/db/drizzle";
 import { chats } from "@/db/schema";
 import { auth } from "@/lib/auth";
 
-export default async function ChatPage({
-  params,
-}: {
-  params: Promise<{ id: string }>;
-}) {
+export default async function ChatPage({ params }: { params: Promise<{ id: string }> }) {
   const session = await auth.api.getSession({ headers: await headers() });
   const userId = session?.session?.userId;
 
@@ -35,9 +31,7 @@ export default async function ChatPage({
     messages: (chat.messages as UIMessage[]) ?? [],
   });
 
-  const initialMessages = validatedMessages.success
-    ? validatedMessages.data
-    : [];
+  const initialMessages = validatedMessages.success ? validatedMessages.data : [];
 
   return <ChatInterface id={id} initialMessages={initialMessages} />;
 }

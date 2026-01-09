@@ -1,9 +1,4 @@
-export type Author =
-  | "openai"
-  | "anthropic"
-  | "google"
-  | "xai"
-  | "openai_compatible";
+export type Author = "openai" | "anthropic" | "google" | "xai" | "openai_compatible";
 
 export enum AuthorEnum {
   openai = "OpenAI",

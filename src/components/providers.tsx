@@ -33,15 +33,11 @@ export function Providers({ children }: { children: ReactNode }) {
                   upload: async (file: File) => {
                     return await new Promise<string>((resolve, reject) => {
                       const reader = new FileReader();
-                      reader.onerror = () =>
-                        reject(new Error(t("Failed to read file")));
+                      reader.onerror = () => reject(new Error(t("Failed to read file")));
                       reader.onload = () => {
                         const result = reader.result;
                         if (typeof result === "string") resolve(result);
-                        else
-                          reject(
-                            new Error(t("Unexpected result from FileReader")),
-                          );
+                        else reject(new Error(t("Unexpected result from FileReader")));
                       };
                       reader.readAsDataURL(file);
                     });

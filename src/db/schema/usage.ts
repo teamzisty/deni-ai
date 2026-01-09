@@ -1,18 +1,14 @@
 import { sql } from "drizzle-orm";
-import {
-  integer,
-  pgTable,
-  text,
-  timestamp,
-  uniqueIndex,
-} from "drizzle-orm/pg-core";
+import { integer, pgTable, text, timestamp, uniqueIndex } from "drizzle-orm/pg-core";
 
 import { user } from "./auth-schema";
 
 export const usageQuota = pgTable(
   "usage_quota",
   {
-    id: text("id").primaryKey().default(sql`gen_random_uuid()`),
+    id: text("id")
+      .primaryKey()
+      .default(sql`gen_random_uuid()`),
     userId: text("user_id")
       .notNull()
       .references(() => user.id, { onDelete: "cascade" }),
@@ -29,9 +25,6 @@ export const usageQuota = pgTable(
       .notNull(),
   },
   (table) => ({
-    userCategoryIdx: uniqueIndex("usage_quota_user_category_idx").on(
-      table.userId,
-      table.category,
-    ),
+    userCategoryIdx: uniqueIndex("usage_quota_user_category_idx").on(table.userId, table.category),
   }),
 );

@@ -8,19 +8,12 @@ import { db } from "@/db/drizzle";
 import { chatShareRecipients, chatShares, chats, user } from "@/db/schema";
 import { auth } from "@/lib/auth";
 
-export default async function SharedChatPage({
-  params,
-}: {
-  params: Promise<{ shareId: string }>;
-}) {
+export default async function SharedChatPage({ params }: { params: Promise<{ shareId: string }> }) {
   const { shareId } = await params;
   const session = await auth.api.getSession({ headers: await headers() });
   const userId = session?.session?.userId;
 
-  const [share] = await db
-    .select()
-    .from(chatShares)
-    .where(eq(chatShares.id, shareId));
+  const [share] = await db.select().from(chatShares).where(eq(chatShares.id, shareId));
 
   if (!share) {
     notFound();
@@ -49,10 +42,7 @@ export default async function SharedChatPage({
     }
   }
 
-  const [chat] = await db
-    .select()
-    .from(chats)
-    .where(eq(chats.id, share.chatId));
+  const [chat] = await db.select().from(chats).where(eq(chats.id, share.chatId));
 
   if (!chat) {
     notFound();

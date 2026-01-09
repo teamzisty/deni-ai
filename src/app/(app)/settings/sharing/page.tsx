@@ -1,15 +1,6 @@
 "use client";
 
-import {
-  Check,
-  Copy,
-  ExternalLink,
-  Globe,
-  Link2,
-  Lock,
-  Trash2,
-  Users,
-} from "lucide-react";
+import { Check, Copy, ExternalLink, Globe, Link2, Lock, Trash2, Users } from "lucide-react";
 import Link from "next/link";
 import { useExtracted } from "next-intl";
 import { useState } from "react";
@@ -26,20 +17,9 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Spinner } from "@/components/ui/spinner";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { trpc } from "@/lib/trpc/react";
 
 function ShareItem({
@@ -59,11 +39,7 @@ function ShareItem({
   chat: { id: string; title: string | null };
   recipients: { id: string; name: string; email: string }[];
   onDelete: (chatId: string) => void;
-  onUpdate: (
-    chatId: string,
-    visibility: "public" | "private",
-    allowFork: boolean,
-  ) => void;
+  onUpdate: (chatId: string, visibility: "public" | "private", allowFork: boolean) => void;
 }) {
   const t = useExtracted();
   const [copied, setCopied] = useState(false);
@@ -89,20 +65,13 @@ function ShareItem({
     <div className="flex items-center justify-between p-4 border rounded-lg">
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2">
-          <Link
-            href={`/chat/${chat.id}`}
-            className="font-medium truncate hover:underline"
-          >
+          <Link href={`/chat/${chat.id}`} className="font-medium truncate hover:underline">
             {chat.title || t("Untitled")}
           </Link>
           <TooltipProvider>
             <Tooltip>
               <TooltipTrigger asChild>
-                <button
-                  type="button"
-                  onClick={toggleVisibility}
-                  className="flex items-center"
-                >
+                <button type="button" onClick={toggleVisibility} className="flex items-center">
                   <Badge
                     variant="secondary"
                     className="shrink-0 cursor-pointer hover:opacity-80 transition-opacity"
@@ -131,11 +100,7 @@ function ShareItem({
           <TooltipProvider>
             <Tooltip>
               <TooltipTrigger asChild>
-                <button
-                  type="button"
-                  onClick={toggleFork}
-                  className="flex items-center"
-                >
+                <button type="button" onClick={toggleFork} className="flex items-center">
                   <Badge
                     variant={share.allowFork ? "outline" : "secondary"}
                     className="shrink-0 cursor-pointer hover:opacity-80 transition-opacity"
@@ -145,9 +110,7 @@ function ShareItem({
                 </button>
               </TooltipTrigger>
               <TooltipContent>
-                {share.allowFork
-                  ? t("Click to disable forking")
-                  : t("Click to enable forking")}
+                {share.allowFork ? t("Click to disable forking") : t("Click to enable forking")}
               </TooltipContent>
             </Tooltip>
           </TooltipProvider>
@@ -173,11 +136,7 @@ function ShareItem({
           <Tooltip>
             <TooltipTrigger asChild>
               <Button size="icon" variant="ghost" onClick={handleCopy}>
-                {copied ? (
-                  <Check className="size-4" />
-                ) : (
-                  <Copy className="size-4" />
-                )}
+                {copied ? <Check className="size-4" /> : <Copy className="size-4" />}
               </Button>
             </TooltipTrigger>
             <TooltipContent>{t("Copy link")}</TooltipContent>
@@ -246,11 +205,7 @@ export default function SharingSettingsPage() {
     },
   });
 
-  const handleUpdate = (
-    chatId: string,
-    visibility: "public" | "private",
-    allowFork: boolean,
-  ) => {
+  const handleUpdate = (chatId: string, visibility: "public" | "private", allowFork: boolean) => {
     updateShare.mutate({ chatId, visibility, allowFork });
   };
 
@@ -267,22 +222,16 @@ export default function SharingSettingsPage() {
   return (
     <div className="mx-auto flex max-w-4xl w-full flex-col gap-6">
       <div className="space-y-2">
-        <h1 className="text-3xl font-semibold tracking-tight">
-          {t("Sharing")}
-        </h1>
+        <h1 className="text-3xl font-semibold tracking-tight">{t("Sharing")}</h1>
         <p className="text-muted-foreground">
-          {t(
-            "Manage your shared conversations and access shared links from others.",
-          )}
+          {t("Manage your shared conversations and access shared links from others.")}
         </p>
       </div>
 
       <Card className="border-border/80">
         <CardHeader>
           <CardTitle>{t("My Shared Links")}</CardTitle>
-          <CardDescription>
-            {t("Conversations you've shared with others.")}
-          </CardDescription>
+          <CardDescription>{t("Conversations you've shared with others.")}</CardDescription>
         </CardHeader>
         <CardContent>
           {myShares.isLoading ? (
@@ -317,9 +266,7 @@ export default function SharingSettingsPage() {
       <Card className="border-border/80">
         <CardHeader>
           <CardTitle>{t("Shared With Me")}</CardTitle>
-          <CardDescription>
-            {t("Conversations others have shared with you.")}
-          </CardDescription>
+          <CardDescription>{t("Conversations others have shared with you.")}</CardDescription>
         </CardHeader>
         <CardContent>
           {sharedWithMe.isLoading ? (
@@ -365,10 +312,7 @@ export default function SharingSettingsPage() {
         </CardContent>
       </Card>
 
-      <AlertDialog
-        open={!!deleteTarget}
-        onOpenChange={(open) => !open && setDeleteTarget(null)}
-      >
+      <AlertDialog open={!!deleteTarget} onOpenChange={(open) => !open && setDeleteTarget(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>{t("Revoke shared access?")}</AlertDialogTitle>
@@ -379,9 +323,7 @@ export default function SharingSettingsPage() {
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={deleteShare.isPending}>
-              {t("Cancel")}
-            </AlertDialogCancel>
+            <AlertDialogCancel disabled={deleteShare.isPending}>{t("Cancel")}</AlertDialogCancel>
             <AlertDialogAction
               onClick={confirmDelete}
               disabled={deleteShare.isPending}

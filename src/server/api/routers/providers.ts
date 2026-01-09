@@ -34,18 +34,9 @@ function normalizeBaseUrl(url: string) {
 export const providersRouter = router({
   getConfig: protectedProcedure.query(async ({ ctx }) => {
     const [keys, settings, models] = await Promise.all([
-      ctx.db
-        .select()
-        .from(providerKey)
-        .where(eq(providerKey.userId, ctx.userId)),
-      ctx.db
-        .select()
-        .from(providerSetting)
-        .where(eq(providerSetting.userId, ctx.userId)),
-      ctx.db
-        .select()
-        .from(customModel)
-        .where(eq(customModel.userId, ctx.userId)),
+      ctx.db.select().from(providerKey).where(eq(providerKey.userId, ctx.userId)),
+      ctx.db.select().from(providerSetting).where(eq(providerSetting.userId, ctx.userId)),
+      ctx.db.select().from(customModel).where(eq(customModel.userId, ctx.userId)),
     ]);
 
     return {
@@ -94,12 +85,7 @@ export const providersRouter = router({
     .mutation(async ({ ctx, input }) => {
       await ctx.db
         .delete(providerKey)
-        .where(
-          and(
-            eq(providerKey.userId, ctx.userId),
-            eq(providerKey.provider, input.provider),
-          ),
-        );
+        .where(and(eq(providerKey.userId, ctx.userId), eq(providerKey.provider, input.provider)));
       return { ok: true };
     }),
 
@@ -109,9 +95,7 @@ export const providersRouter = router({
         provider: ProviderIdSchema,
         preferByok: z.boolean().optional(),
         baseUrl: z.string().nullable().optional(),
-        apiStyle: z
-          .union([z.literal("chat"), z.literal("responses")])
-          .optional(),
+        apiStyle: z.union([z.literal("chat"), z.literal("responses")]).optional(),
       }),
     )
     .mutation(async ({ ctx, input }) => {
@@ -133,17 +117,13 @@ export const providersRouter = router({
         .select()
         .from(providerSetting)
         .where(
-          and(
-            eq(providerSetting.userId, ctx.userId),
-            eq(providerSetting.provider, input.provider),
-          ),
+          and(eq(providerSetting.userId, ctx.userId), eq(providerSetting.provider, input.provider)),
         )
         .limit(1);
 
       const current = existing[0];
       const preferByok = input.preferByok ?? current?.preferByok ?? false;
-      const resolvedBaseUrl =
-        baseUrl === undefined ? (current?.baseUrl ?? null) : baseUrl;
+      const resolvedBaseUrl = baseUrl === undefined ? (current?.baseUrl ?? null) : baseUrl;
       const apiStyle = input.apiStyle ?? current?.apiStyle ?? "responses";
 
       await ctx.db
@@ -173,12 +153,7 @@ export const providersRouter = router({
         premium: z.boolean().optional(),
         inputPriceMicros: z.number().int().nonnegative().nullable().optional(),
         outputPriceMicros: z.number().int().nonnegative().nullable().optional(),
-        reasoningPriceMicros: z
-          .number()
-          .int()
-          .nonnegative()
-          .nullable()
-          .optional(),
+        reasoningPriceMicros: z.number().int().nonnegative().nullable().optional(),
       }),
     )
     .mutation(async ({ ctx, input }) => {
@@ -205,9 +180,7 @@ export const providersRouter = router({
     .mutation(async ({ ctx, input }) => {
       await ctx.db
         .delete(customModel)
-        .where(
-          and(eq(customModel.userId, ctx.userId), eq(customModel.id, input.id)),
-        );
+        .where(and(eq(customModel.userId, ctx.userId), eq(customModel.id, input.id)));
       return { ok: true };
     }),
 
@@ -217,12 +190,7 @@ export const providersRouter = router({
       const row = await ctx.db
         .select({ keyEnc: providerKey.keyEnc })
         .from(providerKey)
-        .where(
-          and(
-            eq(providerKey.userId, ctx.userId),
-            eq(providerKey.provider, input.provider),
-          ),
-        )
+        .where(and(eq(providerKey.userId, ctx.userId), eq(providerKey.provider, input.provider)))
         .limit(1);
 
       if (!row[0]) return { configured: false as const };

@@ -4,13 +4,7 @@ import { useExtracted } from "next-intl";
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -33,13 +27,7 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { trpc } from "@/lib/trpc/react";
 
-const PROVIDER_IDS = [
-  "openai",
-  "anthropic",
-  "google",
-  "xai",
-  "openai_compatible",
-] as const;
+const PROVIDER_IDS = ["openai", "anthropic", "google", "xai", "openai_compatible"] as const;
 
 type ProviderId = (typeof PROVIDER_IDS)[number];
 type ProviderConfig = {
@@ -75,13 +63,10 @@ export default function ProvidersPage() {
   const createCustomModel = trpc.providers.createCustomModel.useMutation();
   const deleteCustomModel = trpc.providers.deleteCustomModel.useMutation();
 
-  const [keyInputs, setKeyInputs] =
-    useState<Record<ProviderId, string>>(defaultKeyState);
-  const [preferByok, setPreferByok] =
-    useState<Record<ProviderId, boolean>>(defaultPreferState);
+  const [keyInputs, setKeyInputs] = useState<Record<ProviderId, string>>(defaultKeyState);
+  const [preferByok, setPreferByok] = useState<Record<ProviderId, boolean>>(defaultPreferState);
   const [openAiCompatBaseUrl, setOpenAiCompatBaseUrl] = useState("");
-  const [openAiCompatApiStyle, setOpenAiCompatApiStyle] =
-    useState<ApiStyle>("responses");
+  const [openAiCompatApiStyle, setOpenAiCompatApiStyle] = useState<ApiStyle>("responses");
 
   const [customName, setCustomName] = useState("");
   const [customModelId, setCustomModelId] = useState("");
@@ -115,9 +100,7 @@ export default function ProvidersPage() {
       {
         id: "openai_compatible",
         label: t("OpenAI-compatible"),
-        description: t(
-          "Use any OpenAI-compatible endpoint (proxy, gateway, local).",
-        ),
+        description: t("Use any OpenAI-compatible endpoint (proxy, gateway, local)."),
       },
     ],
     [t],
@@ -139,9 +122,7 @@ export default function ProvidersPage() {
   }, [configQuery.data?.settings]);
 
   const configuredProviders = useMemo(() => {
-    return new Set(
-      (configQuery.data?.keys ?? []).map((entry) => entry.provider),
-    );
+    return new Set((configQuery.data?.keys ?? []).map((entry) => entry.provider));
   }, [configQuery.data?.keys]);
 
   const customModels = configQuery.data?.customModels ?? [];
@@ -151,8 +132,7 @@ export default function ProvidersPage() {
     const nextPrefer = { ...defaultPreferState };
     for (const providerId of PROVIDER_IDS) {
       const setting = settingsByProvider.get(providerId);
-      nextPrefer[providerId] =
-        setting?.preferByok ?? providerId === "openai_compatible";
+      nextPrefer[providerId] = setting?.preferByok ?? providerId === "openai_compatible";
     }
     setPreferByok(nextPrefer);
 
@@ -179,9 +159,7 @@ export default function ProvidersPage() {
       await utils.providers.getConfig.invalidate();
       toast.success(t("API key saved."));
     } catch (error) {
-      toast.error(
-        error instanceof Error ? error.message : t("Failed to save API key."),
-      );
+      toast.error(error instanceof Error ? error.message : t("Failed to save API key."));
     }
   };
 
@@ -191,9 +169,7 @@ export default function ProvidersPage() {
       await utils.providers.getConfig.invalidate();
       toast.success(t("API key removed."));
     } catch (error) {
-      toast.error(
-        error instanceof Error ? error.message : t("Failed to remove API key."),
-      );
+      toast.error(error instanceof Error ? error.message : t("Failed to remove API key."));
     }
   };
 
@@ -206,11 +182,7 @@ export default function ProvidersPage() {
       });
       await utils.providers.getConfig.invalidate();
     } catch (error) {
-      toast.error(
-        error instanceof Error
-          ? error.message
-          : t("Failed to update preference."),
-      );
+      toast.error(error instanceof Error ? error.message : t("Failed to update preference."));
     }
   };
 
@@ -231,9 +203,7 @@ export default function ProvidersPage() {
       await utils.providers.getConfig.invalidate();
       toast.success(t("Endpoint settings saved."));
     } catch (error) {
-      toast.error(
-        error instanceof Error ? error.message : t("Failed to save endpoint."),
-      );
+      toast.error(error instanceof Error ? error.message : t("Failed to save endpoint."));
     }
   };
 
@@ -292,11 +262,7 @@ export default function ProvidersPage() {
       await utils.providers.getConfig.invalidate();
       toast.success(t("Custom model added."));
     } catch (error) {
-      toast.error(
-        error instanceof Error
-          ? error.message
-          : t("Failed to add custom model."),
-      );
+      toast.error(error instanceof Error ? error.message : t("Failed to add custom model."));
     }
   };
 
@@ -306,11 +272,7 @@ export default function ProvidersPage() {
       await utils.providers.getConfig.invalidate();
       toast.success(t("Custom model removed."));
     } catch (error) {
-      toast.error(
-        error instanceof Error
-          ? error.message
-          : t("Failed to remove custom model."),
-      );
+      toast.error(error instanceof Error ? error.message : t("Failed to remove custom model."));
     }
   };
 
@@ -319,22 +281,16 @@ export default function ProvidersPage() {
   }
 
   const openAiCompatSetting = settingsByProvider.get("openai_compatible");
-  const effectiveApiStyle =
-    openAiCompatSetting?.apiStyle ?? openAiCompatApiStyle;
+  const effectiveApiStyle = openAiCompatSetting?.apiStyle ?? openAiCompatApiStyle;
   const effectiveBaseUrl = openAiCompatSetting?.baseUrl ?? openAiCompatBaseUrl;
-  const apiStyleLabel =
-    effectiveApiStyle === "chat" ? t("Chat Completions") : t("Responses API");
+  const apiStyleLabel = effectiveApiStyle === "chat" ? t("Chat Completions") : t("Responses API");
 
   return (
     <div className="mx-auto flex max-w-4xl w-full flex-col gap-6">
       <div className="space-y-2">
-        <h1 className="text-3xl font-semibold tracking-tight">
-          {t("Providers")}
-        </h1>
+        <h1 className="text-3xl font-semibold tracking-tight">{t("Providers")}</h1>
         <p className="text-muted-foreground">
-          {t(
-            "Bring your own keys, configure OpenAI-compatible endpoints, and add custom models.",
-          )}
+          {t("Bring your own keys, configure OpenAI-compatible endpoints, and add custom models.")}
         </p>
       </div>
 
@@ -361,16 +317,11 @@ export default function ProvidersPage() {
                 <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
                   <div>
                     <p className="text-sm font-semibold">{provider.label}</p>
-                    <p className="text-xs text-muted-foreground">
-                      {provider.description}
-                    </p>
+                    <p className="text-xs text-muted-foreground">{provider.description}</p>
                   </div>
                   {!isOpenAiCompat && (
                     <div className="flex items-center gap-2">
-                      <Label
-                        htmlFor={`prefer-${provider.id}`}
-                        className="text-xs"
-                      >
+                      <Label htmlFor={`prefer-${provider.id}`} className="text-xs">
                         {t("Prefer BYOK")}
                       </Label>
                       <Switch
@@ -438,9 +389,7 @@ export default function ProvidersPage() {
         <CardHeader>
           <CardTitle>{t("OpenAI-compatible endpoint")}</CardTitle>
           <CardDescription>
-            {t(
-              "Configure a base URL and API style for OpenAI-compatible providers.",
-            )}
+            {t("Configure a base URL and API style for OpenAI-compatible providers.")}
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -473,10 +422,7 @@ export default function ProvidersPage() {
             </Select>
           </div>
           <div className="flex flex-wrap items-center gap-3">
-            <Button
-              onClick={handleSaveOpenAiCompat}
-              disabled={upsertSetting.isPending}
-            >
+            <Button onClick={handleSaveOpenAiCompat} disabled={upsertSetting.isPending}>
               {t("Save endpoint")}
             </Button>
             <p className="text-xs text-muted-foreground">
@@ -537,9 +483,7 @@ export default function ProvidersPage() {
           </div>
           <div className="grid gap-4 md:grid-cols-3">
             <div className="space-y-2">
-              <Label htmlFor="custom-input-price">
-                {t("Input price (micros)")}
-              </Label>
+              <Label htmlFor="custom-input-price">{t("Input price (micros)")}</Label>
               <Input
                 id="custom-input-price"
                 type="number"
@@ -549,9 +493,7 @@ export default function ProvidersPage() {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="custom-output-price">
-                {t("Output price (micros)")}
-              </Label>
+              <Label htmlFor="custom-output-price">{t("Output price (micros)")}</Label>
               <Input
                 id="custom-output-price"
                 type="number"
@@ -561,25 +503,18 @@ export default function ProvidersPage() {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="custom-reasoning-price">
-                {t("Reasoning price (micros)")}
-              </Label>
+              <Label htmlFor="custom-reasoning-price">{t("Reasoning price (micros)")}</Label>
               <Input
                 id="custom-reasoning-price"
                 type="number"
                 min={0}
                 value={customReasoningPrice}
-                onChange={(event) =>
-                  setCustomReasoningPrice(event.target.value)
-                }
+                onChange={(event) => setCustomReasoningPrice(event.target.value)}
               />
             </div>
           </div>
           <div className="flex items-center gap-3">
-            <Button
-              onClick={handleCreateCustomModel}
-              disabled={createCustomModel.isPending}
-            >
+            <Button onClick={handleCreateCustomModel} disabled={createCustomModel.isPending}>
               {t("Add model")}
             </Button>
             <p className="text-xs text-muted-foreground">
@@ -604,18 +539,12 @@ export default function ProvidersPage() {
                       <div className="flex flex-col">
                         <span className="font-medium">{model.name}</span>
                         {model.description && (
-                          <span className="text-xs text-muted-foreground">
-                            {model.description}
-                          </span>
+                          <span className="text-xs text-muted-foreground">{model.description}</span>
                         )}
                       </div>
                     </TableCell>
-                    <TableCell className="font-mono text-xs">
-                      {model.modelId}
-                    </TableCell>
-                    <TableCell>
-                      {model.premium ? t("Premium") : t("Basic")}
-                    </TableCell>
+                    <TableCell className="font-mono text-xs">{model.modelId}</TableCell>
+                    <TableCell>{model.premium ? t("Premium") : t("Basic")}</TableCell>
                     <TableCell className="text-right">
                       <Button
                         size="sm"

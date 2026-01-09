@@ -1,20 +1,9 @@
 "use client";
 
 import { useChat } from "@ai-sdk/react";
-import {
-  SiAnthropic,
-  SiGooglegemini,
-  SiOpenai,
-  SiX,
-} from "@icons-pack/react-simple-icons";
+import { SiAnthropic, SiGooglegemini, SiOpenai, SiX } from "@icons-pack/react-simple-icons";
 import { sendGAEvent } from "@next/third-parties/google";
-import type {
-  ToolUIPart,
-  UIDataTypes,
-  UIMessage,
-  UIMessagePart,
-  UITools,
-} from "ai";
+import type { ToolUIPart, UIDataTypes, UIMessage, UIMessagePart, UITools } from "ai";
 import { DefaultChatTransport } from "ai";
 import type { LucideIcon } from "lucide-react";
 import {
@@ -68,12 +57,7 @@ import {
   PromptInputSelectTrigger,
   PromptInputSelectValue,
 } from "@/components/ai-elements/prompt-input";
-import {
-  Source,
-  Sources,
-  SourcesContent,
-  SourcesTrigger,
-} from "@/components/ai-elements/sources";
+import { Source, Sources, SourcesContent, SourcesTrigger } from "@/components/ai-elements/sources";
 import { Composer, type ComposerMessage } from "@/components/chat/composer";
 import { authClient } from "@/lib/auth-client";
 import { isBillingDisabled } from "@/lib/billing-config";
@@ -85,10 +69,7 @@ import { Alert, AlertDescription, AlertTitle } from "../ui/alert";
 import { Badge } from "../ui/badge";
 import { Button } from "../ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
-import {
-  DropdownMenuCheckboxItem,
-  DropdownMenuSeparator,
-} from "../ui/dropdown-menu";
+import { DropdownMenuCheckboxItem, DropdownMenuSeparator } from "../ui/dropdown-menu";
 import { Separator } from "../ui/separator";
 import { Spinner } from "../ui/spinner";
 
@@ -142,9 +123,8 @@ type VideoToolPart = ToolUIPart<{
   };
 }>;
 
-const isVideoToolPart = (
-  part: UIMessagePart<UIDataTypes, UITools>,
-): part is VideoToolPart => part.type === "tool-video";
+const isVideoToolPart = (part: UIMessagePart<UIDataTypes, UITools>): part is VideoToolPart =>
+  part.type === "tool-video";
 
 type ToolChipProps = {
   icon: LucideIcon;
@@ -187,13 +167,7 @@ type CustomModelOption = {
 };
 type ModelOption = BaseModelOption | CustomModelOption;
 
-function ModelItem({
-  model,
-  isSelected,
-}: {
-  model: ModelOption;
-  isSelected: boolean;
-}) {
+function ModelItem({ model, isSelected }: { model: ModelOption; isSelected: boolean }) {
   const t = useExtracted();
 
   const getFeatureLabel = (feature: string) => {
@@ -250,19 +224,14 @@ function ModelItem({
   };
 
   const modelDescription =
-    "description" in model
-      ? model.description
-      : getModelDescription(model.value);
+    "description" in model ? model.description : getModelDescription(model.value);
 
   return (
     <PromptInputSelectItem
       key={model.value}
       value={model.value}
       textValue={model.name}
-      className={cn(
-        "items-start p-2 [&>span]:w-full",
-        isSelected && "bg-accent/60",
-      )}
+      className={cn("items-start p-2 [&>span]:w-full", isSelected && "bg-accent/60")}
     >
       <span className="flex flex-col w-full gap-1">
         <span className="flex items-center justify-between font-medium">
@@ -296,30 +265,20 @@ function ModelItem({
             {model.features
               .filter((feature) => feature.includes("est"))
               .map((feature) => (
-                <Badge
-                  variant="secondary"
-                  className="bg-primary/10"
-                  key={feature}
-                >
+                <Badge variant="secondary" className="bg-primary/10" key={feature}>
                   <StarIcon className="size-4 text-yellow-500 dark:fill-yellow-400" />
                   {getFeatureLabel(feature)}
                 </Badge>
               ))}
           </span>
         </span>
-        <span className="text-xs text-muted-foreground">
-          {modelDescription}
-        </span>
+        <span className="text-xs text-muted-foreground">{modelDescription}</span>
         {model.features.length > 0 && (
           <span className="flex gap-1 flex-wrap">
             {model.features
               .filter((feature) => !feature.includes("est"))
               .map((feature) => (
-                <Badge
-                  variant="secondary"
-                  className="bg-primary/10"
-                  key={feature}
-                >
+                <Badge variant="secondary" className="bg-primary/10" key={feature}>
                   {(() => {
                     switch (feature) {
                       case "smart":
@@ -342,10 +301,7 @@ function ModelItem({
   );
 }
 
-export function ChatInterface({
-  id,
-  initialMessages = [],
-}: ChatInterfaceProps) {
+export function ChatInterface({ id, initialMessages = [] }: ChatInterfaceProps) {
   const t = useExtracted();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -356,8 +312,7 @@ export function ChatInterface({
   const [model, setModel] = useState(models[0].value);
   const [webSearch, setWebSearch] = useState(false);
   const [videoMode, setVideoMode] = useState(false);
-  const [reasoningEffort, setReasoningEffort] =
-    useState<ReasoningEffort>("high");
+  const [reasoningEffort, setReasoningEffort] = useState<ReasoningEffort>("high");
   const initialMessageSentRef = useRef(false);
   const utils = trpc.useUtils();
   const usageQuery = trpc.billing.usage.useQuery(undefined, {
@@ -383,9 +338,7 @@ export function ChatInterface({
   }, [providersQuery.data?.customModels, t]);
 
   const availableModels = useMemo<ModelOption[]>(() => {
-    const baseModels = isAnonymous
-      ? models.filter((entry) => !entry.premium)
-      : models;
+    const baseModels = isAnonymous ? models.filter((entry) => !entry.premium) : models;
     const filteredCustomModels = isAnonymous
       ? customModels.filter((entry) => !entry.premium)
       : customModels;
@@ -476,10 +429,7 @@ export function ChatInterface({
 
         return;
       } catch (e) {
-        console.error(
-          "Failed to parse initial message from sessionStorage:",
-          e,
-        );
+        console.error("Failed to parse initial message from sessionStorage:", e);
         sessionStorage.removeItem(INITIAL_MESSAGE_STORAGE_KEY);
       }
     }
@@ -518,23 +468,12 @@ export function ChatInterface({
         utils.chat.getChats.invalidate();
       });
     }
-  }, [
-    searchParams,
-    initialMessages.length,
-    sendMessage,
-    router,
-    id,
-    model,
-    utils.chat.getChats,
-  ]);
+  }, [searchParams, initialMessages.length, sendMessage, router, id, model, utils.chat.getChats]);
 
   const selectedModel = availableModels.find((m) => m.value === model);
-  const supportsReasoningEffort =
-    selectedModel?.features?.includes("reasoning");
+  const supportsReasoningEffort = selectedModel?.features?.includes("reasoning");
   const usageCategory = selectedModel?.premium ? "premium" : "basic";
-  const categoryUsage = usageQuery.data?.usage.find(
-    (usage) => usage.category === usageCategory,
-  );
+  const categoryUsage = usageQuery.data?.usage.find((usage) => usage.category === usageCategory);
   const remainingUsage = categoryUsage?.remaining;
   const usageLimit = categoryUsage?.limit;
   const usageTier = usageQuery.data?.tier ?? "free";
@@ -552,24 +491,18 @@ export function ChatInterface({
   }, [remainingUsage, usageLimit]);
   const providerSettings = useMemo(() => {
     return new Map(
-      (providersQuery.data?.settings ?? []).map((setting) => [
-        setting.provider,
-        setting,
-      ]),
+      (providersQuery.data?.settings ?? []).map((setting) => [setting.provider, setting]),
     );
   }, [providersQuery.data?.settings]);
 
   const providerKeys = useMemo(() => {
-    return new Set(
-      (providersQuery.data?.keys ?? []).map((entry) => entry.provider),
-    );
+    return new Set((providersQuery.data?.keys ?? []).map((entry) => entry.provider));
   }, [providersQuery.data?.keys]);
 
   const selectedProvider = selectedModel?.author ?? null;
   const openAiCompatSetting = providerSettings.get("openai_compatible");
   const openAiCompatReady =
-    providerKeys.has("openai_compatible") &&
-    Boolean(openAiCompatSetting?.baseUrl);
+    providerKeys.has("openai_compatible") && Boolean(openAiCompatSetting?.baseUrl);
 
   const isByokActive = (() => {
     if (!selectedProvider) return false;
@@ -580,8 +513,7 @@ export function ChatInterface({
     return prefer && providerKeys.has(selectedProvider);
   })();
 
-  const isByokMissingConfig =
-    selectedProvider === "openai_compatible" && !openAiCompatReady;
+  const isByokMissingConfig = selectedProvider === "openai_compatible" && !openAiCompatReady;
 
   const isUsageLow =
     !isByokActive &&
@@ -593,18 +525,10 @@ export function ChatInterface({
     remainingUsage > 0 &&
     remainingUsage <= lowUsageThreshold;
   const isUsageBlocked =
-    !isByokActive &&
-    remainingUsage !== null &&
-    remainingUsage !== undefined &&
-    remainingUsage <= 0;
-  const usageCategoryLabel =
-    usageCategory === "premium" ? t("Premium") : t("Basic");
+    !isByokActive && remainingUsage !== null && remainingUsage !== undefined && remainingUsage <= 0;
+  const usageCategoryLabel = usageCategory === "premium" ? t("Premium") : t("Basic");
   const usageTierLabel =
-    usageTier === "free"
-      ? t("Free")
-      : usageTier === "plus"
-        ? t("Plus")
-        : t("Pro");
+    usageTier === "free" ? t("Free") : usageTier === "plus" ? t("Plus") : t("Pro");
   const isSubmitBlocked = isUsageBlocked || isByokMissingConfig;
   const reasoningEffortLabel = (() => {
     switch (reasoningEffort) {
@@ -636,18 +560,13 @@ export function ChatInterface({
       </PromptInputSelectTrigger>
       <PromptInputSelectContent>
         <PromptInputSelectItem value="low">{t("Low")}</PromptInputSelectItem>
-        <PromptInputSelectItem value="medium">
-          {t("Medium")}
-        </PromptInputSelectItem>
+        <PromptInputSelectItem value="medium">{t("Medium")}</PromptInputSelectItem>
         <PromptInputSelectItem value="high">{t("High")}</PromptInputSelectItem>
       </PromptInputSelectContent>
     </PromptInputSelect>
   );
 
-  const resolveVeoModelLabel = (
-    model?: string | null,
-    modelLabel?: string | null,
-  ) => {
+  const resolveVeoModelLabel = (model?: string | null, modelLabel?: string | null) => {
     switch (model) {
       case "veo-3.1-generate-preview":
         return t("Veo 3.1");
@@ -662,8 +581,7 @@ export function ChatInterface({
     if (isSubmitBlocked) {
       return;
     }
-    const attachments =
-      message.files && message.files.length > 0 ? message.files : undefined;
+    const attachments = message.files && message.files.length > 0 ? message.files : undefined;
 
     if (GA_ID) {
       // Log event to Google Analytics
@@ -714,8 +632,7 @@ export function ChatInterface({
   }, [availableModels, selectedModel]);
 
   const goodModels = availableModels.filter(
-    (m) =>
-      m.value !== model && m.features?.filter((f) => f.includes("est")).length,
+    (m) => m.value !== model && m.features?.filter((f) => f.includes("est")).length,
   );
   const defaultModels = availableModels.filter(
     (m) =>
@@ -723,9 +640,7 @@ export function ChatInterface({
       m.default !== false &&
       m.features?.filter((f) => f.includes("est")).length === 0,
   );
-  const otherModels = availableModels.filter(
-    (m) => m.value !== model && m.default === false,
-  );
+  const otherModels = availableModels.filter((m) => m.value !== model && m.default === false);
 
   return (
     <div className="flex h-full flex-1 min-h-0 flex-col w-full max-w-3xl mx-auto p-4 overflow-hidden">
@@ -736,14 +651,11 @@ export function ChatInterface({
               {message.role === "user" && (
                 <Message from="user">
                   <MessageContent>
-                    {message.parts[0]?.type === "text" &&
-                      message.parts[0].text && (
-                        <MessageResponse
-                          shikiTheme={["github-light", "github-dark"]}
-                        >
-                          {message.parts[0].text}
-                        </MessageResponse>
-                      )}
+                    {message.parts[0]?.type === "text" && message.parts[0].text && (
+                      <MessageResponse shikiTheme={["github-light", "github-dark"]}>
+                        {message.parts[0].text}
+                      </MessageResponse>
+                    )}
                   </MessageContent>
                 </Message>
               )}
@@ -754,10 +666,7 @@ export function ChatInterface({
                     (p) => p.type === "reasoning" || p.type === "tool-search",
                   ) && (
                     <ChainOfThought
-                      defaultOpen={
-                        status === "streaming" &&
-                        message.id === messages.at(-1)?.id
-                      }
+                      defaultOpen={status === "streaming" && message.id === messages.at(-1)?.id}
                     >
                       <ChainOfThoughtHeader>
                         {status === "streaming" &&
@@ -770,16 +679,10 @@ export function ChatInterface({
                       </ChainOfThoughtHeader>
                       <ChainOfThoughtContent>
                         {message.parts
-                          ?.filter(
-                            (p) =>
-                              p.type === "reasoning" ||
-                              p.type === "tool-search",
-                          )
+                          ?.filter((p) => p.type === "reasoning" || p.type === "tool-search")
                           .map((part, i) => {
                             if (part.type === "reasoning") {
-                              const lines = (part.text ?? "")
-                                .replace(/\r\n?/g, "\n")
-                                .split("\n");
+                              const lines = (part.text ?? "").replace(/\r\n?/g, "\n").split("\n");
                               const titleRegex = /^\*\*(.+?)\*\*\s*$/;
 
                               type Section = {
@@ -792,16 +695,10 @@ export function ChatInterface({
                               let currentContent: string[] = [];
 
                               const flush = () => {
-                                if (
-                                  currentTitle === null &&
-                                  currentContent.length === 0
-                                )
-                                  return;
+                                if (currentTitle === null && currentContent.length === 0) return;
 
                                 sections.push({
-                                  title:
-                                    (currentTitle ?? t("Reasoning")).trim() ||
-                                    t("Reasoning"),
+                                  title: (currentTitle ?? t("Reasoning")).trim() || t("Reasoning"),
                                   content: currentContent,
                                 });
 
@@ -847,11 +744,8 @@ export function ChatInterface({
 
                             if (part.type === "tool-search") {
                               const isSearching =
-                                part.state !== "output-available" &&
-                                part.state !== "output-error";
-                              const searchResults = isSearchResultArray(
-                                part.output,
-                              )
+                                part.state !== "output-available" && part.state !== "output-error";
+                              const searchResults = isSearchResultArray(part.output)
                                 ? part.output
                                 : [];
                               return (
@@ -860,9 +754,7 @@ export function ChatInterface({
                                   icon={Globe}
                                   label={
                                     isSearching ? (
-                                      <Shimmer duration={2}>
-                                        {t("Searching...")}
-                                      </Shimmer>
+                                      <Shimmer duration={2}>{t("Searching...")}</Shimmer>
                                     ) : part.state === "output-error" ? (
                                       t("Search failed")
                                     ) : (
@@ -903,10 +795,7 @@ export function ChatInterface({
                   {message.parts
                     ?.filter((p) => p.type === "text")
                     .map((part, i, textParts) => (
-                      <Message
-                        key={`${message.id}-text-${i}`}
-                        from={message.role}
-                      >
+                      <Message key={`${message.id}-text-${i}`} from={message.role}>
                         <MessageContent>
                           <MessageResponse>{part.text}</MessageResponse>
                         </MessageContent>
@@ -925,9 +814,7 @@ export function ChatInterface({
                               <RefreshCcwIcon className="size-3.5" />
                             </MessageAction>
                             <MessageAction
-                              onClick={() =>
-                                navigator.clipboard.writeText(part.text)
-                              }
+                              onClick={() => navigator.clipboard.writeText(part.text)}
                               label={t("Copy")}
                               tooltip={t("Copy")}
                             >
@@ -939,15 +826,9 @@ export function ChatInterface({
                     ))}
 
                   {message.parts?.filter(isVideoToolPart).map((part, i) => {
-                    if (
-                      part.state !== "output-available" &&
-                      part.state !== "output-error"
-                    ) {
+                    if (part.state !== "output-available" && part.state !== "output-error") {
                       return (
-                        <Message
-                          key={`${message.id}-video-${i}`}
-                          from="assistant"
-                        >
+                        <Message key={`${message.id}-video-${i}`} from="assistant">
                           <MessageContent className="w-full gap-2 rounded-lg border border-border/60 bg-muted/20 px-4 py-3 text-sm text-muted-foreground">
                             <div className="flex items-center gap-2">
                               <Spinner className="size-4" />
@@ -960,15 +841,10 @@ export function ChatInterface({
 
                     if (part.state === "output-error") {
                       return (
-                        <Message
-                          key={`${message.id}-video-${i}`}
-                          from="assistant"
-                        >
+                        <Message key={`${message.id}-video-${i}`} from="assistant">
                           <MessageContent className="w-full">
                             <Alert className="border-destructive/50 bg-destructive/10 text-destructive">
-                              <AlertTitle>
-                                {t("Video generation failed")}
-                              </AlertTitle>
+                              <AlertTitle>{t("Video generation failed")}</AlertTitle>
                               <AlertDescription>
                                 {t("Please try again with a different prompt.")}
                               </AlertDescription>
@@ -978,21 +854,14 @@ export function ChatInterface({
                       );
                     }
 
-                    const output = isVideoToolOutput(part.output)
-                      ? part.output
-                      : null;
+                    const output = isVideoToolOutput(part.output) ? part.output : null;
 
                     if (!output) {
                       return (
-                        <Message
-                          key={`${message.id}-video-${i}`}
-                          from="assistant"
-                        >
+                        <Message key={`${message.id}-video-${i}`} from="assistant">
                           <MessageContent className="w-full">
                             <Alert className="border-destructive/50 bg-destructive/10 text-destructive">
-                              <AlertTitle>
-                                {t("Video response unavailable")}
-                              </AlertTitle>
+                              <AlertTitle>{t("Video response unavailable")}</AlertTitle>
                               <AlertDescription>
                                 {t("The video output could not be displayed.")}
                               </AlertDescription>
@@ -1008,58 +877,40 @@ export function ChatInterface({
                     );
 
                     return (
-                      <Message
-                        key={`${message.id}-video-${i}`}
-                        from="assistant"
-                      >
+                      <Message key={`${message.id}-video-${i}`} from="assistant">
                         <MessageContent className="w-full gap-3 rounded-lg border border-border/60 bg-background/90 px-4 py-3">
                           {output.negativePrompt && (
                             <div className="rounded-md border border-border/60 bg-muted/30 px-3 py-2 text-xs">
                               <p className="text-xs font-medium text-foreground">
                                 {t("Negative prompt")}
                               </p>
-                              <p className="text-muted-foreground">
-                                {output.negativePrompt}
-                              </p>
+                              <p className="text-muted-foreground">{output.negativePrompt}</p>
                             </div>
                           )}
                           <div className="overflow-hidden rounded-lg border border-border/70 bg-muted/30">
-                            {/* biome-ignore lint/a11y/useMediaCaption: generated videos don't include captions. */}
-                            <video
-                              controls
-                              src={output.videoUrl}
-                              className="h-auto w-full"
-                            />
+                            {/* oxlint-disable-next-line: generated videos don't include captions. */}
+                            <video controls src={output.videoUrl} className="h-auto w-full" />
                           </div>
                           <div className="flex flex-wrap items-center gap-2 text-xs">
                             {output.resolution && (
-                              <Badge variant="secondary">
-                                {output.resolution}
-                              </Badge>
+                              <Badge variant="secondary">{output.resolution}</Badge>
                             )}
                             {output.aspectRatio && (
-                              <Badge variant="secondary">
-                                {output.aspectRatio}
-                              </Badge>
+                              <Badge variant="secondary">{output.aspectRatio}</Badge>
                             )}
                             {output.durationSeconds && (
-                              <Badge variant="secondary">
-                                {output.durationSeconds}s
-                              </Badge>
+                              <Badge variant="secondary">{output.durationSeconds}s</Badge>
                             )}
                             {resolvedModelLabel ? (
-                              <Badge variant="outline">
-                                {resolvedModelLabel}
-                              </Badge>
+                              <Badge variant="outline">{resolvedModelLabel}</Badge>
                             ) : null}
-                            {output.seed !== null &&
-                              output.seed !== undefined && (
-                                <Badge variant="outline">
-                                  {t("Seed {seed}", {
-                                    seed: output.seed.toString(),
-                                  })}
-                                </Badge>
-                              )}
+                            {output.seed !== null && output.seed !== undefined && (
+                              <Badge variant="outline">
+                                {t("Seed {seed}", {
+                                  seed: output.seed.toString(),
+                                })}
+                              </Badge>
+                            )}
                           </div>
                           {output.operationName && (
                             <p className="break-words text-xs text-muted-foreground">
@@ -1084,10 +935,7 @@ export function ChatInterface({
                   {message.parts?.some((p) => p.type === "source-url") && (
                     <Sources className="mt-2">
                       <SourcesTrigger
-                        count={
-                          message.parts.filter((p) => p.type === "source-url")
-                            .length
-                        }
+                        count={message.parts.filter((p) => p.type === "source-url").length}
                       >
                         {t("Sources")}
                       </SourcesTrigger>
@@ -1140,9 +988,7 @@ export function ChatInterface({
           <AlertTitle>{t("Endpoint not configured")}</AlertTitle>
           <AlertDescription className="flex flex-col gap-2">
             <p>
-              {t(
-                "Configure an OpenAI-compatible base URL and API key before using this model.",
-              )}
+              {t("Configure an OpenAI-compatible base URL and API key before using this model.")}
             </p>
             {!isAnonymous && (
               <div className="flex flex-wrap gap-2">
@@ -1163,9 +1009,7 @@ export function ChatInterface({
           <Plug className="mt-0.5 size-4" />
           <AlertTitle>{t("BYOK active")}</AlertTitle>
           <AlertDescription>
-            {t(
-              "Requests use your own API key and do not count toward usage limits.",
-            )}
+            {t("Requests use your own API key and do not count toward usage limits.")}
           </AlertDescription>
         </Alert>
       )}
@@ -1184,22 +1028,20 @@ export function ChatInterface({
             <TriangleAlert className="mt-0.5 size-4" />
           )}
           <AlertTitle>
-            {isUsageBlocked
-              ? t("Usage limit reached")
-              : t("You are running low")}
+            {isUsageBlocked ? t("Usage limit reached") : t("You are running low")}
           </AlertTitle>
           <AlertDescription className="flex flex-col gap-2">
             <p>
               {isUsageBlocked
-                ? t(
-                    "You've hit the {category} usage limit on your {tier} plan.",
-                    { category: usageCategoryLabel, tier: usageTierLabel },
-                  )
+                ? t("You've hit the {category} usage limit on your {tier} plan.", {
+                    category: usageCategoryLabel,
+                    tier: usageTierLabel,
+                  })
                 : remainingUsage === null || remainingUsage === undefined
-                  ? t(
-                      "Only a few {category} requests left on your {tier} plan.",
-                      { category: usageCategoryLabel, tier: usageTierLabel },
-                    )
+                  ? t("Only a few {category} requests left on your {tier} plan.", {
+                      category: usageCategoryLabel,
+                      tier: usageTierLabel,
+                    })
                   : t(
                       "Only {count, plural, one {#} other {#}} {category} requests left on your {tier} plan.",
                       {
@@ -1218,11 +1060,7 @@ export function ChatInterface({
                   </Link>
                 </Button>
               )}
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => usageQuery.refetch()}
-              >
+              <Button variant="ghost" size="sm" onClick={() => usageQuery.refetch()}>
                 {t("Refresh usage")}
               </Button>
             </div>
@@ -1237,9 +1075,7 @@ export function ChatInterface({
         globalDrop
         multiple
         placeholder={
-          videoMode
-            ? t("Describe the video scene, style, motion, and lighting.")
-            : undefined
+          videoMode ? t("Describe the video scene, style, motion, and lighting.") : undefined
         }
         headerClassName="py-0.5!"
         value={input}
@@ -1258,9 +1094,7 @@ export function ChatInterface({
             </DropdownMenuCheckboxItem>
             <DropdownMenuCheckboxItem
               checked={webSearch}
-              onCheckedChange={(checked) =>
-                handleSearchToggle(Boolean(checked))
-              }
+              onCheckedChange={(checked) => handleSearchToggle(Boolean(checked))}
             >
               <Globe className="size-4" />
               {t("Search")}
@@ -1273,11 +1107,7 @@ export function ChatInterface({
         tools={
           <>
             {videoMode && (
-              <ToolChip
-                icon={Film}
-                label={t("Video")}
-                onRemove={() => handleVideoToggle(false)}
-              />
+              <ToolChip icon={Film} label={t("Video")} onRemove={() => handleVideoToggle(false)} />
             )}
             {webSearch && (
               <ToolChip
@@ -1323,9 +1153,7 @@ export function ChatInterface({
                 </PromptInputSelectValue>
               </PromptInputSelectTrigger>
               <PromptInputSelectContent className="max-h-[300px] md:max-h-[400px] overflow-y-auto">
-                {selectedModel && (
-                  <ModelItem model={selectedModel} isSelected={true} />
-                )}
+                {selectedModel && <ModelItem model={selectedModel} isSelected={true} />}
                 <Separator className="my-1" />
                 {goodModels.map((m) => (
                   <ModelItem key={m.value} model={m} isSelected={false} />
@@ -1340,9 +1168,7 @@ export function ChatInterface({
                 ))}
               </PromptInputSelectContent>
             </PromptInputSelect>
-            <div className="hidden md:block">
-              {renderReasoningEffortSelector()}
-            </div>
+            <div className="hidden md:block">{renderReasoningEffortSelector()}</div>
           </>
         }
       />

@@ -4,33 +4,17 @@ import type Stripe from "stripe";
 import { z } from "zod";
 import { billing, user } from "@/db/schema";
 import { env } from "@/env";
-import {
-  type BillingPlan,
-  billingPlans,
-  findPlanById,
-  findPlanByLookupKey,
-} from "@/lib/billing";
+import { type BillingPlan, billingPlans, findPlanById, findPlanByLookupKey } from "@/lib/billing";
 import { isBillingDisabled } from "@/lib/billing-config";
 import { stripe } from "@/lib/stripe";
 import { getSubscriptionPeriodEndDate } from "@/lib/stripe-subscriptions";
 import { getUsageSummary } from "@/lib/usage";
 import { type ProtectedContext, protectedProcedure, router } from "../trpc";
 
-const planIdSchema = z.enum([
-  "plus_monthly",
-  "plus_yearly",
-  "pro_monthly",
-  "pro_yearly",
-]);
+const planIdSchema = z.enum(["plus_monthly", "plus_yearly", "pro_monthly", "pro_yearly"]);
 
 type BillingRecord = typeof billing.$inferSelect;
-const ACTIVE_SUB_STATUSES = new Set([
-  "trialing",
-  "active",
-  "past_due",
-  "incomplete",
-  "unpaid",
-]);
+const ACTIVE_SUB_STATUSES = new Set(["trialing", "active", "past_due", "incomplete", "unpaid"]);
 const billingEnabledProcedure = protectedProcedure.use(({ next }) => {
   if (isBillingDisabled) {
     throw new TRPCError({
@@ -41,9 +25,7 @@ const billingEnabledProcedure = protectedProcedure.use(({ next }) => {
   return next();
 });
 
-function deriveModeFromPrice(
-  price: Stripe.Price | null | undefined,
-): "subscription" | "payment" {
+function deriveModeFromPrice(price: Stripe.Price | null | undefined): "subscription" | "payment" {
   if (!price) {
     return "subscription";
   }
@@ -130,11 +112,7 @@ async function findOrCreateStripeCustomer({
 }
 
 async function ensureBillingRecord(ctx: ProtectedContext, userId: string) {
-  const existing = await ctx.db
-    .select()
-    .from(billing)
-    .where(eq(billing.userId, userId))
-    .limit(1);
+  const existing = await ctx.db.select().from(billing).where(eq(billing.userId, userId)).limit(1);
 
   if (existing[0]) {
     return existing[0];
@@ -186,9 +164,7 @@ async function syncSubscription(ctx: ProtectedContext, userId: string) {
 
   if (subscription) {
     const price = subscription.items.data.at(0)?.price ?? null;
-    const plan =
-      findPlanById(subscription.metadata?.planId ?? "") ??
-      getPlanFromPrice(price);
+    const plan = findPlanById(subscription.metadata?.planId ?? "") ?? getPlanFromPrice(price);
     const status = subscription.status;
 
     updates.stripeSubscriptionId = subscription.id;
@@ -286,16 +262,13 @@ export const billingRouter = router({
         });
 
         const activeSub = existingSubs.data.find(
-          (sub) =>
-            ACTIVE_SUB_STATUSES.has(sub.status) ||
-            sub.cancel_at_period_end === true,
+          (sub) => ACTIVE_SUB_STATUSES.has(sub.status) || sub.cancel_at_period_end === true,
         );
 
         if (activeSub) {
           throw new TRPCError({
             code: "BAD_REQUEST",
-            message:
-              "You already have an active subscription. Use Change plan or cancel first.",
+            message: "You already have an active subscription. Use Change plan or cancel first.",
           });
         }
       }
@@ -374,10 +347,7 @@ export const billingRouter = router({
         expand: ["subscription", "payment_intent", "line_items"],
       });
 
-      if (
-        session.client_reference_id &&
-        session.client_reference_id !== ctx.userId
-      ) {
+      if (session.client_reference_id && session.client_reference_id !== ctx.userId) {
         throw new TRPCError({
           code: "UNAUTHORIZED",
           message: "Session does not belong to the current user.",
@@ -386,17 +356,13 @@ export const billingRouter = router({
 
       const billingRecord = await ensureBillingRecord(ctx, ctx.userId);
       const subscription =
-        session.subscription &&
-        typeof session.subscription !== "string" &&
-        session.subscription;
+        session.subscription && typeof session.subscription !== "string" && session.subscription;
 
       const paymentIntent = session.payment_intent;
 
       const linePrice =
         session.line_items?.data.at(0)?.price ??
-        (subscription &&
-        typeof subscription !== "string" &&
-        "items" in subscription
+        (subscription && typeof subscription !== "string" && "items" in subscription
           ? subscription.items.data.at(0)?.price
           : undefined);
 
@@ -410,8 +376,7 @@ export const billingRouter = router({
 
       const updates: Partial<BillingRecord> = {
         stripeCustomerId:
-          (session.customer as string | null | undefined) ??
-          billingRecord.stripeCustomerId,
+          (session.customer as string | null | undefined) ?? billingRecord.stripeCustomerId,
         planId: plan?.id ?? billingRecord.planId,
         priceId: linePrice?.id ?? billingRecord.priceId,
         mode: resolvedMode,
@@ -560,16 +525,14 @@ export const billingRouter = router({
       });
     }
 
-    const canceled = await stripe.subscriptions.update(
-      subscriptionState.stripeSubscriptionId,
-      { cancel_at_period_end: true },
-    );
+    const canceled = await stripe.subscriptions.update(subscriptionState.stripeSubscriptionId, {
+      cancel_at_period_end: true,
+    });
 
     const updates: Partial<BillingRecord> = {
       status: canceled.cancel_at_period_end ? "canceled" : canceled.status,
       currentPeriodEnd:
-        getSubscriptionPeriodEndDate(canceled) ??
-        subscriptionState.currentPeriodEnd,
+        getSubscriptionPeriodEndDate(canceled) ?? subscriptionState.currentPeriodEnd,
     };
 
     const [saved] = await ctx.db
@@ -605,18 +568,15 @@ export const billingRouter = router({
       });
     }
 
-    const resumed = await stripe.subscriptions.update(
-      subscriptionState.stripeSubscriptionId,
-      { cancel_at_period_end: false },
-    );
+    const resumed = await stripe.subscriptions.update(subscriptionState.stripeSubscriptionId, {
+      cancel_at_period_end: false,
+    });
 
     const price = resumed.items.data.at(0)?.price ?? null;
     const plan =
       getPlanFromPrice(price) ??
       findPlanById(resumed.metadata?.planId ?? "") ??
-      (subscriptionState.planId
-        ? findPlanById(subscriptionState.planId)
-        : null);
+      (subscriptionState.planId ? findPlanById(subscriptionState.planId) : null);
 
     const updates: Partial<BillingRecord> = {
       status: resumed.status,

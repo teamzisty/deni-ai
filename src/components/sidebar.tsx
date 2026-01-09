@@ -1,13 +1,6 @@
 "use client";
 
-import {
-  compareDesc,
-  isThisMonth,
-  isThisWeek,
-  isThisYear,
-  isToday,
-  isYesterday,
-} from "date-fns";
+import { compareDesc, isThisMonth, isThisWeek, isThisYear, isToday, isYesterday } from "date-fns";
 import { MoreHorizontal, Pencil, Share2, Trash2 } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
@@ -67,13 +60,7 @@ const KONAMI_SEQUENCE = [
   "a",
 ] as const;
 
-type ChatRecencyBucketKey =
-  | "today"
-  | "yesterday"
-  | "thisWeek"
-  | "thisMonth"
-  | "thisYear"
-  | "older";
+type ChatRecencyBucketKey = "today" | "yesterday" | "thisWeek" | "thisMonth" | "thisYear" | "older";
 
 function getRecencyBucketKey(date: Date): ChatRecencyBucketKey {
   if (isToday(date)) {
@@ -105,9 +92,7 @@ function groupChatsByRecency<T extends { updated_at: Date }>(items: T[]) {
   ];
 
   const buckets = new Map<ChatRecencyBucketKey, T[]>();
-  const sorted = [...items].sort((a, b) =>
-    compareDesc(a.updated_at, b.updated_at),
-  );
+  const sorted = [...items].sort((a, b) => compareDesc(a.updated_at, b.updated_at));
 
   for (const item of sorted) {
     const key = getRecencyBucketKey(item.updated_at);
@@ -220,11 +205,7 @@ function ChatItem({ item }: { item: { id: string; title: string | null } }) {
         </DialogContent>
       </Dialog>
 
-      <ShareDialog
-        chatId={item.id}
-        isOpen={isShareOpen}
-        onOpenChange={setIsShareOpen}
-      />
+      <ShareDialog chatId={item.id} isOpen={isShareOpen} onOpenChange={setIsShareOpen} />
     </>
   );
 }
@@ -322,9 +303,7 @@ export function AppSidebar() {
     <Sidebar>
       <SidebarContent className="px-3">
         <SidebarGroup>
-          <h1 className="py-3 mx-auto text-2xl font-semibold tracking-tighter">
-            {t("Deni AI")}
-          </h1>
+          <h1 className="py-3 mx-auto text-2xl font-semibold tracking-tighter">{t("Deni AI")}</h1>
           <SidebarGroupContent>
             <SidebarMenu>
               <SidebarMenuItem>
@@ -382,15 +361,10 @@ export function AppSidebar() {
           </SidebarGroupContent>
         </SidebarGroup>
       </SidebarContent>
-      <AlertDialog
-        open={isDeleteAllDialogOpen}
-        onOpenChange={setIsDeleteAllDialogOpen}
-      >
+      <AlertDialog open={isDeleteAllDialogOpen} onOpenChange={setIsDeleteAllDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>
-              {t("Delete all conversations with Deni AI?")}
-            </AlertDialogTitle>
+            <AlertDialogTitle>{t("Delete all conversations with Deni AI?")}</AlertDialogTitle>
             <AlertDialogDescription>
               {t(
                 "This will permanently remove every chat in your history. This action cannot be undone.",
@@ -398,9 +372,7 @@ export function AppSidebar() {
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={deleteAllChats.isPending}>
-              {t("Cancel")}
-            </AlertDialogCancel>
+            <AlertDialogCancel disabled={deleteAllChats.isPending}>{t("Cancel")}</AlertDialogCancel>
             <AlertDialogAction
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
               disabled={deleteAllChats.isPending}

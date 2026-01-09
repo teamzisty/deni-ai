@@ -67,10 +67,11 @@ NEXT_PUBLIC_BILLING_DISABLED=1
 ```
 
 Also edit constants.ts:
+
 ```ts
 // Analytics + Email (optional)
-GA_ID=G-XXXXXXXXXX
-EMAIL_FROM="Deni AI <noreply@deniai.app>"
+GA_ID = G - XXXXXXXXXX;
+EMAIL_FROM = "Deni AI <noreply@deniai.app>";
 ```
 
 Note: when adding or updating supported AI providers/models, also update `src/lib/constants.ts`.
@@ -84,6 +85,7 @@ openssl rand -base64 32
 #### Setting up OAuth Providers
 
 **Google OAuth:**
+
 1. Go to [Google Cloud Console](https://console.cloud.google.com/)
 2. Create a new project or select existing
 3. Enable Google+ API
@@ -91,6 +93,7 @@ openssl rand -base64 32
 5. Add authorized redirect URI: `http://localhost:3000/api/auth/callback/google`
 
 **GitHub OAuth:**
+
 1. Go to [GitHub Developer Settings](https://github.com/settings/developers)
 2. Create a new OAuth App
 3. Set Authorization callback URL: `http://localhost:3000/api/auth/callback/github`
@@ -128,16 +131,16 @@ Open [http://localhost:3000](http://localhost:3000) in your browser.
 
 ## Available Scripts
 
-| Command | Description |
-|---------|-------------|
-| `bun dev` | Start development server |
-| `bun run build` | Build for production |
-| `bun start` | Start production server |
-| `bun run lint` | Run Biome linter |
-| `bun run format` | Format code with Biome |
-| `bun run db:generate` | Generate Drizzle migrations |
-| `bun run db:migrate` | Run database migrations |
-| `bun run db:push` | Push schema to database |
+| Command                 | Description                   |
+| ----------------------- | ----------------------------- |
+| `bun dev`               | Start development server      |
+| `bun run build`         | Build for production          |
+| `bun start`             | Start production server       |
+| `bun run lint`          | Run oxlint linter             |
+| `bun run format`        | Format code with oxfmt        |
+| `bun run db:generate`   | Generate Drizzle migrations   |
+| `bun run db:migrate`    | Run database migrations       |
+| `bun run db:push`       | Push schema to database       |
 | `bun run auth:generate` | Regenerate better-auth schema |
 
 ## Stripe Billing Setup (Optional)
@@ -211,6 +214,7 @@ The application can be deployed to any platform that supports Next.js:
 - AWS/GCP/Azure
 
 Make sure to:
+
 - Set all required environment variables
 - Use PostgreSQL database
 - Configure proper build commands: `bun run build`

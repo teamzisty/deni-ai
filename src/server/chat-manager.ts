@@ -23,10 +23,7 @@ export async function getUserId(headers: HeadersType): Promise<string> {
  * @param title - Optional title for the chat (defaults to "New Chat")
  * @returns The created chat ID
  */
-export async function createChat(
-  userId: string,
-  title: string = "New Chat",
-): Promise<string> {
+export async function createChat(userId: string, title: string = "New Chat"): Promise<string> {
   const newChat = await db
     .insert(chats)
     .values({

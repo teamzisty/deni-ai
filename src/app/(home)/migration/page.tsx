@@ -4,13 +4,7 @@ import { useExtracted } from "next-intl";
 import { getExtracted } from "next-intl/server";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getExtracted();
@@ -45,22 +39,14 @@ export default function MigrationPage() {
         <div className="grid gap-6">
           <Card className="border-border/80">
             <CardHeader>
-              <CardTitle>
-                {t("Step 1: Export from the migrator tool")}
-              </CardTitle>
+              <CardTitle>{t("Step 1: Export from the migrator tool")}</CardTitle>
               <CardDescription>
-                {t(
-                  "Log into the migrator app and download a `message.json` file.",
-                )}
+                {t("Log into the migrator app and download a `message.json` file.")}
               </CardDescription>
             </CardHeader>
             <CardContent className="flex flex-wrap gap-2">
               <Button variant="secondary" asChild>
-                <Link
-                  href="https://migrate.deniai.app"
-                  target="_blank"
-                  rel="noreferrer"
-                >
+                <Link href="https://migrate.deniai.app" target="_blank" rel="noreferrer">
                   {t("Go to migrator tool")}
                 </Link>
               </Button>
@@ -69,13 +55,9 @@ export default function MigrationPage() {
 
           <Card className="border-border/80">
             <CardHeader>
-              <CardTitle>
-                {t("Step 2: Create a new account on this site")}
-              </CardTitle>
+              <CardTitle>{t("Step 2: Create a new account on this site")}</CardTitle>
               <CardDescription>
-                {t(
-                  "Create a new account on this site to continue the migration.",
-                )}
+                {t("Create a new account on this site to continue the migration.")}
               </CardDescription>
             </CardHeader>
             <CardContent className="flex flex-wrap gap-2">

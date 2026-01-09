@@ -16,9 +16,7 @@ export default function TermsPage() {
     <main className="min-h-screen bg-background">
       <div className="mx-auto flex max-w-4xl flex-col gap-10 px-4 pb-16 pt-28 sm:px-6 lg:px-8">
         <div className="space-y-3">
-          <p className="text-sm text-muted-foreground">
-            {t("Last updated: 2025-12-31")}
-          </p>
+          <p className="text-sm text-muted-foreground">{t("Last updated: 2025-12-31")}</p>
           <h1 className="text-3xl font-semibold tracking-tight sm:text-4xl">
             {t("Terms of Service")}
           </h1>
@@ -39,9 +37,7 @@ export default function TermsPage() {
         </section>
 
         <section className="space-y-3">
-          <h2 className="text-xl font-semibold">
-            {t("2. Accounts and Security")}
-          </h2>
+          <h2 className="text-xl font-semibold">{t("2. Accounts and Security")}</h2>
           <p className="text-muted-foreground">
             {t(
               "You are responsible for the accuracy of the information you provide and for maintaining the security of your account. You agree not to share your login credentials and to notify us immediately of any unauthorized access or use of your account.",
@@ -52,16 +48,8 @@ export default function TermsPage() {
         <section className="space-y-3">
           <h2 className="text-xl font-semibold">{t("3. Acceptable Use")}</h2>
           <ul className="list-disc space-y-2 pl-6 text-muted-foreground">
-            <li>
-              {t(
-                "Do not use the Service for unlawful, harmful, or abusive activity.",
-              )}
-            </li>
-            <li>
-              {t(
-                "Do not attempt to reverse engineer or interfere with the Service.",
-              )}
-            </li>
+            <li>{t("Do not use the Service for unlawful, harmful, or abusive activity.")}</li>
+            <li>{t("Do not attempt to reverse engineer or interfere with the Service.")}</li>
             <li>
               {t(
                 "Do not upload content that infringes on the rights of others or violates applicable laws.",
@@ -108,9 +96,7 @@ export default function TermsPage() {
         </section>
 
         <section className="space-y-3">
-          <h2 className="text-xl font-semibold">
-            {t("7. Intellectual Property")}
-          </h2>
+          <h2 className="text-xl font-semibold">{t("7. Intellectual Property")}</h2>
           <p className="text-muted-foreground">
             {t(
               "The Service, including its software and design, is owned by Deni AI and protected by applicable laws. You may not copy, modify, or distribute any part of the Service without prior written consent.",
@@ -137,9 +123,7 @@ export default function TermsPage() {
         </section>
 
         <section className="space-y-3">
-          <h2 className="text-xl font-semibold">
-            {t("10. Limitation of Liability")}
-          </h2>
+          <h2 className="text-xl font-semibold">{t("10. Limitation of Liability")}</h2>
           <p className="text-muted-foreground">
             {t(
               "To the maximum extent permitted by law, Deni AI will not be liable for any indirect, incidental, special, consequential, or punitive damages, or any loss of profits or revenues, whether incurred directly or indirectly.",
@@ -148,9 +132,7 @@ export default function TermsPage() {
         </section>
 
         <section className="space-y-3">
-          <h2 className="text-xl font-semibold">
-            {t("11. Changes to These Terms")}
-          </h2>
+          <h2 className="text-xl font-semibold">{t("11. Changes to These Terms")}</h2>
           <p className="text-muted-foreground">
             {t(
               "We may update these Terms from time to time. If we make material changes, we will provide notice by updating the date above or by other reasonable means. Continued use of the Service after changes become effective constitutes acceptance of the updated Terms.",

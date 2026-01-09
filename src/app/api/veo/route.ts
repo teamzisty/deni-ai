@@ -3,12 +3,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { env } from "@/env";
 import { auth } from "@/lib/auth";
-import {
-  veoAspectRatios,
-  veoDurations,
-  veoModelValues,
-  veoResolutions,
-} from "@/lib/veo";
+import { veoAspectRatios, veoDurations, veoModelValues, veoResolutions } from "@/lib/veo";
 
 const BASE_URL = "https://generativelanguage.googleapis.com/v1beta";
 
@@ -51,10 +46,7 @@ export async function POST(req: Request) {
   const body = await req.json();
   const parsedBody = requestSchema.safeParse(body);
   if (!parsedBody.success) {
-    return NextResponse.json(
-      { error: "Invalid request body" },
-      { status: 400 },
-    );
+    return NextResponse.json({ error: "Invalid request body" }, { status: 400 });
   }
 
   const data = parsedBody.data;
@@ -89,22 +81,16 @@ export async function POST(req: Request) {
     parameters.seed = data.seed;
   }
 
-  const payload =
-    Object.keys(parameters).length > 0
-      ? { instances, parameters }
-      : { instances };
+  const payload = Object.keys(parameters).length > 0 ? { instances, parameters } : { instances };
 
-  const response = await fetch(
-    `${BASE_URL}/models/${data.model}:predictLongRunning`,
-    {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "x-goog-api-key": env.GOOGLE_GENERATIVE_AI_API_KEY,
-      },
-      body: JSON.stringify(payload),
+  const response = await fetch(`${BASE_URL}/models/${data.model}:predictLongRunning`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "x-goog-api-key": env.GOOGLE_GENERATIVE_AI_API_KEY,
     },
-  );
+    body: JSON.stringify(payload),
+  });
 
   let responseData: unknown = null;
   try {
@@ -130,10 +116,7 @@ export async function POST(req: Request) {
       : undefined;
 
   if (!operationName) {
-    return NextResponse.json(
-      { error: "Missing operation name." },
-      { status: 500 },
-    );
+    return NextResponse.json({ error: "Missing operation name." }, { status: 500 });
   }
 
   return NextResponse.json({ operationName });
@@ -148,18 +131,12 @@ export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
   const nameParam = searchParams.get("name");
   if (!nameParam) {
-    return NextResponse.json(
-      { error: "Missing operation name." },
-      { status: 400 },
-    );
+    return NextResponse.json({ error: "Missing operation name." }, { status: 400 });
   }
 
   const parsedName = operationNameSchema.safeParse(nameParam);
   if (!parsedName.success) {
-    return NextResponse.json(
-      { error: "Invalid operation name." },
-      { status: 400 },
-    );
+    return NextResponse.json({ error: "Invalid operation name." }, { status: 400 });
   }
 
   const response = await fetch(`${BASE_URL}/${parsedName.data}`, {
@@ -204,8 +181,7 @@ export async function GET(req: Request) {
               };
             };
           }
-        ).response?.generateVideoResponse?.generatedSamples?.[0]?.video?.uri ??
-        null)
+        ).response?.generateVideoResponse?.generatedSamples?.[0]?.video?.uri ?? null)
       : null;
 
   return NextResponse.json({ done, error: errorMessage, videoUri });

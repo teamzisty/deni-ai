@@ -16,9 +16,7 @@ export default function Home() {
         <AlertTitle>{t("Message Migration")}</AlertTitle>
         <AlertDescription className="gap-3">
           <p>{t("Move your chats from the old version into this site.")}</p>
-          <p>
-            {t("Create a new account on this site to continue the migration.")}
-          </p>
+          <p>{t("Create a new account on this site to continue the migration.")}</p>
           <Button size="sm" variant="secondary" asChild>
             <Link href="/migration">{t("Migration")}</Link>
           </Button>
@@ -26,9 +24,7 @@ export default function Home() {
       </Alert>
 
       <div className="flex flex-col items-center text-center">
-        <Badge className="mb-4 px-3 py-1 text-sm">
-          {t("Welcome to Deni AI")}
-        </Badge>
+        <Badge className="mb-4 px-3 py-1 text-sm">{t("Welcome to Deni AI")}</Badge>
         <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold tracking-tighter">
           {t.rich("AI Chatbot for <highlight>Everyone</highlight>", {
             highlight: (chunks) => (

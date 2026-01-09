@@ -6,7 +6,9 @@ import { user } from "./auth-schema";
 export const providerKey = pgTable(
   "provider_key",
   {
-    id: text("id").primaryKey().default(sql`gen_random_uuid()`),
+    id: text("id")
+      .primaryKey()
+      .default(sql`gen_random_uuid()`),
     userId: text("user_id")
       .notNull()
       .references(() => user.id, { onDelete: "cascade" }),
@@ -19,9 +21,6 @@ export const providerKey = pgTable(
       .notNull(),
   },
   (table) => ({
-    userProviderIdx: uniqueIndex("provider_key_user_provider_idx").on(
-      table.userId,
-      table.provider,
-    ),
+    userProviderIdx: uniqueIndex("provider_key_user_provider_idx").on(table.userId, table.provider),
   }),
 );

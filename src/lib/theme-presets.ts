@@ -1,11 +1,4 @@
-export type ThemeName =
-  | "light"
-  | "dark"
-  | "system"
-  | "default"
-  | "t3-chat"
-  | "tangerine"
-  | "mono";
+export type ThemeName = "light" | "dark" | "system" | "default" | "t3-chat" | "tangerine" | "mono";
 
 type ThemePreset = {
   key: ThemeName;

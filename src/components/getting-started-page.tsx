@@ -44,8 +44,7 @@ export default function GettingStartedPage() {
   // Preload session while the intro animation plays
   const { data: sessionData } = authClient.useSession();
   const preloadName = sessionData?.user?.name ?? "";
-  const preloadImage =
-    (sessionData?.user as { image?: string | null } | undefined)?.image ?? null;
+  const preloadImage = (sessionData?.user as { image?: string | null } | undefined)?.image ?? null;
 
   useEffect(() => {
     const timeout = setTimeout(() => setShowSetup(true), showSetupDelay);
@@ -69,9 +68,7 @@ export default function GettingStartedPage() {
 
       <div
         className={`w-full px-4 ${
-          showSetup
-            ? "mx-auto max-w-2xl space-y-8"
-            : "mx-auto max-w-xl text-center"
+          showSetup ? "mx-auto max-w-2xl space-y-8" : "mx-auto max-w-xl text-center"
         }`}
       >
         {showSetup ? (
@@ -150,10 +147,7 @@ function SetupScreen({
 
   const canPrev = index > 0;
   const canNext = index < steps.length - 1;
-  const percentage = useMemo(
-    () => ((index + 1) / steps.length) * 100,
-    [index, steps.length],
-  );
+  const percentage = useMemo(() => ((index + 1) / steps.length) * 100, [index, steps.length]);
 
   return (
     <>
@@ -162,17 +156,13 @@ function SetupScreen({
         <h1 className="text-balance bg-gradient-to-br from-foreground to-foreground/60 bg-clip-text text-3xl font-semibold text-transparent md:text-4xl">
           {t("Let’s get your space ready")}
         </h1>
-        <p className="text-muted-foreground">
-          {t("Let’s set up the AI chatbot for yours.")}
-        </p>
+        <p className="text-muted-foreground">{t("Let’s set up the AI chatbot for yours.")}</p>
       </div>
 
       <Card className="overflow-hidden border-border/60 bg-background/60 backdrop-blur supports-[backdrop-filter]:bg-background/60 animate-fade-in will-change-[transform,opacity]">
         <CardContent>
           <div className="mb-4 flex flex-col -mx-0.5">
-            <h1 className="text-balance text-2xl font-semibold">
-              {steps[index].title}
-            </h1>
+            <h1 className="text-balance text-2xl font-semibold">{steps[index].title}</h1>
             <p className="text-muted-foreground">{steps[index].description}</p>
           </div>
 
@@ -183,10 +173,7 @@ function SetupScreen({
           >
             <CarouselContent>
               <CarouselItem className="py-2">
-                <AccountStep
-                  initialName={preloadName}
-                  initialImage={preloadImage}
-                />
+                <AccountStep initialName={preloadName} initialImage={preloadImage} />
               </CarouselItem>
               <CarouselItem className="py-2">
                 <ThemeStep />
@@ -213,9 +200,7 @@ function SetupScreen({
           </div>
           <Button
             className="order-3 w-full md:w-auto"
-            onClick={() =>
-              canNext ? carouselApi?.scrollNext() : router.push("/app")
-            }
+            onClick={() => (canNext ? carouselApi?.scrollNext() : router.push("/app"))}
           >
             {canNext ? (
               <>
@@ -244,9 +229,7 @@ function AccountStep({
   const { isPending, refetch } = authClient.useSession();
 
   const [name, setName] = useState(initialName ?? "");
-  const [avatarUrl, setAvatarUrl] = useState<string | null>(
-    initialImage ?? null,
-  );
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(initialImage ?? null);
   const [saving, setSaving] = useState(false);
   const [savedMsg, setSavedMsg] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
@@ -254,8 +237,7 @@ function AccountStep({
     if ((initialName ?? "") && !name) setName(initialName ?? "");
   }, [initialName, name]);
   useEffect(() => {
-    if (initialImage !== undefined && avatarUrl == null)
-      setAvatarUrl(initialImage ?? null);
+    if (initialImage !== undefined && avatarUrl == null) setAvatarUrl(initialImage ?? null);
   }, [initialImage, avatarUrl]);
 
   async function handleSave() {
@@ -270,6 +252,7 @@ function AccountStep({
       refetch();
       setSavedMsg(t("Saved"));
     } catch (_e) {
+      console.error(_e);
       setSavedMsg(t("Failed to save"));
     } finally {
       setSaving(false);
@@ -342,9 +325,7 @@ function AccountStep({
           <Button onClick={handleSave} disabled={isPending || saving}>
             {saving ? t("Saving...") : t("Save")}
           </Button>
-          {savedMsg && (
-            <span className="text-xs text-muted-foreground">{savedMsg}</span>
-          )}
+          {savedMsg && <span className="text-xs text-muted-foreground">{savedMsg}</span>}
         </div>
       </div>
     </div>
@@ -359,10 +340,8 @@ function ThemeStep() {
   const themes = themePresets;
 
   useEffect(() => {
-    const isStandardTheme =
-      theme === "light" || theme === "dark" || theme === "system";
-    const isCustomPreset =
-      preset === "t3-chat" || preset === "tangerine" || preset === "mono";
+    const isStandardTheme = theme === "light" || theme === "dark" || theme === "system";
+    const isCustomPreset = preset === "t3-chat" || preset === "tangerine" || preset === "mono";
     if (isStandardTheme && !isCustomPreset) {
       setPreset(theme as ThemeName);
     }
@@ -372,12 +351,7 @@ function ThemeStep() {
     setPreset(value);
   };
 
-  const themeLabel =
-    theme === "system"
-      ? t("System")
-      : theme === "light"
-        ? t("Light")
-        : t("Dark");
+  const themeLabel = theme === "system" ? t("System") : theme === "light" ? t("Light") : t("Dark");
 
   const getPresetCopy = (key: ThemeName) => {
     switch (key) {
@@ -453,15 +427,10 @@ function ThemeStep() {
                     </motion.span>
                   )}
                 </div>
-                <p className="text-sm text-muted-foreground">
-                  {copy.description}
-                </p>
+                <p className="text-sm text-muted-foreground">{copy.description}</p>
                 <div className="flex w-full gap-1.5" aria-hidden>
                   {presetItem.preview?.map((bar, _i) => (
-                    <div
-                      key={bar}
-                      className={`h-1.5 flex-1 rounded-full ${bar}`}
-                    />
+                    <div key={bar} className={`h-1.5 flex-1 rounded-full ${bar}`} />
                   ))}
                 </div>
               </Button>

@@ -42,9 +42,7 @@ export function AccountMenu() {
                 (session.data?.user?.name?.charAt(0).toUpperCase() ?? "U")
               )}
             </div>
-            <span className="flex-1 truncate text-sm">
-              {session.data?.user?.name ?? t("User")}
-            </span>
+            <span className="flex-1 truncate text-sm">{session.data?.user?.name ?? t("User")}</span>
           </div>
         </SidebarMenuButton>
       </DropdownMenuTrigger>

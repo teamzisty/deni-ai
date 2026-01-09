@@ -39,10 +39,7 @@ const Temporary = ({
   );
 };
 
-const getHandleCoordsByPosition = (
-  node: InternalNode<Node>,
-  handlePosition: Position,
-) => {
+const getHandleCoordsByPosition = (node: InternalNode<Node>, handlePosition: Position) => {
   // Choose the handle type based on position - Left is for target, Right is for source
   const handleType = handlePosition === Position.Left ? "target" : "source";
 
@@ -83,10 +80,7 @@ const getHandleCoordsByPosition = (
   return [x, y] as const;
 };
 
-const getEdgeParams = (
-  source: InternalNode<Node>,
-  target: InternalNode<Node>,
-) => {
+const getEdgeParams = (source: InternalNode<Node>, target: InternalNode<Node>) => {
   const sourcePos = Position.Right;
   const [sx, sy] = getHandleCoordsByPosition(source, sourcePos);
   const targetPos = Position.Left;
@@ -110,10 +104,7 @@ const Animated = ({ id, source, target, markerEnd, style }: EdgeProps) => {
     return null;
   }
 
-  const { sx, sy, tx, ty, sourcePos, targetPos } = getEdgeParams(
-    sourceNode,
-    targetNode,
-  );
+  const { sx, sy, tx, ty, sourcePos, targetPos } = getEdgeParams(sourceNode, targetNode);
 
   const [edgePath] = getBezierPath({
     sourceX: sx,

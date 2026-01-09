@@ -3,7 +3,9 @@ import { jsonb, pgTable, text, timestamp } from "drizzle-orm/pg-core";
 import { user } from "@/db/schema";
 
 export const chats = pgTable("chats", {
-  id: text("id").primaryKey().default(sql`gen_random_uuid()`),
+  id: text("id")
+    .primaryKey()
+    .default(sql`gen_random_uuid()`),
   uid: text("user_id").references(() => user.id, { onDelete: "cascade" }),
   title: text("title"),
   messages: jsonb("messages").default(sql`'[]'`),

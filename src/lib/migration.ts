@@ -40,25 +40,15 @@ export type MigrationImportResult = {
 
 type UnknownRecord = Record<string, unknown>;
 
-export function normalizeMigrationPayload(
-  payload: unknown,
-): MigrationImportResult {
-  const { conversations: legacyConversations, warnings } =
-    extractLegacyConversations(payload);
+export function normalizeMigrationPayload(payload: unknown): MigrationImportResult {
+  const { conversations: legacyConversations, warnings } = extractLegacyConversations(payload);
   const normalized: NormalizedConversation[] = [];
   const allWarnings = [...warnings];
 
   legacyConversations.forEach((conversation, index) => {
-    const rawMessages = Array.isArray(conversation.messages)
-      ? conversation.messages
-      : [];
-    const { messages, warnings: messageWarnings } =
-      normalizeMessages(rawMessages);
-    allWarnings.push(
-      ...messageWarnings.map(
-        (warning) => `conversation ${index + 1}: ${warning}`,
-      ),
-    );
+    const rawMessages = Array.isArray(conversation.messages) ? conversation.messages : [];
+    const { messages, warnings: messageWarnings } = normalizeMessages(rawMessages);
+    allWarnings.push(...messageWarnings.map((warning) => `conversation ${index + 1}: ${warning}`));
 
     if (!messages.length) {
       allWarnings.push(`conversation ${index + 1}: no valid messages found`);
@@ -137,10 +127,7 @@ function extractLegacyConversations(payload: unknown): {
       return {
         conversations: [
           {
-            title:
-              typeof payload.title === "string"
-                ? payload.title
-                : "Imported Chat",
+            title: typeof payload.title === "string" ? payload.title : "Imported Chat",
             messages: payload.messages,
             createdAt: payload.createdAt,
             updatedAt: payload.updatedAt,
@@ -187,8 +174,7 @@ function normalizeMessage(raw: unknown): UIMessage | null {
   }
 
   const role = normalizeRole(raw.role ?? raw.sender ?? raw.from ?? raw.type);
-  const id =
-    typeof raw.id === "string" && raw.id.trim().length > 0 ? raw.id : nanoid();
+  const id = typeof raw.id === "string" && raw.id.trim().length > 0 ? raw.id : nanoid();
   const metadata = isRecord(raw.metadata) ? raw.metadata : undefined;
   const parts = normalizePartsFromMessage(raw);
 
@@ -302,12 +288,8 @@ function normalizeContentArray(rawParts: unknown[]): UIMessage["parts"] {
         parts.push({
           type: "file",
           url,
-          filename:
-            typeof rawPart.filename === "string" ? rawPart.filename : "image",
-          mediaType:
-            typeof rawPart.mediaType === "string"
-              ? rawPart.mediaType
-              : "image/*",
+          filename: typeof rawPart.filename === "string" ? rawPart.filename : "image",
+          mediaType: typeof rawPart.mediaType === "string" ? rawPart.mediaType : "image/*",
         });
       }
       continue;

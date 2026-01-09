@@ -101,9 +101,7 @@ export function getUniqueCodename(): string {
     }
   }
 
-  throw new Error(
-    "All codenames have been used. Reset the store or add more words.",
-  );
+  throw new Error("All codenames have been used. Reset the store or add more words.");
 }
 
 export function resetCodenames(): void {
