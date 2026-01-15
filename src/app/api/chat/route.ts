@@ -11,7 +11,6 @@ import {
   streamText,
   type UIMessage,
 } from "ai";
-import { checkBotId } from "botid/server";
 import { and, eq } from "drizzle-orm";
 import { headers } from "next/headers";
 import { NextResponse } from "next/server";
@@ -31,12 +30,6 @@ const UIMessagesSchema = z
   .transform((value) => value as unknown as UIMessage[]);
 
 export async function POST(req: Request) {
-  const verification = await checkBotId();
-
-  if (verification.isBot) {
-    return NextResponse.json({ error: "Could not verify you are human." }, { status: 403 });
-  }
-
   const headersList = await headers();
   const session = await auth.api.getSession({ headers: headersList });
   const userId = session?.session?.userId;
@@ -55,6 +48,7 @@ export async function POST(req: Request) {
       webSearch: z.boolean().optional(),
       reasoningEffort: z.enum(["low", "medium", "high"]).optional(),
       video: z.boolean().optional(),
+      image: z.boolean().optional(),
     })
     .safeParse(body);
 
@@ -291,7 +285,7 @@ export async function POST(req: Request) {
       break;
   }
 
-  const tools = createChatTools({ videoMode });
+  const tools = createChatTools({ videoMode, imageMode });
 
   const modelMessages = await convertToModelMessages(messages);
   const currentDate = new Date().toISOString().split("T")[0];
@@ -319,7 +313,12 @@ export async function POST(req: Request) {
     messages: modelMessages,
     stopWhen: stepCountIs(50),
     tools,
-    toolChoice: videoMode ? { type: "tool", toolName: "video" } : undefined,
+    toolChoice:
+      videoMode
+        ? { type: "tool", toolName: "video" }
+        : imageMode
+          ? { type: "tool", toolName: "image" }
+          : undefined,
     providerOptions: {
       openai: {
         reasoningEffort,

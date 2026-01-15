@@ -1,29 +1,18 @@
 "use client";
 
 import { useChat } from "@ai-sdk/react";
-import { SiAnthropic, SiGooglegemini, SiOpenai, SiX } from "@icons-pack/react-simple-icons";
 import { sendGAEvent } from "@next/third-parties/google";
 import type { ToolUIPart, UIDataTypes, UIMessage, UIMessagePart, UITools } from "ai";
 import { DefaultChatTransport } from "ai";
-import type { LucideIcon } from "lucide-react";
 import {
-  ArrowBigUpDash,
   ArrowUpRight,
   Ban,
-  Bot,
-  BrainCircuit,
   BrainIcon,
-  Code,
   CopyIcon,
-  Diamond,
-  Film,
   Globe,
   Plug,
   RefreshCcwIcon,
-  Sparkle,
-  StarIcon,
   TriangleAlert,
-  XIcon,
 } from "lucide-react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -50,15 +39,14 @@ import {
   MessageContent,
   MessageResponse,
 } from "@/components/ai-elements/message";
-import {
-  PromptInputSelect,
-  PromptInputSelectContent,
-  PromptInputSelectItem,
-  PromptInputSelectTrigger,
-  PromptInputSelectValue,
-} from "@/components/ai-elements/prompt-input";
 import { Source, Sources, SourcesContent, SourcesTrigger } from "@/components/ai-elements/sources";
-import { Composer, type ComposerMessage } from "@/components/chat/composer";
+import {
+  ChatComposer,
+  type ComposerMessage,
+  isReasoningEffort,
+  type ModelOption,
+  type ReasoningEffort,
+} from "@/components/chat/chat-composer";
 import { authClient } from "@/lib/auth-client";
 import { isBillingDisabled } from "@/lib/billing-config";
 import { GA_ID, models } from "@/lib/constants";
@@ -69,8 +57,6 @@ import { Alert, AlertDescription, AlertTitle } from "../ui/alert";
 import { Badge } from "../ui/badge";
 import { Button } from "../ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
-import { DropdownMenuCheckboxItem, DropdownMenuSeparator } from "../ui/dropdown-menu";
-import { Separator } from "../ui/separator";
 import { Spinner } from "../ui/spinner";
 
 type SearchResult = {
@@ -91,12 +77,14 @@ type VideoToolOutput = {
   negativePrompt?: string | null;
 };
 
-const reasoningEffortValues = ["low", "medium", "high"] as const;
-type ReasoningEffort = (typeof reasoningEffortValues)[number];
-
-function isReasoningEffort(value: string): value is ReasoningEffort {
-  return (reasoningEffortValues as readonly string[]).includes(value);
-}
+type ImageToolOutput = {
+  imageUrls: string[];
+  model?: string | null;
+  modelLabel?: string | null;
+  aspectRatio?: string | null;
+  resolution?: string | null;
+  numberOfImages?: number | null;
+};
 
 const isSearchResultArray = (value: unknown): value is SearchResult[] =>
   Array.isArray(value) &&
@@ -116,6 +104,16 @@ const isVideoToolOutput = (value: unknown): value is VideoToolOutput => {
   return typeof (value as { videoUrl?: unknown }).videoUrl === "string";
 };
 
+const isImageToolOutput = (value: unknown): value is ImageToolOutput => {
+  if (!value || typeof value !== "object") {
+    return false;
+  }
+  return (
+    Array.isArray((value as { imageUrls?: unknown }).imageUrls) &&
+    (value as { imageUrls?: unknown[] }).imageUrls?.every((url) => typeof url === "string") === true
+  );
+};
+
 type VideoToolPart = ToolUIPart<{
   video: {
     input: unknown;
@@ -126,179 +124,19 @@ type VideoToolPart = ToolUIPart<{
 const isVideoToolPart = (part: UIMessagePart<UIDataTypes, UITools>): part is VideoToolPart =>
   part.type === "tool-video";
 
-type ToolChipProps = {
-  icon: LucideIcon;
-  label: string;
-  onRemove: () => void;
-};
+type ImageToolPart = ToolUIPart<{
+  image: {
+    input: unknown;
+    output: ImageToolOutput;
+  };
+}>;
 
-function ToolChip({ icon: Icon, label, onRemove }: ToolChipProps) {
-  const t = useExtracted();
-
-  return (
-    <Button
-      variant="ghost"
-      className="group flex items-center gap-1.5 rounded-md px-2 py-1 font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground"
-      onClick={onRemove}
-      aria-label={t("Remove {label}", { label })}
-    >
-      <Icon className="size-3.5 group-hover:hidden" />
-      <XIcon className="size-3.5 hidden group-hover:block" />
-      <span>{label}</span>
-    </Button>
-  );
-}
+const isImageToolPart = (part: UIMessagePart<UIDataTypes, UITools>): part is ImageToolPart =>
+  part.type === "tool-image";
 
 interface ChatInterfaceProps {
   id: string;
   initialMessages?: UIMessage[];
-}
-
-type BaseModelOption = (typeof models)[number];
-type CustomModelOption = {
-  name: string;
-  value: string;
-  description: string;
-  author: "openai_compatible";
-  features: string[];
-  premium?: boolean;
-  default?: boolean;
-  source: "custom";
-};
-type ModelOption = BaseModelOption | CustomModelOption;
-
-function ModelItem({ model, isSelected }: { model: ModelOption; isSelected: boolean }) {
-  const t = useExtracted();
-
-  const getFeatureLabel = (feature: string) => {
-    switch (feature) {
-      case "reasoning":
-        return t("Reasoning");
-      case "smart":
-        return t("Smart");
-      case "fast":
-        return t("Fast");
-      case "coding":
-        return t("Coding");
-      case "fastest":
-        return t("Fastest");
-      case "smartest":
-        return t("Smartest");
-      default:
-        return feature;
-    }
-  };
-
-  const getModelDescription = (value: string) => {
-    switch (value) {
-      case "gpt-5.2":
-        return t("General purpose OpenAI model");
-      case "gpt-5.1-codex":
-        return t("For complex coding tasks");
-      case "gpt-5.1-codex-mini":
-        return t("For quick coding tasks");
-      case "openai/gpt-oss-120b":
-        return t("Most powerful open-weight model");
-      case "openai/gpt-oss-20b":
-        return t("Medium-sized open-weight model");
-      case "gemini-3-pro-preview":
-        return t("Best for complex tasks");
-      case "gemini-2.5-flash":
-        return t("Best for everyday tasks");
-      case "gemini-2.5-flash-lite":
-        return t("Best for high volume tasks");
-      case "claude-sonnet-4.5":
-        return t("Hybrid reasoning model");
-      case "claude-opus-4.5":
-        return t("All-around professional model");
-      case "claude-opus-4.1":
-        return t("Legacy professional model");
-      case "grok-4-0709":
-        return t("xAI's most intelligent model");
-      case "grok-4-fast-reasoning":
-      case "grok-4-fast-non-reasoning":
-        return t("Fast and efficient model");
-      default:
-        return value;
-    }
-  };
-
-  const modelDescription =
-    "description" in model ? model.description : getModelDescription(model.value);
-
-  return (
-    <PromptInputSelectItem
-      key={model.value}
-      value={model.value}
-      textValue={model.name}
-      className={cn("items-start p-2 [&>span]:w-full", isSelected && "bg-accent/60")}
-    >
-      <span className="flex flex-col w-full gap-1">
-        <span className="flex items-center justify-between font-medium">
-          <span className="flex items-center gap-1">
-            {(() => {
-              if (model.premium) {
-                return <Diamond className="size-4" />;
-              }
-
-              switch (model?.author) {
-                case "openai":
-                  return <SiOpenai />;
-                case "anthropic":
-                  return <SiAnthropic />;
-                case "google":
-                  return <SiGooglegemini />;
-                case "xai":
-                  return <SiX />;
-                case "openai_compatible":
-                  return <Plug className="size-4" />;
-                default:
-                  return <Bot />;
-              }
-            })()}
-            {model.name}
-            {model.author === "openai_compatible" && (
-              <Badge variant="secondary" className="bg-primary/10">
-                {t("BYOK")}
-              </Badge>
-            )}
-            {model.features
-              .filter((feature) => feature.includes("est"))
-              .map((feature) => (
-                <Badge variant="secondary" className="bg-primary/10" key={feature}>
-                  <StarIcon className="size-4 text-yellow-500 dark:fill-yellow-400" />
-                  {getFeatureLabel(feature)}
-                </Badge>
-              ))}
-          </span>
-        </span>
-        <span className="text-xs text-muted-foreground">{modelDescription}</span>
-        {model.features.length > 0 && (
-          <span className="flex gap-1 flex-wrap">
-            {model.features
-              .filter((feature) => !feature.includes("est"))
-              .map((feature) => (
-                <Badge variant="secondary" className="bg-primary/10" key={feature}>
-                  {(() => {
-                    switch (feature) {
-                      case "smart":
-                        return <Sparkle />;
-                      case "reasoning":
-                        return <BrainCircuit />;
-                      case "fast":
-                        return <ArrowBigUpDash />;
-                      case "coding":
-                        return <Code />;
-                    }
-                  })()}
-                  {getFeatureLabel(feature)}
-                </Badge>
-              ))}
-          </span>
-        )}
-      </span>
-    </PromptInputSelectItem>
-  );
 }
 
 export function ChatInterface({ id, initialMessages = [] }: ChatInterfaceProps) {
@@ -312,6 +150,7 @@ export function ChatInterface({ id, initialMessages = [] }: ChatInterfaceProps) 
   const [model, setModel] = useState(models[0].value);
   const [webSearch, setWebSearch] = useState(false);
   const [videoMode, setVideoMode] = useState(false);
+  const [imageMode, setImageMode] = useState(false);
   const [reasoningEffort, setReasoningEffort] = useState<ReasoningEffort>("high");
   const initialMessageSentRef = useRef(false);
   const utils = trpc.useUtils();
@@ -338,7 +177,9 @@ export function ChatInterface({ id, initialMessages = [] }: ChatInterfaceProps) 
   }, [providersQuery.data?.customModels, t]);
 
   const availableModels = useMemo<ModelOption[]>(() => {
-    const baseModels = isAnonymous ? models.filter((entry) => !entry.premium) : models;
+    const baseModels = isAnonymous
+      ? (models as unknown as ModelOption[]).filter((entry) => !entry.premium)
+      : (models as unknown as ModelOption[]);
     const filteredCustomModels = isAnonymous
       ? customModels.filter((entry) => !entry.premium)
       : customModels;
@@ -351,9 +192,10 @@ export function ChatInterface({ id, initialMessages = [] }: ChatInterfaceProps) 
       webSearch,
       reasoningEffort,
       video: videoMode,
+      image: imageMode,
       id,
     }),
-    [id, model, reasoningEffort, videoMode, webSearch],
+    [id, model, reasoningEffort, videoMode, imageMode, webSearch],
   );
   const transport = useMemo(
     () =>
@@ -394,6 +236,10 @@ export function ChatInterface({ id, initialMessages = [] }: ChatInterfaceProps) 
             url: string;
           }>;
           webSearch: boolean;
+          model?: string;
+          videoMode?: boolean;
+          imageMode?: boolean;
+          reasoningEffort?: string;
         };
 
         initialMessageSentRef.current = true;
@@ -401,10 +247,24 @@ export function ChatInterface({ id, initialMessages = [] }: ChatInterfaceProps) 
         // Clear the stored data to prevent re-sending on refresh
         sessionStorage.removeItem(INITIAL_MESSAGE_STORAGE_KEY);
 
-        // Set webSearch state if it was enabled
+        // Set state from stored data
         if (parsed.webSearch) {
           setWebSearch(true);
         }
+        if (parsed.model) {
+          setModel(parsed.model);
+        }
+        if (parsed.videoMode) {
+          setVideoMode(true);
+        }
+        if (parsed.imageMode) {
+          setImageMode(true);
+        }
+        const parsedReasoningEffort =
+          parsed.reasoningEffort && isReasoningEffort(parsed.reasoningEffort)
+            ? parsed.reasoningEffort
+            : "high";
+        setReasoningEffort(parsedReasoningEffort);
 
         // Send the message with files
         Promise.resolve(
@@ -415,10 +275,11 @@ export function ChatInterface({ id, initialMessages = [] }: ChatInterfaceProps) 
             },
             {
               body: {
-                model,
+                model: parsed.model ?? model,
                 webSearch: parsed.webSearch,
-                reasoningEffort: "high",
-                video: false,
+                reasoningEffort: parsedReasoningEffort,
+                video: parsed.videoMode ?? false,
+                image: parsed.imageMode ?? false,
                 id,
               },
             },
@@ -471,7 +332,6 @@ export function ChatInterface({ id, initialMessages = [] }: ChatInterfaceProps) 
   }, [searchParams, initialMessages.length, sendMessage, router, id, model, utils.chat.getChats]);
 
   const selectedModel = availableModels.find((m) => m.value === model);
-  const supportsReasoningEffort = selectedModel?.features?.includes("reasoning");
   const usageCategory = selectedModel?.premium ? "premium" : "basic";
   const categoryUsage = usageQuery.data?.usage.find((usage) => usage.category === usageCategory);
   const remainingUsage = categoryUsage?.remaining;
@@ -530,54 +390,41 @@ export function ChatInterface({ id, initialMessages = [] }: ChatInterfaceProps) 
   const usageTierLabel =
     usageTier === "free" ? t("Free") : usageTier === "plus" ? t("Plus") : t("Pro");
   const isSubmitBlocked = isUsageBlocked || isByokMissingConfig;
-  const reasoningEffortLabel = (() => {
-    switch (reasoningEffort) {
-      case "low":
-        return t("Low");
-      case "medium":
-        return t("Medium");
-      case "high":
-        return t("High");
-      default:
-        return reasoningEffort;
-    }
-  })();
-  const renderReasoningEffortSelector = (triggerClassName?: string) => (
-    <PromptInputSelect
-      value={reasoningEffort}
-      onValueChange={(value) => {
-        if (isReasoningEffort(value)) {
-          setReasoningEffort(value);
-        }
-      }}
-      disabled={!supportsReasoningEffort}
-    >
-      <PromptInputSelectTrigger className={cn(triggerClassName)}>
-        <PromptInputSelectValue>
-          <BrainIcon className="size-4" />
-          {reasoningEffortLabel}
-        </PromptInputSelectValue>
-      </PromptInputSelectTrigger>
-      <PromptInputSelectContent>
-        <PromptInputSelectItem value="low">{t("Low")}</PromptInputSelectItem>
-        <PromptInputSelectItem value="medium">{t("Medium")}</PromptInputSelectItem>
-        <PromptInputSelectItem value="high">{t("High")}</PromptInputSelectItem>
-      </PromptInputSelectContent>
-    </PromptInputSelect>
-  );
 
-  const resolveVeoModelLabel = (model?: string | null, modelLabel?: string | null) => {
-    switch (model) {
+  const resolveImageModelLabel = (imageModel?: string | null, modelLabel?: string | null) => {
+    if (modelLabel) {
+      return modelLabel;
+    }
+    if (imageModel === "gemini-3-pro-image-preview") {
+      return "Nano Banana Pro";
+    }
+    return imageModel ?? null;
+  };
+
+  const resolveVeoModelLabel = (veoModel?: string | null, modelLabel?: string | null) => {
+    if (modelLabel) {
+      return modelLabel;
+    }
+    switch (veoModel) {
       case "veo-3.1-generate-preview":
         return t("Veo 3.1");
       case "veo-3.1-fast-generate-preview":
         return t("Veo 3.1 Fast");
       default:
-        return modelLabel ?? model ?? null;
+        return veoModel ?? null;
     }
   };
 
-  const handleSubmit = (message: ComposerMessage) => {
+  const handleSubmit = (
+    message: ComposerMessage,
+    options: {
+      model: string;
+      webSearch: boolean;
+      videoMode: boolean;
+      imageMode: boolean;
+      reasoningEffort: ReasoningEffort;
+    },
+  ) => {
     if (isSubmitBlocked) {
       return;
     }
@@ -600,7 +447,13 @@ export function ChatInterface({ id, initialMessages = [] }: ChatInterfaceProps) 
             files: attachments,
           },
           {
-            body: requestBody,
+            body: {
+              model: options.model,
+              webSearch: options.webSearch,
+              reasoningEffort: options.reasoningEffort,
+              video: options.videoMode,
+              id,
+            },
           },
         ),
       ).finally(() => {
@@ -611,36 +464,11 @@ export function ChatInterface({ id, initialMessages = [] }: ChatInterfaceProps) 
     }
   };
 
-  const handleVideoToggle = (enabled: boolean) => {
-    setVideoMode(enabled);
-    if (enabled) {
-      setWebSearch(false);
-    }
-  };
-
-  const handleSearchToggle = (enabled: boolean) => {
-    setWebSearch(enabled);
-    if (enabled) {
-      setVideoMode(false);
-    }
-  };
-
   useEffect(() => {
     if (!selectedModel && availableModels.length > 0) {
       setModel(availableModels[0].value);
     }
   }, [availableModels, selectedModel]);
-
-  const goodModels = availableModels.filter(
-    (m) => m.value !== model && m.features?.filter((f) => f.includes("est")).length,
-  );
-  const defaultModels = availableModels.filter(
-    (m) =>
-      m.value !== model &&
-      m.default !== false &&
-      m.features?.filter((f) => f.includes("est")).length === 0,
-  );
-  const otherModels = availableModels.filter((m) => m.value !== model && m.default === false);
 
   return (
     <div className="flex h-full flex-1 min-h-0 flex-col w-full max-w-3xl mx-auto p-4 overflow-hidden">
@@ -931,6 +759,108 @@ export function ChatInterface({ id, initialMessages = [] }: ChatInterfaceProps) 
                     );
                   })}
 
+                  {message.parts?.filter(isImageToolPart).map((part, i) => {
+                    if (part.state !== "output-available" && part.state !== "output-error") {
+                      return (
+                        <Message key={`${message.id}-image-${i}`} from="assistant">
+                          <MessageContent className="w-full gap-2 rounded-lg border border-border/60 bg-muted/20 px-4 py-3 text-sm text-muted-foreground">
+                            <div className="flex items-center gap-2">
+                              <Spinner className="size-4" />
+                              <span>{t("Generating image...")}</span>
+                            </div>
+                          </MessageContent>
+                        </Message>
+                      );
+                    }
+
+                    if (part.state === "output-error") {
+                      return (
+                        <Message key={`${message.id}-image-${i}`} from="assistant">
+                          <MessageContent className="w-full">
+                            <Alert className="border-destructive/50 bg-destructive/10 text-destructive">
+                              <AlertTitle>{t("Image generation failed")}</AlertTitle>
+                              <AlertDescription>
+                                {t("Please try again with a different prompt.")}
+                              </AlertDescription>
+                            </Alert>
+                          </MessageContent>
+                        </Message>
+                      );
+                    }
+
+                    const output = isImageToolOutput(part.output) ? part.output : null;
+
+                    if (!output) {
+                      return (
+                        <Message key={`${message.id}-image-${i}`} from="assistant">
+                          <MessageContent className="w-full">
+                            <Alert className="border-destructive/50 bg-destructive/10 text-destructive">
+                              <AlertTitle>{t("Image response unavailable")}</AlertTitle>
+                              <AlertDescription>
+                                {t("The image output could not be displayed.")}
+                              </AlertDescription>
+                            </Alert>
+                          </MessageContent>
+                        </Message>
+                      );
+                    }
+
+                    const resolvedModelLabel = resolveImageModelLabel(
+                      output.model,
+                      output.modelLabel,
+                    );
+
+                    return (
+                      <Message key={`${message.id}-image-${i}`} from="assistant">
+                        <MessageContent className="w-full gap-3 rounded-lg border border-border/60 bg-background/90 px-4 py-3">
+                          <div className="grid gap-3">
+                            {output.imageUrls.map((imageUrl: string, idx: number) => (
+                              <div
+                                key={`${message.id}-image-${i}-img-${idx}`}
+                                className="overflow-hidden rounded-lg border border-border/70 bg-muted/30"
+                              >
+                                {/* oxlint-disable-next-line: generated images don't include captions. */}
+                                <img
+                                  src={imageUrl}
+                                  alt={t("Generated image {index}", { index: String(idx + 1) })}
+                                  className="h-auto w-full"
+                                />
+                              </div>
+                            ))}
+                          </div>
+                          <div className="flex flex-wrap items-center gap-2 text-xs">
+                            {output.resolution && (
+                              <Badge variant="secondary">{output.resolution}</Badge>
+                            )}
+                            {output.aspectRatio && (
+                              <Badge variant="secondary">{output.aspectRatio}</Badge>
+                            )}
+                            {output.numberOfImages && output.numberOfImages > 1 && (
+                              <Badge variant="secondary">
+                                {t("{count} images", { count: String(output.numberOfImages) })}
+                              </Badge>
+                            )}
+                            {resolvedModelLabel ? (
+                              <Badge variant="outline">{resolvedModelLabel}</Badge>
+                            ) : null}
+                          </div>
+                          <div className="flex flex-wrap gap-2">
+                            {output.imageUrls.map((imageUrl: string, idx: number) => (
+                              <Button key={`download-${idx}`} asChild size="sm" variant="outline">
+                                <a
+                                  href={imageUrl}
+                                  download={t("image-{index}.png", { index: String(idx + 1) })}
+                                >
+                                  {t("Download image {index}", { index: String(idx + 1) })}
+                                </a>
+                              </Button>
+                            ))}
+                          </div>
+                        </MessageContent>
+                      </Message>
+                    );
+                  })}
+
                   {/* ソース */}
                   {message.parts?.some((p) => p.type === "source-url") && (
                     <Sources className="mt-2">
@@ -1068,109 +998,25 @@ export function ChatInterface({ id, initialMessages = [] }: ChatInterfaceProps) 
         </Alert>
       )}
 
-      <Composer
+      <ChatComposer
+        className="mt-4"
+        value={input}
+        onValueChange={setInput}
         onSubmit={handleSubmit}
         onStop={stop}
-        className="mt-4"
-        globalDrop
-        multiple
-        placeholder={
-          videoMode ? t("Describe the video scene, style, motion, and lighting.") : undefined
-        }
-        headerClassName="py-0.5!"
-        value={input}
-        onValueChange={(value) => setInput(value)}
         status={status}
         isSubmitDisabled={isSubmitBlocked}
-        actionMenuItems={
-          <>
-            <DropdownMenuSeparator />
-            <DropdownMenuCheckboxItem
-              checked={videoMode}
-              onCheckedChange={(checked) => handleVideoToggle(Boolean(checked))}
-            >
-              <Film className="size-4" />
-              {t("Video")}
-            </DropdownMenuCheckboxItem>
-            <DropdownMenuCheckboxItem
-              checked={webSearch}
-              onCheckedChange={(checked) => handleSearchToggle(Boolean(checked))}
-            >
-              <Globe className="size-4" />
-              {t("Search")}
-            </DropdownMenuCheckboxItem>
-            <div className="px-2 py-1.5 md:hidden">
-              {renderReasoningEffortSelector("w-full justify-between")}
-            </div>
-          </>
-        }
-        tools={
-          <>
-            {videoMode && (
-              <ToolChip icon={Film} label={t("Video")} onRemove={() => handleVideoToggle(false)} />
-            )}
-            {webSearch && (
-              <ToolChip
-                icon={Globe}
-                label={t("Search")}
-                onRemove={() => handleSearchToggle(false)}
-              />
-            )}
-            <PromptInputSelect
-              onValueChange={(value) => {
-                setModel(value);
-              }}
-              value={model}
-            >
-              <PromptInputSelectTrigger>
-                <PromptInputSelectValue>
-                  {(() => {
-                    if (selectedModel?.premium) {
-                      return <Diamond className="size-4" />;
-                    }
-
-                    switch (selectedModel?.author) {
-                      case "openai":
-                        return <SiOpenai />;
-                      case "anthropic":
-                        return <SiAnthropic />;
-                      case "google":
-                        return <SiGooglegemini />;
-                      case "xai":
-                        return <SiX />;
-                      case "openai_compatible":
-                        return <Plug className="size-4" />;
-                      default:
-                        return <Bot />;
-                    }
-                  })()}
-                  {selectedModel?.name ?? t("Select model")}
-                  {isByokActive && (
-                    <Badge variant="secondary" className="bg-primary/10">
-                      {t("BYOK")}
-                    </Badge>
-                  )}
-                </PromptInputSelectValue>
-              </PromptInputSelectTrigger>
-              <PromptInputSelectContent className="max-h-[300px] md:max-h-[400px] overflow-y-auto">
-                {selectedModel && <ModelItem model={selectedModel} isSelected={true} />}
-                <Separator className="my-1" />
-                {goodModels.map((m) => (
-                  <ModelItem key={m.value} model={m} isSelected={false} />
-                ))}
-                <Separator className="my-1" />
-                {defaultModels.map((m) => (
-                  <ModelItem key={m.value} model={m} isSelected={false} />
-                ))}
-                {otherModels.length > 0 && <Separator className="my-1" />}
-                {otherModels.map((m) => (
-                  <ModelItem key={m.value} model={m} isSelected={false} />
-                ))}
-              </PromptInputSelectContent>
-            </PromptInputSelect>
-            <div className="hidden md:block">{renderReasoningEffortSelector()}</div>
-          </>
-        }
+        model={model}
+        onModelChange={setModel}
+        webSearch={webSearch}
+        onWebSearchChange={setWebSearch}
+        videoMode={videoMode}
+        onVideoModeChange={setVideoMode}
+        imageMode={imageMode}
+        onImageModeChange={setImageMode}
+        reasoningEffort={reasoningEffort}
+        onReasoningEffortChange={setReasoningEffort}
+        showByokBadge={isByokActive}
       />
     </div>
   );

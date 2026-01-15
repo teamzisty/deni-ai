@@ -3,13 +3,31 @@ import { NextResponse } from "next/server";
 import { env } from "@/env";
 import { auth } from "@/lib/auth";
 
-export async function GET(_req: Request) {
+export async function GET(req: Request) {
   const session = await auth.api.getSession({ headers: await headers() });
   if (!session?.session) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const response = await fetch("https://generativelanguage.googleapis.com/v1beta/videos:generate", {
+  const { searchParams } = new URL(req.url);
+  const uri = searchParams.get("uri");
+  if (!uri) {
+    return NextResponse.json({ error: "Missing uri parameter." }, { status: 400 });
+  }
+
+  try {
+    const videoUrl = new URL(uri);
+    if (
+      videoUrl.hostname !== "generativelanguage.googleapis.com" &&
+      !videoUrl.hostname.endsWith(".googleapis.com")
+    ) {
+      return NextResponse.json({ error: "Invalid URI hostname." }, { status: 400 });
+    }
+  } catch {
+    return NextResponse.json({ error: "Invalid URI format." }, { status: 400 });
+  }
+
+  const response = await fetch(uri, {
     headers: {
       "x-goog-api-key": env.GOOGLE_GENERATIVE_AI_API_KEY,
     },

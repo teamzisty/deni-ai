@@ -4,7 +4,12 @@ import { useRouter } from "next/navigation";
 import { useExtracted } from "next-intl";
 import { useState } from "react";
 import { toast } from "sonner";
-import { Composer, type ComposerMessage } from "@/components/chat/composer";
+import {
+  ChatComposer,
+  type ComposerMessage,
+  type ReasoningEffort,
+} from "@/components/chat/chat-composer";
+import { models } from "@/lib/constants";
 import { trpc } from "@/lib/trpc/react";
 
 // Storage key for passing initial message data to chat page
@@ -19,18 +24,35 @@ export type InitialMessageData = {
     url: string;
   }>;
   webSearch: boolean;
+  model: string;
+  videoMode: boolean;
+  imageMode: boolean;
+  reasoningEffort: ReasoningEffort;
 };
 
 export default function ChatHome() {
   const t = useExtracted();
   const router = useRouter();
   const [input, setInput] = useState("");
+  const [model, setModel] = useState(models[0].value);
   const [webSearch, setWebSearch] = useState(false);
+  const [videoMode, setVideoMode] = useState(false);
+  const [imageMode, setImageMode] = useState(false);
+  const [reasoningEffort, setReasoningEffort] = useState<ReasoningEffort>("high");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const createChatMutation = trpc.chat.createChat.useMutation();
 
-  const handleSubmit = async (message: ComposerMessage) => {
+  const handleSubmit = async (
+    message: ComposerMessage,
+    options: {
+      model: string;
+      webSearch: boolean;
+      videoMode: boolean;
+      imageMode: boolean;
+      reasoningEffort: ReasoningEffort;
+    },
+  ) => {
     if (!message.text.trim() || isSubmitting) {
       return;
     }
@@ -50,7 +72,10 @@ export default function ChatHome() {
           mediaType: file.mediaType,
           url: file.url,
         })),
-        webSearch,
+        webSearch: options.webSearch,
+        model: options.model,
+        videoMode: options.videoMode,
+        reasoningEffort: options.reasoningEffort,
       };
 
       sessionStorage.setItem(INITIAL_MESSAGE_STORAGE_KEY, JSON.stringify(initialMessageData));
@@ -71,17 +96,22 @@ export default function ChatHome() {
       </h1>
 
       <div className="w-full max-w-2xl text-left">
-        <Composer
-          onSubmit={handleSubmit}
-          globalDrop
-          multiple
+        <ChatComposer
           value={input}
-          onValueChange={(value) => setInput(value)}
+          onValueChange={setInput}
+          onSubmit={handleSubmit}
           placeholder={t("Ask me anything...")}
-          textareaClassName="min-h-[60px]"
-          webSearch={webSearch}
-          onToggleWebSearch={() => setWebSearch(!webSearch)}
           isSubmitDisabled={isSubmitting}
+          model={model}
+          onModelChange={setModel}
+          webSearch={webSearch}
+          onWebSearchChange={setWebSearch}
+          videoMode={videoMode}
+          onVideoModeChange={setVideoMode}
+          imageMode={imageMode}
+          onImageModeChange={setImageMode}
+          reasoningEffort={reasoningEffort}
+          onReasoningEffortChange={setReasoningEffort}
         />
       </div>
     </main>

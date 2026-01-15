@@ -101,7 +101,7 @@ The application uses two complementary API approaches:
 2. **AI SDK Streaming Endpoint** (`POST /api/chat`) - Vercel AI SDK for real-time chat
    - Direct streaming response (not tRPC compatible)
    - Handles AI provider selection and model routing
-   - Includes bot detection (botid), usage tracking, and DuckDuckGo search tool
+   - Includes usage tracking, and DuckDuckGo search tool
    - Updates chat via `updateChat()` helper on completion
 
 ### Authentication Flow

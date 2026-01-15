@@ -303,7 +303,11 @@ export function AppSidebar() {
     <Sidebar>
       <SidebarContent className="px-3">
         <SidebarGroup>
-          <h1 className="py-3 mx-auto text-2xl font-semibold tracking-tighter">{t("Deni AI")}</h1>
+          <Link href="/app" className="mx-auto">
+            <h1 className="py-3 mx-auto text-2xl font-semibold tracking-tighter hover:text-primary hover:cursor-pointer">
+              {t("Deni AI")}
+            </h1>
+          </Link>
           <SidebarGroupContent>
             <SidebarMenu>
               <SidebarMenuItem>
