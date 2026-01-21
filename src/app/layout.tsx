@@ -34,12 +34,19 @@ export default async function RootLayout({
 }>) {
   const locale = await getLocale();
   const messages = await getMessages();
+  const t = await getExtracted();
 
   return (
     <html lang={locale} suppressHydrationWarning>
       <body
-        className={`${geistSans.variable} ${geistMono.variable} font-sans antialiased min-w-screen min-h-screen overflow-x-hidden transition-all duration-300`}
+        className={`${geistSans.variable} ${geistMono.variable} font-sans antialiased min-w-screen min-h-screen overflow-x-hidden transition-colors duration-300`}
       >
+        <a
+          href="#main-content"
+          className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus:rounded-md focus:bg-background focus:px-3 focus:py-2 focus:text-sm focus:font-medium focus:text-foreground focus:shadow-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+        >
+          {t("Skip to content")}
+        </a>
         <NextIntlClientProvider locale={locale} messages={messages}>
           <Providers>
             <div className="min-h-screen">{children}</div>

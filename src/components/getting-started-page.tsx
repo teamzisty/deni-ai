@@ -52,7 +52,10 @@ export default function GettingStartedPage() {
   }, []);
 
   return (
-    <main className="relative flex min-h-screen w-full items-center justify-center overflow-hidden">
+    <main
+      className="relative flex min-h-screen w-full items-center justify-center overflow-hidden"
+      id="main-content"
+    >
       {/* Decorative background */}
       <div className="pointer-events-none absolute inset-0 -z-10">
         <div className="absolute inset-0 bg-[radial-gradient(1200px_600px_at_10%_-10%,hsl(220_70%_60%/.20),transparent),radial-gradient(1000px_500px_at_90%_10%,hsl(280_70%_60%/.16),transparent)]" />
@@ -90,7 +93,7 @@ function Intro() {
         {texts.map((text, index) => (
           <h1
             key={`${text}`} // do not use index as key to avoid remounting
-            className="absolute left-1/2 top-1/2 w-full max-w-full -translate-x-1/2 -translate-y-1/2 transform text-2xl font-bold md:text-4xl lg:text-6xl tracking-tighter"
+            className="text-balance absolute left-1/2 top-1/2 w-full max-w-full -translate-x-1/2 -translate-y-1/2 transform text-2xl font-bold md:text-4xl lg:text-6xl tracking-tighter"
             style={{
               opacity: 0,
               animation: `fadeCycle ${totalMs}ms linear`,
@@ -488,9 +491,9 @@ function FeatureCard({
   description: string;
 }) {
   return (
-    <div className="rounded-md border bg-muted/30 p-4 shadow-sm transition-all will-change-transform hover:bg-muted/40 data-[active=true]:animate-in data-[active=true]:fade-in-0 data-[active=true]:slide-in-from-bottom-2">
+    <div className="rounded-md border bg-muted/30 p-4 shadow-sm transition-colors will-change-transform hover:bg-muted/40 data-[active=true]:animate-in data-[active=true]:fade-in-0 data-[active=true]:slide-in-from-bottom-2">
       <div className="mb-2 flex items-center gap-2">
-        <Icon className="size-4" />
+        <Icon className="size-4" aria-hidden="true" />
         <p className="font-medium">{title}</p>
       </div>
       <p className="text-sm text-muted-foreground">{description}</p>

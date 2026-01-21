@@ -75,8 +75,8 @@ function ToolChip({ icon: Icon, label, onRemove }: ToolChipProps) {
       onClick={onRemove}
       aria-label={t("Remove {label}", { label })}
     >
-      <Icon className="size-3.5 group-hover:hidden" />
-      <XIcon className="size-3.5 hidden group-hover:block" />
+      <Icon className="size-3.5 group-hover:hidden" aria-hidden="true" />
+      <XIcon className="size-3.5 hidden group-hover:block" aria-hidden="true" />
       <span>{label}</span>
     </Button>
   );
@@ -153,22 +153,22 @@ function ModelItem({ model, isSelected }: { model: ModelOption; isSelected: bool
           <span className="flex items-center gap-1">
             {(() => {
               if (model.premium) {
-                return <Diamond className="size-4" />;
+                return <Diamond className="size-4" aria-hidden="true" />;
               }
 
               switch (model?.author) {
                 case "openai":
-                  return <SiOpenai />;
+                  return <SiOpenai aria-hidden="true" />;
                 case "anthropic":
-                  return <SiAnthropic />;
+                  return <SiAnthropic aria-hidden="true" />;
                 case "google":
-                  return <SiGooglegemini />;
+                  return <SiGooglegemini aria-hidden="true" />;
                 case "xai":
-                  return <SiX />;
+                  return <SiX aria-hidden="true" />;
                 case "openai_compatible":
-                  return <Plug className="size-4" />;
+                  return <Plug className="size-4" aria-hidden="true" />;
                 default:
-                  return <Bot />;
+                  return <Bot aria-hidden="true" />;
               }
             })()}
             {model.name}
@@ -181,7 +181,10 @@ function ModelItem({ model, isSelected }: { model: ModelOption; isSelected: bool
               .filter((feature) => feature.includes("est"))
               .map((feature) => (
                 <Badge variant="secondary" className="bg-primary/10" key={feature}>
-                  <StarIcon className="size-4 text-yellow-500 dark:fill-yellow-400" />
+                  <StarIcon
+                    className="size-4 text-yellow-500 dark:fill-yellow-400"
+                    aria-hidden="true"
+                  />
                   {getFeatureLabel(feature)}
                 </Badge>
               ))}
@@ -197,13 +200,13 @@ function ModelItem({ model, isSelected }: { model: ModelOption; isSelected: bool
                   {(() => {
                     switch (feature) {
                       case "smart":
-                        return <Sparkle />;
+                        return <Sparkle aria-hidden="true" />;
                       case "reasoning":
-                        return <BrainCircuit />;
+                        return <BrainCircuit aria-hidden="true" />;
                       case "fast":
-                        return <ArrowBigUpDash />;
+                        return <ArrowBigUpDash aria-hidden="true" />;
                       case "coding":
-                        return <Code />;
+                        return <Code aria-hidden="true" />;
                     }
                   })()}
                   {getFeatureLabel(feature)}
@@ -360,7 +363,7 @@ export function ChatComposer({
     >
       <PromptInputSelectTrigger className={cn(triggerClassName)}>
         <PromptInputSelectValue>
-          <BrainIcon className="size-4" />
+          <BrainIcon className="size-4" aria-hidden="true" />
           {reasoningEffortLabel}
         </PromptInputSelectValue>
       </PromptInputSelectTrigger>
@@ -411,21 +414,21 @@ export function ChatComposer({
             checked={videoMode}
             onCheckedChange={(checked) => handleVideoToggle(Boolean(checked))}
           >
-            <Film className="size-4" />
+            <Film className="size-4" aria-hidden="true" />
             {t("Video")}
           </DropdownMenuCheckboxItem>
           <DropdownMenuCheckboxItem
             checked={imageMode}
             onCheckedChange={(checked) => handleImageToggle(Boolean(checked))}
           >
-            <ImageIcon className="size-4" />
+            <ImageIcon className="size-4" aria-hidden="true" />
             {t("Image")}
           </DropdownMenuCheckboxItem>
           <DropdownMenuCheckboxItem
             checked={webSearch}
             onCheckedChange={(checked) => handleSearchToggle(Boolean(checked))}
           >
-            <Globe className="size-4" />
+            <Globe className="size-4" aria-hidden="true" />
             {t("Search")}
           </DropdownMenuCheckboxItem>
           <div className="px-2 py-1.5 md:hidden">
@@ -439,7 +442,11 @@ export function ChatComposer({
             <ToolChip icon={Film} label={t("Video")} onRemove={() => handleVideoToggle(false)} />
           )}
           {imageMode && (
-            <ToolChip icon={ImageIcon} label={t("Image")} onRemove={() => handleImageToggle(false)} />
+            <ToolChip
+              icon={ImageIcon}
+              label={t("Image")}
+              onRemove={() => handleImageToggle(false)}
+            />
           )}
           {webSearch && (
             <ToolChip icon={Globe} label={t("Search")} onRemove={() => handleSearchToggle(false)} />
@@ -454,22 +461,22 @@ export function ChatComposer({
               <PromptInputSelectValue>
                 {(() => {
                   if (selectedModel?.premium) {
-                    return <Diamond className="size-4" />;
+                    return <Diamond className="size-4" aria-hidden="true" />;
                   }
 
                   switch (selectedModel?.author) {
                     case "openai":
-                      return <SiOpenai />;
+                      return <SiOpenai aria-hidden="true" />;
                     case "anthropic":
-                      return <SiAnthropic />;
+                      return <SiAnthropic aria-hidden="true" />;
                     case "google":
-                      return <SiGooglegemini />;
+                      return <SiGooglegemini aria-hidden="true" />;
                     case "xai":
-                      return <SiX />;
+                      return <SiX aria-hidden="true" />;
                     case "openai_compatible":
-                      return <Plug className="size-4" />;
+                      return <Plug className="size-4" aria-hidden="true" />;
                     default:
-                      return <Bot />;
+                      return <Bot aria-hidden="true" />;
                   }
                 })()}
                 {selectedModel?.name ?? t("Select model")}

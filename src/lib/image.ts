@@ -1,6 +1,4 @@
-export const imageModelValues = [
-  "gemini-3-pro-image-preview",
-] as const;
+export const imageModelValues = ["gemini-3-pro-image-preview"] as const;
 
 export type ImageModel = (typeof imageModelValues)[number];
 

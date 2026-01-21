@@ -184,6 +184,9 @@ function ChatItem({ item }: { item: { id: string; title: string | null } }) {
           </DialogHeader>
           <div className="py-4">
             <Input
+              aria-label={t("Chat title")}
+              autoComplete="off"
+              name="chat-title"
               value={newTitle}
               onChange={(e) => setNewTitle(e.target.value)}
               onKeyDown={(e) => {

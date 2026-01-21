@@ -35,14 +35,17 @@ export default function ErrorPage({ error, reset }: ErrorPageProps) {
   const reportText = reportItems.map((item) => `${item.label}: ${item.value}`).join("\n");
 
   return (
-    <main className="min-h-screen bg-gradient-to-b from-background via-background to-destructive/10">
+    <main
+      className="min-h-screen bg-gradient-to-b from-background via-background to-destructive/10"
+      id="main-content"
+    >
       <div className="mx-auto flex min-h-screen max-w-3xl flex-col items-center justify-center gap-10 px-6 py-16 text-center">
         <div className="flex flex-col items-center gap-4">
           <Badge variant="destructive" className="px-3 py-1 text-xs uppercase tracking-[0.35em]">
             {t("Error")}
           </Badge>
-          <TriangleAlert className="size-12 text-destructive" />
-          <h1 className="text-4xl font-semibold tracking-tight sm:text-5xl">
+          <TriangleAlert className="size-12 text-destructive" aria-hidden="true" />
+          <h1 className="text-balance text-4xl font-semibold tracking-tight sm:text-5xl">
             {t("Something went wrong")}
           </h1>
           <p className="max-w-xl text-muted-foreground">

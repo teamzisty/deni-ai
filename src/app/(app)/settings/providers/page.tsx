@@ -149,11 +149,13 @@ export default function ProvidersPage() {
     }
 
     try {
-      await upsertKey.mutateAsync({ provider: providerId, apiKey: value });
-      await upsertSetting.mutateAsync({
-        provider: providerId,
-        preferByok: true,
-      });
+      await Promise.all([
+        upsertKey.mutateAsync({ provider: providerId, apiKey: value }),
+        upsertSetting.mutateAsync({
+          provider: providerId,
+          preferByok: true,
+        }),
+      ]);
       setPreferByok((prev) => ({ ...prev, [providerId]: true }));
       setKeyInputs((prev) => ({ ...prev, [providerId]: "" }));
       await utils.providers.getConfig.invalidate();

@@ -283,7 +283,7 @@ export function PromptInputAttachment({ data, className, ...props }: PromptInput
       <HoverCardTrigger asChild>
         <div
           className={cn(
-            "group relative flex h-8 cursor-pointer select-none items-center gap-1.5 rounded-md border border-border px-1.5 font-medium text-sm transition-all hover:bg-accent hover:text-accent-foreground dark:hover:bg-accent/50",
+            "group relative flex h-8 cursor-pointer select-none items-center gap-1.5 rounded-md border border-border px-1.5 font-medium text-sm transition-colors hover:bg-accent hover:text-accent-foreground dark:hover:bg-accent/50",
             className,
           )}
           key={data.id}
@@ -304,7 +304,7 @@ export function PromptInputAttachment({ data, className, ...props }: PromptInput
                 </>
               ) : (
                 <div className="flex size-5 items-center justify-center text-muted-foreground">
-                  <PaperclipIcon className="size-3" />
+                  <PaperclipIcon className="size-3" aria-hidden="true" />
                 </div>
               )}
             </div>
@@ -318,7 +318,7 @@ export function PromptInputAttachment({ data, className, ...props }: PromptInput
               type="button"
               variant="ghost"
             >
-              <XIcon />
+              <XIcon aria-hidden="true" />
               <span className="sr-only">{t("Remove")}</span>
             </Button>
           </div>
@@ -400,7 +400,7 @@ export const PromptInputActionAddAttachments = ({
         attachments.openFileDialog();
       }}
     >
-      <ImageIcon className="size-4" /> {effectiveLabel}
+      <ImageIcon className="size-4" aria-hidden="true" /> {effectiveLabel}
     </DropdownMenuItem>
   );
 };
@@ -832,7 +832,6 @@ export const PromptInputTextarea = ({
     }
 
     if (files.length > 0) {
-      event.preventDefault();
       attachments.add(files);
     }
   };
@@ -851,6 +850,7 @@ export const PromptInputTextarea = ({
 
   return (
     <InputGroupTextarea
+      autoComplete="off"
       className={cn("field-sizing-content max-h-48 min-h-16", className)}
       name="message"
       onCompositionEnd={() => setIsComposing(false)}
@@ -921,14 +921,20 @@ export type PromptInputActionMenuTriggerProps = PromptInputButtonProps;
 export const PromptInputActionMenuTrigger = ({
   className,
   children,
+  "aria-label": ariaLabel,
   ...props
-}: PromptInputActionMenuTriggerProps) => (
-  <DropdownMenuTrigger asChild>
-    <PromptInputButton className={className} {...props}>
-      {children ?? <PlusIcon className="size-4" />}
-    </PromptInputButton>
-  </DropdownMenuTrigger>
-);
+}: PromptInputActionMenuTriggerProps) => {
+  const t = useExtracted();
+  const resolvedLabel = ariaLabel ?? t("Open actions");
+
+  return (
+    <DropdownMenuTrigger asChild>
+      <PromptInputButton className={className} aria-label={resolvedLabel} {...props}>
+        {children ?? <PlusIcon className="size-4" aria-hidden="true" />}
+      </PromptInputButton>
+    </DropdownMenuTrigger>
+  );
+};
 
 export type PromptInputActionMenuContentProps = ComponentProps<typeof DropdownMenuContent>;
 export const PromptInputActionMenuContent = ({
@@ -964,14 +970,14 @@ export const PromptInputSubmit = ({
 }: PromptInputSubmitProps) => {
   const t = useExtracted();
   const isStreaming = status === "streaming";
-  let Icon = <CornerDownLeftIcon className="size-4" />;
+  let Icon = <CornerDownLeftIcon className="size-4" aria-hidden="true" />;
 
   if (status === "submitted") {
-    Icon = <Loader2Icon className="size-4 animate-spin" />;
+    Icon = <Loader2Icon className="size-4 animate-spin" aria-hidden="true" />;
   } else if (status === "streaming") {
-    Icon = <SquareIcon className="size-4" />;
+    Icon = <SquareIcon className="size-4" aria-hidden="true" />;
   } else if (status === "error") {
-    Icon = <XIcon className="size-4" />;
+    Icon = <XIcon className="size-4" aria-hidden="true" />;
   }
 
   return (
@@ -1056,6 +1062,7 @@ export const PromptInputSpeechButton = ({
   onTranscriptionChange,
   ...props
 }: PromptInputSpeechButtonProps) => {
+  const t = useExtracted();
   const [isListening, setIsListening] = useState(false);
   const [recognition, setRecognition] = useState<SpeechRecognition | null>(null);
   const recognitionRef = useRef<SpeechRecognition | null>(null);
@@ -1129,10 +1136,14 @@ export const PromptInputSpeechButton = ({
     }
   }, [recognition, isListening]);
 
+  const speechLabel = isListening ? t("Stop voice input") : t("Start voice input");
+
   return (
     <PromptInputButton
+      aria-label={speechLabel}
+      title={speechLabel}
       className={cn(
-        "relative transition-all duration-200",
+        "relative transition-colors duration-200",
         isListening && "animate-pulse bg-accent text-accent-foreground",
         className,
       )}
@@ -1140,7 +1151,7 @@ export const PromptInputSpeechButton = ({
       onClick={toggleListening}
       {...props}
     >
-      <MicIcon className="size-4" />
+      <MicIcon className="size-4" aria-hidden="true" />
     </PromptInputButton>
   );
 };

@@ -4,12 +4,13 @@ import { createChatFromRequest } from "@/server/chat-manager";
 
 export async function GET(request: Request, { params }: { params: Promise<{ message: string }> }) {
   try {
-    const headersList = await headers();
+    const headersPromise = headers();
+    const paramsPromise = params;
 
-    // Create a new chat and redirect to its route with the provided message as a query parameter
-    const chatId = await createChatFromRequest(headersList);
-
-    const resolvedParams = await params;
+    const headersList = await headersPromise;
+    const chatPromise = createChatFromRequest(headersList);
+    const resolvedParams = await paramsPromise;
+    const chatId = await chatPromise;
     const baseUrl = new URL(request.url);
 
     // Build redirect URL preserving query parameters from the original request

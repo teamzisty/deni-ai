@@ -3,11 +3,7 @@ import { generateText, tool } from "ai";
 import { load } from "cheerio";
 import { z } from "zod";
 import { env } from "@/env";
-import {
-  imageAspectRatios,
-  imageModelValues,
-  imageResolutions,
-} from "@/lib/image";
+import { imageAspectRatios, imageModelValues, imageResolutions } from "@/lib/image";
 import { veoAspectRatios, veoDurations, veoModelValues, veoResolutions } from "@/lib/veo";
 
 const VEO_BASE_URL = "https://generativelanguage.googleapis.com/v1beta";
@@ -104,14 +100,14 @@ async function pollVeoOperation(operationName: string, signal?: AbortSignal) {
     const videoUri =
       typeof responseData === "object" && responseData !== null
         ? ((
-          responseData as {
-            response?: {
-              generateVideoResponse?: {
-                generatedSamples?: Array<{ video?: { uri?: string } }>;
+            responseData as {
+              response?: {
+                generateVideoResponse?: {
+                  generatedSamples?: Array<{ video?: { uri?: string } }>;
+                };
               };
-            };
-          }
-        ).response?.generateVideoResponse?.generatedSamples?.[0]?.video?.uri ?? null)
+            }
+          ).response?.generateVideoResponse?.generatedSamples?.[0]?.video?.uri ?? null)
         : null;
 
     if (done) {
@@ -156,21 +152,18 @@ async function generateImageWithGemini(
     generationConfig.resolution = resolution;
   }
 
-  const response = await fetch(
-    `${GEMINI_BASE_URL}/models/${model}:generateContent`,
-    {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "x-goog-api-key": env.GOOGLE_GENERATIVE_AI_API_KEY,
-      },
-      body: JSON.stringify({
-        contents,
-        generationConfig,
-      }),
-      signal,
+  const response = await fetch(`${GEMINI_BASE_URL}/models/${model}:generateContent`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "x-goog-api-key": env.GOOGLE_GENERATIVE_AI_API_KEY,
     },
-  );
+    body: JSON.stringify({
+      contents,
+      generationConfig,
+    }),
+    signal,
+  });
 
   let responseData: unknown = null;
   try {
@@ -180,23 +173,23 @@ async function generateImageWithGemini(
   }
 
   if (!response.ok) {
-    throw new Error(
-      extractVeoErrorMessage(responseData, "Failed to generate image."),
-    );
+    throw new Error(extractVeoErrorMessage(responseData, "Failed to generate image."));
   }
 
   const candidates =
     typeof responseData === "object" &&
     responseData !== null &&
-    (responseData as {
-      candidates?: Array<{
-        content?: {
-          parts?: Array<{
-            inlineData?: { data?: string; mimeType?: string };
-          }>;
-        };
-      }>;
-    }).candidates;
+    (
+      responseData as {
+        candidates?: Array<{
+          content?: {
+            parts?: Array<{
+              inlineData?: { data?: string; mimeType?: string };
+            }>;
+          };
+        }>;
+      }
+    ).candidates;
 
   if (!candidates || candidates.length === 0) {
     throw new Error("No image candidates returned.");
@@ -334,144 +327,138 @@ export function createChatTools({ videoMode, imageMode }: CreateChatToolsOptions
     }),
     ...(videoMode
       ? {
-        video: tool({
-          description:
-            "Generate a short video with Veo. Provide a vivid visual prompt and optional settings.",
-          inputSchema: veoToolInputSchema,
-          execute: async (
-            {
-              prompt,
-              model: requestedModel,
-              negativePrompt,
-              aspectRatio,
-              resolution,
-              durationSeconds,
-              seed,
-            },
-            { abortSignal },
-          ) => {
-            const model = requestedModel ?? veoModelValues[0];
-            const finalAspectRatio = aspectRatio ?? "16:9";
-            const finalResolution = resolution ?? "720p";
-            const finalDuration = finalResolution === "1080p" ? 8 : (durationSeconds ?? 6);
-            const trimmedNegative = negativePrompt?.trim() || undefined;
-
-            const instances: Record<string, unknown>[] = [
+          video: tool({
+            description:
+              "Generate a short video with Veo. Provide a vivid visual prompt and optional settings.",
+            inputSchema: veoToolInputSchema,
+            execute: async (
               {
                 prompt,
+                model: requestedModel,
+                negativePrompt,
+                aspectRatio,
+                resolution,
+                durationSeconds,
+                seed,
               },
-            ];
+              { abortSignal },
+            ) => {
+              const model = requestedModel ?? veoModelValues[0];
+              const finalAspectRatio = aspectRatio ?? "16:9";
+              const finalResolution = resolution ?? "720p";
+              const finalDuration = finalResolution === "1080p" ? 8 : (durationSeconds ?? 6);
+              const trimmedNegative = negativePrompt?.trim() || undefined;
 
-            const parameters: Record<string, unknown> = {
-              aspectRatio: finalAspectRatio,
-              resolution: finalResolution,
-              durationSeconds: finalDuration,
-            };
+              const instances: Record<string, unknown>[] = [
+                {
+                  prompt,
+                },
+              ];
 
-            if (trimmedNegative) {
-              parameters.negativePrompt = trimmedNegative;
-            }
-            if (seed !== undefined) {
-              parameters.seed = seed;
-            }
+              const parameters: Record<string, unknown> = {
+                aspectRatio: finalAspectRatio,
+                resolution: finalResolution,
+                durationSeconds: finalDuration,
+              };
 
-            const response = await fetch(`${VEO_BASE_URL}/models/${model}:predictLongRunning`, {
-              method: "POST",
-              headers: {
-                "Content-Type": "application/json",
-                "x-goog-api-key": env.GOOGLE_GENERATIVE_AI_API_KEY,
-              },
-              body: JSON.stringify({ instances, parameters }),
-            });
+              if (trimmedNegative) {
+                parameters.negativePrompt = trimmedNegative;
+              }
+              if (seed !== undefined) {
+                parameters.seed = seed;
+              }
 
-            let responseData: unknown = null;
-            try {
-              responseData = await response.json();
-            } catch {
-              responseData = null;
-            }
+              const response = await fetch(`${VEO_BASE_URL}/models/${model}:predictLongRunning`, {
+                method: "POST",
+                headers: {
+                  "Content-Type": "application/json",
+                  "x-goog-api-key": env.GOOGLE_GENERATIVE_AI_API_KEY,
+                },
+                body: JSON.stringify({ instances, parameters }),
+              });
 
-            if (!response.ok) {
-              throw new Error(
-                extractVeoErrorMessage(responseData, "Failed to start video generation."),
-              );
-            }
+              let responseData: unknown = null;
+              try {
+                responseData = await response.json();
+              } catch {
+                responseData = null;
+              }
 
-            const operationName =
-              typeof responseData === "object" && responseData !== null
-                ? (responseData as { name?: string }).name
-                : undefined;
+              if (!response.ok) {
+                throw new Error(
+                  extractVeoErrorMessage(responseData, "Failed to start video generation."),
+                );
+              }
 
-            if (!operationName) {
-              throw new Error("Missing operation name.");
-            }
+              const operationName =
+                typeof responseData === "object" && responseData !== null
+                  ? (responseData as { name?: string }).name
+                  : undefined;
 
-            const videoUri = await pollVeoOperation(operationName, abortSignal);
-            const proxyUrl = `/api/veo/file?uri=${encodeURIComponent(videoUri)}`;
-            const modelLabel = model;
+              if (!operationName) {
+                throw new Error("Missing operation name.");
+              }
 
-            return {
-              videoUrl: proxyUrl,
-              operationName,
-              model,
-              modelLabel,
-              aspectRatio: finalAspectRatio,
-              resolution: finalResolution,
-              durationSeconds: finalDuration,
-              seed: seed ?? null,
-              negativePrompt: trimmedNegative ?? null,
-            };
-          },
-        }),
-      }
+              const videoUri = await pollVeoOperation(operationName, abortSignal);
+              const proxyUrl = `/api/veo/file?uri=${encodeURIComponent(videoUri)}`;
+              const modelLabel = model;
+
+              return {
+                videoUrl: proxyUrl,
+                operationName,
+                model,
+                modelLabel,
+                aspectRatio: finalAspectRatio,
+                resolution: finalResolution,
+                durationSeconds: finalDuration,
+                seed: seed ?? null,
+                negativePrompt: trimmedNegative ?? null,
+              };
+            },
+          }),
+        }
       : {}),
     ...(imageMode
       ? {
-        image: tool({
-          description:
-            "Generate images with Nano Banana Pro (Gemini 3 Pro Image). Provide a vivid visual prompt and optional settings.",
-          inputSchema: imageToolInputSchema,
-          execute: async (
-            {
-              prompt,
-              model: requestedModel,
-              aspectRatio,
-              resolution,
-              numberOfImages,
+          image: tool({
+            description:
+              "Generate images with Nano Banana Pro (Gemini 3 Pro Image). Provide a vivid visual prompt and optional settings.",
+            inputSchema: imageToolInputSchema,
+            execute: async (
+              { prompt, model: requestedModel, aspectRatio, resolution, numberOfImages },
+              { abortSignal },
+            ) => {
+              const model = requestedModel ?? imageModelValues[0];
+              const finalAspectRatio = aspectRatio ?? "1:1";
+              const finalResolution = resolution ?? "1K";
+              const finalNumberOfImages = numberOfImages ?? 1;
+
+              const generatedImages = await generateImageWithGemini(
+                prompt,
+                model,
+                finalAspectRatio,
+                finalResolution,
+                finalNumberOfImages,
+                abortSignal,
+              );
+
+              const imageUrls = generatedImages.map(
+                (img, idx) =>
+                  `/api/image/file?data=${encodeURIComponent(img.imageBytes)}&mimeType=${encodeURIComponent(img.mimeType)}&index=${idx}`,
+              );
+              const modelLabel = "Nano Banana Pro";
+
+              return {
+                imageUrls,
+                model,
+                modelLabel,
+                aspectRatio: finalAspectRatio,
+                resolution: finalResolution,
+                numberOfImages: finalNumberOfImages,
+              };
             },
-            { abortSignal },
-          ) => {
-            const model = requestedModel ?? imageModelValues[0];
-            const finalAspectRatio = aspectRatio ?? "1:1";
-            const finalResolution = resolution ?? "1K";
-            const finalNumberOfImages = numberOfImages ?? 1;
-
-            const generatedImages = await generateImageWithGemini(
-              prompt,
-              model,
-              finalAspectRatio,
-              finalResolution,
-              finalNumberOfImages,
-              abortSignal,
-            );
-
-            const imageUrls = generatedImages.map(
-              (img, idx) =>
-                `/api/image/file?data=${encodeURIComponent(img.imageBytes)}&mimeType=${encodeURIComponent(img.mimeType)}&index=${idx}`,
-            );
-            const modelLabel = "Nano Banana Pro";
-
-            return {
-              imageUrls,
-              model,
-              modelLabel,
-              aspectRatio: finalAspectRatio,
-              resolution: finalResolution,
-              numberOfImages: finalNumberOfImages,
-            };
-          },
-        }),
-      }
+          }),
+        }
       : {}),
   };
 

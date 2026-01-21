@@ -18,13 +18,13 @@ export default function MigrationPage() {
   const t = useExtracted();
 
   return (
-    <main className="min-h-screen bg-background">
+    <main className="min-h-screen bg-background" id="main-content">
       <div className="mx-auto flex max-w-4xl flex-col gap-8 px-4 pb-16 pt-28 sm:px-6 lg:px-8">
         <div className="space-y-3">
           <Badge variant="secondary" className="px-3 py-1 text-xs">
             {t("Migration")}
           </Badge>
-          <h1 className="text-3xl font-semibold tracking-tight sm:text-4xl">
+          <h1 className="text-balance text-3xl font-semibold tracking-tight sm:text-4xl">
             {t("Message Migration")}
           </h1>
           <p className="text-base text-muted-foreground">

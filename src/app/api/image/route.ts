@@ -3,11 +3,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { env } from "@/env";
 import { auth } from "@/lib/auth";
-import {
-  imageAspectRatios,
-  imageModelValues,
-  imageResolutions,
-} from "@/lib/image";
+import { imageAspectRatios, imageModelValues, imageResolutions } from "@/lib/image";
 
 const GEMINI_BASE_URL = "https://generativelanguage.googleapis.com/v1beta";
 
@@ -56,20 +52,17 @@ export async function POST(req: Request) {
     generationConfig.resolution = data.resolution;
   }
 
-  const response = await fetch(
-    `${GEMINI_BASE_URL}/models/${data.model}:generateContent`,
-    {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "x-goog-api-key": env.GOOGLE_GENERATIVE_AI_API_KEY,
-      },
-      body: JSON.stringify({
-        contents,
-        generationConfig,
-      }),
+  const response = await fetch(`${GEMINI_BASE_URL}/models/${data.model}:generateContent`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "x-goog-api-key": env.GOOGLE_GENERATIVE_AI_API_KEY,
     },
-  );
+    body: JSON.stringify({
+      contents,
+      generationConfig,
+    }),
+  });
 
   let responseData: unknown = null;
   try {
@@ -79,25 +72,24 @@ export async function POST(req: Request) {
   }
 
   if (!response.ok) {
-    const errorMessage = extractErrorMessage(
-      responseData,
-      "Failed to generate image.",
-    );
+    const errorMessage = extractErrorMessage(responseData, "Failed to generate image.");
     return NextResponse.json({ error: errorMessage }, { status: response.status });
   }
 
   const candidates =
     typeof responseData === "object" &&
     responseData !== null &&
-    (responseData as {
-      candidates?: Array<{
-        content?: {
-          parts?: Array<{
-            inlineData?: { data?: string; mimeType?: string };
-          }>;
-        };
-      }>;
-    }).candidates;
+    (
+      responseData as {
+        candidates?: Array<{
+          content?: {
+            parts?: Array<{
+              inlineData?: { data?: string; mimeType?: string };
+            }>;
+          };
+        }>;
+      }
+    ).candidates;
 
   if (!candidates || candidates.length === 0) {
     return NextResponse.json({ error: "No image candidates returned." }, { status: 500 });

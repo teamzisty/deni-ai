@@ -30,16 +30,19 @@ const UIMessagesSchema = z
   .transform((value) => value as unknown as UIMessage[]);
 
 export async function POST(req: Request) {
-  const headersList = await headers();
-  const session = await auth.api.getSession({ headers: headersList });
+  const headersPromise = headers();
+  const sessionPromise = headersPromise.then((headersList) =>
+    auth.api.getSession({ headers: headersList }),
+  );
+  const bodyPromise = req.json();
+
+  const [session, body] = await Promise.all([sessionPromise, bodyPromise]);
   const userId = session?.session?.userId;
   const isAnonymous = Boolean(session?.user?.isAnonymous);
 
   if (!userId) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
-
-  const body = await req.json();
   const parsedBody = z
     .object({
       id: z.string().min(1),
@@ -62,6 +65,7 @@ export async function POST(req: Request) {
     model: baseModel,
     reasoningEffort = "high",
     video: videoMode = false,
+    image: imageMode = false,
   } = parsedBody.data;
 
   const validatedMessages = await safeValidateUIMessages<UIMessage>({
@@ -313,12 +317,11 @@ export async function POST(req: Request) {
     messages: modelMessages,
     stopWhen: stepCountIs(50),
     tools,
-    toolChoice:
-      videoMode
-        ? { type: "tool", toolName: "video" }
-        : imageMode
-          ? { type: "tool", toolName: "image" }
-          : undefined,
+    toolChoice: videoMode
+      ? { type: "tool", toolName: "video" }
+      : imageMode
+        ? { type: "tool", toolName: "image" }
+        : undefined,
     providerOptions: {
       openai: {
         reasoningEffort,

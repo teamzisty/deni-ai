@@ -75,6 +75,7 @@ export default function ChatHome() {
         webSearch: options.webSearch,
         model: options.model,
         videoMode: options.videoMode,
+        imageMode: options.imageMode,
         reasoningEffort: options.reasoningEffort,
       };
 
@@ -90,8 +91,14 @@ export default function ChatHome() {
   };
 
   return (
-    <main className="flex min-h-screen flex-col gap-8 items-center justify-center text-center p-4">
-      <h1 className="text-2xl md:text-3xl lg:text-4xl font-bold tracking-tighter">
+    <section
+      aria-labelledby="chat-home-title"
+      className="flex min-h-screen flex-col gap-8 items-center justify-center text-center p-4"
+    >
+      <h1
+        className="text-balance text-2xl md:text-3xl lg:text-4xl font-bold tracking-tighter"
+        id="chat-home-title"
+      >
         {t("Hello, How can I help you today?")}
       </h1>
 
@@ -114,6 +121,6 @@ export default function ChatHome() {
           onReasoningEffortChange={setReasoningEffort}
         />
       </div>
-    </main>
+    </section>
   );
 }
