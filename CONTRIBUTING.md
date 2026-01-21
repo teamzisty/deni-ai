@@ -97,6 +97,7 @@ Refer to `src/env.ts` for the complete list of required environment variables. K
 2. **Make your changes**: Follow the coding standards below
 
 3. **Test your changes**:
+
    ```bash
    bun run lint      # Check for linting errors
    bun run format    # Format code
@@ -104,6 +105,7 @@ Refer to `src/env.ts` for the complete list of required environment variables. K
    ```
 
 4. **Commit your changes**: Write clear, concise commit messages
+
    ```
    feat: add support for new AI provider
    fix: resolve chat message ordering issue
@@ -127,7 +129,7 @@ Refer to `src/env.ts` for the complete list of required environment variables. K
 
 ### Code Style
 
-- We use [Biome](https://biomejs.dev/) for linting and formatting
+- We use [oxlint](https://oxc-project.github.io/docs/linter) for linting and [oxfmt](https://oxc-project.github.io/docs/formatter) for formatting
 - Run `bun run lint` and `bun run format` before committing
 - Follow existing patterns in the codebase
 

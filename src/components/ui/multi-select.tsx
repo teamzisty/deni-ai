@@ -1,14 +1,10 @@
 // components/ui/multi-select.tsx
 import * as React from "react";
-import { Check, ChevronsUpDown, X } from "lucide-react";
-import { cn } from "@/lib/utils"; // なければ classNames ラッパーを自作してね
+import { Check } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 import { Button } from "@/components/ui/button";
-import {
-  Popover,
-  PopoverTrigger,
-  PopoverContent,
-} from "@/components/ui/popover";
+import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover";
 import {
   Command,
   CommandGroup,
@@ -26,13 +22,13 @@ export type MultiSelectOption = {
 
 type MultiSelectProps = {
   options: MultiSelectOption[];
-  value: string[]; // 選択されている value の配列
+  value: string[];
   onChange: (value: string[]) => void;
   placeholder?: string;
   disabled?: boolean;
   className?: string;
   emptyText?: string;
-  maxBadges?: number; // ボタン内に表示する最大バッジ数（デフォルト 2）
+  maxBadges?: number;
 };
 
 export function MultiSelect({
@@ -55,10 +51,10 @@ export function MultiSelect({
     }
   };
 
-  const clearAll = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    onChange([]);
-  };
+  // const clearAll = (e: React.MouseEvent) => {
+  //   e.stopPropagation();
+  //   onChange([]);
+  // };
 
   const selectedOptions = options.filter((opt) => value.includes(opt.value));
 
@@ -74,7 +70,7 @@ export function MultiSelect({
           className={cn(
             "w-full justify-between overflow-hidden",
             !selectedOptions.length && "text-muted-foreground",
-            className
+            className,
           )}
         >
           <div className="flex items-center gap-2 overflow-hidden">
@@ -90,9 +86,7 @@ export function MultiSelect({
                       className="flex items-center gap-1 text-xs"
                     >
                       {opt.icon}
-                      <span className="truncate max-w-[120px]">
-                        {opt.label}
-                      </span>
+                      <span className="truncate max-w-[120px]">{opt.label}</span>
                     </Badge>
                   ))}
                   {selectedOptions.length > maxBadges && (
@@ -124,9 +118,7 @@ export function MultiSelect({
                     <span
                       className={cn(
                         "mr-2 flex h-4 w-4 items-center justify-center rounded-sm border",
-                        isSelected
-                          ? "bg-primary text-primary-foreground"
-                          : "opacity-50"
+                        isSelected ? "bg-primary text-primary-foreground" : "opacity-50",
                       )}
                     >
                       {isSelected && <Check className="h-3 w-3" />}

@@ -3,11 +3,7 @@
 import { ChevronDownIcon, PaperclipIcon } from "lucide-react";
 import type { ComponentProps } from "react";
 import { Button } from "@/components/ui/button";
-import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from "@/components/ui/collapsible";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
 
@@ -76,9 +72,7 @@ export const QueueItemContent = ({
   <span
     className={cn(
       "line-clamp-1 grow break-words",
-      completed
-        ? "text-muted-foreground/50 line-through"
-        : "text-muted-foreground",
+      completed ? "text-muted-foreground/50 line-through" : "text-muted-foreground",
       className,
     )}
     {...props}
@@ -97,9 +91,7 @@ export const QueueItemDescription = ({
   <div
     className={cn(
       "ml-6 text-xs",
-      completed
-        ? "text-muted-foreground/40 line-through"
-        : "text-muted-foreground",
+      completed ? "text-muted-foreground/40 line-through" : "text-muted-foreground",
       className,
     )}
     {...props}
@@ -108,22 +100,13 @@ export const QueueItemDescription = ({
 
 export type QueueItemActionsProps = ComponentProps<"div">;
 
-export const QueueItemActions = ({
-  className,
-  ...props
-}: QueueItemActionsProps) => (
+export const QueueItemActions = ({ className, ...props }: QueueItemActionsProps) => (
   <div className={cn("flex gap-1", className)} {...props} />
 );
 
-export type QueueItemActionProps = Omit<
-  ComponentProps<typeof Button>,
-  "variant" | "size"
->;
+export type QueueItemActionProps = Omit<ComponentProps<typeof Button>, "variant" | "size">;
 
-export const QueueItemAction = ({
-  className,
-  ...props
-}: QueueItemActionProps) => (
+export const QueueItemAction = ({ className, ...props }: QueueItemActionProps) => (
   <Button
     className={cn(
       "size-auto rounded p-1 text-muted-foreground opacity-0 transition-opacity hover:bg-muted-foreground/10 hover:text-foreground group-hover:opacity-100",
@@ -138,20 +121,14 @@ export const QueueItemAction = ({
 
 export type QueueItemAttachmentProps = ComponentProps<"div">;
 
-export const QueueItemAttachment = ({
-  className,
-  ...props
-}: QueueItemAttachmentProps) => (
+export const QueueItemAttachment = ({ className, ...props }: QueueItemAttachmentProps) => (
   <div className={cn("mt-1 flex flex-wrap gap-2", className)} {...props} />
 );
 
 export type QueueItemImageProps = ComponentProps<"img">;
 
-export const QueueItemImage = ({
-  className,
-  ...props
-}: QueueItemImageProps) => (
-  // biome-ignore lint/performance/noImgElement: attachment previews can be blob/data URLs.
+export const QueueItemImage = ({ className, ...props }: QueueItemImageProps) => (
+  // oxlint-disable-next-line: attachment previews can be blob/data URLs.
   <img
     alt=""
     className={cn("h-8 w-8 rounded border object-cover", className)}
@@ -163,16 +140,9 @@ export const QueueItemImage = ({
 
 export type QueueItemFileProps = ComponentProps<"span">;
 
-export const QueueItemFile = ({
-  children,
-  className,
-  ...props
-}: QueueItemFileProps) => (
+export const QueueItemFile = ({ children, className, ...props }: QueueItemFileProps) => (
   <span
-    className={cn(
-      "flex items-center gap-1 rounded border bg-muted px-2 py-1 text-xs",
-      className,
-    )}
+    className={cn("flex items-center gap-1 rounded border bg-muted px-2 py-1 text-xs", className)}
     {...props}
   >
     <PaperclipIcon size={12} />
@@ -182,11 +152,7 @@ export const QueueItemFile = ({
 
 export type QueueListProps = ComponentProps<typeof ScrollArea>;
 
-export const QueueList = ({
-  children,
-  className,
-  ...props
-}: QueueListProps) => (
+export const QueueList = ({ children, className, ...props }: QueueListProps) => (
   <ScrollArea className={cn("-mb-1 mt-2", className)} {...props}>
     <div className="max-h-40 pr-4">
       <ul>{children}</ul>
@@ -197,11 +163,7 @@ export const QueueList = ({
 // QueueSection - collapsible section container
 export type QueueSectionProps = ComponentProps<typeof Collapsible>;
 
-export const QueueSection = ({
-  className,
-  defaultOpen = true,
-  ...props
-}: QueueSectionProps) => (
+export const QueueSection = ({ className, defaultOpen = true, ...props }: QueueSectionProps) => (
   <Collapsible className={cn(className)} defaultOpen={defaultOpen} {...props} />
 );
 
@@ -251,14 +213,9 @@ export const QueueSectionLabel = ({
 );
 
 // QueueSectionContent - collapsible content area
-export type QueueSectionContentProps = ComponentProps<
-  typeof CollapsibleContent
->;
+export type QueueSectionContentProps = ComponentProps<typeof CollapsibleContent>;
 
-export const QueueSectionContent = ({
-  className,
-  ...props
-}: QueueSectionContentProps) => (
+export const QueueSectionContent = ({ className, ...props }: QueueSectionContentProps) => (
   <CollapsibleContent className={cn(className)} {...props} />
 );
 

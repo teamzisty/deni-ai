@@ -1,18 +1,14 @@
 import { sql } from "drizzle-orm";
-import {
-  integer,
-  pgTable,
-  text,
-  timestamp,
-  uniqueIndex,
-} from "drizzle-orm/pg-core";
+import { integer, pgTable, text, timestamp, uniqueIndex } from "drizzle-orm/pg-core";
 
 import { user } from "./auth-schema";
 
 export const billing = pgTable(
   "billing",
   {
-    id: text("id").primaryKey().default(sql`gen_random_uuid()`),
+    id: text("id")
+      .primaryKey()
+      .default(sql`gen_random_uuid()`),
     userId: text("user_id")
       .notNull()
       .references(() => user.id, { onDelete: "cascade" }),
@@ -34,8 +30,6 @@ export const billing = pgTable(
   (table) => ({
     userIdx: uniqueIndex("billing_user_idx").on(table.userId),
     customerIdx: uniqueIndex("billing_customer_idx").on(table.stripeCustomerId),
-    subscriptionIdx: uniqueIndex("billing_subscription_idx").on(
-      table.stripeSubscriptionId,
-    ),
+    subscriptionIdx: uniqueIndex("billing_subscription_idx").on(table.stripeSubscriptionId),
   }),
 );

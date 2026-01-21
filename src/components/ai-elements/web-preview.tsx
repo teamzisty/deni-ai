@@ -5,18 +5,9 @@ import { useExtracted } from "next-intl";
 import type { ComponentProps, ReactNode } from "react";
 import { createContext, useContext, useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
-import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from "@/components/ui/collapsible";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Input } from "@/components/ui/input";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 
 export type WebPreviewContextValue = {
@@ -66,10 +57,7 @@ export const WebPreview = ({
   return (
     <WebPreviewContext.Provider value={contextValue}>
       <div
-        className={cn(
-          "flex size-full flex-col rounded-lg border bg-card",
-          className,
-        )}
+        className={cn("flex size-full flex-col rounded-lg border bg-card", className)}
         {...props}
       >
         {children}
@@ -85,10 +73,7 @@ export const WebPreviewNavigation = ({
   children,
   ...props
 }: WebPreviewNavigationProps) => (
-  <div
-    className={cn("flex items-center gap-1 border-b p-2", className)}
-    {...props}
-  >
+  <div className={cn("flex items-center gap-1 border-b p-2", className)} {...props}>
     {children}
   </div>
 );
@@ -127,12 +112,7 @@ export const WebPreviewNavigationButton = ({
 
 export type WebPreviewUrlProps = ComponentProps<typeof Input>;
 
-export const WebPreviewUrl = ({
-  value,
-  onChange,
-  onKeyDown,
-  ...props
-}: WebPreviewUrlProps) => {
+export const WebPreviewUrl = ({ value, onChange, onKeyDown, ...props }: WebPreviewUrlProps) => {
   const t = useExtracted();
   const { url, setUrl } = useWebPreview();
   const [inputValue, setInputValue] = useState(url);
@@ -171,12 +151,7 @@ export type WebPreviewBodyProps = ComponentProps<"iframe"> & {
   loading?: ReactNode;
 };
 
-export const WebPreviewBody = ({
-  className,
-  loading,
-  src,
-  ...props
-}: WebPreviewBodyProps) => {
+export const WebPreviewBody = ({ className, loading, src, ...props }: WebPreviewBodyProps) => {
   const t = useExtracted();
   const { url } = useWebPreview();
 
@@ -225,10 +200,7 @@ export const WebPreviewConsole = ({
         >
           {t("Console")}
           <ChevronDownIcon
-            className={cn(
-              "h-4 w-4 transition-transform duration-200",
-              consoleOpen && "rotate-180",
-            )}
+            className={cn("h-4 w-4 transition-transform duration-200", consoleOpen && "rotate-180")}
           />
         </Button>
       </CollapsibleTrigger>
@@ -252,9 +224,7 @@ export const WebPreviewConsole = ({
                 )}
                 key={`${log.timestamp.getTime()}-${index}`}
               >
-                <span className="text-muted-foreground">
-                  {log.timestamp.toLocaleTimeString()}
-                </span>{" "}
+                <span className="text-muted-foreground">{log.timestamp.toLocaleTimeString()}</span>{" "}
                 {log.message}
               </div>
             ))

@@ -1,20 +1,8 @@
-import {
-  type AnthropicProviderOptions,
-  createAnthropic,
-} from "@ai-sdk/anthropic";
-import {
-  createGoogleGenerativeAI,
-  type GoogleGenerativeAIProviderOptions,
-} from "@ai-sdk/google";
+import { type AnthropicProviderOptions, createAnthropic } from "@ai-sdk/anthropic";
+import { createGoogleGenerativeAI, type GoogleGenerativeAIProviderOptions } from "@ai-sdk/google";
 import { createGroq } from "@ai-sdk/groq";
-import {
-  createOpenAI,
-  type OpenAIResponsesProviderOptions,
-} from "@ai-sdk/openai";
-import {
-  createOpenRouter,
-  type OpenRouterProviderOptions,
-} from "@openrouter/ai-sdk-provider";
+import { createOpenAI, type OpenAIResponsesProviderOptions } from "@ai-sdk/openai";
+import { createOpenRouter, type OpenRouterProviderOptions } from "@openrouter/ai-sdk-provider";
 import {
   convertToModelMessages,
   type LanguageModel,
@@ -23,7 +11,6 @@ import {
   streamText,
   type UIMessage,
 } from "ai";
-import { checkBotId } from "botid/server";
 import { and, eq } from "drizzle-orm";
 import { headers } from "next/headers";
 import { NextResponse } from "next/server";
@@ -36,37 +23,26 @@ import { generateTitle, getChatById, updateChat } from "@/lib/chat";
 import { createChatTools } from "@/lib/chat-tools";
 import { models } from "@/lib/constants";
 import { decryptFromB64 } from "@/lib/crypto";
-import {
-  consumeUsage,
-  getUsageSummary,
-  type UsageCategory,
-  UsageLimitError,
-} from "@/lib/usage";
+import { consumeUsage, getUsageSummary, type UsageCategory, UsageLimitError } from "@/lib/usage";
 
 const UIMessagesSchema = z
   .array(z.record(z.string(), z.unknown()))
   .transform((value) => value as unknown as UIMessage[]);
 
 export async function POST(req: Request) {
-  const verification = await checkBotId();
+  const headersPromise = headers();
+  const sessionPromise = headersPromise.then((headersList) =>
+    auth.api.getSession({ headers: headersList }),
+  );
+  const bodyPromise = req.json();
 
-  if (verification.isBot) {
-    return NextResponse.json(
-      { error: "Could not verify you are human." },
-      { status: 403 },
-    );
-  }
-
-  const headersList = await headers();
-  const session = await auth.api.getSession({ headers: headersList });
+  const [session, body] = await Promise.all([sessionPromise, bodyPromise]);
   const userId = session?.session?.userId;
   const isAnonymous = Boolean(session?.user?.isAnonymous);
 
   if (!userId) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
-
-  const body = await req.json();
   const parsedBody = z
     .object({
       id: z.string().min(1),
@@ -75,14 +51,12 @@ export async function POST(req: Request) {
       webSearch: z.boolean().optional(),
       reasoningEffort: z.enum(["low", "medium", "high"]).optional(),
       video: z.boolean().optional(),
+      image: z.boolean().optional(),
     })
     .safeParse(body);
 
   if (!parsedBody.success) {
-    return NextResponse.json(
-      { error: "Invalid request body" },
-      { status: 400 },
-    );
+    return NextResponse.json({ error: "Invalid request body" }, { status: 400 });
   }
 
   const {
@@ -91,6 +65,7 @@ export async function POST(req: Request) {
     model: baseModel,
     reasoningEffort = "high",
     video: videoMode = false,
+    image: imageMode = false,
   } = parsedBody.data;
 
   const validatedMessages = await safeValidateUIMessages<UIMessage>({
@@ -98,10 +73,7 @@ export async function POST(req: Request) {
   });
 
   if (!validatedMessages.success) {
-    return NextResponse.json(
-      { error: "Invalid messages payload" },
-      { status: 400 },
-    );
+    return NextResponse.json({ error: "Invalid messages payload" }, { status: 400 });
   }
 
   const messages = validatedMessages.data;
@@ -110,20 +82,13 @@ export async function POST(req: Request) {
     baseURL: "https://capi.voids.top/v2", // safe custom openai-compatible api
   });
   const isCustomModel = baseModel.startsWith("custom:");
-  const customModelId = isCustomModel
-    ? baseModel.slice("custom:".length)
-    : null;
+  const customModelId = isCustomModel ? baseModel.slice("custom:".length) : null;
   const selectedModel = models.find((m) => m.value === baseModel);
   const customEntry = customModelId
     ? await db
         .select()
         .from(customModel)
-        .where(
-          and(
-            eq(customModel.userId, userId),
-            eq(customModel.id, customModelId),
-          ),
-        )
+        .where(and(eq(customModel.userId, userId), eq(customModel.id, customModelId)))
         .limit(1)
         .then((rows) => rows[0] ?? null)
     : null;
@@ -132,9 +97,7 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Unknown model" }, { status: 400 });
   }
 
-  const isPremiumModel = Boolean(
-    customEntry?.premium ?? selectedModel?.premium ?? false,
-  );
+  const isPremiumModel = Boolean(customEntry?.premium ?? selectedModel?.premium ?? false);
 
   if (isAnonymous && isPremiumModel) {
     return NextResponse.json(
@@ -150,12 +113,8 @@ export async function POST(req: Request) {
     db.select().from(providerSetting).where(eq(providerSetting.userId, userId)),
   ]);
 
-  const providerKeyMap = new Map(
-    providerKeys.map((entry) => [entry.provider, entry.keyEnc]),
-  );
-  const providerSettingMap = new Map(
-    providerSettings.map((entry) => [entry.provider, entry]),
-  );
+  const providerKeyMap = new Map(providerKeys.map((entry) => [entry.provider, entry.keyEnc]));
+  const providerSettingMap = new Map(providerSettings.map((entry) => [entry.provider, entry]));
 
   const providerId = customEntry
     ? "openai_compatible"
@@ -191,11 +150,7 @@ export async function POST(req: Request) {
       byokApiKey = await decryptFromB64(keyEnc);
       byokBaseUrl = setting?.baseUrl ?? undefined;
       byokApiStyle =
-        setting?.apiStyle === "chat"
-          ? "chat"
-          : providerId === "xai"
-            ? "chat"
-            : "responses";
+        setting?.apiStyle === "chat" ? "chat" : providerId === "xai" ? "chat" : "responses";
       useByok = true;
     }
   }
@@ -207,9 +162,7 @@ export async function POST(req: Request) {
   if (!useByok) {
     try {
       const usageSummary = await getUsageSummary({ userId, isAnonymous });
-      const categoryUsage = usageSummary.usage.find(
-        (usage) => usage.category === usageCategory,
-      );
+      const categoryUsage = usageSummary.usage.find((usage) => usage.category === usageCategory);
 
       if (
         categoryUsage?.remaining !== null &&
@@ -220,17 +173,11 @@ export async function POST(req: Request) {
       }
     } catch (error) {
       if (error instanceof UsageLimitError) {
-        return NextResponse.json(
-          { error: error.message, reason: "usage_limit" },
-          { status: 402 },
-        );
+        return NextResponse.json({ error: error.message, reason: "usage_limit" }, { status: 402 });
       }
 
       console.error("Failed to check usage", error);
-      return NextResponse.json(
-        { error: "Unable to check usage" },
-        { status: 500 },
-      );
+      return NextResponse.json({ error: "Unable to check usage" }, { status: 500 });
     }
   }
 
@@ -342,7 +289,7 @@ export async function POST(req: Request) {
       break;
   }
 
-  const tools = createChatTools({ videoMode });
+  const tools = createChatTools({ videoMode, imageMode });
 
   const modelMessages = await convertToModelMessages(messages);
   const currentDate = new Date().toISOString().split("T")[0];
@@ -370,7 +317,11 @@ export async function POST(req: Request) {
     messages: modelMessages,
     stopWhen: stepCountIs(50),
     tools,
-    toolChoice: videoMode ? { type: "tool", toolName: "video" } : undefined,
+    toolChoice: videoMode
+      ? { type: "tool", toolName: "video" }
+      : imageMode
+        ? { type: "tool", toolName: "image" }
+        : undefined,
     providerOptions: {
       openai: {
         reasoningEffort,
@@ -380,11 +331,7 @@ export async function POST(req: Request) {
         thinking: {
           type: "enabled",
           budgetTokens:
-            reasoningEffort === "low"
-              ? 1024
-              : reasoningEffort === "high"
-                ? 16000
-                : 8192,
+            reasoningEffort === "low" ? 1024 : reasoningEffort === "high" ? 16000 : 8192,
         },
       } satisfies AnthropicProviderOptions,
       google: {

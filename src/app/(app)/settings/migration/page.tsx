@@ -5,13 +5,7 @@ import { useExtracted } from "next-intl";
 import { useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Spinner } from "@/components/ui/spinner";
@@ -71,9 +65,7 @@ export default function MigrationPage() {
   return (
     <div className="mx-auto flex w-full max-w-4xl flex-col gap-6">
       <div className="space-y-2">
-        <h1 className="text-3xl font-semibold tracking-tight">
-          {t("Message Migration")}
-        </h1>
+        <h1 className="text-3xl font-semibold tracking-tight">{t("Message Migration")}</h1>
         <p className="text-muted-foreground">
           {t("Move your chats from the old version into this site.")}
         </p>
@@ -89,9 +81,7 @@ export default function MigrationPage() {
         <CardContent className="space-y-4">
           <div className="flex flex-wrap gap-2">
             <Button type="button" variant="secondary" asChild>
-              <Link href="https://migrate.deniai.app">
-                {t("Go to migrator tool")}
-              </Link>
+              <Link href="https://migrate.deniai.app">{t("Go to migrator tool")}</Link>
             </Button>
           </div>
         </CardContent>

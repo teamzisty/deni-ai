@@ -2,17 +2,15 @@ import { headers } from "next/headers";
 import { NextResponse } from "next/server";
 import { createChatFromRequest } from "@/server/chat-manager";
 
-export async function GET(
-  request: Request,
-  { params }: { params: Promise<{ message: string }> },
-) {
+export async function GET(request: Request, { params }: { params: Promise<{ message: string }> }) {
   try {
-    const headersList = await headers();
+    const headersPromise = headers();
+    const paramsPromise = params;
 
-    // Create a new chat and redirect to its route with the provided message as a query parameter
-    const chatId = await createChatFromRequest(headersList);
-
-    const resolvedParams = await params;
+    const headersList = await headersPromise;
+    const chatPromise = createChatFromRequest(headersList);
+    const resolvedParams = await paramsPromise;
+    const chatId = await chatPromise;
     const baseUrl = new URL(request.url);
 
     // Build redirect URL preserving query parameters from the original request
@@ -25,10 +23,7 @@ export async function GET(
       redirectParams.set("webSearch", "true");
     }
 
-    const redirectUrl = new URL(
-      `/chat/${chatId}?${redirectParams.toString()}`,
-      baseUrl.origin,
-    );
+    const redirectUrl = new URL(`/chat/${chatId}?${redirectParams.toString()}`, baseUrl.origin);
     return NextResponse.redirect(redirectUrl);
   } catch (error) {
     if (error instanceof Error) {
@@ -37,9 +32,6 @@ export async function GET(
       }
     }
     console.error("[GET /new/[message]] Error creating chat:", error);
-    return NextResponse.json(
-      { error: "Failed to create chat" },
-      { status: 500 },
-    );
+    return NextResponse.json({ error: "Failed to create chat" }, { status: 500 });
   }
 }

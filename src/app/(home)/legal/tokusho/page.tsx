@@ -19,13 +19,11 @@ export async function generateMetadata(): Promise<Metadata> {
 
 export default function TokushoPage() {
   return (
-    <main className="min-h-screen bg-background">
+    <main className="min-h-screen bg-background" id="main-content">
       <div className="mx-auto flex max-w-4xl flex-col gap-10 px-4 pb-16 pt-28 sm:px-6 lg:px-8">
         <div className="space-y-3">
-          <p className="text-sm text-muted-foreground">
-            最終更新日: 2025-12-31
-          </p>
-          <h1 className="text-3xl font-semibold tracking-tight sm:text-4xl">
+          <p className="text-sm text-muted-foreground">最終更新日: 2025-12-31</p>
+          <h1 className="text-balance text-3xl font-semibold tracking-tight sm:text-4xl">
             特定商取引法に基づく表記
           </h1>
         </div>
@@ -39,9 +37,7 @@ export default function TokushoPage() {
           </div>
           <div className="grid gap-2 border-border p-4 sm:grid-cols-3 sm:gap-6 sm:border-b">
             <dt className="text-sm font-medium">運営責任者</dt>
-            <dd className="text-sm text-muted-foreground sm:col-span-2">
-              桃木 悠汰
-            </dd>
+            <dd className="text-sm text-muted-foreground sm:col-span-2">桃木 悠汰</dd>
           </div>
           <div className="grid gap-2 border-border p-4 sm:grid-cols-3 sm:gap-6 sm:border-b">
             <dt className="text-sm font-medium">所在地</dt>
@@ -57,15 +53,11 @@ export default function TokushoPage() {
           </div>
           <div className="grid gap-2 border-border p-4 sm:grid-cols-3 sm:gap-6 sm:border-b">
             <dt className="text-sm font-medium">メールアドレス</dt>
-            <dd className="text-sm text-muted-foreground sm:col-span-2">
-              imraicdev@gmail.com
-            </dd>
+            <dd className="text-sm text-muted-foreground sm:col-span-2">imraicdev@gmail.com</dd>
           </div>
           <div className="grid gap-2 border-border p-4 sm:grid-cols-3 sm:gap-6 sm:border-b">
             <dt className="text-sm font-medium">利用可能な決済手段</dt>
-            <dd className="text-sm text-muted-foreground sm:col-span-2">
-              クレジットカード
-            </dd>
+            <dd className="text-sm text-muted-foreground sm:col-span-2">クレジットカード</dd>
           </div>
           <div className="grid gap-2 border-border p-4 sm:grid-cols-3 sm:gap-6 sm:border-b">
             <dt className="text-sm font-medium">決済期間</dt>
@@ -93,9 +85,7 @@ export default function TokushoPage() {
           </div>
           <div className="grid gap-2 p-4 sm:grid-cols-3 sm:gap-6">
             <dt className="text-sm font-medium">追加手数料</dt>
-            <dd className="text-sm text-muted-foreground sm:col-span-2">
-              なし
-            </dd>
+            <dd className="text-sm text-muted-foreground sm:col-span-2">なし</dd>
           </div>
         </dl>
       </div>

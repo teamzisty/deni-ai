@@ -19,13 +19,7 @@ import {
 } from "../ui/alert-dialog";
 import { Badge } from "../ui/badge";
 import { Button } from "../ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "../ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../ui/card";
 import { Progress } from "../ui/progress";
 import { Spinner } from "../ui/spinner";
 import { Tabs, TabsList, TabsTrigger } from "../ui/tabs";
@@ -139,10 +133,7 @@ function getPlanCopy(planId: BillingPlanId): PlanCopy {
   }
 }
 
-function getPlanIntervalLabel(
-  planId: BillingPlanId,
-  t: ReturnType<typeof useExtracted>,
-) {
+function getPlanIntervalLabel(planId: BillingPlanId, t: ReturnType<typeof useExtracted>) {
   if (planId.endsWith("_monthly")) {
     return t("Monthly");
   }
@@ -184,13 +175,8 @@ function PlanCard({
   const t = useExtracted();
   const planCopy = getPlanCopy(plan.id);
   const mode = plan.mode ?? "subscription";
-  const canChange =
-    hasActiveSubscription &&
-    !cancelDate &&
-    !isCurrent &&
-    mode === "subscription";
-  const isBlockedByCancel =
-    Number.isInteger(cancelDate) && Boolean(activePlanId) && !isCurrent;
+  const canChange = hasActiveSubscription && !cancelDate && !isCurrent && mode === "subscription";
+  const isBlockedByCancel = Number.isInteger(cancelDate) && Boolean(activePlanId) && !isCurrent;
   const processing =
     (checkout.isPending && checkout.variables?.planId === plan.id) ||
     (changePlan.isPending && changePlan.variables?.planId === plan.id);
@@ -198,12 +184,7 @@ function PlanCard({
   const tierName = plan.id.startsWith("pro_") ? t("Pro") : t("Plus");
 
   return (
-    <Card
-      className={cn(
-        "flex flex-col border-border/80",
-        isCurrent && "border-primary",
-      )}
-    >
+    <Card className={cn("flex flex-col border-border/80", isCurrent && "border-primary")}>
       <CardHeader>
         <div className="flex items-start justify-between gap-4">
           <div className="space-y-1">
@@ -217,10 +198,7 @@ function PlanCard({
             </div>
             <CardDescription>{planCopy.tagline}</CardDescription>
           </div>
-          <Tabs
-            value={interval}
-            onValueChange={(v) => onIntervalChange(v as "monthly" | "yearly")}
-          >
+          <Tabs value={interval} onValueChange={(v) => onIntervalChange(v as "monthly" | "yearly")}>
             <TabsList className="h-7">
               <TabsTrigger value="monthly" className="text-xs px-2 h-5">
                 {t("Monthly")}
@@ -273,13 +251,7 @@ function PlanCard({
   );
 }
 
-function PlanChangeEstimate({
-  planId,
-  enabled,
-}: {
-  planId: BillingPlanId;
-  enabled: boolean;
-}) {
+function PlanChangeEstimate({ planId, enabled }: { planId: BillingPlanId; enabled: boolean }) {
   const t = useExtracted();
   const planChangeQuote = trpc.billing.estimatePlanChange.useQuery(
     { planId },
@@ -322,22 +294,13 @@ type UsageItem = {
   periodEnd: Date | string | null;
 };
 
-function UsageRow({
-  label,
-  item,
-}: {
-  label: string;
-  item: UsageItem | undefined;
-}) {
+function UsageRow({ label, item }: { label: string; item: UsageItem | undefined }) {
   const t = useExtracted();
   if (!item) return null;
 
-  const limitLabel =
-    item.limit === null ? t("Unlimited") : item.limit.toLocaleString();
+  const limitLabel = item.limit === null ? t("Unlimited") : item.limit.toLocaleString();
   const progress =
-    item.limit === null || item.limit === 0
-      ? 0
-      : Math.min((item.used / item.limit) * 100, 100);
+    item.limit === null || item.limit === 0 ? 0 : Math.min((item.used / item.limit) * 100, 100);
   const remainingLabel =
     item.limit === null
       ? t("Unlimited")
@@ -359,9 +322,7 @@ function UsageRow({
       <Progress value={progress} className="h-2" />
       <div className="flex items-center justify-between text-xs text-muted-foreground">
         <span>{remainingLabel}</span>
-        {periodEndLabel && (
-          <span>{t("Resets {date}", { date: periodEndLabel })}</span>
-        )}
+        {periodEndLabel && <span>{t("Resets {date}", { date: periodEndLabel })}</span>}
       </div>
     </div>
   );
@@ -373,12 +334,8 @@ function BillingDisabled() {
   return (
     <div className="mx-auto flex max-w-4xl w-full flex-col gap-6">
       <div className="space-y-2">
-        <h1 className="text-3xl font-semibold tracking-tight">
-          {t("Billing")}
-        </h1>
-        <p className="text-muted-foreground">
-          {t("Billing is disabled for this environment.")}
-        </p>
+        <h1 className="text-3xl font-semibold tracking-tight">{t("Billing")}</h1>
+        <p className="text-muted-foreground">{t("Billing is disabled for this environment.")}</p>
       </div>
       <Card className="border-border/80">
         <CardHeader>
@@ -396,12 +353,8 @@ function BillingPageContent() {
   const t = useExtracted();
   const [isChangePlanOpen, setIsChangePlanOpen] = useState(false);
   const [changeTarget, setChangeTarget] = useState<ClientPlan | null>(null);
-  const [plusInterval, setPlusInterval] = useState<"monthly" | "yearly">(
-    "monthly",
-  );
-  const [proInterval, setProInterval] = useState<"monthly" | "yearly">(
-    "monthly",
-  );
+  const [plusInterval, setPlusInterval] = useState<"monthly" | "yearly">("monthly");
+  const [proInterval, setProInterval] = useState<"monthly" | "yearly">("monthly");
 
   const utils = trpc.useUtils();
   const statusQuery = trpc.billing.status.useQuery(undefined, {
@@ -481,8 +434,7 @@ function BillingPageContent() {
   })();
 
   const planMap = useMemo(
-    () =>
-      new Map((plansQuery.data?.plans ?? []).map((plan) => [plan.id, plan])),
+    () => new Map((plansQuery.data?.plans ?? []).map((plan) => [plan.id, plan])),
     [plansQuery.data?.plans],
   );
 
@@ -490,9 +442,7 @@ function BillingPageContent() {
   const isSubscribed = ACTIVE_STATUSES.has(statusLabel);
   const isSubscription = statusQuery.data?.mode === "subscription";
   const hasActiveSubscription = isSubscribed && isSubscription;
-  const cancelDate = isSubscription
-    ? (statusQuery.data?.cancelAt ?? false)
-    : false;
+  const cancelDate = isSubscription ? (statusQuery.data?.cancelAt ?? false) : false;
 
   const loading = statusQuery.isLoading || plansQuery.isLoading;
   const errored = statusQuery.error ?? plansQuery.error;
@@ -504,8 +454,7 @@ function BillingPageContent() {
   const proMonthly = allPlans.find((p) => p.id === "pro_monthly");
   const proYearly = allPlans.find((p) => p.id === "pro_yearly");
 
-  const selectedPlusPlan =
-    plusInterval === "monthly" ? plusMonthly : plusYearly;
+  const selectedPlusPlan = plusInterval === "monthly" ? plusMonthly : plusYearly;
   const selectedProPlan = proInterval === "monthly" ? proMonthly : proYearly;
   const basicUsage = usage.find((entry) => entry.category === "basic");
   const premiumUsage = usage.find((entry) => entry.category === "premium");
@@ -521,12 +470,8 @@ function BillingPageContent() {
   return (
     <div className="mx-auto flex max-w-4xl w-full flex-col gap-6">
       <div className="space-y-2">
-        <h1 className="text-3xl font-semibold tracking-tight">
-          {t("Billing")}
-        </h1>
-        <p className="text-muted-foreground">
-          {t("Manage your subscription and usage.")}
-        </p>
+        <h1 className="text-3xl font-semibold tracking-tight">{t("Billing")}</h1>
+        <p className="text-muted-foreground">{t("Manage your subscription and usage.")}</p>
       </div>
 
       {/* Current Plan */}
@@ -537,22 +482,17 @@ function BillingPageContent() {
             <CardDescription>
               {currentPlan
                 ? t("{tier} {name}", {
-                    tier: activePlanId?.startsWith("pro_")
-                      ? t("Pro")
-                      : t("Plus"),
+                    tier: activePlanId?.startsWith("pro_") ? t("Pro") : t("Plus"),
                     name: getPlanIntervalLabel(currentPlan.id, t),
                   })
                 : t("Free")}{" "}
               {cancelDate && (
                 <span className="text-destructive">
                   {t("(Cancels {date})", {
-                    date: new Date(cancelDate * 1000).toLocaleDateString(
-                      "en-US",
-                      {
-                        month: "short",
-                        day: "numeric",
-                      },
-                    ),
+                    date: new Date(cancelDate * 1000).toLocaleDateString("en-US", {
+                      month: "short",
+                      day: "numeric",
+                    }),
                   })}
                 </span>
               )}
@@ -592,11 +532,7 @@ function BillingPageContent() {
               </Button>
             )}
             {cancelDate && (
-              <Button
-                size="sm"
-                disabled={resume.isPending}
-                onClick={() => resume.mutate()}
-              >
+              <Button size="sm" disabled={resume.isPending} onClick={() => resume.mutate()}>
                 {resume.isPending && <Spinner />}
                 {t("Resume")}
               </Button>
@@ -609,9 +545,7 @@ function BillingPageContent() {
       <Card className="border-border/80">
         <CardHeader>
           <CardTitle>{t("Usage")}</CardTitle>
-          <CardDescription>
-            {t("Tier: {tier}", { tier: usageTierLabel })}
-          </CardDescription>
+          <CardDescription>{t("Tier: {tier}", { tier: usageTierLabel })}</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           {usageQuery.isLoading ? (
@@ -619,9 +553,7 @@ function BillingPageContent() {
               <Spinner />
             </div>
           ) : usageQuery.error ? (
-            <p className="text-sm text-destructive">
-              {usageQuery.error.message}
-            </p>
+            <p className="text-sm text-destructive">{usageQuery.error.message}</p>
           ) : (
             <div className="grid gap-6 sm:grid-cols-2">
               <UsageRow label={t("Basic models")} item={basicUsage} />
@@ -678,18 +610,13 @@ function BillingPageContent() {
       )}
 
       {/* Change Plan Dialog */}
-      <AlertDialog
-        open={isChangePlanOpen}
-        onOpenChange={(v) => setIsChangePlanOpen(v)}
-      >
+      <AlertDialog open={isChangePlanOpen} onOpenChange={(v) => setIsChangePlanOpen(v)}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>{t("Change plan?")}</AlertDialogTitle>
             <AlertDialogDescription>
               {t("You will switch to {plan}. Prorations apply.", {
-                plan: changeTarget
-                  ? getPlanIntervalLabel(changeTarget.id, t)
-                  : "",
+                plan: changeTarget ? getPlanIntervalLabel(changeTarget.id, t) : "",
               })}
               <PlanChangeEstimate
                 planId={changeTarget?.id ?? "plus_monthly"}
@@ -698,14 +625,10 @@ function BillingPageContent() {
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={changePlan.isPending}>
-              {t("Cancel")}
-            </AlertDialogCancel>
+            <AlertDialogCancel disabled={changePlan.isPending}>{t("Cancel")}</AlertDialogCancel>
             <AlertDialogAction
               disabled={changePlan.isPending || !changeTarget}
-              onClick={() =>
-                changeTarget && changePlan.mutate({ planId: changeTarget.id })
-              }
+              onClick={() => changeTarget && changePlan.mutate({ planId: changeTarget.id })}
             >
               {changePlan.isPending && <Spinner />}
               {t("Confirm")}

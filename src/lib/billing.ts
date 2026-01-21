@@ -1,8 +1,4 @@
-export type BillingPlanId =
-  | "plus_monthly"
-  | "plus_yearly"
-  | "pro_monthly"
-  | "pro_yearly";
+export type BillingPlanId = "plus_monthly" | "plus_yearly" | "pro_monthly" | "pro_yearly";
 
 export type BillingPlan = {
   id: BillingPlanId;

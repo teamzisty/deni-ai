@@ -20,10 +20,7 @@ type UsageRecord = typeof usageQuota.$inferSelect;
 
 const USAGE_CATEGORIES: UsageCategory[] = ["basic", "premium"];
 
-const USAGE_LIMITS: Record<
-  UsageCategory,
-  Record<SubscriptionTier, number | null>
-> = {
+const USAGE_LIMITS: Record<UsageCategory, Record<SubscriptionTier, number | null>> = {
   basic: {
     free: 1500,
     plus: 6000,
@@ -85,13 +82,9 @@ async function getTierInfo(userId: string, now: Date): Promise<TierInfo> {
   const planId = record.planId;
   const status = record.status;
   const hasActiveStatus =
-    Boolean(planId) &&
-    Boolean(status) &&
-    ACTIVE_BILLING_STATUSES.has(status ?? "");
+    Boolean(planId) && Boolean(status) && ACTIVE_BILLING_STATUSES.has(status ?? "");
   const inGracePeriod =
-    status === "canceled" &&
-    record.currentPeriodEnd &&
-    record.currentPeriodEnd > now;
+    status === "canceled" && record.currentPeriodEnd && record.currentPeriodEnd > now;
 
   if (!hasActiveStatus && !inGracePeriod) {
     return {
@@ -130,18 +123,14 @@ async function calculateUsageState({
   isAnonymous?: boolean;
 }) {
   const tierInfo = await getTierInfo(userId, now);
-  const limit = isAnonymous
-    ? GUEST_USAGE_LIMITS[category]
-    : USAGE_LIMITS[category][tierInfo.tier];
+  const limit = isAnonymous ? GUEST_USAGE_LIMITS[category] : USAGE_LIMITS[category][tierInfo.tier];
 
   const current =
     existingRecord ??
     (await db
       .select()
       .from(usageQuota)
-      .where(
-        and(eq(usageQuota.userId, userId), eq(usageQuota.category, category)),
-      )
+      .where(and(eq(usageQuota.userId, userId), eq(usageQuota.category, category)))
       .limit(1)
       .then((rows) => rows[0]));
 
@@ -153,12 +142,7 @@ async function calculateUsageState({
       ? false
       : !current.periodEnd || current.periodEnd <= now;
 
-  const used =
-    limit === null
-      ? (current?.used ?? 0)
-      : shouldReset
-        ? 0
-        : (current?.used ?? 0);
+  const used = limit === null ? (current?.used ?? 0) : shouldReset ? 0 : (current?.used ?? 0);
   const periodStart = shouldReset ? now : (current?.periodStart ?? now);
 
   return {
@@ -265,10 +249,7 @@ export async function getUsageSummary({
   const nowDate = now;
   const tierInfo = await getTierInfo(userId, nowDate);
 
-  const records = await db
-    .select()
-    .from(usageQuota)
-    .where(eq(usageQuota.userId, userId));
+  const records = await db.select().from(usageQuota).where(eq(usageQuota.userId, userId));
 
   const usage = await Promise.all(
     USAGE_CATEGORIES.map(async (category) => {

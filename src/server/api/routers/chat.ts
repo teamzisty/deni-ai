@@ -30,10 +30,7 @@ export const chatRouter = router({
       }),
     )
     .query(async ({ ctx, input }) => {
-      const chat = await ctx.db
-        .select()
-        .from(chats)
-        .where(eq(chats.id, input.id));
+      const chat = await ctx.db.select().from(chats).where(eq(chats.id, input.id));
       return chat;
     }),
   updateChat: protectedProcedure
@@ -82,10 +79,7 @@ export const chatRouter = router({
       }),
     )
     .mutation(async ({ ctx, input }) => {
-      const deletedChat = await ctx.db
-        .delete(chats)
-        .where(eq(chats.id, input.id))
-        .returning();
+      const deletedChat = await ctx.db.delete(chats).where(eq(chats.id, input.id)).returning();
       if (!deletedChat[0]) {
         throw new TRPCError({
           code: "NOT_FOUND",

@@ -3,20 +3,23 @@ import { NextResponse } from "next/server";
 import { env } from "@/env";
 import { auth } from "@/lib/auth";
 
-export async function GET(_req: Request) {
+export async function GET(req: Request) {
   const session = await auth.api.getSession({ headers: await headers() });
   if (!session?.session) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const response = await fetch(
-    "https://generativelanguage.googleapis.com/v1beta/videos:generate",
-    {
-      headers: {
-        "x-goog-api-key": env.GOOGLE_GENERATIVE_AI_API_KEY,
-      },
+  const { searchParams } = new URL(req.url);
+  const uri = searchParams.get("uri");
+  if (!uri) {
+    return NextResponse.json({ error: "Missing uri parameter." }, { status: 400 });
+  }
+
+  const response = await fetch("https://generativelanguage.googleapis.com/v1beta", {
+    headers: {
+      "x-goog-api-key": env.GOOGLE_GENERATIVE_AI_API_KEY,
     },
-  );
+  });
 
   if (!response.ok) {
     let message = "Failed to download video.";

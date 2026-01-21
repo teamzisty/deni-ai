@@ -13,10 +13,5 @@ if (!baseURL) {
 
 export const authClient = createAuthClient({
   baseURL,
-  plugins: [
-    anonymousClient(),
-    twoFactorClient(),
-    lastLoginMethodClient(),
-    passkeyClient(),
-  ],
+  plugins: [anonymousClient(), twoFactorClient(), lastLoginMethodClient(), passkeyClient()],
 });

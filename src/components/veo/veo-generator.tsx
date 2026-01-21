@@ -8,11 +8,7 @@ import {
   ConversationEmptyState,
   ConversationScrollButton,
 } from "@/components/ai-elements/conversation";
-import {
-  Message,
-  MessageContent,
-  MessageResponse,
-} from "@/components/ai-elements/message";
+import { Message, MessageContent, MessageResponse } from "@/components/ai-elements/message";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -58,12 +54,8 @@ export function VeoGenerator() {
   const [prompt, setPrompt] = useState("");
   const [negativePrompt, setNegativePrompt] = useState("");
   const [submittedPrompt, setSubmittedPrompt] = useState<string | null>(null);
-  const [submittedNegativePrompt, setSubmittedNegativePrompt] = useState<
-    string | null
-  >(null);
-  const [submittedImage, setSubmittedImage] = useState<ImagePayload | null>(
-    null,
-  );
+  const [submittedNegativePrompt, setSubmittedNegativePrompt] = useState<string | null>(null);
+  const [submittedImage, setSubmittedImage] = useState<ImagePayload | null>(null);
   const [submittedSettings, setSubmittedSettings] = useState<{
     model: VeoModel;
     aspectRatio: VeoAspectRatio;
@@ -195,10 +187,9 @@ export function VeoGenerator() {
         return;
       }
 
-      const response = await fetch(
-        `/api/veo?name=${encodeURIComponent(name)}`,
-        { signal: controller.signal },
-      );
+      const response = await fetch(`/api/veo?name=${encodeURIComponent(name)}`, {
+        signal: controller.signal,
+      });
       const data = (await response.json()) as {
         done?: boolean;
         videoUri?: string | null;
@@ -218,9 +209,7 @@ export function VeoGenerator() {
           throw new Error(t("Video generation finished without a file."));
         }
 
-        const proxyUrl = `/api/veo/file?uri=${encodeURIComponent(
-          data.videoUri,
-        )}`;
+        const proxyUrl = `/api/veo/file?uri=${encodeURIComponent(data.videoUri)}`;
         setVideoUrl(proxyUrl);
         setStatus("done");
         return;
@@ -278,9 +267,7 @@ export function VeoGenerator() {
           resolution,
           durationSeconds: effectiveDuration,
           seed: seedValue,
-          image: image
-            ? { imageBytes: image.imageBytes, mimeType: image.mimeType }
-            : undefined,
+          image: image ? { imageBytes: image.imageBytes, mimeType: image.mimeType } : undefined,
         }),
         signal: controller.signal,
       });
@@ -348,15 +335,11 @@ export function VeoGenerator() {
     <div className="mx-auto flex w-full max-w-6xl flex-col gap-6">
       <div className="space-y-2">
         <div className="flex flex-wrap items-center gap-2">
-          <h1 className="text-3xl font-semibold tracking-tight">
-            {t("Veo Studio")}
-          </h1>
+          <h1 className="text-3xl font-semibold tracking-tight">{t("Veo Studio")}</h1>
           <Badge variant="secondary">{t("Veo 3.1 Preview")}</Badge>
         </div>
         <p className="text-muted-foreground">
-          {t(
-            "Generate short videos with Veo 3.1. Prompts can include audio cues.",
-          )}
+          {t("Generate short videos with Veo 3.1. Prompts can include audio cues.")}
         </p>
       </div>
 
@@ -377,9 +360,7 @@ export function VeoGenerator() {
                 {!submittedPrompt && (
                   <ConversationEmptyState
                     title={t("Start a prompt")}
-                    description={t(
-                      "Describe the scene to generate a video response.",
-                    )}
+                    description={t("Describe the scene to generate a video response.")}
                   />
                 )}
 
@@ -393,14 +374,12 @@ export function VeoGenerator() {
                             <p className="text-xs font-medium text-foreground">
                               {t("Negative prompt")}
                             </p>
-                            <p className="text-muted-foreground">
-                              {submittedNegativePrompt}
-                            </p>
+                            <p className="text-muted-foreground">{submittedNegativePrompt}</p>
                           </div>
                         )}
                         {submittedImage?.previewUrl && (
                           <div className="overflow-hidden rounded-lg border border-border/60">
-                            {/* biome-ignore lint/performance/noImgElement: preview URLs can be blob/data. */}
+                            {/* oxlint-disable-next-line lint/performance/noImgElement: preview URLs can be blob/data. */}
                             <img
                               src={submittedImage.previewUrl}
                               alt={t("Input preview")}
@@ -421,12 +400,8 @@ export function VeoGenerator() {
                         ) : videoUrl ? (
                           <div className="space-y-3">
                             <div className="overflow-hidden rounded-lg border border-border/70 bg-muted/30">
-                              {/* biome-ignore lint/a11y/useMediaCaption: generated videos don't include captions. */}
-                              <video
-                                controls
-                                src={videoUrl}
-                                className="h-auto w-full"
-                              />
+                              {/* oxlint-disable-next-line lint/a11y/useMediaCaption: generated videos don't include captions. */}
+                              <video controls src={videoUrl} className="h-auto w-full" />
                             </div>
                             <Button asChild variant="outline">
                               <a href={videoUrl} download>
@@ -461,15 +436,9 @@ export function VeoGenerator() {
                         )}
 
                         <div className="flex flex-wrap items-center gap-2 text-xs">
-                          <Badge variant="secondary">
-                            {settingsSnapshot.resolution}
-                          </Badge>
-                          <Badge variant="secondary">
-                            {settingsSnapshot.aspectRatio}
-                          </Badge>
-                          <Badge variant="secondary">
-                            {settingsSnapshot.durationSeconds}s
-                          </Badge>
+                          <Badge variant="secondary">{settingsSnapshot.resolution}</Badge>
+                          <Badge variant="secondary">{settingsSnapshot.aspectRatio}</Badge>
+                          <Badge variant="secondary">{settingsSnapshot.durationSeconds}s</Badge>
                           <Badge variant="outline">{modelLabel}</Badge>
                           {settingsSnapshot.seed && (
                             <Badge variant="outline">
@@ -545,10 +514,7 @@ export function VeoGenerator() {
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="space-y-2">
                 <Label>{t("Model")}</Label>
-                <Select
-                  value={model}
-                  onValueChange={(value) => setModel(value as VeoModel)}
-                >
+                <Select value={model} onValueChange={(value) => setModel(value as VeoModel)}>
                   <SelectTrigger className="w-full">
                     <SelectValue placeholder={t("Select model")} />
                   </SelectTrigger>
@@ -571,9 +537,7 @@ export function VeoGenerator() {
                 <Label>{t("Aspect ratio")}</Label>
                 <Select
                   value={aspectRatio}
-                  onValueChange={(value) =>
-                    setAspectRatio(value as VeoAspectRatio)
-                  }
+                  onValueChange={(value) => setAspectRatio(value as VeoAspectRatio)}
                 >
                   <SelectTrigger className="w-full">
                     <SelectValue placeholder={t("Select ratio")} />
@@ -594,9 +558,7 @@ export function VeoGenerator() {
                 <Label>{t("Resolution")}</Label>
                 <Select
                   value={resolution}
-                  onValueChange={(value) =>
-                    setResolution(value as VeoResolution)
-                  }
+                  onValueChange={(value) => setResolution(value as VeoResolution)}
                 >
                   <SelectTrigger className="w-full">
                     <SelectValue placeholder={t("Select resolution")} />
@@ -676,12 +638,7 @@ export function VeoGenerator() {
                         {(image.size / 1024 / 1024).toFixed(2)} MB
                       </span>
                     </div>
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      onClick={handleClearImage}
-                    >
+                    <Button type="button" variant="ghost" size="sm" onClick={handleClearImage}>
                       {t("Remove")}
                     </Button>
                   </div>
@@ -693,7 +650,7 @@ export function VeoGenerator() {
               <div className="space-y-2">
                 <Label>{t("Input preview")}</Label>
                 <div className="overflow-hidden rounded-lg border border-border/70 bg-muted/30">
-                  {/* biome-ignore lint/performance/noImgElement: preview URLs can be blob/data. */}
+                  {/* oxlint-disable-next-line lint/performance/noImgElement: preview URLs can be blob/data. */}
                   <img
                     src={image.previewUrl}
                     alt={t("Input preview")}

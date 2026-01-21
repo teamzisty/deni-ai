@@ -1,24 +1,16 @@
 import { sql } from "drizzle-orm";
-import {
-  boolean,
-  index,
-  pgEnum,
-  pgTable,
-  text,
-  timestamp,
-} from "drizzle-orm/pg-core";
+import { boolean, index, pgEnum, pgTable, text, timestamp } from "drizzle-orm/pg-core";
 import { user } from "./auth-schema";
 import { chats } from "./chat";
 
-export const shareVisibilityEnum = pgEnum("share_visibility", [
-  "public",
-  "private",
-]);
+export const shareVisibilityEnum = pgEnum("share_visibility", ["public", "private"]);
 
 export const chatShares = pgTable(
   "chat_shares",
   {
-    id: text("id").primaryKey().default(sql`gen_random_uuid()`),
+    id: text("id")
+      .primaryKey()
+      .default(sql`gen_random_uuid()`),
     chatId: text("chat_id")
       .notNull()
       .references(() => chats.id, { onDelete: "cascade" }),
@@ -39,7 +31,9 @@ export const chatShares = pgTable(
 export const chatShareRecipients = pgTable(
   "chat_share_recipients",
   {
-    id: text("id").primaryKey().default(sql`gen_random_uuid()`),
+    id: text("id")
+      .primaryKey()
+      .default(sql`gen_random_uuid()`),
     shareId: text("share_id")
       .notNull()
       .references(() => chatShares.id, { onDelete: "cascade" }),

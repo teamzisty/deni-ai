@@ -26,20 +26,13 @@ interface ShareDialogProps {
   onOpenChange: (open: boolean) => void;
 }
 
-export function ShareDialog({
-  chatId,
-  isOpen,
-  onOpenChange,
-}: ShareDialogProps) {
+export function ShareDialog({ chatId, isOpen, onOpenChange }: ShareDialogProps) {
   const t = useExtracted();
   const [copied, setCopied] = useState(false);
   const [recipientEmail, setRecipientEmail] = useState("");
   const utils = trpc.useUtils();
 
-  const shareSettings = trpc.share.getShareSettings.useQuery(
-    { chatId },
-    { enabled: isOpen },
-  );
+  const shareSettings = trpc.share.getShareSettings.useQuery({ chatId }, { enabled: isOpen });
 
   const createShare = trpc.share.createShare.useMutation({
     onSuccess: () => {
@@ -178,9 +171,7 @@ export function ShareDialog({
         ) : (
           <Tabs
             value={share.visibility}
-            onValueChange={(value) =>
-              handleVisibilityChange(value as "public" | "private")
-            }
+            onValueChange={(value) => handleVisibilityChange(value as "public" | "private")}
           >
             <TabsList className="grid w-full grid-cols-2">
               <TabsTrigger value="public">
@@ -199,11 +190,7 @@ export function ShareDialog({
                 <div className="flex gap-2">
                   <Input value={shareUrl} readOnly className="text-xs" />
                   <Button size="icon" variant="outline" onClick={handleCopy}>
-                    {copied ? (
-                      <Check className="size-4" />
-                    ) : (
-                      <Copy className="size-4" />
-                    )}
+                    {copied ? <Check className="size-4" /> : <Copy className="size-4" />}
                   </Button>
                 </div>
               </div>
@@ -215,10 +202,7 @@ export function ShareDialog({
                     {t("Let viewers continue the conversation")}
                   </p>
                 </div>
-                <Switch
-                  checked={share.allowFork}
-                  onCheckedChange={handleToggleFork}
-                />
+                <Switch checked={share.allowFork} onCheckedChange={handleToggleFork} />
               </div>
 
               <TabsContent value="private" className="mt-0 space-y-4">
@@ -239,9 +223,7 @@ export function ShareDialog({
                     <Button
                       size="icon"
                       onClick={handleAddRecipient}
-                      disabled={
-                        addRecipient.isPending || !recipientEmail.trim()
-                      }
+                      disabled={addRecipient.isPending || !recipientEmail.trim()}
                     >
                       {addRecipient.isPending ? (
                         <Spinner className="size-4" />
@@ -260,9 +242,7 @@ export function ShareDialog({
                         >
                           <div className="text-sm">
                             <div>{recipient.name}</div>
-                            <div className="text-xs text-muted-foreground">
-                              {recipient.email}
-                            </div>
+                            <div className="text-xs text-muted-foreground">{recipient.email}</div>
                           </div>
                           <Button
                             size="icon"

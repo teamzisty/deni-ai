@@ -66,8 +66,7 @@ export function Composer({
   multiple,
 }: ComposerProps) {
   const t = useExtracted();
-  const disabled =
-    status === "streaming" ? false : (isSubmitDisabled ?? (!value && !status));
+  const disabled = status === "streaming" ? false : (isSubmitDisabled ?? (!value && !status));
   const resolvedSearchLabel = searchLabel ?? t("Search");
 
   return (
@@ -110,11 +109,7 @@ export function Composer({
           ) : null}
           {tools}
         </PromptInputTools>
-        <PromptInputSubmit
-          disabled={disabled}
-          status={status}
-          onStop={onStop}
-        />
+        <PromptInputSubmit disabled={disabled} status={status} onStop={onStop} />
       </PromptInputFooter>
     </PromptInput>
   );

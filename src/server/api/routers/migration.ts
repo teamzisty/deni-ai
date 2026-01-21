@@ -11,9 +11,7 @@ export const migrationRouter = router({
       }),
     )
     .mutation(async ({ ctx, input }) => {
-      const { conversations, warnings } = normalizeMigrationPayload(
-        input.payload,
-      );
+      const { conversations, warnings } = normalizeMigrationPayload(input.payload);
 
       if (!conversations.length) {
         return {

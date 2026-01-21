@@ -45,20 +45,14 @@ export default function AppearancePage() {
   return (
     <div className="mx-auto flex max-w-4xl w-full flex-col gap-6">
       <div className="space-y-2">
-        <h1 className="text-3xl font-semibold tracking-tight">
-          {t("Appearance")}
-        </h1>
-        <p className="text-muted-foreground">
-          {t("Select your favorite theme.")}
-        </p>
+        <h1 className="text-3xl font-semibold tracking-tight">{t("Appearance")}</h1>
+        <p className="text-muted-foreground">{t("Select your favorite theme.")}</p>
       </div>
 
       <div className="space-y-4">
         <div className="space-y-2">
           <h2 className="text-lg font-medium">{t("Language")}</h2>
-          <p className="text-sm text-muted-foreground">
-            {t("Choose your preferred language.")}
-          </p>
+          <p className="text-sm text-muted-foreground">{t("Choose your preferred language.")}</p>
         </div>
         <LocaleSwitcher changeLocaleAction={changeLocaleAction} />
       </div>
@@ -66,9 +60,7 @@ export default function AppearancePage() {
       <div className="space-y-4">
         <div className="space-y-2">
           <h2 className="text-lg font-medium">{t("Theme")}</h2>
-          <p className="text-sm text-muted-foreground">
-            {t("Select your favorite theme.")}
-          </p>
+          <p className="text-sm text-muted-foreground">{t("Select your favorite theme.")}</p>
         </div>
 
         <Button
@@ -99,9 +91,7 @@ export default function AppearancePage() {
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="font-semibold">{copy.title}</p>
-                    <p className="text-sm text-muted-foreground">
-                      {copy.description}
-                    </p>
+                    <p className="text-sm text-muted-foreground">{copy.description}</p>
                   </div>
                   {selected ? (
                     <span className="inline-flex items-center rounded-full bg-primary px-3 py-1 text-xs font-semibold text-primary-foreground">
@@ -111,10 +101,7 @@ export default function AppearancePage() {
                 </div>
                 <div className="flex w-full gap-1.5" aria-hidden>
                   {(presetItem.preview ?? []).map((bar) => (
-                    <div
-                      key={bar}
-                      className={`h-1.5 flex-1 rounded-full ${bar}`}
-                    />
+                    <div key={bar} className={`h-1.5 flex-1 rounded-full ${bar}`} />
                   ))}
                 </div>
               </button>

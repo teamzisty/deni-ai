@@ -6,8 +6,7 @@ import { env } from "@/env";
 function getSubtle() {
   // Node 18+/20+ exposes globalThis.crypto.subtle; on edge it's also available.
   const maybeCrypto = (globalThis as { crypto?: Crypto }).crypto;
-  const subtle = (maybeCrypto ?? (require("node:crypto").webcrypto as Crypto))
-    .subtle;
+  const subtle = (maybeCrypto ?? (require("node:crypto").webcrypto as Crypto)).subtle;
   return subtle;
 }
 
@@ -35,11 +34,7 @@ export async function encryptToB64(plaintext: string) {
   const key = await deriveKey();
   const iv = crypto.getRandomValues(new Uint8Array(12));
   const enc = new TextEncoder();
-  const ct = await getSubtle().encrypt(
-    { name: "AES-GCM", iv },
-    key,
-    enc.encode(plaintext),
-  );
+  const ct = await getSubtle().encrypt({ name: "AES-GCM", iv }, key, enc.encode(plaintext));
   const out = new Uint8Array(iv.byteLength + ct.byteLength);
   out.set(iv, 0);
   out.set(new Uint8Array(ct), iv.byteLength);

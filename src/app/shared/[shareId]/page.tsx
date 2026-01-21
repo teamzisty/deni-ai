@@ -3,24 +3,33 @@ import { safeValidateUIMessages } from "ai";
 import { and, eq } from "drizzle-orm";
 import { headers } from "next/headers";
 import { notFound, redirect } from "next/navigation";
-import { SharedChatInterface } from "@/components/chat/shared-chat-interface";
+import dynamic from "next/dynamic";
+
+const SharedChatInterface = dynamic(
+  () => import("@/components/chat/shared-chat-interface").then((mod) => mod.SharedChatInterface),
+  {
+    loading: () => (
+      <div className="flex min-h-[60vh] w-full items-center justify-center text-sm text-muted-foreground">
+        Loading shared chat…
+      </div>
+    ),
+  },
+);
 import { db } from "@/db/drizzle";
 import { chatShareRecipients, chatShares, chats, user } from "@/db/schema";
 import { auth } from "@/lib/auth";
 
-export default async function SharedChatPage({
-  params,
-}: {
-  params: Promise<{ shareId: string }>;
-}) {
+export default async function SharedChatPage({ params }: { params: Promise<{ shareId: string }> }) {
   const { shareId } = await params;
-  const session = await auth.api.getSession({ headers: await headers() });
-  const userId = session?.session?.userId;
+  const headersPromise = headers();
+  const sharePromise = db.select().from(chatShares).where(eq(chatShares.id, shareId));
+  const sessionPromise = headersPromise.then((headersList) =>
+    auth.api.getSession({ headers: headersList }),
+  );
 
-  const [share] = await db
-    .select()
-    .from(chatShares)
-    .where(eq(chatShares.id, shareId));
+  const [session, shareRows] = await Promise.all([sessionPromise, sharePromise]);
+  const userId = session?.session?.userId;
+  const [share] = shareRows;
 
   if (!share) {
     notFound();
@@ -49,19 +58,20 @@ export default async function SharedChatPage({
     }
   }
 
-  const [chat] = await db
-    .select()
-    .from(chats)
-    .where(eq(chats.id, share.chatId));
+  const [chatRows, ownerRows] = await Promise.all([
+    db.select().from(chats).where(eq(chats.id, share.chatId)),
+    db
+      .select({ id: user.id, name: user.name, image: user.image })
+      .from(user)
+      .where(eq(user.id, share.ownerId)),
+  ]);
+
+  const [chat] = chatRows;
+  const [owner] = ownerRows;
 
   if (!chat) {
     notFound();
   }
-
-  const [owner] = await db
-    .select({ id: user.id, name: user.name, image: user.image })
-    .from(user)
-    .where(eq(user.id, share.ownerId));
 
   const validatedMessages = await safeValidateUIMessages<UIMessage>({
     messages: (chat.messages as UIMessage[]) ?? [],

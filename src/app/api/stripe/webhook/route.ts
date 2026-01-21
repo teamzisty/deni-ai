@@ -31,9 +31,7 @@ async function saveSubscription(payload: SubscriptionPayload) {
     planId: plan?.id ?? null,
     status: payload.status ?? null,
     mode: "subscription" as const,
-    currentPeriodEnd: payload.currentPeriodEnd
-      ? new Date(payload.currentPeriodEnd * 1000)
-      : null,
+    currentPeriodEnd: payload.currentPeriodEnd ? new Date(payload.currentPeriodEnd * 1000) : null,
   };
 
   await db
@@ -51,13 +49,7 @@ async function saveSubscription(payload: SubscriptionPayload) {
     });
 }
 
-async function clearPlanData({
-  userId,
-  customerId,
-}: {
-  userId: string;
-  customerId: string;
-}) {
+async function clearPlanData({ userId, customerId }: { userId: string; customerId: string }) {
   await db
     .insert(billing)
     .values({
@@ -87,10 +79,7 @@ async function clearPlanData({
     });
 }
 
-async function resolveUserIdFromCustomer(
-  stripeCustomerId: string,
-  metadataUserId?: string | null,
-) {
+async function resolveUserIdFromCustomer(stripeCustomerId: string, metadataUserId?: string | null) {
   if (metadataUserId) return metadataUserId;
 
   try {
@@ -113,10 +102,7 @@ async function resolveUserIdFromCustomer(
 
 export async function POST(req: Request) {
   if (!env.STRIPE_WEBHOOK_SECRET) {
-    return NextResponse.json(
-      { error: "STRIPE_WEBHOOK_SECRET not configured" },
-      { status: 500 },
-    );
+    return NextResponse.json({ error: "STRIPE_WEBHOOK_SECRET not configured" }, { status: 500 });
   }
 
   const signature = req.headers.get("stripe-signature");
@@ -128,11 +114,7 @@ export async function POST(req: Request) {
 
   let event: Stripe.Event;
   try {
-    event = stripe.webhooks.constructEvent(
-      body,
-      signature,
-      env.STRIPE_WEBHOOK_SECRET,
-    );
+    event = stripe.webhooks.constructEvent(body, signature, env.STRIPE_WEBHOOK_SECRET);
   } catch (error) {
     console.error("Stripe webhook signature verification failed", error);
     return NextResponse.json({ error: "Invalid signature" }, { status: 400 });
@@ -158,18 +140,12 @@ export async function POST(req: Request) {
           break;
         }
 
-        const userId = await resolveUserIdFromCustomer(
-          customerId,
-          subscription.metadata?.userId,
-        );
+        const userId = await resolveUserIdFromCustomer(customerId, subscription.metadata?.userId);
 
         if (!userId) {
-          console.warn(
-            "[stripe:webhook] missing userId for deleted subscription",
-            {
-              subscriptionId: subscription.id,
-            },
-          );
+          console.warn("[stripe:webhook] missing userId for deleted subscription", {
+            subscriptionId: subscription.id,
+          });
           break;
         }
 
@@ -201,17 +177,12 @@ export async function POST(req: Request) {
         const price = subscription.items?.data?.[0]?.price ?? null;
         const priceId = price?.id ?? null;
         const lookupKey = price?.lookup_key ?? null;
-        const userId = await resolveUserIdFromCustomer(
-          customerId,
-          subscription.metadata?.userId,
-        );
+        const userId = await resolveUserIdFromCustomer(customerId, subscription.metadata?.userId);
         const isCanceled =
           subscription.status === "canceled" ||
           subscription.cancel_at_period_end === true ||
           Boolean(subscription.cancel_at);
-        const computedStatus = isCanceled
-          ? "canceled"
-          : (subscription.status ?? null);
+        const computedStatus = isCanceled ? "canceled" : (subscription.status ?? null);
 
         if (!userId) {
           console.warn("[stripe:webhook] missing userId for subscription", {
@@ -239,14 +210,10 @@ export async function POST(req: Request) {
               ? await stripe.subscriptions.retrieve(session.subscription)
               : session.subscription;
 
-          let userId =
-            session.metadata?.userId ?? subscription.metadata?.userId;
+          let userId = session.metadata?.userId ?? subscription.metadata?.userId;
 
           if (!userId && typeof session.customer === "string") {
-            userId = await resolveUserIdFromCustomer(
-              session.customer,
-              session.metadata?.userId,
-            );
+            userId = await resolveUserIdFromCustomer(session.customer, session.metadata?.userId);
           }
 
           if (userId) {
@@ -254,14 +221,10 @@ export async function POST(req: Request) {
               subscription.status === "canceled" ||
               subscription.cancel_at_period_end === true ||
               Boolean(subscription.cancel_at);
-            const computedStatus = isCanceled
-              ? "canceled"
-              : subscription.status;
+            const computedStatus = isCanceled ? "canceled" : subscription.status;
 
             const price =
-              subscription.items.data.at(0)?.price ??
-              session.line_items?.data.at(0)?.price ??
-              null;
+              subscription.items.data.at(0)?.price ?? session.line_items?.data.at(0)?.price ?? null;
             await saveSubscription({
               userId,
               customerId: session.customer as string,

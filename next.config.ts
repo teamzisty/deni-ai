@@ -1,4 +1,3 @@
-import { withBotId } from "botid/next/config";
 import type { NextConfig } from "next";
 import createNextIntlPlugin from "next-intl/plugin";
 
@@ -9,8 +8,6 @@ const nextConfig: NextConfig = {
     turbopackFileSystemCacheForBuild: true,
   },
 };
-
-const withBotIdConfig = withBotId(nextConfig);
 
 const withNextIntl = createNextIntlPlugin({
   experimental: {
@@ -26,4 +23,4 @@ const withNextIntl = createNextIntlPlugin({
   },
 });
 
-export default withNextIntl(withBotIdConfig);
+export default withNextIntl(nextConfig);

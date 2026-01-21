@@ -60,12 +60,7 @@ export const shareRouter = router({
       const [share] = await ctx.db
         .select()
         .from(chatShares)
-        .where(
-          and(
-            eq(chatShares.chatId, input.chatId),
-            eq(chatShares.ownerId, ctx.userId),
-          ),
-        );
+        .where(and(eq(chatShares.chatId, input.chatId), eq(chatShares.ownerId, ctx.userId)));
 
       if (!share) return null;
 
@@ -86,12 +81,7 @@ export const shareRouter = router({
     .mutation(async ({ ctx, input }) => {
       const [deleted] = await ctx.db
         .delete(chatShares)
-        .where(
-          and(
-            eq(chatShares.chatId, input.chatId),
-            eq(chatShares.ownerId, ctx.userId),
-          ),
-        )
+        .where(and(eq(chatShares.chatId, input.chatId), eq(chatShares.ownerId, ctx.userId)))
         .returning();
 
       if (!deleted) {
@@ -111,12 +101,7 @@ export const shareRouter = router({
       const [share] = await ctx.db
         .select()
         .from(chatShares)
-        .where(
-          and(
-            eq(chatShares.chatId, input.chatId),
-            eq(chatShares.ownerId, ctx.userId),
-          ),
-        );
+        .where(and(eq(chatShares.chatId, input.chatId), eq(chatShares.ownerId, ctx.userId)));
 
       if (!share) {
         throw new TRPCError({ code: "NOT_FOUND", message: "Share not found" });
@@ -174,12 +159,7 @@ export const shareRouter = router({
       const [share] = await ctx.db
         .select()
         .from(chatShares)
-        .where(
-          and(
-            eq(chatShares.chatId, input.chatId),
-            eq(chatShares.ownerId, ctx.userId),
-          ),
-        );
+        .where(and(eq(chatShares.chatId, input.chatId), eq(chatShares.ownerId, ctx.userId)));
 
       if (!share) {
         throw new TRPCError({ code: "NOT_FOUND", message: "Share not found" });
@@ -241,10 +221,7 @@ export const shareRouter = router({
         }
       }
 
-      const [chat] = await ctx.db
-        .select()
-        .from(chats)
-        .where(eq(chats.id, share.chatId));
+      const [chat] = await ctx.db.select().from(chats).where(eq(chats.id, share.chatId));
 
       if (!chat) {
         throw new TRPCError({
@@ -308,10 +285,7 @@ export const shareRouter = router({
         }
       }
 
-      const [originalChat] = await ctx.db
-        .select()
-        .from(chats)
-        .where(eq(chats.id, share.chatId));
+      const [originalChat] = await ctx.db.select().from(chats).where(eq(chats.id, share.chatId));
 
       if (!originalChat) {
         throw new TRPCError({

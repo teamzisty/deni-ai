@@ -2,9 +2,7 @@ import { cookies, headers } from "next/headers";
 import { getRequestConfig } from "next-intl/server";
 import { type AppLocale, defaultLocale, locales } from "@/i18n/locales";
 
-const getPreferredLocaleFromHeader = (
-  acceptLanguage: string | null,
-): AppLocale | null => {
+const getPreferredLocaleFromHeader = (acceptLanguage: string | null): AppLocale | null => {
   if (!acceptLanguage) {
     return null;
   }
@@ -35,17 +33,14 @@ const getPreferredLocaleFromHeader = (
       };
     })
     .filter(
-      (
-        candidate,
-      ): candidate is { tag: string; quality: number; index: number } =>
+      (candidate): candidate is { tag: string; quality: number; index: number } =>
         candidate !== null && candidate.tag !== "*",
     )
     .sort((a, b) => b.quality - a.quality || a.index - b.index);
 
   for (const candidate of candidates) {
     const matched = locales.find(
-      (locale) =>
-        candidate.tag === locale || candidate.tag.startsWith(`${locale}-`),
+      (locale) => candidate.tag === locale || candidate.tag.startsWith(`${locale}-`),
     );
     if (matched) {
       return matched;
@@ -60,9 +55,7 @@ export default getRequestConfig(async () => {
   const requestHeaders = await headers();
   const persistedLocale = store.get("locale")?.value;
   const storedLocale = locales.find((locale) => locale === persistedLocale);
-  const headerLocale = getPreferredLocaleFromHeader(
-    requestHeaders.get("accept-language"),
-  );
+  const headerLocale = getPreferredLocaleFromHeader(requestHeaders.get("accept-language"));
   const locale = storedLocale ?? headerLocale ?? defaultLocale;
   const messages = (await import(`../../messages/${locale}.json`)).default;
 
