@@ -15,19 +15,7 @@ export async function GET(req: Request) {
     return NextResponse.json({ error: "Missing uri parameter." }, { status: 400 });
   }
 
-  try {
-    const videoUrl = new URL(uri);
-    if (
-      videoUrl.hostname !== "generativelanguage.googleapis.com" &&
-      !videoUrl.hostname.endsWith(".googleapis.com")
-    ) {
-      return NextResponse.json({ error: "Invalid URI hostname." }, { status: 400 });
-    }
-  } catch {
-    return NextResponse.json({ error: "Invalid URI format." }, { status: 400 });
-  }
-
-  const response = await fetch(uri, {
+  const response = await fetch("https://generativelanguage.googleapis.com/v1beta", {
     headers: {
       "x-goog-api-key": env.GOOGLE_GENERATIVE_AI_API_KEY,
     },
