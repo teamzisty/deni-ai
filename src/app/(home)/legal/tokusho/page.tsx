@@ -53,7 +53,7 @@ export default function TokushoPage() {
           </div>
           <div className="grid gap-2 border-border p-4 sm:grid-cols-3 sm:gap-6 sm:border-b">
             <dt className="text-sm font-medium">メールアドレス</dt>
-            <dd className="text-sm text-muted-foreground sm:col-span-2">imraicdev@gmail.com</dd>
+            <dd className="text-sm text-muted-foreground sm:col-span-2">contact@deniai.app</dd>
           </div>
           <div className="grid gap-2 border-border p-4 sm:grid-cols-3 sm:gap-6 sm:border-b">
             <dt className="text-sm font-medium">利用可能な決済手段</dt>
