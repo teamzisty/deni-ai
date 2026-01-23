@@ -64,6 +64,13 @@
       "when": 1766943903382,
       "tag": "0008_solid_leopardon",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1769086237606,
+      "tag": "0009_good_lester",
+      "breakpoints": true
     }
   ]
 }

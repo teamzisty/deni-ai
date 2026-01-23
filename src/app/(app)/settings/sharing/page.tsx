@@ -301,7 +301,7 @@ export default function SharingSettingsPage() {
                   </div>
                   <Button size="sm" variant="outline" asChild>
                     <Link href={`/shared/${item.share.id}`}>
-                      <ExternalLink className="size-4 mr-2" />
+                      <ExternalLink className="size-4" />
                       {t("View")}
                     </Link>
                   </Button>

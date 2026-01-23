@@ -6,6 +6,12 @@ import { billing, user } from "@/db/schema";
 import { env } from "@/env";
 import { type BillingPlan, billingPlans, findPlanById, findPlanByLookupKey } from "@/lib/billing";
 import { isBillingDisabled } from "@/lib/billing-config";
+import {
+  disableMaxMode,
+  enableMaxMode,
+  getMaxModeStatus,
+  MAX_MODE_PRICING,
+} from "@/lib/max-mode";
 import { stripe } from "@/lib/stripe";
 import { getSubscriptionPeriodEndDate } from "@/lib/stripe-subscriptions";
 import { getUsageSummary } from "@/lib/usage";
@@ -691,4 +697,32 @@ export const billingRouter = router({
           : null,
       };
     }),
+  // Max Mode endpoints
+  maxModeStatus: protectedProcedure.query(async ({ ctx }) => {
+    const status = await getMaxModeStatus(ctx.userId);
+    return {
+      ...status,
+      pricing: MAX_MODE_PRICING,
+    };
+  }),
+  enableMaxMode: billingEnabledProcedure.mutation(async ({ ctx }) => {
+    const result = await enableMaxMode(ctx.userId);
+    if (!result.success) {
+      throw new TRPCError({
+        code: "BAD_REQUEST",
+        message: result.error ?? "Failed to enable Max Mode.",
+      });
+    }
+    return { success: true };
+  }),
+  disableMaxMode: billingEnabledProcedure.mutation(async ({ ctx }) => {
+    const result = await disableMaxMode(ctx.userId);
+    if (!result.success) {
+      throw new TRPCError({
+        code: "BAD_REQUEST",
+        message: result.error ?? "Failed to disable Max Mode.",
+      });
+    }
+    return { success: true };
+  }),
 });

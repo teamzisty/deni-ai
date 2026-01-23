@@ -5,6 +5,8 @@ import { and, eq } from "drizzle-orm";
 import { db } from "@/db/drizzle";
 import { billing, usageQuota } from "@/db/schema";
 
+import { isMaxModeEligible, recordMaxModeUsage } from "./max-mode";
+
 const ACTIVE_BILLING_STATUSES = new Set([
   "active",
   "trialing",
@@ -17,19 +19,20 @@ const ACTIVE_BILLING_STATUSES = new Set([
 export type UsageCategory = "basic" | "premium";
 export type SubscriptionTier = "free" | "plus" | "pro";
 type UsageRecord = typeof usageQuota.$inferSelect;
+type BillingRecord = typeof billing.$inferSelect;
 
 const USAGE_CATEGORIES: UsageCategory[] = ["basic", "premium"];
 
 const USAGE_LIMITS: Record<UsageCategory, Record<SubscriptionTier, number | null>> = {
   basic: {
     free: 1500,
-    plus: 6000,
-    pro: 15000,
+    plus: 3000,
+    pro: 10000,
   },
   premium: {
     free: 50,
-    plus: 500,
-    pro: 1000,
+    plus: 250,
+    pro: 500,
   },
 };
 
@@ -39,9 +42,12 @@ const GUEST_USAGE_LIMITS: Record<UsageCategory, number> = {
 };
 
 export class UsageLimitError extends Error {
-  constructor(message: string) {
+  public maxModeAvailable: boolean;
+  
+  constructor(message: string, maxModeAvailable = false) {
     super(message);
     this.name = "UsageLimitError";
+    this.maxModeAvailable = maxModeAvailable;
   }
 }
 
@@ -50,6 +56,8 @@ type TierInfo = {
   planId: string | null;
   status: string | null;
   periodEnd: Date | null;
+  maxModeEnabled: boolean;
+  maxModeEligible: boolean;
 };
 
 function getDefaultPeriodEnd(now: Date) {
@@ -65,6 +73,7 @@ async function getTierInfo(userId: string, now: Date): Promise<TierInfo> {
       planId: billing.planId,
       status: billing.status,
       currentPeriodEnd: billing.currentPeriodEnd,
+      maxModeEnabled: billing.maxModeEnabled,
     })
     .from(billing)
     .where(eq(billing.userId, userId))
@@ -76,6 +85,8 @@ async function getTierInfo(userId: string, now: Date): Promise<TierInfo> {
       planId: null,
       status: null,
       periodEnd: getDefaultPeriodEnd(now),
+      maxModeEnabled: false,
+      maxModeEligible: false,
     };
   }
 
@@ -92,16 +103,21 @@ async function getTierInfo(userId: string, now: Date): Promise<TierInfo> {
       planId,
       status,
       periodEnd: getDefaultPeriodEnd(now),
+      maxModeEnabled: false,
+      maxModeEligible: false,
     };
   }
 
   const isPro = (planId ?? "").startsWith("pro");
+  const maxModeEligible = isMaxModeEligible(planId) && status === "active";
 
   return {
     tier: isPro ? "pro" : "plus",
     planId,
     status: status ?? null,
     periodEnd: record.currentPeriodEnd ?? null,
+    maxModeEnabled: maxModeEligible && record.maxModeEnabled,
+    maxModeEligible,
   };
 }
 
@@ -180,11 +196,30 @@ export async function consumeUsage({
       tier: tierInfo.tier,
       limit: null,
       remaining: null,
+      usedMaxMode: false,
     };
   }
 
-  if (limit <= 0 || (!state.shouldReset && state.used >= limit)) {
-    throw new UsageLimitError("Usage limit reached for your plan.");
+  const isLimitReached = limit <= 0 || (!state.shouldReset && state.used >= limit);
+
+  // If limit reached, check for Max Mode
+  if (isLimitReached) {
+    // If Max Mode is enabled, record usage and allow
+    if (tierInfo.maxModeEnabled) {
+      await recordMaxModeUsage(userId, category);
+      return {
+        tier: tierInfo.tier,
+        limit,
+        remaining: 0,
+        usedMaxMode: true,
+      };
+    }
+
+    // If Max Mode is eligible but not enabled, throw error with flag
+    throw new UsageLimitError(
+      "Usage limit reached for your plan.",
+      tierInfo.maxModeEligible,
+    );
   }
 
   const nextUsed = state.used + 1;
@@ -217,6 +252,7 @@ export async function consumeUsage({
     tier: tierInfo.tier,
     limit,
     remaining: Math.max(limit - saved.used, 0),
+    usedMaxMode: false,
   };
 }
 
@@ -235,6 +271,8 @@ export type UsageSummary = {
   status: string | null;
   periodEnd: Date | null;
   usage: UsageSnapshot[];
+  maxModeEnabled: boolean;
+  maxModeEligible: boolean;
 };
 
 export async function getUsageSummary({
@@ -289,5 +327,7 @@ export async function getUsageSummary({
     status: tierInfo.status,
     periodEnd: tierInfo.periodEnd,
     usage,
+    maxModeEnabled: tierInfo.maxModeEnabled,
+    maxModeEligible: tierInfo.maxModeEligible,
   };
 }

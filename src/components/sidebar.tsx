@@ -159,18 +159,18 @@ function ChatItem({ item }: { item: { id: string; title: string | null } }) {
           </DropdownMenuTrigger>
           <DropdownMenuContent side="right" align="start">
             <DropdownMenuItem onClick={() => setIsRenameOpen(true)}>
-              <Pencil className="mr-2 size-4" />
+              <Pencil className="size-4" />
               <span>{t("Rename")}</span>
             </DropdownMenuItem>
             <DropdownMenuItem onClick={() => setIsShareOpen(true)}>
-              <Share2 className="mr-2 size-4" />
+              <Share2 className="size-4" />
               <span>{t("Share")}</span>
             </DropdownMenuItem>
             <DropdownMenuItem
               onClick={() => deleteChat.mutate({ id: item.id })}
               className="text-destructive focus:text-destructive"
             >
-              <Trash2 className="mr-2 size-4" />
+              <Trash2 className="size-4" />
               <span>{t("Delete")}</span>
             </DropdownMenuItem>
           </DropdownMenuContent>

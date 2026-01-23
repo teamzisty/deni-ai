@@ -67,6 +67,16 @@ This file applies to the entire repository tree rooted here. Follow these rules,
   - If changes are absolutely necessary, keep them minimal and non-breaking to component APIs.
 - Shared utilities belong in `src/lib/utils.ts`; reusable logic goes under `src/lib/`.
 
+■ Internationalization (i18n)
+
+- Translation files are located in `messages/` directory (`en.json`, `ja.json`, etc.).
+- When adding new user-facing text strings:
+  1. Add the key and English text to `messages/en.json`.
+  2. Add the corresponding Japanese translation to `messages/ja.json`.
+  3. Ensure all translation files have the same keys.
+- Use `next-intl` for translations in components (e.g., `useExtracted()` hook).
+- Before completing i18n-related changes, verify that all language files are in sync.
+
 ■ Directory Guidelines
 
 - Pages/Layouts: `src/app/**`

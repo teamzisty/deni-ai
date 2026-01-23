@@ -135,7 +135,7 @@ export function SharedChatInterface({
 
         {allowFork && (
           <Button onClick={handleFork} disabled={forkChat.isPending}>
-            {forkChat.isPending ? <Spinner /> : <GitFork className="mr-2 size-4" />}
+            {forkChat.isPending ? <Spinner /> : <GitFork className="size-4" />}
             {isLoggedIn ? t("Fork & Continue") : t("Sign in to Fork")}
           </Button>
         )}

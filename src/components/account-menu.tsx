@@ -1,6 +1,6 @@
 "use client";
 
-import { LogOut, Settings, UserIcon } from "lucide-react";
+import { LogOut, Settings, UserIcon, Zap } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -14,13 +14,25 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { SidebarMenuButton } from "@/components/ui/sidebar";
 import { authClient } from "@/lib/auth-client";
+import { isBillingDisabled } from "@/lib/billing-config";
+import { trpc } from "@/lib/trpc/react";
 import { versions } from "@/lib/version";
+import { Badge } from "./ui/badge";
 
 export function AccountMenu() {
   const t = useExtracted();
   const router = useRouter();
   const session = authClient.useSession();
   const isAnonymous = Boolean(session.data?.user?.isAnonymous);
+  const billingDisabled = isBillingDisabled;
+
+  const maxModeQuery = trpc.billing.maxModeStatus.useQuery(undefined, {
+    enabled: !billingDisabled && !isAnonymous,
+    refetchInterval: 30000,
+  });
+
+  const maxModeEnabled = maxModeQuery.data?.enabled ?? false;
+  const maxModeEligible = maxModeQuery.data?.eligible ?? false;
 
   return (
     <DropdownMenu>
@@ -43,6 +55,12 @@ export function AccountMenu() {
               )}
             </div>
             <span className="flex-1 truncate text-sm">{session.data?.user?.name ?? t("User")}</span>
+            {maxModeEnabled && (
+              <Badge variant="secondary" className="ml-auto text-xs px-1.5 py-0">
+                <Zap className="size-3 mr-0.5" />
+                Max
+              </Badge>
+            )}
           </div>
         </SidebarMenuButton>
       </DropdownMenuTrigger>
@@ -72,6 +90,20 @@ export function AccountMenu() {
             </span>
           </div>
         </div>
+        {maxModeEnabled && (
+          <div className="px-2 py-1.5 text-xs text-muted-foreground flex items-center gap-1">
+            <Zap className="size-3 text-amber-500" />
+            <span>{t("Max Mode active")}</span>
+          </div>
+        )}
+        {!maxModeEnabled && maxModeEligible && (
+          <DropdownMenuItem className="gap-2 text-sm text-amber-600" asChild>
+            <Link href="/settings/billing" className="flex w-full">
+              <Zap className="size-4" />
+              <span className="flex-1">{t("Enable Max Mode")}</span>
+            </Link>
+          </DropdownMenuItem>
+        )}
         {
           <span className="px-2 py-1 text-xs text-muted-foreground">
             Deni AI {versions.version}, {versions.codename}

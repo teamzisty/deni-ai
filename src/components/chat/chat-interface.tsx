@@ -13,6 +13,7 @@ import {
   Plug,
   RefreshCcwIcon,
   TriangleAlert,
+  Zap,
 } from "lucide-react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -375,8 +376,10 @@ export function ChatInterface({ id, initialMessages = [] }: ChatInterfaceProps) 
 
   const isByokMissingConfig = selectedProvider === "openai_compatible" && !openAiCompatReady;
 
+  const maxModeEnabled = usageQuery.data?.maxModeEnabled ?? false;
   const isUsageLow =
     !isByokActive &&
+    !maxModeEnabled &&
     remainingUsage !== null &&
     remainingUsage !== undefined &&
     usageLimit !== null &&
@@ -385,11 +388,23 @@ export function ChatInterface({ id, initialMessages = [] }: ChatInterfaceProps) 
     remainingUsage > 0 &&
     remainingUsage <= lowUsageThreshold;
   const isUsageBlocked =
-    !isByokActive && remainingUsage !== null && remainingUsage !== undefined && remainingUsage <= 0;
+    !isByokActive &&
+    !maxModeEnabled &&
+    remainingUsage !== null &&
+    remainingUsage !== undefined &&
+    remainingUsage <= 0;
   const usageCategoryLabel = usageCategory === "premium" ? t("Premium") : t("Basic");
   const usageTierLabel =
     usageTier === "free" ? t("Free") : usageTier === "plus" ? t("Plus") : t("Pro");
-  const isSubmitBlocked = isUsageBlocked || isByokMissingConfig;
+  const maxModeEligible = usageQuery.data?.maxModeEligible ?? false;
+  const canEnableMaxMode = maxModeEligible && !maxModeEnabled && isUsageBlocked;
+  const isSubmitBlocked = (isUsageBlocked && !maxModeEnabled) || isByokMissingConfig;
+
+  const enableMaxMode = trpc.billing.enableMaxMode.useMutation({
+    onSuccess: () => {
+      usageQuery.refetch();
+    },
+  });
 
   const resolveImageModelLabel = (imageModel?: string | null, modelLabel?: string | null) => {
     if (modelLabel) {
@@ -925,7 +940,7 @@ export function ChatInterface({ id, initialMessages = [] }: ChatInterfaceProps) 
                 <Button size="sm" asChild>
                   <Link href="/settings/providers">
                     {t("Open settings")}
-                    <ArrowUpRight className="ml-1.5 size-3.5" />
+                    <ArrowUpRight className="size-3.5" />
                   </Link>
                 </Button>
               </div>
@@ -949,44 +964,68 @@ export function ChatInterface({ id, initialMessages = [] }: ChatInterfaceProps) 
           className={cn(
             "mt-3 border-amber-500/50 bg-amber-100/40 text-amber-900 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-50",
             isUsageBlocked &&
+              !canEnableMaxMode &&
               "border-destructive/40 bg-destructive/10 text-destructive-foreground dark:border-destructive/30",
+            canEnableMaxMode &&
+              "border-blue-500/50 bg-blue-100/40 text-blue-900 dark:border-blue-500/30 dark:bg-blue-500/10 dark:text-blue-50",
           )}
         >
-          {isUsageBlocked ? (
+          {canEnableMaxMode ? (
+            <Zap className="mt-0.5 size-4" />
+          ) : isUsageBlocked ? (
             <Ban className="mt-0.5 size-4" />
           ) : (
             <TriangleAlert className="mt-0.5 size-4" />
           )}
           <AlertTitle>
-            {isUsageBlocked ? t("Usage limit reached") : t("You are running low")}
+            {canEnableMaxMode
+              ? t("Enable Max Mode to continue")
+              : isUsageBlocked
+                ? t("Usage limit reached")
+                : t("You are running low")}
           </AlertTitle>
           <AlertDescription className="flex flex-col gap-2">
             <p>
-              {isUsageBlocked
-                ? t("You've hit the {category} usage limit on your {tier} plan.", {
-                    category: usageCategoryLabel,
-                    tier: usageTierLabel,
-                  })
-                : remainingUsage === null || remainingUsage === undefined
-                  ? t("Only a few {category} requests left on your {tier} plan.", {
+              {canEnableMaxMode
+                ? t(
+                    "You've reached your limit. Enable Max Mode to continue with pay-per-use pricing.",
+                  )
+                : isUsageBlocked
+                  ? t("You've hit the {category} usage limit on your {tier} plan.", {
                       category: usageCategoryLabel,
                       tier: usageTierLabel,
                     })
-                  : t(
-                      "Only {count, plural, one {#} other {#}} {category} requests left on your {tier} plan.",
-                      {
-                        count: remainingUsage,
+                  : remainingUsage === null || remainingUsage === undefined
+                    ? t("Only a few {category} requests left on your {tier} plan.", {
                         category: usageCategoryLabel,
                         tier: usageTierLabel,
-                      },
-                    )}
+                      })
+                    : t(
+                        "Only {count, plural, one {#} other {#}} {category} requests left on your {tier} plan.",
+                        {
+                          count: remainingUsage,
+                          category: usageCategoryLabel,
+                          tier: usageTierLabel,
+                        },
+                      )}
             </p>
             <div className="flex flex-wrap gap-2">
-              {!isAnonymous && !billingDisabled && (
+              {canEnableMaxMode && (
+                <Button
+                  size="sm"
+                  onClick={() => enableMaxMode.mutate()}
+                  disabled={enableMaxMode.isPending}
+                >
+                  {enableMaxMode.isPending && <Spinner />}
+                  <Zap className="size-3.5" />
+                  {t("Enable Max Mode")}
+                </Button>
+              )}
+              {!isAnonymous && !billingDisabled && !canEnableMaxMode && (
                 <Button size="sm" asChild>
                   <Link href="/settings/billing">
                     {t("Upgrade plan")}
-                    <ArrowUpRight className="ml-1.5 size-3.5" />
+                    <ArrowUpRight className="size-3.5" />
                   </Link>
                 </Button>
               )}

@@ -5,6 +5,7 @@ import { db } from "@/db/drizzle";
 import { billing } from "@/db/schema";
 import { env } from "@/env";
 import { findPlanByLookupKey } from "@/lib/billing";
+import { resetMaxModeUsage } from "@/lib/max-mode";
 import { stripe } from "@/lib/stripe";
 import { getSubscriptionPeriodEnd } from "@/lib/stripe-subscriptions";
 
@@ -34,6 +35,19 @@ async function saveSubscription(payload: SubscriptionPayload) {
     currentPeriodEnd: payload.currentPeriodEnd ? new Date(payload.currentPeriodEnd * 1000) : null,
   };
 
+  // Check if this is a renewal (period end changed) for Max Mode reset
+  const [existingRecord] = await db
+    .select({ currentPeriodEnd: billing.currentPeriodEnd, maxModeEnabled: billing.maxModeEnabled })
+    .from(billing)
+    .where(eq(billing.userId, payload.userId))
+    .limit(1);
+
+  const isRenewal =
+    existingRecord?.currentPeriodEnd &&
+    updates.currentPeriodEnd &&
+    existingRecord.currentPeriodEnd.getTime() !== updates.currentPeriodEnd.getTime() &&
+    updates.currentPeriodEnd.getTime() > existingRecord.currentPeriodEnd.getTime();
+
   await db
     .insert(billing)
     .values({
@@ -47,6 +61,12 @@ async function saveSubscription(payload: SubscriptionPayload) {
         updatedAt: new Date(),
       },
     });
+
+  // If this is a renewal and Max Mode is enabled, reset usage counters
+  if (isRenewal && existingRecord?.maxModeEnabled) {
+    await resetMaxModeUsage(payload.userId);
+    console.log("[stripe:webhook] Reset Max Mode usage for renewal", { userId: payload.userId });
+  }
 }
 
 async function clearPlanData({ userId, customerId }: { userId: string; customerId: string }) {

@@ -6,6 +6,7 @@ const nextConfig: NextConfig = {
   transpilePackages: ["shiki"],
   experimental: {
     turbopackFileSystemCacheForBuild: true,
+    turbopackFileSystemCacheForDev: true
   },
 };
 
