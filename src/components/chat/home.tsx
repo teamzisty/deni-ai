@@ -1,5 +1,6 @@
 "use client";
 
+import { MessageSquare, Sparkles, Code, Image, FileText } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useExtracted } from "next-intl";
 import { useState } from "react";
@@ -29,6 +30,35 @@ export type InitialMessageData = {
   imageMode: boolean;
   reasoningEffort: ReasoningEffort;
 };
+
+type SuggestionCardProps = {
+  icon: React.ElementType;
+  title: string;
+  prompt: string;
+  onClick: (prompt: string) => void;
+  delay: string;
+};
+
+function SuggestionCard({ icon: Icon, title, prompt, onClick, delay }: SuggestionCardProps) {
+  return (
+    <button
+      type="button"
+      onClick={() => onClick(prompt)}
+      className={`group relative flex flex-col gap-2 p-4 rounded-xl border border-border/50 bg-card/50 backdrop-blur-sm text-left transition-all duration-300 hover:border-primary/30 hover:bg-card/80 hover:shadow-md animate-fade-in-up ${delay}`}
+    >
+      <div className="absolute inset-0 rounded-xl bg-gradient-to-br from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+      <div className="relative flex items-center gap-2">
+        <div className="inline-flex items-center justify-center w-8 h-8 rounded-lg bg-primary/10 text-primary">
+          <Icon className="w-4 h-4" />
+        </div>
+        <span className="font-medium text-sm">{title}</span>
+      </div>
+      <p className="relative text-xs text-muted-foreground line-clamp-2 leading-relaxed">
+        {prompt}
+      </p>
+    </button>
+  );
+}
 
 export default function ChatHome() {
   const t = useExtracted();
@@ -90,36 +120,95 @@ export default function ChatHome() {
     }
   };
 
+  const handleSuggestionClick = (prompt: string) => {
+    setInput(prompt);
+  };
+
+  const suggestions = [
+    {
+      icon: Sparkles,
+      title: t("Creative Writing"),
+      prompt: t("Write a short story about a robot learning to paint"),
+    },
+    {
+      icon: Code,
+      title: t("Code Help"),
+      prompt: t("Explain how async/await works in JavaScript"),
+    },
+    {
+      icon: FileText,
+      title: t("Summarize"),
+      prompt: t("Summarize the key benefits of renewable energy"),
+    },
+    {
+      icon: Image,
+      title: t("Analyze"),
+      prompt: t("What makes a good user interface design?"),
+    },
+  ];
+
   return (
     <section
       aria-labelledby="chat-home-title"
-      className="flex min-h-screen flex-col gap-8 items-center justify-center text-center p-4"
+      className="relative flex min-h-screen flex-col items-center justify-center p-4"
     >
-      <h1
-        className="text-balance text-2xl md:text-3xl lg:text-4xl font-bold tracking-tighter"
-        id="chat-home-title"
-      >
-        {t("Hello, How can I help you today?")}
-      </h1>
+      {/* Atmospheric background */}
+      <div className="absolute inset-0 -z-10 overflow-hidden">
+        <div className="absolute top-1/4 left-1/3 w-[400px] h-[400px] bg-primary/5 rounded-full blur-[100px] animate-pulse-soft" />
+        <div className="absolute bottom-1/4 right-1/3 w-[300px] h-[300px] bg-primary/8 rounded-full blur-[80px] animate-pulse-soft delay-300" />
+      </div>
 
-      <div className="w-full max-w-2xl text-left">
-        <ChatComposer
-          value={input}
-          onValueChange={setInput}
-          onSubmit={handleSubmit}
-          placeholder={t("Ask me anything...")}
-          isSubmitDisabled={isSubmitting}
-          model={model}
-          onModelChange={setModel}
-          webSearch={webSearch}
-          onWebSearchChange={setWebSearch}
-          videoMode={videoMode}
-          onVideoModeChange={setVideoMode}
-          imageMode={imageMode}
-          onImageModeChange={setImageMode}
-          reasoningEffort={reasoningEffort}
-          onReasoningEffortChange={setReasoningEffort}
-        />
+      <div className="w-full max-w-2xl space-y-8">
+        {/* Greeting */}
+        <div className="text-center space-y-3 animate-fade-in-up">
+          <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-primary/10 mb-2">
+            <MessageSquare className="w-7 h-7 text-primary" />
+          </div>
+          <h1
+            className="text-2xl md:text-3xl lg:text-4xl font-bold tracking-[-0.03em]"
+            id="chat-home-title"
+          >
+            {t("How can I help you today?")}
+          </h1>
+          <p className="text-muted-foreground text-sm md:text-base max-w-md mx-auto">
+            {t("Ask me anything. I'm here to assist with your questions, creative projects, and more.")}
+          </p>
+        </div>
+
+        {/* Suggestions */}
+        <div className="grid grid-cols-2 gap-3">
+          {suggestions.map((suggestion, index) => (
+            <SuggestionCard
+              key={suggestion.title}
+              icon={suggestion.icon}
+              title={suggestion.title}
+              prompt={suggestion.prompt}
+              onClick={handleSuggestionClick}
+              delay={`delay-${(index + 1) * 100}`}
+            />
+          ))}
+        </div>
+
+        {/* Composer */}
+        <div className="animate-fade-in-up delay-500">
+          <ChatComposer
+            value={input}
+            onValueChange={setInput}
+            onSubmit={handleSubmit}
+            placeholder={t("Ask me anything...")}
+            isSubmitDisabled={isSubmitting}
+            model={model}
+            onModelChange={setModel}
+            webSearch={webSearch}
+            onWebSearchChange={setWebSearch}
+            videoMode={videoMode}
+            onVideoModeChange={setVideoMode}
+            imageMode={imageMode}
+            onImageModeChange={setImageMode}
+            reasoningEffort={reasoningEffort}
+            onReasoningEffortChange={setReasoningEffort}
+          />
+        </div>
       </div>
     </section>
   );

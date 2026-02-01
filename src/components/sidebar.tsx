@@ -1,7 +1,7 @@
 "use client";
 
 import { compareDesc, isThisMonth, isThisWeek, isThisYear, isToday, isYesterday } from "date-fns";
-import { MoreHorizontal, Pencil, Share2, Trash2 } from "lucide-react";
+import { MoreHorizontal, Pencil, Share2, Trash2, Plus, MessageSquare } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useExtracted } from "next-intl";
@@ -44,6 +44,7 @@ import {
 import { trpc } from "@/lib/trpc/react";
 import { AccountMenu } from "./account-menu";
 import { ShareDialog } from "./chat/share-dialog";
+import DeniAIIcon from "./deni-ai-icon";
 import { Button } from "./ui/button";
 import { Spinner } from "./ui/spinner";
 
@@ -303,23 +304,34 @@ export function AppSidebar() {
   };
 
   return (
-    <Sidebar>
-      <SidebarContent className="px-3">
+    <Sidebar className="border-r border-sidebar-border/50">
+      <SidebarContent className="px-3 py-4">
+        {/* Header with logo and new chat */}
         <SidebarGroup>
-          <Link href="/app" className="mx-auto">
-            <h1 className="py-3 mx-auto text-2xl font-semibold tracking-tighter hover:text-primary hover:cursor-pointer">
-              {t("Deni AI")}
-            </h1>
-          </Link>
+          <div className="flex items-center justify-between mb-4">
+            <Link href="/app" className="flex items-center gap-2.5 group">
+              <div className="relative">
+                <div className="absolute inset-0 bg-sidebar-primary/20 rounded-lg blur-md opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                <DeniAIIcon className="relative w-8 h-8 text-sidebar-primary transition-transform duration-300 group-hover:scale-105" />
+              </div>
+              <h1 className="text-lg font-semibold tracking-tight text-sidebar-foreground">
+                {t("Deni AI")}
+              </h1>
+            </Link>
+          </div>
           <SidebarGroupContent>
             <SidebarMenu>
               <SidebarMenuItem>
                 <Button
-                  className="w-full"
+                  className="w-full justify-start gap-2 rounded-xl h-10 font-medium shadow-sm hover:shadow-md transition-all duration-300"
                   disabled={createConversion.isPending}
                   onClick={handleNewChat}
                 >
-                  {createConversion.isPending ? <Spinner /> : null}
+                  {createConversion.isPending ? (
+                    <Spinner className="w-4 h-4" />
+                  ) : (
+                    <Plus className="w-4 h-4" />
+                  )}
                   {t("New Chat")}
                 </Button>
               </SidebarMenuItem>
@@ -327,9 +339,11 @@ export function AppSidebar() {
           </SidebarGroupContent>
         </SidebarGroup>
         {isLoading ? (
-          <Spinner className="mx-auto mt-3" />
+          <div className="flex flex-col items-center justify-center py-8">
+            <Spinner className="w-5 h-5 text-sidebar-primary" />
+          </div>
         ) : error ? (
-          <div>
+          <div className="px-3 py-4 text-sm text-destructive">
             {t("Error")}: {error.message}
           </div>
         ) : (
@@ -337,14 +351,22 @@ export function AppSidebar() {
             <SidebarGroupContent className="h-full overflow-y-auto">
               <SidebarMenu>
                 {(data?.length ?? 0) === 0 && (
-                  <div className="text-sm text-center text-muted-foreground">
-                    {t("No chats found.")}
+                  <div className="flex flex-col items-center justify-center py-8 px-4 text-center">
+                    <div className="w-12 h-12 rounded-xl bg-sidebar-accent flex items-center justify-center mb-3">
+                      <MessageSquare className="w-6 h-6 text-sidebar-primary" />
+                    </div>
+                    <p className="text-sm text-muted-foreground">
+                      {t("No chats yet")}
+                    </p>
+                    <p className="text-xs text-muted-foreground/70 mt-1">
+                      {t("Start a conversation to see it here")}
+                    </p>
                   </div>
                 )}
                 {chatGroups.map((group) => (
                   <Fragment key={group.key}>
-                    <SidebarMenuItem className="mt-3 first:mt-0">
-                      <div className="px-2 pt-2 text-xs font-medium text-muted-foreground">
+                    <SidebarMenuItem className="mt-4 first:mt-0">
+                      <div className="px-2 pt-2 pb-1 text-[11px] font-medium uppercase tracking-wider text-muted-foreground/70">
                         {getRecencyLabel(group.key)}
                       </div>
                     </SidebarMenuItem>
@@ -358,7 +380,7 @@ export function AppSidebar() {
           </SidebarGroup>
         )}
 
-        <SidebarGroup className="w-full mt-auto mb-4">
+        <SidebarGroup className="w-full mt-auto pt-4 border-t border-sidebar-border/50">
           <SidebarGroupContent>
             <SidebarMenu>
               <SidebarMenuItem>

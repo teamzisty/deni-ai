@@ -207,6 +207,32 @@ export async function consumeUsage({
     // If Max Mode is enabled, record usage and allow
     if (tierInfo.maxModeEnabled) {
       await recordMaxModeUsage(userId, category);
+
+      // Also increment the regular usage counter
+      const nextUsed = state.used + 1;
+      await db
+        .insert(usageQuota)
+        .values({
+          userId,
+          category,
+          planTier: tierInfo.tier,
+          limitAmount: limit,
+          used: nextUsed,
+          periodStart: state.periodStart,
+          periodEnd: state.targetPeriodEnd,
+        })
+        .onConflictDoUpdate({
+          target: [usageQuota.userId, usageQuota.category],
+          set: {
+            planTier: tierInfo.tier,
+            limitAmount: limit,
+            used: nextUsed,
+            periodStart: state.periodStart,
+            periodEnd: state.targetPeriodEnd,
+            updatedAt: new Date(),
+          },
+        });
+
       return {
         tier: tierInfo.tier,
         limit,

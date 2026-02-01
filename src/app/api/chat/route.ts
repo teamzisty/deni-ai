@@ -164,12 +164,17 @@ export async function POST(req: Request) {
       const usageSummary = await getUsageSummary({ userId, isAnonymous });
       const categoryUsage = usageSummary.usage.find((usage) => usage.category === usageCategory);
 
-      if (
+      // Allow if Max Mode is enabled, even if remaining is 0
+      const isLimitReached =
         categoryUsage?.remaining !== null &&
         categoryUsage?.remaining !== undefined &&
-        categoryUsage.remaining <= 0
-      ) {
-        throw new UsageLimitError("You've hit the usage limit for your plan.");
+        categoryUsage.remaining <= 0;
+
+      if (isLimitReached && !usageSummary.maxModeEnabled) {
+        throw new UsageLimitError(
+          "You've hit the usage limit for your plan.",
+          usageSummary.maxModeEligible,
+        );
       }
     } catch (error) {
       if (error instanceof UsageLimitError) {

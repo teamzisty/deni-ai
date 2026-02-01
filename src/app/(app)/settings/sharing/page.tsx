@@ -1,6 +1,16 @@
 "use client";
 
-import { Check, Copy, ExternalLink, Globe, Link2, Lock, Trash2, Users } from "lucide-react";
+import {
+  Check,
+  Copy,
+  ExternalLink,
+  Globe,
+  Link2,
+  Lock,
+  Share2,
+  Trash2,
+  Users,
+} from "lucide-react";
 import Link from "next/link";
 import { useExtracted } from "next-intl";
 import { useState } from "react";
@@ -28,6 +38,7 @@ function ShareItem({
   recipients,
   onDelete,
   onUpdate,
+  index = 0,
 }: {
   share: {
     id: string;
@@ -40,6 +51,7 @@ function ShareItem({
   recipients: { id: string; name: string; email: string }[];
   onDelete: (chatId: string) => void;
   onUpdate: (chatId: string, visibility: "public" | "private", allowFork: boolean) => void;
+  index?: number;
 }) {
   const t = useExtracted();
   const [copied, setCopied] = useState(false);
@@ -62,10 +74,16 @@ function ShareItem({
   };
 
   return (
-    <div className="flex items-center justify-between p-4 border rounded-lg">
+    <div
+      className={`group relative flex items-center justify-between rounded-xl border border-border/50 p-4 transition-all duration-300 hover:border-primary/30 hover:shadow-sm animate-fade-in-up`}
+      style={{ animationDelay: `${index * 75}ms` }}
+    >
       <div className="flex-1 min-w-0">
-        <div className="flex items-center gap-2">
-          <Link href={`/chat/${chat.id}`} className="font-medium truncate hover:underline">
+        <div className="flex items-center gap-2 flex-wrap">
+          <Link
+            href={`/chat/${chat.id}`}
+            className="font-medium truncate hover:text-primary transition-colors"
+          >
             {chat.title || t("Untitled")}
           </Link>
           <TooltipProvider>
@@ -74,7 +92,11 @@ function ShareItem({
                 <button type="button" onClick={toggleVisibility} className="flex items-center">
                   <Badge
                     variant="secondary"
-                    className="shrink-0 cursor-pointer hover:opacity-80 transition-opacity"
+                    className={`shrink-0 cursor-pointer transition-all duration-200 hover:scale-105 ${
+                      share.visibility === "public"
+                        ? "bg-green-500/10 text-green-600"
+                        : "bg-amber-500/10 text-amber-600"
+                    }`}
                   >
                     {share.visibility === "public" ? (
                       <>
@@ -103,7 +125,7 @@ function ShareItem({
                 <button type="button" onClick={toggleFork} className="flex items-center">
                   <Badge
                     variant={share.allowFork ? "outline" : "secondary"}
-                    className="shrink-0 cursor-pointer hover:opacity-80 transition-opacity"
+                    className="shrink-0 cursor-pointer transition-all duration-200 hover:scale-105"
                   >
                     {share.allowFork ? t("Fork OK") : t("No Fork")}
                   </Badge>
@@ -115,7 +137,7 @@ function ShareItem({
             </Tooltip>
           </TooltipProvider>
         </div>
-        <div className="flex items-center gap-4 mt-1 text-xs text-muted-foreground">
+        <div className="flex items-center gap-4 mt-2 text-xs text-muted-foreground">
           <span className="flex items-center gap-1">
             <Link2 className="size-3" />
             {new Date(share.createdAt).toLocaleDateString()}
@@ -131,12 +153,12 @@ function ShareItem({
         </div>
       </div>
 
-      <div className="flex items-center gap-2 ml-4">
+      <div className="flex items-center gap-1 ml-4">
         <TooltipProvider>
           <Tooltip>
             <TooltipTrigger asChild>
-              <Button size="icon" variant="ghost" onClick={handleCopy}>
-                {copied ? <Check className="size-4" /> : <Copy className="size-4" />}
+              <Button size="icon" variant="ghost" className="rounded-lg" onClick={handleCopy}>
+                {copied ? <Check className="size-4 text-green-600" /> : <Copy className="size-4" />}
               </Button>
             </TooltipTrigger>
             <TooltipContent>{t("Copy link")}</TooltipContent>
@@ -146,7 +168,7 @@ function ShareItem({
         <TooltipProvider>
           <Tooltip>
             <TooltipTrigger asChild>
-              <Button size="icon" variant="ghost" asChild>
+              <Button size="icon" variant="ghost" className="rounded-lg" asChild>
                 <Link href={`/shared/${share.id}`} target="_blank">
                   <ExternalLink className="size-4" />
                 </Link>
@@ -162,7 +184,7 @@ function ShareItem({
               <Button
                 size="icon"
                 variant="ghost"
-                className="text-destructive hover:text-destructive"
+                className="rounded-lg text-destructive hover:text-destructive hover:bg-destructive/10"
                 onClick={() => onDelete(chat.id)}
               >
                 <Trash2 className="size-4" />
@@ -220,35 +242,49 @@ export default function SharingSettingsPage() {
   };
 
   return (
-    <div className="mx-auto flex max-w-4xl w-full flex-col gap-6">
+    <div className="mx-auto flex max-w-4xl w-full flex-col gap-8 animate-fade-in-up">
+      {/* Page Header */}
       <div className="space-y-2">
-        <h1 className="text-3xl font-semibold tracking-tight">{t("Sharing")}</h1>
-        <p className="text-muted-foreground">
-          {t("Manage your shared conversations and access shared links from others.")}
-        </p>
+        <div className="flex items-center gap-3">
+          <div className="inline-flex items-center justify-center w-10 h-10 rounded-xl bg-primary/10 text-primary">
+            <Share2 className="w-5 h-5" />
+          </div>
+          <div>
+            <h1 className="text-2xl font-bold tracking-[-0.02em]">{t("Sharing")}</h1>
+            <p className="text-muted-foreground text-sm">
+              {t("Manage your shared conversations and access shared links from others.")}
+            </p>
+          </div>
+        </div>
       </div>
 
-      <Card className="border-border/80">
-        <CardHeader>
-          <CardTitle>{t("My Shared Links")}</CardTitle>
+      {/* My Shared Links */}
+      <Card className="border-border/50 shadow-sm">
+        <CardHeader className="pb-4">
+          <div className="flex items-center gap-2">
+            <Link2 className="w-4 h-4 text-primary" />
+            <CardTitle className="text-base font-semibold">{t("My Shared Links")}</CardTitle>
+          </div>
           <CardDescription>{t("Conversations you've shared with others.")}</CardDescription>
         </CardHeader>
         <CardContent>
           {myShares.isLoading ? (
-            <div className="flex justify-center py-8">
-              <Spinner />
+            <div className="flex justify-center py-12">
+              <Spinner className="w-6 h-6" />
             </div>
           ) : myShares.data?.length === 0 ? (
-            <div className="text-center py-8 text-muted-foreground">
-              <Link2 className="size-8 mx-auto mb-2 opacity-50" />
-              <p>{t("No shared conversations yet.")}</p>
-              <p className="text-sm">
+            <div className="text-center py-12 text-muted-foreground">
+              <div className="inline-flex items-center justify-center w-12 h-12 rounded-xl bg-muted/50 mb-3">
+                <Link2 className="size-6 opacity-50" />
+              </div>
+              <p className="font-medium">{t("No shared conversations yet.")}</p>
+              <p className="text-sm mt-1">
                 {t("Share a conversation from the chat menu to create a link.")}
               </p>
             </div>
           ) : (
             <div className="space-y-3">
-              {myShares.data?.map((item) => (
+              {myShares.data?.map((item, index) => (
                 <ShareItem
                   key={item.share.id}
                   share={item.share}
@@ -256,6 +292,7 @@ export default function SharingSettingsPage() {
                   recipients={item.recipients}
                   onDelete={handleDelete}
                   onUpdate={handleUpdate}
+                  index={index}
                 />
               ))}
             </div>
@@ -263,27 +300,34 @@ export default function SharingSettingsPage() {
         </CardContent>
       </Card>
 
-      <Card className="border-border/80">
-        <CardHeader>
-          <CardTitle>{t("Shared With Me")}</CardTitle>
+      {/* Shared With Me */}
+      <Card className="border-border/50 shadow-sm">
+        <CardHeader className="pb-4">
+          <div className="flex items-center gap-2">
+            <Users className="w-4 h-4 text-primary" />
+            <CardTitle className="text-base font-semibold">{t("Shared With Me")}</CardTitle>
+          </div>
           <CardDescription>{t("Conversations others have shared with you.")}</CardDescription>
         </CardHeader>
         <CardContent>
           {sharedWithMe.isLoading ? (
-            <div className="flex justify-center py-8">
-              <Spinner />
+            <div className="flex justify-center py-12">
+              <Spinner className="w-6 h-6" />
             </div>
           ) : sharedWithMe.data?.length === 0 ? (
-            <div className="text-center py-8 text-muted-foreground">
-              <Users className="size-8 mx-auto mb-2 opacity-50" />
-              <p>{t("No one has shared conversations with you yet.")}</p>
+            <div className="text-center py-12 text-muted-foreground">
+              <div className="inline-flex items-center justify-center w-12 h-12 rounded-xl bg-muted/50 mb-3">
+                <Users className="size-6 opacity-50" />
+              </div>
+              <p className="font-medium">{t("No one has shared conversations with you yet.")}</p>
             </div>
           ) : (
             <div className="space-y-3">
-              {sharedWithMe.data?.map((item) => (
+              {sharedWithMe.data?.map((item, index) => (
                 <div
                   key={item.share.id}
-                  className="flex items-center justify-between p-4 border rounded-lg"
+                  className="group relative flex items-center justify-between rounded-xl border border-border/50 p-4 transition-all duration-300 hover:border-primary/30 hover:shadow-sm animate-fade-in-up"
+                  style={{ animationDelay: `${index * 75}ms` }}
                 >
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2">
@@ -291,7 +335,7 @@ export default function SharingSettingsPage() {
                         {item.chat.title || t("Untitled")}
                       </span>
                     </div>
-                    <div className="flex items-center gap-4 mt-1 text-xs text-muted-foreground">
+                    <div className="flex items-center gap-4 mt-2 text-xs text-muted-foreground">
                       <span>
                         {t("From: {name}", {
                           name: item.owner.name || t("Unknown"),
@@ -299,7 +343,7 @@ export default function SharingSettingsPage() {
                       </span>
                     </div>
                   </div>
-                  <Button size="sm" variant="outline" asChild>
+                  <Button size="sm" variant="outline" className="rounded-lg gap-2" asChild>
                     <Link href={`/shared/${item.share.id}`}>
                       <ExternalLink className="size-4" />
                       {t("View")}
@@ -313,7 +357,7 @@ export default function SharingSettingsPage() {
       </Card>
 
       <AlertDialog open={!!deleteTarget} onOpenChange={(open) => !open && setDeleteTarget(null)}>
-        <AlertDialogContent>
+        <AlertDialogContent className="rounded-2xl">
           <AlertDialogHeader>
             <AlertDialogTitle>{t("Revoke shared access?")}</AlertDialogTitle>
             <AlertDialogDescription>
@@ -323,11 +367,13 @@ export default function SharingSettingsPage() {
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={deleteShare.isPending}>{t("Cancel")}</AlertDialogCancel>
+            <AlertDialogCancel disabled={deleteShare.isPending} className="rounded-lg">
+              {t("Cancel")}
+            </AlertDialogCancel>
             <AlertDialogAction
               onClick={confirmDelete}
               disabled={deleteShare.isPending}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              className="rounded-lg bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
               {deleteShare.isPending && <Spinner />}
               {t("Revoke Access")}

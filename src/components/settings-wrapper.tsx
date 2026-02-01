@@ -122,34 +122,40 @@ export default function SettingsWrapper({ children }: { children: React.ReactNod
                   }).format(new Date(usages?.[0]?.periodEnd || Date.now())),
                 })}
               </span>
-              {usages?.map((usage) => {
-                const limitLabel =
-                  usage.limit === null ? t("Unlimited") : usage.limit.toLocaleString();
-                const progress =
-                  usage.limit === null || usage.limit === 0
+              {usages?.map((usageItem) => {
+                const maxModeEnabled = usage?.maxModeEnabled ?? false;
+                const limitLabel = maxModeEnabled
+                  ? t("Unlimited")
+                  : usageItem.limit === null
+                    ? t("Unlimited")
+                    : usageItem.limit.toLocaleString();
+                const progress = maxModeEnabled
+                  ? 0
+                  : usageItem.limit === null || usageItem.limit === 0
                     ? 0
-                    : Math.min((usage.used / usage.limit) * 100, 100);
-                const remainingLabel =
-                  usage.limit === null
+                    : Math.min((usageItem.used / usageItem.limit) * 100, 100);
+                const remainingLabel = maxModeEnabled
+                  ? t("Unlimited")
+                  : usageItem.limit === null
                     ? t("Unlimited")
                     : t("{count} remaining", {
-                        count: Math.max(usage.remaining ?? 0, 0).toLocaleString(),
+                        count: Math.max(usageItem.remaining ?? 0, 0).toLocaleString(),
                       });
-                const periodEndLabel = usage.periodEnd
+                const periodEndLabel = usageItem.periodEnd
                   ? new Intl.DateTimeFormat(undefined, {
                       month: "short",
                       day: "numeric",
                       year: "numeric",
-                    }).format(new Date(usage.periodEnd))
+                    }).format(new Date(usageItem.periodEnd))
                   : null;
                 return (
-                  <div key={usage.category} className="space-y-2 text-sm py-1">
+                  <div key={usageItem.category} className="space-y-2 text-sm py-1">
                     <div className="flex items-center justify-between text-sm">
                       <span className="capitalize">
-                        {usage.category === "basic" ? t("Basic models") : t("Premium models")}
+                        {usageItem.category === "basic" ? t("Basic models") : t("Premium models")}
                       </span>
                       <span className="tabular-nums text-muted-foreground">
-                        {usage.used.toLocaleString()} / {limitLabel}
+                        {usageItem.used.toLocaleString()} / {limitLabel}
                       </span>
                     </div>
                     <Progress value={progress} className="h-2" />

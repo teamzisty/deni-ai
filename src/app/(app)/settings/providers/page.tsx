@@ -1,8 +1,10 @@
 "use client";
 
+import { Key, Plug, Server, Box, Plus, Trash2 } from "lucide-react";
 import { useExtracted } from "next-intl";
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -279,7 +281,11 @@ export default function ProvidersPage() {
   };
 
   if (configQuery.isLoading) {
-    return <Spinner />;
+    return (
+      <div className="flex items-center justify-center py-12">
+        <Spinner className="w-6 h-6" />
+      </div>
+    );
   }
 
   const openAiCompatSetting = settingsByProvider.get("openai_compatible");
@@ -288,25 +294,37 @@ export default function ProvidersPage() {
   const apiStyleLabel = effectiveApiStyle === "chat" ? t("Chat Completions") : t("Responses API");
 
   return (
-    <div className="mx-auto flex max-w-4xl w-full flex-col gap-6">
+    <div className="mx-auto flex max-w-4xl w-full flex-col gap-8 animate-fade-in-up">
+      {/* Page Header */}
       <div className="space-y-2">
-        <h1 className="text-3xl font-semibold tracking-tight">{t("Providers")}</h1>
-        <p className="text-muted-foreground">
-          {t("Bring your own keys, configure OpenAI-compatible endpoints, and add custom models.")}
-        </p>
+        <div className="flex items-center gap-3">
+          <div className="inline-flex items-center justify-center w-10 h-10 rounded-xl bg-primary/10 text-primary">
+            <Key className="w-5 h-5" />
+          </div>
+          <div>
+            <h1 className="text-2xl font-bold tracking-[-0.02em]">{t("Providers")}</h1>
+            <p className="text-muted-foreground text-sm">
+              {t("Bring your own keys and configure custom endpoints")}
+            </p>
+          </div>
+        </div>
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>{t("BYOK keys")}</CardTitle>
+      <div>
+        <div className="mb-4">
+          <div className="flex items-center gap-2">
+            <Key className="w-4 h-4 text-primary" />
+            <CardTitle className="text-base font-semibold">{t("API Keys (BYOK)")}</CardTitle>
+          </div>
           <CardDescription>
             {t(
               "Saved keys are encrypted. Requests sent with BYOK are not counted toward usage limits.",
             )}
           </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          {providers.map((provider) => {
+        </div>
+
+        <div className="flex flex-col gap-3">
+          {providers.map((provider, index) => {
             const configured = configuredProviders.has(provider.id);
             const prefer = preferByok[provider.id] ?? false;
             const isOpenAiCompat = provider.id === "openai_compatible";
@@ -314,27 +332,39 @@ export default function ProvidersPage() {
             return (
               <div
                 key={provider.id}
-                className="flex flex-col gap-3 rounded-lg border border-border/70 p-4"
+                className={`group relative flex flex-col gap-3 rounded-xl border border-border/50 p-4 transition-all duration-300 hover:border-primary/30 hover:shadow-sm animate-fade-in-up delay-${(index + 1) * 75}`}
               >
                 <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
-                  <div>
-                    <p className="text-sm font-semibold">{provider.label}</p>
-                    <p className="text-xs text-muted-foreground">{provider.description}</p>
-                  </div>
-                  {!isOpenAiCompat && (
-                    <div className="flex items-center gap-2">
-                      <Label htmlFor={`prefer-${provider.id}`} className="text-xs">
-                        {t("Prefer BYOK")}
-                      </Label>
-                      <Switch
-                        id={`prefer-${provider.id}`}
-                        checked={prefer}
-                        onCheckedChange={(checked) =>
-                          handlePreferToggle(provider.id, Boolean(checked))
-                        }
-                      />
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
+                      <Plug className="w-4 h-4 text-primary" />
                     </div>
-                  )}
+                    <div>
+                      <p className="text-sm font-semibold">{provider.label}</p>
+                      <p className="text-xs text-muted-foreground">{provider.description}</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    {configured && (
+                      <Badge variant="secondary" className="bg-green-500/10 text-green-600">
+                        {t("Configured")}
+                      </Badge>
+                    )}
+                    {!isOpenAiCompat && (
+                      <div className="flex items-center gap-2">
+                        <Label htmlFor={`prefer-${provider.id}`} className="text-xs text-muted-foreground">
+                          {t("Prefer BYOK")}
+                        </Label>
+                        <Switch
+                          id={`prefer-${provider.id}`}
+                          checked={prefer}
+                          onCheckedChange={(checked) =>
+                            handlePreferToggle(provider.id, Boolean(checked))
+                          }
+                        />
+                      </div>
+                    )}
+                  </div>
                 </div>
                 <div className="flex flex-col gap-2 md:flex-row md:items-center">
                   <div className="flex-1">
@@ -347,6 +377,7 @@ export default function ProvidersPage() {
                       id={inputId}
                       type="password"
                       placeholder={t("sk-••••")}
+                      className="rounded-lg"
                       value={keyInputs[provider.id]}
                       onChange={(event) =>
                         setKeyInputs((prev) => ({
@@ -359,37 +390,38 @@ export default function ProvidersPage() {
                   <div className="flex items-center gap-2">
                     <Button
                       size="sm"
+                      className="rounded-lg"
                       onClick={() => handleSaveKey(provider.id)}
                       disabled={upsertKey.isPending}
                     >
-                      {configured ? t("Update key") : t("Save key")}
+                      {configured ? t("Update") : t("Save")}
                     </Button>
                     {configured && (
                       <Button
                         size="sm"
                         variant="ghost"
+                        className="text-destructive hover:text-destructive"
                         onClick={() => handleDeleteKey(provider.id)}
                         disabled={deleteKey.isPending}
                       >
-                        {t("Remove")}
+                        <Trash2 className="w-4 h-4" />
                       </Button>
                     )}
                   </div>
                 </div>
-                <p className="text-xs text-muted-foreground">
-                  {t("Status: {status}", {
-                    status: configured ? t("Saved") : t("Not configured"),
-                  })}
-                </p>
               </div>
             );
           })}
-        </CardContent>
-      </Card>
+        </div>
+      </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>{t("OpenAI-compatible endpoint")}</CardTitle>
+      {/* OpenAI-compatible endpoint */}
+      <Card className="border-border/50 shadow-sm">
+        <CardHeader className="pb-4">
+          <div className="flex items-center gap-2">
+            <Server className="w-4 h-4 text-primary" />
+            <CardTitle className="text-base font-semibold">{t("OpenAI-compatible Endpoint")}</CardTitle>
+          </div>
           <CardDescription>
             {t("Configure a base URL and API style for OpenAI-compatible providers.")}
           </CardDescription>
@@ -400,12 +432,13 @@ export default function ProvidersPage() {
             <Input
               id="openai-compat-base-url"
               placeholder={t("https://api.your-provider.com/v1")}
+              className="rounded-lg"
               value={openAiCompatBaseUrl}
               onChange={(event) => setOpenAiCompatBaseUrl(event.target.value)}
             />
           </div>
           <div className="space-y-2">
-            <Label>{t("API style")}</Label>
+            <Label>{t("API Style")}</Label>
             <Select
               value={openAiCompatApiStyle}
               onValueChange={(value) => {
@@ -414,7 +447,7 @@ export default function ProvidersPage() {
                 }
               }}
             >
-              <SelectTrigger className="max-w-xs">
+              <SelectTrigger className="max-w-xs rounded-lg">
                 <SelectValue placeholder={t("Select API style")} />
               </SelectTrigger>
               <SelectContent>
@@ -423,23 +456,27 @@ export default function ProvidersPage() {
               </SelectContent>
             </Select>
           </div>
-          <div className="flex flex-wrap items-center gap-3">
-            <Button onClick={handleSaveOpenAiCompat} disabled={upsertSetting.isPending}>
-              {t("Save endpoint")}
+          <div className="flex flex-wrap items-center gap-3 pt-2">
+            <Button className="rounded-lg" onClick={handleSaveOpenAiCompat} disabled={upsertSetting.isPending}>
+              {t("Save Endpoint")}
             </Button>
-            <p className="text-xs text-muted-foreground">
-              {t("Active: {active} · API: {api}", {
-                active: effectiveBaseUrl ? t("Yes") : t("No"),
-                api: apiStyleLabel,
-              })}
-            </p>
+            <div className="flex items-center gap-2 text-xs text-muted-foreground">
+              <Badge variant="outline">
+                {effectiveBaseUrl ? t("Active") : t("Not configured")}
+              </Badge>
+              <span>{apiStyleLabel}</span>
+            </div>
           </div>
         </CardContent>
       </Card>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>{t("Custom models")}</CardTitle>
+      {/* Custom Models */}
+      <Card className="border-border/50 shadow-sm">
+        <CardHeader className="pb-4">
+          <div className="flex items-center gap-2">
+            <Box className="w-4 h-4 text-primary" />
+            <CardTitle className="text-base font-semibold">{t("Custom Models")}</CardTitle>
+          </div>
           <CardDescription>
             {t(
               "Add OpenAI-compatible models for your endpoint. These are available in the chat model selector.",
@@ -449,9 +486,10 @@ export default function ProvidersPage() {
         <CardContent className="space-y-6">
           <div className="grid gap-4 md:grid-cols-2">
             <div className="space-y-2">
-              <Label htmlFor="custom-model-name">{t("Display name")}</Label>
+              <Label htmlFor="custom-model-name">{t("Display Name")}</Label>
               <Input
                 id="custom-model-name"
+                className="rounded-lg"
                 value={customName}
                 onChange={(event) => setCustomName(event.target.value)}
               />
@@ -460,6 +498,7 @@ export default function ProvidersPage() {
               <Label htmlFor="custom-model-id">{t("Model ID")}</Label>
               <Input
                 id="custom-model-id"
+                className="rounded-lg"
                 value={customModelId}
                 onChange={(event) => setCustomModelId(event.target.value)}
               />
@@ -469,6 +508,7 @@ export default function ProvidersPage() {
             <Label htmlFor="custom-model-description">{t("Description")}</Label>
             <Textarea
               id="custom-model-description"
+              className="rounded-lg"
               value={customDescription}
               onChange={(event) => setCustomDescription(event.target.value)}
             />
@@ -485,39 +525,43 @@ export default function ProvidersPage() {
           </div>
           <div className="grid gap-4 md:grid-cols-3">
             <div className="space-y-2">
-              <Label htmlFor="custom-input-price">{t("Input price (micros)")}</Label>
+              <Label htmlFor="custom-input-price">{t("Input Price (micros)")}</Label>
               <Input
                 id="custom-input-price"
                 type="number"
                 min={0}
+                className="rounded-lg"
                 value={customInputPrice}
                 onChange={(event) => setCustomInputPrice(event.target.value)}
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="custom-output-price">{t("Output price (micros)")}</Label>
+              <Label htmlFor="custom-output-price">{t("Output Price (micros)")}</Label>
               <Input
                 id="custom-output-price"
                 type="number"
                 min={0}
+                className="rounded-lg"
                 value={customOutputPrice}
                 onChange={(event) => setCustomOutputPrice(event.target.value)}
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="custom-reasoning-price">{t("Reasoning price (micros)")}</Label>
+              <Label htmlFor="custom-reasoning-price">{t("Reasoning Price (micros)")}</Label>
               <Input
                 id="custom-reasoning-price"
                 type="number"
                 min={0}
+                className="rounded-lg"
                 value={customReasoningPrice}
                 onChange={(event) => setCustomReasoningPrice(event.target.value)}
               />
             </div>
           </div>
-          <div className="flex items-center gap-3">
-            <Button onClick={handleCreateCustomModel} disabled={createCustomModel.isPending}>
-              {t("Add model")}
+          <div className="flex items-center gap-3 pt-2">
+            <Button className="rounded-lg gap-2" onClick={handleCreateCustomModel} disabled={createCustomModel.isPending}>
+              <Plus className="w-4 h-4" />
+              {t("Add Model")}
             </Button>
             <p className="text-xs text-muted-foreground">
               {t("Pricing fields are optional metadata for cost estimates.")}
@@ -525,42 +569,49 @@ export default function ProvidersPage() {
           </div>
 
           {customModels.length > 0 && (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>{t("Name")}</TableHead>
-                  <TableHead>{t("Model ID")}</TableHead>
-                  <TableHead>{t("Tier")}</TableHead>
-                  <TableHead className="text-right">{t("Actions")}</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {customModels.map((model) => (
-                  <TableRow key={model.id}>
-                    <TableCell>
-                      <div className="flex flex-col">
-                        <span className="font-medium">{model.name}</span>
-                        {model.description && (
-                          <span className="text-xs text-muted-foreground">{model.description}</span>
-                        )}
-                      </div>
-                    </TableCell>
-                    <TableCell className="font-mono text-xs">{model.modelId}</TableCell>
-                    <TableCell>{model.premium ? t("Premium") : t("Basic")}</TableCell>
-                    <TableCell className="text-right">
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        onClick={() => handleDeleteCustomModel(model.id)}
-                        disabled={deleteCustomModel.isPending}
-                      >
-                        {t("Remove")}
-                      </Button>
-                    </TableCell>
+            <div className="rounded-xl border border-border/50 overflow-hidden">
+              <Table>
+                <TableHeader>
+                  <TableRow className="bg-muted/30">
+                    <TableHead>{t("Name")}</TableHead>
+                    <TableHead>{t("Model ID")}</TableHead>
+                    <TableHead>{t("Tier")}</TableHead>
+                    <TableHead className="text-right">{t("Actions")}</TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+                </TableHeader>
+                <TableBody>
+                  {customModels.map((model) => (
+                    <TableRow key={model.id} className="hover:bg-muted/20">
+                      <TableCell>
+                        <div className="flex flex-col">
+                          <span className="font-medium">{model.name}</span>
+                          {model.description && (
+                            <span className="text-xs text-muted-foreground">{model.description}</span>
+                          )}
+                        </div>
+                      </TableCell>
+                      <TableCell className="font-mono text-xs">{model.modelId}</TableCell>
+                      <TableCell>
+                        <Badge variant={model.premium ? "default" : "secondary"}>
+                          {model.premium ? t("Premium") : t("Basic")}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          className="text-destructive hover:text-destructive"
+                          onClick={() => handleDeleteCustomModel(model.id)}
+                          disabled={deleteCustomModel.isPending}
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
           )}
         </CardContent>
       </Card>

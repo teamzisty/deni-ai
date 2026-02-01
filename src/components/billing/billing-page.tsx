@@ -1,6 +1,6 @@
 "use client";
 
-import { Zap } from "lucide-react";
+import { Zap, CreditCard, Check, Sparkles, Crown } from "lucide-react";
 import { useExtracted } from "next-intl";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
@@ -187,50 +187,67 @@ function PlanCard({
   const isLoadingThisPlan = isLoadingEstimate;
 
   const tierName = plan.id.startsWith("pro_") ? t("Pro") : t("Plus");
+  const isPro = plan.id.startsWith("pro_");
 
   return (
-    <Card className={cn("flex flex-col border-border/80", isCurrent && "border-primary")}>
-      <CardHeader>
+    <Card className={cn(
+      "group relative flex flex-col overflow-hidden transition-all duration-300",
+      "border-border/50 hover:border-primary/40 hover:shadow-lg",
+      isCurrent && "border-primary ring-2 ring-primary/20",
+      isPro && "bg-gradient-to-br from-card to-primary/5"
+    )}>
+      {/* Decorative gradient */}
+      <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+
+      <CardHeader className="relative pb-4">
         <div className="flex items-start justify-between gap-4">
-          <div className="space-y-1">
+          <div className="space-y-2">
             <div className="flex items-center gap-2">
-              <CardTitle>{tierName}</CardTitle>
+              {isPro ? (
+                <Crown className="w-5 h-5 text-primary" />
+              ) : (
+                <Sparkles className="w-5 h-5 text-primary" />
+              )}
+              <CardTitle className="text-xl font-bold">{tierName}</CardTitle>
               {planCopy.badge && (
-                <Badge variant="secondary" className="text-xs">
+                <Badge variant="secondary" className="text-xs bg-primary/10 text-primary">
                   {planCopy.badge}
                 </Badge>
               )}
             </div>
-            <CardDescription>{planCopy.tagline}</CardDescription>
+            <CardDescription className="text-sm">{planCopy.tagline}</CardDescription>
           </div>
           <Tabs value={interval} onValueChange={(v) => onIntervalChange(v as "monthly" | "yearly")}>
-            <TabsList className="h-7">
-              <TabsTrigger value="monthly" className="text-xs px-2 h-5">
+            <TabsList className="h-8 rounded-lg">
+              <TabsTrigger value="monthly" className="text-xs px-3 h-6 rounded-md">
                 {t("Monthly")}
               </TabsTrigger>
-              <TabsTrigger value="yearly" className="text-xs px-2 h-5">
+              <TabsTrigger value="yearly" className="text-xs px-3 h-6 rounded-md">
                 {t("Yearly")}
               </TabsTrigger>
             </TabsList>
           </Tabs>
         </div>
       </CardHeader>
-      <CardContent className="flex flex-1 flex-col">
+      <CardContent className="relative flex flex-1 flex-col pt-0">
         <div className="flex-1">
-          <div className="text-2xl font-semibold">{formatPriceLabel(plan)}</div>
+          <div className="text-3xl font-bold tracking-tight">{formatPriceLabel(plan)}</div>
           {planCopy.highlights.length > 0 && (
-            <ul className="mt-4 space-y-1 text-sm text-muted-foreground">
+            <ul className="mt-5 space-y-2.5">
               {planCopy.highlights.map((item) => (
-                <li key={item} className="flex items-center gap-2">
-                  <span className="h-1 w-1 rounded-full bg-foreground/40" />
-                  {item}
+                <li key={item} className="flex items-start gap-2.5 text-sm">
+                  <Check className="w-4 h-4 mt-0.5 text-primary shrink-0" />
+                  <span className="text-muted-foreground">{item}</span>
                 </li>
               ))}
             </ul>
           )}
         </div>
         <Button
-          className="mt-4 w-full"
+          className={cn(
+            "mt-6 w-full h-11 rounded-xl font-medium transition-all duration-300",
+            !isCurrent && "shadow-md hover:shadow-lg"
+          )}
           variant={isCurrent ? "secondary" : "default"}
           disabled={isCurrent || processing || isBlockedByCancel || isLoadingThisPlan}
           onClick={() => {
@@ -241,7 +258,7 @@ function PlanCard({
             }
           }}
         >
-          {(processing || isLoadingThisPlan) && <Spinner />}
+          {(processing || isLoadingThisPlan) && <Spinner className="w-4 h-4 mr-2" />}
           {isCurrent
             ? t("Current plan")
             : isBlockedByCancel
@@ -535,17 +552,25 @@ function BillingPageContent() {
   }
 
   return (
-    <div className="mx-auto flex max-w-4xl w-full flex-col gap-6">
+    <div className="mx-auto flex max-w-4xl w-full flex-col gap-8 animate-fade-in-up">
+      {/* Page Header */}
       <div className="space-y-2">
-        <h1 className="text-3xl font-semibold tracking-tight">{t("Billing")}</h1>
-        <p className="text-muted-foreground">{t("Manage your subscription and usage.")}</p>
+        <div className="flex items-center gap-3">
+          <div className="inline-flex items-center justify-center w-10 h-10 rounded-xl bg-primary/10 text-primary">
+            <CreditCard className="w-5 h-5" />
+          </div>
+          <div>
+            <h1 className="text-2xl font-bold tracking-[-0.02em]">{t("Billing")}</h1>
+            <p className="text-muted-foreground text-sm">{t("Manage your subscription and usage")}</p>
+          </div>
+        </div>
       </div>
 
       {/* Current Plan */}
-      <Card className="border-border/80">
+      <Card className="border-border/50 shadow-sm">
         <CardHeader className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div className="space-y-1">
-            <CardTitle>{t("Current Plan")}</CardTitle>
+            <CardTitle className="text-base font-semibold">{t("Current Plan")}</CardTitle>
             <CardDescription>
               {currentPlan
                 ? t("{tier} {name}", {
@@ -567,7 +592,7 @@ function BillingPageContent() {
           </div>
           <div className="flex flex-wrap items-center gap-2">
             {statusQuery.data?.currentPeriodEnd && !cancelDate && (
-              <span className="text-xs text-muted-foreground">
+              <span className="text-xs text-muted-foreground px-3 py-1 rounded-full bg-muted">
                 {t("Renews {date}", {
                   date: new Intl.DateTimeFormat(undefined, {
                     month: "short",
@@ -580,10 +605,11 @@ function BillingPageContent() {
               <Button
                 variant="outline"
                 size="sm"
+                className="rounded-lg"
                 disabled={portal.isPending}
                 onClick={() => portal.mutate()}
               >
-                {portal.isPending && <Spinner />}
+                {portal.isPending && <Spinner className="w-4 h-4 mr-1" />}
                 {t("Manage")}
               </Button>
             )}
@@ -591,16 +617,17 @@ function BillingPageContent() {
               <Button
                 variant="ghost"
                 size="sm"
+                className="rounded-lg text-muted-foreground"
                 disabled={cancel.isPending}
                 onClick={() => cancel.mutate()}
               >
-                {cancel.isPending && <Spinner />}
+                {cancel.isPending && <Spinner className="w-4 h-4 mr-1" />}
                 {t("Cancel")}
               </Button>
             )}
             {cancelDate && (
-              <Button size="sm" disabled={resume.isPending} onClick={() => resume.mutate()}>
-                {resume.isPending && <Spinner />}
+              <Button size="sm" className="rounded-lg" disabled={resume.isPending} onClick={() => resume.mutate()}>
+                {resume.isPending && <Spinner className="w-4 h-4 mr-1" />}
                 {t("Resume")}
               </Button>
             )}
@@ -609,12 +636,19 @@ function BillingPageContent() {
       </Card>
 
       {/* Usage */}
-      <Card className="border-border/80">
-        <CardHeader>
-          <CardTitle>{t("Usage")}</CardTitle>
-          <CardDescription>{t("Tier: {tier}", { tier: usageTierLabel })}</CardDescription>
+      <Card className="border-border/50 shadow-sm">
+        <CardHeader className="gap-0!">
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle className="text-base font-semibold">{t("Usage")}</CardTitle>
+              <CardDescription>{t("Tier: {tier}", { tier: usageTierLabel })}</CardDescription>
+            </div>
+            <Badge variant="secondary" className="bg-primary/10 text-primary">
+              {usageTierLabel}
+            </Badge>
+          </div>
         </CardHeader>
-        <CardContent className="space-y-4">
+        <CardContent className="space-y-5">
           {usageQuery.isLoading ? (
             <div className="flex justify-center py-4">
               <Spinner />

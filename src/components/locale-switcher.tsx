@@ -1,14 +1,7 @@
 "use client";
 
-import { ChevronDown } from "lucide-react";
 import { useLocale } from "next-intl";
-import { Button } from "@/components/ui/button";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { type AppLocale, locales } from "@/i18n/locales";
 
 type LocaleSwitcherProps = {
@@ -24,24 +17,19 @@ export default function LocaleSwitcher({ changeLocaleAction }: LocaleSwitcherPro
   const locale = useLocale() as AppLocale;
 
   return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button variant="outline" size="sm" className="gap-1">
+    <Select value={locale} onValueChange={(value) => changeLocaleAction(value as AppLocale)}>
+      <SelectTrigger className="w-36">
+        <SelectValue>
           {localeLabels[locale] ?? locale}
-          <ChevronDown className="h-3 w-3" />
-        </Button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="end">
+        </SelectValue>
+      </SelectTrigger>
+      <SelectContent>
         {locales.map((option) => (
-          <DropdownMenuItem
-            key={option}
-            onClick={() => changeLocaleAction(option)}
-            className={locale === option ? "bg-accent" : ""}
-          >
+          <SelectItem key={option} value={option}>
             {localeLabels[option] ?? option}
-          </DropdownMenuItem>
+          </SelectItem>
         ))}
-      </DropdownMenuContent>
-    </DropdownMenu>
+      </SelectContent>
+    </Select>
   );
 }

@@ -13,19 +13,33 @@ export default function Header() {
   }
 
   return (
-    <header className="w-full fixed top-0 left-0 z-50">
-      <div className="bg-accent/50 backdrop-blur-[2px] border w-2xl rounded-b-xl mx-auto p-4 flex items-center justify-between shadow-lg">
-        <div className="flex items-center space-x-2">
-          <Link href="/" aria-label="Deni AI" title="Deni AI">
-            <DeniAIIcon className="w-8 h-8" />
+    <header className="w-full fixed top-0 left-0 z-50 px-4 pt-4">
+      <nav className="mx-auto max-w-3xl">
+        <div className="glass rounded-2xl border border-border/40 shadow-lg px-4 py-3 flex items-center justify-between animate-fade-in-down">
+          {/* Logo */}
+          <Link
+            href="/"
+            aria-label="Deni AI"
+            title="Deni AI"
+            className="flex items-center gap-3 group"
+          >
+            <div className="relative">
+              <div className="absolute inset-0 bg-primary/20 rounded-xl blur-lg opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+              <DeniAIIcon className="relative w-9 h-9 text-primary transition-transform duration-300 group-hover:scale-105" />
+            </div>
+            <span className="font-semibold text-lg tracking-tight hidden sm:inline-block">
+              Deni AI
+            </span>
           </Link>
-        </div>
 
-        <div className="flex items-center space-x-2">
-          <LocaleSwitcher changeLocaleAction={changeLocaleAction} />
-          <UserButton size="icon" />
+          {/* Actions */}
+          <div className="flex items-center gap-2">
+            <LocaleSwitcher changeLocaleAction={changeLocaleAction} />
+            <div className="w-px h-6 bg-border/60 hidden sm:block" />
+            <UserButton size="icon" />
+          </div>
         </div>
-      </div>
+      </nav>
     </header>
   );
 }
