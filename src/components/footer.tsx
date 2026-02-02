@@ -49,12 +49,6 @@ const Footer = () => {
             >
               {t("特定商取引法")}
             </Link>
-            <Link
-              href="/status"
-              className="text-muted-foreground transition-colors hover:text-foreground editorial-underline"
-            >
-              {t("Status")}
-            </Link>
           </nav>
         </div>
 
