@@ -32,10 +32,10 @@ import { authClient } from "@/lib/auth-client";
 import { models } from "@/lib/constants";
 import { trpc } from "@/lib/trpc/react";
 import { cn } from "@/lib/utils";
-import { Badge } from "../ui/badge";
-import { Button } from "../ui/button";
-import { DropdownMenuCheckboxItem, DropdownMenuSeparator } from "../ui/dropdown-menu";
-import { Separator } from "../ui/separator";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { DropdownMenuCheckboxItem, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
+import { Separator } from "@/components/ui/separator";
 
 export type { ComposerMessage };
 

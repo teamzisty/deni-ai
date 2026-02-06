@@ -7,6 +7,7 @@ import {
   haveIBeenPwned,
   lastLoginMethod,
   magicLink,
+  organization,
 } from "better-auth/plugins";
 import { twoFactor } from "better-auth/plugins/two-factor";
 import { Resend } from "resend";
@@ -14,6 +15,7 @@ import { db } from "@/db/drizzle";
 import * as schema from "@/db/schema";
 import { env } from "@/env";
 import { EMAIL_FROM, emailTemplates } from "@/lib/constants";
+import { updateTeamSeatCount } from "@/lib/team-billing";
 
 const resend = env.RESEND_API_KEY ? new Resend(env.RESEND_API_KEY) : null;
 
@@ -59,6 +61,34 @@ export const auth = betterAuth({
     passkey(),
     haveIBeenPwned(),
     lastLoginMethod(),
+    organization({
+      allowUserToCreateOrganization: true,
+      membershipLimit: 50,
+      organizationHooks: {
+        afterAcceptInvitation: async ({ organization }) => {
+          await updateTeamSeatCount(organization.id);
+        },
+        afterRemoveMember: async ({ organization }) => {
+          await updateTeamSeatCount(organization.id);
+        },
+      },
+      sendInvitationEmail: resend
+        ? async (data) => {
+            const url = `${env.NEXT_PUBLIC_BETTER_AUTH_URL}/settings/team?invitationId=${data.id}`;
+            const template = emailTemplates.orgInvitation(
+              data.organization.name,
+              data.inviter.user.name,
+              url,
+            );
+            await resend.emails.send({
+              from: EMAIL_FROM,
+              to: data.email,
+              subject: template.subject,
+              html: template.html,
+            });
+          }
+        : undefined,
+    }),
     captcha({
       provider: "cloudflare-turnstile",
       secretKey: env.TURNSTILE_SECRET_KEY,

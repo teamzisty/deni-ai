@@ -1,9 +1,11 @@
 "use client";
 
+import { Zap, Check, Users } from "lucide-react";
+import Link from "next/link";
 import { useExtracted } from "next-intl";
-import { useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
-import type { BillingPlanId, ClientPlan } from "@/lib/billing";
+import type { BillingPlanId, ClientPlan, IndividualPlanId } from "@/lib/billing";
 import { isBillingDisabled } from "@/lib/billing-config";
 import { trpc } from "@/lib/trpc/react";
 import { cn } from "@/lib/utils";
@@ -20,12 +22,15 @@ import {
 import { Badge } from "../ui/badge";
 import { Button } from "../ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../ui/card";
+import { Checkbox } from "../ui/checkbox";
+import { Label } from "../ui/label";
 import { Progress } from "../ui/progress";
 import { Spinner } from "../ui/spinner";
+import { Switch } from "../ui/switch";
 import { Tabs, TabsList, TabsTrigger } from "../ui/tabs";
 
 const ACTIVE_STATUSES = new Set(["active", "trialing", "paid"]);
-const usageResetFormatter = new Intl.DateTimeFormat("en-US", {
+const usageResetFormatter = new Intl.DateTimeFormat(undefined, {
   month: "short",
   day: "numeric",
 });
@@ -38,7 +43,7 @@ function formatPriceLabel(plan: ClientPlan) {
     return t("Set price in Stripe");
   }
 
-  const formatter = new Intl.NumberFormat("en-US", {
+  const formatter = new Intl.NumberFormat(undefined, {
     style: "currency",
     currency: plan.currency.toUpperCase(),
     maximumFractionDigits: 0,
@@ -63,7 +68,7 @@ function formatPriceLabel(plan: ClientPlan) {
 
 function formatCurrencyMinor(amountMinor: number, currency?: string | null) {
   const currencyCode = currency ? currency.toUpperCase() : "USD";
-  const formatter = new Intl.NumberFormat("en-US", {
+  const formatter = new Intl.NumberFormat(undefined, {
     style: "currency",
     currency: currencyCode,
     minimumFractionDigits: 2,
@@ -109,7 +114,7 @@ function getPlanCopy(planId: BillingPlanId): PlanCopy {
         highlights: [
           t("Get 10x usage for basic model"),
           t("Get 20x usage for premium models"),
-          t("Usage-based billing (coming soon)"),
+          t("Max Mode pay-per-use available"),
           t("Deni AI Code - Pro access"),
           t("For power users"),
         ],
@@ -120,7 +125,7 @@ function getPlanCopy(planId: BillingPlanId): PlanCopy {
         highlights: [
           t("Get 10x usage for basic model"),
           t("Get 20x usage for premium models"),
-          t("Usage-based billing (coming soon)"),
+          t("Max Mode pay-per-use available"),
           t("Deni AI Code - Pro access"),
           t("For power users"),
         ],
@@ -153,8 +158,8 @@ function PlanCard({
   activePlanId,
   checkout,
   changePlan,
-  setChangeTarget,
-  setIsChangePlanOpen,
+  onChangePlanClick,
+  isLoadingEstimate,
 }: {
   plan: ClientPlan;
   interval: "monthly" | "yearly";
@@ -165,12 +170,12 @@ function PlanCard({
   activePlanId: string | undefined;
   checkout: {
     isPending: boolean;
-    variables?: { planId: BillingPlanId };
-    mutate: (data: { planId: BillingPlanId }) => void;
+    variables?: { planId: IndividualPlanId };
+    mutate: (data: { planId: IndividualPlanId }) => void;
   };
-  changePlan: { isPending: boolean; variables?: { planId: BillingPlanId } };
-  setChangeTarget: (plan: ClientPlan) => void;
-  setIsChangePlanOpen: (open: boolean) => void;
+  changePlan: { isPending: boolean; variables?: { planId: IndividualPlanId } };
+  onChangePlanClick: (plan: ClientPlan) => void;
+  isLoadingEstimate: boolean;
 }) {
   const t = useExtracted();
   const planCopy = getPlanCopy(plan.id);
@@ -180,64 +185,66 @@ function PlanCard({
   const processing =
     (checkout.isPending && checkout.variables?.planId === plan.id) ||
     (changePlan.isPending && changePlan.variables?.planId === plan.id);
+  const isLoadingThisPlan = isLoadingEstimate;
 
   const tierName = plan.id.startsWith("pro_") ? t("Pro") : t("Plus");
 
   return (
-    <Card className={cn("flex flex-col border-border/80", isCurrent && "border-primary")}>
-      <CardHeader>
+    <Card
+      className={cn("flex flex-col", isCurrent && "border-foreground ring-1 ring-foreground/10")}
+    >
+      <CardHeader className="pb-4">
         <div className="flex items-start justify-between gap-4">
           <div className="space-y-1">
             <div className="flex items-center gap-2">
-              <CardTitle>{tierName}</CardTitle>
+              <CardTitle className="text-lg font-semibold">{tierName}</CardTitle>
               {planCopy.badge && (
                 <Badge variant="secondary" className="text-xs">
                   {planCopy.badge}
                 </Badge>
               )}
             </div>
-            <CardDescription>{planCopy.tagline}</CardDescription>
+            <CardDescription className="text-sm">{planCopy.tagline}</CardDescription>
           </div>
           <Tabs value={interval} onValueChange={(v) => onIntervalChange(v as "monthly" | "yearly")}>
-            <TabsList className="h-7">
-              <TabsTrigger value="monthly" className="text-xs px-2 h-5">
+            <TabsList className="h-8 rounded-lg">
+              <TabsTrigger value="monthly" className="text-xs px-3 h-6 rounded-md">
                 {t("Monthly")}
               </TabsTrigger>
-              <TabsTrigger value="yearly" className="text-xs px-2 h-5">
+              <TabsTrigger value="yearly" className="text-xs px-3 h-6 rounded-md">
                 {t("Yearly")}
               </TabsTrigger>
             </TabsList>
           </Tabs>
         </div>
       </CardHeader>
-      <CardContent className="flex flex-1 flex-col">
+      <CardContent className="flex flex-1 flex-col pt-0">
         <div className="flex-1">
-          <div className="text-2xl font-semibold">{formatPriceLabel(plan)}</div>
+          <div className="text-2xl font-semibold tracking-tight">{formatPriceLabel(plan)}</div>
           {planCopy.highlights.length > 0 && (
-            <ul className="mt-4 space-y-1 text-sm text-muted-foreground">
+            <ul className="mt-5 space-y-2.5">
               {planCopy.highlights.map((item) => (
-                <li key={item} className="flex items-center gap-2">
-                  <span className="h-1 w-1 rounded-full bg-foreground/40" />
-                  {item}
+                <li key={item} className="flex items-start gap-2.5 text-sm">
+                  <Check className="w-4 h-4 mt-0.5 text-muted-foreground shrink-0" />
+                  <span className="text-muted-foreground">{item}</span>
                 </li>
               ))}
             </ul>
           )}
         </div>
         <Button
-          className="mt-4 w-full"
+          className="mt-6 w-full font-medium"
           variant={isCurrent ? "secondary" : "default"}
-          disabled={isCurrent || processing || isBlockedByCancel}
+          disabled={isCurrent || processing || isBlockedByCancel || isLoadingThisPlan}
           onClick={() => {
             if (canChange) {
-              setChangeTarget(plan);
-              setIsChangePlanOpen(true);
+              onChangePlanClick(plan);
             } else {
-              checkout.mutate({ planId: plan.id });
+              checkout.mutate({ planId: plan.id as IndividualPlanId });
             }
           }}
         >
-          {processing && <Spinner />}
+          {(processing || isLoadingThisPlan) && <Spinner className="w-4 h-4" />}
           {isCurrent
             ? t("Current plan")
             : isBlockedByCancel
@@ -251,41 +258,6 @@ function PlanCard({
   );
 }
 
-function PlanChangeEstimate({ planId, enabled }: { planId: BillingPlanId; enabled: boolean }) {
-  const t = useExtracted();
-  const planChangeQuote = trpc.billing.estimatePlanChange.useQuery(
-    { planId },
-    {
-      enabled,
-      refetchOnWindowFocus: false,
-      retry: false,
-    },
-  );
-
-  if (!enabled) {
-    return null;
-  }
-
-  if (planChangeQuote.isLoading) {
-    return <span className="block mt-2">{t("Fetching estimate...")}</span>;
-  }
-
-  if (planChangeQuote.error) {
-    return <span className="block mt-2">{t("Unable to fetch estimate.")}</span>;
-  }
-
-  return (
-    <span className="block mt-2">
-      {t("Estimated charge: {amount}", {
-        amount: formatCurrencyMinor(
-          planChangeQuote.data?.amountDue ?? 0,
-          planChangeQuote.data?.currency,
-        ),
-      })}
-    </span>
-  );
-}
-
 type UsageItem = {
   category: "basic" | "premium";
   limit: number | null;
@@ -294,9 +266,42 @@ type UsageItem = {
   periodEnd: Date | string | null;
 };
 
-function UsageRow({ label, item }: { label: string; item: UsageItem | undefined }) {
+function UsageRow({
+  label,
+  item,
+  maxModeEnabled,
+}: {
+  label: string;
+  item: UsageItem | undefined;
+  maxModeEnabled?: boolean;
+}) {
   const t = useExtracted();
   if (!item) return null;
+
+  // When Max Mode is enabled, show as unlimited
+  if (maxModeEnabled) {
+    const periodEndLabel = item.periodEnd
+      ? usageResetFormatter.format(new Date(item.periodEnd))
+      : null;
+
+    return (
+      <div className="space-y-2">
+        <div className="flex items-center justify-between text-sm">
+          <span>{label}</span>
+          <span className="text-muted-foreground">
+            {item.used.toLocaleString()} / {t("Unlimited")}
+          </span>
+        </div>
+        <div className="flex items-center justify-between text-xs text-muted-foreground">
+          <span className="flex items-center gap-1">
+            <Zap className="size-3 text-blue-500" />
+            {t("Max Mode active")}
+          </span>
+          {periodEndLabel && <span>{t("Resets {date}", { date: periodEndLabel })}</span>}
+        </div>
+      </div>
+    );
+  }
 
   const limitLabel = item.limit === null ? t("Unlimited") : item.limit.toLocaleString();
   const progress =
@@ -335,9 +340,11 @@ function BillingDisabled() {
     <div className="mx-auto flex max-w-4xl w-full flex-col gap-6">
       <div className="space-y-2">
         <h1 className="text-3xl font-semibold tracking-tight">{t("Billing")}</h1>
-        <p className="text-muted-foreground">{t("Billing is disabled for this environment.")}</p>
+        <p className="text-muted-foreground text-sm">
+          {t("Billing is disabled for this environment.")}
+        </p>
       </div>
-      <Card className="border-border/80">
+      <Card>
         <CardHeader>
           <CardTitle>{t("Billing unavailable")}</CardTitle>
           <CardDescription>
@@ -355,6 +362,41 @@ function BillingPageContent() {
   const [changeTarget, setChangeTarget] = useState<ClientPlan | null>(null);
   const [plusInterval, setPlusInterval] = useState<"monthly" | "yearly">("monthly");
   const [proInterval, setProInterval] = useState<"monthly" | "yearly">("monthly");
+  const [hasAgreed, setHasAgreed] = useState(false);
+  const [pendingPlanId, setPendingPlanId] = useState<IndividualPlanId | null>(null);
+
+  // Pre-fetch estimate when user clicks "Change plan" button
+  const estimateQuery = trpc.billing.estimatePlanChange.useQuery(
+    { planId: pendingPlanId ?? "plus_monthly" },
+    {
+      enabled: Boolean(pendingPlanId),
+      refetchOnWindowFocus: false,
+      retry: false,
+    },
+  );
+
+  // Open dialog when estimate is loaded
+  useEffect(() => {
+    if (pendingPlanId && !estimateQuery.isLoading) {
+      setIsChangePlanOpen(true);
+    }
+  }, [pendingPlanId, estimateQuery.isLoading]);
+
+  // Reset state when dialog closes
+  const handleDialogOpenChange = useCallback((open: boolean) => {
+    setIsChangePlanOpen(open);
+    if (!open) {
+      setHasAgreed(false);
+      setPendingPlanId(null);
+      setChangeTarget(null);
+    }
+  }, []);
+
+  // Handle "Change plan" button click - start loading estimate
+  const handleChangePlanClick = useCallback((plan: ClientPlan) => {
+    setChangeTarget(plan);
+    setPendingPlanId(plan.id as IndividualPlanId);
+  }, []);
 
   const utils = trpc.useUtils();
   const statusQuery = trpc.billing.status.useQuery(undefined, {
@@ -417,6 +459,40 @@ function BillingPageContent() {
     onError: (error) => toast.error(error.message),
   });
 
+  // Max Mode queries and mutations
+  const maxModeQuery = trpc.billing.maxModeStatus.useQuery(undefined, {
+    refetchOnWindowFocus: true,
+  });
+
+  const enableMaxMode = trpc.billing.enableMaxMode.useMutation({
+    onSuccess: async () => {
+      toast.success(t("Max Mode enabled."));
+      await utils.billing.maxModeStatus.invalidate();
+      await utils.billing.usage.invalidate();
+    },
+    onError: (error) => toast.error(error.message),
+  });
+
+  const disableMaxMode = trpc.billing.disableMaxMode.useMutation({
+    onSuccess: async () => {
+      toast.success(t("Max Mode disabled."));
+      await utils.billing.maxModeStatus.invalidate();
+      await utils.billing.usage.invalidate();
+    },
+    onError: (error) => toast.error(error.message),
+  });
+
+  const handleMaxModeToggle = useCallback(
+    (enabled: boolean) => {
+      if (enabled) {
+        enableMaxMode.mutate();
+      } else {
+        disableMaxMode.mutate();
+      }
+    },
+    [enableMaxMode, disableMaxMode],
+  );
+
   const statusLabel = statusQuery.data?.status ?? "inactive";
   const rawPlanId = (statusQuery.data?.planId as BillingPlanId) ?? undefined;
   const activePlanId = statusLabel !== "active" ? undefined : rawPlanId;
@@ -469,16 +545,17 @@ function BillingPageContent() {
 
   return (
     <div className="mx-auto flex max-w-4xl w-full flex-col gap-6">
-      <div className="space-y-2">
-        <h1 className="text-3xl font-semibold tracking-tight">{t("Billing")}</h1>
-        <p className="text-muted-foreground">{t("Manage your subscription and usage.")}</p>
+      {/* Page Header */}
+      <div className="space-y-1">
+        <h1 className="text-xl font-semibold tracking-tight">{t("Billing")}</h1>
+        <p className="text-muted-foreground text-sm">{t("Manage your subscription and usage")}</p>
       </div>
 
       {/* Current Plan */}
-      <Card className="border-border/80">
+      <Card>
         <CardHeader className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div className="space-y-1">
-            <CardTitle>{t("Current Plan")}</CardTitle>
+            <CardTitle className="text-sm font-medium">{t("Current Plan")}</CardTitle>
             <CardDescription>
               {currentPlan
                 ? t("{tier} {name}", {
@@ -489,7 +566,7 @@ function BillingPageContent() {
               {cancelDate && (
                 <span className="text-destructive">
                   {t("(Cancels {date})", {
-                    date: new Date(cancelDate * 1000).toLocaleDateString("en-US", {
+                    date: new Date(cancelDate * 1000).toLocaleDateString(undefined, {
                       month: "short",
                       day: "numeric",
                     }),
@@ -500,9 +577,9 @@ function BillingPageContent() {
           </div>
           <div className="flex flex-wrap items-center gap-2">
             {statusQuery.data?.currentPeriodEnd && !cancelDate && (
-              <span className="text-xs text-muted-foreground">
+              <span className="text-xs text-muted-foreground px-3 py-1 rounded-full bg-muted">
                 {t("Renews {date}", {
-                  date: new Intl.DateTimeFormat("en-US", {
+                  date: new Intl.DateTimeFormat(undefined, {
                     month: "short",
                     day: "numeric",
                   }).format(new Date(statusQuery.data.currentPeriodEnd)),
@@ -516,7 +593,7 @@ function BillingPageContent() {
                 disabled={portal.isPending}
                 onClick={() => portal.mutate()}
               >
-                {portal.isPending && <Spinner />}
+                {portal.isPending && <Spinner className="w-4 h-4 mr-1" />}
                 {t("Manage")}
               </Button>
             )}
@@ -524,16 +601,17 @@ function BillingPageContent() {
               <Button
                 variant="ghost"
                 size="sm"
+                className="text-muted-foreground"
                 disabled={cancel.isPending}
                 onClick={() => cancel.mutate()}
               >
-                {cancel.isPending && <Spinner />}
+                {cancel.isPending && <Spinner className="w-4 h-4 mr-1" />}
                 {t("Cancel")}
               </Button>
             )}
             {cancelDate && (
               <Button size="sm" disabled={resume.isPending} onClick={() => resume.mutate()}>
-                {resume.isPending && <Spinner />}
+                {resume.isPending && <Spinner className="w-4 h-4 mr-1" />}
                 {t("Resume")}
               </Button>
             )}
@@ -542,12 +620,17 @@ function BillingPageContent() {
       </Card>
 
       {/* Usage */}
-      <Card className="border-border/80">
-        <CardHeader>
-          <CardTitle>{t("Usage")}</CardTitle>
-          <CardDescription>{t("Tier: {tier}", { tier: usageTierLabel })}</CardDescription>
+      <Card>
+        <CardHeader className="gap-0!">
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle className="text-sm font-medium">{t("Usage")}</CardTitle>
+              <CardDescription>{t("Tier: {tier}", { tier: usageTierLabel })}</CardDescription>
+            </div>
+            <Badge variant="secondary">{usageTierLabel}</Badge>
+          </div>
         </CardHeader>
-        <CardContent className="space-y-4">
+        <CardContent className="space-y-5">
           {usageQuery.isLoading ? (
             <div className="flex justify-center py-4">
               <Spinner />
@@ -556,12 +639,86 @@ function BillingPageContent() {
             <p className="text-sm text-destructive">{usageQuery.error.message}</p>
           ) : (
             <div className="grid gap-6 sm:grid-cols-2">
-              <UsageRow label={t("Basic models")} item={basicUsage} />
-              <UsageRow label={t("Premium models")} item={premiumUsage} />
+              <UsageRow
+                label={t("Basic models")}
+                item={basicUsage}
+                maxModeEnabled={maxModeQuery.data?.enabled}
+              />
+              <UsageRow
+                label={t("Premium models")}
+                item={premiumUsage}
+                maxModeEnabled={maxModeQuery.data?.enabled}
+              />
             </div>
           )}
         </CardContent>
       </Card>
+
+      {/* Max Mode - Only show for Pro users */}
+      {maxModeQuery.data?.eligible && (
+        <Card className="border-border/80">
+          <CardHeader className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div className="space-y-1">
+              <div className="flex items-center gap-2">
+                <Zap className="size-4 text-muted-foreground" />
+                <CardTitle className="text-sm font-medium">{t("Max Mode")}</CardTitle>
+                {maxModeQuery.data?.enabled && <Badge variant="secondary">{t("Active")}</Badge>}
+              </div>
+              <CardDescription>
+                {t("Continue using Deni AI after reaching your limits with pay-per-use pricing.")}
+              </CardDescription>
+            </div>
+            <div className="flex items-center gap-2">
+              <Label htmlFor="max-mode-toggle" className="text-sm text-muted-foreground">
+                {maxModeQuery.data?.enabled ? t("Enabled") : t("Disabled")}
+              </Label>
+              <Switch
+                id="max-mode-toggle"
+                checked={maxModeQuery.data?.enabled ?? false}
+                onCheckedChange={handleMaxModeToggle}
+                disabled={enableMaxMode.isPending || disableMaxMode.isPending}
+              />
+            </div>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div className="rounded-lg border border-border p-4">
+                <div className="text-sm text-muted-foreground">{t("Basic model messages")}</div>
+                <div className="mt-1 flex items-baseline gap-2">
+                  <span className="text-2xl font-semibold">
+                    {maxModeQuery.data?.usageBasic ?? 0}
+                  </span>
+                  <span className="text-sm text-muted-foreground">
+                    × ${(maxModeQuery.data?.pricing.basic ?? 1) / 100}
+                  </span>
+                </div>
+              </div>
+              <div className="rounded-lg border border-border p-4">
+                <div className="text-sm text-muted-foreground">{t("Premium model messages")}</div>
+                <div className="mt-1 flex items-baseline gap-2">
+                  <span className="text-2xl font-semibold">
+                    {maxModeQuery.data?.usagePremium ?? 0}
+                  </span>
+                  <span className="text-sm text-muted-foreground">
+                    × ${(maxModeQuery.data?.pricing.premium ?? 5) / 100}
+                  </span>
+                </div>
+              </div>
+            </div>
+            <div className="flex items-center justify-between rounded-lg bg-muted/50 p-4">
+              <div className="text-sm text-muted-foreground">{t("Estimated cost this period")}</div>
+              <div className="text-lg font-semibold">
+                ${((maxModeQuery.data?.estimatedCost ?? 0) / 100).toFixed(2)}
+              </div>
+            </div>
+            <p className="text-xs text-muted-foreground">
+              {t(
+                "Max Mode charges are billed at the end of each billing cycle. Pricing: $0.01 per basic message, $0.05 per premium message.",
+              )}
+            </p>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Plans */}
       {errored ? (
@@ -585,8 +742,8 @@ function BillingPageContent() {
               activePlanId={activePlanId}
               checkout={checkout}
               changePlan={changePlan}
-              setChangeTarget={setChangeTarget}
-              setIsChangePlanOpen={setIsChangePlanOpen}
+              onChangePlanClick={handleChangePlanClick}
+              isLoadingEstimate={pendingPlanId === selectedPlusPlan.id && estimateQuery.isLoading}
             />
           )}
 
@@ -602,33 +759,90 @@ function BillingPageContent() {
               activePlanId={activePlanId}
               checkout={checkout}
               changePlan={changePlan}
-              setChangeTarget={setChangeTarget}
-              setIsChangePlanOpen={setIsChangePlanOpen}
+              onChangePlanClick={handleChangePlanClick}
+              isLoadingEstimate={pendingPlanId === selectedProPlan.id && estimateQuery.isLoading}
             />
           )}
         </div>
       )}
 
+      {/* Pro for Teams */}
+      <Card className="border-border/80">
+        <CardHeader className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <div className="space-y-1">
+            <div className="flex items-center gap-2">
+              <Users className="size-4 text-muted-foreground" />
+              <CardTitle className="text-sm font-medium">{t("Pro for Teams")}</CardTitle>
+            </div>
+            <CardDescription>
+              {t("Give your whole team Pro-tier access with per-seat pricing.")}
+            </CardDescription>
+          </div>
+          <Button asChild size="sm">
+            <Link href="/settings/team">{t("Manage Team")}</Link>
+          </Button>
+        </CardHeader>
+        <CardContent>
+          <ul className="space-y-2">
+            {[
+              t("Pro benefits for every team member"),
+              t("Per-seat billing — pay only for active members"),
+              t("Centralized billing and member management"),
+            ].map((item) => (
+              <li key={item} className="flex items-start gap-2.5 text-sm">
+                <Check className="w-4 h-4 mt-0.5 text-muted-foreground shrink-0" />
+                <span className="text-muted-foreground">{item}</span>
+              </li>
+            ))}
+          </ul>
+        </CardContent>
+      </Card>
+
       {/* Change Plan Dialog */}
-      <AlertDialog open={isChangePlanOpen} onOpenChange={(v) => setIsChangePlanOpen(v)}>
+      <AlertDialog open={isChangePlanOpen} onOpenChange={handleDialogOpenChange}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>{t("Change plan?")}</AlertDialogTitle>
-            <AlertDialogDescription>
-              {t("You will switch to {plan}. Prorations apply.", {
-                plan: changeTarget ? getPlanIntervalLabel(changeTarget.id, t) : "",
-              })}
-              <PlanChangeEstimate
-                planId={changeTarget?.id ?? "plus_monthly"}
-                enabled={Boolean(changeTarget?.id)}
-              />
+            <AlertDialogDescription asChild>
+              <div>
+                <p>
+                  {t("You will switch to {plan}. Prorations apply.", {
+                    plan: changeTarget ? getPlanIntervalLabel(changeTarget.id, t) : "",
+                  })}
+                </p>
+                {estimateQuery.error ? (
+                  <span className="block mt-2">{t("Unable to fetch estimate.")}</span>
+                ) : (
+                  <span className="block mt-2">
+                    {t("Estimated charge: {amount}", {
+                      amount: formatCurrencyMinor(
+                        estimateQuery.data?.amountDue ?? 0,
+                        estimateQuery.data?.currency,
+                      ),
+                    })}
+                  </span>
+                )}
+              </div>
             </AlertDialogDescription>
           </AlertDialogHeader>
+          <div className="flex items-start space-x-2 py-4">
+            <Checkbox
+              id="agree-plan-change"
+              checked={hasAgreed}
+              onCheckedChange={(checked) => setHasAgreed(checked === true)}
+              disabled={estimateQuery.error != null}
+            />
+            <Label htmlFor="agree-plan-change" className="text-sm leading-tight cursor-pointer">
+              {t("I have reviewed the estimated charge and agree to the plan change.")}
+            </Label>
+          </div>
           <AlertDialogFooter>
             <AlertDialogCancel disabled={changePlan.isPending}>{t("Cancel")}</AlertDialogCancel>
             <AlertDialogAction
-              disabled={changePlan.isPending || !changeTarget}
-              onClick={() => changeTarget && changePlan.mutate({ planId: changeTarget.id })}
+              disabled={
+                changePlan.isPending || !changeTarget || estimateQuery.error != null || !hasAgreed
+              }
+              onClick={() => changeTarget && changePlan.mutate({ planId: changeTarget.id as IndividualPlanId })}
             >
               {changePlan.isPending && <Spinner />}
               {t("Confirm")}

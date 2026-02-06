@@ -3,7 +3,7 @@ import { cookies } from "next/headers";
 import Link from "next/link";
 import type { AppLocale } from "@/i18n/locales";
 import DeniAIIcon from "./deni-ai-icon";
-import LocaleSwitcher from "./locale-switcher";
+import { LocaleSwitcher } from "./locale-switcher";
 
 export default function Header() {
   async function changeLocaleAction(locale: AppLocale) {
@@ -13,19 +13,30 @@ export default function Header() {
   }
 
   return (
-    <header className="w-full fixed top-0 left-0 z-50">
-      <div className="bg-accent/50 backdrop-blur-[2px] border w-2xl rounded-b-xl mx-auto p-4 flex items-center justify-between shadow-lg">
-        <div className="flex items-center space-x-2">
-          <Link href="/" aria-label="Deni AI" title="Deni AI">
-            <DeniAIIcon className="w-8 h-8" />
+    <header className="w-full fixed top-0 left-0 z-50 px-4 pt-4">
+      <nav className="mx-auto max-w-3xl">
+        <div className="rounded-lg border border-border bg-background/90 backdrop-blur-sm shadow-sm px-4 py-2.5 flex items-center justify-between">
+          {/* Logo */}
+          <Link
+            href="/"
+            aria-label="Deni AI"
+            title="Deni AI"
+            className="flex items-center gap-2.5"
+          >
+            <DeniAIIcon className="w-7 h-7 text-foreground" />
+            <span className="font-semibold text-base tracking-tight hidden sm:inline-block">
+              Deni AI
+            </span>
           </Link>
-        </div>
 
-        <div className="flex items-center space-x-2">
-          <LocaleSwitcher changeLocaleAction={changeLocaleAction} />
-          <UserButton size="icon" />
+          {/* Actions */}
+          <div className="flex items-center gap-2">
+            <LocaleSwitcher changeLocaleAction={changeLocaleAction} />
+            <div className="w-px h-5 bg-border hidden sm:block" />
+            <UserButton size="icon" />
+          </div>
         </div>
-      </div>
+      </nav>
     </header>
   );
 }

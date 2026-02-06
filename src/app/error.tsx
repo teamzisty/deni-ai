@@ -7,7 +7,7 @@ import { useExtracted } from "next-intl";
 import { useEffect, useMemo } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { appVersion } from "@/lib/version";
+import { versions } from "@/lib/version";
 
 type ErrorPageProps = {
   error: Error & { digest?: string };
@@ -24,12 +24,13 @@ export default function ErrorPage({ error, reset }: ErrorPageProps) {
   }, [error]);
 
   const reportItems = [
-    { label: t("Version"), value: appVersion },
-    { label: t("Path"), value: pathname ?? t("Unknown") },
-    { label: t("Time"), value: timestamp },
-    { label: t("Digest"), value: error.digest ?? t("n/a") },
-    { label: t("Name"), value: error.name ?? t("Error") },
-    { label: t("Message"), value: error.message || t("Unexpected error") },
+    { label: "Version", value: versions.version },
+    { label: "Version Hash", value: versions.hash },
+    { label: "Path", value: pathname ?? "Unknown" },
+    { label: "Time", value: timestamp },
+    { label: "Digest", value: error.digest ?? "n/a" },
+    { label: "Name", value: error.name ?? "Error" },
+    { label: "Message", value: error.message || "Unexpected error" },
   ];
 
   const reportText = reportItems.map((item) => `${item.label}: ${item.value}`).join("\n");

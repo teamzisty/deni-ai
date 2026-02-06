@@ -58,6 +58,11 @@ export default function SettingsWrapper({ children }: { children: React.ReactNod
       href: "/settings/billing",
     },
     {
+      label: t("Team"),
+      value: "team",
+      href: "/settings/team",
+    },
+    {
       label: t("Sharing"),
       value: "sharing",
       href: "/settings/sharing",
@@ -67,7 +72,7 @@ export default function SettingsWrapper({ children }: { children: React.ReactNod
       value: "migration",
       href: "/settings/migration",
     },
-  ].filter((tab) => !billingDisabled || tab.value !== "billing");
+  ].filter((tab) => !billingDisabled || (tab.value !== "billing" && tab.value !== "team"));
 
   // Determine current tab value based on pathname
   const currentTab =
@@ -86,7 +91,7 @@ export default function SettingsWrapper({ children }: { children: React.ReactNod
                   <span className="text-xs text-muted-foreground">
                     {t("Next update: {date}", {
                       date: status?.currentPeriodEnd
-                        ? new Intl.DateTimeFormat("en-US", {
+                        ? new Intl.DateTimeFormat(undefined, {
                             month: "short",
                             day: "numeric",
                             year: "numeric",
@@ -115,40 +120,59 @@ export default function SettingsWrapper({ children }: { children: React.ReactNod
               <span className="font-medium text-muted-foreground">{t("Usage")}</span>
               <span className="text-sm">
                 {t("Resets on {date}", {
-                  date: new Intl.DateTimeFormat("en-US", {
+                  date: new Intl.DateTimeFormat(undefined, {
                     month: "short",
                     day: "numeric",
                     year: "numeric",
                   }).format(new Date(usages?.[0]?.periodEnd || Date.now())),
                 })}
               </span>
-              {usages?.map((usage) => (
-                <div key={usage.category} className="space-y-2 text-sm py-1">
-                  <div className="flex items-center justify-between">
-                    <span className="capitalize">
-                      {usage.category === "basic" ? t("Basic") : t("Premium")}
-                    </span>
-                    {usage.limit !== null ? (
-                      <span className="tabular-nums text-muted-foreground">
-                        {Math.max(usage.used ?? 0, 0).toLocaleString()} /{" "}
-                        {Math.max(usage.limit ?? 0, 0).toLocaleString()}
+              {usages?.map((usageItem) => {
+                const maxModeEnabled = usage?.maxModeEnabled ?? false;
+                const limitLabel = maxModeEnabled
+                  ? t("Unlimited")
+                  : usageItem.limit === null
+                    ? t("Unlimited")
+                    : usageItem.limit.toLocaleString();
+                const progress = maxModeEnabled
+                  ? 0
+                  : usageItem.limit === null || usageItem.limit === 0
+                    ? 0
+                    : Math.min((usageItem.used / usageItem.limit) * 100, 100);
+                const remainingLabel = maxModeEnabled
+                  ? t("Unlimited")
+                  : usageItem.limit === null
+                    ? t("Unlimited")
+                    : t("{count} remaining", {
+                        count: Math.max(usageItem.remaining ?? 0, 0).toLocaleString(),
+                      });
+                const periodEndLabel = usageItem.periodEnd
+                  ? new Intl.DateTimeFormat(undefined, {
+                      month: "short",
+                      day: "numeric",
+                      year: "numeric",
+                    }).format(new Date(usageItem.periodEnd))
+                  : null;
+                return (
+                  <div key={usageItem.category} className="space-y-2 text-sm py-1">
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="capitalize">
+                        {usageItem.category === "basic" ? t("Basic models") : t("Premium models")}
                       </span>
-                    ) : (
                       <span className="tabular-nums text-muted-foreground">
-                        {t("{used} / Unlimited", {
-                          used: Math.max(usage.used ?? 0, 0).toLocaleString(),
-                        })}
+                        {usageItem.used.toLocaleString()} / {limitLabel}
                       </span>
-                    )}
+                    </div>
+                    <Progress value={progress} className="h-2" />
+                    <div className="flex items-center justify-between text-xs text-muted-foreground">
+                      <span>{remainingLabel}</span>
+                      {periodEndLabel && (
+                        <span>{t("Resets {date}", { date: periodEndLabel })}</span>
+                      )}
+                    </div>
                   </div>
-                  <Progress value={usage.used || 0} max={usage.limit || 0} />
-                  <span className="text-sm">
-                    {t("{count} left", {
-                      count: Math.max(usage.remaining ?? 0, 0).toLocaleString(),
-                    })}
-                  </span>
-                </div>
-              ))}
+                );
+              })}
 
               <span className="block text-xs font-medium">
                 <InfoIcon size="16" className="-mt-0.5 mr-1 inline-flex size-3 shrink-0" />

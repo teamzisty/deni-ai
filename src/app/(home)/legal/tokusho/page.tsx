@@ -17,77 +17,51 @@ export async function generateMetadata(): Promise<Metadata> {
   };
 }
 
+const items = [
+  { label: "事業者名", value: "請求があった場合には遅滞なく開示いたします" },
+  { label: "運営責任者", value: "桃木 悠汰" },
+  { label: "所在地", value: "請求があった場合には速やかに開示いたします" },
+  { label: "電話番号", value: "請求があった場合には速やかに開示いたします" },
+  { label: "メールアドレス", value: "contact@deniai.app" },
+  { label: "販売価格", value: "各商品ページに記載の金額（税込）" },
+  { label: "支払方法", value: "クレジットカード" },
+  { label: "支払時期", value: "クレジットカード決済は即時処理されます" },
+  { label: "商品の引渡時期", value: "決済完了後、即時利用可能" },
+  { label: "返品・キャンセル", value: "デジタルサービスの性質上、原則として返品・返金には対応しておりません" },
+  { label: "商品代金以外の費用", value: "なし" },
+];
+
 export default function TokushoPage() {
   return (
     <main className="min-h-screen bg-background" id="main-content">
-      <div className="mx-auto flex max-w-4xl flex-col gap-10 px-4 pb-16 pt-28 sm:px-6 lg:px-8">
-        <div className="space-y-3">
-          <p className="text-sm text-muted-foreground">最終更新日: 2025-12-31</p>
-          <h1 className="text-balance text-3xl font-semibold tracking-tight sm:text-4xl">
+      <div className="mx-auto max-w-3xl px-4 pb-16 pt-28 sm:px-6">
+        <div className="mb-8">
+          <h1 className="text-2xl font-semibold tracking-tight">
             特定商取引法に基づく表記
           </h1>
+          <p className="mt-2 text-sm text-muted-foreground">
+            最終更新日: 2025年12月31日
+          </p>
         </div>
 
-        <dl className="overflow-hidden rounded-lg border border-border bg-card">
-          <div className="grid gap-2 border-border p-4 sm:grid-cols-3 sm:gap-6 sm:border-b">
-            <dt className="text-sm font-medium">事業者名</dt>
-            <dd className="text-sm text-muted-foreground sm:col-span-2">
-              実名については、請求があった場合は遅滞なく開示します。
-            </dd>
-          </div>
-          <div className="grid gap-2 border-border p-4 sm:grid-cols-3 sm:gap-6 sm:border-b">
-            <dt className="text-sm font-medium">運営責任者</dt>
-            <dd className="text-sm text-muted-foreground sm:col-span-2">桃木 悠汰</dd>
-          </div>
-          <div className="grid gap-2 border-border p-4 sm:grid-cols-3 sm:gap-6 sm:border-b">
-            <dt className="text-sm font-medium">所在地</dt>
-            <dd className="text-sm text-muted-foreground sm:col-span-2">
-              請求があった場合には速やかに開示いたします
-            </dd>
-          </div>
-          <div className="grid gap-2 border-border p-4 sm:grid-cols-3 sm:gap-6 sm:border-b">
-            <dt className="text-sm font-medium">電話番号</dt>
-            <dd className="text-sm text-muted-foreground sm:col-span-2">
-              請求があった場合には速やかに開示いたします
-            </dd>
-          </div>
-          <div className="grid gap-2 border-border p-4 sm:grid-cols-3 sm:gap-6 sm:border-b">
-            <dt className="text-sm font-medium">メールアドレス</dt>
-            <dd className="text-sm text-muted-foreground sm:col-span-2">imraicdev@gmail.com</dd>
-          </div>
-          <div className="grid gap-2 border-border p-4 sm:grid-cols-3 sm:gap-6 sm:border-b">
-            <dt className="text-sm font-medium">利用可能な決済手段</dt>
-            <dd className="text-sm text-muted-foreground sm:col-span-2">クレジットカード</dd>
-          </div>
-          <div className="grid gap-2 border-border p-4 sm:grid-cols-3 sm:gap-6 sm:border-b">
-            <dt className="text-sm font-medium">決済期間</dt>
-            <dd className="text-sm text-muted-foreground sm:col-span-2">
-              クレジットカード決済はただちに処理されます。
-            </dd>
-          </div>
-          <div className="grid gap-2 border-border p-4 sm:grid-cols-3 sm:gap-6 sm:border-b">
-            <dt className="text-sm font-medium">配達時間</dt>
-            <dd className="text-sm text-muted-foreground sm:col-span-2">
-              決済完了後、直ちに利用可能
-            </dd>
-          </div>
-          <div className="grid gap-2 border-border p-4 sm:grid-cols-3 sm:gap-6 sm:border-b">
-            <dt className="text-sm font-medium">価格</dt>
-            <dd className="text-sm text-muted-foreground sm:col-span-2">
-              各商品ページに記載の金額
-            </dd>
-          </div>
-          <div className="grid gap-2 border-border p-4 sm:grid-cols-3 sm:gap-6 sm:border-b">
-            <dt className="text-sm font-medium">返品・キャンセル</dt>
-            <dd className="text-sm text-muted-foreground sm:col-span-2">
-              デジタルサービスのため原則不可
-            </dd>
-          </div>
-          <div className="grid gap-2 p-4 sm:grid-cols-3 sm:gap-6">
-            <dt className="text-sm font-medium">追加手数料</dt>
-            <dd className="text-sm text-muted-foreground sm:col-span-2">なし</dd>
-          </div>
-        </dl>
+        <table className="w-full border-collapse text-sm">
+          <tbody>
+            {items.map((item, i) => (
+              <tr key={i} className="border-b border-border">
+                <th className="w-1/3 bg-muted/50 px-4 py-3 text-left font-medium align-top">
+                  {item.label}
+                </th>
+                <td className="px-4 py-3 text-muted-foreground">
+                  {item.value}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+
+        <p className="mt-8 text-xs text-muted-foreground">
+          ※ 上記の「請求があった場合には開示」の項目については、メールにてお問い合わせください。
+        </p>
       </div>
     </main>
   );

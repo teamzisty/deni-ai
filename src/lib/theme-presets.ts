@@ -8,18 +8,19 @@ type ThemePreset = {
 export const themePresets: ThemePreset[] = [
   {
     key: "default",
+    preview: ["bg-[#8b6f47]", "bg-[#d4a574]", "bg-[#f5e6d3]"],
   },
   {
     key: "t3-chat",
-    preview: ["bg-[#ec4899]", "bg-[#a855f7]", "bg-[#6b7280]"],
+    preview: ["bg-[#ec4899]", "bg-[#a855f7]", "bg-[#fce7f3]"],
   },
   {
     key: "tangerine",
-    preview: ["bg-[#fb923c]", "bg-[#f97316]", "bg-[#1f2937]"],
+    preview: ["bg-[#fb923c]", "bg-[#f97316]", "bg-[#fef3e2]"],
   },
   {
     key: "mono",
-    preview: ["bg-[#0b0b0f]", "bg-[#27272a]", "bg-[#a1a1aa]"],
+    preview: ["bg-[#0b0b0f]", "bg-[#52525b]", "bg-[#a1a1aa]"],
   },
 ];
 

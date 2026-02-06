@@ -2,6 +2,7 @@
 
 # dependencies
 /node_modules
+.vx
 /.pnp
 .pnp.*
 .yarn/*
@@ -43,3 +44,5 @@ next-env.d.ts
 
 # claude
 .claude-images/
+# next-agents-md
+.next-docs/

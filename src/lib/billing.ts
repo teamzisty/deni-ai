@@ -1,4 +1,12 @@
-export type BillingPlanId = "plus_monthly" | "plus_yearly" | "pro_monthly" | "pro_yearly";
+export type IndividualPlanId =
+  | "plus_monthly"
+  | "plus_yearly"
+  | "pro_monthly"
+  | "pro_yearly";
+
+export type TeamPlanId = "pro_team_monthly" | "pro_team_yearly";
+
+export type BillingPlanId = IndividualPlanId | TeamPlanId;
 
 export type BillingPlan = {
   id: BillingPlanId;
@@ -14,6 +22,7 @@ export type ClientPlan = {
   currency: string | null;
   interval: string | null;
   intervalCount: number;
+  isTeamPlan: boolean;
 };
 
 export const billingPlans: BillingPlan[] = [
@@ -33,6 +42,14 @@ export const billingPlans: BillingPlan[] = [
     id: "pro_yearly",
     lookupKey: "pro_yearly",
   },
+  {
+    id: "pro_team_monthly",
+    lookupKey: "pro_team_monthly",
+  },
+  {
+    id: "pro_team_yearly",
+    lookupKey: "pro_team_yearly",
+  },
 ];
 
 export const lookupKeyToPlan = new Map<string, BillingPlanId>(
@@ -48,4 +65,12 @@ export function findPlanByLookupKey(lookupKey: string | null | undefined) {
     return undefined;
   }
   return billingPlans.find((plan) => plan.lookupKey === lookupKey);
+}
+
+export function isTeamPlan(planId: string | null | undefined): boolean {
+  return Boolean(planId?.startsWith("pro_team"));
+}
+
+export function isProTier(planId: string | null | undefined): boolean {
+  return Boolean(planId?.startsWith("pro"));
 }

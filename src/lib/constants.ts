@@ -177,6 +177,27 @@ export const emailTemplates = {
     `;
     })(),
   }),
+  orgInvitation: (orgName: string, inviterName: string | null, url: string) => ({
+    subject: `You're invited to join ${orgName} on Deni AI`,
+    html: (() => {
+      const escapedOrg = escapeHtml(orgName);
+      const escapedInviter = inviterName ? escapeHtml(inviterName) : "Someone";
+      const escapedUrl = escapeHtml(url);
+
+      return `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+        <h2>You're Invited!</h2>
+        <p>${escapedInviter} has invited you to join <strong>${escapedOrg}</strong> on Deni AI.</p>
+        <p>Click the button below to accept the invitation:</p>
+        <p style="margin: 24px 0;">
+          <a href="${escapedUrl}" style="background-color: #000; color: #fff; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block;">Accept Invitation</a>
+        </p>
+        <p>If you weren't expecting this invitation, you can safely ignore this email.</p>
+        <p>Best,<br>Deni AI Team</p>
+      </div>
+    `;
+    })(),
+  }),
   magicLink: (url: string) => ({
     subject: "Sign in to Deni AI",
     html: (() => {

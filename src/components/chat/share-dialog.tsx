@@ -175,11 +175,11 @@ export function ShareDialog({ chatId, isOpen, onOpenChange }: ShareDialogProps) 
           >
             <TabsList className="grid w-full grid-cols-2">
               <TabsTrigger value="public">
-                <Globe className="mr-2 size-4" />
+                <Globe className="size-4" />
                 {t("Public")}
               </TabsTrigger>
               <TabsTrigger value="private">
-                <Lock className="mr-2 size-4" />
+                <Lock className="size-4" />
                 {t("Private")}
               </TabsTrigger>
             </TabsList>

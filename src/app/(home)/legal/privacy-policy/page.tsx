@@ -133,7 +133,7 @@ export default function PrivacyPolicyPage() {
           <p className="text-muted-foreground">
             {t("If you have questions about this Policy, contact us at:")}
           </p>
-          <p className="text-muted-foreground">imraicdev@gmail.com</p>
+          <p className="text-muted-foreground">contact@deniai.app</p>
         </section>
       </div>
     </main>

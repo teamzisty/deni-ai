@@ -1,5 +1,6 @@
 "use client";
 
+import { MessageSquare, Code, Image, FileText, PenLine } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useExtracted } from "next-intl";
 import { useState } from "react";
@@ -29,6 +30,31 @@ export type InitialMessageData = {
   imageMode: boolean;
   reasoningEffort: ReasoningEffort;
 };
+
+type SuggestionCardProps = {
+  icon: React.ElementType;
+  title: string;
+  prompt: string;
+  onClick: (prompt: string) => void;
+};
+
+function SuggestionCard({ icon: Icon, title, prompt, onClick }: SuggestionCardProps) {
+  return (
+    <button
+      type="button"
+      onClick={() => onClick(prompt)}
+      className="group flex flex-col gap-1.5 p-3 rounded-lg border border-border bg-card text-left transition-colors hover:bg-accent"
+    >
+      <div className="flex items-center gap-2">
+        <Icon className="w-4 h-4 text-muted-foreground" />
+        <span className="font-medium text-sm">{title}</span>
+      </div>
+      <p className="text-xs text-muted-foreground line-clamp-2 leading-relaxed">
+        {prompt}
+      </p>
+    </button>
+  );
+}
 
 export default function ChatHome() {
   const t = useExtracted();
@@ -90,36 +116,88 @@ export default function ChatHome() {
     }
   };
 
+  const handleSuggestionClick = (prompt: string) => {
+    setInput(prompt);
+  };
+
+  const suggestions = [
+    {
+      icon: PenLine,
+      title: t("Creative Writing"),
+      prompt: t("Write a short story about a robot learning to paint"),
+    },
+    {
+      icon: Code,
+      title: t("Code Help"),
+      prompt: t("Explain how async/await works in JavaScript"),
+    },
+    {
+      icon: FileText,
+      title: t("Summarize"),
+      prompt: t("Summarize the key benefits of renewable energy"),
+    },
+    {
+      icon: Image,
+      title: t("Analyze"),
+      prompt: t("What makes a good user interface design?"),
+    },
+  ];
+
   return (
     <section
       aria-labelledby="chat-home-title"
-      className="flex min-h-screen flex-col gap-8 items-center justify-center text-center p-4"
+      className="relative flex min-h-screen flex-col items-center justify-center p-4"
     >
-      <h1
-        className="text-balance text-2xl md:text-3xl lg:text-4xl font-bold tracking-tighter"
-        id="chat-home-title"
-      >
-        {t("Hello, How can I help you today?")}
-      </h1>
+      <div className="w-full max-w-2xl space-y-6">
+        {/* Greeting */}
+        <div className="text-center space-y-2">
+          <div className="inline-flex items-center justify-center w-12 h-12 rounded-lg bg-secondary mb-2">
+            <MessageSquare className="w-6 h-6 text-muted-foreground" />
+          </div>
+          <h1
+            className="text-2xl md:text-3xl font-semibold tracking-tight"
+            id="chat-home-title"
+          >
+            {t("How can I help you today?")}
+          </h1>
+          <p className="text-muted-foreground text-sm max-w-md mx-auto">
+            {t("Ask me anything. I'm here to assist with your questions, creative projects, and more.")}
+          </p>
+        </div>
 
-      <div className="w-full max-w-2xl text-left">
-        <ChatComposer
-          value={input}
-          onValueChange={setInput}
-          onSubmit={handleSubmit}
-          placeholder={t("Ask me anything...")}
-          isSubmitDisabled={isSubmitting}
-          model={model}
-          onModelChange={setModel}
-          webSearch={webSearch}
-          onWebSearchChange={setWebSearch}
-          videoMode={videoMode}
-          onVideoModeChange={setVideoMode}
-          imageMode={imageMode}
-          onImageModeChange={setImageMode}
-          reasoningEffort={reasoningEffort}
-          onReasoningEffortChange={setReasoningEffort}
-        />
+        {/* Suggestions */}
+        <div className="grid grid-cols-2 gap-2">
+          {suggestions.map((suggestion) => (
+            <SuggestionCard
+              key={suggestion.title}
+              icon={suggestion.icon}
+              title={suggestion.title}
+              prompt={suggestion.prompt}
+              onClick={handleSuggestionClick}
+            />
+          ))}
+        </div>
+
+        {/* Composer */}
+        <div>
+          <ChatComposer
+            value={input}
+            onValueChange={setInput}
+            onSubmit={handleSubmit}
+            placeholder={t("Ask me anything...")}
+            isSubmitDisabled={isSubmitting}
+            model={model}
+            onModelChange={setModel}
+            webSearch={webSearch}
+            onWebSearchChange={setWebSearch}
+            videoMode={videoMode}
+            onVideoModeChange={setVideoMode}
+            imageMode={imageMode}
+            onImageModeChange={setImageMode}
+            reasoningEffort={reasoningEffort}
+            onReasoningEffortChange={setReasoningEffort}
+          />
+        </div>
       </div>
     </section>
   );

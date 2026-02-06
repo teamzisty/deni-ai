@@ -145,7 +145,7 @@ export default function TermsPage() {
           <p className="text-muted-foreground">
             {t("If you have questions about these Terms, contact us at:")}
           </p>
-          <p className="text-muted-foreground">imraicdev@gmail.com</p>
+          <p className="text-muted-foreground">contact@deniai.app</p>
         </section>
       </div>
     </main>
