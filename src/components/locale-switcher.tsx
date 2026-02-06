@@ -13,7 +13,7 @@ const localeLabels: Record<AppLocale, string> = {
   ja: "日本語",
 };
 
-export default function LocaleSwitcher({ changeLocaleAction }: LocaleSwitcherProps) {
+export function LocaleSwitcher({ changeLocaleAction }: LocaleSwitcherProps) {
   const locale = useLocale() as AppLocale;
 
   return (

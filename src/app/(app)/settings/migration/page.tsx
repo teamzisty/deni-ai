@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowRight, Check, Download, FileJson, Upload, AlertTriangle } from "lucide-react";
+import { ArrowRight, Check, Upload, AlertTriangle, FileJson } from "lucide-react";
 import Link from "next/link";
 import { useExtracted } from "next-intl";
 import { useState } from "react";
@@ -64,30 +64,23 @@ export default function MigrationPage() {
   };
 
   return (
-    <div className="mx-auto flex w-full max-w-4xl flex-col gap-8 animate-fade-in-up">
+    <div className="mx-auto flex w-full max-w-4xl flex-col gap-6">
       {/* Page Header */}
-      <div className="space-y-2">
-        <div className="flex items-center gap-3">
-          <div className="inline-flex items-center justify-center w-10 h-10 rounded-xl bg-primary/10 text-primary">
-            <Download className="w-5 h-5" />
-          </div>
-          <div>
-            <h1 className="text-2xl font-bold tracking-[-0.02em]">{t("Message Migration")}</h1>
-            <p className="text-muted-foreground text-sm">
-              {t("Move your chats from the old version into this site.")}
-            </p>
-          </div>
-        </div>
+      <div className="space-y-1">
+        <h1 className="text-xl font-semibold tracking-tight">{t("Message Migration")}</h1>
+        <p className="text-muted-foreground text-sm">
+          {t("Move your chats from the old version into this site.")}
+        </p>
       </div>
 
       {/* Step 1: Export */}
-      <Card className="border-border/50 shadow-sm">
-        <CardHeader className="pb-4">
+      <Card>
+        <CardHeader>
           <div className="flex items-center gap-2">
-            <div className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-primary text-primary-foreground text-xs font-bold">
+            <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-foreground text-background text-xs font-medium">
               1
-            </div>
-            <CardTitle className="text-base font-semibold">
+            </span>
+            <CardTitle className="text-sm font-medium">
               {t("Export from the migrator tool")}
             </CardTitle>
           </div>
@@ -95,9 +88,9 @@ export default function MigrationPage() {
             {t("Log into the migrator app and download a `message.json` file.")}
           </CardDescription>
         </CardHeader>
-        <CardContent className="space-y-4">
+        <CardContent>
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
-            <Button variant="secondary" className="rounded-lg gap-2" asChild>
+            <Button variant="secondary" className="gap-2" asChild>
               <Link href="https://migrate.deniai.app" target="_blank">
                 <ArrowRight className="w-4 h-4" />
                 {t("Go to migrator tool")}
@@ -111,13 +104,13 @@ export default function MigrationPage() {
       </Card>
 
       {/* Step 2: Import */}
-      <Card className="border-border/50 shadow-sm">
-        <CardHeader className="pb-4">
+      <Card>
+        <CardHeader>
           <div className="flex items-center gap-2">
-            <div className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-primary text-primary-foreground text-xs font-bold">
+            <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-foreground text-background text-xs font-medium">
               2
-            </div>
-            <CardTitle className="text-base font-semibold">
+            </span>
+            <CardTitle className="text-sm font-medium">
               {t("Import into this site")}
             </CardTitle>
           </div>
@@ -125,24 +118,22 @@ export default function MigrationPage() {
             {t("Upload the `message.json` file to create new chats.")}
           </CardDescription>
         </CardHeader>
-        <CardContent className="space-y-6">
-          <div className="space-y-3">
-            <Label htmlFor="message-file" className="flex items-center gap-2">
-              <FileJson className="w-4 h-4 text-primary" />
+        <CardContent className="space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="message-file" className="flex items-center gap-2 text-sm">
+              <FileJson className="w-4 h-4 text-muted-foreground" />
               {t("message.json")}
             </Label>
-            <div className="relative">
-              <Input
-                id="message-file"
-                type="file"
-                accept="application/json,.json"
-                className="rounded-lg cursor-pointer file:cursor-pointer file:bg-primary/10 file:text-primary file:border-0 file:rounded-md file:px-3 file:py-1 file:text-sm file:font-medium hover:file:bg-primary/20"
-                onChange={(event) => {
-                  const nextFile = event.target.files?.[0] ?? null;
-                  setFile(nextFile);
-                }}
-              />
-            </div>
+            <Input
+              id="message-file"
+              type="file"
+              accept="application/json,.json"
+              className="cursor-pointer"
+              onChange={(event) => {
+                const nextFile = event.target.files?.[0] ?? null;
+                setFile(nextFile);
+              }}
+            />
             {file && (
               <p className="text-xs text-muted-foreground flex items-center gap-2">
                 <Check className="w-3 h-3 text-green-600" />
@@ -154,7 +145,7 @@ export default function MigrationPage() {
           <Button
             onClick={handleImport}
             disabled={importMutation.isPending || !file}
-            className="rounded-lg gap-2"
+            className="gap-2"
           >
             {importMutation.isPending ? <Spinner className="w-4 h-4" /> : <Upload className="w-4 h-4" />}
             {t("Import messages")}
@@ -162,13 +153,13 @@ export default function MigrationPage() {
 
           {result && (
             <div
-              className={`rounded-xl border p-4 text-sm transition-all duration-300 animate-fade-in-up ${
+              className={`rounded-lg border p-4 text-sm ${
                 result.success
                   ? "border-green-500/30 bg-green-500/5"
                   : "border-destructive/30 bg-destructive/5"
               }`}
             >
-              <div className="flex items-center gap-2 font-semibold">
+              <div className="flex items-center gap-2 font-medium">
                 {result.success ? (
                   <Check className="w-4 h-4 text-green-600" />
                 ) : (
@@ -183,14 +174,14 @@ export default function MigrationPage() {
                 })}
               </div>
               {result.warnings?.length ? (
-                <details className="mt-4 text-xs text-muted-foreground">
-                  <summary className="cursor-pointer font-medium hover:text-foreground transition-colors">
+                <details className="mt-3 text-xs text-muted-foreground">
+                  <summary className="cursor-pointer font-medium hover:text-foreground">
                     <AlertTriangle className="w-3 h-3 inline mr-1" />
                     {t("{count, plural, one {# warning} other {# warnings}}", {
                       count: result.warnings.length,
                     })}
                   </summary>
-                  <ul className="mt-3 list-disc space-y-1 pl-4">
+                  <ul className="mt-2 list-disc space-y-1 pl-4">
                     {result.warnings.map((warning) => (
                       <li key={warning}>{warning}</li>
                     ))}

@@ -1,10 +1,10 @@
 import { TRPCError } from "@trpc/server";
-import { eq } from "drizzle-orm";
+import { and, eq, isNull, sql } from "drizzle-orm";
 import type Stripe from "stripe";
 import { z } from "zod";
 import { billing, user } from "@/db/schema";
 import { env } from "@/env";
-import { type BillingPlan, billingPlans, findPlanById, findPlanByLookupKey } from "@/lib/billing";
+import { type BillingPlan, billingPlans, findPlanById, findPlanByLookupKey, isTeamPlan } from "@/lib/billing";
 import { isBillingDisabled } from "@/lib/billing-config";
 import {
   disableMaxMode,
@@ -118,7 +118,11 @@ async function findOrCreateStripeCustomer({
 }
 
 async function ensureBillingRecord(ctx: ProtectedContext, userId: string) {
-  const existing = await ctx.db.select().from(billing).where(eq(billing.userId, userId)).limit(1);
+  const existing = await ctx.db
+    .select()
+    .from(billing)
+    .where(and(eq(billing.userId, userId), isNull(billing.organizationId)))
+    .limit(1);
 
   if (existing[0]) {
     return existing[0];
@@ -140,6 +144,7 @@ async function ensureBillingRecord(ctx: ProtectedContext, userId: string) {
     })
     .onConflictDoUpdate({
       target: billing.userId,
+      targetWhere: sql`organization_id IS NULL`,
       set: {
         stripeCustomerId: customer.id,
         updatedAt: new Date(),
@@ -194,6 +199,7 @@ async function syncSubscription(ctx: ProtectedContext, userId: string) {
     })
     .onConflictDoUpdate({
       target: billing.userId,
+      targetWhere: sql`organization_id IS NULL`,
       set: {
         stripeCustomerId: billingRecord.stripeCustomerId,
         ...updates,
@@ -207,8 +213,9 @@ async function syncSubscription(ctx: ProtectedContext, userId: string) {
 
 export const billingRouter = router({
   plans: billingEnabledProcedure.query(async () => {
+    const individualPlans = billingPlans.filter((p) => !isTeamPlan(p.id));
     const plans = await Promise.all(
-      billingPlans.map(async (plan) => {
+      individualPlans.map(async (plan) => {
         const price = await getPriceForPlan(plan);
         const mode = deriveModeFromPrice(price);
         return {
@@ -220,6 +227,7 @@ export const billingRouter = router({
           currency: price.currency,
           interval: price.recurring?.interval ?? null,
           intervalCount: price.recurring?.interval_count ?? 1,
+          isTeamPlan: false,
         };
       }),
     );
@@ -330,6 +338,7 @@ export const billingRouter = router({
         })
         .onConflictDoUpdate({
           target: billing.userId,
+          targetWhere: sql`organization_id IS NULL`,
           set: {
             planId: plan.id,
             priceId: price.id,
@@ -415,6 +424,7 @@ export const billingRouter = router({
         ])
         .onConflictDoUpdate({
           target: billing.userId,
+          targetWhere: sql`organization_id IS NULL`,
           set: {
             ...updates,
             updatedAt: new Date(),
@@ -508,6 +518,7 @@ export const billingRouter = router({
         })
         .onConflictDoUpdate({
           target: billing.userId,
+          targetWhere: sql`organization_id IS NULL`,
           set: {
             ...updates,
             updatedAt: new Date(),
@@ -551,6 +562,7 @@ export const billingRouter = router({
       })
       .onConflictDoUpdate({
         target: billing.userId,
+        targetWhere: sql`organization_id IS NULL`,
         set: {
           ...updates,
           updatedAt: new Date(),
@@ -602,6 +614,7 @@ export const billingRouter = router({
       })
       .onConflictDoUpdate({
         target: billing.userId,
+        targetWhere: sql`organization_id IS NULL`,
         set: {
           ...updates,
           updatedAt: new Date(),

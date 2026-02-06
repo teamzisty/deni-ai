@@ -1,6 +1,6 @@
 import "server-only";
 
-import { eq } from "drizzle-orm";
+import { and, eq, isNull } from "drizzle-orm";
 
 import { db } from "@/db/drizzle";
 import { billing } from "@/db/schema";
@@ -39,7 +39,7 @@ export async function getMaxModeStatus(userId: string): Promise<MaxModeStatus> {
       maxModePeriodStart: billing.maxModePeriodStart,
     })
     .from(billing)
-    .where(eq(billing.userId, userId))
+    .where(and(eq(billing.userId, userId), isNull(billing.organizationId)))
     .limit(1);
 
   if (!record) {
@@ -78,7 +78,7 @@ export async function enableMaxMode(userId: string): Promise<{ success: boolean;
       maxModeEnabled: billing.maxModeEnabled,
     })
     .from(billing)
-    .where(eq(billing.userId, userId))
+    .where(and(eq(billing.userId, userId), isNull(billing.organizationId)))
     .limit(1);
 
   if (!record) {
@@ -106,7 +106,7 @@ export async function enableMaxMode(userId: string): Promise<{ success: boolean;
       maxModeUsageBasic: 0,
       maxModeUsagePremium: 0,
     })
-    .where(eq(billing.userId, userId));
+    .where(and(eq(billing.userId, userId), isNull(billing.organizationId)));
 
   return { success: true };
 }
@@ -117,7 +117,7 @@ export async function disableMaxMode(userId: string): Promise<{ success: boolean
       maxModeEnabled: billing.maxModeEnabled,
     })
     .from(billing)
-    .where(eq(billing.userId, userId))
+    .where(and(eq(billing.userId, userId), isNull(billing.organizationId)))
     .limit(1);
 
   if (!record) {
@@ -133,7 +133,7 @@ export async function disableMaxMode(userId: string): Promise<{ success: boolean
     .set({
       maxModeEnabled: false,
     })
-    .where(eq(billing.userId, userId));
+    .where(and(eq(billing.userId, userId), isNull(billing.organizationId)));
 
   return { success: true };
 }
@@ -151,7 +151,7 @@ export async function recordMaxModeUsage(
       stripeCustomerId: billing.stripeCustomerId,
     })
     .from(billing)
-    .where(eq(billing.userId, userId))
+    .where(and(eq(billing.userId, userId), isNull(billing.organizationId)))
     .limit(1);
 
   if (!record) {
@@ -166,7 +166,7 @@ export async function recordMaxModeUsage(
     .set({
       [field]: newUsage,
     })
-    .where(eq(billing.userId, userId));
+    .where(and(eq(billing.userId, userId), isNull(billing.organizationId)));
 
   // Report usage to Stripe for metered billing
   try {
@@ -193,5 +193,5 @@ export async function resetMaxModeUsage(userId: string): Promise<void> {
       maxModeUsagePremium: 0,
       maxModePeriodStart: new Date(),
     })
-    .where(eq(billing.userId, userId));
+    .where(and(eq(billing.userId, userId), isNull(billing.organizationId)));
 }

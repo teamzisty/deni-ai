@@ -1,10 +1,11 @@
 "use client";
 
-import { Zap, CreditCard, Check, Sparkles, Crown } from "lucide-react";
+import { Zap, Check, Users } from "lucide-react";
+import Link from "next/link";
 import { useExtracted } from "next-intl";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
-import type { BillingPlanId, ClientPlan } from "@/lib/billing";
+import type { BillingPlanId, ClientPlan, IndividualPlanId } from "@/lib/billing";
 import { isBillingDisabled } from "@/lib/billing-config";
 import { trpc } from "@/lib/trpc/react";
 import { cn } from "@/lib/utils";
@@ -169,10 +170,10 @@ function PlanCard({
   activePlanId: string | undefined;
   checkout: {
     isPending: boolean;
-    variables?: { planId: BillingPlanId };
-    mutate: (data: { planId: BillingPlanId }) => void;
+    variables?: { planId: IndividualPlanId };
+    mutate: (data: { planId: IndividualPlanId }) => void;
   };
-  changePlan: { isPending: boolean; variables?: { planId: BillingPlanId } };
+  changePlan: { isPending: boolean; variables?: { planId: IndividualPlanId } };
   onChangePlanClick: (plan: ClientPlan) => void;
   isLoadingEstimate: boolean;
 }) {
@@ -187,30 +188,18 @@ function PlanCard({
   const isLoadingThisPlan = isLoadingEstimate;
 
   const tierName = plan.id.startsWith("pro_") ? t("Pro") : t("Plus");
-  const isPro = plan.id.startsWith("pro_");
 
   return (
-    <Card className={cn(
-      "group relative flex flex-col overflow-hidden transition-all duration-300",
-      "border-border/50 hover:border-primary/40 hover:shadow-lg",
-      isCurrent && "border-primary ring-2 ring-primary/20",
-      isPro && "bg-gradient-to-br from-card to-primary/5"
-    )}>
-      {/* Decorative gradient */}
-      <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-
-      <CardHeader className="relative pb-4">
+    <Card
+      className={cn("flex flex-col", isCurrent && "border-foreground ring-1 ring-foreground/10")}
+    >
+      <CardHeader className="pb-4">
         <div className="flex items-start justify-between gap-4">
-          <div className="space-y-2">
+          <div className="space-y-1">
             <div className="flex items-center gap-2">
-              {isPro ? (
-                <Crown className="w-5 h-5 text-primary" />
-              ) : (
-                <Sparkles className="w-5 h-5 text-primary" />
-              )}
-              <CardTitle className="text-xl font-bold">{tierName}</CardTitle>
+              <CardTitle className="text-lg font-semibold">{tierName}</CardTitle>
               {planCopy.badge && (
-                <Badge variant="secondary" className="text-xs bg-primary/10 text-primary">
+                <Badge variant="secondary" className="text-xs">
                   {planCopy.badge}
                 </Badge>
               )}
@@ -229,14 +218,14 @@ function PlanCard({
           </Tabs>
         </div>
       </CardHeader>
-      <CardContent className="relative flex flex-1 flex-col pt-0">
+      <CardContent className="flex flex-1 flex-col pt-0">
         <div className="flex-1">
-          <div className="text-3xl font-bold tracking-tight">{formatPriceLabel(plan)}</div>
+          <div className="text-2xl font-semibold tracking-tight">{formatPriceLabel(plan)}</div>
           {planCopy.highlights.length > 0 && (
             <ul className="mt-5 space-y-2.5">
               {planCopy.highlights.map((item) => (
                 <li key={item} className="flex items-start gap-2.5 text-sm">
-                  <Check className="w-4 h-4 mt-0.5 text-primary shrink-0" />
+                  <Check className="w-4 h-4 mt-0.5 text-muted-foreground shrink-0" />
                   <span className="text-muted-foreground">{item}</span>
                 </li>
               ))}
@@ -244,21 +233,18 @@ function PlanCard({
           )}
         </div>
         <Button
-          className={cn(
-            "mt-6 w-full h-11 rounded-xl font-medium transition-all duration-300",
-            !isCurrent && "shadow-md hover:shadow-lg"
-          )}
+          className="mt-6 w-full font-medium"
           variant={isCurrent ? "secondary" : "default"}
           disabled={isCurrent || processing || isBlockedByCancel || isLoadingThisPlan}
           onClick={() => {
             if (canChange) {
               onChangePlanClick(plan);
             } else {
-              checkout.mutate({ planId: plan.id });
+              checkout.mutate({ planId: plan.id as IndividualPlanId });
             }
           }}
         >
-          {(processing || isLoadingThisPlan) && <Spinner className="w-4 h-4 mr-2" />}
+          {(processing || isLoadingThisPlan) && <Spinner className="w-4 h-4" />}
           {isCurrent
             ? t("Current plan")
             : isBlockedByCancel
@@ -284,7 +270,11 @@ function UsageRow({
   label,
   item,
   maxModeEnabled,
-}: { label: string; item: UsageItem | undefined; maxModeEnabled?: boolean }) {
+}: {
+  label: string;
+  item: UsageItem | undefined;
+  maxModeEnabled?: boolean;
+}) {
   const t = useExtracted();
   if (!item) return null;
 
@@ -350,9 +340,11 @@ function BillingDisabled() {
     <div className="mx-auto flex max-w-4xl w-full flex-col gap-6">
       <div className="space-y-2">
         <h1 className="text-3xl font-semibold tracking-tight">{t("Billing")}</h1>
-        <p className="text-muted-foreground">{t("Billing is disabled for this environment.")}</p>
+        <p className="text-muted-foreground text-sm">
+          {t("Billing is disabled for this environment.")}
+        </p>
       </div>
-      <Card className="border-border/80">
+      <Card>
         <CardHeader>
           <CardTitle>{t("Billing unavailable")}</CardTitle>
           <CardDescription>
@@ -371,7 +363,7 @@ function BillingPageContent() {
   const [plusInterval, setPlusInterval] = useState<"monthly" | "yearly">("monthly");
   const [proInterval, setProInterval] = useState<"monthly" | "yearly">("monthly");
   const [hasAgreed, setHasAgreed] = useState(false);
-  const [pendingPlanId, setPendingPlanId] = useState<BillingPlanId | null>(null);
+  const [pendingPlanId, setPendingPlanId] = useState<IndividualPlanId | null>(null);
 
   // Pre-fetch estimate when user clicks "Change plan" button
   const estimateQuery = trpc.billing.estimatePlanChange.useQuery(
@@ -403,7 +395,7 @@ function BillingPageContent() {
   // Handle "Change plan" button click - start loading estimate
   const handleChangePlanClick = useCallback((plan: ClientPlan) => {
     setChangeTarget(plan);
-    setPendingPlanId(plan.id);
+    setPendingPlanId(plan.id as IndividualPlanId);
   }, []);
 
   const utils = trpc.useUtils();
@@ -552,25 +544,18 @@ function BillingPageContent() {
   }
 
   return (
-    <div className="mx-auto flex max-w-4xl w-full flex-col gap-8 animate-fade-in-up">
+    <div className="mx-auto flex max-w-4xl w-full flex-col gap-6">
       {/* Page Header */}
-      <div className="space-y-2">
-        <div className="flex items-center gap-3">
-          <div className="inline-flex items-center justify-center w-10 h-10 rounded-xl bg-primary/10 text-primary">
-            <CreditCard className="w-5 h-5" />
-          </div>
-          <div>
-            <h1 className="text-2xl font-bold tracking-[-0.02em]">{t("Billing")}</h1>
-            <p className="text-muted-foreground text-sm">{t("Manage your subscription and usage")}</p>
-          </div>
-        </div>
+      <div className="space-y-1">
+        <h1 className="text-xl font-semibold tracking-tight">{t("Billing")}</h1>
+        <p className="text-muted-foreground text-sm">{t("Manage your subscription and usage")}</p>
       </div>
 
       {/* Current Plan */}
-      <Card className="border-border/50 shadow-sm">
+      <Card>
         <CardHeader className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div className="space-y-1">
-            <CardTitle className="text-base font-semibold">{t("Current Plan")}</CardTitle>
+            <CardTitle className="text-sm font-medium">{t("Current Plan")}</CardTitle>
             <CardDescription>
               {currentPlan
                 ? t("{tier} {name}", {
@@ -605,7 +590,6 @@ function BillingPageContent() {
               <Button
                 variant="outline"
                 size="sm"
-                className="rounded-lg"
                 disabled={portal.isPending}
                 onClick={() => portal.mutate()}
               >
@@ -617,7 +601,7 @@ function BillingPageContent() {
               <Button
                 variant="ghost"
                 size="sm"
-                className="rounded-lg text-muted-foreground"
+                className="text-muted-foreground"
                 disabled={cancel.isPending}
                 onClick={() => cancel.mutate()}
               >
@@ -626,7 +610,7 @@ function BillingPageContent() {
               </Button>
             )}
             {cancelDate && (
-              <Button size="sm" className="rounded-lg" disabled={resume.isPending} onClick={() => resume.mutate()}>
+              <Button size="sm" disabled={resume.isPending} onClick={() => resume.mutate()}>
                 {resume.isPending && <Spinner className="w-4 h-4 mr-1" />}
                 {t("Resume")}
               </Button>
@@ -636,16 +620,14 @@ function BillingPageContent() {
       </Card>
 
       {/* Usage */}
-      <Card className="border-border/50 shadow-sm">
+      <Card>
         <CardHeader className="gap-0!">
           <div className="flex items-center justify-between">
             <div>
-              <CardTitle className="text-base font-semibold">{t("Usage")}</CardTitle>
+              <CardTitle className="text-sm font-medium">{t("Usage")}</CardTitle>
               <CardDescription>{t("Tier: {tier}", { tier: usageTierLabel })}</CardDescription>
             </div>
-            <Badge variant="secondary" className="bg-primary/10 text-primary">
-              {usageTierLabel}
-            </Badge>
+            <Badge variant="secondary">{usageTierLabel}</Badge>
           </div>
         </CardHeader>
         <CardContent className="space-y-5">
@@ -678,13 +660,9 @@ function BillingPageContent() {
           <CardHeader className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div className="space-y-1">
               <div className="flex items-center gap-2">
-                <Zap className="size-5 text-blue-500" />
-                <CardTitle>{t("Max Mode")}</CardTitle>
-                {maxModeQuery.data?.enabled && (
-                  <Badge variant="secondary" className="bg-blue-500/10 text-blue-600">
-                    {t("Active")}
-                  </Badge>
-                )}
+                <Zap className="size-4 text-muted-foreground" />
+                <CardTitle className="text-sm font-medium">{t("Max Mode")}</CardTitle>
+                {maxModeQuery.data?.enabled && <Badge variant="secondary">{t("Active")}</Badge>}
               </div>
               <CardDescription>
                 {t("Continue using Deni AI after reaching your limits with pay-per-use pricing.")}
@@ -704,7 +682,7 @@ function BillingPageContent() {
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="grid gap-4 sm:grid-cols-2">
-              <div className="rounded-lg border border-border/60 p-4">
+              <div className="rounded-lg border border-border p-4">
                 <div className="text-sm text-muted-foreground">{t("Basic model messages")}</div>
                 <div className="mt-1 flex items-baseline gap-2">
                   <span className="text-2xl font-semibold">
@@ -715,7 +693,7 @@ function BillingPageContent() {
                   </span>
                 </div>
               </div>
-              <div className="rounded-lg border border-border/60 p-4">
+              <div className="rounded-lg border border-border p-4">
                 <div className="text-sm text-muted-foreground">{t("Premium model messages")}</div>
                 <div className="mt-1 flex items-baseline gap-2">
                   <span className="text-2xl font-semibold">
@@ -734,7 +712,9 @@ function BillingPageContent() {
               </div>
             </div>
             <p className="text-xs text-muted-foreground">
-              {t("Max Mode charges are billed at the end of each billing cycle. Pricing: $0.01 per basic message, $0.05 per premium message.")}
+              {t(
+                "Max Mode charges are billed at the end of each billing cycle. Pricing: $0.01 per basic message, $0.05 per premium message.",
+              )}
             </p>
           </CardContent>
         </Card>
@@ -786,6 +766,38 @@ function BillingPageContent() {
         </div>
       )}
 
+      {/* Pro for Teams */}
+      <Card className="border-border/80">
+        <CardHeader className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <div className="space-y-1">
+            <div className="flex items-center gap-2">
+              <Users className="size-4 text-muted-foreground" />
+              <CardTitle className="text-sm font-medium">{t("Pro for Teams")}</CardTitle>
+            </div>
+            <CardDescription>
+              {t("Give your whole team Pro-tier access with per-seat pricing.")}
+            </CardDescription>
+          </div>
+          <Button asChild size="sm">
+            <Link href="/settings/team">{t("Manage Team")}</Link>
+          </Button>
+        </CardHeader>
+        <CardContent>
+          <ul className="space-y-2">
+            {[
+              t("Pro benefits for every team member"),
+              t("Per-seat billing — pay only for active members"),
+              t("Centralized billing and member management"),
+            ].map((item) => (
+              <li key={item} className="flex items-start gap-2.5 text-sm">
+                <Check className="w-4 h-4 mt-0.5 text-muted-foreground shrink-0" />
+                <span className="text-muted-foreground">{item}</span>
+              </li>
+            ))}
+          </ul>
+        </CardContent>
+      </Card>
+
       {/* Change Plan Dialog */}
       <AlertDialog open={isChangePlanOpen} onOpenChange={handleDialogOpenChange}>
         <AlertDialogContent>
@@ -830,7 +842,7 @@ function BillingPageContent() {
               disabled={
                 changePlan.isPending || !changeTarget || estimateQuery.error != null || !hasAgreed
               }
-              onClick={() => changeTarget && changePlan.mutate({ planId: changeTarget.id })}
+              onClick={() => changeTarget && changePlan.mutate({ planId: changeTarget.id as IndividualPlanId })}
             >
               {changePlan.isPending && <Spinner />}
               {t("Confirm")}

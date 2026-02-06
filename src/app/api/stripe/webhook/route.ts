@@ -1,4 +1,4 @@
-import { eq } from "drizzle-orm";
+import { and, eq, isNull, sql } from "drizzle-orm";
 import { NextResponse } from "next/server";
 import type Stripe from "stripe";
 import { db } from "@/db/drizzle";
@@ -20,10 +20,12 @@ type SubscriptionPayload = {
   priceId: string | null | undefined;
   status: string | null;
   currentPeriodEnd: number | null;
+  organizationId?: string | null;
 };
 
 async function saveSubscription(payload: SubscriptionPayload) {
   const plan = findPlanByLookupKey(payload.lookupKey ?? undefined);
+  const organizationId = payload.organizationId ?? null;
 
   const updates = {
     stripeCustomerId: payload.customerId,
@@ -33,13 +35,18 @@ async function saveSubscription(payload: SubscriptionPayload) {
     status: payload.status ?? null,
     mode: "subscription" as const,
     currentPeriodEnd: payload.currentPeriodEnd ? new Date(payload.currentPeriodEnd * 1000) : null,
+    organizationId,
   };
 
   // Check if this is a renewal (period end changed) for Max Mode reset
+  const whereClause = organizationId
+    ? and(eq(billing.userId, payload.userId), eq(billing.organizationId, organizationId))
+    : and(eq(billing.userId, payload.userId), isNull(billing.organizationId));
+
   const [existingRecord] = await db
     .select({ currentPeriodEnd: billing.currentPeriodEnd, maxModeEnabled: billing.maxModeEnabled })
     .from(billing)
-    .where(eq(billing.userId, payload.userId))
+    .where(whereClause)
     .limit(1);
 
   const isRenewal =
@@ -55,7 +62,12 @@ async function saveSubscription(payload: SubscriptionPayload) {
       ...updates,
     })
     .onConflictDoUpdate({
-      target: billing.userId,
+      target: organizationId
+        ? [billing.userId, billing.organizationId]
+        : billing.userId,
+      targetWhere: organizationId
+        ? sql`organization_id IS NOT NULL`
+        : sql`organization_id IS NULL`,
       set: {
         ...updates,
         updatedAt: new Date(),
@@ -69,11 +81,22 @@ async function saveSubscription(payload: SubscriptionPayload) {
   }
 }
 
-async function clearPlanData({ userId, customerId }: { userId: string; customerId: string }) {
+async function clearPlanData({
+  userId,
+  customerId,
+  organizationId,
+}: {
+  userId: string;
+  customerId: string;
+  organizationId?: string | null;
+}) {
+  const orgId = organizationId ?? null;
+
   await db
     .insert(billing)
     .values({
       userId,
+      organizationId: orgId,
       stripeCustomerId: customerId,
       stripeSubscriptionId: null,
       priceId: null,
@@ -84,7 +107,12 @@ async function clearPlanData({ userId, customerId }: { userId: string; customerI
       checkoutSessionId: null,
     })
     .onConflictDoUpdate({
-      target: billing.userId,
+      target: orgId
+        ? [billing.userId, billing.organizationId]
+        : billing.userId,
+      targetWhere: orgId
+        ? sql`organization_id IS NOT NULL`
+        : sql`organization_id IS NULL`,
       set: {
         stripeCustomerId: customerId,
         stripeSubscriptionId: null,
@@ -118,6 +146,10 @@ async function resolveUserIdFromCustomer(stripeCustomerId: string, metadataUserI
     .limit(1);
 
   return record?.userId ?? null;
+}
+
+function resolveOrganizationId(metadata?: Stripe.Metadata | null): string | null {
+  return metadata?.organizationId ?? null;
 }
 
 export async function POST(req: Request) {
@@ -161,6 +193,7 @@ export async function POST(req: Request) {
         }
 
         const userId = await resolveUserIdFromCustomer(customerId, subscription.metadata?.userId);
+        const organizationId = resolveOrganizationId(subscription.metadata);
 
         if (!userId) {
           console.warn("[stripe:webhook] missing userId for deleted subscription", {
@@ -172,6 +205,7 @@ export async function POST(req: Request) {
         await clearPlanData({
           userId,
           customerId,
+          organizationId,
         });
         break;
       }
@@ -198,6 +232,7 @@ export async function POST(req: Request) {
         const priceId = price?.id ?? null;
         const lookupKey = price?.lookup_key ?? null;
         const userId = await resolveUserIdFromCustomer(customerId, subscription.metadata?.userId);
+        const organizationId = resolveOrganizationId(subscription.metadata);
         const isCanceled =
           subscription.status === "canceled" ||
           subscription.cancel_at_period_end === true ||
@@ -219,6 +254,7 @@ export async function POST(req: Request) {
           priceId,
           status: computedStatus,
           currentPeriodEnd: getSubscriptionPeriodEnd(subscription),
+          organizationId,
         });
         break;
       }
@@ -235,6 +271,10 @@ export async function POST(req: Request) {
           if (!userId && typeof session.customer === "string") {
             userId = await resolveUserIdFromCustomer(session.customer, session.metadata?.userId);
           }
+
+          const organizationId =
+            resolveOrganizationId(session.metadata) ??
+            resolveOrganizationId(subscription.metadata);
 
           if (userId) {
             const isCanceled =
@@ -253,6 +293,7 @@ export async function POST(req: Request) {
               priceId: price?.id ?? null,
               status: computedStatus,
               currentPeriodEnd: getSubscriptionPeriodEnd(subscription),
+              organizationId,
             });
           }
         }

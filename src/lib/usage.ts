@@ -1,9 +1,9 @@
 import "server-only";
 
-import { and, eq } from "drizzle-orm";
+import { and, eq, isNull, sql } from "drizzle-orm";
 
 import { db } from "@/db/drizzle";
-import { billing, usageQuota } from "@/db/schema";
+import { billing, member, usageQuota } from "@/db/schema";
 
 import { isMaxModeEligible, recordMaxModeUsage } from "./max-mode";
 
@@ -68,6 +68,7 @@ function getDefaultPeriodEnd(now: Date) {
 }
 
 async function getTierInfo(userId: string, now: Date): Promise<TierInfo> {
+  // 1. Check personal billing (where organizationId is NULL)
   const [record] = await db
     .select({
       planId: billing.planId,
@@ -76,9 +77,55 @@ async function getTierInfo(userId: string, now: Date): Promise<TierInfo> {
       maxModeEnabled: billing.maxModeEnabled,
     })
     .from(billing)
-    .where(eq(billing.userId, userId))
+    .where(and(eq(billing.userId, userId), isNull(billing.organizationId)))
     .limit(1);
 
+  // 2. Check if user belongs to any org with an active team plan
+  const teamRecords = await db
+    .select({
+      planId: billing.planId,
+      status: billing.status,
+      currentPeriodEnd: billing.currentPeriodEnd,
+      maxModeEnabled: billing.maxModeEnabled,
+    })
+    .from(billing)
+    .innerJoin(member, eq(billing.organizationId, member.organizationId))
+    .where(
+      and(
+        eq(member.userId, userId),
+        sql`${billing.organizationId} IS NOT NULL`,
+        sql`${billing.planId} LIKE 'pro_team%'`,
+      ),
+    )
+    .limit(1);
+
+  const teamRecord = teamRecords[0];
+
+  // 3. If user has an active team plan, check it first
+  if (teamRecord) {
+    const teamPlanId = teamRecord.planId;
+    const teamStatus = teamRecord.status;
+    const teamHasActive =
+      Boolean(teamPlanId) && Boolean(teamStatus) && ACTIVE_BILLING_STATUSES.has(teamStatus ?? "");
+    const teamGracePeriod =
+      teamStatus === "canceled" &&
+      teamRecord.currentPeriodEnd &&
+      teamRecord.currentPeriodEnd > now;
+
+    if (teamHasActive || teamGracePeriod) {
+      const maxModeEligible = isMaxModeEligible(teamPlanId) && teamStatus === "active";
+      return {
+        tier: "pro",
+        planId: teamPlanId,
+        status: teamStatus ?? null,
+        periodEnd: teamRecord.currentPeriodEnd ?? null,
+        maxModeEnabled: maxModeEligible && teamRecord.maxModeEnabled,
+        maxModeEligible,
+      };
+    }
+  }
+
+  // 4. Fall back to personal billing
   if (!record) {
     return {
       tier: "free",

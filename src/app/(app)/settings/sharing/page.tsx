@@ -7,7 +7,6 @@ import {
   Globe,
   Link2,
   Lock,
-  Share2,
   Trash2,
   Users,
 } from "lucide-react";
@@ -38,7 +37,6 @@ function ShareItem({
   recipients,
   onDelete,
   onUpdate,
-  index = 0,
 }: {
   share: {
     id: string;
@@ -51,7 +49,6 @@ function ShareItem({
   recipients: { id: string; name: string; email: string }[];
   onDelete: (chatId: string) => void;
   onUpdate: (chatId: string, visibility: "public" | "private", allowFork: boolean) => void;
-  index?: number;
 }) {
   const t = useExtracted();
   const [copied, setCopied] = useState(false);
@@ -74,15 +71,12 @@ function ShareItem({
   };
 
   return (
-    <div
-      className={`group relative flex items-center justify-between rounded-xl border border-border/50 p-4 transition-all duration-300 hover:border-primary/30 hover:shadow-sm animate-fade-in-up`}
-      style={{ animationDelay: `${index * 75}ms` }}
-    >
+    <div className="flex items-center justify-between rounded-lg border border-border p-4">
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2 flex-wrap">
           <Link
             href={`/chat/${chat.id}`}
-            className="font-medium truncate hover:text-primary transition-colors"
+            className="font-medium text-sm truncate hover:underline"
           >
             {chat.title || t("Untitled")}
           </Link>
@@ -92,7 +86,7 @@ function ShareItem({
                 <button type="button" onClick={toggleVisibility} className="flex items-center">
                   <Badge
                     variant="secondary"
-                    className={`shrink-0 cursor-pointer transition-all duration-200 hover:scale-105 ${
+                    className={`shrink-0 cursor-pointer ${
                       share.visibility === "public"
                         ? "bg-green-500/10 text-green-600"
                         : "bg-amber-500/10 text-amber-600"
@@ -125,7 +119,7 @@ function ShareItem({
                 <button type="button" onClick={toggleFork} className="flex items-center">
                   <Badge
                     variant={share.allowFork ? "outline" : "secondary"}
-                    className="shrink-0 cursor-pointer transition-all duration-200 hover:scale-105"
+                    className="shrink-0 cursor-pointer"
                   >
                     {share.allowFork ? t("Fork OK") : t("No Fork")}
                   </Badge>
@@ -157,7 +151,7 @@ function ShareItem({
         <TooltipProvider>
           <Tooltip>
             <TooltipTrigger asChild>
-              <Button size="icon" variant="ghost" className="rounded-lg" onClick={handleCopy}>
+              <Button size="icon" variant="ghost" onClick={handleCopy}>
                 {copied ? <Check className="size-4 text-green-600" /> : <Copy className="size-4" />}
               </Button>
             </TooltipTrigger>
@@ -168,7 +162,7 @@ function ShareItem({
         <TooltipProvider>
           <Tooltip>
             <TooltipTrigger asChild>
-              <Button size="icon" variant="ghost" className="rounded-lg" asChild>
+              <Button size="icon" variant="ghost" asChild>
                 <Link href={`/shared/${share.id}`} target="_blank">
                   <ExternalLink className="size-4" />
                 </Link>
@@ -184,7 +178,7 @@ function ShareItem({
               <Button
                 size="icon"
                 variant="ghost"
-                className="rounded-lg text-destructive hover:text-destructive hover:bg-destructive/10"
+                className="text-destructive hover:text-destructive hover:bg-destructive/10"
                 onClick={() => onDelete(chat.id)}
               >
                 <Trash2 className="size-4" />
@@ -242,29 +236,19 @@ export default function SharingSettingsPage() {
   };
 
   return (
-    <div className="mx-auto flex max-w-4xl w-full flex-col gap-8 animate-fade-in-up">
+    <div className="mx-auto flex max-w-4xl w-full flex-col gap-6">
       {/* Page Header */}
-      <div className="space-y-2">
-        <div className="flex items-center gap-3">
-          <div className="inline-flex items-center justify-center w-10 h-10 rounded-xl bg-primary/10 text-primary">
-            <Share2 className="w-5 h-5" />
-          </div>
-          <div>
-            <h1 className="text-2xl font-bold tracking-[-0.02em]">{t("Sharing")}</h1>
-            <p className="text-muted-foreground text-sm">
-              {t("Manage your shared conversations and access shared links from others.")}
-            </p>
-          </div>
-        </div>
+      <div className="space-y-1">
+        <h1 className="text-xl font-semibold tracking-tight">{t("Sharing")}</h1>
+        <p className="text-muted-foreground text-sm">
+          {t("Manage your shared conversations and access shared links from others.")}
+        </p>
       </div>
 
       {/* My Shared Links */}
-      <Card className="border-border/50 shadow-sm">
-        <CardHeader className="pb-4">
-          <div className="flex items-center gap-2">
-            <Link2 className="w-4 h-4 text-primary" />
-            <CardTitle className="text-base font-semibold">{t("My Shared Links")}</CardTitle>
-          </div>
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-sm font-medium">{t("My Shared Links")}</CardTitle>
           <CardDescription>{t("Conversations you've shared with others.")}</CardDescription>
         </CardHeader>
         <CardContent>
@@ -274,17 +258,17 @@ export default function SharingSettingsPage() {
             </div>
           ) : myShares.data?.length === 0 ? (
             <div className="text-center py-12 text-muted-foreground">
-              <div className="inline-flex items-center justify-center w-12 h-12 rounded-xl bg-muted/50 mb-3">
-                <Link2 className="size-6 opacity-50" />
+              <div className="inline-flex items-center justify-center w-10 h-10 rounded-lg bg-secondary mb-3">
+                <Link2 className="size-5 text-muted-foreground" />
               </div>
-              <p className="font-medium">{t("No shared conversations yet.")}</p>
-              <p className="text-sm mt-1">
+              <p className="font-medium text-sm">{t("No shared conversations yet.")}</p>
+              <p className="text-xs mt-1">
                 {t("Share a conversation from the chat menu to create a link.")}
               </p>
             </div>
           ) : (
-            <div className="space-y-3">
-              {myShares.data?.map((item, index) => (
+            <div className="space-y-2">
+              {myShares.data?.map((item) => (
                 <ShareItem
                   key={item.share.id}
                   share={item.share}
@@ -292,7 +276,6 @@ export default function SharingSettingsPage() {
                   recipients={item.recipients}
                   onDelete={handleDelete}
                   onUpdate={handleUpdate}
-                  index={index}
                 />
               ))}
             </div>
@@ -301,12 +284,9 @@ export default function SharingSettingsPage() {
       </Card>
 
       {/* Shared With Me */}
-      <Card className="border-border/50 shadow-sm">
-        <CardHeader className="pb-4">
-          <div className="flex items-center gap-2">
-            <Users className="w-4 h-4 text-primary" />
-            <CardTitle className="text-base font-semibold">{t("Shared With Me")}</CardTitle>
-          </div>
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-sm font-medium">{t("Shared With Me")}</CardTitle>
           <CardDescription>{t("Conversations others have shared with you.")}</CardDescription>
         </CardHeader>
         <CardContent>
@@ -316,22 +296,21 @@ export default function SharingSettingsPage() {
             </div>
           ) : sharedWithMe.data?.length === 0 ? (
             <div className="text-center py-12 text-muted-foreground">
-              <div className="inline-flex items-center justify-center w-12 h-12 rounded-xl bg-muted/50 mb-3">
-                <Users className="size-6 opacity-50" />
+              <div className="inline-flex items-center justify-center w-10 h-10 rounded-lg bg-secondary mb-3">
+                <Users className="size-5 text-muted-foreground" />
               </div>
-              <p className="font-medium">{t("No one has shared conversations with you yet.")}</p>
+              <p className="font-medium text-sm">{t("No one has shared conversations with you yet.")}</p>
             </div>
           ) : (
-            <div className="space-y-3">
-              {sharedWithMe.data?.map((item, index) => (
+            <div className="space-y-2">
+              {sharedWithMe.data?.map((item) => (
                 <div
                   key={item.share.id}
-                  className="group relative flex items-center justify-between rounded-xl border border-border/50 p-4 transition-all duration-300 hover:border-primary/30 hover:shadow-sm animate-fade-in-up"
-                  style={{ animationDelay: `${index * 75}ms` }}
+                  className="flex items-center justify-between rounded-lg border border-border p-4"
                 >
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2">
-                      <span className="font-medium truncate">
+                      <span className="font-medium text-sm truncate">
                         {item.chat.title || t("Untitled")}
                       </span>
                     </div>
@@ -343,7 +322,7 @@ export default function SharingSettingsPage() {
                       </span>
                     </div>
                   </div>
-                  <Button size="sm" variant="outline" className="rounded-lg gap-2" asChild>
+                  <Button size="sm" variant="outline" className="gap-2" asChild>
                     <Link href={`/shared/${item.share.id}`}>
                       <ExternalLink className="size-4" />
                       {t("View")}
@@ -357,7 +336,7 @@ export default function SharingSettingsPage() {
       </Card>
 
       <AlertDialog open={!!deleteTarget} onOpenChange={(open) => !open && setDeleteTarget(null)}>
-        <AlertDialogContent className="rounded-2xl">
+        <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>{t("Revoke shared access?")}</AlertDialogTitle>
             <AlertDialogDescription>
@@ -367,13 +346,13 @@ export default function SharingSettingsPage() {
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={deleteShare.isPending} className="rounded-lg">
+            <AlertDialogCancel disabled={deleteShare.isPending}>
               {t("Cancel")}
             </AlertDialogCancel>
             <AlertDialogAction
               onClick={confirmDelete}
               disabled={deleteShare.isPending}
-              className="rounded-lg bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
               {deleteShare.isPending && <Spinner />}
               {t("Revoke Access")}

@@ -58,6 +58,11 @@ export default function SettingsWrapper({ children }: { children: React.ReactNod
       href: "/settings/billing",
     },
     {
+      label: t("Team"),
+      value: "team",
+      href: "/settings/team",
+    },
+    {
       label: t("Sharing"),
       value: "sharing",
       href: "/settings/sharing",
@@ -67,7 +72,7 @@ export default function SettingsWrapper({ children }: { children: React.ReactNod
       value: "migration",
       href: "/settings/migration",
     },
-  ].filter((tab) => !billingDisabled || tab.value !== "billing");
+  ].filter((tab) => !billingDisabled || (tab.value !== "billing" && tab.value !== "team"));
 
   // Determine current tab value based on pathname
   const currentTab =

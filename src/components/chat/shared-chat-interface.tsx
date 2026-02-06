@@ -25,44 +25,9 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Spinner } from "@/components/ui/spinner";
+import { isSearchResultArray, isVideoToolOutput } from "@/components/chat/chat-utils";
 import { trpc } from "@/lib/trpc/react";
 import { cn } from "@/lib/utils";
-
-type SearchResult = {
-  title: string;
-  url: string;
-  description: string;
-};
-
-type VideoToolOutput = {
-  videoUrl: string;
-  operationName?: string | null;
-  model?: string | null;
-  modelLabel?: string | null;
-  aspectRatio?: string | null;
-  resolution?: string | null;
-  durationSeconds?: number | null;
-  seed?: number | null;
-  negativePrompt?: string | null;
-};
-
-const isSearchResultArray = (value: unknown): value is SearchResult[] =>
-  Array.isArray(value) &&
-  value.every(
-    (item) =>
-      item !== null &&
-      typeof item === "object" &&
-      "title" in item &&
-      "url" in item &&
-      "description" in item,
-  );
-
-const isVideoToolOutput = (value: unknown): value is VideoToolOutput => {
-  if (!value || typeof value !== "object") {
-    return false;
-  }
-  return typeof (value as { videoUrl?: unknown }).videoUrl === "string";
-};
 
 interface SharedChatInterfaceProps {
   shareId: string;

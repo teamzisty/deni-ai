@@ -53,67 +53,19 @@ import { isBillingDisabled } from "@/lib/billing-config";
 import { GA_ID, models } from "@/lib/constants";
 import { trpc } from "@/lib/trpc/react";
 import { cn } from "@/lib/utils";
-import { Shimmer } from "../ai-elements/shimmer";
-import { Alert, AlertDescription, AlertTitle } from "../ui/alert";
-import { Badge } from "../ui/badge";
-import { Button } from "../ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
-import { Spinner } from "../ui/spinner";
-
-type SearchResult = {
-  title: string;
-  url: string;
-  description: string;
-};
-
-type VideoToolOutput = {
-  videoUrl: string;
-  operationName?: string | null;
-  model?: string | null;
-  modelLabel?: string | null;
-  aspectRatio?: string | null;
-  resolution?: string | null;
-  durationSeconds?: number | null;
-  seed?: number | null;
-  negativePrompt?: string | null;
-};
-
-type ImageToolOutput = {
-  imageUrls: string[];
-  model?: string | null;
-  modelLabel?: string | null;
-  aspectRatio?: string | null;
-  resolution?: string | null;
-  numberOfImages?: number | null;
-};
-
-const isSearchResultArray = (value: unknown): value is SearchResult[] =>
-  Array.isArray(value) &&
-  value.every(
-    (item) =>
-      item !== null &&
-      typeof item === "object" &&
-      "title" in item &&
-      "url" in item &&
-      "description" in item,
-  );
-
-const isVideoToolOutput = (value: unknown): value is VideoToolOutput => {
-  if (!value || typeof value !== "object") {
-    return false;
-  }
-  return typeof (value as { videoUrl?: unknown }).videoUrl === "string";
-};
-
-const isImageToolOutput = (value: unknown): value is ImageToolOutput => {
-  if (!value || typeof value !== "object") {
-    return false;
-  }
-  return (
-    Array.isArray((value as { imageUrls?: unknown }).imageUrls) &&
-    (value as { imageUrls?: unknown[] }).imageUrls?.every((url) => typeof url === "string") === true
-  );
-};
+import {
+  isImageToolOutput,
+  isSearchResultArray,
+  isVideoToolOutput,
+  type ImageToolOutput,
+  type VideoToolOutput,
+} from "@/components/chat/chat-utils";
+import { Shimmer } from "@/components/ai-elements/shimmer";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Spinner } from "@/components/ui/spinner";
 
 type VideoToolPart = ToolUIPart<{
   video: {

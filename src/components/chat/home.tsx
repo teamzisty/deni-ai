@@ -1,6 +1,6 @@
 "use client";
 
-import { MessageSquare, Sparkles, Code, Image, FileText } from "lucide-react";
+import { MessageSquare, Code, Image, FileText, PenLine } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useExtracted } from "next-intl";
 import { useState } from "react";
@@ -36,24 +36,20 @@ type SuggestionCardProps = {
   title: string;
   prompt: string;
   onClick: (prompt: string) => void;
-  delay: string;
 };
 
-function SuggestionCard({ icon: Icon, title, prompt, onClick, delay }: SuggestionCardProps) {
+function SuggestionCard({ icon: Icon, title, prompt, onClick }: SuggestionCardProps) {
   return (
     <button
       type="button"
       onClick={() => onClick(prompt)}
-      className={`group relative flex flex-col gap-2 p-4 rounded-xl border border-border/50 bg-card/50 backdrop-blur-sm text-left transition-all duration-300 hover:border-primary/30 hover:bg-card/80 hover:shadow-md animate-fade-in-up ${delay}`}
+      className="group flex flex-col gap-1.5 p-3 rounded-lg border border-border bg-card text-left transition-colors hover:bg-accent"
     >
-      <div className="absolute inset-0 rounded-xl bg-gradient-to-br from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-      <div className="relative flex items-center gap-2">
-        <div className="inline-flex items-center justify-center w-8 h-8 rounded-lg bg-primary/10 text-primary">
-          <Icon className="w-4 h-4" />
-        </div>
+      <div className="flex items-center gap-2">
+        <Icon className="w-4 h-4 text-muted-foreground" />
         <span className="font-medium text-sm">{title}</span>
       </div>
-      <p className="relative text-xs text-muted-foreground line-clamp-2 leading-relaxed">
+      <p className="text-xs text-muted-foreground line-clamp-2 leading-relaxed">
         {prompt}
       </p>
     </button>
@@ -126,7 +122,7 @@ export default function ChatHome() {
 
   const suggestions = [
     {
-      icon: Sparkles,
+      icon: PenLine,
       title: t("Creative Writing"),
       prompt: t("Write a short story about a robot learning to paint"),
     },
@@ -152,45 +148,38 @@ export default function ChatHome() {
       aria-labelledby="chat-home-title"
       className="relative flex min-h-screen flex-col items-center justify-center p-4"
     >
-      {/* Atmospheric background */}
-      <div className="absolute inset-0 -z-10 overflow-hidden">
-        <div className="absolute top-1/4 left-1/3 w-[400px] h-[400px] bg-primary/5 rounded-full blur-[100px] animate-pulse-soft" />
-        <div className="absolute bottom-1/4 right-1/3 w-[300px] h-[300px] bg-primary/8 rounded-full blur-[80px] animate-pulse-soft delay-300" />
-      </div>
-
-      <div className="w-full max-w-2xl space-y-8">
+      <div className="w-full max-w-2xl space-y-6">
         {/* Greeting */}
-        <div className="text-center space-y-3 animate-fade-in-up">
-          <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-primary/10 mb-2">
-            <MessageSquare className="w-7 h-7 text-primary" />
+        <div className="text-center space-y-2">
+          <div className="inline-flex items-center justify-center w-12 h-12 rounded-lg bg-secondary mb-2">
+            <MessageSquare className="w-6 h-6 text-muted-foreground" />
           </div>
           <h1
-            className="text-2xl md:text-3xl lg:text-4xl font-bold tracking-[-0.03em]"
+            className="text-2xl md:text-3xl font-semibold tracking-tight"
             id="chat-home-title"
           >
             {t("How can I help you today?")}
           </h1>
-          <p className="text-muted-foreground text-sm md:text-base max-w-md mx-auto">
+          <p className="text-muted-foreground text-sm max-w-md mx-auto">
             {t("Ask me anything. I'm here to assist with your questions, creative projects, and more.")}
           </p>
         </div>
 
         {/* Suggestions */}
-        <div className="grid grid-cols-2 gap-3">
-          {suggestions.map((suggestion, index) => (
+        <div className="grid grid-cols-2 gap-2">
+          {suggestions.map((suggestion) => (
             <SuggestionCard
               key={suggestion.title}
               icon={suggestion.icon}
               title={suggestion.title}
               prompt={suggestion.prompt}
               onClick={handleSuggestionClick}
-              delay={`delay-${(index + 1) * 100}`}
             />
           ))}
         </div>
 
         {/* Composer */}
-        <div className="animate-fade-in-up delay-500">
+        <div>
           <ChatComposer
             value={input}
             onValueChange={setInput}

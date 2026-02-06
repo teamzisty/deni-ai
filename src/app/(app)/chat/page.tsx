@@ -1,5 +1,5 @@
 import ChatHome from "@/components/chat/home";
 
-export default function HomePage() {
+export default function ChatHomePage() {
   return <ChatHome />;
 }

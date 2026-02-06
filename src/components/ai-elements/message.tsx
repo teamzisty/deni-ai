@@ -274,7 +274,8 @@ export type MessageResponseProps = ComponentProps<typeof Streamdown>;
 export const MessageResponse = memo(
   ({ className, ...props }: MessageResponseProps) => (
     <Streamdown
-      plugins={{ code, mermaid, math, cjk }}
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      plugins={{ code: code as any, mermaid, math, cjk }}
       className={cn("size-full [&>*:first-child]:mt-0 [&>*:last-child]:mb-0", className)}
       {...props}
     />

@@ -2,6 +2,7 @@ import { passkeyClient } from "@better-auth/passkey/client";
 import {
   anonymousClient,
   lastLoginMethodClient,
+  organizationClient,
   twoFactorClient,
 } from "better-auth/client/plugins";
 import { createAuthClient } from "better-auth/react";
@@ -13,5 +14,11 @@ if (!baseURL) {
 
 export const authClient = createAuthClient({
   baseURL,
-  plugins: [anonymousClient(), twoFactorClient(), lastLoginMethodClient(), passkeyClient()],
+  plugins: [
+    anonymousClient(),
+    twoFactorClient(),
+    lastLoginMethodClient(),
+    passkeyClient(),
+    organizationClient(),
+  ],
 });
