@@ -53,7 +53,12 @@ export default function AppearancePage() {
     { value: "system", label: t("System"), icon: Monitor },
   ];
 
-  const designStyles: { value: DesignStyle; label: string; description: string; icon: typeof Palette }[] = [
+  const designStyles: {
+    value: DesignStyle;
+    label: string;
+    description: string;
+    icon: typeof Palette;
+  }[] = [
     {
       value: "modern",
       label: t("Modern"),
@@ -104,9 +109,7 @@ export default function AppearancePage() {
                   onClick={() => setStyle(value)}
                   className={cn(
                     "group relative flex flex-col gap-2 rounded-lg border p-3 text-left transition-colors",
-                    selected
-                      ? "border-foreground bg-accent"
-                      : "border-border hover:bg-accent/50",
+                    selected ? "border-foreground bg-accent" : "border-border hover:bg-accent/50",
                   )}
                 >
                   <div className="flex items-start justify-between gap-2">
@@ -114,9 +117,7 @@ export default function AppearancePage() {
                       <Icon className="w-4 h-4 text-muted-foreground" />
                       <div className="space-y-0.5">
                         <p className="font-medium text-sm">{label}</p>
-                        <p className="text-xs text-muted-foreground">
-                          {description}
-                        </p>
+                        <p className="text-xs text-muted-foreground">{description}</p>
                       </div>
                     </div>
                     {selected && (
@@ -174,18 +175,14 @@ export default function AppearancePage() {
                   onClick={() => handleSelect(presetItem.key)}
                   className={cn(
                     "group relative flex flex-col gap-2 rounded-lg border p-3 text-left transition-colors",
-                    selected
-                      ? "border-foreground bg-accent"
-                      : "border-border hover:bg-accent/50",
+                    selected ? "border-foreground bg-accent" : "border-border hover:bg-accent/50",
                   )}
                 >
                   {/* Content */}
                   <div className="flex items-start justify-between gap-2">
                     <div className="space-y-0.5">
                       <p className="font-medium text-sm">{copy.title}</p>
-                      <p className="text-xs text-muted-foreground">
-                        {copy.description}
-                      </p>
+                      <p className="text-xs text-muted-foreground">{copy.description}</p>
                     </div>
                     {selected && (
                       <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-foreground text-background shrink-0">
@@ -197,13 +194,7 @@ export default function AppearancePage() {
                   {/* Color Preview */}
                   <div className="flex w-full gap-1" aria-hidden>
                     {(presetItem.preview ?? []).map((bar) => (
-                      <div
-                        key={bar}
-                        className={cn(
-                          "h-1.5 flex-1 rounded-full",
-                          bar
-                        )}
-                      />
+                      <div key={bar} className={cn("h-1.5 flex-1 rounded-full", bar)} />
                     ))}
                   </div>
                 </button>

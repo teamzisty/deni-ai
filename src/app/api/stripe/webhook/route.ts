@@ -62,12 +62,8 @@ async function saveSubscription(payload: SubscriptionPayload) {
       ...updates,
     })
     .onConflictDoUpdate({
-      target: organizationId
-        ? [billing.userId, billing.organizationId]
-        : billing.userId,
-      targetWhere: organizationId
-        ? sql`organization_id IS NOT NULL`
-        : sql`organization_id IS NULL`,
+      target: organizationId ? [billing.userId, billing.organizationId] : billing.userId,
+      targetWhere: organizationId ? sql`organization_id IS NOT NULL` : sql`organization_id IS NULL`,
       set: {
         ...updates,
         updatedAt: new Date(),
@@ -107,12 +103,8 @@ async function clearPlanData({
       checkoutSessionId: null,
     })
     .onConflictDoUpdate({
-      target: orgId
-        ? [billing.userId, billing.organizationId]
-        : billing.userId,
-      targetWhere: orgId
-        ? sql`organization_id IS NOT NULL`
-        : sql`organization_id IS NULL`,
+      target: orgId ? [billing.userId, billing.organizationId] : billing.userId,
+      targetWhere: orgId ? sql`organization_id IS NOT NULL` : sql`organization_id IS NULL`,
       set: {
         stripeCustomerId: customerId,
         stripeSubscriptionId: null,
@@ -273,8 +265,7 @@ export async function POST(req: Request) {
           }
 
           const organizationId =
-            resolveOrganizationId(session.metadata) ??
-            resolveOrganizationId(subscription.metadata);
+            resolveOrganizationId(session.metadata) ?? resolveOrganizationId(subscription.metadata);
 
           if (userId) {
             const isCanceled =

@@ -2,7 +2,7 @@ import "server-only";
 
 import { groq } from "@ai-sdk/groq";
 import { generateText, type UIMessage } from "ai";
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import { db } from "@/db/drizzle";
 import { chats } from "@/db/schema";
 
@@ -34,12 +34,20 @@ export async function generateTitle(messages: UIMessage[]): Promise<string> {
   return text.trim().slice(0, 50) || "New Chat";
 }
 
-export async function getChatById(id: string) {
-  const [chat] = await db.select().from(chats).where(eq(chats.id, id));
+export async function getChatById(id: string, userId: string) {
+  const [chat] = await db
+    .select()
+    .from(chats)
+    .where(and(eq(chats.id, id), eq(chats.uid, userId)));
   return chat;
 }
 
-export async function updateChat(id: string, messages: UIMessage[], title?: string) {
+export async function updateChat(
+  id: string,
+  userId: string,
+  messages: UIMessage[],
+  title?: string,
+) {
   const updates: ChatUpdateFields = {
     // structuredClone keeps parts/metadata intact while ensuring the payload is serializable for JSONB
     messages: structuredClone(messages),
@@ -53,7 +61,7 @@ export async function updateChat(id: string, messages: UIMessage[], title?: stri
   const [updatedChat] = await db
     .update(chats)
     .set(updates)
-    .where(eq(chats.id, id))
+    .where(and(eq(chats.id, id), eq(chats.uid, userId)))
     .returning({ id: chats.id });
 
   if (!updatedChat) {

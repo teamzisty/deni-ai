@@ -17,7 +17,6 @@ import { authClient } from "@/lib/auth-client";
 import { isBillingDisabled } from "@/lib/billing-config";
 import { trpc } from "@/lib/trpc/react";
 import { versions } from "@/lib/version";
-import { Badge } from "./ui/badge";
 
 export function AccountMenu() {
   const t = useExtracted();
@@ -56,10 +55,10 @@ export function AccountMenu() {
             </div>
             <span className="flex-1 truncate text-sm">{session.data?.user?.name ?? t("User")}</span>
             {maxModeEnabled && (
-              <Badge variant="secondary" className="ml-auto text-xs px-1.5 py-0">
-                <Zap className="size-3 mr-0.5" />
+              <span className="ml-auto inline-flex items-center gap-0.5 text-[10px] font-medium uppercase tracking-widest text-foreground/50">
+                <Zap className="size-2.5" />
                 Max
-              </Badge>
+              </span>
             )}
           </div>
         </SidebarMenuButton>
@@ -105,9 +104,14 @@ export function AccountMenu() {
           </DropdownMenuItem>
         )}
         {
-          <span className="px-2 py-1 text-xs text-muted-foreground">
-            Deni AI {versions.version}, {versions.codename}
-          </span>
+          <div className="px-2 py-1.5 text-xs text-muted-foreground group relative cursor-help">
+            <span className="block">Deni AI {versions.version}</span>
+            <div className="absolute bottom-full left-2 mb-2 hidden rounded-md bg-popover px-2 py-1.5 text-xs text-popover-foreground shadow-md group-hover:block whitespace-nowrap z-50 border border-border animate-in fade-in zoom-in-95 duration-200">
+              <div>{versions.codename}</div>
+              <div>{versions.date}</div>
+              <div className="font-mono text-[10px]">{versions.hash}</div>
+            </div>
+          </div>
         }
         <DropdownMenuItem className="gap-2 text-sm" asChild>
           <Link href="/account/settings" className="flex w-full">

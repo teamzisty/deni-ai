@@ -314,7 +314,7 @@ export default function ProvidersPage() {
         </div>
 
         <div className="flex flex-col gap-3">
-          {providers.map((provider, index) => {
+          {providers.map((provider) => {
             const configured = configuredProviders.has(provider.id);
             const prefer = preferByok[provider.id] ?? false;
             const isOpenAiCompat = provider.id === "openai_compatible";
@@ -340,7 +340,10 @@ export default function ProvidersPage() {
                     )}
                     {!isOpenAiCompat && (
                       <div className="flex items-center gap-2">
-                        <Label htmlFor={`prefer-${provider.id}`} className="text-xs text-muted-foreground">
+                        <Label
+                          htmlFor={`prefer-${provider.id}`}
+                          className="text-xs text-muted-foreground"
+                        >
                           {t("Prefer BYOK")}
                         </Label>
                         <Switch
@@ -532,7 +535,11 @@ export default function ProvidersPage() {
             </div>
           </div>
           <div className="flex items-center gap-3 pt-2">
-            <Button className="gap-2" onClick={handleCreateCustomModel} disabled={createCustomModel.isPending}>
+            <Button
+              className="gap-2"
+              onClick={handleCreateCustomModel}
+              disabled={createCustomModel.isPending}
+            >
               <Plus className="w-4 h-4" />
               {t("Add Model")}
             </Button>
@@ -559,7 +566,9 @@ export default function ProvidersPage() {
                         <div className="flex flex-col">
                           <span className="font-medium">{model.name}</span>
                           {model.description && (
-                            <span className="text-xs text-muted-foreground">{model.description}</span>
+                            <span className="text-xs text-muted-foreground">
+                              {model.description}
+                            </span>
                           )}
                         </div>
                       </TableCell>

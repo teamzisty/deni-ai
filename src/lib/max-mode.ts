@@ -1,6 +1,6 @@
 import "server-only";
 
-import { and, eq, isNull } from "drizzle-orm";
+import { and, eq, isNull, sql } from "drizzle-orm";
 
 import { db } from "@/db/drizzle";
 import { billing } from "@/db/schema";
@@ -111,7 +111,9 @@ export async function enableMaxMode(userId: string): Promise<{ success: boolean;
   return { success: true };
 }
 
-export async function disableMaxMode(userId: string): Promise<{ success: boolean; error?: string }> {
+export async function disableMaxMode(
+  userId: string,
+): Promise<{ success: boolean; error?: string }> {
   const [record] = await db
     .select({
       maxModeEnabled: billing.maxModeEnabled,
@@ -158,15 +160,20 @@ export async function recordMaxModeUsage(
     return { success: false, newUsage: 0 };
   }
 
-  const currentUsage = category === "basic" ? record.maxModeUsageBasic : record.maxModeUsagePremium;
-  const newUsage = currentUsage + 1;
+  const column = category === "basic" ? billing.maxModeUsageBasic : billing.maxModeUsagePremium;
 
-  await db
+  const [updated] = await db
     .update(billing)
     .set({
-      [field]: newUsage,
+      [field]: sql`${column} + 1`,
     })
-    .where(and(eq(billing.userId, userId), isNull(billing.organizationId)));
+    .where(and(eq(billing.userId, userId), isNull(billing.organizationId)))
+    .returning({
+      maxModeUsageBasic: billing.maxModeUsageBasic,
+      maxModeUsagePremium: billing.maxModeUsagePremium,
+    });
+
+  const newUsage = category === "basic" ? updated.maxModeUsageBasic : updated.maxModeUsagePremium;
 
   // Report usage to Stripe for metered billing
   try {

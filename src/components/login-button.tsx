@@ -40,7 +40,7 @@ export function LoginButton() {
           <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
         </Link>
       </Button>
-      <GuestSignInButton className="h-12 px-6 rounded-xl text-base" />
+      <GuestSignInButton className="h-10 px-6 rounded-xl text-base" />
     </div>
   );
 }

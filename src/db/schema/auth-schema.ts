@@ -150,17 +150,14 @@ export const passkeyRelations = relations(passkey, ({ one }) => ({
   }),
 }));
 
-export const organization = pgTable(
-  "organization",
-  {
-    id: text("id").primaryKey(),
-    name: text("name").notNull(),
-    slug: text("slug").unique(),
-    logo: text("logo"),
-    metadata: text("metadata"),
-    createdAt: timestamp("created_at").defaultNow().notNull(),
-  },
-);
+export const organization = pgTable("organization", {
+  id: text("id").primaryKey(),
+  name: text("name").notNull(),
+  slug: text("slug").unique(),
+  logo: text("logo"),
+  metadata: text("metadata"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
 
 export const member = pgTable(
   "member",
@@ -197,9 +194,7 @@ export const invitation = pgTable(
       .references(() => user.id, { onDelete: "cascade" }),
     createdAt: timestamp("created_at").defaultNow().notNull(),
   },
-  (table) => [
-    index("invitation_organizationId_idx").on(table.organizationId),
-  ],
+  (table) => [index("invitation_organizationId_idx").on(table.organizationId)],
 );
 
 export const organizationRelations = relations(organization, ({ many }) => ({

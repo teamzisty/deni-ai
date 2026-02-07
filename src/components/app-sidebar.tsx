@@ -352,9 +352,7 @@ export function AppSidebar() {
                     <div className="w-10 h-10 rounded-lg bg-secondary flex items-center justify-center mb-3">
                       <MessageSquare className="w-5 h-5 text-muted-foreground" />
                     </div>
-                    <p className="text-sm text-muted-foreground">
-                      {t("No chats yet")}
-                    </p>
+                    <p className="text-sm text-muted-foreground">{t("No chats yet")}</p>
                     <p className="text-xs text-muted-foreground/70 mt-1">
                       {t("Start a conversation to see it here")}
                     </p>

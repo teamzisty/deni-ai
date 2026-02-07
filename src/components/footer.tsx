@@ -17,9 +17,7 @@ const Footer = () => {
             <DeniAIIcon className="w-8 h-8 text-primary" />
             <div>
               <span className="font-semibold tracking-tight">Deni AI</span>
-              <p className="text-xs text-muted-foreground mt-0.5">
-                {t("AI for Everyone")}
-              </p>
+              <p className="text-xs text-muted-foreground mt-0.5">{t("AI for Everyone")}</p>
             </div>
           </div>
 

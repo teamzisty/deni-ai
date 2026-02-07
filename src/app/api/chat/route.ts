@@ -1,6 +1,7 @@
 import { type AnthropicProviderOptions, createAnthropic } from "@ai-sdk/anthropic";
 import { createGoogleGenerativeAI, type GoogleGenerativeAIProviderOptions } from "@ai-sdk/google";
 import { createGroq } from "@ai-sdk/groq";
+import { createXai } from "@ai-sdk/xai";
 import { createOpenAI, type OpenAIResponsesProviderOptions } from "@ai-sdk/openai";
 import { createOpenRouter, type OpenRouterProviderOptions } from "@openrouter/ai-sdk-provider";
 import {
@@ -24,6 +25,7 @@ import { createChatTools } from "@/lib/chat-tools";
 import { models } from "@/lib/constants";
 import { decryptFromB64 } from "@/lib/crypto";
 import { consumeUsage, getUsageSummary, type UsageCategory, UsageLimitError } from "@/lib/usage";
+import { checkRateLimit } from "@/lib/rate-limit";
 
 const UIMessagesSchema = z
   .array(z.record(z.string(), z.unknown()))
@@ -43,6 +45,15 @@ export async function POST(req: Request) {
   if (!userId) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
+
+  const rateCheck = checkRateLimit({ key: `chat:${userId}`, windowMs: 60_000, maxRequests: 30 });
+  if (!rateCheck.allowed) {
+    return NextResponse.json(
+      { error: "Too many requests. Please slow down." },
+      { status: 429, headers: { "Retry-After": String(rateCheck.retryAfter) } },
+    );
+  }
+
   const parsedBody = z
     .object({
       id: z.string().min(1),
@@ -176,6 +187,14 @@ export async function POST(req: Request) {
           usageSummary.maxModeEligible,
         );
       }
+
+      // Consume usage upfront (atomic increment) to prevent TOCTOU race
+      await consumeUsage({
+        userId,
+        category: usageCategory,
+        isAnonymous,
+      });
+
     } catch (error) {
       if (error instanceof UsageLimitError) {
         return NextResponse.json({ error: error.message, reason: "usage_limit" }, { status: 402 });
@@ -249,17 +268,18 @@ export async function POST(req: Request) {
     }
     case "xai": {
       if (useByok) {
-        const provider = createOpenAI({
+        const provider = createXai({
           apiKey: byokApiKey,
           baseURL: byokBaseUrl,
         });
-        model =
-          byokApiStyle === "chat"
-            ? provider.chat(resolvedModelId)
-            : provider.responses(resolvedModelId);
+        model = provider.chat(resolvedModelId.replace("xai.", ""));
       } else {
         model = voids.chat(resolvedModelId);
       }
+      break;
+    }
+    case "openrouter": {
+      model = getOpenRouterModel();
       break;
     }
     case "groq": {
@@ -333,6 +353,7 @@ export async function POST(req: Request) {
         reasoningSummary: "detailed",
       } satisfies OpenAIResponsesProviderOptions,
       anthropic: {
+        effort: reasoningEffort,
         thinking: {
           type: "enabled",
           budgetTokens:
@@ -347,6 +368,7 @@ export async function POST(req: Request) {
       } satisfies GoogleGenerativeAIProviderOptions,
       openrouter: {
         reasoning: {
+          enabled: true,
           effort: reasoningEffort,
         },
       } satisfies OpenRouterProviderOptions,
@@ -363,7 +385,7 @@ export async function POST(req: Request) {
       let newTitle: string | undefined;
 
       try {
-        const chat = await getChatById(id);
+        const chat = await getChatById(id, userId);
         if (chat?.title === "New Chat") {
           newTitle = await generateTitle(updatedMessages);
         }
@@ -371,19 +393,7 @@ export async function POST(req: Request) {
         console.error("Failed to generate title", error);
       }
 
-      await updateChat(id, updatedMessages, newTitle);
-
-      if (!useByok) {
-        try {
-          await consumeUsage({
-            userId,
-            category: usageCategory,
-            isAnonymous,
-          });
-        } catch (error) {
-          console.error("Failed to record usage", error);
-        }
-      }
+      await updateChat(id, userId, updatedMessages, newTitle);
     },
   });
 }

@@ -12,6 +12,19 @@ export async function GET(req: Request) {
   const data = searchParams.get("data");
   const mimeType = searchParams.get("mimeType") ?? "image/png";
 
+  // Only allow image MIME types to prevent content-type spoofing (e.g. text/html XSS)
+  const ALLOWED_MIME_TYPES = new Set([
+    "image/png",
+    "image/jpeg",
+    "image/gif",
+    "image/webp",
+    "image/svg+xml",
+    "image/avif",
+  ]);
+  if (!ALLOWED_MIME_TYPES.has(mimeType)) {
+    return NextResponse.json({ error: "Invalid MIME type." }, { status: 400 });
+  }
+
   if (!data) {
     return NextResponse.json({ error: "Missing data parameter." }, { status: 400 });
   }

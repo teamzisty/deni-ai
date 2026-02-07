@@ -1,8 +1,4 @@
-export type IndividualPlanId =
-  | "plus_monthly"
-  | "plus_yearly"
-  | "pro_monthly"
-  | "pro_yearly";
+export type IndividualPlanId = "plus_monthly" | "plus_yearly" | "pro_monthly" | "pro_yearly";
 
 export type TeamPlanId = "pro_team_monthly" | "pro_team_yearly";
 

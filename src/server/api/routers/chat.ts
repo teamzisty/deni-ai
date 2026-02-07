@@ -1,5 +1,5 @@
 import { TRPCError } from "@trpc/server";
-import { desc, eq } from "drizzle-orm";
+import { and, desc, eq } from "drizzle-orm";
 import { z } from "zod";
 import { chats } from "@/db/schema";
 import { protectedProcedure, router } from "../trpc";
@@ -30,7 +30,10 @@ export const chatRouter = router({
       }),
     )
     .query(async ({ ctx, input }) => {
-      const chat = await ctx.db.select().from(chats).where(eq(chats.id, input.id));
+      const chat = await ctx.db
+        .select()
+        .from(chats)
+        .where(and(eq(chats.id, input.id), eq(chats.uid, ctx.userId)));
       return chat;
     }),
   updateChat: protectedProcedure
@@ -62,7 +65,7 @@ export const chatRouter = router({
       const updatedChat = await ctx.db
         .update(chats)
         .set({ ...fields, updated_at: new Date() })
-        .where(eq(chats.id, id))
+        .where(and(eq(chats.id, id), eq(chats.uid, ctx.userId)))
         .returning();
       if (!updatedChat[0]) {
         throw new TRPCError({
@@ -79,7 +82,10 @@ export const chatRouter = router({
       }),
     )
     .mutation(async ({ ctx, input }) => {
-      const deletedChat = await ctx.db.delete(chats).where(eq(chats.id, input.id)).returning();
+      const deletedChat = await ctx.db
+        .delete(chats)
+        .where(and(eq(chats.id, input.id), eq(chats.uid, ctx.userId)))
+        .returning();
       if (!deletedChat[0]) {
         throw new TRPCError({
           code: "NOT_FOUND",

@@ -27,7 +27,10 @@ const items = [
   { label: "支払方法", value: "クレジットカード" },
   { label: "支払時期", value: "クレジットカード決済は即時処理されます" },
   { label: "商品の引渡時期", value: "決済完了後、即時利用可能" },
-  { label: "返品・キャンセル", value: "デジタルサービスの性質上、原則として返品・返金には対応しておりません" },
+  {
+    label: "返品・キャンセル",
+    value: "デジタルサービスの性質上、原則として返品・返金には対応しておりません",
+  },
   { label: "商品代金以外の費用", value: "なし" },
 ];
 
@@ -36,12 +39,8 @@ export default function TokushoPage() {
     <main className="min-h-screen bg-background" id="main-content">
       <div className="mx-auto max-w-3xl px-4 pb-16 pt-28 sm:px-6">
         <div className="mb-8">
-          <h1 className="text-2xl font-semibold tracking-tight">
-            特定商取引法に基づく表記
-          </h1>
-          <p className="mt-2 text-sm text-muted-foreground">
-            最終更新日: 2025年12月31日
-          </p>
+          <h1 className="text-2xl font-semibold tracking-tight">特定商取引法に基づく表記</h1>
+          <p className="mt-2 text-sm text-muted-foreground">最終更新日: 2025年12月31日</p>
         </div>
 
         <table className="w-full border-collapse text-sm">
@@ -51,9 +50,7 @@ export default function TokushoPage() {
                 <th className="w-1/3 bg-muted/50 px-4 py-3 text-left font-medium align-top">
                   {item.label}
                 </th>
-                <td className="px-4 py-3 text-muted-foreground">
-                  {item.value}
-                </td>
+                <td className="px-4 py-3 text-muted-foreground">{item.value}</td>
               </tr>
             ))}
           </tbody>

@@ -1,4 +1,4 @@
-export type Author = "openai" | "anthropic" | "google" | "xai" | "openai_compatible";
+export type Author = "openai" | "anthropic" | "google" | "xai" | "openai_compatible" | "openrouter";
 
 export enum AuthorEnum {
   openai = "OpenAI",
@@ -6,6 +6,7 @@ export enum AuthorEnum {
   google = "Google",
   xai = "xAI",
   openai_compatible = "OpenAI-compatible",
+  openrouter = "OpenRouter",
 }
 
 export type Models = {
@@ -23,6 +24,12 @@ export const models = [
     value: "gpt-5.2",
     author: "openai",
     features: ["reasoning", "smart", "fast"],
+  },
+  {
+    name: "GPT-5.3 Codex",
+    value: "gpt-5.3-codex",
+    author: "openai",
+    features: ["coding", "smart", "fast"],
   },
   {
     name: "GPT-5.1 Codex",
@@ -60,14 +67,20 @@ export const models = [
     features: ["reasoning", "fastest", "fast"],
   },
   {
+    name: "Pony Alpha",
+    value: "pony-alpha",
+    author: "openrouter",
+    features: ["reasoning"],
+  },
+  {
     name: "Gemini 3 Pro",
     value: "gemini-3-pro-preview",
     author: "google",
     features: ["smartest", "smart", "reasoning"],
   },
   {
-    name: "Gemini 2.5 Flash",
-    value: "gemini-2.5-flash",
+    name: "Gemini 3 Flash",
+    value: "gemini-3-flash-preview",
     author: "google",
     features: ["reasoning", "fast"],
   },
@@ -90,31 +103,31 @@ export const models = [
     value: "claude-opus-4.5",
     author: "anthropic",
     premium: true,
+    default: false,
     features: ["reasoning", "smart"],
   },
   {
-    name: "Claude Opus 4.1",
-    value: "claude-opus-4.1",
+    name: "Claude Opus 4.6",
+    value: "claude-opus-4.6",
     author: "anthropic",
     premium: true,
-    features: ["reasoning"],
-    default: false,
+    features: ["reasoning", "smart"],
   },
   {
-    name: "Grok 4",
-    value: "grok-4-0709",
+    name: "Grok Code Fast 1",
+    value: "xai.grok-code-fast-1",
     author: "xai",
     features: ["reasoning"],
   },
   {
-    name: "Grok 4 Fast (Reasoning)",
-    value: "grok-4-fast-reasoning",
+    name: "Grok 4.1 Fast (Reasoning)",
+    value: "grok-4-1-fast-reasoning",
     author: "xai",
     features: ["reasoning", "fast"],
   },
   {
-    name: "Grok 4 Fast (Non-Reasoning)",
-    value: "grok-4-fast-non-reasoning",
+    name: "Grok 4.1 Fast (Non-Reasoning)",
+    value: "grok-4-1-fast-non-reasoning",
     author: "xai",
     features: ["fast"],
   },
