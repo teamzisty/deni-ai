@@ -1,4 +1,4 @@
-export const appVersion = "6.4.1-beta.1";
+export const appVersion = "6.5-beta.2";
 export const appCodename = "Crimson Titan";
 export const appDate = "2026-02-07";
 
