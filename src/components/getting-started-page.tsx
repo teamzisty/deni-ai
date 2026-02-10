@@ -203,7 +203,7 @@ function SetupScreen({
           </div>
           <Button
             className="order-3 w-full md:w-auto"
-            onClick={() => (canNext ? carouselApi?.scrollNext() : router.push("/app"))}
+            onClick={() => (canNext ? carouselApi?.scrollNext() : router.push("/chat"))}
           >
             {canNext ? (
               <>

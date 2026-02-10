@@ -1,4 +1,4 @@
-import "server-only";
+//import "server-only";
 
 import { groq } from "@ai-sdk/groq";
 import { generateText, type UIMessage } from "ai";

@@ -39,7 +39,7 @@ export default async function ChatPage({ params }: { params: Promise<{ id: strin
     .where(and(eq(chats.id, id), eq(chats.uid, userId)));
 
   if (!chat) {
-    redirect("/app");
+    redirect("/chat");
   }
 
   const validatedMessages = await safeValidateUIMessages<UIMessage>({

@@ -19,7 +19,6 @@ import {
   XIcon,
 } from "lucide-react";
 import { useExtracted } from "next-intl";
-import { useMemo } from "react";
 import {
   PromptInputSelect,
   PromptInputSelectContent,
@@ -28,9 +27,8 @@ import {
   PromptInputSelectValue,
 } from "@/components/ai-elements/prompt-input";
 import { Composer, type ComposerMessage } from "@/components/chat/composer";
-import { authClient } from "@/lib/auth-client";
+import { useAvailableModels } from "@/hooks/use-available-models";
 import { models } from "@/lib/constants";
-import { trpc } from "@/lib/trpc/react";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -274,34 +272,7 @@ export function ChatComposer({
   showByokBadge = false,
 }: ChatComposerProps) {
   const t = useExtracted();
-  const session = authClient.useSession();
-  const isAnonymous = Boolean(session.data?.user?.isAnonymous);
-
-  const providersQuery = trpc.providers.getConfig.useQuery(undefined, {
-    refetchOnWindowFocus: false,
-    staleTime: 30000,
-  });
-
-  const customModels = useMemo<ModelOption[]>(() => {
-    return (providersQuery.data?.customModels ?? []).map((entry) => ({
-      name: entry.name,
-      value: `custom:${entry.id}`,
-      description: entry.description ?? t("Custom model"),
-      author: "openai_compatible",
-      features: [],
-      premium: entry.premium,
-      default: false,
-      source: "custom",
-    }));
-  }, [providersQuery.data?.customModels, t]);
-
-  const availableModels = useMemo<ModelOption[]>(() => {
-    const baseModels = isAnonymous ? models.filter((entry) => !entry.premium) : models;
-    const filteredCustomModels = isAnonymous
-      ? customModels.filter((entry) => !entry.premium)
-      : customModels;
-    return [...baseModels, ...filteredCustomModels];
-  }, [customModels, isAnonymous]);
+  const { availableModels } = useAvailableModels();
 
   const selectedModel = availableModels.find((m) => m.value === model);
   const supportsReasoningEffort = selectedModel?.features?.includes("reasoning");

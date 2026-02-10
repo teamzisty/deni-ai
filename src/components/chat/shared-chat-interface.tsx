@@ -25,7 +25,11 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Spinner } from "@/components/ui/spinner";
-import { isSearchResultArray, isVideoToolOutput } from "@/components/chat/chat-utils";
+import {
+  isSearchResultArray,
+  isVideoToolOutput,
+  resolveVeoModelLabel,
+} from "@/components/chat/chat-utils";
 import { trpc } from "@/lib/trpc/react";
 import { cn } from "@/lib/utils";
 
@@ -67,17 +71,6 @@ export function SharedChatInterface({
       return;
     }
     forkChat.mutate({ shareId });
-  };
-
-  const resolveVeoModelLabel = (model?: string | null, modelLabel?: string | null) => {
-    switch (model) {
-      case "veo-3.1-generate-preview":
-        return t("Veo 3.1");
-      case "veo-3.1-fast-generate-preview":
-        return t("Veo 3.1 Fast");
-      default:
-        return modelLabel ?? model ?? null;
-    }
   };
 
   return (
@@ -275,6 +268,7 @@ export function SharedChatInterface({
                         const resolvedModelLabel = resolveVeoModelLabel(
                           output.model,
                           output.modelLabel,
+                          t,
                         );
 
                         return (

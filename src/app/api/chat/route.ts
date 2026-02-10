@@ -17,8 +17,9 @@ import { headers } from "next/headers";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { db } from "@/db/drizzle";
-import { customModel, providerKey, providerSetting } from "@/db/schema";
+import { apiKey, customModel, providerKey, providerSetting } from "@/db/schema";
 import { env } from "@/env";
+import { hashApiKey } from "@/lib/api-key-utils";
 import { auth } from "@/lib/auth";
 import { generateTitle, getChatById, updateChat } from "@/lib/chat";
 import { createChatTools } from "@/lib/chat-tools";
@@ -32,19 +33,51 @@ const UIMessagesSchema = z
   .transform((value) => value as unknown as UIMessage[]);
 
 export async function POST(req: Request) {
-  const headersPromise = headers();
-  const sessionPromise = headersPromise.then((headersList) =>
-    auth.api.getSession({ headers: headersList }),
-  );
+  const headersList = await headers();
   const bodyPromise = req.json();
 
-  const [session, body] = await Promise.all([sessionPromise, bodyPromise]);
-  const userId = session?.session?.userId;
-  const isAnonymous = Boolean(session?.user?.isAnonymous);
+  // Check for Flixa API key in Authorization header
+  const authHeader = headersList.get("authorization");
+  const bearerToken = authHeader?.startsWith("Bearer ") ? authHeader.slice(7) : null;
+  const isDeniApiKey = bearerToken?.startsWith("deni_") ?? false;
+
+  let userId: string | undefined;
+  let isAnonymous = false;
+
+  if (isDeniApiKey && bearerToken) {
+    const keyHash = await hashApiKey(bearerToken);
+    const [row] = await db
+      .select({ userId: apiKey.userId, expiresAt: apiKey.expiresAt, id: apiKey.id })
+      .from(apiKey)
+      .where(eq(apiKey.keyHash, keyHash))
+      .limit(1);
+
+    if (!row) {
+      return NextResponse.json({ error: "Invalid API key" }, { status: 401 });
+    }
+
+    if (row.expiresAt && row.expiresAt < new Date()) {
+      return NextResponse.json({ error: "API key has expired" }, { status: 401 });
+    }
+
+    userId = row.userId;
+
+    // Update lastUsedAt asynchronously
+    db.update(apiKey)
+      .set({ lastUsedAt: new Date() })
+      .where(eq(apiKey.id, row.id))
+      .catch(() => {});
+  } else {
+    const session = await auth.api.getSession({ headers: headersList });
+    userId = session?.session?.userId;
+    isAnonymous = Boolean(session?.user?.isAnonymous);
+  }
 
   if (!userId) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
+
+  const body = await bodyPromise;
 
   const rateCheck = checkRateLimit({ key: `chat:${userId}`, windowMs: 60_000, maxRequests: 30 });
   if (!rateCheck.allowed) {
@@ -194,7 +227,6 @@ export async function POST(req: Request) {
         category: usageCategory,
         isAnonymous,
       });
-
     } catch (error) {
       if (error instanceof UsageLimitError) {
         return NextResponse.json({ error: error.message, reason: "usage_limit" }, { status: 402 });

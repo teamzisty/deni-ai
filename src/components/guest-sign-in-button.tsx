@@ -32,7 +32,7 @@ export function GuestSignInButton({
     setIsSubmitting(true);
     try {
       await authClient.signIn.anonymous();
-      router.push("/app");
+      router.push("/chat");
       router.refresh();
     } catch (error) {
       const message =

@@ -127,7 +127,7 @@ function ChatItem({ item }: { item: { id: string; title: string | null } }) {
     onSuccess: async () => {
       await utils.chat.getChats.invalidate();
       if (pathname === `/chat/${item.id}`) {
-        router.push("/app");
+        router.push("/chat");
       }
     },
   });
@@ -236,7 +236,7 @@ export function AppSidebar() {
       await utils.chat.getChats.invalidate();
       setIsDeleteAllDialogOpen(false);
       if (pathname?.startsWith("/chat/")) {
-        router.push("/app");
+        router.push("/chat");
       }
       toast.success(t("All conversations have been deleted."));
     },
@@ -309,7 +309,7 @@ export function AppSidebar() {
         {/* Header with logo and new chat */}
         <SidebarGroup>
           <div className="flex items-center justify-between mb-4">
-            <Link href="/app" className="flex items-center gap-2">
+            <Link href="/chat" className="flex items-center gap-2">
               <DeniAIIcon className="w-7 h-7 text-sidebar-foreground" />
               <h1 className="text-base font-semibold tracking-tight text-sidebar-foreground">
                 {t("Deni AI")}

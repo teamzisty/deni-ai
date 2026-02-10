@@ -17,6 +17,7 @@ import { authClient } from "@/lib/auth-client";
 import { isBillingDisabled } from "@/lib/billing-config";
 import { trpc } from "@/lib/trpc/react";
 import { versions } from "@/lib/version";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "./ui/tooltip";
 
 export function AccountMenu() {
   const t = useExtracted();
@@ -104,14 +105,21 @@ export function AccountMenu() {
           </DropdownMenuItem>
         )}
         {
-          <div className="px-2 py-1.5 text-xs text-muted-foreground group relative cursor-help">
-            <span className="block">Deni AI {versions.version}</span>
-            <div className="absolute bottom-full left-2 mb-2 hidden rounded-md bg-popover px-2 py-1.5 text-xs text-popover-foreground shadow-md group-hover:block whitespace-nowrap z-50 border border-border animate-in fade-in zoom-in-95 duration-200">
-              <div>{versions.codename}</div>
-              <div>{versions.date}</div>
-              <div className="font-mono text-[10px]">{versions.hash}</div>
-            </div>
-          </div>
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <div className="px-2 py-1.5 text-xs text-muted-foreground cursor-help">
+                  <span className="block">Deni AI {versions.version}</span>
+                </div>
+              </TooltipTrigger>
+              <TooltipContent side="left" align="start">
+                <div>
+                  {versions.codename}, {versions.date}
+                </div>
+                <div className="font-mono text-[10px]">{versions.hash}</div>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
         }
         <DropdownMenuItem className="gap-2 text-sm" asChild>
           <Link href="/account/settings" className="flex w-full">
