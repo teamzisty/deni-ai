@@ -12,13 +12,12 @@ export async function GET(req: Request) {
   const data = searchParams.get("data");
   const mimeType = searchParams.get("mimeType") ?? "image/png";
 
-  // Only allow image MIME types to prevent content-type spoofing (e.g. text/html XSS)
+  // Only allow safe image MIME types to prevent content-type spoofing (e.g. text/html or SVG-based XSS)
   const ALLOWED_MIME_TYPES = new Set([
     "image/png",
     "image/jpeg",
     "image/gif",
     "image/webp",
-    "image/svg+xml",
     "image/avif",
   ]);
   if (!ALLOWED_MIME_TYPES.has(mimeType)) {

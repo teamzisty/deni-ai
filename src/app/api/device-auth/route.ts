@@ -1,4 +1,4 @@
-import { eq } from "drizzle-orm";
+import { eq, lt } from "drizzle-orm";
 import { headers } from "next/headers";
 import { NextResponse } from "next/server";
 import { z } from "zod";
@@ -6,6 +6,7 @@ import { db } from "@/db/drizzle";
 import { apiKey, deviceAuthCode } from "@/db/schema";
 import { generateApiKey, getKeyPrefix, hashApiKey } from "@/lib/api-key-utils";
 import { auth } from "@/lib/auth";
+import { checkRateLimit } from "@/lib/rate-limit";
 
 function generateUserCode(): string {
   const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
@@ -31,7 +32,7 @@ export async function POST(req: Request) {
 
   switch (action.data) {
     case "initiate":
-      return handleInitiate();
+      return handleInitiate(req);
     case "approve":
       return handleApprove(body);
     case "poll":
@@ -40,7 +41,19 @@ export async function POST(req: Request) {
 }
 
 /** Extension calls this to start the flow. Returns userCode (shown to user) and deviceCode (for polling). */
-async function handleInitiate() {
+async function handleInitiate(req: Request) {
+  const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "unknown";
+  const rateCheck = checkRateLimit({ key: `device-auth:${ip}`, windowMs: 60_000, maxRequests: 5 });
+  if (!rateCheck.allowed) {
+    return NextResponse.json(
+      { error: "Too many requests. Please slow down." },
+      { status: 429, headers: { "Retry-After": String(rateCheck.retryAfter) } },
+    );
+  }
+
+  // Clean up expired codes to prevent DB bloat
+  await db.delete(deviceAuthCode).where(lt(deviceAuthCode.expiresAt, new Date()));
+
   const userCode = generateUserCode();
   const deviceCode = generateDeviceCode();
   const expiresAt = new Date(Date.now() + 15 * 60 * 1000);
