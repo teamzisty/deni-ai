@@ -1,3 +1,4 @@
+import { apiKeysRouter } from "./routers/api-keys";
 import { billingRouter } from "./routers/billing";
 import { chatRouter } from "./routers/chat";
 import { migrationRouter } from "./routers/migration";
@@ -7,6 +8,7 @@ import { shareRouter } from "./routers/share";
 import { router, t } from "./trpc";
 
 export const appRouter = router({
+  apiKeys: apiKeysRouter,
   chat: chatRouter,
   billing: billingRouter,
   migration: migrationRouter,

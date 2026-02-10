@@ -25,6 +25,29 @@ function normalizeBaseUrl(url: string) {
   if (!trimmed) return null;
   try {
     const parsed = new URL(trimmed);
+
+    // Only allow HTTPS (and HTTP for localhost dev)
+    if (parsed.protocol !== "https:" && parsed.protocol !== "http:") {
+      return null;
+    }
+
+    // Block internal/private network addresses to prevent SSRF
+    const hostname = parsed.hostname;
+    if (
+      hostname === "localhost" ||
+      hostname === "127.0.0.1" ||
+      hostname === "0.0.0.0" ||
+      hostname === "[::1]" ||
+      hostname.startsWith("10.") ||
+      hostname.startsWith("172.") ||
+      hostname.startsWith("192.168.") ||
+      hostname.startsWith("169.254.") ||
+      hostname.endsWith(".internal") ||
+      hostname.endsWith(".local")
+    ) {
+      return null;
+    }
+
     return parsed.toString().replace(/\/$/, "");
   } catch {
     return null;

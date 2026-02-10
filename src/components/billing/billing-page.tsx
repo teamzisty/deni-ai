@@ -35,9 +35,7 @@ const usageResetFormatter = new Intl.DateTimeFormat(undefined, {
   day: "numeric",
 });
 
-function formatPriceLabel(plan: ClientPlan) {
-  const t = useExtracted();
-
+function formatPriceLabel(plan: ClientPlan, t: ReturnType<typeof useExtracted>) {
   const mode = plan.mode ?? "subscription";
   if (!plan.amount || !plan.currency) {
     return t("Set price in Stripe");
@@ -82,9 +80,7 @@ type PlanCopy = {
   badge?: string;
 };
 
-function getPlanCopy(planId: BillingPlanId): PlanCopy {
-  const t = useExtracted();
-
+function getPlanCopy(planId: BillingPlanId, t: ReturnType<typeof useExtracted>): PlanCopy {
   switch (planId) {
     case "plus_monthly":
       return {
@@ -178,7 +174,7 @@ function PlanCard({
   isLoadingEstimate: boolean;
 }) {
   const t = useExtracted();
-  const planCopy = getPlanCopy(plan.id);
+  const planCopy = getPlanCopy(plan.id, t);
   const mode = plan.mode ?? "subscription";
   const canChange = hasActiveSubscription && !cancelDate && !isCurrent && mode === "subscription";
   const isBlockedByCancel = Number.isInteger(cancelDate) && Boolean(activePlanId) && !isCurrent;
@@ -220,7 +216,7 @@ function PlanCard({
       </CardHeader>
       <CardContent className="flex flex-1 flex-col pt-0">
         <div className="flex-1">
-          <div className="text-2xl font-semibold tracking-tight">{formatPriceLabel(plan)}</div>
+          <div className="text-2xl font-semibold tracking-tight">{formatPriceLabel(plan, t)}</div>
           {planCopy.highlights.length > 0 && (
             <ul className="mt-5 space-y-2.5">
               {planCopy.highlights.map((item) => (
@@ -842,7 +838,9 @@ function BillingPageContent() {
               disabled={
                 changePlan.isPending || !changeTarget || estimateQuery.error != null || !hasAgreed
               }
-              onClick={() => changeTarget && changePlan.mutate({ planId: changeTarget.id as IndividualPlanId })}
+              onClick={() =>
+                changeTarget && changePlan.mutate({ planId: changeTarget.id as IndividualPlanId })
+              }
             >
               {changePlan.isPending && <Spinner />}
               {t("Confirm")}

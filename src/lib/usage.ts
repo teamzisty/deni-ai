@@ -1,4 +1,4 @@
-import "server-only";
+//import "server-only";
 
 import { and, eq, isNull, sql } from "drizzle-orm";
 
@@ -19,7 +19,6 @@ const ACTIVE_BILLING_STATUSES = new Set([
 export type UsageCategory = "basic" | "premium";
 export type SubscriptionTier = "free" | "plus" | "pro";
 type UsageRecord = typeof usageQuota.$inferSelect;
-type BillingRecord = typeof billing.$inferSelect;
 
 const USAGE_CATEGORIES: UsageCategory[] = ["basic", "premium"];
 
@@ -43,7 +42,7 @@ const GUEST_USAGE_LIMITS: Record<UsageCategory, number> = {
 
 export class UsageLimitError extends Error {
   public maxModeAvailable: boolean;
-  
+
   constructor(message: string, maxModeAvailable = false) {
     super(message);
     this.name = "UsageLimitError";
@@ -108,9 +107,7 @@ async function getTierInfo(userId: string, now: Date): Promise<TierInfo> {
     const teamHasActive =
       Boolean(teamPlanId) && Boolean(teamStatus) && ACTIVE_BILLING_STATUSES.has(teamStatus ?? "");
     const teamGracePeriod =
-      teamStatus === "canceled" &&
-      teamRecord.currentPeriodEnd &&
-      teamRecord.currentPeriodEnd > now;
+      teamStatus === "canceled" && teamRecord.currentPeriodEnd && teamRecord.currentPeriodEnd > now;
 
     if (teamHasActive || teamGracePeriod) {
       const maxModeEligible = isMaxModeEligible(teamPlanId) && teamStatus === "active";
@@ -255,8 +252,7 @@ export async function consumeUsage({
     if (tierInfo.maxModeEnabled) {
       await recordMaxModeUsage(userId, category);
 
-      // Also increment the regular usage counter
-      const nextUsed = state.used + 1;
+      // Also increment the regular usage counter atomically
       await db
         .insert(usageQuota)
         .values({
@@ -264,7 +260,7 @@ export async function consumeUsage({
           category,
           planTier: tierInfo.tier,
           limitAmount: limit,
-          used: nextUsed,
+          used: state.used + 1,
           periodStart: state.periodStart,
           periodEnd: state.targetPeriodEnd,
         })
@@ -273,7 +269,7 @@ export async function consumeUsage({
           set: {
             planTier: tierInfo.tier,
             limitAmount: limit,
-            used: nextUsed,
+            used: sql`${usageQuota.used} + 1`,
             periodStart: state.periodStart,
             periodEnd: state.targetPeriodEnd,
             updatedAt: new Date(),
@@ -289,13 +285,8 @@ export async function consumeUsage({
     }
 
     // If Max Mode is eligible but not enabled, throw error with flag
-    throw new UsageLimitError(
-      "Usage limit reached for your plan.",
-      tierInfo.maxModeEligible,
-    );
+    throw new UsageLimitError("Usage limit reached for your plan.", tierInfo.maxModeEligible);
   }
-
-  const nextUsed = state.used + 1;
 
   const [saved] = await db
     .insert(usageQuota)
@@ -304,7 +295,7 @@ export async function consumeUsage({
       category,
       planTier: tierInfo.tier,
       limitAmount: limit,
-      used: nextUsed,
+      used: state.used + 1,
       periodStart: state.periodStart,
       periodEnd: state.targetPeriodEnd,
     })
@@ -313,7 +304,7 @@ export async function consumeUsage({
       set: {
         planTier: tierInfo.tier,
         limitAmount: limit,
-        used: nextUsed,
+        used: state.shouldReset ? 1 : sql`${usageQuota.used} + 1`,
         periodStart: state.periodStart,
         periodEnd: state.targetPeriodEnd,
         updatedAt: new Date(),

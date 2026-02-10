@@ -32,19 +32,64 @@ const geistSans = Geist({
   variable: "--font-geist",
   subsets: ["latin"],
   display: "swap",
-})
+});
 
 const geistMono = Geist_Mono({
   variable: "--font-geist-mono",
   subsets: ["latin"],
   display: "swap",
-})
+});
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getExtracted();
+  const description = t(
+    "Access GPT, Claude, Gemini and more AI models in one place. Free, fast, and private AI chat for everyone.",
+  );
+
   return {
-    title: t("Deni AI"),
-    description: t("Best AI Chatbot for everyone."),
+    metadataBase: new URL("https://deniai.app"),
+    title: {
+      default: "Deni AI",
+      template: "%s | Deni AI",
+    },
+    description,
+    keywords: [
+      "AI chat",
+      "ChatGPT alternative",
+      "Claude",
+      "Gemini",
+      "AI assistant",
+      "free AI",
+      "multi-model AI",
+    ],
+    authors: [{ name: "Deni AI" }],
+    creator: "Deni AI",
+    publisher: "Deni AI",
+    openGraph: {
+      type: "website",
+      siteName: "Deni AI",
+      title: "Deni AI",
+      description,
+      locale: "en_US",
+      images: [
+        {
+          url: "/og.png",
+          width: 800,
+          height: 600,
+          alt: "Deni AI",
+        },
+      ],
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: "Deni AI",
+      description,
+      images: ["/og.png"],
+    },
+    robots: {
+      index: true,
+      follow: true,
+    },
   };
 }
 
@@ -62,6 +107,42 @@ export default async function RootLayout({
       <body
         className={`${outfit.variable} ${geistSans.variable} ${geistMono.variable} ${jetbrainsMono.variable} ${instrumentSerif.variable} font-sans antialiased min-w-screen min-h-screen overflow-x-hidden transition-colors duration-500`}
       >
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify([
+              {
+                "@context": "https://schema.org",
+                "@type": "WebSite",
+                name: "Deni AI",
+                url: "https://deniai.app",
+                potentialAction: {
+                  "@type": "SearchAction",
+                  target: "https://deniai.app/chat?q={search_term_string}",
+                  "query-input": "required name=search_term_string",
+                },
+              },
+              {
+                "@context": "https://schema.org",
+                "@type": "SiteNavigationElement",
+                name: [
+                  "About",
+                  "AI Models",
+                  "Flixa",
+                  "Terms of Service",
+                  "Privacy Policy",
+                ],
+                url: [
+                  "https://deniai.app/about",
+                  "https://deniai.app/models",
+                  "https://deniai.app/flixa",
+                  "https://deniai.app/legal/terms",
+                  "https://deniai.app/legal/privacy-policy",
+                ],
+              },
+            ]),
+          }}
+        />
         <a
           href="#main-content"
           className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus:rounded-md focus:bg-background focus:px-3 focus:py-2 focus:text-sm focus:font-medium focus:text-foreground focus:shadow-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"

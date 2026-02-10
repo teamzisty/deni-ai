@@ -4,14 +4,15 @@ import type Stripe from "stripe";
 import { z } from "zod";
 import { billing, user } from "@/db/schema";
 import { env } from "@/env";
-import { type BillingPlan, billingPlans, findPlanById, findPlanByLookupKey, isTeamPlan } from "@/lib/billing";
-import { isBillingDisabled } from "@/lib/billing-config";
 import {
-  disableMaxMode,
-  enableMaxMode,
-  getMaxModeStatus,
-  MAX_MODE_PRICING,
-} from "@/lib/max-mode";
+  type BillingPlan,
+  billingPlans,
+  findPlanById,
+  findPlanByLookupKey,
+  isTeamPlan,
+} from "@/lib/billing";
+import { isBillingDisabled } from "@/lib/billing-config";
+import { disableMaxMode, enableMaxMode, getMaxModeStatus, MAX_MODE_PRICING } from "@/lib/max-mode";
 import { stripe } from "@/lib/stripe";
 import { getSubscriptionPeriodEndDate } from "@/lib/stripe-subscriptions";
 import { getUsageSummary } from "@/lib/usage";

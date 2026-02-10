@@ -286,7 +286,10 @@
     @apply font-sans font-semibold tracking-tight leading-[1.15];
   }
 
-  h3, h4, h5, h6 {
+  h3,
+  h4,
+  h5,
+  h6 {
     @apply font-sans font-medium tracking-tight leading-[1.2];
   }
 
@@ -313,16 +316,30 @@
    ======================================== */
 
 @keyframes fadeCycle {
-  0% { opacity: 0; }
-  5% { opacity: 1; }
-  20% { opacity: 1; }
-  25% { opacity: 0; }
-  100% { opacity: 0; }
+  0% {
+    opacity: 0;
+  }
+  5% {
+    opacity: 1;
+  }
+  20% {
+    opacity: 1;
+  }
+  25% {
+    opacity: 0;
+  }
+  100% {
+    opacity: 0;
+  }
 }
 
 @keyframes fadeIn {
-  0% { opacity: 0; }
-  100% { opacity: 1; }
+  0% {
+    opacity: 0;
+  }
+  100% {
+    opacity: 1;
+  }
 }
 
 @keyframes fadeInUp {
@@ -386,12 +403,7 @@
 
   .animate-shimmer {
     animation: shimmer 2s linear infinite;
-    background: linear-gradient(
-      90deg,
-      transparent 0%,
-      oklch(0.9 0 0 / 0.3) 50%,
-      transparent 100%
-    );
+    background: linear-gradient(90deg, transparent 0%, oklch(0.9 0 0 / 0.3) 50%, transparent 100%);
     background-size: 200% 100%;
   }
 
@@ -409,13 +421,27 @@
   }
 
   /* Keep delay classes for backward compat */
-  .delay-75 { animation-delay: 50ms; }
-  .delay-100 { animation-delay: 75ms; }
-  .delay-150 { animation-delay: 100ms; }
-  .delay-200 { animation-delay: 125ms; }
-  .delay-300 { animation-delay: 150ms; }
-  .delay-400 { animation-delay: 175ms; }
-  .delay-500 { animation-delay: 200ms; }
+  .delay-75 {
+    animation-delay: 50ms;
+  }
+  .delay-100 {
+    animation-delay: 75ms;
+  }
+  .delay-150 {
+    animation-delay: 100ms;
+  }
+  .delay-200 {
+    animation-delay: 125ms;
+  }
+  .delay-300 {
+    animation-delay: 150ms;
+  }
+  .delay-400 {
+    animation-delay: 175ms;
+  }
+  .delay-500 {
+    animation-delay: 200ms;
+  }
 
   /* Glass - simplified to subtle background */
   .glass {

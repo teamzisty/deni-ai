@@ -17,14 +17,24 @@ const Footer = () => {
             <DeniAIIcon className="w-8 h-8 text-primary" />
             <div>
               <span className="font-semibold tracking-tight">Deni AI</span>
-              <p className="text-xs text-muted-foreground mt-0.5">
-                {t("AI for Everyone")}
-              </p>
+              <p className="text-xs text-muted-foreground mt-0.5">{t("AI for Everyone")}</p>
             </div>
           </div>
 
           {/* Links */}
           <nav className="flex flex-wrap items-center gap-x-6 gap-y-2 text-sm">
+            <Link
+              href="/about"
+              className="text-muted-foreground transition-colors hover:text-foreground editorial-underline"
+            >
+              {t("About")}
+            </Link>
+            <Link
+              href="/models"
+              className="text-muted-foreground transition-colors hover:text-foreground editorial-underline"
+            >
+              {t("Models")}
+            </Link>
             <Link
               href="/flixa"
               className="text-muted-foreground transition-colors hover:text-foreground editorial-underline"

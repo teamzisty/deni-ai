@@ -49,9 +49,7 @@ function SuggestionCard({ icon: Icon, title, prompt, onClick }: SuggestionCardPr
         <Icon className="w-4 h-4 text-muted-foreground" />
         <span className="font-medium text-sm">{title}</span>
       </div>
-      <p className="text-xs text-muted-foreground line-clamp-2 leading-relaxed">
-        {prompt}
-      </p>
+      <p className="text-xs text-muted-foreground line-clamp-2 leading-relaxed">{prompt}</p>
     </button>
   );
 }
@@ -154,14 +152,13 @@ export default function ChatHome() {
           <div className="inline-flex items-center justify-center w-12 h-12 rounded-lg bg-secondary mb-2">
             <MessageSquare className="w-6 h-6 text-muted-foreground" />
           </div>
-          <h1
-            className="text-2xl md:text-3xl font-semibold tracking-tight"
-            id="chat-home-title"
-          >
+          <h1 className="text-2xl md:text-3xl font-semibold tracking-tight" id="chat-home-title">
             {t("How can I help you today?")}
           </h1>
           <p className="text-muted-foreground text-sm max-w-md mx-auto">
-            {t("Ask me anything. I'm here to assist with your questions, creative projects, and more.")}
+            {t(
+              "Ask me anything. I'm here to assist with your questions, creative projects, and more.",
+            )}
           </p>
         </div>
 

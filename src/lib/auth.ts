@@ -3,6 +3,7 @@ import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import {
   anonymous,
+  bearer,
   captcha,
   haveIBeenPwned,
   lastLoginMethod,
@@ -93,6 +94,7 @@ export const auth = betterAuth({
       provider: "cloudflare-turnstile",
       secretKey: env.TURNSTILE_SECRET_KEY,
     }),
+    bearer(),
     ...(resend
       ? [
           magicLink({

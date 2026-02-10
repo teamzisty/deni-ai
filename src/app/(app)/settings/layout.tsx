@@ -11,7 +11,7 @@ export default async function Layout({ children }: { children: React.ReactNode }
   }
 
   if (session.user?.isAnonymous) {
-    redirect("/app");
+    redirect("/chat");
   }
 
   return <SettingsWrapper>{children}</SettingsWrapper>;

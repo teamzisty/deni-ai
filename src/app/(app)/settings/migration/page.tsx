@@ -96,9 +96,7 @@ export default function MigrationPage() {
                 {t("Go to migrator tool")}
               </Link>
             </Button>
-            <p className="text-xs text-muted-foreground">
-              {t("Opens in a new tab")}
-            </p>
+            <p className="text-xs text-muted-foreground">{t("Opens in a new tab")}</p>
           </div>
         </CardContent>
       </Card>
@@ -110,9 +108,7 @@ export default function MigrationPage() {
             <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-foreground text-background text-xs font-medium">
               2
             </span>
-            <CardTitle className="text-sm font-medium">
-              {t("Import into this site")}
-            </CardTitle>
+            <CardTitle className="text-sm font-medium">{t("Import into this site")}</CardTitle>
           </div>
           <CardDescription>
             {t("Upload the `message.json` file to create new chats.")}
@@ -147,7 +143,11 @@ export default function MigrationPage() {
             disabled={importMutation.isPending || !file}
             className="gap-2"
           >
-            {importMutation.isPending ? <Spinner className="w-4 h-4" /> : <Upload className="w-4 h-4" />}
+            {importMutation.isPending ? (
+              <Spinner className="w-4 h-4" />
+            ) : (
+              <Upload className="w-4 h-4" />
+            )}
             {t("Import messages")}
           </Button>
 

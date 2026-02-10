@@ -1,8 +1,27 @@
+import type { Metadata } from "next";
 import { ArrowRight, Zap, Shield, BrainCircuit } from "lucide-react";
 import Link from "next/link";
 import { useExtracted } from "next-intl";
+import { getExtracted } from "next-intl/server";
 import { LoginButton } from "@/components/login-button";
 import { Button } from "@/components/ui/button";
+
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getExtracted();
+  const title = t("The AI Assistant You Deserve");
+  const description = t(
+    "Access GPT, Claude, Gemini and more AI models in one place. Free, fast, and private AI chat for everyone.",
+  );
+
+  return {
+    title,
+    description,
+    openGraph: {
+      title: `Deni AI — ${title}`,
+      description,
+    },
+  };
+}
 
 function FeatureCard({
   icon: Icon,
@@ -27,8 +46,28 @@ function FeatureCard({
 export default function Home() {
   const t = useExtracted();
 
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@type": "WebApplication",
+    name: "Deni AI",
+    url: "https://deniai.app",
+    description:
+      "Access GPT, Claude, Gemini and more AI models in one place. Free, fast, and private AI chat for everyone.",
+    applicationCategory: "UtilitiesApplication",
+    operatingSystem: "Web",
+    offers: {
+      "@type": "Offer",
+      price: "0",
+      priceCurrency: "USD",
+    },
+  };
+
   return (
     <main className="relative min-h-screen" id="main-content">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
       {/* Hero Section */}
       <section className="relative px-4 pt-32 pb-20 md:pt-40 md:pb-28">
         <div className="mx-auto max-w-3xl">

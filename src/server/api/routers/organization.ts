@@ -1,5 +1,5 @@
 import { TRPCError } from "@trpc/server";
-import { and, eq, isNotNull, sql } from "drizzle-orm";
+import { and, eq, sql } from "drizzle-orm";
 import { z } from "zod";
 import { billing, member, user } from "@/db/schema";
 import { env } from "@/env";
@@ -7,7 +7,7 @@ import { type BillingPlan, billingPlans, findPlanById, isTeamPlan } from "@/lib/
 import { isBillingDisabled } from "@/lib/billing-config";
 import { stripe } from "@/lib/stripe";
 import { getSubscriptionPeriodEndDate } from "@/lib/stripe-subscriptions";
-import { getOrgMemberCount, getTeamBilling, updateTeamSeatCount } from "@/lib/team-billing";
+import { getOrgMemberCount, updateTeamSeatCount } from "@/lib/team-billing";
 import { type ProtectedContext, protectedProcedure, router } from "../trpc";
 
 import type Stripe from "stripe";
@@ -166,11 +166,7 @@ async function ensureTeamBillingRecord(
   return created;
 }
 
-async function syncTeamSubscription(
-  ctx: ProtectedContext,
-  userId: string,
-  organizationId: string,
-) {
+async function syncTeamSubscription(ctx: ProtectedContext, userId: string, organizationId: string) {
   const billingRecord = await ensureTeamBillingRecord(ctx, userId, organizationId);
 
   const subscriptions = await stripe.subscriptions.list({
@@ -256,11 +252,7 @@ export const organizationRouter = router({
     .input(z.object({ organizationId: z.string().min(1) }))
     .query(async ({ ctx, input }) => {
       await verifyOrgOwner(ctx, input.organizationId);
-      const subscription = await syncTeamSubscription(
-        ctx,
-        ctx.userId,
-        input.organizationId,
-      );
+      const subscription = await syncTeamSubscription(ctx, ctx.userId, input.organizationId);
       const memberCount = await getOrgMemberCount(input.organizationId);
       return {
         planId: subscription.planId ?? null,
@@ -290,11 +282,7 @@ export const organizationRouter = router({
       }
 
       await syncTeamSubscription(ctx, ctx.userId, input.organizationId);
-      const billingRecord = await ensureTeamBillingRecord(
-        ctx,
-        ctx.userId,
-        input.organizationId,
-      );
+      const billingRecord = await ensureTeamBillingRecord(ctx, ctx.userId, input.organizationId);
 
       const price = await getPriceForPlan(plan);
 
@@ -312,8 +300,7 @@ export const organizationRouter = router({
       if (activeSub) {
         throw new TRPCError({
           code: "BAD_REQUEST",
-          message:
-            "This team already has an active subscription. Use Change plan or cancel first.",
+          message: "This team already has an active subscription. Use Change plan or cancel first.",
         });
       }
 
@@ -378,11 +365,7 @@ export const organizationRouter = router({
     .input(z.object({ organizationId: z.string().min(1) }))
     .mutation(async ({ ctx, input }) => {
       await verifyOrgOwner(ctx, input.organizationId);
-      const subscription = await syncTeamSubscription(
-        ctx,
-        ctx.userId,
-        input.organizationId,
-      );
+      const subscription = await syncTeamSubscription(ctx, ctx.userId, input.organizationId);
 
       const portal = await stripe.billingPortal.sessions.create({
         customer: subscription.stripeCustomerId,
@@ -412,11 +395,7 @@ export const organizationRouter = router({
 
       const price = await getPriceForPlan(plan);
 
-      const subscriptionState = await syncTeamSubscription(
-        ctx,
-        ctx.userId,
-        input.organizationId,
-      );
+      const subscriptionState = await syncTeamSubscription(ctx, ctx.userId, input.organizationId);
       if (!subscriptionState.stripeSubscriptionId) {
         throw new TRPCError({
           code: "BAD_REQUEST",
@@ -486,11 +465,7 @@ export const organizationRouter = router({
     .mutation(async ({ ctx, input }) => {
       await verifyOrgOwner(ctx, input.organizationId);
 
-      const subscriptionState = await syncTeamSubscription(
-        ctx,
-        ctx.userId,
-        input.organizationId,
-      );
+      const subscriptionState = await syncTeamSubscription(ctx, ctx.userId, input.organizationId);
       if (!subscriptionState.stripeSubscriptionId) {
         throw new TRPCError({
           code: "BAD_REQUEST",
@@ -498,10 +473,9 @@ export const organizationRouter = router({
         });
       }
 
-      const canceled = await stripe.subscriptions.update(
-        subscriptionState.stripeSubscriptionId,
-        { cancel_at_period_end: true },
-      );
+      const canceled = await stripe.subscriptions.update(subscriptionState.stripeSubscriptionId, {
+        cancel_at_period_end: true,
+      });
 
       const updates: Partial<BillingRecord> = {
         status: canceled.cancel_at_period_end ? "canceled" : canceled.status,
@@ -540,11 +514,7 @@ export const organizationRouter = router({
     .mutation(async ({ ctx, input }) => {
       await verifyOrgOwner(ctx, input.organizationId);
 
-      const subscriptionState = await syncTeamSubscription(
-        ctx,
-        ctx.userId,
-        input.organizationId,
-      );
+      const subscriptionState = await syncTeamSubscription(ctx, ctx.userId, input.organizationId);
       if (!subscriptionState.stripeSubscriptionId) {
         throw new TRPCError({
           code: "BAD_REQUEST",
@@ -552,10 +522,9 @@ export const organizationRouter = router({
         });
       }
 
-      const resumed = await stripe.subscriptions.update(
-        subscriptionState.stripeSubscriptionId,
-        { cancel_at_period_end: false },
-      );
+      const resumed = await stripe.subscriptions.update(subscriptionState.stripeSubscriptionId, {
+        cancel_at_period_end: false,
+      });
 
       const price = resumed.items.data.at(0)?.price ?? null;
       const plan =

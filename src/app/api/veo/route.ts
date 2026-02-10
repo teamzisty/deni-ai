@@ -3,6 +3,8 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { env } from "@/env";
 import { auth } from "@/lib/auth";
+import { checkRateLimit } from "@/lib/rate-limit";
+import { consumeUsage, UsageLimitError } from "@/lib/usage";
 import { veoAspectRatios, veoDurations, veoModelValues, veoResolutions } from "@/lib/veo";
 
 const BASE_URL = "https://generativelanguage.googleapis.com/v1beta";
@@ -41,6 +43,25 @@ export async function POST(req: Request) {
   const session = await auth.api.getSession({ headers: await headers() });
   if (!session?.session) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  const userId = session.session.userId;
+
+  const rateCheck = checkRateLimit({ key: `veo:${userId}`, windowMs: 60_000, maxRequests: 5 });
+  if (!rateCheck.allowed) {
+    return NextResponse.json(
+      { error: "Too many requests. Please slow down." },
+      { status: 429, headers: { "Retry-After": String(rateCheck.retryAfter) } },
+    );
+  }
+
+  try {
+    await consumeUsage({ userId, category: "premium" });
+  } catch (error) {
+    if (error instanceof UsageLimitError) {
+      return NextResponse.json({ error: error.message, reason: "usage_limit" }, { status: 402 });
+    }
+    return NextResponse.json({ error: "Unable to check usage" }, { status: 500 });
   }
 
   const body = await req.json();

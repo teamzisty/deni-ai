@@ -19,7 +19,7 @@ export default async function AuthPage({ params }: { params: Promise<{ path: str
     >
       <AuthView
         path={path}
-        callbackURL="/app"
+        callbackURL="/chat"
         cardFooter={showGuest ? <GuestSignInButton className="w-full" size="sm" /> : undefined}
       />
     </main>

@@ -53,6 +53,11 @@ export default function SettingsWrapper({ children }: { children: React.ReactNod
       href: "/settings/providers",
     },
     {
+      label: t("API Keys"),
+      value: "api-keys",
+      href: "/settings/api-keys",
+    },
+    {
       label: t("Billing"),
       value: "billing",
       href: "/settings/billing",

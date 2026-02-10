@@ -9,8 +9,8 @@ import {
   BrainCircuit,
   BrainIcon,
   Code,
-  Diamond,
   Film,
+  Gem,
   Globe,
   Image as ImageIcon,
   Plug,
@@ -19,7 +19,6 @@ import {
   XIcon,
 } from "lucide-react";
 import { useExtracted } from "next-intl";
-import { useMemo } from "react";
 import {
   PromptInputSelect,
   PromptInputSelectContent,
@@ -28,9 +27,8 @@ import {
   PromptInputSelectValue,
 } from "@/components/ai-elements/prompt-input";
 import { Composer, type ComposerMessage } from "@/components/chat/composer";
-import { authClient } from "@/lib/auth-client";
+import { useAvailableModels } from "@/hooks/use-available-models";
 import { models } from "@/lib/constants";
-import { trpc } from "@/lib/trpc/react";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -108,6 +106,7 @@ function ModelItem({ model, isSelected }: { model: ModelOption; isSelected: bool
     switch (value) {
       case "gpt-5.2":
         return t("General purpose OpenAI model");
+      case "gpt-5.3-codex":
       case "gpt-5.1-codex":
         return t("For complex coding tasks");
       case "gpt-5.1-codex-mini":
@@ -118,20 +117,21 @@ function ModelItem({ model, isSelected }: { model: ModelOption; isSelected: bool
         return t("Medium-sized open-weight model");
       case "gemini-3-pro-preview":
         return t("Best for complex tasks");
-      case "gemini-2.5-flash":
+      case "gemini-3-flash-preview":
         return t("Best for everyday tasks");
       case "gemini-2.5-flash-lite":
         return t("Best for high volume tasks");
       case "claude-sonnet-4.5":
         return t("Hybrid reasoning model");
       case "claude-opus-4.5":
-        return t("All-around professional model");
       case "claude-opus-4.1":
         return t("Legacy professional model");
+      case "claude-opus-4.6":
+        return t("All-around professional model");
       case "grok-4-0709":
         return t("xAI's most intelligent model");
-      case "grok-4-fast-reasoning":
-      case "grok-4-fast-non-reasoning":
+      case "grok-4-1-fast-reasoning":
+      case "grok-4-1-fast-non-reasoning":
         return t("Fast and efficient model");
       default:
         return value;
@@ -153,7 +153,7 @@ function ModelItem({ model, isSelected }: { model: ModelOption; isSelected: bool
           <span className="flex items-center gap-1">
             {(() => {
               if (model.premium) {
-                return <Diamond className="size-4" aria-hidden="true" />;
+                return <Gem className="size-4" aria-hidden="true" />;
               }
 
               switch (model?.author) {
@@ -272,34 +272,7 @@ export function ChatComposer({
   showByokBadge = false,
 }: ChatComposerProps) {
   const t = useExtracted();
-  const session = authClient.useSession();
-  const isAnonymous = Boolean(session.data?.user?.isAnonymous);
-
-  const providersQuery = trpc.providers.getConfig.useQuery(undefined, {
-    refetchOnWindowFocus: false,
-    staleTime: 30000,
-  });
-
-  const customModels = useMemo<ModelOption[]>(() => {
-    return (providersQuery.data?.customModels ?? []).map((entry) => ({
-      name: entry.name,
-      value: `custom:${entry.id}`,
-      description: entry.description ?? t("Custom model"),
-      author: "openai_compatible",
-      features: [],
-      premium: entry.premium,
-      default: false,
-      source: "custom",
-    }));
-  }, [providersQuery.data?.customModels, t]);
-
-  const availableModels = useMemo<ModelOption[]>(() => {
-    const baseModels = isAnonymous ? models.filter((entry) => !entry.premium) : models;
-    const filteredCustomModels = isAnonymous
-      ? customModels.filter((entry) => !entry.premium)
-      : customModels;
-    return [...baseModels, ...filteredCustomModels];
-  }, [customModels, isAnonymous]);
+  const { availableModels } = useAvailableModels();
 
   const selectedModel = availableModels.find((m) => m.value === model);
   const supportsReasoningEffort = selectedModel?.features?.includes("reasoning");
@@ -461,7 +434,7 @@ export function ChatComposer({
               <PromptInputSelectValue>
                 {(() => {
                   if (selectedModel?.premium) {
-                    return <Diamond className="size-4" aria-hidden="true" />;
+                    return <Gem className="size-4" aria-hidden="true" />;
                   }
 
                   switch (selectedModel?.author) {

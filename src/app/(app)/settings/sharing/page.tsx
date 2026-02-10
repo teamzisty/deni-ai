@@ -1,15 +1,6 @@
 "use client";
 
-import {
-  Check,
-  Copy,
-  ExternalLink,
-  Globe,
-  Link2,
-  Lock,
-  Trash2,
-  Users,
-} from "lucide-react";
+import { Check, Copy, ExternalLink, Globe, Link2, Lock, Trash2, Users } from "lucide-react";
 import Link from "next/link";
 import { useExtracted } from "next-intl";
 import { useState } from "react";
@@ -74,10 +65,7 @@ function ShareItem({
     <div className="flex items-center justify-between rounded-lg border border-border p-4">
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2 flex-wrap">
-          <Link
-            href={`/chat/${chat.id}`}
-            className="font-medium text-sm truncate hover:underline"
-          >
+          <Link href={`/chat/${chat.id}`} className="font-medium text-sm truncate hover:underline">
             {chat.title || t("Untitled")}
           </Link>
           <TooltipProvider>
@@ -299,7 +287,9 @@ export default function SharingSettingsPage() {
               <div className="inline-flex items-center justify-center w-10 h-10 rounded-lg bg-secondary mb-3">
                 <Users className="size-5 text-muted-foreground" />
               </div>
-              <p className="font-medium text-sm">{t("No one has shared conversations with you yet.")}</p>
+              <p className="font-medium text-sm">
+                {t("No one has shared conversations with you yet.")}
+              </p>
             </div>
           ) : (
             <div className="space-y-2">
@@ -346,9 +336,7 @@ export default function SharingSettingsPage() {
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={deleteShare.isPending}>
-              {t("Cancel")}
-            </AlertDialogCancel>
+            <AlertDialogCancel disabled={deleteShare.isPending}>{t("Cancel")}</AlertDialogCancel>
             <AlertDialogAction
               onClick={confirmDelete}
               disabled={deleteShare.isPending}

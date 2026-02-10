@@ -1,8 +1,27 @@
+import type { Metadata } from "next";
 import { ArrowRight, Code2, Zap, Brain, Terminal, Download } from "lucide-react";
 import Link from "next/link";
 import { useExtracted } from "next-intl";
+import { getExtracted } from "next-intl/server";
 import { Button } from "@/components/ui/button";
 import { SiGoogle, SiWindsurf } from "@icons-pack/react-simple-icons";
+
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getExtracted();
+  const title = t("Flixa — AI Coding Agent");
+  const description = t(
+    "Supercharge your development workflow with AI-powered coding assistance. Available for VS Code, Cursor, Windsurf, and more.",
+  );
+
+  return {
+    title,
+    description,
+    openGraph: {
+      title: `${title} by Deni AI`,
+      description,
+    },
+  };
+}
 
 function FeatureCard({
   icon: Icon,
@@ -45,7 +64,7 @@ function IDECard({
       <div className="mb-4">{icon}</div>
       <h3 className="text-base font-semibold mb-1">{name}</h3>
       <p className="text-muted-foreground text-sm mb-4">{description}</p>
-      <span className="inline-flex items-center text-sm font-medium text-foreground group-hover:underline">
+      <span className="gap-2 inline-flex items-center text-sm font-medium text-foreground group-hover:underline">
         <Download className="w-4 h-4" />
         Install
       </span>
