@@ -50,7 +50,7 @@ function useFormatPriceLabel() {
       maximumFractionDigits: 0,
     });
 
-    const base = formatter.format(plan.amount);
+    const base = formatter.format(plan.amount / 100);
     if (mode === "payment") {
       return t("{price} one-time", { price: base });
     }
@@ -75,7 +75,7 @@ function formatCurrencyMinor(amountMinor: number, currency?: string | null) {
     currency: currencyCode,
     minimumFractionDigits: 2,
   });
-  return formatter.format(amountMinor);
+  return formatter.format(amountMinor / 100);
 }
 
 type PlanCopy = {
@@ -512,7 +512,7 @@ function BillingPageContent() {
   const rawPlanId = (statusQuery.data?.planId as BillingPlanId) ?? undefined;
   const activePlanId = statusLabel !== "active" ? undefined : rawPlanId;
   const isOnTeamPlan =
-    statusQuery.data?.isTeamPlan === true && activePlanId ? isTeamPlan(activePlanId) : false;
+    statusQuery.data?.isTeamPlan === true && rawPlanId ? isTeamPlan(rawPlanId) : false;
   const usage = usageQuery.data?.usage ?? [];
   const usageTier = usageQuery.data?.tier ?? "free";
   const usageTierLabel = (() => {

@@ -6,7 +6,10 @@ const LOCALE_COOKIE = "locale";
 export function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  // Root path: redirect based on session cookie presence (edge, no origin hit)
+  // Root path: redirect based on session cookie presence.
+  // This is a lightweight heuristic — it checks cookie presence, not validity.
+  // An expired or invalid cookie will redirect to /chat, where full server-side
+  // auth validation occurs and handles the session properly.
   if (pathname === "/") {
     const hasSession = request.cookies.has(SESSION_COOKIE);
     const destination = hasSession ? "/chat" : "/home";
