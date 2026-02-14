@@ -2,7 +2,7 @@ import { TRPCError } from "@trpc/server";
 import { and, eq, isNull, sql } from "drizzle-orm";
 import type Stripe from "stripe";
 import { z } from "zod";
-import { billing, user } from "@/db/schema";
+import { billing, member, user } from "@/db/schema";
 import { env } from "@/env";
 import {
   type BillingPlan,
@@ -237,6 +237,54 @@ export const billingRouter = router({
   }),
   status: billingEnabledProcedure.query(async ({ ctx }) => {
     const subscription = await syncSubscription(ctx, ctx.userId);
+
+    // Check if user belongs to an org with an active team plan
+    const teamRecords = await ctx.db
+      .select({
+        planId: billing.planId,
+        status: billing.status,
+        cancelAt: billing.cancelAt,
+        mode: billing.mode,
+        priceId: billing.priceId,
+        currentPeriodEnd: billing.currentPeriodEnd,
+        stripeCustomerId: billing.stripeCustomerId,
+      })
+      .from(billing)
+      .innerJoin(member, eq(billing.organizationId, member.organizationId))
+      .where(
+        and(
+          eq(member.userId, ctx.userId),
+          sql`${billing.organizationId} IS NOT NULL`,
+          sql`${billing.planId} LIKE 'pro_team%'`,
+        ),
+      )
+      .limit(1);
+
+    const teamRecord = teamRecords[0];
+    const teamActive =
+      teamRecord &&
+      teamRecord.planId &&
+      teamRecord.status &&
+      ACTIVE_SUB_STATUSES.has(teamRecord.status);
+    const teamGrace =
+      teamRecord &&
+      teamRecord.status === "canceled" &&
+      teamRecord.currentPeriodEnd &&
+      teamRecord.currentPeriodEnd > new Date();
+
+    if (teamActive || teamGrace) {
+      return {
+        planId: teamRecord.planId ?? null,
+        status: teamRecord.status ?? null,
+        mode: (teamRecord.mode as "subscription" | "payment" | null) ?? null,
+        cancelAt: teamRecord.cancelAt,
+        priceId: teamRecord.priceId ?? null,
+        currentPeriodEnd: teamRecord.currentPeriodEnd ?? null,
+        stripeCustomerId: teamRecord.stripeCustomerId,
+        isTeamPlan: true,
+      };
+    }
+
     return {
       planId: subscription.planId ?? null,
       status: subscription.status ?? null,
@@ -245,6 +293,7 @@ export const billingRouter = router({
       priceId: subscription.priceId ?? null,
       currentPeriodEnd: subscription.currentPeriodEnd ?? null,
       stripeCustomerId: subscription.stripeCustomerId,
+      isTeamPlan: false,
     };
   }),
   createCheckoutSession: billingEnabledProcedure

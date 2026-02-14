@@ -364,15 +364,35 @@ export function TeamSettingsPage() {
           </CardContent>
         </Card>
 
-        <CreateOrgDialog
-          open={isCreateDialogOpen}
-          onOpenChange={setIsCreateDialogOpen}
-          name={newOrgName}
-          onNameChange={setNewOrgName}
-          onSubmit={handleCreateOrg}
-          isLoading={isCreatingOrg}
-          t={t}
-        />
+        <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>{t("Create Team")}</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4 py-2">
+              <div className="space-y-2">
+                <Label>{t("Team Name")}</Label>
+                <Input
+                  placeholder={t("e.g. Acme Corp")}
+                  value={newOrgName}
+                  onChange={(e) => setNewOrgName(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") handleCreateOrg();
+                  }}
+                />
+              </div>
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setIsCreateDialogOpen(false)}>
+                {t("Cancel")}
+              </Button>
+              <Button onClick={handleCreateOrg} disabled={isCreatingOrg || !newOrgName.trim()}>
+                {isCreatingOrg && <Spinner className="h-3.5 w-3.5" />}
+                {t("Create")}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
     );
   }
@@ -664,16 +684,36 @@ export function TeamSettingsPage() {
         </Card>
       )}
 
-      {/* Dialogs */}
-      <CreateOrgDialog
-        open={isCreateDialogOpen}
-        onOpenChange={setIsCreateDialogOpen}
-        name={newOrgName}
-        onNameChange={setNewOrgName}
-        onSubmit={handleCreateOrg}
-        isLoading={isCreatingOrg}
-        t={t}
-      />
+      {/* Create Team Dialog */}
+      <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{t("Create Team")}</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <div className="space-y-2">
+              <Label>{t("Team Name")}</Label>
+              <Input
+                placeholder={t("e.g. Acme Corp")}
+                value={newOrgName}
+                onChange={(e) => setNewOrgName(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") handleCreateOrg();
+                }}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsCreateDialogOpen(false)}>
+              {t("Cancel")}
+            </Button>
+            <Button onClick={handleCreateOrg} disabled={isCreatingOrg || !newOrgName.trim()}>
+              {isCreatingOrg && <Spinner className="h-3.5 w-3.5" />}
+              {t("Create")}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       <Dialog open={isInviteDialogOpen} onOpenChange={setIsInviteDialogOpen}>
         <DialogContent>
@@ -742,55 +782,5 @@ export function TeamSettingsPage() {
         </AlertDialogContent>
       </AlertDialog>
     </div>
-  );
-}
-
-function CreateOrgDialog({
-  open,
-  onOpenChange,
-  name,
-  onNameChange,
-  onSubmit,
-  isLoading,
-  t,
-}: {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  name: string;
-  onNameChange: (name: string) => void;
-  onSubmit: () => void;
-  isLoading: boolean;
-  t: (key: string) => string;
-}) {
-  return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>{t("Create Team")}</DialogTitle>
-        </DialogHeader>
-        <div className="space-y-4 py-2">
-          <div className="space-y-2">
-            <Label>{t("Team Name")}</Label>
-            <Input
-              placeholder={t("e.g. Acme Corp")}
-              value={name}
-              onChange={(e) => onNameChange(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter") onSubmit();
-              }}
-            />
-          </div>
-        </div>
-        <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>
-            {t("Cancel")}
-          </Button>
-          <Button onClick={onSubmit} disabled={isLoading || !name.trim()}>
-            {isLoading && <Spinner className="h-3.5 w-3.5" />}
-            {t("Create")}
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
   );
 }
