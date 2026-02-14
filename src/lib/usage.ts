@@ -1,6 +1,6 @@
 //import "server-only";
 
-import { and, eq, isNull, sql } from "drizzle-orm";
+import { and, eq, isNotNull, isNull, like, sql } from "drizzle-orm";
 
 import { db } from "@/db/drizzle";
 import { billing, member, usageQuota } from "@/db/schema";
@@ -92,8 +92,8 @@ async function getTierInfo(userId: string, now: Date): Promise<TierInfo> {
     .where(
       and(
         eq(member.userId, userId),
-        sql`${billing.organizationId} IS NOT NULL`,
-        sql`${billing.planId} LIKE 'pro_team%'`,
+        isNotNull(billing.organizationId),
+        like(billing.planId, "pro_team%")
       ),
     )
     .limit(1);

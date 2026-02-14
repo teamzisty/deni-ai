@@ -6,6 +6,7 @@ import { useExtracted } from "next-intl";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import type { BillingPlanId, ClientPlan, IndividualPlanId } from "@/lib/billing";
+import { isTeamPlan } from "@/lib/billing";
 import { isBillingDisabled } from "@/lib/billing-config";
 import { trpc } from "@/lib/trpc/react";
 import { cn } from "@/lib/utils";
@@ -35,33 +36,36 @@ const usageResetFormatter = new Intl.DateTimeFormat(undefined, {
   day: "numeric",
 });
 
-function formatPriceLabel(plan: ClientPlan, t: ReturnType<typeof useExtracted>) {
-  const mode = plan.mode ?? "subscription";
-  if (!plan.amount || !plan.currency) {
-    return t("Set price in Stripe");
-  }
+function useFormatPriceLabel() {
+  const t = useExtracted();
+  return (plan: ClientPlan) => {
+    const mode = plan.mode ?? "subscription";
+    if (!plan.amount || !plan.currency) {
+      return t("Set price in Stripe");
+    }
 
-  const formatter = new Intl.NumberFormat(undefined, {
-    style: "currency",
-    currency: plan.currency.toUpperCase(),
-    maximumFractionDigits: 0,
-  });
+    const formatter = new Intl.NumberFormat(undefined, {
+      style: "currency",
+      currency: plan.currency.toUpperCase(),
+      maximumFractionDigits: 0,
+    });
 
-  const base = formatter.format(plan.amount);
-  if (mode === "payment") {
-    return t("{price} one-time", { price: base });
-  }
+    const base = formatter.format(plan.amount / 100);
+    if (mode === "payment") {
+      return t("{price} one-time", { price: base });
+    }
 
-  if (!plan.interval) {
-    return base;
-  }
+    if (!plan.interval) {
+      return base;
+    }
 
-  const interval =
-    plan.intervalCount && plan.intervalCount > 1
-      ? `${plan.intervalCount} ${plan.interval}s`
-      : plan.interval;
+    const interval =
+      plan.intervalCount && plan.intervalCount > 1
+        ? `${plan.intervalCount} ${plan.interval}s`
+        : plan.interval;
 
-  return t("{price}/{interval}", { price: base, interval });
+    return t("{price}/{interval}", { price: base, interval });
+  };
 }
 
 function formatCurrencyMinor(amountMinor: number, currency?: string | null) {
@@ -71,7 +75,7 @@ function formatCurrencyMinor(amountMinor: number, currency?: string | null) {
     currency: currencyCode,
     minimumFractionDigits: 2,
   });
-  return formatter.format(amountMinor);
+  return formatter.format(amountMinor / 100);
 }
 
 type PlanCopy = {
@@ -80,68 +84,74 @@ type PlanCopy = {
   badge?: string;
 };
 
-function getPlanCopy(planId: BillingPlanId, t: ReturnType<typeof useExtracted>): PlanCopy {
-  switch (planId) {
-    case "plus_monthly":
-      return {
-        tagline: t("Get unbelievable usage limits"),
-        highlights: [
-          t("Get 4x usage for basic models"),
-          t("Get 10x usage for premium models"),
-          t("With priority support"),
-          t("Deni AI Code - Plus access"),
-          t("For trying Deni AI"),
-        ],
-      };
-    case "plus_yearly":
-      return {
-        tagline: t("Incredible deal"),
-        highlights: [
-          t("Get 4x usage for basic models"),
-          t("Get 10x usage for premium models"),
-          t("With priority support"),
-          t("Deni AI Code - Plus access"),
-          t("Most cost-effective"),
-        ],
-      };
-    case "pro_monthly":
-      return {
-        tagline: t("Great deals even for power users"),
-        highlights: [
-          t("Get 10x usage for basic model"),
-          t("Get 20x usage for premium models"),
-          t("Max Mode pay-per-use available"),
-          t("Deni AI Code - Pro access"),
-          t("For power users"),
-        ],
-      };
-    case "pro_yearly":
-      return {
-        tagline: t("You like us, and we like you too!"),
-        highlights: [
-          t("Get 10x usage for basic model"),
-          t("Get 20x usage for premium models"),
-          t("Max Mode pay-per-use available"),
-          t("Deni AI Code - Pro access"),
-          t("For power users"),
-        ],
-      };
-    default:
-      return {
-        tagline: "",
-        highlights: [],
-      };
-  }
+function usePlanCopy() {
+  const t = useExtracted();
+  return (planId: BillingPlanId): PlanCopy => {
+    switch (planId) {
+      case "plus_monthly":
+        return {
+          tagline: t("Get unbelievable usage limits"),
+          highlights: [
+            t("Get 4x usage for basic models"),
+            t("Get 10x usage for premium models"),
+            t("With priority support"),
+            t("Deni AI Code - Plus access"),
+            t("For trying Deni AI"),
+          ],
+        };
+      case "plus_yearly":
+        return {
+          tagline: t("Incredible deal"),
+          highlights: [
+            t("Get 4x usage for basic models"),
+            t("Get 10x usage for premium models"),
+            t("With priority support"),
+            t("Deni AI Code - Plus access"),
+            t("Most cost-effective"),
+          ],
+        };
+      case "pro_monthly":
+        return {
+          tagline: t("Great deals even for power users"),
+          highlights: [
+            t("Get 10x usage for basic models"),
+            t("Get 20x usage for premium models"),
+            t("Max Mode pay-per-use available"),
+            t("Deni AI Code - Pro access"),
+            t("For power users"),
+          ],
+        };
+      case "pro_yearly":
+        return {
+          tagline: t("You like us, and we like you too!"),
+          highlights: [
+            t("Get 10x usage for basic models"),
+            t("Get 20x usage for premium models"),
+            t("Max Mode pay-per-use available"),
+            t("Deni AI Code - Pro access"),
+            t("For power users"),
+          ],
+        };
+      default:
+        return {
+          tagline: "",
+          highlights: [],
+        };
+    }
+  };
 }
 
-function getPlanIntervalLabel(planId: BillingPlanId, t: ReturnType<typeof useExtracted>) {
-  if (planId.endsWith("_monthly")) {
-    return t("Monthly");
-  }
-  if (planId.endsWith("_yearly")) {
-    return t("Yearly");
-  }
-  return "";
+function usePlanIntervalLabel() {
+  const t = useExtracted();
+  return (planId: BillingPlanId) => {
+    if (planId.endsWith("_monthly")) {
+      return t("Monthly");
+    }
+    if (planId.endsWith("_yearly")) {
+      return t("Yearly");
+    }
+    return "";
+  };
 }
 
 function PlanCard({
@@ -156,6 +166,7 @@ function PlanCard({
   changePlan,
   onChangePlanClick,
   isLoadingEstimate,
+  isOnTeamPlan,
 }: {
   plan: ClientPlan;
   interval: "monthly" | "yearly";
@@ -172,9 +183,12 @@ function PlanCard({
   changePlan: { isPending: boolean; variables?: { planId: IndividualPlanId } };
   onChangePlanClick: (plan: ClientPlan) => void;
   isLoadingEstimate: boolean;
+  isOnTeamPlan?: boolean;
 }) {
   const t = useExtracted();
-  const planCopy = getPlanCopy(plan.id, t);
+  const getPlanCopy = usePlanCopy();
+  const formatPriceLabel = useFormatPriceLabel();
+  const planCopy = getPlanCopy(plan.id);
   const mode = plan.mode ?? "subscription";
   const canChange = hasActiveSubscription && !cancelDate && !isCurrent && mode === "subscription";
   const isBlockedByCancel = Number.isInteger(cancelDate) && Boolean(activePlanId) && !isCurrent;
@@ -216,7 +230,7 @@ function PlanCard({
       </CardHeader>
       <CardContent className="flex flex-1 flex-col pt-0">
         <div className="flex-1">
-          <div className="text-2xl font-semibold tracking-tight">{formatPriceLabel(plan, t)}</div>
+          <div className="text-2xl font-semibold tracking-tight">{formatPriceLabel(plan)}</div>
           {planCopy.highlights.length > 0 && (
             <ul className="mt-5 space-y-2.5">
               {planCopy.highlights.map((item) => (
@@ -231,7 +245,9 @@ function PlanCard({
         <Button
           className="mt-6 w-full font-medium"
           variant={isCurrent ? "secondary" : "default"}
-          disabled={isCurrent || processing || isBlockedByCancel || isLoadingThisPlan}
+          disabled={
+            isCurrent || processing || isBlockedByCancel || isLoadingThisPlan || isOnTeamPlan
+          }
           onClick={() => {
             if (canChange) {
               onChangePlanClick(plan);
@@ -241,13 +257,15 @@ function PlanCard({
           }}
         >
           {(processing || isLoadingThisPlan) && <Spinner className="w-4 h-4" />}
-          {isCurrent
-            ? t("Current plan")
-            : isBlockedByCancel
-              ? t("Resume to change")
-              : canChange
-                ? t("Change plan")
-                : t("Subscribe")}
+          {isOnTeamPlan
+            ? t("Team plan active")
+            : isCurrent
+              ? t("Current plan")
+              : isBlockedByCancel
+                ? t("Resume to change")
+                : canChange
+                  ? t("Change plan")
+                  : t("Subscribe")}
         </Button>
       </CardContent>
     </Card>
@@ -354,6 +372,7 @@ function BillingDisabled() {
 
 function BillingPageContent() {
   const t = useExtracted();
+  const getPlanIntervalLabel = usePlanIntervalLabel();
   const [isChangePlanOpen, setIsChangePlanOpen] = useState(false);
   const [changeTarget, setChangeTarget] = useState<ClientPlan | null>(null);
   const [plusInterval, setPlusInterval] = useState<"monthly" | "yearly">("monthly");
@@ -491,7 +510,9 @@ function BillingPageContent() {
 
   const statusLabel = statusQuery.data?.status ?? "inactive";
   const rawPlanId = (statusQuery.data?.planId as BillingPlanId) ?? undefined;
-  const activePlanId = statusLabel !== "active" ? undefined : rawPlanId;
+  const activePlanId = ACTIVE_STATUSES.has(statusLabel) ? rawPlanId : undefined;
+  const isOnTeamPlan =
+    statusQuery.data?.isTeamPlan === true && rawPlanId ? isTeamPlan(rawPlanId) : false;
   const usage = usageQuery.data?.usage ?? [];
   const usageTier = usageQuery.data?.tier ?? "free";
   const usageTierLabel = (() => {
@@ -553,12 +574,16 @@ function BillingPageContent() {
           <div className="space-y-1">
             <CardTitle className="text-sm font-medium">{t("Current Plan")}</CardTitle>
             <CardDescription>
-              {currentPlan
-                ? t("{tier} {name}", {
-                    tier: activePlanId?.startsWith("pro_") ? t("Pro") : t("Plus"),
-                    name: getPlanIntervalLabel(currentPlan.id, t),
+              {isOnTeamPlan
+                ? t("Pro for Teams {name}", {
+                    name: rawPlanId ? getPlanIntervalLabel(rawPlanId) : "",
                   })
-                : t("Free")}{" "}
+                : currentPlan
+                  ? t("{tier} {name}", {
+                      tier: activePlanId?.startsWith("pro_") ? t("Pro") : t("Plus"),
+                      name: getPlanIntervalLabel(currentPlan.id),
+                    })
+                  : t("Free")}{" "}
               {cancelDate && (
                 <span className="text-destructive">
                   {t("(Cancels {date})", {
@@ -582,34 +607,42 @@ function BillingPageContent() {
                 })}
               </span>
             )}
-            {statusQuery.data?.stripeCustomerId && (
-              <Button
-                variant="outline"
-                size="sm"
-                disabled={portal.isPending}
-                onClick={() => portal.mutate()}
-              >
-                {portal.isPending && <Spinner className="w-4 h-4 mr-1" />}
-                {t("Manage")}
+            {isOnTeamPlan ? (
+              <Button asChild variant="outline" size="sm">
+                <Link href="/settings/team">{t("Manage Team")}</Link>
               </Button>
-            )}
-            {hasActiveSubscription && !cancelDate && (
-              <Button
-                variant="ghost"
-                size="sm"
-                className="text-muted-foreground"
-                disabled={cancel.isPending}
-                onClick={() => cancel.mutate()}
-              >
-                {cancel.isPending && <Spinner className="w-4 h-4 mr-1" />}
-                {t("Cancel")}
-              </Button>
-            )}
-            {cancelDate && (
-              <Button size="sm" disabled={resume.isPending} onClick={() => resume.mutate()}>
-                {resume.isPending && <Spinner className="w-4 h-4 mr-1" />}
-                {t("Resume")}
-              </Button>
+            ) : (
+              <>
+                {statusQuery.data?.stripeCustomerId && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    disabled={portal.isPending}
+                    onClick={() => portal.mutate()}
+                  >
+                    {portal.isPending && <Spinner className="w-4 h-4 mr-1" />}
+                    {t("Manage")}
+                  </Button>
+                )}
+                {hasActiveSubscription && !cancelDate && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="text-muted-foreground"
+                    disabled={cancel.isPending}
+                    onClick={() => cancel.mutate()}
+                  >
+                    {cancel.isPending && <Spinner className="w-4 h-4 mr-1" />}
+                    {t("Cancel")}
+                  </Button>
+                )}
+                {cancelDate && (
+                  <Button size="sm" disabled={resume.isPending} onClick={() => resume.mutate()}>
+                    {resume.isPending && <Spinner className="w-4 h-4 mr-1" />}
+                    {t("Resume")}
+                  </Button>
+                )}
+              </>
             )}
           </div>
         </CardHeader>
@@ -740,6 +773,7 @@ function BillingPageContent() {
               changePlan={changePlan}
               onChangePlanClick={handleChangePlanClick}
               isLoadingEstimate={pendingPlanId === selectedPlusPlan.id && estimateQuery.isLoading}
+              isOnTeamPlan={isOnTeamPlan}
             />
           )}
 
@@ -757,18 +791,29 @@ function BillingPageContent() {
               changePlan={changePlan}
               onChangePlanClick={handleChangePlanClick}
               isLoadingEstimate={pendingPlanId === selectedProPlan.id && estimateQuery.isLoading}
+              isOnTeamPlan={isOnTeamPlan}
             />
           )}
         </div>
       )}
 
       {/* Pro for Teams */}
-      <Card className="border-border/80">
+      <Card
+        className={cn(
+          "border-border/80",
+          isOnTeamPlan && "border-foreground ring-1 ring-foreground/10",
+        )}
+      >
         <CardHeader className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div className="space-y-1">
             <div className="flex items-center gap-2">
               <Users className="size-4 text-muted-foreground" />
               <CardTitle className="text-sm font-medium">{t("Pro for Teams")}</CardTitle>
+              {isOnTeamPlan && (
+                <Badge variant="secondary" className="text-xs">
+                  {t("Current plan")}
+                </Badge>
+              )}
             </div>
             <CardDescription>
               {t("Give your whole team Pro-tier access with per-seat pricing.")}
@@ -803,7 +848,7 @@ function BillingPageContent() {
               <div>
                 <p>
                   {t("You will switch to {plan}. Prorations apply.", {
-                    plan: changeTarget ? getPlanIntervalLabel(changeTarget.id, t) : "",
+                    plan: changeTarget ? getPlanIntervalLabel(changeTarget.id) : "",
                   })}
                 </p>
                 {estimateQuery.error ? (

@@ -6,7 +6,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useExtracted } from "next-intl";
-import type { ReactNode } from "react";
+import { type ReactNode, useState } from "react";
 import { env } from "@/env";
 import { DesignStyleProvider } from "@/hooks/use-design-style";
 import { ThemePresetProvider } from "@/hooks/use-theme-preset";
@@ -15,12 +15,23 @@ import { makeTRPCClient } from "@/lib/trpc/client";
 import { trpc } from "@/lib/trpc/react";
 import { ThemeProvider } from "./ui/theme-provider";
 
-const queryClient = new QueryClient();
 const trpcClient = makeTRPCClient();
 
 export function Providers({ children }: { children: ReactNode }) {
   const t = useExtracted();
   const router = useRouter();
+  const [queryClient] = useState(
+    () =>
+      new QueryClient({
+        defaultOptions: {
+          queries: {
+            staleTime: 60_000,
+            gcTime: 5 * 60_000,
+            refetchOnWindowFocus: false,
+          },
+        },
+      }),
+  );
 
   return (
     <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
