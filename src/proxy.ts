@@ -22,9 +22,7 @@ export function proxy(request: NextRequest) {
   } else {
     // Fallback: parse Accept-Language for ja, default to en
     const acceptLang = request.headers.get("accept-language") ?? "";
-    const isJa = acceptLang
-      .split(",")
-      .some((entry) => entry.trim().toLowerCase().startsWith("ja"));
+    const isJa = acceptLang.split(",").some((entry) => entry.trim().toLowerCase().startsWith("ja"));
     response.headers.set("x-locale", isJa ? "ja" : "en");
   }
 

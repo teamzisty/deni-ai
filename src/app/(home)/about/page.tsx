@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import { BrainCircuit, Globe, Lock, Zap, Users, Code2 } from "lucide-react";
-import Link from "next/link";
 import { useExtracted } from "next-intl";
 import { getExtracted } from "next-intl/server";
 import { LoginButton } from "@/components/login-button";
@@ -50,8 +49,7 @@ export default function AboutPage() {
     "@type": "Organization",
     name: "Deni AI",
     url: "https://deniai.app",
-    description:
-      "A free, fast, and private multi-model AI chat platform.",
+    description: "A free, fast, and private multi-model AI chat platform.",
   };
 
   return (

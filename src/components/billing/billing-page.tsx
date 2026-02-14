@@ -245,7 +245,9 @@ function PlanCard({
         <Button
           className="mt-6 w-full font-medium"
           variant={isCurrent ? "secondary" : "default"}
-          disabled={isCurrent || processing || isBlockedByCancel || isLoadingThisPlan || isOnTeamPlan}
+          disabled={
+            isCurrent || processing || isBlockedByCancel || isLoadingThisPlan || isOnTeamPlan
+          }
           onClick={() => {
             if (canChange) {
               onChangePlanClick(plan);
@@ -509,7 +511,8 @@ function BillingPageContent() {
   const statusLabel = statusQuery.data?.status ?? "inactive";
   const rawPlanId = (statusQuery.data?.planId as BillingPlanId) ?? undefined;
   const activePlanId = statusLabel !== "active" ? undefined : rawPlanId;
-  const isOnTeamPlan = statusQuery.data?.isTeamPlan === true && activePlanId ? isTeamPlan(activePlanId) : false;
+  const isOnTeamPlan =
+    statusQuery.data?.isTeamPlan === true && activePlanId ? isTeamPlan(activePlanId) : false;
   const usage = usageQuery.data?.usage ?? [];
   const usageTier = usageQuery.data?.tier ?? "free";
   const usageTierLabel = (() => {
@@ -795,7 +798,12 @@ function BillingPageContent() {
       )}
 
       {/* Pro for Teams */}
-      <Card className={cn("border-border/80", isOnTeamPlan && "border-foreground ring-1 ring-foreground/10")}>
+      <Card
+        className={cn(
+          "border-border/80",
+          isOnTeamPlan && "border-foreground ring-1 ring-foreground/10",
+        )}
+      >
         <CardHeader className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div className="space-y-1">
             <div className="flex items-center gap-2">

@@ -125,13 +125,7 @@ export default async function RootLayout({
               {
                 "@context": "https://schema.org",
                 "@type": "SiteNavigationElement",
-                name: [
-                  "About",
-                  "AI Models",
-                  "Flixa",
-                  "Terms of Service",
-                  "Privacy Policy",
-                ],
+                name: ["About", "AI Models", "Flixa", "Terms of Service", "Privacy Policy"],
                 url: [
                   "https://deniai.app/about",
                   "https://deniai.app/models",
