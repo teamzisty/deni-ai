@@ -15,7 +15,15 @@ import { makeTRPCClient } from "@/lib/trpc/client";
 import { trpc } from "@/lib/trpc/react";
 import { ThemeProvider } from "./ui/theme-provider";
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 60_000,
+      gcTime: 5 * 60_000,
+      refetchOnWindowFocus: false,
+    },
+  },
+});
 const trpcClient = makeTRPCClient();
 
 export function Providers({ children }: { children: ReactNode }) {
