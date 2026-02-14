@@ -114,7 +114,7 @@ function usePlanCopy() {
         return {
           tagline: t("Great deals even for power users"),
           highlights: [
-            t("Get 10x usage for basic model"),
+            t("Get 10x usage for basic models"),
             t("Get 20x usage for premium models"),
             t("Max Mode pay-per-use available"),
             t("Deni AI Code - Pro access"),
@@ -125,7 +125,7 @@ function usePlanCopy() {
         return {
           tagline: t("You like us, and we like you too!"),
           highlights: [
-            t("Get 10x usage for basic model"),
+            t("Get 10x usage for basic models"),
             t("Get 20x usage for premium models"),
             t("Max Mode pay-per-use available"),
             t("Deni AI Code - Pro access"),
@@ -510,7 +510,7 @@ function BillingPageContent() {
 
   const statusLabel = statusQuery.data?.status ?? "inactive";
   const rawPlanId = (statusQuery.data?.planId as BillingPlanId) ?? undefined;
-  const activePlanId = statusLabel !== "active" ? undefined : rawPlanId;
+  const activePlanId = ACTIVE_STATUSES.has(statusLabel) ? rawPlanId : undefined;
   const isOnTeamPlan =
     statusQuery.data?.isTeamPlan === true && rawPlanId ? isTeamPlan(rawPlanId) : false;
   const usage = usageQuery.data?.usage ?? [];
@@ -576,7 +576,7 @@ function BillingPageContent() {
             <CardDescription>
               {isOnTeamPlan
                 ? t("Pro for Teams {name}", {
-                    name: getPlanIntervalLabel(activePlanId!),
+                    name: rawPlanId ? getPlanIntervalLabel(rawPlanId) : "",
                   })
                 : currentPlan
                   ? t("{tier} {name}", {
