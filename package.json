@@ -55,7 +55,7 @@
     "drizzle-orm": "^0.45.1",
     "embla-carousel-react": "^8.6.0",
     "input-otp": "^1.4.2",
-    "lucide-react": "^0.574.0",
+    "lucide-react": "^0.575.0",
     "motion": "^12.34.2",
     "nanoid": "^5.1.6",
     "next": "^16.1.6",
