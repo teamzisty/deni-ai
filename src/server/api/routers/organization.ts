@@ -310,6 +310,9 @@ export const organizationRouter = router({
         mode: "subscription",
         customer: billingRecord.stripeCustomerId,
         client_reference_id: ctx.userId,
+        adaptive_pricing: {
+          enabled: true,
+        },
         line_items: [
           {
             price: price.id,

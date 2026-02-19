@@ -8,6 +8,7 @@ import { toast } from "sonner";
 import { Button, type buttonVariants } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
 import { authClient } from "@/lib/auth-client";
+import { User } from "lucide-react";
 
 type GuestSignInButtonProps = VariantProps<typeof buttonVariants> & {
   className?: string;
@@ -54,7 +55,7 @@ export function GuestSignInButton({
       onClick={handleClick}
       disabled={isPending || isSubmitting}
     >
-      {isSubmitting ? <Spinner className="size-4" /> : null}
+      {isSubmitting ? <Spinner className="size-4" /> : <User className="size-4" />}
       {t("Continue as Guest")}
     </Button>
   );
