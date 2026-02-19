@@ -93,7 +93,7 @@ async function getTierInfo(userId: string, now: Date): Promise<TierInfo> {
       and(
         eq(member.userId, userId),
         isNotNull(billing.organizationId),
-        like(billing.planId, "pro_team%")
+        like(billing.planId, "pro_team%"),
       ),
     )
     .limit(1);

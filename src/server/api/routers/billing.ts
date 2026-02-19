@@ -255,7 +255,7 @@ export const billingRouter = router({
         and(
           eq(member.userId, ctx.userId),
           isNotNull(billing.organizationId),
-          like(billing.planId, "pro_team%")
+          like(billing.planId, "pro_team%"),
         ),
       )
       .limit(1);
@@ -341,6 +341,9 @@ export const billingRouter = router({
         mode: mode === "payment" ? "payment" : "subscription",
         customer: billingRecord.stripeCustomerId,
         client_reference_id: ctx.userId,
+        adaptive_pricing: {
+          enabled: true,
+        },
         line_items: [
           {
             price: price.id,

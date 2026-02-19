@@ -59,10 +59,13 @@ function useFormatPriceLabel() {
       return base;
     }
 
+    const localizedInterval =
+      plan.interval === "month" ? t("month") : plan.interval === "year" ? t("year") : plan.interval;
+
     const interval =
       plan.intervalCount && plan.intervalCount > 1
-        ? `${plan.intervalCount} ${plan.interval}s`
-        : plan.interval;
+        ? `${plan.intervalCount} ${localizedInterval}`
+        : localizedInterval;
 
     return t("{price}/{interval}", { price: base, interval });
   };
