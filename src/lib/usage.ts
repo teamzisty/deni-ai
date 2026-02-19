@@ -24,14 +24,14 @@ const USAGE_CATEGORIES: UsageCategory[] = ["basic", "premium"];
 
 const USAGE_LIMITS: Record<UsageCategory, Record<SubscriptionTier, number | null>> = {
   basic: {
-    free: 1500,
-    plus: 3000,
-    pro: 10000,
+    free: 500,
+    plus: 1500,
+    pro: 3000,
   },
   premium: {
     free: 50,
-    plus: 250,
-    pro: 500,
+    plus: 400,
+    pro: 800,
   },
 };
 
