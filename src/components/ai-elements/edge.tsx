@@ -1,10 +1,9 @@
+import type { EdgeProps, InternalNode, Node } from "@xyflow/react";
+
 import {
   BaseEdge,
-  type EdgeProps,
   getBezierPath,
   getSimpleBezierPath,
-  type InternalNode,
-  type Node,
   Position,
   useInternalNode,
 } from "@xyflow/react";
@@ -19,12 +18,12 @@ const Temporary = ({
   targetPosition,
 }: EdgeProps) => {
   const [edgePath] = getSimpleBezierPath({
+    sourcePosition,
     sourceX,
     sourceY,
-    sourcePosition,
+    targetPosition,
     targetX,
     targetY,
-    targetPosition,
   });
 
   return (
@@ -58,20 +57,25 @@ const getHandleCoordsByPosition = (node: InternalNode<Node>, handlePosition: Pos
   // The handle position that gets calculated has the origin top-left, so depending which side we are using, we add a little offset
   // when the handlePosition is Position.Right for example, we need to add an offset as big as the handle itself in order to get the correct position
   switch (handlePosition) {
-    case Position.Left:
+    case Position.Left: {
       offsetX = 0;
       break;
-    case Position.Right:
+    }
+    case Position.Right: {
       offsetX = handle.width;
       break;
-    case Position.Top:
+    }
+    case Position.Top: {
       offsetY = 0;
       break;
-    case Position.Bottom:
+    }
+    case Position.Bottom: {
       offsetY = handle.height;
       break;
-    default:
+    }
+    default: {
       throw new Error(`Invalid handle position: ${handlePosition}`);
+    }
   }
 
   const x = node.internals.positionAbsolute.x + handle.x + offsetX;
@@ -87,12 +91,12 @@ const getEdgeParams = (source: InternalNode<Node>, target: InternalNode<Node>) =
   const [tx, ty] = getHandleCoordsByPosition(target, targetPos);
 
   return {
+    sourcePos,
     sx,
     sy,
+    targetPos,
     tx,
     ty,
-    sourcePos,
-    targetPos,
   };
 };
 
@@ -107,12 +111,12 @@ const Animated = ({ id, source, target, markerEnd, style }: EdgeProps) => {
   const { sx, sy, tx, ty, sourcePos, targetPos } = getEdgeParams(sourceNode, targetNode);
 
   const [edgePath] = getBezierPath({
+    sourcePosition: sourcePos,
     sourceX: sx,
     sourceY: sy,
-    sourcePosition: sourcePos,
+    targetPosition: targetPos,
     targetX: tx,
     targetY: ty,
-    targetPosition: targetPos,
   });
 
   return (
@@ -126,6 +130,6 @@ const Animated = ({ id, source, target, markerEnd, style }: EdgeProps) => {
 };
 
 export const Edge = {
-  Temporary,
   Animated,
+  Temporary,
 };

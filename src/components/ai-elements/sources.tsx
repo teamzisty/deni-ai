@@ -1,10 +1,10 @@
 "use client";
 
-import { BookIcon, ChevronDownIcon } from "lucide-react";
-import { useExtracted } from "next-intl";
 import type { ComponentProps } from "react";
+
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { cn } from "@/lib/utils";
+import { BookIcon, ChevronDownIcon } from "lucide-react";
 
 export type SourcesProps = ComponentProps<"div">;
 
@@ -18,19 +18,14 @@ export type SourcesTriggerProps = ComponentProps<typeof CollapsibleTrigger> & {
 
 export const SourcesTrigger = ({ className, count, children, ...props }: SourcesTriggerProps) => (
   <CollapsibleTrigger className={cn("flex items-center gap-2", className)} {...props}>
-    {children ?? <SourcesTriggerLabel count={count} />}
+    {children ?? (
+      <>
+        <p className="font-medium">Used {count} sources</p>
+        <ChevronDownIcon className="h-4 w-4" />
+      </>
+    )}
   </CollapsibleTrigger>
 );
-
-const SourcesTriggerLabel = ({ count }: { count: number }) => {
-  const t = useExtracted();
-  return (
-    <>
-      <p className="font-medium">{t("Used {count} sources", { count: count.toString() })}</p>
-      <ChevronDownIcon className="h-4 w-4" />
-    </>
-  );
-};
 
 export type SourcesContentProps = ComponentProps<typeof CollapsibleContent>;
 

@@ -1,5 +1,5 @@
-import { useExtracted } from "next-intl";
 import type { ComponentProps, ReactNode } from "react";
+
 import {
   Command,
   CommandDialog,
@@ -31,18 +31,18 @@ export type ModelSelectorContentProps = ComponentProps<typeof DialogContent> & {
 export const ModelSelectorContent = ({
   className,
   children,
-  title,
+  title = "Model Selector",
   ...props
-}: ModelSelectorContentProps) => {
-  const t = useExtracted();
-  const resolvedTitle = title ?? t("Model Selector");
-  return (
-    <DialogContent className={cn("p-0", className)} {...props}>
-      <DialogTitle className="sr-only">{resolvedTitle}</DialogTitle>
-      <Command className="**:data-[slot=command-input-wrapper]:h-auto">{children}</Command>
-    </DialogContent>
-  );
-};
+}: ModelSelectorContentProps) => (
+  <DialogContent
+    aria-describedby={undefined}
+    className={cn("outline! border-none! p-0 outline-border! outline-solid!", className)}
+    {...props}
+  >
+    <DialogTitle className="sr-only">{title}</DialogTitle>
+    <Command className="**:data-[slot=command-input-wrapper]:h-auto">{children}</Command>
+  </DialogContent>
+);
 
 export type ModelSelectorDialogProps = ComponentProps<typeof CommandDialog>;
 
@@ -142,30 +142,27 @@ export type ModelSelectorLogoProps = Omit<ComponentProps<"img">, "src" | "alt"> 
     | "scaleway"
     | "amazon-bedrock"
     | "cerebras"
+    // oxlint-disable-next-line typescript-eslint(ban-types) -- intentional pattern for autocomplete-friendly string union
     | (string & {});
 };
 
-export const ModelSelectorLogo = ({ provider, className, ...props }: ModelSelectorLogoProps) => {
-  const t = useExtracted();
-  return (
-    // oxlint-disable-next-line: SVG logos are tiny and already optimized.
-    <img
-      {...props}
-      alt={t("{provider} logo", { provider })}
-      className={cn("size-3 dark:invert", className)}
-      height={12}
-      src={`https://models.dev/logos/${provider}.svg`}
-      width={12}
-    />
-  );
-};
+export const ModelSelectorLogo = ({ provider, className, ...props }: ModelSelectorLogoProps) => (
+  <img
+    {...props}
+    alt={`${provider} logo`}
+    className={cn("size-3 dark:invert", className)}
+    height={12}
+    src={`https://models.dev/logos/${provider}.svg`}
+    width={12}
+  />
+);
 
 export type ModelSelectorLogoGroupProps = ComponentProps<"div">;
 
 export const ModelSelectorLogoGroup = ({ className, ...props }: ModelSelectorLogoGroupProps) => (
   <div
     className={cn(
-      "-space-x-1 flex shrink-0 items-center [&>img]:rounded-full [&>img]:bg-background [&>img]:p-px [&>img]:ring-1 dark:[&>img]:bg-foreground",
+      "flex shrink-0 items-center -space-x-1 [&>img]:rounded-full [&>img]:bg-background [&>img]:p-px [&>img]:ring-1 dark:[&>img]:bg-foreground",
       className,
     )}
     {...props}

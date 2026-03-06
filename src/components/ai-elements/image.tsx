@@ -1,4 +1,5 @@
 import type { Experimental_GeneratedImage } from "ai";
+
 import { cn } from "@/lib/utils";
 
 export type ImageProps = Experimental_GeneratedImage & {
@@ -6,8 +7,7 @@ export type ImageProps = Experimental_GeneratedImage & {
   alt?: string;
 };
 
-export const Image = ({ base64, mediaType, ...props }: ImageProps) => (
-  // oxlint-disable-next-line: data URLs don't benefit from Next/Image optimization.
+export const Image = ({ base64, uint8Array: _uint8Array, mediaType, ...props }: ImageProps) => (
   <img
     {...props}
     alt={props.alt}

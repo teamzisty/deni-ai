@@ -1,24 +1,14 @@
 "use client";
 
-import { ArrowLeftIcon, ArrowRightIcon } from "lucide-react";
-import { useExtracted } from "next-intl";
-import {
-  type ComponentProps,
-  createContext,
-  useCallback,
-  useContext,
-  useEffect,
-  useState,
-} from "react";
+import type { CarouselApi } from "@/components/ui/carousel";
+import type { ComponentProps } from "react";
+
 import { Badge } from "@/components/ui/badge";
-import {
-  Carousel,
-  type CarouselApi,
-  CarouselContent,
-  CarouselItem,
-} from "@/components/ui/carousel";
+import { Carousel, CarouselContent, CarouselItem } from "@/components/ui/carousel";
 import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/hover-card";
 import { cn } from "@/lib/utils";
+import { ArrowLeftIcon, ArrowRightIcon } from "lucide-react";
+import { createContext, useCallback, useContext, useEffect, useState } from "react";
 
 export type InlineCitationProps = ComponentProps<"span">;
 
@@ -46,22 +36,19 @@ export const InlineCitationCardTrigger = ({
   sources,
   className,
   ...props
-}: InlineCitationCardTriggerProps) => {
-  const t = useExtracted();
-  return (
-    <HoverCardTrigger asChild>
-      <Badge className={cn("ml-1 rounded-full", className)} variant="secondary" {...props}>
-        {sources[0] ? (
-          <>
-            {new URL(sources[0]).hostname} {sources.length > 1 && `+${sources.length - 1}`}
-          </>
-        ) : (
-          t("unknown")
-        )}
-      </Badge>
-    </HoverCardTrigger>
-  );
-};
+}: InlineCitationCardTriggerProps) => (
+  <HoverCardTrigger asChild>
+    <Badge className={cn("ml-1 rounded-full", className)} variant="secondary" {...props}>
+      {sources[0] ? (
+        <>
+          {new URL(sources[0]).hostname} {sources.length > 1 && `+${sources.length - 1}`}
+        </>
+      ) : (
+        "unknown"
+      )}
+    </Badge>
+  </HoverCardTrigger>
+);
 
 export type InlineCitationCardBodyProps = ComponentProps<"div">;
 
@@ -131,7 +118,6 @@ export const InlineCitationCarouselIndex = ({
   className,
   ...props
 }: InlineCitationCarouselIndexProps) => {
-  const t = useExtracted();
   const api = useCarouselApi();
   const [current, setCurrent] = useState(0);
   const [count, setCount] = useState(0);
@@ -144,9 +130,15 @@ export const InlineCitationCarouselIndex = ({
     setCount(api.scrollSnapList().length);
     setCurrent(api.selectedScrollSnap() + 1);
 
-    api.on("select", () => {
+    const handleSelect = () => {
       setCurrent(api.selectedScrollSnap() + 1);
-    });
+    };
+
+    api.on("select", handleSelect);
+
+    return () => {
+      api.off("select", handleSelect);
+    };
   }, [api]);
 
   return (
@@ -157,11 +149,7 @@ export const InlineCitationCarouselIndex = ({
       )}
       {...props}
     >
-      {children ??
-        t("{current}/{total}", {
-          current: current.toString(),
-          total: count.toString(),
-        })}
+      {children ?? `${current}/${count}`}
     </div>
   );
 };
@@ -172,7 +160,6 @@ export const InlineCitationCarouselPrev = ({
   className,
   ...props
 }: InlineCitationCarouselPrevProps) => {
-  const t = useExtracted();
   const api = useCarouselApi();
 
   const handleClick = useCallback(() => {
@@ -183,7 +170,7 @@ export const InlineCitationCarouselPrev = ({
 
   return (
     <button
-      aria-label={t("Previous")}
+      aria-label="Previous"
       className={cn("shrink-0", className)}
       onClick={handleClick}
       type="button"
@@ -200,7 +187,6 @@ export const InlineCitationCarouselNext = ({
   className,
   ...props
 }: InlineCitationCarouselNextProps) => {
-  const t = useExtracted();
   const api = useCarouselApi();
 
   const handleClick = useCallback(() => {
@@ -211,7 +197,7 @@ export const InlineCitationCarouselNext = ({
 
   return (
     <button
-      aria-label={t("Next")}
+      aria-label="Next"
       className={cn("shrink-0", className)}
       onClick={handleClick}
       type="button"
