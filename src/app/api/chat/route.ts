@@ -18,9 +18,8 @@ import { headers } from "next/headers";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { db } from "@/db/drizzle";
-import { apiKey, customModel, providerKey, providerSetting } from "@/db/schema";
+import { customModel, providerKey, providerSetting } from "@/db/schema";
 import { env } from "@/env";
-import { hashApiKey } from "@/lib/api-key-utils";
 import { auth } from "@/lib/auth";
 import { generateTitle, getChatById, updateChat } from "@/lib/chat";
 import { createChatTools } from "@/lib/chat-tools";
@@ -36,54 +35,18 @@ const UIMessagesSchema = z
 export async function POST(req: Request) {
   const headersList = await headers();
   const bodyPromise = req.json();
-
-  // Check for Flixa API key in Authorization header
-  const authHeader = headersList.get("authorization");
-  const bearerToken = authHeader?.startsWith("Bearer ") ? authHeader.slice(7) : null;
-  const isDeniApiKey = bearerToken?.startsWith("deni_") ?? false;
-
-  if (!isDeniApiKey) {
-    const verification = await checkBotId();
-
-    if (verification.isBot) {
-      return NextResponse.json({ error: "Access denied" }, { status: 403 });
-    }
-  }
-
-  let userId: string | undefined;
-  let isAnonymous = false;
-
-  if (isDeniApiKey && bearerToken) {
-    const keyHash = await hashApiKey(bearerToken);
-    const [row] = await db
-      .select({ userId: apiKey.userId, expiresAt: apiKey.expiresAt, id: apiKey.id })
-      .from(apiKey)
-      .where(eq(apiKey.keyHash, keyHash))
-      .limit(1);
-
-    if (!row) {
-      return NextResponse.json({ error: "Invalid API key" }, { status: 401 });
-    }
-
-    if (row.expiresAt && row.expiresAt < new Date()) {
-      return NextResponse.json({ error: "API key has expired" }, { status: 401 });
-    }
-
-    userId = row.userId;
-
-    // Update lastUsedAt asynchronously
-    db.update(apiKey)
-      .set({ lastUsedAt: new Date() })
-      .where(eq(apiKey.id, row.id))
-      .catch(() => {});
-  } else {
-    const session = await auth.api.getSession({ headers: headersList });
-    userId = session?.session?.userId;
-    isAnonymous = Boolean(session?.user?.isAnonymous);
-  }
+  const session = await auth.api.getSession({ headers: headersList });
+  const userId = session?.session?.userId;
+  const isAnonymous = Boolean(session?.user?.isAnonymous);
 
   if (!userId) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  const verification = await checkBotId();
+
+  if (verification.isBot) {
+    return NextResponse.json({ error: "Access denied" }, { status: 403 });
   }
 
   const body = await bodyPromise;
