@@ -15,6 +15,7 @@ import { useRouter } from "next/navigation";
 import { useExtracted, useLocale } from "next-intl";
 import { useTheme } from "next-themes";
 import { startTransition, useEffect, useMemo, useState } from "react";
+import { toast } from "sonner";
 import type { BillingPlanId, IndividualPlanId, TeamPlanId } from "@/lib/billing";
 import { formatMinorCurrency } from "@/lib/currency";
 import { stripeJsPromise } from "@/lib/stripe-js";
@@ -252,15 +253,18 @@ function PromotionCodeSection({ checkout }: { checkout: StripeCheckoutValue }) {
       const result = await checkout.applyPromotionCode(code);
 
       if (result.type === "error") {
-        setPromotionError(
+        const message =
           result.error.code === "invalidCode"
             ? t("This coupon code is invalid or unavailable.")
-            : result.error.message,
-        );
+            : result.error.message;
+        setPromotionError(message);
+        toast.error(message);
         return;
       }
     } catch (error) {
-      setPromotionError(error instanceof Error ? error.message : t("Unable to apply coupon code."));
+      const message = error instanceof Error ? error.message : t("Unable to apply coupon code.");
+      setPromotionError(message);
+      toast.error(message);
     } finally {
       setIsApplyingPromotion(false);
     }
@@ -279,11 +283,12 @@ function PromotionCodeSection({ checkout }: { checkout: StripeCheckoutValue }) {
 
       if (result.type === "error") {
         setPromotionError(result.error.message);
+        toast.error(result.error.message);
       }
     } catch (error) {
-      setPromotionError(
-        error instanceof Error ? error.message : t("Unable to remove coupon code."),
-      );
+      const message = error instanceof Error ? error.message : t("Unable to remove coupon code.");
+      setPromotionError(message);
+      toast.error(message);
     } finally {
       setIsRemovingPromotion(false);
     }
@@ -455,6 +460,7 @@ function CheckoutForm({
 
       if (result.type === "error") {
         setSubmitError(result.error.message);
+        toast.error(result.error.message);
         return;
       }
 
@@ -462,11 +468,12 @@ function CheckoutForm({
         router.replace(returnUrl);
       });
     } catch (error) {
-      setSubmitError(
+      const message =
         error instanceof Error
           ? error.message
-          : t("Unable to complete checkout. Please try again."),
-      );
+          : t("Unable to complete checkout. Please try again.");
+      setSubmitError(message);
+      toast.error(message);
     } finally {
       setIsSubmitting(false);
     }

@@ -16,16 +16,16 @@ export function FlixaBanner() {
   const pathname = usePathname();
   const [visible, setVisible] = useState(false);
 
-  if (pathname === "/settings/team/checkout") {
-    return null;
-  }
-
   useEffect(() => {
     const dismissed = localStorage.getItem(DISMISSED_KEY);
     if (!dismissed) {
       setVisible(true);
     }
   }, []);
+
+  if (pathname === "/settings/team/checkout") {
+    return null;
+  }
 
   const dismiss = () => {
     localStorage.setItem(DISMISSED_KEY, "1");
