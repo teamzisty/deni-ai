@@ -21,6 +21,7 @@ export const env = createEnv({
   client: {
     NEXT_PUBLIC_BETTER_AUTH_URL: z.url(),
     NEXT_PUBLIC_BILLING_DISABLED: z.string().optional(),
+    NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: z.string().optional(),
     NEXT_PUBLIC_TURNSTILE_SITE_KEY: z.string(),
   },
   // If you're using Next.js < 13.4.4, you'll need to specify the runtimeEnv manually
@@ -28,6 +29,7 @@ export const env = createEnv({
     DATABASE_URL: process.env.DATABASE_URL,
     NEXT_PUBLIC_BETTER_AUTH_URL: process.env.NEXT_PUBLIC_BETTER_AUTH_URL,
     NEXT_PUBLIC_BILLING_DISABLED: process.env.NEXT_PUBLIC_BILLING_DISABLED,
+    NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY,
     BETTER_AUTH_SECRET: process.env.BETTER_AUTH_SECRET,
     GOOGLE_CLIENT_ID: process.env.GOOGLE_CLIENT_ID,
     GOOGLE_CLIENT_SECRET: process.env.GOOGLE_CLIENT_SECRET,

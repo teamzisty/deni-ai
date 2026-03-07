@@ -6,6 +6,7 @@ import { env } from "@/env";
 import { type BillingPlan, billingPlans, findPlanById, isTeamPlan } from "@/lib/billing";
 import { isBillingDisabled } from "@/lib/billing-config";
 import { stripe } from "@/lib/stripe";
+import { customCheckoutRequestOptions } from "@/lib/stripe-checkout";
 import { getSubscriptionPeriodEndDate } from "@/lib/stripe-subscriptions";
 import { getOrgMemberCount, updateTeamSeatCount } from "@/lib/team-billing";
 import { type ProtectedContext, protectedProcedure, router } from "../trpc";
@@ -225,6 +226,46 @@ async function syncTeamSubscription(ctx: ProtectedContext, userId: string, organ
   return updated;
 }
 
+async function reuseOpenTeamCheckoutSession({
+  checkoutSessionId,
+  userId,
+  organizationId,
+  planId,
+}: {
+  checkoutSessionId: string | null | undefined;
+  userId: string;
+  organizationId: string;
+  planId: string;
+}) {
+  if (!checkoutSessionId) {
+    return null;
+  }
+
+  try {
+    const session = await stripe.checkout.sessions.retrieve(
+      checkoutSessionId,
+      {},
+      customCheckoutRequestOptions,
+    );
+
+    if (
+      session.status !== "open" ||
+      session.ui_mode !== "custom" ||
+      session.client_reference_id !== userId ||
+      session.metadata?.planId !== planId ||
+      session.metadata?.organizationId !== organizationId ||
+      !session.client_secret
+    ) {
+      return null;
+    }
+
+    return session;
+  } catch (error) {
+    console.warn("Failed to reuse team checkout session", error);
+    return null;
+  }
+}
+
 export const organizationRouter = router({
   teamPlans: billingEnabledProcedure.query(async () => {
     const teamPlans = billingPlans.filter((p) => isTeamPlan(p.id));
@@ -286,6 +327,20 @@ export const organizationRouter = router({
 
       const price = await getPriceForPlan(plan);
 
+      const reusableSession = await reuseOpenTeamCheckoutSession({
+        checkoutSessionId: billingRecord.checkoutSessionId,
+        userId: ctx.userId,
+        organizationId: input.organizationId,
+        planId: plan.id,
+      });
+
+      if (reusableSession) {
+        return {
+          sessionId: reusableSession.id,
+          clientSecret: reusableSession.client_secret,
+        };
+      }
+
       // Check for existing active subscription
       const existingSubs = await stripe.subscriptions.list({
         customer: billingRecord.stripeCustomerId,
@@ -306,35 +361,38 @@ export const organizationRouter = router({
 
       const memberCount = await getOrgMemberCount(input.organizationId);
 
-      const session = await stripe.checkout.sessions.create({
-        mode: "subscription",
-        customer: billingRecord.stripeCustomerId,
-        client_reference_id: ctx.userId,
-        adaptive_pricing: {
-          enabled: true,
-        },
-        line_items: [
-          {
-            price: price.id,
-            quantity: memberCount,
+      const session = await stripe.checkout.sessions.create(
+        {
+          mode: "subscription",
+          ui_mode: "custom",
+          customer: billingRecord.stripeCustomerId,
+          client_reference_id: ctx.userId,
+          adaptive_pricing: {
+            enabled: true,
           },
-        ],
-        metadata: {
-          userId: ctx.userId,
-          planId: plan.id,
-          organizationId: input.organizationId,
-        },
-        subscription_data: {
+          line_items: [
+            {
+              price: price.id,
+              quantity: memberCount,
+            },
+          ],
           metadata: {
             userId: ctx.userId,
             planId: plan.id,
             organizationId: input.organizationId,
           },
+          subscription_data: {
+            metadata: {
+              userId: ctx.userId,
+              planId: plan.id,
+              organizationId: input.organizationId,
+            },
+          },
+          allow_promotion_codes: true,
+          return_url: `${env.NEXT_PUBLIC_BETTER_AUTH_URL}/settings/team/checkout?organizationId=${input.organizationId}&session_id={CHECKOUT_SESSION_ID}`,
         },
-        allow_promotion_codes: true,
-        success_url: `${env.NEXT_PUBLIC_BETTER_AUTH_URL}/settings/team?session_id={CHECKOUT_SESSION_ID}`,
-        cancel_url: `${env.NEXT_PUBLIC_BETTER_AUTH_URL}/settings/team`,
-      });
+        customCheckoutRequestOptions,
+      );
 
       await ctx.db
         .insert(billing)
@@ -361,7 +419,55 @@ export const organizationRouter = router({
           },
         });
 
-      return { url: session.url };
+      if (!session.client_secret) {
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Stripe did not return a checkout client secret.",
+        });
+      }
+
+      return { sessionId: session.id, clientSecret: session.client_secret };
+    }),
+  getTeamCheckoutSession: billingEnabledProcedure
+    .input(
+      z.object({
+        organizationId: z.string().min(1),
+        sessionId: z.string().min(1),
+      }),
+    )
+    .query(async ({ ctx, input }) => {
+      await verifyOrgOwner(ctx, input.organizationId);
+
+      const session = await stripe.checkout.sessions.retrieve(
+        input.sessionId,
+        {},
+        customCheckoutRequestOptions,
+      );
+
+      if (session.client_reference_id && session.client_reference_id !== ctx.userId) {
+        throw new TRPCError({
+          code: "UNAUTHORIZED",
+          message: "Session does not belong to the current user.",
+        });
+      }
+
+      if (session.metadata?.organizationId !== input.organizationId) {
+        throw new TRPCError({
+          code: "UNAUTHORIZED",
+          message: "Session does not belong to the selected organization.",
+        });
+      }
+
+      return {
+        sessionId: session.id,
+        clientSecret: session.client_secret,
+        status: session.status,
+        paymentStatus: session.payment_status,
+        amountTotal: session.amount_total,
+        currency: session.currency,
+        mode: session.mode,
+        planId: session.metadata?.planId ?? null,
+      };
     }),
 
   createTeamPortalSession: billingEnabledProcedure

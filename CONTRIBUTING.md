@@ -61,7 +61,7 @@ Refer to `src/env.ts` for the complete list of required environment variables. K
 - `DATABASE_URL` - PostgreSQL connection URL
 - `BETTER_AUTH_SECRET` - 32-character authentication secret
 - AI provider keys (OpenAI, Anthropic, Google)
-- Stripe keys for billing
+- Stripe keys for billing: `STRIPE_SECRET_KEY`, `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY`
 
 ## How to Contribute
 

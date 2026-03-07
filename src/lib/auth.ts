@@ -1,6 +1,6 @@
 import { passkey } from "@better-auth/passkey";
 import { betterAuth } from "better-auth";
-import { drizzleAdapter } from "better-auth/adapters/drizzle";
+import { drizzleAdapter } from "@better-auth/drizzle-adapter";
 import {
   anonymous,
   bearer,
@@ -11,9 +11,11 @@ import {
   organization,
 } from "better-auth/plugins";
 import { twoFactor } from "better-auth/plugins/two-factor";
+import { createElement } from "react";
 import { Resend } from "resend";
 import { db } from "@/db/drizzle";
 import * as schema from "@/db/schema";
+import { VerificationEmail, verificationEmailSubject } from "@/emails/verification-email";
 import { env } from "@/env";
 import { EMAIL_FROM, emailTemplates } from "@/lib/constants";
 import { updateTeamSeatCount } from "@/lib/team-billing";
@@ -44,12 +46,14 @@ export const auth = betterAuth({
   emailVerification: resend
     ? {
         sendVerificationEmail: async ({ user, url }) => {
-          const template = emailTemplates.verifyEmail(user.name, url);
           await resend.emails.send({
             from: EMAIL_FROM,
             to: user.email,
-            subject: template.subject,
-            html: template.html,
+            subject: verificationEmailSubject,
+            react: createElement(VerificationEmail, {
+              name: user.name,
+              verificationUrl: url,
+            }),
           });
         },
         sendOnSignUp: true,
@@ -145,4 +149,5 @@ export const auth = betterAuth({
     expiresIn: 60 * 60 * 24 * 7, // 7 days
     updateAge: 60 * 60 * 24, // 1 day (every 1 day the session expiration is updated)
   },
+  experimental: { joins: true },
 });

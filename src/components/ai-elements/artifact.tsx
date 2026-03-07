@@ -1,11 +1,12 @@
 "use client";
 
-import { type LucideIcon, XIcon } from "lucide-react";
-import { useExtracted } from "next-intl";
+import type { LucideIcon } from "lucide-react";
 import type { ComponentProps, HTMLAttributes } from "react";
+
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
+import { XIcon } from "lucide-react";
 
 export type ArtifactProps = HTMLAttributes<HTMLDivElement>;
 
@@ -45,14 +46,9 @@ export const ArtifactClose = ({
     {...props}
   >
     {children ?? <XIcon className="size-4" />}
-    <ArtifactCloseLabel />
+    <span className="sr-only">Close</span>
   </Button>
 );
-
-const ArtifactCloseLabel = () => {
-  const t = useExtracted();
-  return <span className="sr-only">{t("Close")}</span>;
-};
 
 export type ArtifactTitleProps = HTMLAttributes<HTMLParagraphElement>;
 

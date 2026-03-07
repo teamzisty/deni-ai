@@ -1,9 +1,7 @@
 "use client";
 
-import { ChevronsUpDownIcon } from "lucide-react";
-import { useExtracted } from "next-intl";
 import type { ComponentProps } from "react";
-import { createContext, useContext } from "react";
+
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -16,11 +14,14 @@ import {
 } from "@/components/ui/card";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { cn } from "@/lib/utils";
+import { ChevronsUpDownIcon } from "lucide-react";
+import { createContext, useContext } from "react";
+
 import { Shimmer } from "./shimmer";
 
-type PlanContextValue = {
+interface PlanContextValue {
   isStreaming: boolean;
-};
+}
 
 const PlanContext = createContext<PlanContextValue | null>(null);
 
@@ -118,12 +119,7 @@ export const PlanTrigger = ({ className, ...props }: PlanTriggerProps) => (
       {...props}
     >
       <ChevronsUpDownIcon className="size-4" />
-      <PlanToggleLabel />
+      <span className="sr-only">Toggle plan</span>
     </Button>
   </CollapsibleTrigger>
 );
-
-const PlanToggleLabel = () => {
-  const t = useExtracted();
-  return <span className="sr-only">{t("Toggle plan")}</span>;
-};

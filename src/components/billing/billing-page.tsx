@@ -2,12 +2,14 @@
 
 import { Zap, Check, Users } from "lucide-react";
 import Link from "next/link";
-import { useExtracted } from "next-intl";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
+import { useExtracted, useLocale } from "next-intl";
+import { startTransition, useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import type { BillingPlanId, ClientPlan, IndividualPlanId } from "@/lib/billing";
 import { isTeamPlan } from "@/lib/billing";
 import { isBillingDisabled } from "@/lib/billing-config";
+import { formatMinorCurrency } from "@/lib/currency";
 import { trpc } from "@/lib/trpc/react";
 import { cn } from "@/lib/utils";
 import {
@@ -38,19 +40,23 @@ const usageResetFormatter = new Intl.DateTimeFormat(undefined, {
 
 function useFormatPriceLabel() {
   const t = useExtracted();
+  const locale = useLocale();
   return (plan: ClientPlan) => {
     const mode = plan.mode ?? "subscription";
     if (!plan.amount || !plan.currency) {
       return t("Set price in Stripe");
     }
 
-    const formatter = new Intl.NumberFormat(undefined, {
-      style: "currency",
-      currency: plan.currency.toUpperCase(),
-      maximumFractionDigits: 0,
-    });
+    const base = formatMinorCurrency(
+      plan.amount,
+      plan.currency,
+      {
+        currencyDisplay: "code",
+        maximumFractionDigits: 0,
+      },
+      locale,
+    );
 
-    const base = formatter.format(plan.amount / 100);
     if (mode === "payment") {
       return t("{price} one-time", { price: base });
     }
@@ -71,14 +77,10 @@ function useFormatPriceLabel() {
   };
 }
 
-function formatCurrencyMinor(amountMinor: number, currency?: string | null) {
-  const currencyCode = currency ? currency.toUpperCase() : "USD";
-  const formatter = new Intl.NumberFormat(undefined, {
-    style: "currency",
-    currency: currencyCode,
-    minimumFractionDigits: 2,
-  });
-  return formatter.format(amountMinor / 100);
+function useFormatCurrencyMinor() {
+  const locale = useLocale();
+  return (amountMinor: number, currency?: string | null) =>
+    formatMinorCurrency(amountMinor, currency, { currencyDisplay: "code" }, locale);
 }
 
 type PlanCopy = {
@@ -165,9 +167,9 @@ function PlanCard({
   hasActiveSubscription,
   cancelDate,
   activePlanId,
-  checkout,
   changePlan,
   onChangePlanClick,
+  onCheckout,
   isLoadingEstimate,
   isOnTeamPlan,
 }: {
@@ -178,13 +180,9 @@ function PlanCard({
   hasActiveSubscription: boolean;
   cancelDate: number | false;
   activePlanId: string | undefined;
-  checkout: {
-    isPending: boolean;
-    variables?: { planId: IndividualPlanId };
-    mutate: (data: { planId: IndividualPlanId }) => void;
-  };
   changePlan: { isPending: boolean; variables?: { planId: IndividualPlanId } };
   onChangePlanClick: (plan: ClientPlan) => void;
+  onCheckout: (planId: IndividualPlanId) => void;
   isLoadingEstimate: boolean;
   isOnTeamPlan?: boolean;
 }) {
@@ -195,9 +193,7 @@ function PlanCard({
   const mode = plan.mode ?? "subscription";
   const canChange = hasActiveSubscription && !cancelDate && !isCurrent && mode === "subscription";
   const isBlockedByCancel = Number.isInteger(cancelDate) && Boolean(activePlanId) && !isCurrent;
-  const processing =
-    (checkout.isPending && checkout.variables?.planId === plan.id) ||
-    (changePlan.isPending && changePlan.variables?.planId === plan.id);
+  const processing = changePlan.isPending && changePlan.variables?.planId === plan.id;
   const isLoadingThisPlan = isLoadingEstimate;
 
   const tierName = plan.id.startsWith("pro_") ? t("Pro") : t("Plus");
@@ -255,7 +251,7 @@ function PlanCard({
             if (canChange) {
               onChangePlanClick(plan);
             } else {
-              checkout.mutate({ planId: plan.id as IndividualPlanId });
+              onCheckout(plan.id as IndividualPlanId);
             }
           }}
         >
@@ -375,7 +371,9 @@ function BillingDisabled() {
 
 function BillingPageContent() {
   const t = useExtracted();
+  const router = useRouter();
   const getPlanIntervalLabel = usePlanIntervalLabel();
+  const formatCurrencyMinor = useFormatCurrencyMinor();
   const [isChangePlanOpen, setIsChangePlanOpen] = useState(false);
   const [changeTarget, setChangeTarget] = useState<ClientPlan | null>(null);
   const [plusInterval, setPlusInterval] = useState<"monthly" | "yearly">("monthly");
@@ -416,6 +414,15 @@ function BillingPageContent() {
     setPendingPlanId(plan.id as IndividualPlanId);
   }, []);
 
+  const handleCheckout = useCallback(
+    (planId: IndividualPlanId) => {
+      startTransition(() => {
+        router.push(`/settings/billing/checkout?planId=${planId}`);
+      });
+    },
+    [router],
+  );
+
   const utils = trpc.useUtils();
   const statusQuery = trpc.billing.status.useQuery(undefined, {
     refetchInterval: 15000,
@@ -425,17 +432,6 @@ function BillingPageContent() {
   const usageQuery = trpc.billing.usage.useQuery(undefined, {
     refetchInterval: 30000,
     refetchOnWindowFocus: true,
-  });
-
-  const checkout = trpc.billing.createCheckoutSession.useMutation({
-    onSuccess: (data) => {
-      if (data.url) {
-        window.location.href = data.url;
-        return;
-      }
-      toast.error(t("Stripe did not return a checkout URL."));
-    },
-    onError: (error) => toast.error(error.message),
   });
 
   const portal = trpc.billing.createPortalSession.useMutation({
@@ -772,9 +768,9 @@ function BillingPageContent() {
               hasActiveSubscription={hasActiveSubscription}
               cancelDate={cancelDate}
               activePlanId={activePlanId}
-              checkout={checkout}
               changePlan={changePlan}
               onChangePlanClick={handleChangePlanClick}
+              onCheckout={handleCheckout}
               isLoadingEstimate={pendingPlanId === selectedPlusPlan.id && estimateQuery.isLoading}
               isOnTeamPlan={isOnTeamPlan}
             />
@@ -790,9 +786,9 @@ function BillingPageContent() {
               hasActiveSubscription={hasActiveSubscription}
               cancelDate={cancelDate}
               activePlanId={activePlanId}
-              checkout={checkout}
               changePlan={changePlan}
               onChangePlanClick={handleChangePlanClick}
+              onCheckout={handleCheckout}
               isLoadingEstimate={pendingPlanId === selectedProPlan.id && estimateQuery.isLoading}
               isOnTeamPlan={isOnTeamPlan}
             />

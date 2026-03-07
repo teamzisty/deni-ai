@@ -1,5 +1,5 @@
 import { GoogleAnalytics } from "@next/third-parties/google";
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Outfit, JetBrains_Mono, Instrument_Serif, Geist, Geist_Mono } from "next/font/google";
 import { NextIntlClientProvider } from "next-intl";
 import { getExtracted, getLocale, getMessages } from "next-intl/server";
@@ -40,6 +40,13 @@ const geistMono = Geist_Mono({
   display: "swap",
 });
 
+export const viewport: Viewport = {
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#ffffff" },
+    { media: "(prefers-color-scheme: dark)", color: "#171717" },
+  ],
+};
+
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getExtracted();
   const description = t(
@@ -48,11 +55,13 @@ export async function generateMetadata(): Promise<Metadata> {
 
   return {
     metadataBase: new URL("https://deniai.app"),
+    applicationName: "Deni AI",
     title: {
       default: "Deni AI",
       template: "%s | Deni AI",
     },
     description,
+    manifest: "/manifest.webmanifest",
     keywords: [
       "AI chat",
       "ChatGPT alternative",
@@ -65,6 +74,16 @@ export async function generateMetadata(): Promise<Metadata> {
     authors: [{ name: "Deni AI" }],
     creator: "Deni AI",
     publisher: "Deni AI",
+    formatDetection: {
+      address: false,
+      email: false,
+      telephone: false,
+    },
+    appleWebApp: {
+      capable: true,
+      statusBarStyle: "black-translucent",
+      title: "Deni AI",
+    },
     openGraph: {
       type: "website",
       siteName: "Deni AI",

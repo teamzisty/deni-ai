@@ -1,5 +1,5 @@
-import { Handle, Position } from "@xyflow/react";
 import type { ComponentProps } from "react";
+
 import {
   Card,
   CardAction,
@@ -10,6 +10,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
+import { Handle, Position } from "@xyflow/react";
 
 export type NodeProps = ComponentProps<typeof Card> & {
   handles: {

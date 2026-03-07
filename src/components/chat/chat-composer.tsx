@@ -1,6 +1,6 @@
 "use client";
 
-import { SiAnthropic, SiGooglegemini, SiOpenai, SiX } from "@icons-pack/react-simple-icons";
+import { SiAnthropic, SiGooglegemini, SiX } from "@icons-pack/react-simple-icons";
 import type { ChatStatus } from "ai";
 import type { LucideIcon } from "lucide-react";
 import {
@@ -27,6 +27,7 @@ import {
   PromptInputSelectValue,
 } from "@/components/ai-elements/prompt-input";
 import { Composer, type ComposerMessage } from "@/components/chat/composer";
+import Openai from "@/components/openai";
 import { useAvailableModels } from "@/hooks/use-available-models";
 import { models } from "@/lib/constants";
 import { cn } from "@/lib/utils";
@@ -158,7 +159,7 @@ function ModelItem({ model, isSelected }: { model: ModelOption; isSelected: bool
 
               switch (model?.author) {
                 case "openai":
-                  return <SiOpenai aria-hidden="true" />;
+                  return <Openai aria-hidden="true" />;
                 case "anthropic":
                   return <SiAnthropic aria-hidden="true" />;
                 case "google":
@@ -439,7 +440,7 @@ export function ChatComposer({
 
                   switch (selectedModel?.author) {
                     case "openai":
-                      return <SiOpenai aria-hidden="true" />;
+                      return <Openai aria-hidden="true" />;
                     case "anthropic":
                       return <SiAnthropic aria-hidden="true" />;
                     case "google":

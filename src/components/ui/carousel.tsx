@@ -3,7 +3,6 @@
 import * as React from "react";
 import useEmblaCarousel, { type UseEmblaCarouselType } from "embla-carousel-react";
 import { ArrowLeft, ArrowRight } from "lucide-react";
-import { useExtracted } from "next-intl";
 
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -50,7 +49,6 @@ function Carousel({
   children,
   ...props
 }: React.ComponentProps<"div"> & CarouselProps) {
-  const t = useExtracted();
   const [carouselRef, api] = useEmblaCarousel(
     {
       ...opts,
@@ -121,7 +119,7 @@ function Carousel({
         onKeyDownCapture={handleKeyDown}
         className={cn("relative", className)}
         role="region"
-        aria-roledescription={t("carousel")}
+        aria-roledescription="carousel"
         data-slot="carousel"
         {...props}
       >
@@ -145,13 +143,12 @@ function CarouselContent({ className, ...props }: React.ComponentProps<"div">) {
 }
 
 function CarouselItem({ className, ...props }: React.ComponentProps<"div">) {
-  const t = useExtracted();
   const { orientation } = useCarousel();
 
   return (
     <div
       role="group"
-      aria-roledescription={t("slide")}
+      aria-roledescription="slide"
       data-slot="carousel-item"
       className={cn(
         "min-w-0 shrink-0 grow-0 basis-full",
@@ -169,7 +166,6 @@ function CarouselPrevious({
   size = "icon",
   ...props
 }: React.ComponentProps<typeof Button>) {
-  const t = useExtracted();
   const { orientation, scrollPrev, canScrollPrev } = useCarousel();
 
   return (
@@ -189,7 +185,7 @@ function CarouselPrevious({
       {...props}
     >
       <ArrowLeft />
-      <span className="sr-only">{t("Previous slide")}</span>
+      <span className="sr-only">Previous slide</span>
     </Button>
   );
 }
@@ -200,7 +196,6 @@ function CarouselNext({
   size = "icon",
   ...props
 }: React.ComponentProps<typeof Button>) {
-  const t = useExtracted();
   const { orientation, scrollNext, canScrollNext } = useCarousel();
 
   return (
@@ -220,7 +215,7 @@ function CarouselNext({
       {...props}
     >
       <ArrowRight />
-      <span className="sr-only">{t("Next slide")}</span>
+      <span className="sr-only">Next slide</span>
     </Button>
   );
 }

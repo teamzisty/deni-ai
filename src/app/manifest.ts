@@ -6,15 +6,26 @@ export default function manifest(): MetadataRoute.Manifest {
     short_name: "Deni AI",
     description:
       "Access GPT, Claude, Gemini and more AI models in one place. Free, fast, and private AI chat for everyone.",
-    start_url: "/",
+    id: "/",
+    start_url: "/home",
+    scope: "/",
     display: "standalone",
+    orientation: "any",
     background_color: "#ffffff",
-    theme_color: "#000000",
+    theme_color: "#171717",
+    categories: ["productivity", "utilities"],
     icons: [
       {
-        src: "/favicon.ico",
-        sizes: "256x256",
-        type: "image/x-icon",
+        src: "/icon-192x192",
+        sizes: "192x192",
+        type: "image/png",
+        purpose: "maskable",
+      },
+      {
+        src: "/icon-512x512",
+        sizes: "512x512",
+        type: "image/png",
+        purpose: "maskable",
       },
     ],
   };

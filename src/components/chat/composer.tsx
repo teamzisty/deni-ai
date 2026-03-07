@@ -3,6 +3,13 @@
 import { GlobeIcon } from "lucide-react";
 import { useExtracted } from "next-intl";
 import type { ReactNode } from "react";
+import {
+  Attachment,
+  AttachmentInfo,
+  AttachmentPreview,
+  AttachmentRemove,
+  Attachments,
+} from "@/components/ai-elements/attachments";
 import type {
   PromptInputMessage,
   PromptInputProps,
@@ -14,8 +21,6 @@ import {
   PromptInputActionMenu,
   PromptInputActionMenuContent,
   PromptInputActionMenuTrigger,
-  PromptInputAttachment,
-  PromptInputAttachments,
   PromptInputBody,
   PromptInputButton,
   PromptInputFooter,
@@ -23,10 +28,35 @@ import {
   PromptInputSubmit,
   PromptInputTextarea,
   PromptInputTools,
+  usePromptInputAttachments,
 } from "@/components/ai-elements/prompt-input";
 import { cn } from "@/lib/utils";
 
 export type ComposerMessage = PromptInputMessage;
+
+function ComposerAttachments() {
+  const attachments = usePromptInputAttachments();
+
+  if (attachments.files.length === 0) {
+    return null;
+  }
+
+  return (
+    <Attachments variant="inline">
+      {attachments.files.map((attachment) => (
+        <Attachment
+          data={attachment}
+          key={attachment.id}
+          onRemove={() => attachments.remove(attachment.id)}
+        >
+          <AttachmentPreview />
+          <AttachmentInfo />
+          <AttachmentRemove />
+        </Attachment>
+      ))}
+    </Attachments>
+  );
+}
 
 type ComposerProps = Pick<PromptInputProps, "globalDrop" | "multiple"> & {
   value: string;
@@ -77,9 +107,7 @@ export function Composer({
       multiple={multiple}
     >
       <PromptInputHeader className={cn(headerClassName)}>
-        <PromptInputAttachments>
-          {(attachment) => <PromptInputAttachment data={attachment} />}
-        </PromptInputAttachments>
+        <ComposerAttachments />
       </PromptInputHeader>
       <PromptInputBody>
         <PromptInputTextarea
