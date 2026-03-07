@@ -218,6 +218,7 @@ export function AppSidebar() {
   const t = useExtracted();
   const router = useRouter();
   const pathname = usePathname();
+  const isTeamCheckoutRoute = pathname === "/settings/team/checkout";
   const utils = trpc.useUtils();
   const [isDeleteAllDialogOpen, setIsDeleteAllDialogOpen] = useState(false);
   const konamiIndexRef = useRef(0);
@@ -245,6 +246,10 @@ export function AppSidebar() {
       toast.error(t("Failed to delete conversations. Please try again."));
     },
   });
+
+  if (isTeamCheckoutRoute) {
+    return null;
+  }
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {

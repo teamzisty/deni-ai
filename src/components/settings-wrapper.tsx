@@ -16,19 +16,28 @@ import { Progress } from "./ui/progress";
 export default function SettingsWrapper({ children }: { children: React.ReactNode }) {
   const t = useExtracted();
   const pathname = usePathname();
+  const isTeamCheckoutRoute = pathname === "/settings/team/checkout";
   const billingDisabled = isBillingDisabled;
   const statusQuery = trpc.billing.status.useQuery(undefined, {
-    enabled: !billingDisabled,
+    enabled: !billingDisabled && !isTeamCheckoutRoute,
     refetchInterval: 15000,
     refetchOnWindowFocus: true,
   });
   const usageQuery = trpc.billing.usage.useQuery(undefined, {
+    enabled: !isTeamCheckoutRoute,
     refetchInterval: 30000,
     refetchOnWindowFocus: true,
   });
 
-  if (usageQuery.isLoading || (!billingDisabled && statusQuery.isLoading)) {
+  if (
+    !isTeamCheckoutRoute &&
+    (usageQuery.isLoading || (!billingDisabled && statusQuery.isLoading))
+  ) {
     return <Spinner />;
+  }
+
+  if (isTeamCheckoutRoute) {
+    return <div className="mx-auto w-full max-w-5xl pb-12 pt-4">{children}</div>;
   }
 
   const status = statusQuery.data;

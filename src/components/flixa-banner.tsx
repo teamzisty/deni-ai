@@ -2,6 +2,7 @@
 
 import { Code2, X, ArrowRight } from "lucide-react";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { useExtracted } from "next-intl";
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
@@ -12,6 +13,7 @@ const DISMISSED_KEY = "flixa-banner-dismissed";
 
 export function FlixaBanner() {
   const t = useExtracted();
+  const pathname = usePathname();
   const [visible, setVisible] = useState(false);
 
   useEffect(() => {
@@ -20,6 +22,10 @@ export function FlixaBanner() {
       setVisible(true);
     }
   }, []);
+
+  if (pathname === "/settings/team/checkout") {
+    return null;
+  }
 
   const dismiss = () => {
     localStorage.setItem(DISMISSED_KEY, "1");
