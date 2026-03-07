@@ -12,6 +12,7 @@ import {
   streamText,
   type UIMessage,
 } from "ai";
+import { checkBotId } from "botid/server";
 import { and, eq } from "drizzle-orm";
 import { headers } from "next/headers";
 import { NextResponse } from "next/server";
@@ -40,6 +41,14 @@ export async function POST(req: Request) {
   const authHeader = headersList.get("authorization");
   const bearerToken = authHeader?.startsWith("Bearer ") ? authHeader.slice(7) : null;
   const isDeniApiKey = bearerToken?.startsWith("deni_") ?? false;
+
+  if (!isDeniApiKey) {
+    const verification = await checkBotId();
+
+    if (verification.isBot) {
+      return NextResponse.json({ error: "Access denied" }, { status: 403 });
+    }
+  }
 
   let userId: string | undefined;
   let isAnonymous = false;
