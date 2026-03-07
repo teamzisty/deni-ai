@@ -41,12 +41,13 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
-import { trpc } from "@/lib/trpc/react";
 import { AccountMenu } from "@/components/account-menu";
 import { ShareDialog } from "@/components/chat/share-dialog";
 import DeniAIIcon from "@/components/deni-ai-icon";
 import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
+import { isCheckoutSettingsRoute } from "@/lib/settings-routes";
+import { trpc } from "@/lib/trpc/react";
 
 const KONAMI_SEQUENCE = [
   "arrowup",
@@ -218,7 +219,7 @@ export function AppSidebar() {
   const t = useExtracted();
   const router = useRouter();
   const pathname = usePathname();
-  const isTeamCheckoutRoute = pathname === "/settings/team/checkout";
+  const isCheckoutRoute = isCheckoutSettingsRoute(pathname);
   const utils = trpc.useUtils();
   const [isDeleteAllDialogOpen, setIsDeleteAllDialogOpen] = useState(false);
   const konamiIndexRef = useRef(0);
@@ -247,7 +248,7 @@ export function AppSidebar() {
     },
   });
 
-  if (isTeamCheckoutRoute) {
+  if (isCheckoutRoute) {
     return null;
   }
 
