@@ -5,6 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useExtracted } from "next-intl";
 import { useEffect, useState } from "react";
+import { isCheckoutSettingsRoute } from "@/lib/settings-routes";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { SidebarTrigger } from "@/components/ui/sidebar";
@@ -23,7 +24,7 @@ export function FlixaBanner() {
     }
   }, []);
 
-  if (pathname === "/settings/team/checkout") {
+  if (isCheckoutSettingsRoute(pathname)) {
     return null;
   }
 

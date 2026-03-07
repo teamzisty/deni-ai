@@ -9,6 +9,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Spinner } from "@/components/ui/spinner";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { isBillingDisabled } from "@/lib/billing-config";
+import { isCheckoutSettingsRoute } from "@/lib/settings-routes";
 import { trpc } from "@/lib/trpc/react";
 import { cn } from "@/lib/utils";
 import { Progress } from "./ui/progress";
@@ -16,27 +17,24 @@ import { Progress } from "./ui/progress";
 export default function SettingsWrapper({ children }: { children: React.ReactNode }) {
   const t = useExtracted();
   const pathname = usePathname();
-  const isTeamCheckoutRoute = pathname === "/settings/team/checkout";
+  const isCheckoutRoute = isCheckoutSettingsRoute(pathname);
   const billingDisabled = isBillingDisabled;
   const statusQuery = trpc.billing.status.useQuery(undefined, {
-    enabled: !billingDisabled && !isTeamCheckoutRoute,
+    enabled: !billingDisabled && !isCheckoutRoute,
     refetchInterval: 15000,
     refetchOnWindowFocus: true,
   });
   const usageQuery = trpc.billing.usage.useQuery(undefined, {
-    enabled: !isTeamCheckoutRoute,
+    enabled: !isCheckoutRoute,
     refetchInterval: 30000,
     refetchOnWindowFocus: true,
   });
 
-  if (
-    !isTeamCheckoutRoute &&
-    (usageQuery.isLoading || (!billingDisabled && statusQuery.isLoading))
-  ) {
+  if (!isCheckoutRoute && (usageQuery.isLoading || (!billingDisabled && statusQuery.isLoading))) {
     return <Spinner />;
   }
 
-  if (isTeamCheckoutRoute) {
+  if (isCheckoutRoute) {
     return <div className="mx-auto w-full max-w-5xl pb-12 pt-4">{children}</div>;
   }
 
