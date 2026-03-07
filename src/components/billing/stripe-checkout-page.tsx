@@ -185,12 +185,9 @@ function CheckoutSummary({
 
   return (
     <Card className="border-border/80 bg-card/80 shadow-sm backdrop-blur-sm">
-      <CardHeader className="space-y-3">
+      <CardHeader>
         <div className="space-y-1">
           <CardTitle className="text-2xl">{planLabel}</CardTitle>
-          <CardDescription className="max-w-sm">
-            {t("This price is provided directly by Stripe and will match the checkout total.")}
-          </CardDescription>
         </div>
       </CardHeader>
       <CardContent className="space-y-5">
@@ -508,11 +505,6 @@ function CheckoutForm({
                   paymentMethodLogoPosition: "end",
                   radios: false,
                   spacedAccordionItems: false,
-                },
-                wallets: {
-                  applePay: "never",
-                  googlePay: "never",
-                  link: "never",
                 },
               }}
             />
