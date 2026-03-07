@@ -81,6 +81,7 @@ Required variables (validated via `src/env.ts` using Zod):
 **Billing:**
 
 - `STRIPE_SECRET_KEY` - Stripe secret key (required)
+- `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY` - Stripe publishable key (required for custom checkout)
 - `STRIPE_WEBHOOK_SECRET` - Stripe webhook signing secret (optional for local dev)
 
 Missing or invalid environment variables will cause startup failures due to strict Zod validation in `src/env.ts`.

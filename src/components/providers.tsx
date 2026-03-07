@@ -13,6 +13,7 @@ import { ThemePresetProvider } from "@/hooks/use-theme-preset";
 import { authClient } from "@/lib/auth-client";
 import { makeTRPCClient } from "@/lib/trpc/client";
 import { trpc } from "@/lib/trpc/react";
+import { ServiceWorkerRegistration } from "./pwa/service-worker-registration";
 import { ThemeProvider } from "./ui/theme-provider";
 import { TooltipProvider } from "./ui/tooltip";
 
@@ -76,6 +77,7 @@ export function Providers({ children }: { children: ReactNode }) {
                     Link={Link}
                   >
                     {children}
+                    <ServiceWorkerRegistration />
                   </AuthUIProviderTanstack>
                 </AuthQueryProvider>
               </trpc.Provider>

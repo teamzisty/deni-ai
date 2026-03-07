@@ -14,6 +14,7 @@ import {
 import { isBillingDisabled } from "@/lib/billing-config";
 import { disableMaxMode, enableMaxMode, getMaxModeStatus, MAX_MODE_PRICING } from "@/lib/max-mode";
 import { stripe } from "@/lib/stripe";
+import { customCheckoutRequestOptions } from "@/lib/stripe-checkout";
 import { getSubscriptionPeriodEndDate } from "@/lib/stripe-subscriptions";
 import { getUsageSummary } from "@/lib/usage";
 import { type ProtectedContext, protectedProcedure, router } from "../trpc";
@@ -212,6 +213,43 @@ async function syncSubscription(ctx: ProtectedContext, userId: string) {
   return updated;
 }
 
+async function reuseOpenCheckoutSession({
+  checkoutSessionId,
+  userId,
+  planId,
+}: {
+  checkoutSessionId: string | null | undefined;
+  userId: string;
+  planId: string;
+}) {
+  if (!checkoutSessionId) {
+    return null;
+  }
+
+  try {
+    const session = await stripe.checkout.sessions.retrieve(
+      checkoutSessionId,
+      {},
+      customCheckoutRequestOptions,
+    );
+
+    if (
+      session.status !== "open" ||
+      session.ui_mode !== "custom" ||
+      session.client_reference_id !== userId ||
+      session.metadata?.planId !== planId ||
+      !session.client_secret
+    ) {
+      return null;
+    }
+
+    return session;
+  } catch (error) {
+    console.warn("Failed to reuse checkout session", error);
+    return null;
+  }
+}
+
 export const billingRouter = router({
   plans: billingEnabledProcedure.query(async () => {
     const individualPlans = billingPlans.filter((p) => !isTeamPlan(p.id));
@@ -318,6 +356,19 @@ export const billingRouter = router({
       const price = await getPriceForPlan(plan);
       const mode = deriveModeFromPrice(price);
 
+      const reusableSession = await reuseOpenCheckoutSession({
+        checkoutSessionId: billingRecord.checkoutSessionId,
+        userId: ctx.userId,
+        planId: plan.id,
+      });
+
+      if (reusableSession) {
+        return {
+          sessionId: reusableSession.id,
+          clientSecret: reusableSession.client_secret,
+        };
+      }
+
       if (mode === "subscription") {
         const existingSubs = await stripe.subscriptions.list({
           customer: billingRecord.stripeCustomerId,
@@ -337,46 +388,49 @@ export const billingRouter = router({
         }
       }
 
-      const session = await stripe.checkout.sessions.create({
-        mode: mode === "payment" ? "payment" : "subscription",
-        customer: billingRecord.stripeCustomerId,
-        client_reference_id: ctx.userId,
-        adaptive_pricing: {
-          enabled: true,
-        },
-        line_items: [
-          {
-            price: price.id,
-            quantity: 1,
+      const session = await stripe.checkout.sessions.create(
+        {
+          mode: mode === "payment" ? "payment" : "subscription",
+          ui_mode: "custom",
+          customer: billingRecord.stripeCustomerId,
+          client_reference_id: ctx.userId,
+          adaptive_pricing: {
+            enabled: true,
           },
-        ],
-        metadata: {
-          userId: ctx.userId,
-          planId: plan.id,
+          line_items: [
+            {
+              price: price.id,
+              quantity: 1,
+            },
+          ],
+          metadata: {
+            userId: ctx.userId,
+            planId: plan.id,
+          },
+          subscription_data:
+            mode === "subscription"
+              ? {
+                  metadata: {
+                    userId: ctx.userId,
+                    planId: plan.id,
+                  },
+                }
+              : undefined,
+          payment_intent_data:
+            mode === "payment"
+              ? {
+                  metadata: {
+                    userId: ctx.userId,
+                    planId: plan.id,
+                    priceId: price.id,
+                  },
+                }
+              : undefined,
+          allow_promotion_codes: true,
+          return_url: `${env.NEXT_PUBLIC_BETTER_AUTH_URL}/settings/billing/checkout?session_id={CHECKOUT_SESSION_ID}`,
         },
-        subscription_data:
-          mode === "subscription"
-            ? {
-                metadata: {
-                  userId: ctx.userId,
-                  planId: plan.id,
-                },
-              }
-            : undefined,
-        payment_intent_data:
-          mode === "payment"
-            ? {
-                metadata: {
-                  userId: ctx.userId,
-                  planId: plan.id,
-                  priceId: price.id,
-                },
-              }
-            : undefined,
-        allow_promotion_codes: true,
-        success_url: `${env.NEXT_PUBLIC_BETTER_AUTH_URL}/settings/billing?session_id={CHECKOUT_SESSION_ID}`,
-        cancel_url: `${env.NEXT_PUBLIC_BETTER_AUTH_URL}/settings/billing`,
-      });
+        customCheckoutRequestOptions,
+      );
 
       await ctx.db
         .insert(billing)
@@ -402,7 +456,45 @@ export const billingRouter = router({
           },
         });
 
-      return { url: session.url };
+      if (!session.client_secret) {
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Stripe did not return a checkout client secret.",
+        });
+      }
+
+      return { sessionId: session.id, clientSecret: session.client_secret };
+    }),
+  getCheckoutSession: billingEnabledProcedure
+    .input(
+      z.object({
+        sessionId: z.string().min(1),
+      }),
+    )
+    .query(async ({ ctx, input }) => {
+      const session = await stripe.checkout.sessions.retrieve(
+        input.sessionId,
+        {},
+        customCheckoutRequestOptions,
+      );
+
+      if (session.client_reference_id && session.client_reference_id !== ctx.userId) {
+        throw new TRPCError({
+          code: "UNAUTHORIZED",
+          message: "Session does not belong to the current user.",
+        });
+      }
+
+      return {
+        sessionId: session.id,
+        clientSecret: session.client_secret,
+        status: session.status,
+        paymentStatus: session.payment_status,
+        amountTotal: session.amount_total,
+        currency: session.currency,
+        mode: session.mode,
+        planId: session.metadata?.planId ?? null,
+      };
     }),
   confirmCheckout: billingEnabledProcedure
     .input(

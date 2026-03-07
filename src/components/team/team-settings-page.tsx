@@ -1,9 +1,9 @@
 "use client";
 
 import { Crown, Mail, MoreHorizontal, Plus, Trash2, UserPlus, Users } from "lucide-react";
-import { useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useExtracted } from "next-intl";
-import { useEffect, useState } from "react";
+import { startTransition, useEffect, useState } from "react";
 import { toast } from "sonner";
 import {
   AlertDialog,
@@ -43,6 +43,7 @@ import {
 
 import { Spinner } from "@/components/ui/spinner";
 import { authClient } from "@/lib/auth-client";
+import { formatMinorCurrency } from "@/lib/currency";
 import { trpc } from "@/lib/trpc/react";
 
 type Organization = {
@@ -76,15 +77,15 @@ type Invitation = {
 
 function formatCurrency(amount: number | null, currency: string | null) {
   if (amount === null || !currency) return "—";
-  return new Intl.NumberFormat(undefined, {
-    style: "currency",
-    currency,
+  return formatMinorCurrency(amount, currency, {
+    currencyDisplay: "code",
     minimumFractionDigits: 0,
-  }).format(amount / 100);
+  });
 }
 
 export function TeamSettingsPage() {
   const t = useExtracted();
+  const router = useRouter();
   const searchParams = useSearchParams();
 
   const [organizations, setOrganizations] = useState<Organization[]>([]);
@@ -116,7 +117,6 @@ export function TeamSettingsPage() {
     enabled: Boolean(activeOrg?.id) && currentUserRole === "owner",
   });
 
-  const createCheckout = trpc.organization.createTeamCheckoutSession.useMutation();
   const createPortal = trpc.organization.createTeamPortalSession.useMutation();
   const cancelSub = trpc.organization.cancelTeamSubscription.useMutation();
   const resumeSub = trpc.organization.resumeTeamSubscription.useMutation();
@@ -273,20 +273,9 @@ export function TeamSettingsPage() {
 
   async function handleSubscribe(planId: "pro_team_monthly" | "pro_team_yearly") {
     if (!activeOrg) return;
-    try {
-      const result = await createCheckout.mutateAsync({
-        planId,
-        organizationId: activeOrg.id,
-      });
-      if (result.url) {
-        window.location.href = result.url;
-      } else {
-        toast.error(t("Stripe did not return a checkout URL."));
-      }
-    } catch (error) {
-      console.error("Failed to create checkout", error);
-      toast.error(t("Failed to start checkout"));
-    }
+    startTransition(() => {
+      router.push(`/settings/team/checkout?organizationId=${activeOrg.id}&planId=${planId}`);
+    });
   }
 
   async function handleManage() {
@@ -545,9 +534,7 @@ export function TeamSettingsPage() {
                       <Button
                         className="mt-3 w-full"
                         onClick={() => handleSubscribe("pro_team_monthly")}
-                        disabled={createCheckout.isPending}
                       >
-                        {createCheckout.isPending && <Spinner className="h-3.5 w-3.5" />}
                         {t("Subscribe")}
                       </Button>
                     </CardContent>
@@ -566,9 +553,7 @@ export function TeamSettingsPage() {
                       <Button
                         className="mt-3 w-full"
                         onClick={() => handleSubscribe("pro_team_yearly")}
-                        disabled={createCheckout.isPending}
                       >
-                        {createCheckout.isPending && <Spinner className="h-3.5 w-3.5" />}
                         {t("Subscribe")}
                       </Button>
                     </CardContent>

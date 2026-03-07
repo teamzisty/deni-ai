@@ -56,6 +56,7 @@ BRAVE_SEARCH_API_KEY=your-brave-search-key
 
 # Stripe (optional, can disable with NEXT_PUBLIC_BILLING_DISABLED=true)
 STRIPE_SECRET_KEY=sk_test_your-stripe-key
+NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=pk_test_your-stripe-publishable-key
 STRIPE_WEBHOOK_SECRET=whsec_your-webhook-secret
 
 # Turnstile (Cloudflare CAPTCHA)
@@ -153,8 +154,11 @@ If you want to enable Stripe billing:
 
 ```env
 STRIPE_SECRET_KEY=sk_test_your-stripe-key
+NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=pk_test_your-stripe-publishable-key
 STRIPE_WEBHOOK_SECRET=whsec_your-webhook-secret
 ```
+
+`NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY` is required for the custom Stripe checkout UI.
 
 4. Set up webhook endpoint:
    - Endpoint URL: `{NEXT_PUBLIC_BETTER_AUTH_URL}/api/stripe/webhook`
