@@ -6,6 +6,9 @@ const nextConfig: NextConfig = {
   transpilePackages: ["shiki"],
   reactCompiler: true,
   poweredByHeader: false,
+  typescript: {
+    ignoreBuildErrors: true,
+  },
   async headers() {
     const securityHeaders = [
       { key: "X-Content-Type-Options", value: "nosniff" },
