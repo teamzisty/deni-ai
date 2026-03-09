@@ -1,6 +1,6 @@
 "use client";
 
-import { Zap, Check, Users } from "lucide-react";
+import { Zap, Users } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useExtracted, useLocale } from "next-intl";
@@ -9,9 +9,11 @@ import { toast } from "sonner";
 import type { BillingPlanId, ClientPlan, IndividualPlanId } from "@/lib/billing";
 import { isTeamPlan } from "@/lib/billing";
 import { isBillingDisabled } from "@/lib/billing-config";
+import { getBillingPlanCopy } from "@/lib/billing-plan-copy";
 import { formatMinorCurrency } from "@/lib/currency";
 import { trpc } from "@/lib/trpc/react";
 import { cn } from "@/lib/utils";
+import { PlanHighlights } from "./plan-highlights";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -83,69 +85,6 @@ function useFormatCurrencyMinor() {
     formatMinorCurrency(amountMinor, currency, { currencyDisplay: "code" }, locale);
 }
 
-type PlanCopy = {
-  tagline: string;
-  highlights: string[];
-  badge?: string;
-};
-
-function usePlanCopy() {
-  const t = useExtracted();
-  return (planId: BillingPlanId): PlanCopy => {
-    switch (planId) {
-      case "plus_monthly":
-        return {
-          tagline: t("Get unbelievable usage limits"),
-          highlights: [
-            t("Get 4x usage for basic models"),
-            t("Get 10x usage for premium models"),
-            t("With priority support"),
-            t("Deni AI Code - Plus access"),
-            t("For trying Deni AI"),
-          ],
-        };
-      case "plus_yearly":
-        return {
-          tagline: t("Incredible deal"),
-          highlights: [
-            t("Get 4x usage for basic models"),
-            t("Get 10x usage for premium models"),
-            t("With priority support"),
-            t("Deni AI Code - Plus access"),
-            t("Most cost-effective"),
-          ],
-        };
-      case "pro_monthly":
-        return {
-          tagline: t("Great deals even for power users"),
-          highlights: [
-            t("Get 10x usage for basic models"),
-            t("Get 20x usage for premium models"),
-            t("Max Mode pay-per-use available"),
-            t("Deni AI Code - Pro access"),
-            t("For power users"),
-          ],
-        };
-      case "pro_yearly":
-        return {
-          tagline: t("You like us, and we like you too!"),
-          highlights: [
-            t("Get 10x usage for basic models"),
-            t("Get 20x usage for premium models"),
-            t("Max Mode pay-per-use available"),
-            t("Deni AI Code - Pro access"),
-            t("For power users"),
-          ],
-        };
-      default:
-        return {
-          tagline: "",
-          highlights: [],
-        };
-    }
-  };
-}
-
 function usePlanIntervalLabel() {
   const t = useExtracted();
   return (planId: BillingPlanId) => {
@@ -168,6 +107,7 @@ function PlanCard({
   cancelDate,
   activePlanId,
   changePlan,
+  checkout,
   onChangePlanClick,
   onCheckout,
   isLoadingEstimate,
@@ -181,19 +121,21 @@ function PlanCard({
   cancelDate: number | false;
   activePlanId: string | undefined;
   changePlan: { isPending: boolean; variables?: { planId: IndividualPlanId } };
+  checkout: { isPending: boolean; variables?: { planId: IndividualPlanId } };
   onChangePlanClick: (plan: ClientPlan) => void;
   onCheckout: (planId: IndividualPlanId) => void;
   isLoadingEstimate: boolean;
   isOnTeamPlan?: boolean;
 }) {
   const t = useExtracted();
-  const getPlanCopy = usePlanCopy();
   const formatPriceLabel = useFormatPriceLabel();
-  const planCopy = getPlanCopy(plan.id);
+  const planCopy = getBillingPlanCopy(t, plan.id);
   const mode = plan.mode ?? "subscription";
   const canChange = hasActiveSubscription && !cancelDate && !isCurrent && mode === "subscription";
   const isBlockedByCancel = Number.isInteger(cancelDate) && Boolean(activePlanId) && !isCurrent;
-  const processing = changePlan.isPending && changePlan.variables?.planId === plan.id;
+  const processing =
+    (changePlan.isPending && changePlan.variables?.planId === plan.id) ||
+    (checkout.isPending && checkout.variables?.planId === plan.id);
   const isLoadingThisPlan = isLoadingEstimate;
 
   const tierName = plan.id.startsWith("pro_") ? t("Pro") : t("Plus");
@@ -230,16 +172,7 @@ function PlanCard({
       <CardContent className="flex flex-1 flex-col pt-0">
         <div className="flex-1">
           <div className="text-2xl font-semibold tracking-tight">{formatPriceLabel(plan)}</div>
-          {planCopy.highlights.length > 0 && (
-            <ul className="mt-5 space-y-2.5">
-              {planCopy.highlights.map((item) => (
-                <li key={item} className="flex items-start gap-2.5 text-sm">
-                  <Check className="w-4 h-4 mt-0.5 text-muted-foreground shrink-0" />
-                  <span className="text-muted-foreground">{item}</span>
-                </li>
-              ))}
-            </ul>
-          )}
+          <PlanHighlights items={planCopy.highlights} className="mt-5" />
         </div>
         <Button
           className="mt-6 w-full font-medium"
@@ -414,13 +347,20 @@ function BillingPageContent() {
     setPendingPlanId(plan.id as IndividualPlanId);
   }, []);
 
+  const createCheckout = trpc.billing.createCheckoutSession.useMutation();
+
   const handleCheckout = useCallback(
-    (planId: IndividualPlanId) => {
-      startTransition(() => {
-        router.push(`/settings/billing/checkout?planId=${planId}`);
-      });
+    async (planId: IndividualPlanId) => {
+      try {
+        const result = await createCheckout.mutateAsync({ planId });
+        startTransition(() => {
+          router.push(`/settings/billing/checkout/${result.sessionId}`);
+        });
+      } catch (error) {
+        toast.error(error instanceof Error ? error.message : t("Unable to load checkout."));
+      }
     },
-    [router],
+    [createCheckout, router, t],
   );
 
   const utils = trpc.useUtils();
@@ -769,6 +709,7 @@ function BillingPageContent() {
               cancelDate={cancelDate}
               activePlanId={activePlanId}
               changePlan={changePlan}
+              checkout={createCheckout}
               onChangePlanClick={handleChangePlanClick}
               onCheckout={handleCheckout}
               isLoadingEstimate={pendingPlanId === selectedPlusPlan.id && estimateQuery.isLoading}
@@ -787,6 +728,7 @@ function BillingPageContent() {
               cancelDate={cancelDate}
               activePlanId={activePlanId}
               changePlan={changePlan}
+              checkout={createCheckout}
               onChangePlanClick={handleChangePlanClick}
               onCheckout={handleCheckout}
               isLoadingEstimate={pendingPlanId === selectedProPlan.id && estimateQuery.isLoading}
@@ -823,18 +765,13 @@ function BillingPageContent() {
           </Button>
         </CardHeader>
         <CardContent>
-          <ul className="space-y-2">
-            {[
+          <PlanHighlights
+            items={[
               t("Pro benefits for every team member"),
               t("Per-seat billing — pay only for active members"),
               t("Centralized billing and member management"),
-            ].map((item) => (
-              <li key={item} className="flex items-start gap-2.5 text-sm">
-                <Check className="w-4 h-4 mt-0.5 text-muted-foreground shrink-0" />
-                <span className="text-muted-foreground">{item}</span>
-              </li>
-            ))}
-          </ul>
+            ]}
+          />
         </CardContent>
       </Card>
 

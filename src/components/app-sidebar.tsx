@@ -248,11 +248,12 @@ export function AppSidebar() {
     },
   });
 
-  if (isCheckoutRoute) {
-    return null;
-  }
-
   useEffect(() => {
+    if (isCheckoutRoute) {
+      konamiIndexRef.current = 0;
+      return;
+    }
+
     const handleKeyDown = (event: KeyboardEvent) => {
       if (isDeleteAllDialogOpen) {
         return;
@@ -277,7 +278,11 @@ export function AppSidebar() {
     return () => {
       window.removeEventListener("keydown", handleKeyDown);
     };
-  }, [isDeleteAllDialogOpen]);
+  }, [isCheckoutRoute, isDeleteAllDialogOpen]);
+
+  if (isCheckoutRoute) {
+    return null;
+  }
 
   const handleNewChat = () => {
     createConversion.mutate();

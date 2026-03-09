@@ -1,3 +1,12 @@
+.t3-chat,
+.dark > .t3-chat,
+.tangerine,
+.dark > .tangerine {
+  --app-font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  --app-font-serif: var(--font-instrument-serif), serif;
+  --app-font-mono: var(--font-jetbrains-mono), ui-monospace, monospace;
+}
+
 .t3-chat {
   --background: oklch(0.9754 0.0084 325.6414);
   --foreground: oklch(0.3257 0.1161 325.0372);
@@ -185,9 +194,6 @@
   --sidebar-accent-foreground: oklch(0.8823 0.0571 254.1284);
   --sidebar-border: oklch(0.3843 0.0301 269.7337);
   --sidebar-ring: oklch(0.6397 0.172 36.4421);
-  --font-sans: Inter, sans-serif;
-  --font-serif: Source Serif 4, serif;
-  --font-mono: JetBrains Mono, monospace;
   --radius: 0.75rem;
   --shadow-x: 0px;
   --shadow-y: 1px;
@@ -238,9 +244,9 @@
   --sidebar-accent-foreground: oklch(0.2046 0 0);
   --sidebar-border: oklch(0.9219 0 0);
   --sidebar-ring: oklch(0.709 0 0);
-  --font-sans: Geist Mono, monospace;
-  --font-serif: Geist Mono, monospace;
-  --font-mono: Geist Mono, monospace;
+  --app-font-sans: var(--font-geist-mono), monospace;
+  --app-font-serif: var(--font-geist-mono), monospace;
+  --app-font-mono: var(--font-geist-mono), monospace;
   --radius: 0rem;
   --shadow-x: 0px;
   --shadow-y: 1px;
@@ -302,6 +308,9 @@
   --sidebar-accent-foreground: oklch(0.9851 0 0);
   --sidebar-border: oklch(1 0 0);
   --sidebar-ring: oklch(0.4386 0 0);
+  --app-font-sans: var(--font-geist-mono), monospace;
+  --app-font-serif: var(--font-geist-mono), monospace;
+  --app-font-mono: var(--font-geist-mono), monospace;
   --radius: 0rem;
   --shadow-x: 0px;
   --shadow-y: 1px;

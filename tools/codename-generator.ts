@@ -118,7 +118,6 @@ export function getRemainingCount(): number {
   return totalPossible - store.used.length;
 }
 
-// CLI usage
 const isMain =
   typeof process !== "undefined" &&
   process.argv[1] &&

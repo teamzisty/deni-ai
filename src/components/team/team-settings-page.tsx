@@ -17,6 +17,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { PlanHighlights } from "@/components/billing/plan-highlights";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Dialog,
@@ -43,6 +44,7 @@ import {
 
 import { Spinner } from "@/components/ui/spinner";
 import { authClient } from "@/lib/auth-client";
+import { getBillingPlanCopy } from "@/lib/billing-plan-copy";
 import { formatMinorCurrency } from "@/lib/currency";
 import { trpc } from "@/lib/trpc/react";
 
@@ -118,6 +120,7 @@ export function TeamSettingsPage() {
   });
 
   const createPortal = trpc.organization.createTeamPortalSession.useMutation();
+  const createTeamCheckout = trpc.organization.createTeamCheckoutSession.useMutation();
   const cancelSub = trpc.organization.cancelTeamSubscription.useMutation();
   const resumeSub = trpc.organization.resumeTeamSubscription.useMutation();
   const utils = trpc.useUtils();
@@ -273,9 +276,18 @@ export function TeamSettingsPage() {
 
   async function handleSubscribe(planId: "pro_team_monthly" | "pro_team_yearly") {
     if (!activeOrg) return;
-    startTransition(() => {
-      router.push(`/settings/team/checkout?organizationId=${activeOrg.id}&planId=${planId}`);
-    });
+    try {
+      const result = await createTeamCheckout.mutateAsync({
+        organizationId: activeOrg.id,
+        planId,
+      });
+      startTransition(() => {
+        router.push(`/settings/team/checkout/${result.sessionId}?organizationId=${activeOrg.id}`);
+      });
+    } catch (error) {
+      console.error("Failed to create checkout session", error);
+      toast.error(error instanceof Error ? error.message : t("Unable to load checkout."));
+    }
   }
 
   async function handleManage() {
@@ -394,6 +406,8 @@ export function TeamSettingsPage() {
   const teamPlans = teamPlansQuery.data?.plans ?? [];
   const monthlyPlan = teamPlans.find((p) => p.id === "pro_team_monthly");
   const yearlyPlan = teamPlans.find((p) => p.id === "pro_team_yearly");
+  const monthlyPlanCopy = getBillingPlanCopy(t, "pro_team_monthly");
+  const yearlyPlanCopy = getBillingPlanCopy(t, "pro_team_yearly");
 
   return (
     <div className="space-y-6">
@@ -426,7 +440,7 @@ export function TeamSettingsPage() {
               </SelectContent>
             </Select>
           )}
-          <Button variant="outline" size="sm" onClick={() => setIsCreateDialogOpen(true)}>
+          <Button variant="outline" onClick={() => setIsCreateDialogOpen(true)}>
             <Plus className="h-3.5 w-3.5" />
             {t("New Team")}
           </Button>
@@ -522,38 +536,81 @@ export function TeamSettingsPage() {
             ) : (
               <div className="grid gap-3 sm:grid-cols-2">
                 {monthlyPlan && (
-                  <Card className="border-muted">
-                    <CardContent className="py-4">
-                      <p className="text-sm font-medium">{t("Monthly")}</p>
+                  <Card className="flex flex-col border-muted">
+                    <CardHeader className="pb-4">
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="space-y-1">
+                          <CardTitle className="text-base">{t("Pro for Teams")}</CardTitle>
+                          <CardDescription className="text-sm">
+                            {monthlyPlanCopy.tagline}
+                          </CardDescription>
+                        </div>
+                        <Badge variant="secondary" className="text-xs">
+                          {t("Monthly")}
+                        </Badge>
+                      </div>
+                    </CardHeader>
+                    <CardContent className="flex flex-1 flex-col pt-0">
                       <p className="text-2xl font-bold">
                         {formatCurrency(monthlyPlan.amount, monthlyPlan.currency)}
                         <span className="text-sm font-normal text-muted-foreground">
                           /{t("seat")}/{t("month")}
                         </span>
                       </p>
+                      <PlanHighlights items={monthlyPlanCopy.highlights} className="mt-5 flex-1" />
                       <Button
-                        className="mt-3 w-full"
+                        className="mt-5 w-full"
+                        disabled={createTeamCheckout.isPending}
                         onClick={() => handleSubscribe("pro_team_monthly")}
                       >
+                        {createTeamCheckout.isPending &&
+                        createTeamCheckout.variables?.planId === "pro_team_monthly" ? (
+                          <Spinner className="h-3.5 w-3.5" />
+                        ) : null}
                         {t("Subscribe")}
                       </Button>
                     </CardContent>
                   </Card>
                 )}
                 {yearlyPlan && (
-                  <Card className="border-muted">
-                    <CardContent className="py-4">
-                      <p className="text-sm font-medium">{t("Yearly")}</p>
+                  <Card className="flex flex-col border-muted">
+                    <CardHeader className="pb-4">
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="space-y-1">
+                          <div className="flex items-center gap-2">
+                            <CardTitle className="text-base">{t("Pro for Teams")}</CardTitle>
+                            {yearlyPlanCopy.badge ? (
+                              <Badge variant="secondary" className="text-xs">
+                                {yearlyPlanCopy.badge}
+                              </Badge>
+                            ) : null}
+                          </div>
+                          <CardDescription className="text-sm">
+                            {yearlyPlanCopy.tagline}
+                          </CardDescription>
+                        </div>
+                        <Badge variant="secondary" className="text-xs">
+                          {t("Yearly")}
+                        </Badge>
+                      </div>
+                    </CardHeader>
+                    <CardContent className="flex flex-1 flex-col pt-0">
                       <p className="text-2xl font-bold">
                         {formatCurrency(yearlyPlan.amount, yearlyPlan.currency)}
                         <span className="text-sm font-normal text-muted-foreground">
                           /{t("seat")}/{t("year")}
                         </span>
                       </p>
+                      <PlanHighlights items={yearlyPlanCopy.highlights} className="mt-5 flex-1" />
                       <Button
-                        className="mt-3 w-full"
+                        className="mt-5 w-full"
+                        disabled={createTeamCheckout.isPending}
                         onClick={() => handleSubscribe("pro_team_yearly")}
                       >
+                        {createTeamCheckout.isPending &&
+                        createTeamCheckout.variables?.planId === "pro_team_yearly" ? (
+                          <Spinner className="h-3.5 w-3.5" />
+                        ) : null}
                         {t("Subscribe")}
                       </Button>
                     </CardContent>
