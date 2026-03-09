@@ -6,7 +6,7 @@ This guide covers prerequisites, environment configuration, database setup, and 
 
 - [Bun](https://bun.sh/) (recommended) or [Node.js 20+](https://nodejs.org/)
 - [PostgreSQL database](https://neon.tech/) (Neon serverless recommended)
-- API keys for AI providers (at least one required)
+- API keys for AI providers (Google AI, Groq, OpenRouter)
 - OAuth credentials for authentication providers
 
 ## Getting Started
@@ -44,38 +44,31 @@ GOOGLE_CLIENT_SECRET=your-google-client-secret
 GITHUB_CLIENT_ID=your-github-client-id
 GITHUB_CLIENT_SECRET=your-github-client-secret
 
-# AI Providers (at least one required)
-OPENAI_API_KEY=sk-your-openai-key
-ANTHROPIC_API_KEY=sk-ant-your-anthropic-key
+# AI Providers
 GOOGLE_GENERATIVE_AI_API_KEY=your-google-ai-key
-GROQ_API_KEY=gsk-your-groq-key
+GROQ_API_KEY=gsk_your-groq-key
 OPENROUTER_API_KEY=sk-or-your-openrouter-key
 
-# Search (optional)
+# Search
 BRAVE_SEARCH_API_KEY=your-brave-search-key
 
-# Stripe (optional, can disable with NEXT_PUBLIC_BILLING_DISABLED=true)
-STRIPE_SECRET_KEY=sk_test_your-stripe-key
-NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=pk_test_your-stripe-publishable-key
-STRIPE_WEBHOOK_SECRET=whsec_your-webhook-secret
-
-# Turnstile (Cloudflare CAPTCHA)
+# CAPTCHA (Cloudflare Turnstile)
 TURNSTILE_SECRET_KEY=your-turnstile-secret
 NEXT_PUBLIC_TURNSTILE_SITE_KEY=your-turnstile-site-key
+
+# Stripe Billing
+STRIPE_SECRET_KEY=sk_test_your-stripe-key
+NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=pk_test_your-stripe-publishable-key
+STRIPE_WEBHOOK_SECRET=whsec_your-webhook-secret  # optional for local dev
+
+# Email (optional)
+RESEND_API_KEY=re_your-resend-key
 
 # Optional: Disable billing
 NEXT_PUBLIC_BILLING_DISABLED=1
 ```
 
-Also edit constants.ts:
-
-```ts
-// Analytics + Email (optional)
-GA_ID = G - XXXXXXXXXX;
-EMAIL_FROM = "Deni AI <noreply@deniai.app>";
-```
-
-Note: when adding or updating supported AI providers/models, also update `src/lib/constants.ts`.
+When adding or updating supported AI providers/models, also update `src/lib/constants.ts`.
 
 #### Generate `BETTER_AUTH_SECRET`
 
