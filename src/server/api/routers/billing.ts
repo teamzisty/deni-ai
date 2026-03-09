@@ -427,7 +427,7 @@ export const billingRouter = router({
                 }
               : undefined,
           allow_promotion_codes: true,
-          return_url: `${env.NEXT_PUBLIC_BETTER_AUTH_URL}/settings/billing/checkout?session_id={CHECKOUT_SESSION_ID}`,
+          return_url: `${env.NEXT_PUBLIC_BETTER_AUTH_URL}/settings/billing/checkout/{CHECKOUT_SESSION_ID}`,
         },
         customCheckoutRequestOptions,
       );

@@ -15,7 +15,8 @@
     "db:migrate": "bun run --env-file=.env.production drizzle-kit migrate",
     "db:migrate:dev": "bun run --env-file=.env.local db:migrate",
     "db:push": "drizzle-kit push",
-    "tools:codename": "bun ./tools/codename-generator.ts"
+    "tools:codename": "bun ./tools/codename-generator.ts",
+    "tools:commit": "bun ./tools/openrouter-commit.ts"
   },
   "dependencies": {
     "@ai-sdk/anthropic": "^3.0.58",

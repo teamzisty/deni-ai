@@ -17,9 +17,12 @@ import { useTheme } from "next-themes";
 import { startTransition, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import type { BillingPlanId, IndividualPlanId, TeamPlanId } from "@/lib/billing";
+import { findPlanById } from "@/lib/billing";
+import { getBillingPlanCopy } from "@/lib/billing-plan-copy";
 import { formatMinorCurrency } from "@/lib/currency";
 import { stripeJsPromise } from "@/lib/stripe-js";
 import { makeTRPCClient } from "@/lib/trpc/client";
+import { PlanHighlights } from "./plan-highlights";
 import { Button } from "../ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../ui/card";
 import { Input } from "../ui/input";
@@ -177,17 +180,23 @@ function usePlanLabel() {
 function CheckoutSummary({
   checkout,
   planLabel,
+  planId,
 }: {
   checkout: StripeCheckoutValue;
   planLabel: string;
+  planId: BillingPlanId | null;
 }) {
   const t = useExtracted();
+  const planCopy = planId ? getBillingPlanCopy(t, planId) : null;
 
   return (
-    <Card className="border-border/80 bg-card/80 shadow-sm backdrop-blur-sm">
+    <Card className="not-first:border-border/80 bg-card/80 shadow-sm backdrop-blur-sm">
       <CardHeader>
         <div className="space-y-1">
           <CardTitle className="text-2xl">{planLabel}</CardTitle>
+          {planCopy?.tagline ? (
+            <CardDescription className="text-sm">{planCopy.tagline}</CardDescription>
+          ) : null}
         </div>
       </CardHeader>
       <CardContent className="space-y-5">
@@ -214,6 +223,12 @@ function CheckoutSummary({
             </div>
           )}
         </div>
+
+        {planCopy ? (
+          <div className="rounded-2xl border border-border/80 bg-background/70 p-5">
+            <PlanHighlights items={planCopy.highlights} />
+          </div>
+        ) : null}
       </CardContent>
     </Card>
   );
@@ -347,7 +362,6 @@ function PromotionCodeSection({ checkout }: { checkout: StripeCheckoutValue }) {
           <Button
             type="button"
             variant="outline"
-            className="h-9 rounded-full px-4"
             disabled={isApplyingPromotion || promotionCode.trim().length === 0}
             onClick={handleApplyPromotionCode}
           >
@@ -368,12 +382,14 @@ function CheckoutForm({
   returnLabel,
   returnUrl,
   appearance,
+  planId,
 }: {
   planLabel: string;
   backHref: string;
   returnLabel: string;
   returnUrl: string;
   appearance: Appearance;
+  planId: BillingPlanId | null;
 }) {
   const t = useExtracted();
   const router = useRouter();
@@ -528,20 +544,19 @@ function CheckoutForm({
             />
           </div>
         </section>
+      </div>
 
-        {submitError && <p className="text-sm text-destructive">{submitError}</p>}
+      <div className="lg:sticky lg:top-6 space-y-6">
+        <CheckoutSummary checkout={activeCheckout} planLabel={planLabel} planId={planId} />
         <Button
           className="h-11 w-full rounded-full text-sm font-medium"
           disabled={isSubmitting || !activeCheckout.canConfirm}
           onClick={handleConfirm}
         >
           {isSubmitting && <Spinner className="size-4" />}
+          {submitError && <p className="text-sm text-destructive">{submitError}</p>}
           {activeCheckout.recurring ? t("Start subscription") : t("Complete payment")}
         </Button>
-      </div>
-
-      <div className="lg:sticky lg:top-6">
-        <CheckoutSummary checkout={activeCheckout} planLabel={planLabel} />
       </div>
     </div>
   );
@@ -602,7 +617,11 @@ export function StripeCheckoutPage(props: StripeCheckoutPageProps) {
   const [session, setSession] = useState<CheckoutSessionSummary | null>(null);
   const [bootstrapError, setBootstrapError] = useState<string | null>(null);
   const [isBootstrapping, setIsBootstrapping] = useState(true);
-  const planLabel = usePlanLabel()((session?.planId as BillingPlanId | null) ?? planId);
+  const resolvedPlanId = useMemo(() => {
+    const candidate = session?.planId ?? planId;
+    return candidate ? (findPlanById(candidate)?.id ?? null) : null;
+  }, [planId, session?.planId]);
+  const planLabel = usePlanLabel()(resolvedPlanId ?? session?.planId ?? planId);
   const checkoutAppearance = useMemo(
     () => getStripeCheckoutAppearance(resolvedTheme),
     [resolvedTheme],
@@ -615,8 +634,8 @@ export function StripeCheckoutPage(props: StripeCheckoutPageProps) {
       ? backHref
       : `${window.location.origin}${
           scope === "billing"
-            ? `/settings/billing/checkout?session_id=${session?.sessionId ?? sessionId ?? ""}`
-            : `/settings/team/checkout?organizationId=${organizationId}&session_id=${session?.sessionId ?? sessionId ?? ""}`
+            ? `/settings/billing/checkout/${session?.sessionId ?? sessionId ?? ""}`
+            : `/settings/team/checkout/${session?.sessionId ?? sessionId ?? ""}?organizationId=${organizationId}`
         }`;
 
   useEffect(() => {
@@ -681,8 +700,8 @@ export function StripeCheckoutPage(props: StripeCheckoutPageProps) {
 
       const nextHref =
         scope === "billing"
-          ? `/settings/billing/checkout?session_id=${result.sessionId}`
-          : `/settings/team/checkout?organizationId=${organizationId}&session_id=${result.sessionId}`;
+          ? `/settings/billing/checkout/${result.sessionId}`
+          : `/settings/team/checkout/${result.sessionId}?organizationId=${organizationId}`;
 
       startTransition(() => {
         router.replace(nextHref);
@@ -709,7 +728,7 @@ export function StripeCheckoutPage(props: StripeCheckoutPageProps) {
 
   return (
     <div className="mx-auto flex max-w-5xl flex-col gap-6">
-      <div className="flex items-center justify-between gap-4">
+      <div className="bg-background flex items-center justify-between gap-4">
         <div className="space-y-1">
           <div className="text-sm text-muted-foreground">{t("Checkout")}</div>
           <h1 className="text-2xl font-semibold tracking-tight">{planLabel}</h1>
@@ -777,6 +796,7 @@ export function StripeCheckoutPage(props: StripeCheckoutPageProps) {
             returnLabel={returnLabel}
             returnUrl={returnUrl}
             appearance={checkoutAppearance}
+            planId={resolvedPlanId}
           />
         </CheckoutProvider>
       ) : (

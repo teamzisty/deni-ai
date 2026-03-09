@@ -1,5 +1,5 @@
-export const appVersion = "6.6";
-export const appCodename = "Crimson Titan";
+export const appVersion = "6.6.1";
+export const appCodename = "Shadow Arrow";
 export const appDate = "2026-3-7";
 
 const appHashPayload = [appVersion, appDate].join(":");

@@ -389,7 +389,7 @@ export const organizationRouter = router({
             },
           },
           allow_promotion_codes: true,
-          return_url: `${env.NEXT_PUBLIC_BETTER_AUTH_URL}/settings/team/checkout?organizationId=${input.organizationId}&session_id={CHECKOUT_SESSION_ID}`,
+          return_url: `${env.NEXT_PUBLIC_BETTER_AUTH_URL}/settings/team/checkout/{CHECKOUT_SESSION_ID}?organizationId=${input.organizationId}`,
         },
         customCheckoutRequestOptions,
       );
