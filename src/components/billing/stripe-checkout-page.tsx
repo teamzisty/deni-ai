@@ -548,13 +548,13 @@ function CheckoutForm({
 
       <div className="lg:sticky lg:top-6 space-y-6">
         <CheckoutSummary checkout={activeCheckout} planLabel={planLabel} planId={planId} />
+        {submitError && <p className="text-sm text-destructive">{submitError}</p>}
         <Button
           className="h-11 w-full rounded-full text-sm font-medium"
           disabled={isSubmitting || !activeCheckout.canConfirm}
           onClick={handleConfirm}
         >
           {isSubmitting && <Spinner className="size-4" />}
-          {submitError && <p className="text-sm text-destructive">{submitError}</p>}
           {activeCheckout.recurring ? t("Start subscription") : t("Complete payment")}
         </Button>
       </div>

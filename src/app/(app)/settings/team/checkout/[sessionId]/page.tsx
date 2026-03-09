@@ -2,13 +2,14 @@
 
 import { useParams, useSearchParams } from "next/navigation";
 import { StripeCheckoutPage } from "@/components/billing/stripe-checkout-page";
-import type { TeamPlanId } from "@/lib/billing";
+import { isTeamPlanId } from "@/lib/billing";
 
 export default function TeamCheckoutSessionPage() {
   const params = useParams<{ sessionId: string }>();
   const searchParams = useSearchParams();
   const organizationId = searchParams.get("organizationId");
-  const planId = searchParams.get("planId") as TeamPlanId | null;
+  const rawPlanId = searchParams.get("planId");
+  const planId = isTeamPlanId(rawPlanId) ? rawPlanId : null;
   const sessionId = typeof params.sessionId === "string" ? params.sessionId : null;
 
   return (

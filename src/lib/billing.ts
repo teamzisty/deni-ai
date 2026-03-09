@@ -52,6 +52,8 @@ export const lookupKeyToPlan = new Map<string, BillingPlanId>(
   billingPlans.map((plan) => [plan.lookupKey, plan.id]),
 );
 
+const teamPlanIds = new Set<TeamPlanId>(["pro_team_monthly", "pro_team_yearly"]);
+
 export function findPlanById(planId: BillingPlanId | string) {
   return billingPlans.find((plan) => plan.id === planId);
 }
@@ -61,6 +63,10 @@ export function findPlanByLookupKey(lookupKey: string | null | undefined) {
     return undefined;
   }
   return billingPlans.find((plan) => plan.lookupKey === lookupKey);
+}
+
+export function isTeamPlanId(planId: string | null | undefined): planId is TeamPlanId {
+  return planId != null && teamPlanIds.has(planId as TeamPlanId);
 }
 
 export function isTeamPlan(planId: string | null | undefined): boolean {

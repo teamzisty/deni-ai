@@ -151,6 +151,7 @@ function parseArgs(argv: string[]): Options {
       case "-h":
         printHelp();
         process.exit(0);
+        break;
       default:
         throw new Error(`Unknown argument: ${arg}`);
     }
