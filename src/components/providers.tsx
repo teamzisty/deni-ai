@@ -73,6 +73,7 @@ export function Providers({ children }: { children: ReactNode }) {
                     }}
                     credentials={{ forgotPassword: true }}
                     emailVerification
+                    deleteUser
                     passkey
                     Link={Link}
                   >

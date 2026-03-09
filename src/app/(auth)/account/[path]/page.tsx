@@ -13,9 +13,9 @@ export default async function AccountPage({ params }: { params: Promise<{ path: 
   const { path } = await params;
 
   return (
-    <main className="pt-24 px-8" id="main-content">
+    <main className="pt-24" id="main-content">
       <Header />
-      <AccountView path={path} />
+      <AccountView className="pb-12 px-8" path={path} />
       <Footer />
     </main>
   );

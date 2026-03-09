@@ -18,7 +18,7 @@ import * as schema from "@/db/schema";
 import { VerificationEmail, verificationEmailSubject } from "@/emails/verification-email";
 import { env } from "@/env";
 import { EMAIL_FROM, emailTemplates } from "@/lib/constants";
-import { updateTeamSeatCount } from "@/lib/team-billing";
+import { cancelPersonalSubscription, updateTeamSeatCount } from "@/lib/team-billing";
 
 const resend = env.RESEND_API_KEY ? new Resend(env.RESEND_API_KEY) : null;
 
@@ -70,8 +70,9 @@ export const auth = betterAuth({
       allowUserToCreateOrganization: true,
       membershipLimit: 50,
       organizationHooks: {
-        afterAcceptInvitation: async ({ organization }) => {
+        afterAcceptInvitation: async ({ organization, member }) => {
           await updateTeamSeatCount(organization.id);
+          await cancelPersonalSubscription(member.userId);
         },
         afterRemoveMember: async ({ organization }) => {
           await updateTeamSeatCount(organization.id);
@@ -143,6 +144,11 @@ export const auth = betterAuth({
           max: 3,
         };
       },
+    },
+  },
+  user: {
+    deleteUser: {
+      enabled: true,
     },
   },
   session: {

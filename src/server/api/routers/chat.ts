@@ -7,10 +7,16 @@ import { protectedProcedure, router } from "../trpc";
 export const chatRouter = router({
   getChats: protectedProcedure.query(async ({ ctx }) => {
     const userChats = await ctx.db
-      .select()
+      .select({
+        id: chats.id,
+        title: chats.title,
+        created_at: chats.created_at,
+        updated_at: chats.updated_at,
+      })
       .from(chats)
       .where(eq(chats.uid, ctx.userId))
-      .orderBy(desc(chats.updated_at));
+      .orderBy(desc(chats.updated_at))
+      .limit(100);
     return userChats;
   }),
   createChat: protectedProcedure.mutation(async ({ ctx }) => {

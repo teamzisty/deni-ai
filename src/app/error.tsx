@@ -4,7 +4,7 @@ import { TriangleAlert } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useExtracted } from "next-intl";
-import { useEffect, useMemo } from "react";
+import { useEffect, useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { versions } from "@/lib/version";
@@ -17,7 +17,7 @@ type ErrorPageProps = {
 export default function ErrorPage({ error, reset }: ErrorPageProps) {
   const pathname = usePathname();
   const t = useExtracted();
-  const timestamp = useMemo(() => new Date().toISOString(), []);
+  const [timestamp] = useState(() => new Date().toISOString());
 
   useEffect(() => {
     console.error(error);

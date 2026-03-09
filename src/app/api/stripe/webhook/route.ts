@@ -4,10 +4,11 @@ import type Stripe from "stripe";
 import { db } from "@/db/drizzle";
 import { billing } from "@/db/schema";
 import { env } from "@/env";
-import { findPlanByLookupKey } from "@/lib/billing";
+import { findPlanByLookupKey, isTeamPlan } from "@/lib/billing";
 import { resetMaxModeUsage } from "@/lib/max-mode";
 import { stripe } from "@/lib/stripe";
 import { getSubscriptionPeriodEnd } from "@/lib/stripe-subscriptions";
+import { cancelOrgMembersPersonalSubscriptions } from "@/lib/team-billing";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -248,6 +249,16 @@ export async function POST(req: Request) {
           currentPeriodEnd: getSubscriptionPeriodEnd(subscription),
           organizationId,
         });
+
+        // When a team subscription becomes active, cancel all org members' personal subs
+        if (
+          organizationId &&
+          subscription.status === "active" &&
+          lookupKey &&
+          isTeamPlan(findPlanByLookupKey(lookupKey)?.id ?? "")
+        ) {
+          await cancelOrgMembersPersonalSubscriptions(organizationId);
+        }
         break;
       }
       case "checkout.session.completed": {

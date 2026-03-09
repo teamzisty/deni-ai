@@ -28,6 +28,39 @@ import { decryptFromB64 } from "@/lib/crypto";
 import { consumeUsage, getUsageSummary, type UsageCategory, UsageLimitError } from "@/lib/usage";
 import { checkRateLimit } from "@/lib/rate-limit";
 
+function isPrivateUrl(url: string): boolean {
+  try {
+    const parsed = new URL(url);
+    if (parsed.protocol !== "https:" && parsed.protocol !== "http:") {
+      return true;
+    }
+    const hostname = parsed.hostname.toLowerCase();
+    if (
+      hostname === "localhost" ||
+      hostname === "127.0.0.1" ||
+      hostname === "0.0.0.0" ||
+      hostname === "[::1]" ||
+      hostname.startsWith("10.") ||
+      hostname.startsWith("192.168.") ||
+      hostname.startsWith("169.254.") ||
+      hostname.endsWith(".internal") ||
+      hostname.endsWith(".local")
+    ) {
+      return true;
+    }
+    const match172 = hostname.match(/^172\.(\d+)\./);
+    if (match172) {
+      const second = Number.parseInt(match172[1], 10);
+      if (second >= 16 && second <= 31) {
+        return true;
+      }
+    }
+    return false;
+  } catch {
+    return true;
+  }
+}
+
 const UIMessagesSchema = z
   .array(z.record(z.string(), z.unknown()))
   .transform((value) => value as unknown as UIMessage[]);
@@ -51,7 +84,7 @@ export async function POST(req: Request) {
 
   const body = await bodyPromise;
 
-  const rateCheck = checkRateLimit({ key: `chat:${userId}`, windowMs: 60_000, maxRequests: 30 });
+  const rateCheck = await checkRateLimit({ key: `chat:${userId}`, windowMs: 60_000, maxRequests: 30 });
   if (!rateCheck.allowed) {
     return NextResponse.json(
       { error: "Too many requests. Please slow down." },
@@ -79,6 +112,7 @@ export async function POST(req: Request) {
     id,
     messages: rawMessages = [],
     model: baseModel,
+    webSearch = true,
     reasoningEffort = "high",
     video: videoMode = false,
     image: imageMode = false,
@@ -173,6 +207,11 @@ export async function POST(req: Request) {
 
   if (providerId === "xai" && useByok && !byokBaseUrl) {
     byokBaseUrl = "https://api.x.ai/v1";
+  }
+
+  // Validate BYOK base URL is not pointing to a private network
+  if (byokBaseUrl && isPrivateUrl(byokBaseUrl)) {
+    byokBaseUrl = undefined;
   }
 
   if (!useByok) {
@@ -318,7 +357,7 @@ export async function POST(req: Request) {
       break;
   }
 
-  const tools = createChatTools({ videoMode, imageMode });
+  const tools = createChatTools({ videoMode, imageMode, webSearch });
 
   const modelMessages = await convertToModelMessages(messages);
   const currentDate = new Date().toISOString().split("T")[0];

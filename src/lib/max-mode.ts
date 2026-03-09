@@ -1,9 +1,9 @@
-//import "server-only";
+import "server-only";
 
-import { and, eq, isNull, sql } from "drizzle-orm";
+import { and, eq, isNotNull, isNull, like, sql } from "drizzle-orm";
 
 import { db } from "@/db/drizzle";
-import { billing } from "@/db/schema";
+import { billing, member } from "@/db/schema";
 import { stripe } from "@/lib/stripe";
 
 import type { UsageCategory } from "./usage";
@@ -19,6 +19,54 @@ export function isMaxModeEligible(planId: string | null | undefined): boolean {
   return Boolean(planId?.startsWith("pro"));
 }
 
+const ACTIVE_STATUSES = new Set(["active", "trialing", "past_due", "paid"]);
+
+/**
+ * Find the billing record that should be used for Max Mode operations.
+ * Uses the team billing record when the user is on an active team plan,
+ * otherwise falls back to the personal billing record.
+ */
+async function getEffectiveBillingRecord(userId: string) {
+  const selectFields = {
+    id: billing.id,
+    planId: billing.planId,
+    status: billing.status,
+    stripeCustomerId: billing.stripeCustomerId,
+    stripeSubscriptionId: billing.stripeSubscriptionId,
+    maxModeEnabled: billing.maxModeEnabled,
+    maxModeUsageBasic: billing.maxModeUsageBasic,
+    maxModeUsagePremium: billing.maxModeUsagePremium,
+    maxModePeriodStart: billing.maxModePeriodStart,
+  };
+
+  // Check for active team plan first
+  const [teamRecord] = await db
+    .select(selectFields)
+    .from(billing)
+    .innerJoin(member, eq(billing.organizationId, member.organizationId))
+    .where(
+      and(
+        eq(member.userId, userId),
+        isNotNull(billing.organizationId),
+        like(billing.planId, "pro_team%"),
+      ),
+    )
+    .limit(1);
+
+  if (teamRecord && teamRecord.status && ACTIVE_STATUSES.has(teamRecord.status)) {
+    return teamRecord;
+  }
+
+  // Fall back to personal billing record
+  const [personal] = await db
+    .select(selectFields)
+    .from(billing)
+    .where(and(eq(billing.userId, userId), isNull(billing.organizationId)))
+    .limit(1);
+
+  return personal ?? null;
+}
+
 export type MaxModeStatus = {
   eligible: boolean;
   enabled: boolean;
@@ -29,18 +77,7 @@ export type MaxModeStatus = {
 };
 
 export async function getMaxModeStatus(userId: string): Promise<MaxModeStatus> {
-  const [record] = await db
-    .select({
-      planId: billing.planId,
-      status: billing.status,
-      maxModeEnabled: billing.maxModeEnabled,
-      maxModeUsageBasic: billing.maxModeUsageBasic,
-      maxModeUsagePremium: billing.maxModeUsagePremium,
-      maxModePeriodStart: billing.maxModePeriodStart,
-    })
-    .from(billing)
-    .where(and(eq(billing.userId, userId), isNull(billing.organizationId)))
-    .limit(1);
+  const record = await getEffectiveBillingRecord(userId);
 
   if (!record) {
     return {
@@ -69,17 +106,7 @@ export async function getMaxModeStatus(userId: string): Promise<MaxModeStatus> {
 }
 
 export async function enableMaxMode(userId: string): Promise<{ success: boolean; error?: string }> {
-  const [record] = await db
-    .select({
-      planId: billing.planId,
-      status: billing.status,
-      stripeCustomerId: billing.stripeCustomerId,
-      stripeSubscriptionId: billing.stripeSubscriptionId,
-      maxModeEnabled: billing.maxModeEnabled,
-    })
-    .from(billing)
-    .where(and(eq(billing.userId, userId), isNull(billing.organizationId)))
-    .limit(1);
+  const record = await getEffectiveBillingRecord(userId);
 
   if (!record) {
     return { success: false, error: "No billing record found." };
@@ -97,7 +124,6 @@ export async function enableMaxMode(userId: string): Promise<{ success: boolean;
     return { success: true }; // Already enabled
   }
 
-  // Enable Max Mode
   await db
     .update(billing)
     .set({
@@ -106,7 +132,7 @@ export async function enableMaxMode(userId: string): Promise<{ success: boolean;
       maxModeUsageBasic: 0,
       maxModeUsagePremium: 0,
     })
-    .where(and(eq(billing.userId, userId), isNull(billing.organizationId)));
+    .where(eq(billing.id, record.id));
 
   return { success: true };
 }
@@ -114,13 +140,7 @@ export async function enableMaxMode(userId: string): Promise<{ success: boolean;
 export async function disableMaxMode(
   userId: string,
 ): Promise<{ success: boolean; error?: string }> {
-  const [record] = await db
-    .select({
-      maxModeEnabled: billing.maxModeEnabled,
-    })
-    .from(billing)
-    .where(and(eq(billing.userId, userId), isNull(billing.organizationId)))
-    .limit(1);
+  const record = await getEffectiveBillingRecord(userId);
 
   if (!record) {
     return { success: false, error: "No billing record found." };
@@ -135,7 +155,7 @@ export async function disableMaxMode(
     .set({
       maxModeEnabled: false,
     })
-    .where(and(eq(billing.userId, userId), isNull(billing.organizationId)));
+    .where(eq(billing.id, record.id));
 
   return { success: true };
 }
@@ -144,30 +164,21 @@ export async function recordMaxModeUsage(
   userId: string,
   category: UsageCategory,
 ): Promise<{ success: boolean; newUsage: number }> {
-  const field = category === "basic" ? "maxModeUsageBasic" : "maxModeUsagePremium";
-
-  const [record] = await db
-    .select({
-      maxModeUsageBasic: billing.maxModeUsageBasic,
-      maxModeUsagePremium: billing.maxModeUsagePremium,
-      stripeCustomerId: billing.stripeCustomerId,
-    })
-    .from(billing)
-    .where(and(eq(billing.userId, userId), isNull(billing.organizationId)))
-    .limit(1);
+  const record = await getEffectiveBillingRecord(userId);
 
   if (!record) {
     return { success: false, newUsage: 0 };
   }
 
   const column = category === "basic" ? billing.maxModeUsageBasic : billing.maxModeUsagePremium;
+  const field = category === "basic" ? "maxModeUsageBasic" : "maxModeUsagePremium";
 
   const [updated] = await db
     .update(billing)
     .set({
       [field]: sql`${column} + 1`,
     })
-    .where(and(eq(billing.userId, userId), isNull(billing.organizationId)))
+    .where(eq(billing.id, record.id))
     .returning({
       maxModeUsageBasic: billing.maxModeUsageBasic,
       maxModeUsagePremium: billing.maxModeUsagePremium,
@@ -175,7 +186,7 @@ export async function recordMaxModeUsage(
 
   const newUsage = category === "basic" ? updated.maxModeUsageBasic : updated.maxModeUsagePremium;
 
-  // Report usage to Stripe for metered billing
+  // Report usage to Stripe for metered billing (use the effective record's customer)
   try {
     await stripe.billing.meterEvents.create({
       event_name: `max_mode_${category}`,
@@ -193,6 +204,9 @@ export async function recordMaxModeUsage(
 }
 
 export async function resetMaxModeUsage(userId: string): Promise<void> {
+  const record = await getEffectiveBillingRecord(userId);
+  if (!record) return;
+
   await db
     .update(billing)
     .set({
@@ -200,5 +214,5 @@ export async function resetMaxModeUsage(userId: string): Promise<void> {
       maxModeUsagePremium: 0,
       maxModePeriodStart: new Date(),
     })
-    .where(and(eq(billing.userId, userId), isNull(billing.organizationId)));
+    .where(eq(billing.id, record.id));
 }

@@ -11,11 +11,11 @@ export async function GET(req: Request) {
 
   const { searchParams } = new URL(req.url);
   const uri = searchParams.get("uri");
-  if (!uri) {
-    return NextResponse.json({ error: "Missing uri parameter." }, { status: 400 });
+  if (!uri || !uri.startsWith("https://generativelanguage.googleapis.com/")) {
+    return NextResponse.json({ error: "Missing or invalid uri parameter." }, { status: 400 });
   }
 
-  const response = await fetch("https://generativelanguage.googleapis.com/v1beta", {
+  const response = await fetch(uri, {
     headers: {
       "x-goog-api-key": env.GOOGLE_GENERATIVE_AI_API_KEY,
     },

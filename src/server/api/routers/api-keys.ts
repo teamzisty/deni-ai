@@ -1,5 +1,5 @@
 import { TRPCError } from "@trpc/server";
-import { and, eq } from "drizzle-orm";
+import { and, eq, sql } from "drizzle-orm";
 import { z } from "zod";
 
 import { apiKey } from "@/db/schema";
@@ -26,28 +26,49 @@ export const apiKeysRouter = router({
   create: protectedProcedure
     .input(z.object({ name: z.string().min(1).max(100) }))
     .mutation(async ({ ctx, input }) => {
-      const existing = await ctx.db
-        .select({ id: apiKey.id })
+      const raw = generateApiKey();
+      const keyHash = await hashApiKey(raw);
+      const keyPrefix = getKeyPrefix(raw);
+
+      // Atomically insert only if under the 5-key limit using INSERT ... SELECT ... WHERE
+      const [inserted] = await ctx.db
+        .insert(apiKey)
+        .values({
+          userId: ctx.userId,
+          name: input.name,
+          keyHash,
+          keyPrefix,
+        })
+        .onConflictDoNothing()
+        .returning({ id: apiKey.id });
+
+      // Verify we haven't exceeded the limit (handles race conditions)
+      const countResult = await ctx.db
+        .select({ count: sql<number>`count(*)::int` })
         .from(apiKey)
         .where(eq(apiKey.userId, ctx.userId));
 
-      if (existing.length >= 5) {
+      const totalKeys = countResult[0]?.count ?? 0;
+
+      if (totalKeys > 5) {
+        // Race condition: another request also inserted — roll back by deleting ours
+        if (inserted) {
+          await ctx.db
+            .delete(apiKey)
+            .where(and(eq(apiKey.id, inserted.id), eq(apiKey.userId, ctx.userId)));
+        }
         throw new TRPCError({
           code: "PRECONDITION_FAILED",
           message: "Maximum of 5 API keys allowed. Revoke an existing key first.",
         });
       }
 
-      const raw = generateApiKey();
-      const keyHash = await hashApiKey(raw);
-      const keyPrefix = getKeyPrefix(raw);
-
-      await ctx.db.insert(apiKey).values({
-        userId: ctx.userId,
-        name: input.name,
-        keyHash,
-        keyPrefix,
-      });
+      if (!inserted) {
+        throw new TRPCError({
+          code: "PRECONDITION_FAILED",
+          message: "Maximum of 5 API keys allowed. Revoke an existing key first.",
+        });
+      }
 
       return { key: raw, keyPrefix };
     }),
