@@ -5,8 +5,6 @@
 - codename-generator.ts: generates deni ai version codenames
 - openrouter-commit.ts: generates conventional commit messages with OpenRouter and can create the commit
 
-This project was created using `bun init` in bun v1.3.5. [Bun](https://bun.com) is a fast all-in-one JavaScript runtime.
-
 ## OpenRouter commit tool
 
 Run from the repository root so Bun loads the root `.env` files:

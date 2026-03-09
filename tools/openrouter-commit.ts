@@ -1,3 +1,5 @@
+import { spawnSync } from "node:child_process";
+
 const DEFAULT_MODEL = "openai/gpt-5.4";
 const DEFAULT_MAX_DIFF_CHARS = 20_000_000;
 
@@ -28,8 +30,6 @@ type GeneratedCommit = {
   subject: string;
   body?: string;
 };
-
-const textDecoder = new TextDecoder();
 
 function printHelp() {
   console.log(`OpenRouter commit tool
@@ -160,17 +160,16 @@ function parseArgs(argv: string[]): Options {
 }
 
 function runGit(repoPath: string, args: string[]) {
-  const result = Bun.spawnSync({
-    cmd: ["git", ...args],
+  const result = spawnSync("git", args, {
     cwd: repoPath,
-    stdout: "pipe",
-    stderr: "pipe",
+    encoding: "utf8",
+    stdio: ["ignore", "pipe", "pipe"],
   });
 
-  const stdout = textDecoder.decode(result.stdout ?? new Uint8Array()).trimEnd();
-  const stderr = textDecoder.decode(result.stderr ?? new Uint8Array()).trimEnd();
+  const stdout = result.stdout.trimEnd();
+  const stderr = result.stderr.trimEnd();
 
-  if (result.exitCode !== 0) {
+  if (result.status !== 0) {
     throw new Error(stderr || `git ${args.join(" ")} failed`);
   }
 
