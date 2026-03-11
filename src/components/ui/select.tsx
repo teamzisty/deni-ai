@@ -107,7 +107,7 @@ function SelectItem({
     >
       <span
         data-slot="select-item-indicator"
-        className="absolute right-2 flex size-3.5 items-center justify-center"
+        className="absolute right-2 top-1/2 -translate-y-1/2 flex !w-3.5 size-3.5 items-center justify-center"
       >
         <SelectPrimitive.ItemIndicator>
           <CheckIcon className="size-4" />

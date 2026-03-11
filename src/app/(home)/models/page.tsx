@@ -103,6 +103,11 @@ export default function ModelsPage() {
                         </span>
                       )}
                     </div>
+                    {"description" in model && model.description && (
+                      <p className="mb-3 text-sm leading-relaxed text-muted-foreground">
+                        {model.description}
+                      </p>
+                    )}
                     {model.features && (
                       <div className="flex flex-wrap gap-1.5">
                         {model.features.map((feature) => (

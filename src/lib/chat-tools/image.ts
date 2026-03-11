@@ -1,6 +1,7 @@
 import { tool } from "ai";
 import { env } from "@/env";
 import { imageModelValues } from "@/lib/image";
+import { uploadImage } from "@/lib/upload";
 import { extractVeoErrorMessage } from "./helpers";
 import { imageToolInputSchema } from "./types";
 
@@ -117,9 +118,13 @@ export function createImageTool() {
         abortSignal,
       );
 
-      const imageUrls = generatedImages.map(
-        (img, idx) =>
-          `/api/image/file?data=${encodeURIComponent(img.imageBytes)}&mimeType=${encodeURIComponent(img.mimeType)}&index=${idx}`,
+      const imageUrls = await Promise.all(
+        generatedImages.map(async (img, idx) => {
+          const uploaded = await uploadImage(img.imageBytes, img.mimeType);
+          if (uploaded) return uploaded;
+          // Fallback to base64 proxy URL when UploadThing is not configured
+          return `/api/image/file?data=${encodeURIComponent(img.imageBytes)}&mimeType=${encodeURIComponent(img.mimeType)}&index=${idx}`;
+        }),
       );
       const modelLabel = "Nano Banana Pro";
 

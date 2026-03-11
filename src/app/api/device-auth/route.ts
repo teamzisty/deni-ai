@@ -43,7 +43,11 @@ export async function POST(req: Request) {
 /** Extension calls this to start the flow. Returns userCode (shown to user) and deviceCode (for polling). */
 async function handleInitiate(req: Request) {
   const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "unknown";
-  const rateCheck = checkRateLimit({ key: `device-auth:${ip}`, windowMs: 60_000, maxRequests: 5 });
+  const rateCheck = await checkRateLimit({
+    key: `device-auth:${ip}`,
+    windowMs: 60_000,
+    maxRequests: 5,
+  });
   if (!rateCheck.allowed) {
     return NextResponse.json(
       { error: "Too many requests. Please slow down." },
@@ -113,6 +117,19 @@ async function handlePoll(body: unknown) {
     return NextResponse.json({ error: "Invalid request" }, { status: 400 });
   }
 
+  // Rate limit poll requests per deviceCode
+  const rateCheck = await checkRateLimit({
+    key: `device-poll:${parsed.data.deviceCode}`,
+    windowMs: 10_000,
+    maxRequests: 3,
+  });
+  if (!rateCheck.allowed) {
+    return NextResponse.json(
+      { error: "Too many requests. Please slow down." },
+      { status: 429, headers: { "Retry-After": String(rateCheck.retryAfter) } },
+    );
+  }
+
   const [row] = await db
     .select()
     .from(deviceAuthCode)
@@ -132,6 +149,30 @@ async function handlePoll(body: unknown) {
     return NextResponse.json({ approved: false });
   }
 
+  // Use DELETE ... RETURNING to atomically consume the row (prevents double key generation)
+  const [consumed] = await db
+    .delete(deviceAuthCode)
+    .where(eq(deviceAuthCode.id, row.id))
+    .returning();
+
+  if (!consumed) {
+    // Another concurrent poll already consumed this row
+    return NextResponse.json({ error: "Code already consumed" }, { status: 409 });
+  }
+
+  // Check API key limit before creating a new one
+  const existingKeys = await db
+    .select({ id: apiKey.id })
+    .from(apiKey)
+    .where(eq(apiKey.userId, row.userId));
+
+  if (existingKeys.length >= 5) {
+    return NextResponse.json(
+      { error: "Maximum of 5 API keys allowed. Revoke an existing key first." },
+      { status: 403 },
+    );
+  }
+
   // Approved — generate API key and return it
   const raw = generateApiKey();
   const keyHash = await hashApiKey(raw);
@@ -143,9 +184,6 @@ async function handlePoll(body: unknown) {
     keyHash,
     keyPrefix,
   });
-
-  // Delete the device auth code (one-time use)
-  await db.delete(deviceAuthCode).where(eq(deviceAuthCode.id, row.id));
 
   return NextResponse.json({ approved: true, apiKey: raw });
 }

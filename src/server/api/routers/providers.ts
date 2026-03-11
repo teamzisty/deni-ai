@@ -33,18 +33,27 @@ function normalizeBaseUrl(url: string) {
 
     // Block internal/private network addresses to prevent SSRF
     const hostname = parsed.hostname;
-    if (
+    let blocked =
       hostname === "localhost" ||
       hostname === "127.0.0.1" ||
       hostname === "0.0.0.0" ||
       hostname === "[::1]" ||
       hostname.startsWith("10.") ||
-      hostname.startsWith("172.") ||
       hostname.startsWith("192.168.") ||
       hostname.startsWith("169.254.") ||
       hostname.endsWith(".internal") ||
-      hostname.endsWith(".local")
-    ) {
+      hostname.endsWith(".local");
+
+    // Check 172.16.0.0/12 (172.16.x.x - 172.31.x.x)
+    if (!blocked) {
+      const parts = hostname.split(".");
+      if (parts[0] === "172") {
+        const second = parseInt(parts[1], 10);
+        if (second >= 16 && second <= 31) blocked = true;
+      }
+    }
+
+    if (blocked) {
       return null;
     }
 

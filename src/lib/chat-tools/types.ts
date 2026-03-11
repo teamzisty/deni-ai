@@ -39,4 +39,5 @@ export const imageToolInputSchema = z.object({
 export type CreateChatToolsOptions = {
   videoMode: boolean;
   imageMode: boolean;
+  webSearch?: boolean;
 };

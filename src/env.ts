@@ -17,6 +17,11 @@ export const env = createEnv({
     BRAVE_SEARCH_API_KEY: z.string(),
     TURNSTILE_SECRET_KEY: z.string(),
     RESEND_API_KEY: z.string().optional(),
+    UPSTASH_REDIS_REST_URL: z.string().optional(),
+    UPSTASH_REDIS_REST_TOKEN: z.string().optional(),
+    KV_REST_API_URL: z.string().optional(),
+    KV_REST_API_TOKEN: z.string().optional(),
+    UPLOADTHING_TOKEN: z.string().optional(),
   },
   client: {
     NEXT_PUBLIC_BETTER_AUTH_URL: z.url(),
@@ -44,5 +49,10 @@ export const env = createEnv({
     TURNSTILE_SECRET_KEY: process.env.TURNSTILE_SECRET_KEY,
     NEXT_PUBLIC_TURNSTILE_SITE_KEY: process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY,
     RESEND_API_KEY: process.env.RESEND_API_KEY,
+    UPSTASH_REDIS_REST_URL: process.env.UPSTASH_REDIS_REST_URL,
+    UPSTASH_REDIS_REST_TOKEN: process.env.UPSTASH_REDIS_REST_TOKEN,
+    KV_REST_API_URL: process.env.KV_REST_API_URL,
+    KV_REST_API_TOKEN: process.env.KV_REST_API_TOKEN,
+    UPLOADTHING_TOKEN: process.env.UPLOADTHING_TOKEN,
   },
 });

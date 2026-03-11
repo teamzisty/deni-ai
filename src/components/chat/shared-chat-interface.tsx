@@ -43,6 +43,22 @@ interface SharedChatInterfaceProps {
   isLoggedIn: boolean;
 }
 
+function getMessageRenderKeys(messages: UIMessage[]) {
+  const occurrences = new Map<string, number>();
+
+  return messages.map((message, index) => {
+    const baseKey =
+      typeof message.id === "string" && message.id.trim().length > 0
+        ? message.id.trim()
+        : `message-${index}`;
+    const duplicateCount = occurrences.get(baseKey) ?? 0;
+
+    occurrences.set(baseKey, duplicateCount + 1);
+
+    return duplicateCount === 0 ? baseKey : `${baseKey}-${duplicateCount}`;
+  });
+}
+
 export function SharedChatInterface({
   shareId,
   chat,
@@ -54,6 +70,7 @@ export function SharedChatInterface({
 }: SharedChatInterfaceProps) {
   const t = useExtracted();
   const router = useRouter();
+  const messageRenderKeys = getMessageRenderKeys(messages);
 
   const forkChat = trpc.share.forkChat.useMutation({
     onSuccess: (forkedChat) => {
@@ -101,8 +118,8 @@ export function SharedChatInterface({
 
       <Conversation className="flex-1 min-h-0 h-full">
         <ConversationContent>
-          {messages.map((message) => (
-            <div key={message.id}>
+          {messages.map((message, index) => (
+            <div key={messageRenderKeys[index]}>
               {message.role === "user" && (
                 <Message from="user">
                   <MessageContent>

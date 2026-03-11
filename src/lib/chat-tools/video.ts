@@ -112,7 +112,7 @@ export function createVideoTool() {
       }
 
       const response = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta//models/${model}:predictLongRunning`,
+        `https://generativelanguage.googleapis.com/v1beta/models/${model}:predictLongRunning`,
         {
           method: "POST",
           headers: {

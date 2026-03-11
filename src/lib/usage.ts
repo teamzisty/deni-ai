@@ -1,4 +1,4 @@
-//import "server-only";
+import "server-only";
 
 import { and, eq, isNotNull, isNull, like, sql } from "drizzle-orm";
 
@@ -7,14 +7,7 @@ import { billing, member, usageQuota } from "@/db/schema";
 
 import { isMaxModeEligible, recordMaxModeUsage } from "./max-mode";
 
-const ACTIVE_BILLING_STATUSES = new Set([
-  "active",
-  "trialing",
-  "past_due",
-  "incomplete",
-  "unpaid",
-  "paid",
-]);
+const ACTIVE_BILLING_STATUSES = new Set(["active", "trialing", "past_due", "paid"]);
 
 export type UsageCategory = "basic" | "premium";
 export type SubscriptionTier = "free" | "plus" | "pro";
@@ -295,7 +288,7 @@ export async function consumeUsage({
       category,
       planTier: tierInfo.tier,
       limitAmount: limit,
-      used: state.used + 1,
+      used: 1,
       periodStart: state.periodStart,
       periodEnd: state.targetPeriodEnd,
     })
@@ -304,13 +297,20 @@ export async function consumeUsage({
       set: {
         planTier: tierInfo.tier,
         limitAmount: limit,
-        used: state.shouldReset ? 1 : sql`${usageQuota.used} + 1`,
+        used: state.shouldReset
+          ? 1
+          : sql`CASE WHEN ${usageQuota.used} < ${limit} THEN ${usageQuota.used} + 1 ELSE ${usageQuota.used} END`,
         periodStart: state.periodStart,
         periodEnd: state.targetPeriodEnd,
         updatedAt: new Date(),
       },
     })
     .returning({ used: usageQuota.used });
+
+  // If the CASE expression didn't increment (used was already at limit), the request lost the race
+  if (saved.used >= limit) {
+    throw new UsageLimitError("Usage limit reached for your plan.", tierInfo.maxModeEligible);
+  }
 
   return {
     tier: tierInfo.tier,

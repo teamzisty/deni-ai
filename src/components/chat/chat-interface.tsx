@@ -34,6 +34,22 @@ interface ChatInterfaceProps {
   initialMessages?: UIMessage[];
 }
 
+function getMessageRenderKeys(messages: UIMessage[]) {
+  const occurrences = new Map<string, number>();
+
+  return messages.map((message, index) => {
+    const baseKey =
+      typeof message.id === "string" && message.id.trim().length > 0
+        ? message.id.trim()
+        : `message-${index}`;
+    const duplicateCount = occurrences.get(baseKey) ?? 0;
+
+    occurrences.set(baseKey, duplicateCount + 1);
+
+    return duplicateCount === 0 ? baseKey : `${baseKey}-${duplicateCount}`;
+  });
+}
+
 export function ChatInterface({ id, initialMessages = [] }: ChatInterfaceProps) {
   const t = useExtracted();
   const session = authClient.useSession();
@@ -158,12 +174,14 @@ export function ChatInterface({ id, initialMessages = [] }: ChatInterfaceProps) 
     }
   }, [availableModels, selectedModel]);
 
+  const messageRenderKeys = useMemo(() => getMessageRenderKeys(messages), [messages]);
+
   return (
     <div className="flex h-full flex-1 min-h-0 flex-col w-full max-w-3xl mx-auto p-4 overflow-hidden">
       <Conversation className="flex-1 min-h-0 h-full">
         <ConversationContent>
-          {messages.map((message) => (
-            <div key={message.id}>
+          {messages.map((message, index) => (
+            <div key={messageRenderKeys[index]}>
               {message.role === "user" && (
                 <Message from="user">
                   <MessageContent>
@@ -178,7 +196,7 @@ export function ChatInterface({ id, initialMessages = [] }: ChatInterfaceProps) 
               {message.role === "assistant" && (
                 <AssistantMessage
                   message={message}
-                  isLastMessage={message.id === messages.at(-1)?.id}
+                  isLastMessage={index === messages.length - 1}
                   isStreaming={status === "streaming"}
                   showActions={showMessageActions}
                   isSubmitBlocked={isSubmitBlocked}

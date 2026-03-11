@@ -3,6 +3,48 @@ import { NextResponse } from "next/server";
 import { env } from "@/env";
 import { auth } from "@/lib/auth";
 
+const GOOGLE_API_ORIGIN = "https://generativelanguage.googleapis.com";
+const ALLOWED_FILE_PATHS = [
+  /^\/v1beta\/files\/[A-Za-z0-9._-]+(?::[A-Za-z0-9._-]+)?$/,
+  /^\/download\/v1beta\/files\/[A-Za-z0-9._-]+(?::[A-Za-z0-9._-]+)?$/,
+];
+
+function getTrustedGoogleFileUrl(uri: string) {
+  let parsed: URL;
+
+  try {
+    parsed = new URL(uri);
+  } catch {
+    return null;
+  }
+
+  if (parsed.origin !== GOOGLE_API_ORIGIN) {
+    return null;
+  }
+
+  if (!ALLOWED_FILE_PATHS.some((pattern) => pattern.test(parsed.pathname))) {
+    return null;
+  }
+
+  const searchParams = new URLSearchParams(parsed.search);
+  if (searchParams.has("alt") && searchParams.get("alt") !== "media") {
+    return null;
+  }
+
+  for (const key of searchParams.keys()) {
+    if (key !== "alt") {
+      return null;
+    }
+  }
+
+  const trustedUrl = new URL(parsed.pathname, GOOGLE_API_ORIGIN);
+  if (searchParams.has("alt")) {
+    trustedUrl.searchParams.set("alt", "media");
+  }
+
+  return trustedUrl.toString();
+}
+
 export async function GET(req: Request) {
   const session = await auth.api.getSession({ headers: await headers() });
   if (!session?.session) {
@@ -11,11 +53,12 @@ export async function GET(req: Request) {
 
   const { searchParams } = new URL(req.url);
   const uri = searchParams.get("uri");
-  if (!uri) {
-    return NextResponse.json({ error: "Missing uri parameter." }, { status: 400 });
+  const trustedUri = uri ? getTrustedGoogleFileUrl(uri) : null;
+  if (!trustedUri) {
+    return NextResponse.json({ error: "Missing or invalid uri parameter." }, { status: 400 });
   }
 
-  const response = await fetch("https://generativelanguage.googleapis.com/v1beta", {
+  const response = await fetch(trustedUri, {
     headers: {
       "x-goog-api-key": env.GOOGLE_GENERATIVE_AI_API_KEY,
     },

@@ -17,14 +17,6 @@ const requestSchema = z.object({
   numberOfImages: z.number().int().min(1).max(4).optional(),
 });
 
-function extractErrorMessage(responseData: unknown, fallback: string): string {
-  if (typeof responseData === "object" && responseData !== null) {
-    const message = (responseData as { error?: { message?: string } }).error?.message;
-    return message || fallback;
-  }
-  return fallback;
-}
-
 export async function POST(req: Request) {
   const session = await auth.api.getSession({ headers: await headers() });
   if (!session?.session) {
@@ -33,12 +25,22 @@ export async function POST(req: Request) {
 
   const userId = session.session.userId;
 
-  const rateCheck = checkRateLimit({ key: `image:${userId}`, windowMs: 60_000, maxRequests: 10 });
+  const rateCheck = await checkRateLimit({
+    key: `image:${userId}`,
+    windowMs: 60_000,
+    maxRequests: 10,
+  });
   if (!rateCheck.allowed) {
     return NextResponse.json(
       { error: "Too many requests. Please slow down." },
       { status: 429, headers: { "Retry-After": String(rateCheck.retryAfter) } },
     );
+  }
+
+  const body = await req.json();
+  const parsedBody = requestSchema.safeParse(body);
+  if (!parsedBody.success) {
+    return NextResponse.json({ error: "Invalid request body" }, { status: 400 });
   }
 
   try {
@@ -48,12 +50,6 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: error.message, reason: "usage_limit" }, { status: 402 });
     }
     return NextResponse.json({ error: "Unable to check usage" }, { status: 500 });
-  }
-
-  const body = await req.json();
-  const parsedBody = requestSchema.safeParse(body);
-  if (!parsedBody.success) {
-    return NextResponse.json({ error: "Invalid request body" }, { status: 400 });
   }
 
   const data = parsedBody.data;
@@ -93,8 +89,8 @@ export async function POST(req: Request) {
   }
 
   if (!response.ok) {
-    const errorMessage = extractErrorMessage(responseData, "Failed to generate image.");
-    return NextResponse.json({ error: errorMessage }, { status: response.status });
+    console.error("Image generation API error:", responseData);
+    return NextResponse.json({ error: "Image generation failed" }, { status: response.status });
   }
 
   const candidates =

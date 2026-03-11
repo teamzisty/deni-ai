@@ -1,5 +1,5 @@
 import { TRPCError } from "@trpc/server";
-import { and, eq } from "drizzle-orm";
+import { and, eq, inArray } from "drizzle-orm";
 import { z } from "zod";
 import { chatShareRecipients, chatShares, chats, user } from "@/db/schema";
 import { protectedProcedure, publicProcedure, router } from "../trpc";
@@ -339,19 +339,37 @@ export const shareRouter = router({
       .innerJoin(chats, eq(chatShares.chatId, chats.id))
       .where(eq(chatShares.ownerId, ctx.userId));
 
-    const sharesWithRecipients = await Promise.all(
-      myShares.map(async (item) => {
-        const recipients =
-          item.share.visibility === "private"
-            ? await ctx.db
-                .select({ id: user.id, name: user.name, email: user.email })
-                .from(chatShareRecipients)
-                .innerJoin(user, eq(chatShareRecipients.recipientId, user.id))
-                .where(eq(chatShareRecipients.shareId, item.share.id))
-            : [];
-        return { ...item, recipients };
-      }),
-    );
+    // Collect private share IDs to fetch recipients in a single query
+    const privateShareIds = myShares
+      .filter((item) => item.share.visibility === "private")
+      .map((item) => item.share.id);
+
+    const allRecipients =
+      privateShareIds.length > 0
+        ? await ctx.db
+            .select({
+              shareId: chatShareRecipients.shareId,
+              id: user.id,
+              name: user.name,
+              email: user.email,
+            })
+            .from(chatShareRecipients)
+            .innerJoin(user, eq(chatShareRecipients.recipientId, user.id))
+            .where(inArray(chatShareRecipients.shareId, privateShareIds))
+        : [];
+
+    // Group recipients by shareId
+    const recipientsByShareId = new Map<string, { id: string; name: string; email: string }[]>();
+    for (const r of allRecipients) {
+      const list = recipientsByShareId.get(r.shareId) ?? [];
+      list.push({ id: r.id, name: r.name ?? "", email: r.email });
+      recipientsByShareId.set(r.shareId, list);
+    }
+
+    const sharesWithRecipients = myShares.map((item) => ({
+      ...item,
+      recipients: recipientsByShareId.get(item.share.id) ?? [],
+    }));
 
     return sharesWithRecipients;
   }),

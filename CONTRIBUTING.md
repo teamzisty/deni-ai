@@ -60,7 +60,7 @@ Refer to `src/env.ts` for the complete list of required environment variables. K
 
 - `DATABASE_URL` - PostgreSQL connection URL
 - `BETTER_AUTH_SECRET` - 32-character authentication secret
-- AI provider keys (OpenAI, Anthropic, Google)
+- AI provider keys (Google AI, Groq, OpenRouter)
 - Stripe keys for billing: `STRIPE_SECRET_KEY`, `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY`
 
 ## How to Contribute
@@ -69,7 +69,7 @@ Refer to `src/env.ts` for the complete list of required environment variables. K
 
 1. Fork the repository
 2. Create a feature branch: `git checkout -b feature/amazing-feature`
-3. Make your changes following the coding conventions in `AGENTS.md`
+3. Make your changes following the coding conventions in `CLAUDE.md`
 4. Run linting: `bun run lint`
 5. Format code: `bun run format`
 6. Commit your changes: `git commit -m 'Add amazing feature'`

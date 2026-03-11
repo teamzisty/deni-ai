@@ -35,7 +35,7 @@ const operationNameSchema = z
   .string()
   .min(1)
   .max(512)
-  .refine((value) => !/\s/.test(value), {
+  .refine((value) => /^[a-zA-Z0-9/-]+$/.test(value) && !value.includes(".."), {
     message: "Invalid operation name.",
   });
 
@@ -47,12 +47,22 @@ export async function POST(req: Request) {
 
   const userId = session.session.userId;
 
-  const rateCheck = checkRateLimit({ key: `veo:${userId}`, windowMs: 60_000, maxRequests: 5 });
+  const rateCheck = await checkRateLimit({
+    key: `veo:${userId}`,
+    windowMs: 60_000,
+    maxRequests: 5,
+  });
   if (!rateCheck.allowed) {
     return NextResponse.json(
       { error: "Too many requests. Please slow down." },
       { status: 429, headers: { "Retry-After": String(rateCheck.retryAfter) } },
     );
+  }
+
+  const body = await req.json();
+  const parsedBody = requestSchema.safeParse(body);
+  if (!parsedBody.success) {
+    return NextResponse.json({ error: "Invalid request body" }, { status: 400 });
   }
 
   try {
@@ -62,12 +72,6 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: error.message, reason: "usage_limit" }, { status: 402 });
     }
     return NextResponse.json({ error: "Unable to check usage" }, { status: 500 });
-  }
-
-  const body = await req.json();
-  const parsedBody = requestSchema.safeParse(body);
-  if (!parsedBody.success) {
-    return NextResponse.json({ error: "Invalid request body" }, { status: 400 });
   }
 
   const data = parsedBody.data;
@@ -121,14 +125,8 @@ export async function POST(req: Request) {
   }
 
   if (!response.ok) {
-    const message =
-      typeof responseData === "object" && responseData !== null
-        ? (responseData as { error?: { message?: string } }).error?.message
-        : undefined;
-    return NextResponse.json(
-      { error: message || "Failed to start video generation." },
-      { status: response.status },
-    );
+    console.error("Video generation API error:", responseData);
+    return NextResponse.json({ error: "Video generation failed" }, { status: response.status });
   }
 
   const operationName =
@@ -174,14 +172,8 @@ export async function GET(req: Request) {
   }
 
   if (!response.ok) {
-    const message =
-      typeof responseData === "object" && responseData !== null
-        ? (responseData as { error?: { message?: string } }).error?.message
-        : undefined;
-    return NextResponse.json(
-      { error: message || "Failed to check status." },
-      { status: response.status },
-    );
+    console.error("Video status check API error:", responseData);
+    return NextResponse.json({ error: "Failed to check status." }, { status: response.status });
   }
 
   const done =

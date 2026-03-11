@@ -5,6 +5,7 @@ import { billing, member, user } from "@/db/schema";
 import { env } from "@/env";
 import { type BillingPlan, billingPlans, findPlanById, isTeamPlan } from "@/lib/billing";
 import { isBillingDisabled } from "@/lib/billing-config";
+import { escapeStripeSearchValue } from "@/lib/stripe-search";
 import { stripe } from "@/lib/stripe";
 import { customCheckoutRequestOptions } from "@/lib/stripe-checkout";
 import { getSubscriptionPeriodEndDate } from "@/lib/stripe-subscriptions";
@@ -17,7 +18,7 @@ const teamPlanIdSchema = z.enum(["pro_team_monthly", "pro_team_yearly"]);
 
 type BillingRecord = typeof billing.$inferSelect;
 
-const ACTIVE_SUB_STATUSES = new Set(["trialing", "active", "past_due", "incomplete", "unpaid"]);
+const ACTIVE_SUB_STATUSES = new Set(["trialing", "active", "past_due"]);
 
 const billingEnabledProcedure = protectedProcedure.use(({ next }) => {
   if (isBillingDisabled) {
@@ -104,7 +105,7 @@ async function findOrCreateStripeCustomer({
 
   try {
     const search = await stripe.customers.search({
-      query: `metadata['organizationId']:'${organizationId}'`,
+      query: `metadata['organizationId']:'${escapeStripeSearchValue(organizationId)}'`,
       limit: 1,
     });
     customer = search.data[0];
@@ -173,11 +174,15 @@ async function syncTeamSubscription(ctx: ProtectedContext, userId: string, organ
   const subscriptions = await stripe.subscriptions.list({
     customer: billingRecord.stripeCustomerId,
     status: "all",
-    limit: 1,
+    limit: 5,
     expand: ["data.default_payment_method"],
   });
 
-  const subscriptionId = subscriptions.data.at(0)?.id;
+  // Prefer active/trialing/past_due subscriptions over canceled ones
+  const bestSub =
+    subscriptions.data.find((sub) => ACTIVE_SUB_STATUSES.has(sub.status)) ??
+    subscriptions.data.at(0);
+  const subscriptionId = bestSub?.id;
   if (!subscriptionId) {
     return billingRecord;
   }

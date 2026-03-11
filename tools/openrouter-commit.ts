@@ -187,7 +187,7 @@ function tryRunGit(repoPath: string, args: string[]) {
 
 function isSensitivePath(filePath: string) {
   return (
-    /(^|\/)\.env(\..+)?$/u.test(filePath) ||
+    (/(^|\/)\.env($|\..+)$/u.test(filePath) && !/(^|\/)\.env\.example$/u.test(filePath)) ||
     /(^|\/).*\.pem$/u.test(filePath) ||
     /(^|\/).*\.key$/u.test(filePath) ||
     /(^|\/)id_(rsa|ed25519)$/u.test(filePath)

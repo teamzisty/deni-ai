@@ -13,6 +13,7 @@ import {
 } from "@/lib/billing";
 import { isBillingDisabled } from "@/lib/billing-config";
 import { disableMaxMode, enableMaxMode, getMaxModeStatus, MAX_MODE_PRICING } from "@/lib/max-mode";
+import { escapeStripeSearchValue } from "@/lib/stripe-search";
 import { stripe } from "@/lib/stripe";
 import { customCheckoutRequestOptions } from "@/lib/stripe-checkout";
 import { getSubscriptionPeriodEndDate } from "@/lib/stripe-subscriptions";
@@ -22,7 +23,7 @@ import { type ProtectedContext, protectedProcedure, router } from "../trpc";
 const planIdSchema = z.enum(["plus_monthly", "plus_yearly", "pro_monthly", "pro_yearly"]);
 
 type BillingRecord = typeof billing.$inferSelect;
-const ACTIVE_SUB_STATUSES = new Set(["trialing", "active", "past_due", "incomplete", "unpaid"]);
+const ACTIVE_SUB_STATUSES = new Set(["trialing", "active", "past_due"]);
 const billingEnabledProcedure = protectedProcedure.use(({ next }) => {
   if (isBillingDisabled) {
     throw new TRPCError({
@@ -95,7 +96,7 @@ async function findOrCreateStripeCustomer({
 
   try {
     const search = await stripe.customers.search({
-      query: `metadata['userId']:'${userId}'`,
+      query: `metadata['userId']:'${escapeStripeSearchValue(userId)}'`,
       limit: 1,
     });
     customer = search.data[0];
@@ -163,11 +164,15 @@ async function syncSubscription(ctx: ProtectedContext, userId: string) {
   const subscriptions = await stripe.subscriptions.list({
     customer: billingRecord.stripeCustomerId,
     status: "all",
-    limit: 1,
+    limit: 5,
     expand: ["data.default_payment_method"],
   });
 
-  const subscriptionId = subscriptions.data.at(0)?.id;
+  // Prefer active/trialing/past_due subscriptions over canceled ones
+  const bestSub =
+    subscriptions.data.find((sub) => ACTIVE_SUB_STATUSES.has(sub.status)) ??
+    subscriptions.data.at(0);
+  const subscriptionId = bestSub?.id;
   if (!subscriptionId) {
     return billingRecord;
   }
@@ -478,7 +483,7 @@ export const billingRouter = router({
         customCheckoutRequestOptions,
       );
 
-      if (session.client_reference_id && session.client_reference_id !== ctx.userId) {
+      if (!session.client_reference_id || session.client_reference_id !== ctx.userId) {
         throw new TRPCError({
           code: "UNAUTHORIZED",
           message: "Session does not belong to the current user.",
@@ -507,7 +512,7 @@ export const billingRouter = router({
         expand: ["subscription", "payment_intent", "line_items"],
       });
 
-      if (session.client_reference_id && session.client_reference_id !== ctx.userId) {
+      if (!session.client_reference_id || session.client_reference_id !== ctx.userId) {
         throw new TRPCError({
           code: "UNAUTHORIZED",
           message: "Session does not belong to the current user.",
