@@ -13,6 +13,7 @@ import {
 } from "@/lib/billing";
 import { isBillingDisabled } from "@/lib/billing-config";
 import { disableMaxMode, enableMaxMode, getMaxModeStatus, MAX_MODE_PRICING } from "@/lib/max-mode";
+import { escapeStripeSearchValue } from "@/lib/stripe-search";
 import { stripe } from "@/lib/stripe";
 import { customCheckoutRequestOptions } from "@/lib/stripe-checkout";
 import { getSubscriptionPeriodEndDate } from "@/lib/stripe-subscriptions";
@@ -95,7 +96,7 @@ async function findOrCreateStripeCustomer({
 
   try {
     const search = await stripe.customers.search({
-      query: `metadata['userId']:'${userId.replace(/'/g, "\\'")}'`,
+      query: `metadata['userId']:'${escapeStripeSearchValue(userId)}'`,
       limit: 1,
     });
     customer = search.data[0];

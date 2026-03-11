@@ -1,10 +1,6 @@
 "use client";
 
-import {
-  SiAnthropic,
-  SiGooglegemini,
-  SiX,
-} from "@icons-pack/react-simple-icons";
+import { SiAnthropic, SiGooglegemini, SiX } from "@icons-pack/react-simple-icons";
 import type { ChatStatus } from "ai";
 import type { LucideIcon } from "lucide-react";
 import {
@@ -41,21 +37,10 @@ import { models } from "@/lib/constants";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import {
-  DropdownMenuCheckboxItem,
-  DropdownMenuSeparator,
-} from "@/components/ui/dropdown-menu";
+import { DropdownMenuCheckboxItem, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
-import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from "@/components/ui/collapsible";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 
 export type { ComposerMessage };
 
@@ -102,10 +87,7 @@ function ToolChip({ icon: Icon, label, onRemove }: ToolChipProps) {
   );
 }
 
-function getModelDescription(
-  value: string,
-  t: (key: string) => string,
-): string {
+function getModelDescription(value: string, t: (key: string) => string): string {
   switch (value) {
     case "gpt-5.4":
     case "gpt-5.2":
@@ -173,22 +155,14 @@ function ModelIcon({
   model: Pick<ModelOption, "author" | "premium">;
   className?: string;
 }) {
-  if (model.premium)
-    return <Gem className={cn("size-3.5", className)} aria-hidden="true" />;
+  if (model.premium) return <Gem className={cn("size-3.5", className)} aria-hidden="true" />;
   switch (model.author) {
     case "openai":
       return <Openai aria-hidden="true" />;
     case "anthropic":
-      return (
-        <SiAnthropic className={cn("size-3.5", className)} aria-hidden="true" />
-      );
+      return <SiAnthropic className={cn("size-3.5", className)} aria-hidden="true" />;
     case "google":
-      return (
-        <SiGooglegemini
-          className={cn("size-3.5", className)}
-          aria-hidden="true"
-        />
-      );
+      return <SiGooglegemini className={cn("size-3.5", className)} aria-hidden="true" />;
     case "xai":
       return <SiX className={cn("size-3.5", className)} aria-hidden="true" />;
     case "openai_compatible":
@@ -247,9 +221,7 @@ function ModelPickerItem({
 }) {
   const t = useExtracted();
   const description =
-    "description" in model
-      ? model.description
-      : getModelDescription(model.value, t);
+    "description" in model ? model.description : getModelDescription(model.value, t);
   const highlightFeatures = model.features.filter((f) => f.includes("est"));
   const regularFeatures = model.features.filter((f) => !f.includes("est"));
 
@@ -259,9 +231,7 @@ function ModelPickerItem({
       onClick={onSelect}
       className={cn(
         "w-full flex flex-col gap-1 rounded-md p-2 text-left transition-colors outline-none focus-visible:ring-2 focus-visible:ring-ring",
-        isSelected
-          ? "bg-accent/70 text-accent-foreground"
-          : "text-foreground hover:bg-accent/40",
+        isSelected ? "bg-accent/70 text-accent-foreground" : "text-foreground hover:bg-accent/40",
       )}
     >
       <span className="flex items-center gap-1.5 font-medium text-sm leading-none flex-wrap">
@@ -293,9 +263,7 @@ function ModelPickerItem({
       </span>
 
       {description && (
-        <span className="text-xs text-muted-foreground leading-snug pl-5">
-          {description}
-        </span>
+        <span className="text-xs text-muted-foreground leading-snug pl-5">{description}</span>
       )}
 
       {regularFeatures.length > 0 && (
@@ -309,27 +277,13 @@ function ModelPickerItem({
               {(() => {
                 switch (feature) {
                   case "smart":
-                    return (
-                      <Sparkle className="size-3 mr-0.5" aria-hidden="true" />
-                    );
+                    return <Sparkle className="size-3 mr-0.5" aria-hidden="true" />;
                   case "reasoning":
-                    return (
-                      <BrainCircuit
-                        className="size-3 mr-0.5"
-                        aria-hidden="true"
-                      />
-                    );
+                    return <BrainCircuit className="size-3 mr-0.5" aria-hidden="true" />;
                   case "fast":
-                    return (
-                      <ArrowBigUpDash
-                        className="size-3 mr-0.5"
-                        aria-hidden="true"
-                      />
-                    );
+                    return <ArrowBigUpDash className="size-3 mr-0.5" aria-hidden="true" />;
                   case "coding":
-                    return (
-                      <Code className="size-3 mr-0.5" aria-hidden="true" />
-                    );
+                    return <Code className="size-3 mr-0.5" aria-hidden="true" />;
                   default:
                     return null;
                 }
@@ -403,17 +357,14 @@ export function ChatComposer({
   const [modelQuery, setModelQuery] = useState("");
 
   const selectedModel = availableModels.find((m) => m.value === model);
-  const supportsReasoningEffort =
-    selectedModel?.features?.includes("reasoning");
+  const supportsReasoningEffort = selectedModel?.features?.includes("reasoning");
 
   // Group available models by author/provider, with "featured" prepended
   const providerGroups = useMemo(() => {
     const groups: Record<string, ModelOption[]> = {};
 
     // Featured virtual category first
-    const featuredModels = availableModels.filter(
-      (m) => "featured" in m && m.featured === true,
-    );
+    const featuredModels = availableModels.filter((m) => "featured" in m && m.featured === true);
     if (featuredModels.length > 0) {
       groups["featured"] = featuredModels;
     }
@@ -438,9 +389,7 @@ export function ChatComposer({
       Object.entries(providerGroups).flatMap(([provider, entries]) => {
         const filteredEntries = entries.filter((entry) => {
           const description =
-            "description" in entry
-              ? entry.description
-              : getModelDescription(entry.value, t);
+            "description" in entry ? entry.description : getModelDescription(entry.value, t);
           const haystack = [
             entry.name,
             entry.value,
@@ -465,12 +414,8 @@ export function ChatComposer({
     [filteredProviderGroups],
   );
   const currentProviderModels = filteredProviderGroups[selectedProvider] ?? [];
-  const activeModels = currentProviderModels.filter(
-    (entry) => entry.default !== false,
-  );
-  const legacyModels = currentProviderModels.filter(
-    (entry) => entry.default === false,
-  );
+  const activeModels = currentProviderModels.filter((entry) => entry.default !== false);
+  const legacyModels = currentProviderModels.filter((entry) => entry.default === false);
 
   useEffect(() => {
     if (availableProviders.length === 0) {
@@ -488,13 +433,9 @@ export function ChatComposer({
       setLegacyModelsOpen(false);
       // Default to featured, or fall back to the current model's provider
       const isFeatured =
-        selectedModel &&
-        "featured" in selectedModel &&
-        selectedModel.featured === true;
+        selectedModel && "featured" in selectedModel && selectedModel.featured === true;
       setSelectedProvider(
-        isFeatured || providerGroups["featured"]
-          ? "featured"
-          : (selectedModel?.author ?? "openai"),
+        isFeatured || providerGroups["featured"] ? "featured" : (selectedModel?.author ?? "openai"),
       );
     }
     setModelPopoverOpen(open);
@@ -565,9 +506,7 @@ export function ChatComposer({
       </PromptInputSelectTrigger>
       <PromptInputSelectContent>
         <PromptInputSelectItem value="low">{t("Low")}</PromptInputSelectItem>
-        <PromptInputSelectItem value="medium">
-          {t("Medium")}
-        </PromptInputSelectItem>
+        <PromptInputSelectItem value="medium">{t("Medium")}</PromptInputSelectItem>
         <PromptInputSelectItem value="high">{t("High")}</PromptInputSelectItem>
       </PromptInputSelectContent>
     </PromptInputSelect>
@@ -626,11 +565,7 @@ export function ChatComposer({
       tools={
         <>
           {videoMode && (
-            <ToolChip
-              icon={Film}
-              label={t("Video")}
-              onRemove={() => handleVideoToggle(false)}
-            />
+            <ToolChip icon={Film} label={t("Video")} onRemove={() => handleVideoToggle(false)} />
           )}
           {imageMode && (
             <ToolChip
@@ -640,18 +575,11 @@ export function ChatComposer({
             />
           )}
           {webSearch && (
-            <ToolChip
-              icon={Globe}
-              label={t("Search")}
-              onRemove={() => handleSearchToggle(false)}
-            />
+            <ToolChip icon={Globe} label={t("Search")} onRemove={() => handleSearchToggle(false)} />
           )}
 
           {/* Two-panel model selector */}
-          <Popover
-            open={modelPopoverOpen}
-            onOpenChange={handleModelPopoverOpenChange}
-          >
+          <Popover open={modelPopoverOpen} onOpenChange={handleModelPopoverOpenChange}>
             <PopoverTrigger asChild>
               <Button
                 variant="ghost"
@@ -662,11 +590,7 @@ export function ChatComposer({
                 )}
               >
                 <span className="flex items-center [&_svg]:size-3.5">
-                  <ModelIcon
-                    model={
-                      selectedModel ?? { author: "openai", premium: false }
-                    }
-                  />
+                  <ModelIcon model={selectedModel ?? { author: "openai", premium: false }} />
                 </span>
                 <span className="max-w-30 truncate text-sm">
                   {selectedModel?.name ?? t("Select model")}
@@ -679,18 +603,10 @@ export function ChatComposer({
                     {t("BYOK")}
                   </Badge>
                 )}
-                <ChevronDownIcon
-                  className="size-3 opacity-50 shrink-0"
-                  aria-hidden="true"
-                />
+                <ChevronDownIcon className="size-3 opacity-50 shrink-0" aria-hidden="true" />
               </Button>
             </PopoverTrigger>
-            <PopoverContent
-              className="w-125 p-0 shadow-lg"
-              side="top"
-              align="start"
-              sideOffset={8}
-            >
+            <PopoverContent className="w-125 p-0 shadow-lg" side="top" align="start" sideOffset={8}>
               <div className="flex flex-col rounded-[inherit]">
                 <div className="border-b">
                   <div className="relative">
@@ -711,8 +627,7 @@ export function ChatComposer({
                   {/* Left panel: Provider list */}
                   <div className="w-35 shrink-0 border-r flex flex-col gap-0.5 p-1.5 overflow-y-auto bg-muted/30">
                     {availableProviders.map((provider) => {
-                      const count =
-                        filteredProviderGroups[provider]?.length ?? 0;
+                      const count = filteredProviderGroups[provider]?.length ?? 0;
                       const isActive = selectedProvider === provider;
                       return (
                         <button
@@ -738,9 +653,7 @@ export function ChatComposer({
                           <span className="flex-1 truncate leading-none">
                             {getProviderLabel(provider, t)}
                           </span>
-                          <span className="tabular-nums text-xs opacity-50 shrink-0">
-                            {count}
-                          </span>
+                          <span className="tabular-nums text-xs opacity-50 shrink-0">{count}</span>
                         </button>
                       );
                     })}
@@ -767,19 +680,13 @@ export function ChatComposer({
                         ))}
 
                         {legacyModels.length > 0 && (
-                          <Collapsible
-                            open={legacyModelsOpen}
-                            onOpenChange={setLegacyModelsOpen}
-                          >
+                          <Collapsible open={legacyModelsOpen} onOpenChange={setLegacyModelsOpen}>
                             <CollapsibleTrigger asChild>
                               <button
                                 type="button"
                                 className="flex w-full items-center gap-2 rounded-md px-2.5 py-2 text-left text-sm text-muted-foreground transition-colors hover:bg-accent/40 hover:text-foreground outline-none focus-visible:ring-2 focus-visible:ring-ring"
                               >
-                                <ArchiveIcon
-                                  className="size-4 shrink-0"
-                                  aria-hidden="true"
-                                />
+                                <ArchiveIcon className="size-4 shrink-0" aria-hidden="true" />
                                 <span className="flex-1">
                                   {t(
                                     "{count, plural, one {# legacy model} other {# legacy models}}",
@@ -820,9 +727,7 @@ export function ChatComposer({
             </PopoverContent>
           </Popover>
 
-          <div className="hidden md:block">
-            {renderReasoningEffortSelector()}
-          </div>
+          <div className="hidden md:block">{renderReasoningEffortSelector()}</div>
         </>
       }
     />

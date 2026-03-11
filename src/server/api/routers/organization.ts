@@ -5,6 +5,7 @@ import { billing, member, user } from "@/db/schema";
 import { env } from "@/env";
 import { type BillingPlan, billingPlans, findPlanById, isTeamPlan } from "@/lib/billing";
 import { isBillingDisabled } from "@/lib/billing-config";
+import { escapeStripeSearchValue } from "@/lib/stripe-search";
 import { stripe } from "@/lib/stripe";
 import { customCheckoutRequestOptions } from "@/lib/stripe-checkout";
 import { getSubscriptionPeriodEndDate } from "@/lib/stripe-subscriptions";
@@ -104,7 +105,7 @@ async function findOrCreateStripeCustomer({
 
   try {
     const search = await stripe.customers.search({
-      query: `metadata['organizationId']:'${organizationId.replace(/'/g, "\\'")}'`,
+      query: `metadata['organizationId']:'${escapeStripeSearchValue(organizationId)}'`,
       limit: 1,
     });
     customer = search.data[0];
