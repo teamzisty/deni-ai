@@ -1,0 +1,105 @@
+"use client";
+
+import { MessageSquare, Plus, Search } from "lucide-react";
+import { usePathname, useRouter } from "next/navigation";
+import { useExtracted } from "next-intl";
+import { useEffect } from "react";
+import {
+  CommandDialog,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+  CommandSeparator,
+  CommandShortcut,
+} from "@/components/ui/command";
+import { trpc } from "@/lib/trpc/react";
+
+function isShortcut(event: KeyboardEvent) {
+  return (event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "k";
+}
+
+export function ChatSearch({
+  open,
+  onOpenChange,
+}: {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+}) {
+  const t = useExtracted();
+  const router = useRouter();
+  const pathname = usePathname();
+  const { data } = trpc.chat.getChats.useQuery();
+
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.defaultPrevented || event.altKey || event.shiftKey || !isShortcut(event)) {
+        return;
+      }
+
+      event.preventDefault();
+      onOpenChange(!open);
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [onOpenChange, open]);
+
+  useEffect(() => {
+    onOpenChange(false);
+  }, [onOpenChange, pathname]);
+
+  const handleSelect = (href: string) => {
+    onOpenChange(false);
+    router.push(href);
+  };
+
+  return (
+    <CommandDialog
+      className="overflow-hidden border-border/60 bg-background/95 p-0 shadow-2xl sm:max-w-2xl"
+      description={t("Search your chats or start a new conversation.")}
+      onOpenChange={onOpenChange}
+      open={open}
+      showCloseButton={false}
+      title={t("Chat Search")}
+    >
+      <div className="border-b border-border/60 bg-muted/30">
+        <CommandInput placeholder={t("Search chats...")} />
+      </div>
+      <CommandList className="max-h-[min(60vh,32rem)]">
+        <CommandGroup heading={t("Actions")}>
+          <CommandItem onSelect={() => handleSelect("/chat")}>
+            <Plus className="size-4" />
+            <span>{t("New Chat")}</span>
+            <CommandShortcut>Ctrl K</CommandShortcut>
+          </CommandItem>
+        </CommandGroup>
+        <CommandSeparator />
+        <CommandGroup heading={t("Chats")}>
+          <CommandEmpty>{t("No chats found.")}</CommandEmpty>
+          {data?.map((chat) => (
+            <CommandItem
+              key={chat.id}
+              value={chat.id}
+              keywords={[chat.title ?? ""]}
+              onSelect={() => handleSelect(`/chat/${chat.id}`)}
+            >
+              <MessageSquare className="size-4" />
+              <span className="truncate">{chat.title ?? t("Untitled")}</span>
+            </CommandItem>
+          ))}
+        </CommandGroup>
+      </CommandList>
+      <div className="flex items-center justify-between border-t border-border/60 bg-muted/20 px-3 py-2 text-xs text-muted-foreground">
+        <div className="flex items-center gap-2">
+          <Search className="size-3.5" />
+          <span>{t("Jump across your chat history instantly.")}</span>
+        </div>
+        <CommandShortcut>Ctrl K</CommandShortcut>
+      </div>
+    </CommandDialog>
+  );
+}

@@ -43,7 +43,11 @@ export async function POST(req: Request) {
 /** Extension calls this to start the flow. Returns userCode (shown to user) and deviceCode (for polling). */
 async function handleInitiate(req: Request) {
   const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "unknown";
-  const rateCheck = await checkRateLimit({ key: `device-auth:${ip}`, windowMs: 60_000, maxRequests: 5 });
+  const rateCheck = await checkRateLimit({
+    key: `device-auth:${ip}`,
+    windowMs: 60_000,
+    maxRequests: 5,
+  });
   if (!rateCheck.allowed) {
     return NextResponse.json(
       { error: "Too many requests. Please slow down." },

@@ -47,7 +47,11 @@ export async function POST(req: Request) {
 
   const userId = session.session.userId;
 
-  const rateCheck = await checkRateLimit({ key: `veo:${userId}`, windowMs: 60_000, maxRequests: 5 });
+  const rateCheck = await checkRateLimit({
+    key: `veo:${userId}`,
+    windowMs: 60_000,
+    maxRequests: 5,
+  });
   if (!rateCheck.allowed) {
     return NextResponse.json(
       { error: "Too many requests. Please slow down." },
@@ -122,10 +126,7 @@ export async function POST(req: Request) {
 
   if (!response.ok) {
     console.error("Video generation API error:", responseData);
-    return NextResponse.json(
-      { error: "Video generation failed" },
-      { status: response.status },
-    );
+    return NextResponse.json({ error: "Video generation failed" }, { status: response.status });
   }
 
   const operationName =
@@ -172,10 +173,7 @@ export async function GET(req: Request) {
 
   if (!response.ok) {
     console.error("Video status check API error:", responseData);
-    return NextResponse.json(
-      { error: "Failed to check status." },
-      { status: response.status },
-    );
+    return NextResponse.json({ error: "Failed to check status." }, { status: response.status });
   }
 
   const done =

@@ -84,7 +84,11 @@ export async function POST(req: Request) {
 
   const body = await bodyPromise;
 
-  const rateCheck = await checkRateLimit({ key: `chat:${userId}`, windowMs: 60_000, maxRequests: 30 });
+  const rateCheck = await checkRateLimit({
+    key: `chat:${userId}`,
+    windowMs: 60_000,
+    maxRequests: 30,
+  });
   if (!rateCheck.allowed) {
     return NextResponse.json(
       { error: "Too many requests. Please slow down." },

@@ -45,6 +45,7 @@ import { AccountMenu } from "@/components/account-menu";
 import { ShareDialog } from "@/components/chat/share-dialog";
 import DeniAIIcon from "@/components/deni-ai-icon";
 import { Button } from "@/components/ui/button";
+import { Kbd } from "@/components/ui/kbd";
 import { Spinner } from "@/components/ui/spinner";
 import { isCheckoutSettingsRoute } from "@/lib/settings-routes";
 import { trpc } from "@/lib/trpc/react";
@@ -215,7 +216,7 @@ function ChatItem({ item }: { item: { id: string; title: string | null } }) {
   );
 }
 
-export function AppSidebar() {
+export function AppSidebar({ onOpenChatSearch }: { onOpenChatSearch: () => void }) {
   const t = useExtracted();
   const router = useRouter();
   const pathname = usePathname();
@@ -328,10 +329,10 @@ export function AppSidebar() {
             </Link>
           </div>
           <SidebarGroupContent>
-            <SidebarMenu>
+            <SidebarMenu className="gap-0">
               <SidebarMenuItem>
                 <Button
-                  className="w-full justify-start gap-2 h-9 font-medium"
+                  className="w-full rounded-b-none justify-start gap-2 h-9 font-medium"
                   disabled={createConversion.isPending}
                   onClick={handleNewChat}
                 >
@@ -341,6 +342,17 @@ export function AppSidebar() {
                     <Plus className="w-4 h-4" />
                   )}
                   {t("New Chat")}
+                </Button>
+              </SidebarMenuItem>
+              <SidebarMenuItem>
+                <Button
+                  className="w-full rounded-t-none justify-start gap-2 h-9 font-medium"
+                  onClick={onOpenChatSearch}
+                  variant="outline"
+                >
+                  <MessageSquare className="size-4" />
+                  <span>{t("Chat Search")}</span>
+                  <Kbd className="bg-sidebar ml-auto text-sidebar-foreground/80">Cmd+K</Kbd>
                 </Button>
               </SidebarMenuItem>
             </SidebarMenu>

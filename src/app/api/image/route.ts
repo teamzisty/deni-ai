@@ -25,7 +25,11 @@ export async function POST(req: Request) {
 
   const userId = session.session.userId;
 
-  const rateCheck = await checkRateLimit({ key: `image:${userId}`, windowMs: 60_000, maxRequests: 10 });
+  const rateCheck = await checkRateLimit({
+    key: `image:${userId}`,
+    windowMs: 60_000,
+    maxRequests: 10,
+  });
   if (!rateCheck.allowed) {
     return NextResponse.json(
       { error: "Too many requests. Please slow down." },

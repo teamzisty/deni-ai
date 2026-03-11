@@ -7,12 +7,7 @@ import { billing, member, usageQuota } from "@/db/schema";
 
 import { isMaxModeEligible, recordMaxModeUsage } from "./max-mode";
 
-const ACTIVE_BILLING_STATUSES = new Set([
-  "active",
-  "trialing",
-  "past_due",
-  "paid",
-]);
+const ACTIVE_BILLING_STATUSES = new Set(["active", "trialing", "past_due", "paid"]);
 
 export type UsageCategory = "basic" | "premium";
 export type SubscriptionTier = "free" | "plus" | "pro";
