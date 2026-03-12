@@ -2,10 +2,16 @@
 
 import { useChat } from "@ai-sdk/react";
 import { sendGAEvent } from "@next/third-parties/google";
-import type { UIMessage } from "ai";
+import type { FileUIPart, UIMessage } from "ai";
 import { DefaultChatTransport } from "ai";
 import { useExtracted } from "next-intl";
 import { useEffect, useMemo, useState } from "react";
+import {
+  Attachment,
+  AttachmentInfo,
+  AttachmentPreview,
+  Attachments,
+} from "@/components/ai-elements/attachments";
 import {
   Conversation,
   ConversationContent,
@@ -32,6 +38,69 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 interface ChatInterfaceProps {
   id: string;
   initialMessages?: UIMessage[];
+}
+
+type UploadableFileUIPart = FileUIPart & { file?: File };
+
+function isFilePart(part: UIMessage["parts"][number]): part is FileUIPart {
+  return part.type === "file";
+}
+
+function isTextPart(
+  part: UIMessage["parts"][number],
+): part is Extract<UIMessage["parts"][number], { type: "text"; text: string }> {
+  return part.type === "text";
+}
+
+async function uploadAttachment(file: UploadableFileUIPart): Promise<FileUIPart> {
+  if (!file.url || !file.file) {
+    return file;
+  }
+
+  if (file.url.startsWith("https://") || file.url.startsWith("http://")) {
+    return file;
+  }
+
+  const formData = new FormData();
+  formData.set("file", file.file);
+
+  const uploadResponse = await fetch("/api/upload-attachment", {
+    method: "POST",
+    body: formData,
+  });
+
+  if (!uploadResponse.ok) {
+    throw new Error("Attachment upload failed.");
+  }
+
+  const payload = (await uploadResponse.json()) as { url?: string };
+  if (!payload.url) {
+    throw new Error("Attachment upload failed.");
+  }
+
+  return { ...file, url: payload.url };
+}
+
+async function normalizeAttachments(files?: UploadableFileUIPart[]) {
+  if (!files?.length) {
+    return undefined;
+  }
+
+  const normalized = await Promise.all(
+    files.map(async (file) => {
+      if (!file.url) {
+        return file;
+      }
+
+      if (file.url.startsWith("https://") || file.url.startsWith("http://")) {
+        return file;
+      }
+
+      return uploadAttachment(file);
+    }),
+  );
+
+  return normalized;
 }
 
 function getMessageRenderKeys(messages: UIMessage[]) {
@@ -61,6 +130,7 @@ export function ChatInterface({ id, initialMessages = [] }: ChatInterfaceProps) 
   const [videoMode, setVideoMode] = useState(false);
   const [imageMode, setImageMode] = useState(false);
   const [reasoningEffort, setReasoningEffort] = useState<ReasoningEffort>("high");
+  const [attachmentError, setAttachmentError] = useState<string | null>(null);
   const utils = trpc.useUtils();
   const { availableModels, providerSettings, providerKeys } = useAvailableModels();
   const {
@@ -120,7 +190,7 @@ export function ChatInterface({ id, initialMessages = [] }: ChatInterfaceProps) 
     onMessageSent: () => utils.chat.getChats.invalidate(),
   });
 
-  const handleSubmit = (
+  const handleSubmit = async (
     message: ComposerMessage,
     options: {
       model: string;
@@ -133,7 +203,17 @@ export function ChatInterface({ id, initialMessages = [] }: ChatInterfaceProps) 
     if (isSubmitBlocked) {
       return;
     }
-    const attachments = message.files && message.files.length > 0 ? message.files : undefined;
+    setAttachmentError(null);
+
+    let attachments: FileUIPart[] | undefined;
+    try {
+      attachments = await normalizeAttachments(message.files);
+    } catch (error) {
+      setAttachmentError(
+        error instanceof Error ? error.message : t("Failed to upload attachment."),
+      );
+      return;
+    }
 
     if (GA_ID) {
       sendGAEvent("chat_message_sent", {
@@ -143,11 +223,11 @@ export function ChatInterface({ id, initialMessages = [] }: ChatInterfaceProps) 
       });
     }
 
-    if (message.text) {
+    if (message.text || attachments?.length) {
       Promise.resolve(
         sendMessage(
           {
-            text: message.text,
+            text: message.text || "",
             files: attachments,
           },
           {
@@ -185,11 +265,28 @@ export function ChatInterface({ id, initialMessages = [] }: ChatInterfaceProps) 
               {message.role === "user" && (
                 <Message from="user">
                   <MessageContent>
-                    {message.parts[0]?.type === "text" && message.parts[0].text && (
-                      <MessageResponse shikiTheme={["github-light", "github-dark"]}>
-                        {message.parts[0].text}
+                    {message.parts.filter(isFilePart).length > 0 ? (
+                      <Attachments variant="list" className="w-full">
+                        {message.parts.filter(isFilePart).map((part, partIndex) => (
+                          <Attachment
+                            data={{ ...part, id: `${message.id}-file-${partIndex}` }}
+                            key={`${message.id}-file-${partIndex}`}
+                            className="w-full bg-background/50"
+                          >
+                            <AttachmentPreview />
+                            <AttachmentInfo showMediaType />
+                          </Attachment>
+                        ))}
+                      </Attachments>
+                    ) : null}
+                    {message.parts.filter(isTextPart).map((part, partIndex) => (
+                      <MessageResponse
+                        key={`${message.id}-text-${partIndex}`}
+                        shikiTheme={["github-light", "github-dark"]}
+                      >
+                        {part.text}
                       </MessageResponse>
-                    )}
+                    ))}
                   </MessageContent>
                 </Message>
               )}
@@ -202,6 +299,9 @@ export function ChatInterface({ id, initialMessages = [] }: ChatInterfaceProps) 
                   isSubmitBlocked={isSubmitBlocked}
                   requestBody={requestBody}
                   onRegenerate={regenerate}
+                  availableModels={availableModels}
+                  onModelChange={setModel}
+                  onWebSearchChange={setWebSearch}
                 />
               )}
             </div>
@@ -225,6 +325,19 @@ export function ChatInterface({ id, initialMessages = [] }: ChatInterfaceProps) 
                     ? error
                     : error?.message || t("An unexpected error occurred.")}
                 </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {attachmentError && (
+            <Card className="!gap-0 bg-destructive/10">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <span>{t("Error")}</span>
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-sm break-words">{attachmentError}</div>
               </CardContent>
             </Card>
           )}

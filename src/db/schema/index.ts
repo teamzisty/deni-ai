@@ -4,6 +4,7 @@ export * from "./billing";
 export * from "./chat";
 export * from "./custom-models";
 export * from "./device-auth";
+export * from "./memory";
 export * from "./provider-keys";
 export * from "./provider-settings";
 export * from "./share";

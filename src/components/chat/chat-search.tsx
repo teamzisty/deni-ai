@@ -16,6 +16,16 @@ import {
 } from "@/components/ui/command";
 import { trpc } from "@/lib/trpc/react";
 
+function normalizeTags(value: unknown): string[] {
+  if (!Array.isArray(value)) {
+    return [];
+  }
+
+  return value
+    .filter((entry): entry is string => typeof entry === "string")
+    .map((entry) => entry.trim());
+}
+
 function isShortcut(event: KeyboardEvent) {
   return (event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "k";
 }
@@ -80,17 +90,27 @@ export function ChatSearch({
         <CommandSeparator />
         <CommandGroup heading={t("Chats")}>
           <CommandEmpty>{t("No chats found.")}</CommandEmpty>
-          {data?.map((chat) => (
-            <CommandItem
-              key={chat.id}
-              value={chat.id}
-              keywords={[chat.title ?? ""]}
-              onSelect={() => handleSelect(`/chat/${chat.id}`)}
-            >
-              <MessageSquare className="size-4" />
-              <span className="truncate">{chat.title ?? t("Untitled")}</span>
-            </CommandItem>
-          ))}
+          {data?.map((chat) => {
+            const tags = normalizeTags(chat.tags);
+            return (
+              <CommandItem
+                key={chat.id}
+                value={chat.id}
+                keywords={[chat.title ?? "", chat.folder ?? "", ...tags]}
+                onSelect={() => handleSelect(`/chat/${chat.id}`)}
+              >
+                <MessageSquare className="size-4" />
+                <div className="flex min-w-0 flex-1 flex-col">
+                  <span className="truncate">{chat.title ?? t("Untitled")}</span>
+                  {chat.folder || tags.length > 0 ? (
+                    <span className="truncate text-xs text-muted-foreground">
+                      {[chat.folder, ...tags].filter(Boolean).join(" · ")}
+                    </span>
+                  ) : null}
+                </div>
+              </CommandItem>
+            );
+          })}
         </CommandGroup>
       </CommandList>
       <div className="flex items-center justify-between border-t border-border/60 bg-muted/20 px-3 py-2 text-xs text-muted-foreground">

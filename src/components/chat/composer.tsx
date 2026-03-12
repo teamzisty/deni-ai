@@ -10,6 +10,7 @@ import {
   AttachmentRemove,
   Attachments,
 } from "@/components/ai-elements/attachments";
+import { Spinner } from "@/components/ui/spinner";
 import type {
   PromptInputMessage,
   PromptInputProps,
@@ -51,6 +52,7 @@ function ComposerAttachments() {
         >
           <AttachmentPreview />
           <AttachmentInfo />
+          {attachment.uploadStatus === "uploading" ? <Spinner className="size-3" /> : null}
           <AttachmentRemove />
         </Attachment>
       ))}

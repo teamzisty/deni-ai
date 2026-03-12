@@ -50,6 +50,11 @@ export default function SettingsWrapper({ children }: { children: React.ReactNod
 
   const settingsTabs = [
     {
+      label: t("Personalize"),
+      value: "memory",
+      href: "/settings/memory",
+    },
+    {
       label: t("Appearance"),
       value: "appearance",
       href: "/settings/appearance",

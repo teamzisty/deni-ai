@@ -1,9 +1,24 @@
 "use client";
 
-import type { ToolUIPart, UIDataTypes, UIMessage, UIMessagePart, UITools } from "ai";
-import { BrainIcon, CopyIcon, Globe, RefreshCcwIcon } from "lucide-react";
+import type {
+  ToolUIPart,
+  UIDataTypes,
+  UIMessage,
+  UIMessagePart,
+  UITools,
+} from "ai";
+import {
+  ArrowUpIcon,
+  BrainIcon,
+  CheckIcon,
+  CopyIcon,
+  Globe,
+  ListFilterIcon,
+  RefreshCcwIcon,
+} from "lucide-react";
 import Link from "next/link";
 import { useExtracted } from "next-intl";
+import { useState } from "react";
 import {
   ChainOfThought,
   ChainOfThoughtContent,
@@ -20,7 +35,12 @@ import {
   MessageResponse,
 } from "@/components/ai-elements/message";
 import { Shimmer } from "@/components/ai-elements/shimmer";
-import { Source, Sources, SourcesContent, SourcesTrigger } from "@/components/ai-elements/sources";
+import {
+  Source,
+  Sources,
+  SourcesContent,
+  SourcesTrigger,
+} from "@/components/ai-elements/sources";
 import type { ReasoningEffort } from "@/components/chat/chat-composer";
 import {
   isImageToolOutput,
@@ -34,7 +54,20 @@ import {
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuSub,
+  DropdownMenuSubContent,
+  DropdownMenuSubTrigger,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Input } from "@/components/ui/input";
 import { Spinner } from "@/components/ui/spinner";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import type { ModelOption } from "./chat-composer";
 
 type VideoToolPart = ToolUIPart<{
   video: {
@@ -43,8 +76,9 @@ type VideoToolPart = ToolUIPart<{
   };
 }>;
 
-const isVideoToolPart = (part: UIMessagePart<UIDataTypes, UITools>): part is VideoToolPart =>
-  part.type === "tool-video";
+const isVideoToolPart = (
+  part: UIMessagePart<UIDataTypes, UITools>,
+): part is VideoToolPart => part.type === "tool-video";
 
 type ImageToolPart = ToolUIPart<{
   image: {
@@ -53,8 +87,9 @@ type ImageToolPart = ToolUIPart<{
   };
 }>;
 
-const isImageToolPart = (part: UIMessagePart<UIDataTypes, UITools>): part is ImageToolPart =>
-  part.type === "tool-image";
+const isImageToolPart = (
+  part: UIMessagePart<UIDataTypes, UITools>,
+): part is ImageToolPart => part.type === "tool-image";
 
 interface RequestBody {
   model: string;
@@ -63,6 +98,9 @@ interface RequestBody {
   video: boolean;
   image: boolean;
   id: string;
+  responseStyle?: "retry" | "detailed" | "concise";
+  forceWebSearch?: boolean;
+  additionalInstruction?: string;
 }
 
 interface AssistantMessageProps {
@@ -72,7 +110,10 @@ interface AssistantMessageProps {
   showActions: boolean;
   isSubmitBlocked: boolean;
   requestBody: RequestBody;
-  onRegenerate: (options: { body: RequestBody }) => void;
+  onRegenerate: (options?: { body?: RequestBody; messageId?: string }) => void;
+  availableModels: ModelOption[];
+  onModelChange: (value: string) => void;
+  onWebSearchChange: (value: boolean) => void;
 }
 
 export function AssistantMessage({
@@ -83,17 +124,46 @@ export function AssistantMessage({
   isSubmitBlocked,
   requestBody,
   onRegenerate,
+  availableModels,
+  onModelChange,
+  onWebSearchChange,
 }: AssistantMessageProps) {
   const t = useExtracted();
   const isStreamingThis = isStreaming && isLastMessage;
+  const [retryMenuOpen, setRetryMenuOpen] = useState(false);
+  const [additionalInstruction, setAdditionalInstruction] = useState("");
+  const regenerateMessage = (overrides?: Partial<RequestBody>) => {
+    onRegenerate({
+      messageId: message.id,
+      body: {
+        ...requestBody,
+        responseStyle: "retry",
+        forceWebSearch: false,
+        additionalInstruction: undefined,
+        ...overrides,
+      },
+    });
+  };
+  const handleAdditionalInstructionSubmit = () => {
+    const instruction = additionalInstruction.trim();
+    if (!instruction) {
+      return;
+    }
+    regenerateMessage({ additionalInstruction: instruction });
+    setAdditionalInstruction("");
+    setRetryMenuOpen(false);
+  };
 
   return (
     <div className="space-y-2">
       {/* Chain of Thought - reasoning と search を統合表示 */}
-      {message.parts?.some((p) => p.type === "reasoning" || p.type === "tool-search") && (
+      {message.parts?.some(
+        (p) => p.type === "reasoning" || p.type === "tool-search",
+      ) && (
         <ChainOfThought defaultOpen={isStreamingThis}>
           <ChainOfThoughtHeader>
-            {isStreamingThis && !message.parts?.some((p) => p.type === "text") ? (
+            {isStreamingThis &&
+            !message.parts?.some((p) => p.type === "text") ? (
               <Shimmer duration={2}>{t("Thinking...")}</Shimmer>
             ) : (
               t("Thought process")
@@ -101,10 +171,14 @@ export function AssistantMessage({
           </ChainOfThoughtHeader>
           <ChainOfThoughtContent>
             {message.parts
-              ?.filter((p) => p.type === "reasoning" || p.type === "tool-search")
+              ?.filter(
+                (p) => p.type === "reasoning" || p.type === "tool-search",
+              )
               .map((part, i) => {
                 if (part.type === "reasoning") {
-                  const lines = (part.text ?? "").replace(/\r\n?/g, "\n").split("\n");
+                  const lines = (part.text ?? "")
+                    .replace(/\r\n?/g, "\n")
+                    .split("\n");
                   const titleRegex = /^\*\*(.+?)\*\*\s*$/;
 
                   type Section = {
@@ -117,10 +191,13 @@ export function AssistantMessage({
                   let currentContent: string[] = [];
 
                   const flush = () => {
-                    if (currentTitle === null && currentContent.length === 0) return;
+                    if (currentTitle === null && currentContent.length === 0)
+                      return;
 
                     sections.push({
-                      title: (currentTitle ?? t("Reasoning")).trim() || t("Reasoning"),
+                      title:
+                        (currentTitle ?? t("Reasoning")).trim() ||
+                        t("Reasoning"),
                       content: currentContent,
                     });
 
@@ -166,8 +243,11 @@ export function AssistantMessage({
 
                 if (part.type === "tool-search") {
                   const isSearching =
-                    part.state !== "output-available" && part.state !== "output-error";
-                  const searchResults = isSearchResultArray(part.output) ? part.output : [];
+                    part.state !== "output-available" &&
+                    part.state !== "output-error";
+                  const searchResults = isSearchResultArray(part.output)
+                    ? part.output
+                    : [];
                   return (
                     <ChainOfThoughtStep
                       key={`${message.id}-cot-${i}`}
@@ -211,7 +291,6 @@ export function AssistantMessage({
         </ChainOfThought>
       )}
 
-      {/* テキスト応答 */}
       {message.parts
         ?.filter((p) => p.type === "text")
         .map((part, i, textParts) => (
@@ -221,18 +300,128 @@ export function AssistantMessage({
             </MessageContent>
             {i === textParts.length - 1 && showActions && (
               <MessageActions>
-                <MessageAction
-                  disabled={isSubmitBlocked}
-                  onClick={() =>
-                    onRegenerate({
-                      body: requestBody,
-                    })
-                  }
-                  label={t("Retry")}
-                  tooltip={t("Retry")}
+                <DropdownMenu
+                  open={retryMenuOpen}
+                  onOpenChange={(open) => {
+                    setRetryMenuOpen(open);
+                    if (!open) {
+                      setAdditionalInstruction("");
+                    }
+                  }}
                 >
-                  <RefreshCcwIcon className="size-3.5" />
-                </MessageAction>
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <DropdownMenuTrigger asChild>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon-sm"
+                            disabled={isSubmitBlocked}
+                            aria-label={t("Retry")}
+                          >
+                            <RefreshCcwIcon className="size-3.5" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p>{t("Retry")}</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                  <DropdownMenuContent align="start" className="w-64">
+                    <form
+                      className="flex items-center gap-2 p-1"
+                      onSubmit={(event) => {
+                        event.preventDefault();
+                        handleAdditionalInstructionSubmit();
+                      }}
+                    >
+                      <Input
+                        value={additionalInstruction}
+                        onChange={(event) =>
+                          setAdditionalInstruction(event.target.value)
+                        }
+                        placeholder={t("Refine this answer")}
+                        aria-label={t("Refine this answer")}
+                        className="h-7 bg-transparent! border-none! select-none! outline-none!"
+                      />
+                      <Button
+                        type="submit"
+                        size="icon-sm"
+                        className="h-7"
+                        disabled={
+                          isSubmitBlocked ||
+                          additionalInstruction.trim().length === 0
+                        }
+                        aria-label={t("Send")}
+                      >
+                        <ArrowUpIcon className="size-4" />
+                      </Button>
+                    </form>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem onSelect={() => regenerateMessage()}>
+                      <RefreshCcwIcon className="size-4" />
+                      {t("Regenerate")}
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem
+                      onSelect={() =>
+                        regenerateMessage({ responseStyle: "detailed" })
+                      }
+                    >
+                      <ListFilterIcon className="size-4" />
+                      {t("Expand answer")}
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      onSelect={() =>
+                        regenerateMessage({ responseStyle: "concise" })
+                      }
+                    >
+                      <ListFilterIcon className="size-4" />
+                      {t("Shorten answer")}
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem
+                      onSelect={() => {
+                        onWebSearchChange(true);
+                        regenerateMessage({
+                          webSearch: true,
+                          forceWebSearch: true,
+                        });
+                      }}
+                    >
+                      <Globe className="size-4" />
+                      {t("Use web search")}
+                    </DropdownMenuItem>
+                    <DropdownMenuSub>
+                      <DropdownMenuSubTrigger>
+                        <BrainIcon className="size-4" />
+                        {t("Change model")}
+                      </DropdownMenuSubTrigger>
+                      <DropdownMenuSubContent className="max-h-80 w-72 overflow-y-auto">
+                        {availableModels.map((modelOption) => (
+                          <DropdownMenuItem
+                            key={modelOption.value}
+                            onSelect={() => {
+                              onModelChange(modelOption.value);
+                              regenerateMessage({ model: modelOption.value });
+                            }}
+                          >
+                            <CheckIcon
+                              className={
+                                modelOption.value === requestBody.model
+                                  ? "size-4 opacity-100"
+                                  : "size-4 opacity-0"
+                              }
+                            />
+                            <span className="truncate">{modelOption.name}</span>
+                          </DropdownMenuItem>
+                        ))}
+                      </DropdownMenuSubContent>
+                    </DropdownMenuSub>
+                  </DropdownMenuContent>
+                </DropdownMenu>
                 <MessageAction
                   onClick={() => navigator.clipboard.writeText(part.text)}
                   label={t("Copy")}
@@ -246,7 +435,10 @@ export function AssistantMessage({
         ))}
 
       {message.parts?.filter(isVideoToolPart).map((part, i) => {
-        if (part.state !== "output-available" && part.state !== "output-error") {
+        if (
+          part.state !== "output-available" &&
+          part.state !== "output-error"
+        ) {
           return (
             <Message key={`${message.id}-video-${i}`} from="assistant">
               <MessageContent className="w-full gap-2 rounded-lg border border-border/60 bg-muted/20 px-4 py-3 text-sm text-muted-foreground">
@@ -291,28 +483,46 @@ export function AssistantMessage({
           );
         }
 
-        const resolvedModelLabel = resolveVeoModelLabel(output.model, output.modelLabel, t);
+        const resolvedModelLabel = resolveVeoModelLabel(
+          output.model,
+          output.modelLabel,
+          t,
+        );
 
         return (
           <Message key={`${message.id}-video-${i}`} from="assistant">
             <MessageContent className="w-full gap-3 rounded-lg border border-border/60 bg-background/90 px-4 py-3">
               {output.negativePrompt && (
                 <div className="rounded-md border border-border/60 bg-muted/30 px-3 py-2 text-xs">
-                  <p className="text-xs font-medium text-foreground">{t("Negative prompt")}</p>
-                  <p className="text-muted-foreground">{output.negativePrompt}</p>
+                  <p className="text-xs font-medium text-foreground">
+                    {t("Negative prompt")}
+                  </p>
+                  <p className="text-muted-foreground">
+                    {output.negativePrompt}
+                  </p>
                 </div>
               )}
               <div className="overflow-hidden rounded-lg border border-border/70 bg-muted/30">
                 {/* oxlint-disable-next-line: generated videos don't include captions. */}
-                <video controls src={output.videoUrl} className="h-auto w-full" />
+                <video
+                  controls
+                  src={output.videoUrl}
+                  className="h-auto w-full"
+                />
               </div>
               <div className="flex flex-wrap items-center gap-2 text-xs">
-                {output.resolution && <Badge variant="secondary">{output.resolution}</Badge>}
-                {output.aspectRatio && <Badge variant="secondary">{output.aspectRatio}</Badge>}
+                {output.resolution && (
+                  <Badge variant="secondary">{output.resolution}</Badge>
+                )}
+                {output.aspectRatio && (
+                  <Badge variant="secondary">{output.aspectRatio}</Badge>
+                )}
                 {output.durationSeconds && (
                   <Badge variant="secondary">{output.durationSeconds}s</Badge>
                 )}
-                {resolvedModelLabel ? <Badge variant="outline">{resolvedModelLabel}</Badge> : null}
+                {resolvedModelLabel ? (
+                  <Badge variant="outline">{resolvedModelLabel}</Badge>
+                ) : null}
                 {output.seed !== null && output.seed !== undefined && (
                   <Badge variant="outline">
                     {t("Seed {seed}", {
@@ -341,7 +551,10 @@ export function AssistantMessage({
       })}
 
       {message.parts?.filter(isImageToolPart).map((part, i) => {
-        if (part.state !== "output-available" && part.state !== "output-error") {
+        if (
+          part.state !== "output-available" &&
+          part.state !== "output-error"
+        ) {
           return (
             <Message key={`${message.id}-image-${i}`} from="assistant">
               <MessageContent className="w-full gap-2 rounded-lg border border-border/60 bg-muted/20 px-4 py-3 text-sm text-muted-foreground">
@@ -386,7 +599,10 @@ export function AssistantMessage({
           );
         }
 
-        const resolvedModelLabel = resolveImageModelLabel(output.model, output.modelLabel);
+        const resolvedModelLabel = resolveImageModelLabel(
+          output.model,
+          output.modelLabel,
+        );
 
         return (
           <Message key={`${message.id}-image-${i}`} from="assistant">
@@ -400,28 +616,45 @@ export function AssistantMessage({
                     {/* oxlint-disable-next-line: generated images don't include captions. */}
                     <img
                       src={imageUrl}
-                      alt={t("Generated image {index}", { index: String(idx + 1) })}
+                      alt={t("Generated image {index}", {
+                        index: String(idx + 1),
+                      })}
                       className="h-auto w-full"
                     />
                   </div>
                 ))}
               </div>
               <div className="flex flex-wrap items-center gap-2 text-xs">
-                {output.resolution && <Badge variant="secondary">{output.resolution}</Badge>}
-                {output.aspectRatio && <Badge variant="secondary">{output.aspectRatio}</Badge>}
+                {output.resolution && (
+                  <Badge variant="secondary">{output.resolution}</Badge>
+                )}
+                {output.aspectRatio && (
+                  <Badge variant="secondary">{output.aspectRatio}</Badge>
+                )}
                 {output.numberOfImages && output.numberOfImages > 1 && (
                   <Badge variant="secondary">
-                    {t("{count} images", { count: String(output.numberOfImages) })}
+                    {t("{count} images", {
+                      count: String(output.numberOfImages),
+                    })}
                   </Badge>
                 )}
-                {resolvedModelLabel ? <Badge variant="outline">{resolvedModelLabel}</Badge> : null}
+                {resolvedModelLabel ? (
+                  <Badge variant="outline">{resolvedModelLabel}</Badge>
+                ) : null}
               </div>
               <div className="flex flex-wrap gap-2">
                 {output.imageUrls.map((imageUrl: string, idx: number) => (
-                  <Button key={`download-${idx}`} asChild size="sm" variant="outline">
+                  <Button
+                    key={`download-${idx}`}
+                    asChild
+                    size="sm"
+                    variant="outline"
+                  >
                     <a
                       href={imageUrl}
-                      download={t("image-{index}.png", { index: String(idx + 1) })}
+                      download={t("image-{index}.png", {
+                        index: String(idx + 1),
+                      })}
                     >
                       {t("Download image {index}", { index: String(idx + 1) })}
                     </a>
@@ -436,7 +669,9 @@ export function AssistantMessage({
       {/* ソース */}
       {message.parts?.some((p) => p.type === "source-url") && (
         <Sources className="mt-2">
-          <SourcesTrigger count={message.parts.filter((p) => p.type === "source-url").length}>
+          <SourcesTrigger
+            count={message.parts.filter((p) => p.type === "source-url").length}
+          >
             {t("Sources")}
           </SourcesTrigger>
           <SourcesContent>

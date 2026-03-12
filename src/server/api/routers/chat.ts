@@ -10,6 +10,9 @@ export const chatRouter = router({
       .select({
         id: chats.id,
         title: chats.title,
+        pinned: chats.pinned,
+        folder: chats.folder,
+        tags: chats.tags,
         created_at: chats.created_at,
         updated_at: chats.updated_at,
       })
@@ -57,6 +60,9 @@ export const chatRouter = router({
               createdAt: z.date(),
             }),
           ),
+          pinned: z.boolean(),
+          folder: z.string().trim().max(80).nullable(),
+          tags: z.array(z.string().trim().min(1).max(32)).max(12),
         })
         .partial(),
     )

@@ -9,7 +9,7 @@ import { toast } from "sonner";
 import type { BillingPlanId, ClientPlan, IndividualPlanId } from "@/lib/billing";
 import { isTeamPlan } from "@/lib/billing";
 import { isBillingDisabled } from "@/lib/billing-config";
-import { getBillingPlanCopy } from "@/lib/billing-plan-copy";
+import { useBillingPlanCopy } from "@/lib/billing-plan-copy";
 import { formatMinorCurrency } from "@/lib/currency";
 import { trpc } from "@/lib/trpc/react";
 import { cn } from "@/lib/utils";
@@ -129,7 +129,7 @@ function PlanCard({
 }) {
   const t = useExtracted();
   const formatPriceLabel = useFormatPriceLabel();
-  const planCopy = getBillingPlanCopy(t, plan.id);
+  const planCopy = useBillingPlanCopy(plan.id);
   const mode = plan.mode ?? "subscription";
   const canChange = hasActiveSubscription && !cancelDate && !isCurrent && mode === "subscription";
   const isBlockedByCancel = Number.isInteger(cancelDate) && Boolean(activePlanId) && !isCurrent;

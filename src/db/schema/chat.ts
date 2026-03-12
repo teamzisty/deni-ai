@@ -1,5 +1,5 @@
 import { sql } from "drizzle-orm";
-import { index, jsonb, pgTable, text, timestamp } from "drizzle-orm/pg-core";
+import { boolean, index, jsonb, pgTable, text, timestamp } from "drizzle-orm/pg-core";
 import { user } from "@/db/schema";
 
 export const chats = pgTable(
@@ -11,6 +11,11 @@ export const chats = pgTable(
     uid: text("user_id").references(() => user.id, { onDelete: "cascade" }),
     title: text("title"),
     messages: jsonb("messages").default(sql`'[]'`),
+    pinned: boolean("pinned").default(false).notNull(),
+    folder: text("folder"),
+    tags: jsonb("tags")
+      .default(sql`'[]'`)
+      .notNull(),
     created_at: timestamp("created_at").defaultNow().notNull(),
     updated_at: timestamp("updated_at").defaultNow().notNull(),
   },

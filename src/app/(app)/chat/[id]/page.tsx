@@ -3,6 +3,7 @@ import { safeValidateUIMessages } from "ai";
 import { and, eq } from "drizzle-orm";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
+import { Loader } from "@/components/ai-elements/loader";
 import dynamic from "next/dynamic";
 
 const ChatInterface = dynamic(
@@ -10,7 +11,7 @@ const ChatInterface = dynamic(
   {
     loading: () => (
       <div className="flex min-h-[60vh] w-full items-center justify-center text-sm text-muted-foreground">
-        Loading chat…
+        <Loader />
       </div>
     ),
   },

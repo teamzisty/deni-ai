@@ -44,7 +44,7 @@ import {
 
 import { Spinner } from "@/components/ui/spinner";
 import { authClient } from "@/lib/auth-client";
-import { getBillingPlanCopy } from "@/lib/billing-plan-copy";
+import { useBillingPlanCopy } from "@/lib/billing-plan-copy";
 import { formatMinorCurrency } from "@/lib/currency";
 import { trpc } from "@/lib/trpc/react";
 
@@ -118,6 +118,8 @@ export function TeamSettingsPage() {
   const teamPlansQuery = trpc.organization.teamPlans.useQuery(undefined, {
     enabled: Boolean(activeOrg?.id) && currentUserRole === "owner",
   });
+  const monthlyPlanCopy = useBillingPlanCopy("pro_team_monthly");
+  const yearlyPlanCopy = useBillingPlanCopy("pro_team_yearly");
 
   const createPortal = trpc.organization.createTeamPortalSession.useMutation();
   const createTeamCheckout = trpc.organization.createTeamCheckoutSession.useMutation();
@@ -406,9 +408,6 @@ export function TeamSettingsPage() {
   const teamPlans = teamPlansQuery.data?.plans ?? [];
   const monthlyPlan = teamPlans.find((p) => p.id === "pro_team_monthly");
   const yearlyPlan = teamPlans.find((p) => p.id === "pro_team_yearly");
-  const monthlyPlanCopy = getBillingPlanCopy(t, "pro_team_monthly");
-  const yearlyPlanCopy = getBillingPlanCopy(t, "pro_team_yearly");
-
   return (
     <div className="space-y-6">
       {/* Header */}

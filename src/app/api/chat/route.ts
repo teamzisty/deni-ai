@@ -25,6 +25,7 @@ import { generateTitle, getChatById, updateChat } from "@/lib/chat";
 import { createChatTools } from "@/lib/chat-tools";
 import { models } from "@/lib/constants";
 import { decryptFromB64 } from "@/lib/crypto";
+import { buildMemoryPrompt, getUserMemoryState, maybeAutoSaveMemories } from "@/lib/memory";
 import { consumeUsage, getUsageSummary, type UsageCategory, UsageLimitError } from "@/lib/usage";
 import { checkRateLimit } from "@/lib/rate-limit";
 
@@ -105,6 +106,9 @@ export async function POST(req: Request) {
       reasoningEffort: z.enum(["low", "medium", "high"]).optional(),
       video: z.boolean().optional(),
       image: z.boolean().optional(),
+      responseStyle: z.enum(["retry", "detailed", "concise"]).optional(),
+      forceWebSearch: z.boolean().optional(),
+      additionalInstruction: z.string().trim().min(1).optional(),
     })
     .safeParse(body);
 
@@ -120,6 +124,9 @@ export async function POST(req: Request) {
     reasoningEffort = "high",
     video: videoMode = false,
     image: imageMode = false,
+    responseStyle = "retry",
+    forceWebSearch = false,
+    additionalInstruction,
   } = parsedBody.data;
 
   const validatedMessages = await safeValidateUIMessages<UIMessage>({
@@ -162,9 +169,10 @@ export async function POST(req: Request) {
 
   const usageCategory: UsageCategory = isPremiumModel ? "premium" : "basic";
 
-  const [providerKeys, providerSettings] = await Promise.all([
+  const [providerKeys, providerSettings, memoryState] = await Promise.all([
     db.select().from(providerKey).where(eq(providerKey.userId, userId)),
     db.select().from(providerSetting).where(eq(providerSetting.userId, userId)),
+    getUserMemoryState(userId),
   ]);
 
   const providerKeyMap = new Map(providerKeys.map((entry) => [entry.provider, entry.keyEnc]));
@@ -365,16 +373,33 @@ export async function POST(req: Request) {
 
   const modelMessages = await convertToModelMessages(messages);
   const currentDate = new Date().toISOString().split("T")[0];
+  const persistentMemory = buildMemoryPrompt(memoryState);
+  const responseStyleInstruction =
+    responseStyle === "detailed"
+      ? "The user asked to regenerate the previous answer with more detail. Keep the same intent, but expand the explanation, include more useful specifics, and improve completeness."
+      : responseStyle === "concise"
+        ? "The user asked to regenerate the previous answer more concisely. Keep the same intent, but shorten the response, reduce repetition, and prioritize the most important points."
+        : "The user asked for a fresh retry of the previous answer. Preserve the intent, but vary the phrasing and structure while keeping the response accurate and useful.";
+  const forceWebSearchInstruction =
+    forceWebSearch && !videoMode && !imageMode
+      ? "Web search is required for this response. Use the search tool at least once before answering, then cite the sources you used."
+      : null;
+  const additionalInstructionPrompt = additionalInstruction
+    ? `Additional regeneration instruction from the user: ${additionalInstruction}`
+    : null;
   const systemPrompt = videoMode
     ? [
         "You are a helpful AI assistant.",
         `Current date: ${currentDate}.`,
+        persistentMemory,
+        additionalInstructionPrompt,
         "Video mode is enabled. Always call the `video` tool exactly once using the user's message as the prompt.",
         "Do not call other tools. After the tool returns, provide a short caption for the video.",
       ].join(" ")
     : [
         "You are a helpful AI assistant.",
         `Current date: ${currentDate}.`,
+        persistentMemory,
         "Guidelines:",
         "- Provide accurate, helpful, and concise responses.",
         "- Use the search tool when you need current information or when the user asks about recent events.",
@@ -382,6 +407,9 @@ export async function POST(req: Request) {
         "- If you're unsure about something, acknowledge the uncertainty rather than making up information.",
         "- Format code blocks with appropriate syntax highlighting.",
         "- Use markdown formatting for better readability.",
+        additionalInstructionPrompt,
+        responseStyleInstruction,
+        forceWebSearchInstruction,
       ].join(" ");
 
   const result = streamText({
@@ -441,6 +469,15 @@ export async function POST(req: Request) {
       }
 
       await updateChat(id, userId, updatedMessages, newTitle);
+      try {
+        await maybeAutoSaveMemories({
+          userId,
+          messages: updatedMessages,
+          enabled: memoryState.profile.autoMemory,
+        });
+      } catch (error) {
+        console.error("Failed to auto-save memories", error);
+      }
     },
   });
 }
