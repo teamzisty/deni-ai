@@ -1,4 +1,4 @@
-export const appVersion = "7.0-beta.1";
+export const appVersion = "7.0-beta.2";
 export const appCodename = "Phantom Phoenix";
 export const appDate = "2026-3-12";
 
