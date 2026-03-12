@@ -3,7 +3,24 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { env } from "@/env";
 import { auth } from "@/lib/auth";
-import { imageAspectRatios, imageModelValues, imageResolutions } from "@/lib/image";
+import {
+  buildGeminiImageGenerationConfig,
+  extractGeminiImageErrorMessage,
+  extractGeneratedImages,
+} from "@/lib/gemini-image";
+import {
+  buildImagenImageGenerationParams,
+  extractImagenErrorMessage,
+  extractImagenGeneratedImages,
+} from "@/lib/imagen-image";
+import {
+  imageAspectRatios,
+  imageModelValues,
+  imageResolutions,
+  type ImageModel,
+  isImagenImageModel,
+  supportsImageHighResolution,
+} from "@/lib/image";
 import { checkRateLimit } from "@/lib/rate-limit";
 import { consumeUsage, UsageLimitError } from "@/lib/usage";
 
@@ -16,6 +33,115 @@ const requestSchema = z.object({
   resolution: z.enum(imageResolutions).optional(),
   numberOfImages: z.number().int().min(1).max(4).optional(),
 });
+
+class ImageGenerationError extends Error {
+  constructor(
+    message: string,
+    readonly status: number,
+  ) {
+    super(message);
+  }
+}
+
+function buildGenerationConfig(
+  model: ImageModel,
+  aspectRatio?: (typeof imageAspectRatios)[number],
+  resolution?: (typeof imageResolutions)[number],
+) {
+  return buildGeminiImageGenerationConfig(model, aspectRatio, resolution);
+}
+
+async function generateSingleImage(
+  prompt: string,
+  model: ImageModel,
+  aspectRatio?: (typeof imageAspectRatios)[number],
+  resolution?: (typeof imageResolutions)[number],
+  numberOfImages = 1,
+): Promise<Array<{ imageBytes: string; mimeType: string }>> {
+  if (isImagenImageModel(model)) {
+    const effectiveResolution = supportsImageHighResolution(model) ? resolution : undefined;
+    const response = await fetch(`${GEMINI_BASE_URL}/models/${model}:predict`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-goog-api-key": env.GOOGLE_GENERATIVE_AI_API_KEY,
+      },
+      body: JSON.stringify({
+        instances: [{ prompt }],
+        parameters: buildImagenImageGenerationParams(
+          aspectRatio,
+          effectiveResolution,
+          numberOfImages,
+        ),
+      }),
+    });
+
+    let responseData: unknown = null;
+    try {
+      responseData = await response.json();
+    } catch {
+      responseData = null;
+    }
+
+    if (!response.ok) {
+      console.error("Image generation API error:", responseData);
+      throw new ImageGenerationError(
+        extractImagenErrorMessage(responseData, "Image generation failed."),
+        response.status,
+      );
+    }
+
+    const images = extractImagenGeneratedImages(responseData);
+    if (images.length === 0) {
+      throw new ImageGenerationError(
+        extractImagenErrorMessage(responseData, "No images generated."),
+        502,
+      );
+    }
+
+    return images;
+  }
+
+  const contents = [{ parts: [{ text: prompt }] }];
+  const generationConfig = buildGenerationConfig(model, aspectRatio, resolution);
+
+  const response = await fetch(`${GEMINI_BASE_URL}/models/${model}:generateContent`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "x-goog-api-key": env.GOOGLE_GENERATIVE_AI_API_KEY,
+    },
+    body: JSON.stringify({
+      contents,
+      ...(generationConfig ? { generationConfig } : {}),
+    }),
+  });
+
+  let responseData: unknown = null;
+  try {
+    responseData = await response.json();
+  } catch {
+    responseData = null;
+  }
+
+  if (!response.ok) {
+    console.error("Image generation API error:", responseData);
+    throw new ImageGenerationError(
+      extractGeminiImageErrorMessage(responseData, "Image generation failed."),
+      response.status,
+    );
+  }
+  const images = extractGeneratedImages(responseData);
+
+  if (images.length === 0) {
+    throw new ImageGenerationError(
+      extractGeminiImageErrorMessage(responseData, "No images generated."),
+      502,
+    );
+  }
+
+  return images;
+}
 
 export async function POST(req: Request) {
   const session = await auth.api.getSession({ headers: await headers() });
@@ -53,82 +179,36 @@ export async function POST(req: Request) {
   }
 
   const data = parsedBody.data;
+  const requestedCount = data.numberOfImages ?? 1;
 
-  const contents = [{ parts: [{ text: data.prompt }] }];
-
-  const generationConfig: Record<string, unknown> = {
-    responseModalities: ["IMAGE"],
-    numberOfImages: data.numberOfImages ?? 1,
-  };
-
-  if (data.aspectRatio) {
-    generationConfig.aspectRatio = data.aspectRatio;
-  }
-
-  if (data.resolution) {
-    generationConfig.resolution = data.resolution;
-  }
-
-  const response = await fetch(`${GEMINI_BASE_URL}/models/${data.model}:generateContent`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "x-goog-api-key": env.GOOGLE_GENERATIVE_AI_API_KEY,
-    },
-    body: JSON.stringify({
-      contents,
-      generationConfig,
-    }),
-  });
-
-  let responseData: unknown = null;
   try {
-    responseData = await response.json();
-  } catch {
-    responseData = null;
-  }
+    const generatedBatches = isImagenImageModel(data.model)
+      ? [
+          await generateSingleImage(
+            data.prompt,
+            data.model,
+            data.aspectRatio,
+            data.resolution,
+            requestedCount,
+          ),
+        ]
+      : await Promise.all(
+          Array.from({ length: requestedCount }, () =>
+            generateSingleImage(data.prompt, data.model, data.aspectRatio, data.resolution),
+          ),
+        );
+    const images = generatedBatches.flat();
 
-  if (!response.ok) {
-    console.error("Image generation API error:", responseData);
-    return NextResponse.json({ error: "Image generation failed" }, { status: response.status });
-  }
-
-  const candidates =
-    typeof responseData === "object" &&
-    responseData !== null &&
-    (
-      responseData as {
-        candidates?: Array<{
-          content?: {
-            parts?: Array<{
-              inlineData?: { data?: string; mimeType?: string };
-            }>;
-          };
-        }>;
-      }
-    ).candidates;
-
-  if (!candidates || candidates.length === 0) {
-    return NextResponse.json({ error: "No image candidates returned." }, { status: 500 });
-  }
-
-  const images: Array<{ imageBytes: string; mimeType: string }> = [];
-
-  for (const candidate of candidates) {
-    const parts = candidate.content?.parts ?? [];
-    for (const part of parts) {
-      if (part.inlineData?.data) {
-        images.push({
-          imageBytes: part.inlineData.data,
-          mimeType: part.inlineData.mimeType ?? "image/png",
-        });
-      }
+    if (images.length === 0) {
+      return NextResponse.json({ error: "No images generated." }, { status: 500 });
     }
-  }
 
-  if (images.length === 0) {
-    return NextResponse.json({ error: "No images generated." }, { status: 500 });
+    return NextResponse.json({ images });
+  } catch (error) {
+    if (error instanceof ImageGenerationError) {
+      return NextResponse.json({ error: error.message }, { status: error.status });
+    }
+    console.error("Image generation API error:", error);
+    return NextResponse.json({ error: "Image generation failed" }, { status: 500 });
   }
-
-  return NextResponse.json({ images });
 }

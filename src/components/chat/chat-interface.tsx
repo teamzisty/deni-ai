@@ -4,6 +4,7 @@ import { useChat } from "@ai-sdk/react";
 import { sendGAEvent } from "@next/third-parties/google";
 import type { FileUIPart, UIMessage } from "ai";
 import { DefaultChatTransport } from "ai";
+import { FolderKanban } from "lucide-react";
 import { useExtracted } from "next-intl";
 import { useEffect, useMemo, useState } from "react";
 import {
@@ -33,11 +34,14 @@ import { authClient } from "@/lib/auth-client";
 import { isBillingDisabled } from "@/lib/billing-config";
 import { GA_ID, models } from "@/lib/constants";
 import { trpc } from "@/lib/trpc/react";
+import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 interface ChatInterfaceProps {
   id: string;
   initialMessages?: UIMessage[];
+  initialProjectId?: string | null;
+  initialProjectName?: string | null;
 }
 
 type UploadableFileUIPart = FileUIPart & { file?: File };
@@ -119,7 +123,12 @@ function getMessageRenderKeys(messages: UIMessage[]) {
   });
 }
 
-export function ChatInterface({ id, initialMessages = [] }: ChatInterfaceProps) {
+export function ChatInterface({
+  id,
+  initialMessages = [],
+  initialProjectId = null,
+  initialProjectName = null,
+}: ChatInterfaceProps) {
   const t = useExtracted();
   const session = authClient.useSession();
   const isAnonymous = Boolean(session.data?.user?.isAnonymous);
@@ -130,6 +139,7 @@ export function ChatInterface({ id, initialMessages = [] }: ChatInterfaceProps) 
   const [videoMode, setVideoMode] = useState(false);
   const [imageMode, setImageMode] = useState(false);
   const [reasoningEffort, setReasoningEffort] = useState<ReasoningEffort>("high");
+  const [deepResearch, setDeepResearch] = useState(false);
   const [attachmentError, setAttachmentError] = useState<string | null>(null);
   const utils = trpc.useUtils();
   const { availableModels, providerSettings, providerKeys } = useAvailableModels();
@@ -154,11 +164,12 @@ export function ChatInterface({ id, initialMessages = [] }: ChatInterfaceProps) 
       model,
       webSearch,
       reasoningEffort,
+      deepResearch,
       video: videoMode,
       image: imageMode,
       id,
     }),
-    [id, model, reasoningEffort, videoMode, imageMode, webSearch],
+    [deepResearch, id, model, reasoningEffort, videoMode, imageMode, webSearch],
   );
   const transport = useMemo(
     () =>
@@ -187,6 +198,7 @@ export function ChatInterface({ id, initialMessages = [] }: ChatInterfaceProps) 
     setVideoMode,
     setImageMode,
     setReasoningEffort,
+    setDeepResearch,
     onMessageSent: () => utils.chat.getChats.invalidate(),
   });
 
@@ -198,6 +210,7 @@ export function ChatInterface({ id, initialMessages = [] }: ChatInterfaceProps) 
       videoMode: boolean;
       imageMode: boolean;
       reasoningEffort: ReasoningEffort;
+      deepResearch: boolean;
     },
   ) => {
     if (isSubmitBlocked) {
@@ -235,6 +248,7 @@ export function ChatInterface({ id, initialMessages = [] }: ChatInterfaceProps) 
               model: options.model,
               webSearch: options.webSearch,
               reasoningEffort: options.reasoningEffort,
+              deepResearch: options.deepResearch,
               video: options.videoMode,
               id,
             },
@@ -258,6 +272,15 @@ export function ChatInterface({ id, initialMessages = [] }: ChatInterfaceProps) 
 
   return (
     <div className="flex h-full flex-1 min-h-0 flex-col w-full max-w-3xl mx-auto p-4 overflow-hidden">
+      {initialProjectId && initialProjectName ? (
+        <div className="mb-3 flex items-center gap-2">
+          <Badge variant="outline" className="gap-1.5 rounded-full px-2.5 py-1 text-xs">
+            <FolderKanban className="size-3.5" />
+            <span className="text-muted-foreground">{t("Projects")}</span>
+            <span className="text-foreground">{initialProjectName}</span>
+          </Badge>
+        </div>
+      ) : null}
       <Conversation className="flex-1 min-h-0 h-full">
         <ConversationContent>
           {messages.map((message, index) => (
@@ -297,6 +320,7 @@ export function ChatInterface({ id, initialMessages = [] }: ChatInterfaceProps) 
                   isStreaming={status === "streaming"}
                   showActions={showMessageActions}
                   isSubmitBlocked={isSubmitBlocked}
+                  projectId={initialProjectId}
                   requestBody={requestBody}
                   onRegenerate={regenerate}
                   availableModels={availableModels}
@@ -378,6 +402,8 @@ export function ChatInterface({ id, initialMessages = [] }: ChatInterfaceProps) 
         onImageModeChange={setImageMode}
         reasoningEffort={reasoningEffort}
         onReasoningEffortChange={setReasoningEffort}
+        deepResearch={deepResearch}
+        onDeepResearchChange={setDeepResearch}
         showByokBadge={isByokActive}
       />
     </div>

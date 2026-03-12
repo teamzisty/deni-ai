@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { AppSidebar } from "@/components/app-sidebar";
 import { ChatSearch } from "@/components/chat/chat-search";
 import { FlixaBanner } from "@/components/flixa-banner";
@@ -8,11 +8,28 @@ import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   const [isChatSearchOpen, setIsChatSearchOpen] = useState(false);
+  const newChatRef = useRef<(() => void) | null>(null);
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      const mod = e.metaKey || e.ctrlKey;
+      if (mod && e.key === "k") {
+        e.preventDefault();
+        setIsChatSearchOpen(true);
+      }
+      if (mod && e.key === "n") {
+        e.preventDefault();
+        newChatRef.current?.();
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, []);
 
   return (
     <SidebarProvider>
       <ChatSearch open={isChatSearchOpen} onOpenChange={setIsChatSearchOpen} />
-      <AppSidebar onOpenChatSearch={() => setIsChatSearchOpen(true)} />
+      <AppSidebar onOpenChatSearch={() => setIsChatSearchOpen(true)} onNewChatRef={newChatRef} />
       <SidebarInset>
         <FlixaBanner />
         <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-auto p-4">{children}</div>

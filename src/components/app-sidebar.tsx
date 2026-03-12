@@ -19,6 +19,7 @@ import {
   ChevronRight,
   FolderClosed,
   FolderOpen,
+  ImageIcon,
   MessageSquare,
   MoreHorizontal,
   Pencil,
@@ -632,7 +633,13 @@ function RemoveFromFolderDropZone({ visible }: { visible: boolean }) {
   );
 }
 
-export function AppSidebar({ onOpenChatSearch }: { onOpenChatSearch: () => void }) {
+export function AppSidebar({
+  onOpenChatSearch,
+  onNewChatRef,
+}: {
+  onOpenChatSearch: () => void;
+  onNewChatRef?: React.RefObject<(() => void) | null>;
+}) {
   const t = useExtracted();
   const router = useRouter();
   const pathname = usePathname();
@@ -785,6 +792,12 @@ export function AppSidebar({ onOpenChatSearch }: { onOpenChatSearch: () => void 
     createConversation.mutate();
   };
 
+  useEffect(() => {
+    if (onNewChatRef) {
+      (onNewChatRef as React.MutableRefObject<(() => void) | null>).current = handleNewChat;
+    }
+  });
+
   const handleDeleteAllChats = () => {
     if (deleteAllChats.isPending) {
       return;
@@ -883,7 +896,7 @@ export function AppSidebar({ onOpenChatSearch }: { onOpenChatSearch: () => void 
             <SidebarMenu className="gap-0">
               <SidebarMenuItem>
                 <Button
-                  className="h-9 w-full justify-start gap-2 rounded-b-none font-medium"
+                  className="group/newchat h-9 w-full justify-start gap-2 rounded-b-none font-medium"
                   disabled={createConversation.isPending}
                   onClick={handleNewChat}
                 >
@@ -893,17 +906,34 @@ export function AppSidebar({ onOpenChatSearch }: { onOpenChatSearch: () => void 
                     <Plus className="h-4 w-4" />
                   )}
                   {t("New Chat")}
+                  <Kbd className="ml-auto opacity-0 transition-opacity duration-150 group-hover/newchat:opacity-100 bg-sidebar text-sidebar-foreground/80">
+                    Ctrl+N
+                  </Kbd>
                 </Button>
               </SidebarMenuItem>
               <SidebarMenuItem>
                 <Button
-                  className="h-9 w-full justify-start gap-2 rounded-t-none font-medium"
+                  className="group/search h-9 w-full justify-start gap-2 rounded-none font-medium"
                   onClick={onOpenChatSearch}
                   variant="outline"
                 >
                   <MessageSquare className="size-4" />
                   <span>{t("Chat Search")}</span>
-                  <Kbd className="ml-auto bg-sidebar text-sidebar-foreground/80">Cmd+K</Kbd>
+                  <Kbd className="ml-auto opacity-0 transition-opacity duration-150 group-hover/search:opacity-100 bg-sidebar text-sidebar-foreground/80">
+                    Ctrl+K
+                  </Kbd>
+                </Button>
+              </SidebarMenuItem>
+              <SidebarMenuItem>
+                <Button
+                  className="h-9 w-full justify-start gap-2 rounded-t-none font-medium"
+                  asChild
+                  variant="outline"
+                >
+                  <Link href="/palette">
+                    <ImageIcon className="size-4" />
+                    <span>{t("Palette")}</span>
+                  </Link>
                 </Button>
               </SidebarMenuItem>
             </SidebarMenu>

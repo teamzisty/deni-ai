@@ -17,6 +17,8 @@ export function useInitialMessage(params: {
   setVideoMode: (videoMode: boolean) => void;
   setImageMode: (imageMode: boolean) => void;
   setReasoningEffort: (effort: ReasoningEffort) => void;
+  setDeepResearch: (enabled: boolean) => void;
+  setProjectId?: (projectId: string | null) => void;
   onMessageSent: () => void;
 }) {
   const {
@@ -29,6 +31,8 @@ export function useInitialMessage(params: {
     setVideoMode,
     setImageMode,
     setReasoningEffort,
+    setDeepResearch,
+    setProjectId,
     onMessageSent,
   } = params;
 
@@ -58,6 +62,8 @@ export function useInitialMessage(params: {
           videoMode?: boolean;
           imageMode?: boolean;
           reasoningEffort?: string;
+          deepResearch?: boolean;
+          projectId?: string | null;
         };
 
         initialMessageSentRef.current = true;
@@ -83,6 +89,8 @@ export function useInitialMessage(params: {
             ? parsed.reasoningEffort
             : "high";
         setReasoningEffort(parsedReasoningEffort);
+        setDeepResearch(Boolean(parsed.deepResearch));
+        setProjectId?.(parsed.projectId ?? null);
 
         // Send the message with files
         Promise.resolve(
@@ -98,6 +106,7 @@ export function useInitialMessage(params: {
                 reasoningEffort: parsedReasoningEffort,
                 video: parsed.videoMode ?? false,
                 image: parsed.imageMode ?? false,
+                deepResearch: parsed.deepResearch ?? false,
                 id,
               },
             },

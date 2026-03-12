@@ -17,7 +17,7 @@ const ChatInterface = dynamic(
   },
 );
 import { db } from "@/db/drizzle";
-import { chats } from "@/db/schema";
+import { chats, projects } from "@/db/schema";
 import { auth } from "@/lib/auth";
 
 export default async function ChatPage({ params }: { params: Promise<{ id: string }> }) {
@@ -48,6 +48,23 @@ export default async function ChatPage({ params }: { params: Promise<{ id: strin
   });
 
   const initialMessages = validatedMessages.success ? validatedMessages.data : [];
+  const [project] = chat.projectId
+    ? await db
+        .select({
+          id: projects.id,
+          name: projects.name,
+        })
+        .from(projects)
+        .where(and(eq(projects.id, chat.projectId), eq(projects.userId, userId)))
+        .limit(1)
+    : [];
 
-  return <ChatInterface id={id} initialMessages={initialMessages} />;
+  return (
+    <ChatInterface
+      id={id}
+      initialMessages={initialMessages}
+      initialProjectId={chat.projectId}
+      initialProjectName={project?.name ?? null}
+    />
+  );
 }

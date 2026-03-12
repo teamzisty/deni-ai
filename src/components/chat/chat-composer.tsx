@@ -12,6 +12,7 @@ import {
   ChevronDownIcon,
   Code,
   Film,
+  Mic,
   Gem,
   Globe,
   Image as ImageIcon,
@@ -30,6 +31,7 @@ import {
   PromptInputSelectTrigger,
   PromptInputSelectValue,
 } from "@/components/ai-elements/prompt-input";
+import { SpeechInput } from "@/components/ai-elements/speech-input";
 import { Composer, type ComposerMessage } from "@/components/chat/composer";
 import Openai from "@/components/openai";
 import { useAvailableModels } from "@/hooks/use-available-models";
@@ -344,6 +346,7 @@ export interface ChatComposerProps {
       videoMode: boolean;
       imageMode: boolean;
       reasoningEffort: ReasoningEffort;
+      deepResearch: boolean;
     },
   ) => void;
   onStop?: () => void;
@@ -361,6 +364,8 @@ export interface ChatComposerProps {
   onImageModeChange: (enabled: boolean) => void;
   reasoningEffort: ReasoningEffort;
   onReasoningEffortChange: (effort: ReasoningEffort) => void;
+  deepResearch: boolean;
+  onDeepResearchChange: (enabled: boolean) => void;
   showByokBadge?: boolean;
 }
 
@@ -383,6 +388,8 @@ export function ChatComposer({
   onImageModeChange,
   reasoningEffort,
   onReasoningEffortChange,
+  deepResearch,
+  onDeepResearchChange,
   showByokBadge = false,
 }: ChatComposerProps) {
   const t = useExtracted();
@@ -541,6 +548,18 @@ export function ChatComposer({
       onVideoModeChange(false);
       onImageModeChange(false);
     }
+    if (!enabled) {
+      onDeepResearchChange(false);
+    }
+  };
+
+  const handleResearchToggle = (enabled: boolean) => {
+    onDeepResearchChange(enabled);
+    if (enabled) {
+      onWebSearchChange(true);
+      onVideoModeChange(false);
+      onImageModeChange(false);
+    }
   };
 
   const handleSubmit = (message: ComposerMessage) => {
@@ -550,6 +569,7 @@ export function ChatComposer({
       videoMode,
       imageMode,
       reasoningEffort,
+      deepResearch,
     });
   };
 
@@ -622,6 +642,13 @@ export function ChatComposer({
             <Globe className="size-4" aria-hidden="true" />
             {t("Search")}
           </DropdownMenuCheckboxItem>
+          <DropdownMenuCheckboxItem
+            checked={deepResearch}
+            onCheckedChange={(checked) => handleResearchToggle(Boolean(checked))}
+          >
+            <Sparkle className="size-4" aria-hidden="true" />
+            {t("Deep Research")}
+          </DropdownMenuCheckboxItem>
           <div className="px-2 py-1.5 md:hidden">
             {renderReasoningEffortSelector("w-full justify-between")}
           </div>
@@ -642,6 +669,26 @@ export function ChatComposer({
           {webSearch && (
             <ToolChip icon={Globe} label={t("Search")} onRemove={() => handleSearchToggle(false)} />
           )}
+          {deepResearch && (
+            <ToolChip
+              icon={Sparkle}
+              label={t("Deep Research")}
+              onRemove={() => handleResearchToggle(false)}
+            />
+          )}
+          <SpeechInput
+            size="icon-sm"
+            variant="ghost"
+            className="size-8 bg-transparent text-muted-foreground hover:bg-accent hover:text-foreground"
+            aria-label={t("Voice input")}
+            title={t("Voice input")}
+            onTranscriptionChange={(transcript) => {
+              const nextValue = value.trim() ? `${value.trim()} ${transcript}` : transcript;
+              onValueChange(nextValue.trim());
+            }}
+          >
+            <Mic className="size-4" />
+          </SpeechInput>
 
           {/* Two-panel model selector */}
           <Popover open={modelPopoverOpen} onOpenChange={handleModelPopoverOpenChange}>

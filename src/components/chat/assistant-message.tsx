@@ -1,14 +1,9 @@
 "use client";
 
-import type {
-  ToolUIPart,
-  UIDataTypes,
-  UIMessage,
-  UIMessagePart,
-  UITools,
-} from "ai";
+import type { ToolUIPart, UIDataTypes, UIMessage, UIMessagePart, UITools } from "ai";
 import {
   ArrowUpIcon,
+  BookmarkPlusIcon,
   BrainIcon,
   CheckIcon,
   CopyIcon,
@@ -19,6 +14,7 @@ import {
 import Link from "next/link";
 import { useExtracted } from "next-intl";
 import { useState } from "react";
+import { toast } from "sonner";
 import {
   ChainOfThought,
   ChainOfThoughtContent,
@@ -35,12 +31,7 @@ import {
   MessageResponse,
 } from "@/components/ai-elements/message";
 import { Shimmer } from "@/components/ai-elements/shimmer";
-import {
-  Source,
-  Sources,
-  SourcesContent,
-  SourcesTrigger,
-} from "@/components/ai-elements/sources";
+import { Source, Sources, SourcesContent, SourcesTrigger } from "@/components/ai-elements/sources";
 import type { ReasoningEffort } from "@/components/chat/chat-composer";
 import {
   isImageToolOutput,
@@ -67,6 +58,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Spinner } from "@/components/ui/spinner";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { trpc } from "@/lib/trpc/react";
 import type { ModelOption } from "./chat-composer";
 
 type VideoToolPart = ToolUIPart<{
@@ -76,9 +68,8 @@ type VideoToolPart = ToolUIPart<{
   };
 }>;
 
-const isVideoToolPart = (
-  part: UIMessagePart<UIDataTypes, UITools>,
-): part is VideoToolPart => part.type === "tool-video";
+const isVideoToolPart = (part: UIMessagePart<UIDataTypes, UITools>): part is VideoToolPart =>
+  part.type === "tool-video";
 
 type ImageToolPart = ToolUIPart<{
   image: {
@@ -87,9 +78,13 @@ type ImageToolPart = ToolUIPart<{
   };
 }>;
 
-const isImageToolPart = (
-  part: UIMessagePart<UIDataTypes, UITools>,
-): part is ImageToolPart => part.type === "tool-image";
+const isImageToolPart = (part: UIMessagePart<UIDataTypes, UITools>): part is ImageToolPart =>
+  part.type === "tool-image";
+
+type TextMessagePart = Extract<UIMessage["parts"][number], { type: "text"; text: string }>;
+
+const isTextMessagePart = (part: UIMessage["parts"][number]): part is TextMessagePart =>
+  part.type === "text";
 
 interface RequestBody {
   model: string;
@@ -98,6 +93,7 @@ interface RequestBody {
   video: boolean;
   image: boolean;
   id: string;
+  deepResearch?: boolean;
   responseStyle?: "retry" | "detailed" | "concise";
   forceWebSearch?: boolean;
   additionalInstruction?: string;
@@ -109,6 +105,7 @@ interface AssistantMessageProps {
   isStreaming: boolean;
   showActions: boolean;
   isSubmitBlocked: boolean;
+  projectId?: string | null;
   requestBody: RequestBody;
   onRegenerate: (options?: { body?: RequestBody; messageId?: string }) => void;
   availableModels: ModelOption[];
@@ -122,6 +119,7 @@ export function AssistantMessage({
   isStreaming,
   showActions,
   isSubmitBlocked,
+  projectId,
   requestBody,
   onRegenerate,
   availableModels,
@@ -132,6 +130,35 @@ export function AssistantMessage({
   const isStreamingThis = isStreaming && isLastMessage;
   const [retryMenuOpen, setRetryMenuOpen] = useState(false);
   const [additionalInstruction, setAdditionalInstruction] = useState("");
+  const saveArtifact = trpc.projects.createArtifactFromText.useMutation({
+    onSuccess: () => {
+      toast.success(t("Saved as artifact"));
+    },
+    onError: (error) => {
+      toast.error(error.message || t("Failed to save artifact"));
+    },
+  });
+
+  const textContent =
+    message.parts
+      ?.filter(isTextMessagePart)
+      .map((part) => part.text.trim())
+      .filter(Boolean)
+      .join("\n\n") ?? "";
+
+  const handleSaveAsArtifact = () => {
+    if (!projectId || !textContent.trim()) {
+      return;
+    }
+
+    saveArtifact.mutate({
+      projectId,
+      text: textContent,
+      positionX: 120 + (Date.now() % 160),
+      positionY: 120 + (Date.now() % 120),
+    });
+  };
+
   const regenerateMessage = (overrides?: Partial<RequestBody>) => {
     onRegenerate({
       messageId: message.id,
@@ -157,13 +184,10 @@ export function AssistantMessage({
   return (
     <div className="space-y-2">
       {/* Chain of Thought - reasoning と search を統合表示 */}
-      {message.parts?.some(
-        (p) => p.type === "reasoning" || p.type === "tool-search",
-      ) && (
+      {message.parts?.some((p) => p.type === "reasoning" || p.type === "tool-search") && (
         <ChainOfThought defaultOpen={isStreamingThis}>
           <ChainOfThoughtHeader>
-            {isStreamingThis &&
-            !message.parts?.some((p) => p.type === "text") ? (
+            {isStreamingThis && !message.parts?.some((p) => p.type === "text") ? (
               <Shimmer duration={2}>{t("Thinking...")}</Shimmer>
             ) : (
               t("Thought process")
@@ -171,14 +195,10 @@ export function AssistantMessage({
           </ChainOfThoughtHeader>
           <ChainOfThoughtContent>
             {message.parts
-              ?.filter(
-                (p) => p.type === "reasoning" || p.type === "tool-search",
-              )
+              ?.filter((p) => p.type === "reasoning" || p.type === "tool-search")
               .map((part, i) => {
                 if (part.type === "reasoning") {
-                  const lines = (part.text ?? "")
-                    .replace(/\r\n?/g, "\n")
-                    .split("\n");
+                  const lines = (part.text ?? "").replace(/\r\n?/g, "\n").split("\n");
                   const titleRegex = /^\*\*(.+?)\*\*\s*$/;
 
                   type Section = {
@@ -191,13 +211,10 @@ export function AssistantMessage({
                   let currentContent: string[] = [];
 
                   const flush = () => {
-                    if (currentTitle === null && currentContent.length === 0)
-                      return;
+                    if (currentTitle === null && currentContent.length === 0) return;
 
                     sections.push({
-                      title:
-                        (currentTitle ?? t("Reasoning")).trim() ||
-                        t("Reasoning"),
+                      title: (currentTitle ?? t("Reasoning")).trim() || t("Reasoning"),
                       content: currentContent,
                     });
 
@@ -243,11 +260,8 @@ export function AssistantMessage({
 
                 if (part.type === "tool-search") {
                   const isSearching =
-                    part.state !== "output-available" &&
-                    part.state !== "output-error";
-                  const searchResults = isSearchResultArray(part.output)
-                    ? part.output
-                    : [];
+                    part.state !== "output-available" && part.state !== "output-error";
+                  const searchResults = isSearchResultArray(part.output) ? part.output : [];
                   return (
                     <ChainOfThoughtStep
                       key={`${message.id}-cot-${i}`}
@@ -339,9 +353,7 @@ export function AssistantMessage({
                     >
                       <Input
                         value={additionalInstruction}
-                        onChange={(event) =>
-                          setAdditionalInstruction(event.target.value)
-                        }
+                        onChange={(event) => setAdditionalInstruction(event.target.value)}
                         placeholder={t("Refine this answer")}
                         aria-label={t("Refine this answer")}
                         className="h-7 bg-transparent! border-none! select-none! outline-none!"
@@ -350,10 +362,7 @@ export function AssistantMessage({
                         type="submit"
                         size="icon-sm"
                         className="h-7"
-                        disabled={
-                          isSubmitBlocked ||
-                          additionalInstruction.trim().length === 0
-                        }
+                        disabled={isSubmitBlocked || additionalInstruction.trim().length === 0}
                         aria-label={t("Send")}
                       >
                         <ArrowUpIcon className="size-4" />
@@ -366,17 +375,13 @@ export function AssistantMessage({
                     </DropdownMenuItem>
                     <DropdownMenuSeparator />
                     <DropdownMenuItem
-                      onSelect={() =>
-                        regenerateMessage({ responseStyle: "detailed" })
-                      }
+                      onSelect={() => regenerateMessage({ responseStyle: "detailed" })}
                     >
                       <ListFilterIcon className="size-4" />
                       {t("Expand answer")}
                     </DropdownMenuItem>
                     <DropdownMenuItem
-                      onSelect={() =>
-                        regenerateMessage({ responseStyle: "concise" })
-                      }
+                      onSelect={() => regenerateMessage({ responseStyle: "concise" })}
                     >
                       <ListFilterIcon className="size-4" />
                       {t("Shorten answer")}
@@ -393,6 +398,19 @@ export function AssistantMessage({
                     >
                       <Globe className="size-4" />
                       {t("Use web search")}
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      onSelect={() => {
+                        onWebSearchChange(true);
+                        regenerateMessage({
+                          webSearch: true,
+                          deepResearch: true,
+                          forceWebSearch: true,
+                        });
+                      }}
+                    >
+                      <BrainIcon className="size-4" />
+                      {t("Run deep research")}
                     </DropdownMenuItem>
                     <DropdownMenuSub>
                       <DropdownMenuSubTrigger>
@@ -429,16 +447,23 @@ export function AssistantMessage({
                 >
                   <CopyIcon className="size-3.5" />
                 </MessageAction>
+                {projectId ? (
+                  <MessageAction
+                    onClick={handleSaveAsArtifact}
+                    disabled={saveArtifact.isPending || !textContent.trim()}
+                    label={t("Save as Artifact")}
+                    tooltip={t("Save as Artifact")}
+                  >
+                    <BookmarkPlusIcon className="size-3.5" />
+                  </MessageAction>
+                ) : null}
               </MessageActions>
             )}
           </Message>
         ))}
 
       {message.parts?.filter(isVideoToolPart).map((part, i) => {
-        if (
-          part.state !== "output-available" &&
-          part.state !== "output-error"
-        ) {
+        if (part.state !== "output-available" && part.state !== "output-error") {
           return (
             <Message key={`${message.id}-video-${i}`} from="assistant">
               <MessageContent className="w-full gap-2 rounded-lg border border-border/60 bg-muted/20 px-4 py-3 text-sm text-muted-foreground">
@@ -483,46 +508,28 @@ export function AssistantMessage({
           );
         }
 
-        const resolvedModelLabel = resolveVeoModelLabel(
-          output.model,
-          output.modelLabel,
-          t,
-        );
+        const resolvedModelLabel = resolveVeoModelLabel(output.model, output.modelLabel, t);
 
         return (
           <Message key={`${message.id}-video-${i}`} from="assistant">
             <MessageContent className="w-full gap-3 rounded-lg border border-border/60 bg-background/90 px-4 py-3">
               {output.negativePrompt && (
                 <div className="rounded-md border border-border/60 bg-muted/30 px-3 py-2 text-xs">
-                  <p className="text-xs font-medium text-foreground">
-                    {t("Negative prompt")}
-                  </p>
-                  <p className="text-muted-foreground">
-                    {output.negativePrompt}
-                  </p>
+                  <p className="text-xs font-medium text-foreground">{t("Negative prompt")}</p>
+                  <p className="text-muted-foreground">{output.negativePrompt}</p>
                 </div>
               )}
               <div className="overflow-hidden rounded-lg border border-border/70 bg-muted/30">
                 {/* oxlint-disable-next-line: generated videos don't include captions. */}
-                <video
-                  controls
-                  src={output.videoUrl}
-                  className="h-auto w-full"
-                />
+                <video controls src={output.videoUrl} className="h-auto w-full" />
               </div>
               <div className="flex flex-wrap items-center gap-2 text-xs">
-                {output.resolution && (
-                  <Badge variant="secondary">{output.resolution}</Badge>
-                )}
-                {output.aspectRatio && (
-                  <Badge variant="secondary">{output.aspectRatio}</Badge>
-                )}
+                {output.resolution && <Badge variant="secondary">{output.resolution}</Badge>}
+                {output.aspectRatio && <Badge variant="secondary">{output.aspectRatio}</Badge>}
                 {output.durationSeconds && (
                   <Badge variant="secondary">{output.durationSeconds}s</Badge>
                 )}
-                {resolvedModelLabel ? (
-                  <Badge variant="outline">{resolvedModelLabel}</Badge>
-                ) : null}
+                {resolvedModelLabel ? <Badge variant="outline">{resolvedModelLabel}</Badge> : null}
                 {output.seed !== null && output.seed !== undefined && (
                   <Badge variant="outline">
                     {t("Seed {seed}", {
@@ -551,10 +558,7 @@ export function AssistantMessage({
       })}
 
       {message.parts?.filter(isImageToolPart).map((part, i) => {
-        if (
-          part.state !== "output-available" &&
-          part.state !== "output-error"
-        ) {
+        if (part.state !== "output-available" && part.state !== "output-error") {
           return (
             <Message key={`${message.id}-image-${i}`} from="assistant">
               <MessageContent className="w-full gap-2 rounded-lg border border-border/60 bg-muted/20 px-4 py-3 text-sm text-muted-foreground">
@@ -599,10 +603,7 @@ export function AssistantMessage({
           );
         }
 
-        const resolvedModelLabel = resolveImageModelLabel(
-          output.model,
-          output.modelLabel,
-        );
+        const resolvedModelLabel = resolveImageModelLabel(output.model, output.modelLabel);
 
         return (
           <Message key={`${message.id}-image-${i}`} from="assistant">
@@ -625,12 +626,8 @@ export function AssistantMessage({
                 ))}
               </div>
               <div className="flex flex-wrap items-center gap-2 text-xs">
-                {output.resolution && (
-                  <Badge variant="secondary">{output.resolution}</Badge>
-                )}
-                {output.aspectRatio && (
-                  <Badge variant="secondary">{output.aspectRatio}</Badge>
-                )}
+                {output.resolution && <Badge variant="secondary">{output.resolution}</Badge>}
+                {output.aspectRatio && <Badge variant="secondary">{output.aspectRatio}</Badge>}
                 {output.numberOfImages && output.numberOfImages > 1 && (
                   <Badge variant="secondary">
                     {t("{count} images", {
@@ -638,18 +635,11 @@ export function AssistantMessage({
                     })}
                   </Badge>
                 )}
-                {resolvedModelLabel ? (
-                  <Badge variant="outline">{resolvedModelLabel}</Badge>
-                ) : null}
+                {resolvedModelLabel ? <Badge variant="outline">{resolvedModelLabel}</Badge> : null}
               </div>
               <div className="flex flex-wrap gap-2">
                 {output.imageUrls.map((imageUrl: string, idx: number) => (
-                  <Button
-                    key={`download-${idx}`}
-                    asChild
-                    size="sm"
-                    variant="outline"
-                  >
+                  <Button key={`download-${idx}`} asChild size="sm" variant="outline">
                     <a
                       href={imageUrl}
                       download={t("image-{index}.png", {
@@ -669,9 +659,7 @@ export function AssistantMessage({
       {/* ソース */}
       {message.parts?.some((p) => p.type === "source-url") && (
         <Sources className="mt-2">
-          <SourcesTrigger
-            count={message.parts.filter((p) => p.type === "source-url").length}
-          >
+          <SourcesTrigger count={message.parts.filter((p) => p.type === "source-url").length}>
             {t("Sources")}
           </SourcesTrigger>
           <SourcesContent>

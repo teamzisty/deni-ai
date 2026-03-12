@@ -10,10 +10,27 @@ type CanvasProps = ReactFlowProps & {
 
 const deleteKeyCode = ["Backspace", "Delete"];
 
-export const Canvas = ({ children, ...props }: CanvasProps) => (
+export const Canvas = ({
+  children,
+  fitView = true,
+  fitViewOptions,
+  minZoom = 0.35,
+  maxZoom = 1.15,
+  defaultViewport,
+  ...props
+}: CanvasProps) => (
   <ReactFlow
     deleteKeyCode={deleteKeyCode}
-    fitView
+    fitView={fitView}
+    fitViewOptions={{
+      padding: 0.2,
+      minZoom: 0.45,
+      maxZoom: 0.8,
+      ...fitViewOptions,
+    }}
+    minZoom={minZoom}
+    maxZoom={maxZoom}
+    defaultViewport={defaultViewport ?? { x: 0, y: 0, zoom: 0.7 }}
     panOnDrag={false}
     panOnScroll
     selectionOnDrag={true}

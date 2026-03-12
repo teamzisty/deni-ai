@@ -50,24 +50,9 @@ export default function SettingsWrapper({ children }: { children: React.ReactNod
 
   const settingsTabs = [
     {
-      label: t("Personalize"),
-      value: "memory",
-      href: "/settings/memory",
-    },
-    {
       label: t("Appearance"),
       value: "appearance",
       href: "/settings/appearance",
-    },
-    {
-      label: t("Providers"),
-      value: "providers",
-      href: "/settings/providers",
-    },
-    {
-      label: t("API Keys"),
-      value: "api-keys",
-      href: "/settings/api-keys",
     },
     {
       label: t("Billing"),
@@ -78,6 +63,26 @@ export default function SettingsWrapper({ children }: { children: React.ReactNod
       label: t("Team"),
       value: "team",
       href: "/settings/team",
+    },
+    {
+      label: t("Providers"),
+      value: "providers",
+      href: "/settings/providers",
+    },
+    {
+      label: t("Projects"),
+      value: "projects",
+      href: "/settings/projects",
+    },
+    {
+      label: t("Personalize"),
+      value: "memory",
+      href: "/settings/memory",
+    },
+    {
+      label: t("API Keys"),
+      value: "api-keys",
+      href: "/settings/api-keys",
     },
     {
       label: t("Sharing"),
