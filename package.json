@@ -103,7 +103,7 @@
     "auth": "^1.5.4",
     "babel-plugin-react-compiler": "1.0.0",
     "drizzle-kit": "^0.31.9",
-    "oxfmt": "^0.38.0",
+    "oxfmt": "^0.40.0",
     "oxlint": "^1.53.0",
     "shadcn": "^4.0.5",
     "tailwindcss": "^4.2.1",
