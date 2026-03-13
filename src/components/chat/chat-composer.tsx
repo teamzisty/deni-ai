@@ -1,6 +1,6 @@
 "use client";
 
-import { SiAnthropic, SiGooglegemini, SiOpenrouter, SiX } from "@icons-pack/react-simple-icons";
+import { SiAnthropic, SiGooglegemini, SiX } from "@icons-pack/react-simple-icons";
 import type { ChatStatus } from "ai";
 import type { LucideIcon } from "lucide-react";
 import {
@@ -35,7 +35,12 @@ import { SpeechInput } from "@/components/ai-elements/speech-input";
 import { Composer, type ComposerMessage } from "@/components/chat/composer";
 import Openai from "@/components/openai";
 import { useAvailableModels } from "@/hooks/use-available-models";
-import { models } from "@/lib/constants";
+import {
+  getPreferredReasoningEffort,
+  isReasoningEffort,
+  type ModelDefinition,
+  type ReasoningEffort,
+} from "@/lib/constants";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -46,14 +51,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/component
 
 export type { ComposerMessage };
 
-const reasoningEffortValues = ["low", "medium", "high"] as const;
-export type ReasoningEffort = (typeof reasoningEffortValues)[number];
-
-export function isReasoningEffort(value: string): value is ReasoningEffort {
-  return (reasoningEffortValues as readonly string[]).includes(value);
-}
-
-type BaseModelOption = (typeof models)[number];
+type BaseModelOption = ModelDefinition;
 type CustomModelOption = {
   name: string;
   value: string;
@@ -62,6 +60,7 @@ type CustomModelOption = {
   features: string[];
   premium?: boolean;
   default?: boolean;
+  efforts: false;
   source: "custom";
 };
 export type ModelOption = BaseModelOption | CustomModelOption;
@@ -153,7 +152,9 @@ function getModelDescription(value: string, labels: ModelDescriptionLabels): str
     case "claude-opus-4.6":
       return labels.allAroundProfessionalModel;
     case "grok-4-0709":
+    case "grok-4.20-reasoning-beta":
       return labels.xaiMostIntelligentModel;
+    case "grok-4.20-non-reasoning-beta":
     case "grok-4-1-fast-reasoning":
     case "grok-4-1-fast-non-reasoning":
       return labels.fastAndEfficientModel;
@@ -188,7 +189,7 @@ function ModelIcon({
   model,
   className,
 }: {
-  model: Pick<ModelOption, "author" | "premium">;
+  model: { author: ModelOption["author"]; premium?: boolean };
   className?: string;
 }) {
   if (model.premium) return <Gem className={cn("size-3.5", className)} aria-hidden="true" />;
@@ -203,8 +204,6 @@ function ModelIcon({
       return <SiX className={cn("size-3.5", className)} aria-hidden="true" />;
     case "openai_compatible":
       return <Plug className={cn("size-3.5", className)} aria-hidden="true" />;
-    case "openrouter":
-      return <SiOpenrouter className={cn("size-3.5", className)} aria-hidden="true" />;
     default:
       return <Bot className={cn("size-3.5", className)} aria-hidden="true" />;
   }
@@ -224,8 +223,6 @@ function ProviderIcon({ author }: { author: string }) {
       return <SiX className="size-3.5" aria-hidden="true" />;
     case "openai_compatible":
       return <Plug className="size-3.5" aria-hidden="true" />;
-    case "openrouter":
-      return <SiOpenrouter className="size-3.5" aria-hidden="true" />;
     default:
       return <Bot className="size-3.5" aria-hidden="true" />;
   }
@@ -243,8 +240,6 @@ function getProviderLabel(author: string, labels: ProviderLabels): string {
       return "Google";
     case "xai":
       return "xAI";
-    case "openrouter":
-      return "OpenRouter";
     case "openai_compatible":
       return labels.custom;
     default:
@@ -438,7 +433,28 @@ export function ChatComposer({
   const [modelQuery, setModelQuery] = useState("");
 
   const selectedModel = availableModels.find((m) => m.value === model);
-  const supportsReasoningEffort = selectedModel?.features?.includes("reasoning");
+  const supportedEfforts = selectedModel?.efforts ?? false;
+  const supportsReasoningEffort = supportedEfforts !== false;
+  const getReasoningEffortLabel = (effort: ReasoningEffort) => {
+    switch (effort) {
+      case "none":
+        return t("None");
+      case "minimal":
+        return t("Minimal");
+      case "low":
+        return t("Low");
+      case "medium":
+        return t("Medium");
+      case "high":
+        return t("High");
+      case "xhigh":
+        return t("X-High");
+      case "max":
+        return t("Max");
+      default:
+        return effort;
+    }
+  };
 
   // Group available models by author/provider, with "featured" prepended
   const providerGroups = useMemo(() => {
@@ -510,6 +526,16 @@ export function ChatComposer({
     }
   }, [availableProviders, selectedProvider]);
 
+  useEffect(() => {
+    if (supportedEfforts === false) {
+      return;
+    }
+
+    if (!supportedEfforts.includes(reasoningEffort)) {
+      onReasoningEffortChange(getPreferredReasoningEffort(supportedEfforts));
+    }
+  }, [onReasoningEffortChange, reasoningEffort, supportedEfforts]);
+
   const handleModelPopoverOpenChange = (open: boolean) => {
     if (open) {
       setModelQuery("");
@@ -524,18 +550,7 @@ export function ChatComposer({
     setModelPopoverOpen(open);
   };
 
-  const reasoningEffortLabel = (() => {
-    switch (reasoningEffort) {
-      case "low":
-        return t("Low");
-      case "medium":
-        return t("Medium");
-      case "high":
-        return t("High");
-      default:
-        return reasoningEffort;
-    }
-  })();
+  const reasoningEffortLabel = getReasoningEffortLabel(reasoningEffort);
 
   const handleVideoToggle = (enabled: boolean) => {
     onVideoModeChange(enabled);
@@ -601,9 +616,12 @@ export function ChatComposer({
         </PromptInputSelectValue>
       </PromptInputSelectTrigger>
       <PromptInputSelectContent>
-        <PromptInputSelectItem value="low">{t("Low")}</PromptInputSelectItem>
-        <PromptInputSelectItem value="medium">{t("Medium")}</PromptInputSelectItem>
-        <PromptInputSelectItem value="high">{t("High")}</PromptInputSelectItem>
+        {supportedEfforts !== false &&
+          supportedEfforts.map((effort) => (
+            <PromptInputSelectItem key={effort} value={effort}>
+              {getReasoningEffortLabel(effort)}
+            </PromptInputSelectItem>
+          ))}
       </PromptInputSelectContent>
     </PromptInputSelect>
   );

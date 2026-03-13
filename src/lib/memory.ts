@@ -1,7 +1,7 @@
 import "server-only";
 
-import { createOpenRouter } from "@openrouter/ai-sdk-provider";
-import { generateObject, type UIMessage } from "ai";
+import type { GatewayLanguageModelOptions } from "@ai-sdk/gateway";
+import { createGateway, generateObject, type UIMessage } from "ai";
 import { and, eq } from "drizzle-orm";
 import { z } from "zod";
 import { db } from "@/db/drizzle";
@@ -30,12 +30,8 @@ const defaultProfile: PersonalizationProfile = {
   autoMemory: true,
 };
 
-const openrouter = createOpenRouter({
-  apiKey: env.OPENROUTER_API_KEY,
-  headers: {
-    "X-Title": "Deni AI",
-    "HTTP-Referer": "https://deniai.app",
-  },
+const gateway = createGateway({
+  apiKey: env.AI_GATEWAY_API_KEY,
 });
 
 export async function getUserMemoryState(userId: string) {
@@ -243,13 +239,15 @@ export async function maybeAutoSaveMemories({
   const existingMemories = existingItems.map((item) => item.content.trim()).filter(Boolean);
 
   const { object } = await generateObject({
-    model: openrouter.chat("google/gemini-3.1-flash-lite-preview", {
-      provider: {
-        allow_fallbacks: false,
-        only: ["google"],
-      },
-    }),
+    model: gateway("google/gemini-3.1-flash-lite-preview"),
     schema: memoryExtractionSchema,
+    providerOptions: {
+      gateway: {
+        only: ["google"],
+        tags: ["memory"],
+        user: userId,
+      } satisfies GatewayLanguageModelOptions,
+    },
     system:
       "Extract only durable user preferences or facts worth remembering for future chats. Ignore transient requests, one-off tasks, secrets, and credentials. Return at most 3 concise memory strings. Use canonical wording so duplicates collapse cleanly, for example `Name: rai`, `Preferred language: Japanese`, `Role: Deni AI owner`. Do not restate the same fact in multiple ways.",
     prompt: `Existing memories:\n${existingMemories.map((item) => `- ${item}`).join("\n") || "None"}\n\nRecent user messages:\n${transcript}`,

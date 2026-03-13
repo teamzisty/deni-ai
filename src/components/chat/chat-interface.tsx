@@ -21,18 +21,14 @@ import {
 import { Loader } from "@/components/ai-elements/loader";
 import { Message, MessageContent, MessageResponse } from "@/components/ai-elements/message";
 import { AssistantMessage } from "@/components/chat/assistant-message";
-import {
-  ChatComposer,
-  type ComposerMessage,
-  type ReasoningEffort,
-} from "@/components/chat/chat-composer";
+import { ChatComposer, type ComposerMessage } from "@/components/chat/chat-composer";
 import { UsageAlerts } from "@/components/chat/usage-alerts";
 import { useAvailableModels } from "@/hooks/use-available-models";
 import { useInitialMessage } from "@/hooks/use-initial-message";
 import { useUsageStatus } from "@/hooks/use-usage-status";
 import { authClient } from "@/lib/auth-client";
 import { isBillingDisabled } from "@/lib/billing-config";
-import { GA_ID, models } from "@/lib/constants";
+import { GA_ID, getPreferredReasoningEffort, models, type ReasoningEffort } from "@/lib/constants";
 import { trpc } from "@/lib/trpc/react";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -150,7 +146,9 @@ export function ChatInterface({
   const [webSearch, setWebSearch] = useState(false);
   const [videoMode, setVideoMode] = useState(false);
   const [imageMode, setImageMode] = useState(false);
-  const [reasoningEffort, setReasoningEffort] = useState<ReasoningEffort>("high");
+  const [reasoningEffort, setReasoningEffort] = useState<ReasoningEffort>(
+    getPreferredReasoningEffort(models[0].efforts),
+  );
   const [deepResearch, setDeepResearch] = useState(false);
   const [attachmentError, setAttachmentError] = useState<string | null>(null);
   const utils = trpc.useUtils();

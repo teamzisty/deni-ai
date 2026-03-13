@@ -5,13 +5,9 @@ import { useRouter } from "next/navigation";
 import { useExtracted } from "next-intl";
 import { useState } from "react";
 import { toast } from "sonner";
-import {
-  ChatComposer,
-  type ComposerMessage,
-  type ReasoningEffort,
-} from "@/components/chat/chat-composer";
+import { ChatComposer, type ComposerMessage } from "@/components/chat/chat-composer";
 import { ProjectSelect } from "@/components/projects/project-select";
-import { models } from "@/lib/constants";
+import { getPreferredReasoningEffort, models, type ReasoningEffort } from "@/lib/constants";
 import { trpc } from "@/lib/trpc/react";
 
 // Storage key for passing initial message data to chat page
@@ -65,7 +61,9 @@ export default function ChatHome() {
   const [webSearch, setWebSearch] = useState(false);
   const [videoMode, setVideoMode] = useState(false);
   const [imageMode, setImageMode] = useState(false);
-  const [reasoningEffort, setReasoningEffort] = useState<ReasoningEffort>("high");
+  const [reasoningEffort, setReasoningEffort] = useState<ReasoningEffort>(
+    getPreferredReasoningEffort(models[0].efforts),
+  );
   const [deepResearch, setDeepResearch] = useState(false);
   const [projectId, setProjectId] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);

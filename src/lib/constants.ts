@@ -1,4 +1,59 @@
-export type Author = "openai" | "anthropic" | "google" | "xai" | "openai_compatible" | "openrouter";
+export type Author = "openai" | "anthropic" | "google" | "xai" | "openai_compatible";
+
+export const reasoningEffortValues = [
+  "none",
+  "minimal",
+  "low",
+  "medium",
+  "high",
+  "xhigh",
+  "max",
+] as const;
+export type ReasoningEffort = (typeof reasoningEffortValues)[number];
+export type ModelEfforts = readonly ReasoningEffort[] | false;
+
+export function isReasoningEffort(value: string): value is ReasoningEffort {
+  return (reasoningEffortValues as readonly string[]).includes(value);
+}
+
+export function getPreferredReasoningEffort(efforts: ModelEfforts): ReasoningEffort {
+  if (efforts === false) {
+    return "high";
+  }
+
+  const preferredOrder: readonly ReasoningEffort[] = [
+    "high",
+    "medium",
+    "low",
+    "minimal",
+    "none",
+    "xhigh",
+    "max",
+  ];
+
+  for (const effort of preferredOrder) {
+    if (efforts.includes(effort)) {
+      return effort;
+    }
+  }
+
+  return efforts[0] ?? "high";
+}
+
+export function resolveReasoningEffort(
+  efforts: ModelEfforts,
+  requestedEffort: string | null | undefined,
+): ReasoningEffort | undefined {
+  if (efforts === false) {
+    return undefined;
+  }
+
+  if (requestedEffort && isReasoningEffort(requestedEffort) && efforts.includes(requestedEffort)) {
+    return requestedEffort;
+  }
+
+  return getPreferredReasoningEffort(efforts);
+}
 
 export enum AuthorEnum {
   openai = "OpenAI",
@@ -6,7 +61,6 @@ export enum AuthorEnum {
   google = "Google",
   xai = "xAI",
   openai_compatible = "OpenAI-compatible",
-  openrouter = "OpenRouter",
 }
 
 export type Models = {
@@ -18,13 +72,27 @@ export type Models = {
   };
 };
 
-export const models = [
+export type ModelDefinition = {
+  name: string;
+  value: string;
+  author: Author;
+  description?: string;
+  featured?: boolean;
+  premium?: boolean;
+  default?: boolean;
+  provider?: string;
+  features: string[];
+  efforts: ModelEfforts;
+};
+
+export const models: readonly ModelDefinition[] = [
   {
     name: "GPT-5.4",
     value: "gpt-5.4",
     author: "openai",
     featured: true,
     features: ["reasoning", "smart", "fast"],
+    efforts: ["none", "low", "medium", "high", "xhigh"],
   },
   {
     name: "GPT-5.3 Codex",
@@ -32,6 +100,7 @@ export const models = [
     author: "openai",
     description: "The most capable agentic coding model to date.",
     features: ["coding", "reasoning", "fast"],
+    efforts: ["low", "medium", "high", "xhigh"],
   },
   {
     name: "GPT-5.2 Codex",
@@ -39,6 +108,7 @@ export const models = [
     author: "openai",
     features: ["coding", "reasoning", "fast"],
     default: false,
+    efforts: ["low", "medium", "high", "xhigh"],
   },
   {
     name: "GPT-5.2",
@@ -46,28 +116,32 @@ export const models = [
     author: "openai",
     features: ["smart", "reasoning", "fast"],
     default: false,
+    efforts: ["none", "low", "medium", "high", "xhigh"],
   },
   {
     name: "GPT-5.1 Codex",
     value: "gpt-5.1-codex",
     author: "openai",
-    features: ["coding", "fast"],
+    features: ["coding", "reasoning", "fast"],
     default: false,
+    efforts: ["low", "medium", "high"],
   },
   {
     name: "GPT-5.1 Codex Max",
     value: "gpt-5.1-codex-max",
     author: "openai",
     description: "A version of GPT-5.1-Codex optimized for long-running tasks.",
-    features: ["coding", "fast"],
+    features: ["coding", "reasoning", "fast"],
     default: false,
+    efforts: ["none", "medium", "high", "xhigh"],
   },
   {
     name: "GPT-5.1 Codex mini",
     value: "gpt-5.1-codex-mini",
     author: "openai",
-    features: ["coding", "fast"],
+    features: ["coding", "reasoning", "fast"],
     default: false,
+    efforts: ["low", "medium", "high"],
   },
   {
     name: "GPT-5",
@@ -76,6 +150,7 @@ export const models = [
     description: "Flagship model for coding, reasoning, and agentic tasks across domains.",
     features: ["smart", "reasoning", "fast"],
     default: false,
+    efforts: ["minimal", "low", "medium", "high"],
   },
   {
     name: "GPT-5 mini",
@@ -84,6 +159,7 @@ export const models = [
     description: "Faster, more affordable GPT-5 for well-defined tasks.",
     features: ["reasoning", "fast"],
     default: false,
+    efforts: ["medium"],
   },
   {
     name: "GPT-5 nano",
@@ -92,6 +168,7 @@ export const models = [
     description: "Fastest, most cost-efficient GPT-5 model.",
     features: ["reasoning", "fast"],
     default: false,
+    efforts: ["medium"],
   },
   {
     name: "GPT-4.1",
@@ -100,6 +177,7 @@ export const models = [
     description: "Smartest model for fast, everyday tasks.",
     features: ["fast"],
     default: false,
+    efforts: false,
   },
   {
     name: "GPT-4o",
@@ -108,6 +186,7 @@ export const models = [
     description: "Fast, intelligent, flexible GPT model.",
     features: ["fast"],
     default: false,
+    efforts: false,
   },
   {
     name: "GPT-4o mini",
@@ -116,6 +195,7 @@ export const models = [
     description: "Fast, affordable small model for focused tasks.",
     features: ["fast"],
     default: false,
+    efforts: false,
   },
   // {
   //   name: "GPT-5 Pro",
@@ -130,6 +210,7 @@ export const models = [
     author: "openai",
     provider: "groq",
     features: ["reasoning", "fast"],
+    efforts: ["low", "medium", "high"],
   },
   {
     name: "GPT-oss 20b",
@@ -137,6 +218,7 @@ export const models = [
     author: "openai",
     provider: "groq",
     features: ["reasoning", "fastest", "fast"],
+    efforts: ["low", "medium", "high"],
   },
   {
     name: "Gemini 3.1 Pro",
@@ -144,6 +226,7 @@ export const models = [
     author: "google",
     featured: true,
     features: ["smartest", "smart", "reasoning"],
+    efforts: ["low", "high"],
   },
   {
     name: "Gemini 3 Pro",
@@ -151,6 +234,7 @@ export const models = [
     author: "google",
     default: false,
     features: ["smart", "reasoning"],
+    efforts: ["low", "high"],
   },
   {
     name: "Gemini 3 Flash",
@@ -158,12 +242,14 @@ export const models = [
     author: "google",
     featured: true,
     features: ["reasoning", "fast"],
+    efforts: ["minimal", "low", "medium", "high"],
   },
   {
     name: "Gemini 3.1 Flash Lite",
     value: "gemini-3.1-flash-lite-preview",
     author: "google",
     features: ["reasoning", "fast"],
+    efforts: ["minimal", "low", "medium", "high"],
   },
   {
     name: "Gemini 2.5 Flash Lite",
@@ -171,6 +257,7 @@ export const models = [
     author: "google",
     features: ["reasoning", "fast"],
     default: false,
+    efforts: false,
   },
   {
     name: "Claude Opus 4.6",
@@ -179,6 +266,7 @@ export const models = [
     premium: true,
     featured: true,
     features: ["reasoning", "smart"],
+    efforts: ["low", "medium", "high", "max"],
   },
   {
     name: "Claude Sonnet 4.6",
@@ -187,6 +275,7 @@ export const models = [
     premium: true,
     featured: true,
     features: ["reasoning", "smart", "fast"],
+    efforts: ["low", "medium", "high"],
   },
   {
     name: "Claude Sonnet 4.5",
@@ -195,6 +284,7 @@ export const models = [
     premium: true,
     default: false,
     features: ["reasoning", "smart", "fast"],
+    efforts: false,
   },
   {
     name: "Claude Haiku 4.5",
@@ -203,6 +293,7 @@ export const models = [
     description: "Fast, lightweight Claude model for everyday chat and quick reasoning.",
     featured: true,
     features: ["reasoning", "smart", "fast"],
+    efforts: false,
   },
   {
     name: "Claude Opus 4.5",
@@ -211,6 +302,7 @@ export const models = [
     premium: true,
     default: false,
     features: ["reasoning", "smart"],
+    efforts: ["low", "medium", "high"],
   },
   {
     name: "Claude Opus 4.1",
@@ -219,6 +311,7 @@ export const models = [
     premium: true,
     default: false,
     features: ["reasoning", "smart"],
+    efforts: ["low", "medium", "high"],
   },
   {
     name: "Claude Opus 4",
@@ -227,6 +320,7 @@ export const models = [
     premium: true,
     default: false,
     features: ["reasoning", "smart"],
+    efforts: ["low", "medium", "high"],
   },
   {
     name: "Claude Sonnet 4",
@@ -235,6 +329,7 @@ export const models = [
     premium: true,
     default: false,
     features: ["reasoning", "smart"],
+    efforts: ["low", "medium", "high"],
   },
   {
     name: "Grok 4.20 Multi-Agent Beta",
@@ -242,14 +337,24 @@ export const models = [
     author: "xai",
     description: "Beta Grok model for deep research with coordinated multi-agent tool use.",
     features: ["reasoning", "fast"],
+    efforts: false,
   },
   {
-    name: "Grok 4.20 Beta",
-    value: "grok-4.20-beta",
+    name: "Grok 4.20 Reasoning Beta",
+    value: "grok-4.20-reasoning-beta",
     author: "xai",
-    description: "Newest flagship Grok with lightning-fast reasoning and agentic tool calling.",
+    description: "Reasoning-enabled Grok 4.20 variant for agentic tool calling and harder tasks.",
     featured: true,
     features: ["reasoning", "fast"],
+    efforts: ["low", "high"],
+  },
+  {
+    name: "Grok 4.20 Non-Reasoning Beta",
+    value: "grok-4.20-non-reasoning-beta",
+    author: "xai",
+    description: "Non-reasoning Grok 4.20 variant tuned for fast responses and tool use.",
+    features: ["fast"],
+    efforts: false,
   },
   {
     name: "Grok 4.1 Fast",
@@ -259,6 +364,7 @@ export const models = [
       "Fast Grok model optimized for accurate tool calling, deep research, and low hallucination.",
     featured: true,
     features: ["reasoning", "fast"],
+    efforts: false,
   },
   {
     name: "Grok 4 Fast",
@@ -268,6 +374,7 @@ export const models = [
       "Cost-efficient Grok model with strong reasoning, native tool use, and real-time search.",
     default: false,
     features: ["reasoning", "fast"],
+    efforts: false,
   },
   {
     name: "Grok 4",
@@ -276,18 +383,7 @@ export const models = [
     description: "Flagship Grok reasoning model with native tool use and real-time search.",
     default: false,
     features: ["reasoning"],
-  },
-  {
-    name: "Hunter Alpha",
-    value: "hunter-alpha",
-    author: "openrouter",
-    features: ["reasoning"],
-  },
-  {
-    name: "Healer Alpha",
-    value: "healer-alpha",
-    author: "openrouter",
-    features: ["reasoning"],
+    efforts: false,
   },
 ];
 

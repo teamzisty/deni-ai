@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { useExtracted } from "next-intl";
 import { getExtracted } from "next-intl/server";
 import { LoginButton } from "@/components/login-button";
-import { models } from "@/lib/constants";
+import { models, type ModelDefinition } from "@/lib/constants";
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getExtracted();
@@ -26,7 +26,6 @@ const authorLabels: Record<string, string> = {
   anthropic: "Anthropic",
   google: "Google",
   xai: "xAI",
-  openrouter: "OpenRouter",
 };
 
 const featureStyles: Record<string, string> = {
@@ -48,7 +47,7 @@ export default function ModelsPage() {
       acc[author].push(model);
       return acc;
     },
-    {} as Record<string, typeof models>,
+    {} as Record<string, ModelDefinition[]>,
   );
 
   const jsonLd = {

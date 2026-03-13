@@ -1,4 +1,7 @@
 import { spawnSync } from "node:child_process";
+import type { GatewayLanguageModelOptions } from "@ai-sdk/gateway";
+import { createGateway, generateObject } from "ai";
+import { z } from "zod";
 
 const DEFAULT_MODEL = "openai/gpt-5.4";
 const DEFAULT_MAX_DIFF_CHARS = 20_000_000;
@@ -15,27 +18,23 @@ type Options = {
   maxDiffChars: number;
 };
 
-type OpenRouterResponse = {
-  choices?: Array<{
-    message?: {
-      content?: string;
-    };
-  }>;
-  error?: {
-    message?: string;
-  };
-};
-
 type GeneratedCommit = {
   subject: string;
   body?: string;
 };
 
+function createCommitSchema(includeDescription: boolean) {
+  return z.object({
+    subject: z.string(),
+    body: includeDescription ? z.string().nullable() : z.null(),
+  });
+}
+
 function printHelp() {
-  console.log(`OpenRouter commit tool
+  console.log(`AI Gateway commit tool
 
 Usage:
-  bun ./tools/openrouter-commit.ts [options]
+  bun ./tools/gateway-commit.ts [options]
 
 Options:
   --it                 Alias for --all --generate-description --commit
@@ -43,22 +42,22 @@ Options:
   --commit             Create the git commit after generating the message
   --all                Stage all changes before generating the message
   --no-verify          Pass --no-verify to git commit
-  --model <id>         OpenRouter model to use (default: ${DEFAULT_MODEL})
+  --model <id>         AI Gateway model to use (default: ${DEFAULT_MODEL})
   --prompt <text>      Extra context for the generated commit message
   --description <text> Use this commit body instead of generating one
   --generate-description
                        Generate a short commit body in addition to the subject
   --repo <path>        Repository path (default: current working directory)
-  --max-diff-chars <n> Truncate the staged diff sent to OpenRouter
+  --max-diff-chars <n> Truncate the staged diff sent to AI Gateway
   --help               Show this help
 
 Examples:
-  bun ./tools/openrouter-commit.ts --it
-  bun ./tools/openrouter-commit.ts --check
-  bun ./tools/openrouter-commit.ts --all
-  bun ./tools/openrouter-commit.ts --all --commit
-  bun ./tools/openrouter-commit.ts --all --generate-description --commit
-  bun ./tools/openrouter-commit.ts --prompt "Focus on billing checkout changes"
+  bun ./tools/gateway-commit.ts --it
+  bun ./tools/gateway-commit.ts --check
+  bun ./tools/gateway-commit.ts --all
+  bun ./tools/gateway-commit.ts --all --commit
+  bun ./tools/gateway-commit.ts --all --generate-description --commit
+  bun ./tools/gateway-commit.ts --prompt "Focus on billing checkout changes"
 `);
 }
 
@@ -243,7 +242,7 @@ function sanitizeCommitMessage(raw: string) {
     .replace(/^["'`]+|["'`]+$/gu, "");
 
   if (!firstLine) {
-    throw new Error("OpenRouter returned an empty commit message");
+    throw new Error("AI Gateway returned an empty commit message");
   }
 
   return firstLine.slice(0, 72);
@@ -291,59 +290,34 @@ async function generateCommit(input: {
   prompt: string;
   includeDescription: boolean;
 }) {
-  const responseFormatInstruction = input.includeDescription
-    ? 'Return valid JSON: {"subject":"<commit subject>","body":"<short commit body>"}'
-    : 'Return valid JSON: {"subject":"<commit subject>"}';
-
-  const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${input.apiKey}`,
-      "Content-Type": "application/json",
-      "HTTP-Referer": "http://localhost",
-      "X-Title": "deni-ai openrouter commit tool",
-    },
-    body: JSON.stringify({
-      model: input.model,
-      messages: [
-        {
-          role: "system",
-          content: `You write concise conventional commit messages. ${responseFormatInstruction}. The subject must be under 72 characters, use imperative mood, and use a suitable type like feat, fix, refactor, chore, docs, test, perf, build, ci, or style. If body is requested, keep it brief, plain text, and at most 3 short lines.`,
-        },
-        {
-          role: "user",
-          content: input.prompt,
-        },
-      ],
-      temperature: 0.2,
-    }),
+  const gateway = createGateway({
+    apiKey: input.apiKey,
   });
 
-  const json = (await response.json()) as OpenRouterResponse;
-
-  if (!response.ok) {
-    throw new Error(json.error?.message || `OpenRouter request failed (${response.status})`);
-  }
-
-  const content = json.choices?.[0]?.message?.content;
-  if (!content) {
-    throw new Error("OpenRouter response did not include message content");
-  }
-
-  const parsed = JSON.parse(content) as { subject?: string; body?: string };
+  const { object } = await generateObject({
+    model: gateway(input.model),
+    schema: createCommitSchema(input.includeDescription),
+    providerOptions: {
+      gateway: {
+        tags: ["tools", "commit"],
+      } satisfies GatewayLanguageModelOptions,
+    },
+    system: `You write concise conventional commit messages. Return JSON with a "subject" field${input.includeDescription ? ' and an optional "body" field' : ""}. The subject must be under 72 characters, use imperative mood, and use a suitable type like feat, fix, refactor, chore, docs, test, perf, build, ci, or style. ${input.includeDescription ? "If body is requested, keep it brief, plain text, and at most 3 short lines." : "Do not include a body unless it is requested."}`,
+    prompt: input.prompt,
+  });
 
   return {
-    subject: sanitizeCommitMessage(parsed.subject ?? ""),
-    body: sanitizeCommitBody(parsed.body ?? ""),
+    subject: sanitizeCommitMessage(object.subject),
+    body: sanitizeCommitBody(object.body ?? ""),
   } satisfies GeneratedCommit;
 }
 
 async function main() {
   const options = parseArgs(process.argv.slice(2));
-  const apiKey = process.env.OPENROUTER_API_KEY;
+  const apiKey = process.env.AI_GATEWAY_API_KEY;
 
   if (!apiKey) {
-    throw new Error("OPENROUTER_API_KEY is not set");
+    throw new Error("AI_GATEWAY_API_KEY is not set");
   }
 
   const repoRoot = runGit(options.repoPath, ["rev-parse", "--show-toplevel"]);
@@ -396,7 +370,7 @@ async function main() {
     });
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
-    console.error(`OpenRouter generation failed, using fallback. ${message}`);
+    console.error(`AI Gateway generation failed, using fallback. ${message}`);
     generatedCommit = fallbackCommit({
       stagedFiles,
       includeDescription: options.generateDescription || Boolean(options.description),

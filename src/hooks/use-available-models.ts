@@ -29,6 +29,7 @@ export function useAvailableModels() {
       description: entry.description ?? t("Custom model"),
       author: "openai_compatible" as const,
       features: [],
+      efforts: false,
       premium: entry.premium,
       default: false,
       source: "custom" as const,

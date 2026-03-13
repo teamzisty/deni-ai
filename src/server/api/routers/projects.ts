@@ -1,5 +1,5 @@
-import { createOpenRouter } from "@openrouter/ai-sdk-provider";
-import { generateObject } from "ai";
+import type { GatewayLanguageModelOptions } from "@ai-sdk/gateway";
+import { createGateway, generateObject } from "ai";
 import { nanoid } from "nanoid";
 import { and, asc, eq } from "drizzle-orm";
 import { z } from "zod";
@@ -47,12 +47,8 @@ const createArtifactFromTextSchema = z.object({
   positionY: z.number().int().optional(),
 });
 
-const openrouter = createOpenRouter({
-  apiKey: env.OPENROUTER_API_KEY,
-  headers: {
-    "X-Title": "Deni AI",
-    "HTTP-Referer": "https://deniai.app",
-  },
+const gateway = createGateway({
+  apiKey: env.AI_GATEWAY_API_KEY,
 });
 
 async function ensureProjectOwnership(ctx: ProtectedContext, projectId: string) {
@@ -208,13 +204,15 @@ export const projectsRouter = router({
       await ensureProjectOwnership(ctx, input.projectId);
 
       const { object } = await generateObject({
-        model: openrouter.chat("google/gemini-3.1-flash-lite-preview", {
-          provider: {
-            allow_fallbacks: false,
-            only: ["google"],
-          },
-        }),
+        model: gateway("google/gemini-3.1-flash-lite-preview"),
         schema: artifactSummarySchema,
+        providerOptions: {
+          gateway: {
+            only: ["google"],
+            tags: ["project-artifact"],
+            user: ctx.userId,
+          } satisfies GatewayLanguageModelOptions,
+        },
         system: [
           "You convert an AI assistant response into a concise reusable project artifact.",
           "Return a short title, a one-sentence summary, and a cleaned-up body.",

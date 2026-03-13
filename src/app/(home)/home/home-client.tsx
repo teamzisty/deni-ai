@@ -5,7 +5,7 @@ import { motion } from "motion/react";
 import { ArrowRight, Zap, Shield, BrainCircuit } from "lucide-react";
 import Link from "next/link";
 import { useExtracted, useLocale } from "next-intl";
-import { SiAnthropic, SiGoogle, SiOpenrouter, SiX } from "@icons-pack/react-simple-icons";
+import { SiAnthropic, SiGoogle, SiX } from "@icons-pack/react-simple-icons";
 import { LoginButton } from "@/components/login-button";
 import { Button } from "@/components/ui/button";
 import { BlurReveal } from "@/components/blur-reveal";
@@ -56,10 +56,7 @@ export function ClientHome() {
     />,
     <Openai key="openai2" className="size-8 opacity-40 hover:opacity-100 transition-opacity" />,
     <SiX key="xai" className="size-8 opacity-40 hover:opacity-100 transition-opacity" />,
-    <SiOpenrouter
-      key="openrouter"
-      className="size-8 opacity-40 hover:opacity-100 transition-opacity"
-    />,
+    <SiGoogle key="google2" className="size-8 opacity-40 hover:opacity-100 transition-opacity" />,
   ];
 
   return (

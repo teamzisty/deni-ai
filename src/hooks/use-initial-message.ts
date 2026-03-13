@@ -1,7 +1,7 @@
 import type { useChat } from "@ai-sdk/react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useRef } from "react";
-import { isReasoningEffort, type ReasoningEffort } from "@/components/chat/chat-composer";
+import { models, resolveReasoningEffort, type ReasoningEffort } from "@/lib/constants";
 
 const INITIAL_MESSAGE_STORAGE_KEY = "deni_initial_message";
 
@@ -84,10 +84,10 @@ export function useInitialMessage(params: {
         if (parsed.imageMode) {
           setImageMode(true);
         }
+        const effectiveModel = parsed.model ?? model;
+        const selectedModel = models.find((entry) => entry.value === effectiveModel);
         const parsedReasoningEffort =
-          parsed.reasoningEffort && isReasoningEffort(parsed.reasoningEffort)
-            ? parsed.reasoningEffort
-            : "high";
+          resolveReasoningEffort(selectedModel?.efforts ?? false, parsed.reasoningEffort) ?? "high";
         setReasoningEffort(parsedReasoningEffort);
         setDeepResearch(Boolean(parsed.deepResearch));
         setProjectId?.(parsed.projectId ?? null);
@@ -101,7 +101,7 @@ export function useInitialMessage(params: {
             },
             {
               body: {
-                model: parsed.model ?? model,
+                model: effectiveModel,
                 webSearch: parsed.webSearch,
                 reasoningEffort: parsedReasoningEffort,
                 video: parsed.videoMode ?? false,

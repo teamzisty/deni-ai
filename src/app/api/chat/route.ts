@@ -1,12 +1,13 @@
 import { type AnthropicProviderOptions, createAnthropic } from "@ai-sdk/anthropic";
 import { createGoogleGenerativeAI, type GoogleGenerativeAIProviderOptions } from "@ai-sdk/google";
+import type { GatewayLanguageModelOptions } from "@ai-sdk/gateway";
 import { createGroq } from "@ai-sdk/groq";
-import { createXai } from "@ai-sdk/xai";
+import { createXai, type XaiProviderOptions } from "@ai-sdk/xai";
 import { createOpenAI, type OpenAIResponsesProviderOptions } from "@ai-sdk/openai";
-import { createOpenRouter, type OpenRouterProviderOptions } from "@openrouter/ai-sdk-provider";
 import {
   consumeStream,
   convertToModelMessages,
+  createGateway,
   createUIMessageStream,
   createUIMessageStreamResponse,
   generateId,
@@ -29,7 +30,7 @@ import { auth } from "@/lib/auth";
 import { generateTitle, getChatById, updateChat } from "@/lib/chat";
 import { clearChatGeneration, startChatGeneration } from "@/lib/chat-generation";
 import { createChatTools } from "@/lib/chat-tools";
-import { models } from "@/lib/constants";
+import { models, resolveReasoningEffort } from "@/lib/constants";
 import { decryptFromB64 } from "@/lib/crypto";
 import { buildMemoryPrompt, getUserMemoryState, maybeAutoSaveMemories } from "@/lib/memory";
 import { buildProjectPrompt } from "@/lib/project-context";
@@ -133,7 +134,9 @@ export async function POST(req: Request) {
       messages: UIMessagesSchema.optional(),
       model: z.string(),
       webSearch: z.boolean().optional(),
-      reasoningEffort: z.enum(["low", "medium", "high"]).optional(),
+      reasoningEffort: z
+        .enum(["none", "minimal", "low", "medium", "high", "xhigh", "max"])
+        .optional(),
       video: z.boolean().optional(),
       image: z.boolean().optional(),
       deepResearch: z.boolean().optional(),
@@ -297,22 +300,78 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Unknown model" }, { status: 400 });
   }
 
+  const resolvedReasoningEffort = resolveReasoningEffort(
+    selectedModel?.efforts ?? false,
+    reasoningEffort,
+  );
+  const openaiEffortOptions = ["none", "minimal", "low", "medium", "high", "xhigh"] as const;
+  const anthropicEffortOptions = ["low", "medium", "high", "max"] as const;
+  const googleThinkingLevels = ["minimal", "low", "medium", "high"] as const;
+  const anthropicBudgetModelIds = new Set(["claude-opus-4.1", "claude-opus-4", "claude-sonnet-4"]);
+  const openaiReasoningEffort =
+    providerId === "openai" &&
+    resolvedReasoningEffort &&
+    openaiEffortOptions.includes(resolvedReasoningEffort as (typeof openaiEffortOptions)[number])
+      ? (resolvedReasoningEffort as (typeof openaiEffortOptions)[number])
+      : undefined;
+  const anthropicReasoningEffort =
+    providerId === "anthropic" &&
+    !anthropicBudgetModelIds.has(selectedModel?.value ?? "") &&
+    resolvedReasoningEffort &&
+    anthropicEffortOptions.includes(
+      resolvedReasoningEffort as (typeof anthropicEffortOptions)[number],
+    )
+      ? (resolvedReasoningEffort as (typeof anthropicEffortOptions)[number])
+      : undefined;
+  const anthropicThinkingBudget =
+    providerId === "anthropic" &&
+    anthropicBudgetModelIds.has(selectedModel?.value ?? "") &&
+    resolvedReasoningEffort
+      ? resolvedReasoningEffort === "low"
+        ? 5_000
+        : resolvedReasoningEffort === "medium"
+          ? 10_000
+          : resolvedReasoningEffort === "high"
+            ? 15_000
+            : undefined
+      : undefined;
+  const googleThinkingLevel =
+    providerId === "google" &&
+    resolvedReasoningEffort &&
+    googleThinkingLevels.includes(resolvedReasoningEffort as (typeof googleThinkingLevels)[number])
+      ? (resolvedReasoningEffort as (typeof googleThinkingLevels)[number])
+      : undefined;
+  const xaiReasoningEffort =
+    providerId === "xai" &&
+    (resolvedReasoningEffort === "low" || resolvedReasoningEffort === "high")
+      ? resolvedReasoningEffort
+      : undefined;
+
   let model: LanguageModel;
-  const openrouter = createOpenRouter({
-    apiKey: env.OPENROUTER_API_KEY,
-    headers: {
-      "X-Title": "Deni AI",
-      "HTTP-Referer": "https://deniai.app",
-    },
+  const gateway = createGateway({
+    apiKey: env.AI_GATEWAY_API_KEY,
   });
-  const getOpenRouterModel = () => {
-    return openrouter.chat(`${providerId}/${resolvedModelId}`, {
-      provider: {
-        allow_fallbacks: false,
-        only: ["openai", "anthropic", "google", "groq", "xai"],
-      },
-    });
+  const selectedGatewayModelId = selectedModel
+    ? selectedModel.value.includes("/")
+      ? selectedModel.value
+      : `${selectedModel.author}/${selectedModel.value}`
+    : null;
+  const getGatewayModel = () => {
+    if (!selectedGatewayModelId) {
+      throw new Error("Gateway model is not available for the selected model.");
+    }
+    return gateway(selectedGatewayModelId);
   };
+  const gatewayOptions = {
+    tags: ["chat"],
+    user: userId,
+    ...(selectedModel?.provider
+      ? { only: [selectedModel.provider] }
+      : selectedModel
+        ? { only: [selectedModel.author] }
+        : {}),
+  } satisfies GatewayLanguageModelOptions;
+
   switch (providerId) {
     case "openai": {
       if (useByok) {
@@ -325,7 +384,7 @@ export async function POST(req: Request) {
             ? provider.chat(resolvedModelId)
             : provider.responses(resolvedModelId);
       } else {
-        model = getOpenRouterModel();
+        model = getGatewayModel();
       }
       break;
     }
@@ -335,9 +394,9 @@ export async function POST(req: Request) {
           apiKey: byokApiKey,
           baseURL: byokBaseUrl,
         });
-        model = provider(resolvedModelId.replace(".", "-")); // fix ex. "claude-sonnet-4.5" (openrouter id) to ex. "claude-sonnet-4-5" (anthropic id)
+        model = provider(resolvedModelId.replace(".", "-")); // Anthropic SDK uses dashes instead of dots in Claude model ids.
       } else {
-        model = getOpenRouterModel();
+        model = getGatewayModel();
       }
       break;
     }
@@ -349,7 +408,7 @@ export async function POST(req: Request) {
         });
         model = provider(resolvedModelId);
       } else {
-        model = getOpenRouterModel();
+        model = getGatewayModel();
       }
       break;
     }
@@ -361,12 +420,8 @@ export async function POST(req: Request) {
         });
         model = provider.chat(resolvedModelId.replace("xai.", ""));
       } else {
-        model = voids.chat(resolvedModelId);
+        model = getGatewayModel();
       }
-      break;
-    }
-    case "openrouter": {
-      model = getOpenRouterModel();
       break;
     }
     case "groq": {
@@ -487,30 +542,49 @@ export async function POST(req: Request) {
         ? { type: "tool", toolName: "image" }
         : undefined,
     providerOptions: {
-      openai: {
-        reasoningEffort,
-        reasoningSummary: "detailed",
-      } satisfies OpenAIResponsesProviderOptions,
-      anthropic: {
-        effort: reasoningEffort,
-        thinking: {
-          type: "enabled",
-          budgetTokens:
-            reasoningEffort === "low" ? 1024 : reasoningEffort === "high" ? 16000 : 8192,
-        },
-      } satisfies AnthropicProviderOptions,
-      google: {
-        thinkingConfig: {
-          thinkingLevel: reasoningEffort,
-          includeThoughts: true,
-        },
-      } satisfies GoogleGenerativeAIProviderOptions,
-      openrouter: {
-        reasoning: {
-          enabled: true,
-          effort: reasoningEffort,
-        },
-      } satisfies OpenRouterProviderOptions,
+      ...(openaiReasoningEffort
+        ? {
+            openai: {
+              reasoningEffort: openaiReasoningEffort,
+              reasoningSummary: "detailed",
+            } satisfies OpenAIResponsesProviderOptions,
+          }
+        : {}),
+      ...(anthropicReasoningEffort
+        ? {
+            anthropic: {
+              effort: anthropicReasoningEffort,
+            } satisfies AnthropicProviderOptions,
+          }
+        : {}),
+      ...(anthropicThinkingBudget
+        ? {
+            anthropic: {
+              thinking: {
+                type: "enabled",
+                budgetTokens: anthropicThinkingBudget,
+              },
+            } satisfies AnthropicProviderOptions,
+          }
+        : {}),
+      ...(googleThinkingLevel
+        ? {
+            google: {
+              thinkingConfig: {
+                thinkingLevel: googleThinkingLevel,
+                includeThoughts: true,
+              },
+            } satisfies GoogleGenerativeAIProviderOptions,
+          }
+        : {}),
+      ...(xaiReasoningEffort
+        ? {
+            xai: {
+              reasoningEffort: xaiReasoningEffort,
+            } satisfies XaiProviderOptions,
+          }
+        : {}),
+      gateway: gatewayOptions,
     },
     system: systemPrompt,
   });

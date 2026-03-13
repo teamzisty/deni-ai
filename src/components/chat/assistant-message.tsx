@@ -32,7 +32,6 @@ import {
 } from "@/components/ai-elements/message";
 import { Shimmer } from "@/components/ai-elements/shimmer";
 import { Source, Sources, SourcesContent, SourcesTrigger } from "@/components/ai-elements/sources";
-import type { ReasoningEffort } from "@/components/chat/chat-composer";
 import {
   isImageToolOutput,
   isSearchResultArray,
@@ -42,6 +41,7 @@ import {
   type ImageToolOutput,
   type VideoToolOutput,
 } from "@/components/chat/chat-utils";
+import type { ReasoningEffort } from "@/lib/constants";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";

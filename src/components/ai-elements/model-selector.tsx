@@ -121,7 +121,6 @@ export type ModelSelectorLogoProps = Omit<ComponentProps<"img">, "src" | "alt"> 
     | "openai"
     | "zhipuai-coding-plan"
     | "perplexity"
-    | "openrouter"
     | "zenmux"
     | "v0"
     | "iflowcn"
