@@ -12,12 +12,26 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
+      const target = e.target as HTMLElement | null;
+      const role = target?.getAttribute("role");
+      const isEditable =
+        target instanceof HTMLElement &&
+        (target.isContentEditable ||
+          target.tagName === "INPUT" ||
+          target.tagName === "TEXTAREA" ||
+          target.tagName === "SELECT" ||
+          role === "textbox");
+      if (isEditable) {
+        return;
+      }
+
       const mod = e.metaKey || e.ctrlKey;
-      if (mod && e.key === "k") {
+      const key = e.key.toLowerCase();
+      if (mod && key === "k") {
         e.preventDefault();
         setIsChatSearchOpen(true);
       }
-      if (mod && e.key === "n") {
+      if (mod && key === "n") {
         e.preventDefault();
         newChatRef.current?.();
       }

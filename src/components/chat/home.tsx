@@ -82,7 +82,7 @@ export default function ChatHome() {
       deepResearch: boolean;
     },
   ) => {
-    if (!message.text.trim() || isSubmitting) {
+    if ((!message.text.trim() && message.files.length === 0) || isSubmitting) {
       return;
     }
 

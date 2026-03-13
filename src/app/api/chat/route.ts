@@ -258,7 +258,10 @@ export async function POST(req: Request) {
 
   // Validate BYOK base URL is not pointing to a private network
   if (byokBaseUrl && isPrivateUrl(byokBaseUrl)) {
-    byokBaseUrl = undefined;
+    return NextResponse.json(
+      { error: "BYOK endpoints to private networks are not allowed." },
+      { status: 400 },
+    );
   }
 
   if (!useByok) {
@@ -266,7 +269,6 @@ export async function POST(req: Request) {
       const usageSummary = await getUsageSummary({ userId, isAnonymous });
       const categoryUsage = usageSummary.usage.find((usage) => usage.category === usageCategory);
 
-      // Allow if Max Mode is enabled, even if remaining is 0
       const isLimitReached =
         categoryUsage?.remaining !== null &&
         categoryUsage?.remaining !== undefined &&
@@ -278,13 +280,6 @@ export async function POST(req: Request) {
           usageSummary.maxModeEligible,
         );
       }
-
-      // Consume usage upfront (atomic increment) to prevent TOCTOU race
-      await consumeUsage({
-        userId,
-        category: usageCategory,
-        isAnonymous,
-      });
     } catch (error) {
       if (error instanceof UsageLimitError) {
         return NextResponse.json({ error: error.message, reason: "usage_limit" }, { status: 402 });
@@ -445,10 +440,8 @@ export async function POST(req: Request) {
       });
       model =
         byokApiStyle === "chat"
-          ? provider.chat(resolvedModelId.replace(".", "-"))
-          : provider.responses(resolvedModelId.replace(".", "-"));
-      // fix claude model ids for openai-compatible claude endpoints
-
+          ? provider.chat(resolvedModelId)
+          : provider.responses(resolvedModelId);
       break;
     }
     default:
@@ -456,7 +449,8 @@ export async function POST(req: Request) {
       break;
   }
 
-  const tools = createChatTools({ videoMode, imageMode, webSearch });
+  const webSearchEnabled = webSearch || forceWebSearch || deepResearch;
+  const tools = createChatTools({ videoMode, imageMode, webSearch: webSearchEnabled });
 
   const modelMessages = await convertToModelMessages(messages);
   const currentDate = new Date().toISOString().split("T")[0];
@@ -509,9 +503,19 @@ export async function POST(req: Request) {
   try {
     projectPrompt = await buildProjectPrompt(chat.projectId, userId);
     generationAbortController = startChatGeneration(id, userId);
+    if (!useByok) {
+      await consumeUsage({
+        userId,
+        category: usageCategory,
+        isAnonymous,
+      });
+    }
   } catch (error) {
     await rollbackPendingAssistantState();
     clearGenerationLock();
+    if (error instanceof UsageLimitError) {
+      return NextResponse.json({ error: error.message, reason: "usage_limit" }, { status: 402 });
+    }
     throw error;
   }
 

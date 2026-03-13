@@ -90,11 +90,18 @@ export default function MemorySettingsPage() {
     autoMemory: true,
   });
   const [instructionsDraft, setInstructionsDraft] = useState("");
+  const [profileInitialized, setProfileInitialized] = useState(false);
   const [newMemory, setNewMemory] = useState("");
   const [isClearDialogOpen, setIsClearDialogOpen] = useState(false);
 
   useEffect(() => {
-    if (!memoryQuery.data) {
+    if (!memoryQuery.isSuccess || !memoryQuery.data) {
+      return;
+    }
+
+    const hasUnsavedInstructionChanges =
+      profileInitialized && instructionsDraft !== profile.instructions;
+    if (profileInitialized && hasUnsavedInstructionChanges) {
       return;
     }
 
@@ -107,7 +114,14 @@ export default function MemorySettingsPage() {
       autoMemory: memoryQuery.data.profile.autoMemory,
     });
     setInstructionsDraft(memoryQuery.data.profile.instructions);
-  }, [memoryQuery.data]);
+    setProfileInitialized(true);
+  }, [
+    instructionsDraft,
+    memoryQuery.data,
+    memoryQuery.isSuccess,
+    profile.instructions,
+    profileInitialized,
+  ]);
 
   const saveProfile = trpc.memory.upsertProfile.useMutation();
 
@@ -148,7 +162,7 @@ export default function MemorySettingsPage() {
     saveProfile.mutate(
       {
         ...nextProfile,
-        instructions: profile.instructions,
+        instructions: nextProfile.instructions,
       },
       {
         onError: (error) => {
@@ -175,6 +189,8 @@ export default function MemorySettingsPage() {
       },
     });
   };
+
+  const hasMemoryLoadError = memoryQuery.isError || (!memoryQuery.isLoading && !memoryQuery.data);
 
   const handleAddMemory = () => {
     if (!newMemory.trim()) {
@@ -280,6 +296,10 @@ export default function MemorySettingsPage() {
           {memoryQuery.isLoading ? (
             <div className="flex items-center justify-center py-8">
               <Spinner />
+            </div>
+          ) : hasMemoryLoadError ? (
+            <div className="rounded-lg border border-dashed p-6 text-sm text-muted-foreground">
+              {t("Unable to load personalization right now.")}
             </div>
           ) : (
             <>
@@ -412,6 +432,10 @@ export default function MemorySettingsPage() {
           {memoryQuery.isLoading ? (
             <div className="flex items-center justify-center py-6">
               <Spinner />
+            </div>
+          ) : hasMemoryLoadError ? (
+            <div className="rounded-lg border border-dashed p-6 text-sm text-muted-foreground">
+              {t("Unable to load saved memories right now.")}
             </div>
           ) : memoryQuery.data?.items.length ? (
             <ScrollArea className="max-h-[22rem]">

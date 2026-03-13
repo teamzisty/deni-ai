@@ -51,11 +51,11 @@ export function useInitialMessage(params: {
       try {
         const parsed = JSON.parse(storedData) as {
           text: string;
-          files: Array<{
-            type: "file";
+          files?: Array<{
+            type?: "file";
             filename?: string;
-            mediaType: string;
-            url: string;
+            mediaType?: string;
+            url?: string;
           }>;
           webSearch: boolean;
           model?: string;
@@ -65,6 +65,12 @@ export function useInitialMessage(params: {
           deepResearch?: boolean;
           projectId?: string | null;
         };
+        const files = Array.isArray(parsed.files)
+          ? parsed.files.filter(
+              (file): file is { type: "file"; filename?: string; mediaType: string; url: string } =>
+                Boolean(file?.url && file?.mediaType),
+            )
+          : [];
 
         initialMessageSentRef.current = true;
 
@@ -97,7 +103,7 @@ export function useInitialMessage(params: {
           sendMessage(
             {
               text: parsed.text,
-              files: parsed.files.length > 0 ? parsed.files : undefined,
+              files: files.length > 0 ? files : undefined,
             },
             {
               body: {

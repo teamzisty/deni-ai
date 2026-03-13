@@ -300,9 +300,11 @@ function ChatItem({ item }: { item: ChatListItem }) {
   });
 
   const handleSave = () => {
+    const normalizedTitle = title.trim() || null;
+
     updateChat.mutate({
       id: item.id,
-      title: title.trim(),
+      title: normalizedTitle,
       folder: folder.trim() || null,
       tags: parseTagsInput(tagsInput),
     });
@@ -784,19 +786,24 @@ export function AppSidebar({
     };
   }, [isCheckoutRoute, isDeleteAllDialogOpen]);
 
-  if (isCheckoutRoute) {
-    return null;
-  }
-
   const handleNewChat = () => {
     createConversation.mutate();
   };
 
   useEffect(() => {
-    if (onNewChatRef) {
-      (onNewChatRef as React.MutableRefObject<(() => void) | null>).current = handleNewChat;
+    if (!onNewChatRef) {
+      return;
     }
-  });
+
+    (onNewChatRef as React.MutableRefObject<(() => void) | null>).current = handleNewChat;
+    return () => {
+      (onNewChatRef as React.MutableRefObject<(() => void) | null>).current = null;
+    };
+  }, [handleNewChat, onNewChatRef]);
+
+  if (isCheckoutRoute) {
+    return null;
+  }
 
   const handleDeleteAllChats = () => {
     if (deleteAllChats.isPending) {

@@ -60,7 +60,7 @@ export const chatRouter = router({
       z
         .object({
           id: z.string().min(1),
-          title: z.string(),
+          title: z.string().nullable(),
           messages: z.array(
             z.object({
               id: z.uuid(),

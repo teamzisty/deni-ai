@@ -708,7 +708,7 @@ export default function PaletteClient() {
   }
 
   function handleRetry(batch: GenerationBatch) {
-    if (isUsageBlocked) {
+    if (isBusy || isUsageBlocked) {
       return;
     }
 
@@ -786,7 +786,7 @@ export default function PaletteClient() {
                 index={index}
                 onOpenImage={setSelectedImage}
                 onRetry={handleRetry}
-                retryDisabled={isUsageBlocked}
+                retryDisabled={isBusy || isUsageBlocked}
               />
             ))}
           </div>

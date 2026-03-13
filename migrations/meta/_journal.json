@@ -155,6 +155,13 @@
       "when": 1773331161000,
       "tag": "0021_bent_kat_farrell",
       "breakpoints": true
+    },
+    {
+      "idx": 22,
+      "version": "7",
+      "when": 1773393612982,
+      "tag": "0022_perpetual_captain_america",
+      "breakpoints": true
     }
   ]
 }

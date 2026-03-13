@@ -13,7 +13,7 @@ export const env = createEnv({
     STRIPE_WEBHOOK_SECRET: z.string().optional(),
     GOOGLE_GENERATIVE_AI_API_KEY: z.string(),
     GROQ_API_KEY: z.string(),
-    AI_GATEWAY_API_KEY: z.string().optional(),
+    AI_GATEWAY_API_KEY: z.string(),
     BRAVE_SEARCH_API_KEY: z.string(),
     TURNSTILE_SECRET_KEY: z.string(),
     RESEND_API_KEY: z.string().optional(),

@@ -13,11 +13,18 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
+  let body: unknown;
+  try {
+    body = await req.json();
+  } catch {
+    return NextResponse.json({ error: "Invalid request body" }, { status: 400 });
+  }
+
   const parsedBody = z
     .object({
       id: z.string().min(1),
     })
-    .safeParse(await req.json());
+    .safeParse(body);
 
   if (!parsedBody.success) {
     return NextResponse.json({ error: "Invalid request body" }, { status: 400 });

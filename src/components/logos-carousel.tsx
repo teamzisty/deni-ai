@@ -27,7 +27,9 @@ export function LogosCarousel({
   const [nextIndex, setNextIndex] = React.useState(1);
 
   const childrenArray = React.Children.toArray(children);
-  const logosPerGroup = count || childrenArray.length;
+  const normalizedCount =
+    typeof count === "number" && Number.isFinite(count) ? Math.floor(count) : childrenArray.length;
+  const logosPerGroup = Math.max(1, Math.min(childrenArray.length || 1, normalizedCount || 1));
   const groups: React.ReactNode[][] = [];
 
   for (let i = 0; i < childrenArray.length; i += logosPerGroup) {
@@ -37,6 +39,13 @@ export function LogosCarousel({
   const groupsLength = groups.length;
 
   React.useEffect(() => {
+    if (groupsLength < 2) {
+      setAnimate(false);
+      setIndex(0);
+      setNextIndex(0);
+      return;
+    }
+
     const id = setTimeout(() => {
       setAnimate(true);
     }, initialDelay);
@@ -44,10 +53,10 @@ export function LogosCarousel({
     return () => {
       clearTimeout(id);
     };
-  }, [initialDelay]);
+  }, [groupsLength, initialDelay]);
 
   React.useEffect(() => {
-    if (!animate || groupsLength === 0) {
+    if (!animate || groupsLength < 2) {
       return;
     }
 

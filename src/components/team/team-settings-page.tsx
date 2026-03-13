@@ -108,9 +108,10 @@ export function TeamSettingsPage() {
 
   // Remove member dialog
   const [memberToRemove, setMemberToRemove] = useState<Member | null>(null);
+  const currentUserId = session.data?.user?.id ?? null;
 
   const organizationsQuery = useQuery({
-    queryKey: ["team", "organizations"],
+    queryKey: ["team", "organizations", currentUserId],
     enabled: !session.isPending,
     queryFn: async () => {
       const result = await authClient.organization.list({});
@@ -118,7 +119,7 @@ export function TeamSettingsPage() {
     },
   });
   const orgDetailsQuery = useQuery({
-    queryKey: ["team", "organization", activeOrg?.id],
+    queryKey: ["team", "organization", currentUserId, activeOrg?.id],
     enabled: Boolean(activeOrg?.id),
     queryFn: async () => {
       const result = await authClient.organization.getFullOrganization({
@@ -135,7 +136,6 @@ export function TeamSettingsPage() {
   const cancelSub = trpc.organization.cancelTeamSubscription.useMutation();
   const resumeSub = trpc.organization.resumeTeamSubscription.useMutation();
   const utils = trpc.useUtils();
-  const currentUserId = session.data?.user?.id ?? null;
   const activeOrganizationId = session.data?.session?.activeOrganizationId ?? null;
   const organizations = organizationsQuery.data ?? [];
   const members = (orgDetailsQuery.data?.members ?? []) as unknown as Member[];
@@ -151,6 +151,10 @@ export function TeamSettingsPage() {
 
   const isOwner = currentUserRole === "owner";
   const isAdmin = currentUserRole === "admin" || isOwner;
+
+  useEffect(() => {
+    setActiveOrg(null);
+  }, [currentUserId]);
 
   async function selectOrg(org: Organization, options?: { persistActive?: boolean }) {
     setActiveOrg(org);
@@ -177,13 +181,15 @@ export function TeamSettingsPage() {
           toast.error(t("Failed to accept invitation"));
         } else {
           toast.success(t("Invitation accepted"));
-          await queryClient.invalidateQueries({ queryKey: ["team", "organizations"] });
+          await queryClient.invalidateQueries({
+            queryKey: ["team", "organizations", currentUserId],
+          });
           await session.refetch();
         }
       }
     }
     init();
-  }, [queryClient, searchParams, session, t]);
+  }, [currentUserId, queryClient, searchParams, session, t]);
 
   useEffect(() => {
     if (activeOrg || organizationsQuery.isLoading) {
@@ -209,7 +215,7 @@ export function TeamSettingsPage() {
       });
       if (result.data) {
         const orgs = await queryClient.fetchQuery({
-          queryKey: ["team", "organizations"],
+          queryKey: ["team", "organizations", currentUserId],
           queryFn: async () => {
             const listResult = await authClient.organization.list({});
             return (listResult.data ?? []) as Organization[];
@@ -241,7 +247,9 @@ export function TeamSettingsPage() {
         organizationId: activeOrg.id,
       });
       toast.success(t("Invitation sent"));
-      await queryClient.invalidateQueries({ queryKey: ["team", "organization", activeOrg.id] });
+      await queryClient.invalidateQueries({
+        queryKey: ["team", "organization", currentUserId, activeOrg.id],
+      });
     } catch (error) {
       console.error("Failed to invite", error);
       toast.error(t("Failed to send invitation"));
@@ -261,7 +269,9 @@ export function TeamSettingsPage() {
         organizationId: activeOrg.id,
       });
       toast.success(t("Member removed"));
-      await queryClient.invalidateQueries({ queryKey: ["team", "organization", activeOrg.id] });
+      await queryClient.invalidateQueries({
+        queryKey: ["team", "organization", currentUserId, activeOrg.id],
+      });
       setMemberToRemove(null);
     } catch (error) {
       console.error("Failed to remove member", error);
@@ -274,7 +284,9 @@ export function TeamSettingsPage() {
       await authClient.organization.cancelInvitation({ invitationId });
       toast.success(t("Invitation cancelled"));
       if (activeOrg) {
-        await queryClient.invalidateQueries({ queryKey: ["team", "organization", activeOrg.id] });
+        await queryClient.invalidateQueries({
+          queryKey: ["team", "organization", currentUserId, activeOrg.id],
+        });
       }
     } catch (error) {
       console.error("Failed to cancel invitation", error);

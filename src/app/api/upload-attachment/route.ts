@@ -16,7 +16,25 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "File is required." }, { status: 400 });
   }
 
-  const url = await uploadFile(uploadedFile);
+  const allowedTypes = new Set(["image/jpeg", "image/png", "image/webp", "application/pdf"]);
+  const maxBytes = 10 * 1024 * 1024;
+
+  if (!allowedTypes.has(uploadedFile.type)) {
+    return NextResponse.json({ error: "Unsupported attachment type." }, { status: 415 });
+  }
+
+  if (uploadedFile.size > maxBytes) {
+    return NextResponse.json({ error: "Attachment is too large." }, { status: 413 });
+  }
+
+  let url: string | null;
+  try {
+    url = await uploadFile(uploadedFile);
+  } catch (error) {
+    console.error("Attachment upload failed", error);
+    return NextResponse.json({ error: "Attachment upload failed." }, { status: 500 });
+  }
+
   if (!url) {
     return NextResponse.json({ error: "Attachment upload failed." }, { status: 500 });
   }

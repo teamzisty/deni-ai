@@ -1,10 +1,11 @@
 import dynamic from "next/dynamic";
+import { ProjectsSettingsLoading } from "@/components/projects/projects-settings-loading";
 
 const ProjectsSettingsPage = dynamic(
   () =>
     import("@/components/projects/projects-settings-page").then((mod) => mod.ProjectsSettingsPage),
   {
-    loading: () => <div className="py-10 text-sm text-muted-foreground">Loading projects…</div>,
+    loading: () => <ProjectsSettingsLoading />,
   },
 );
 

@@ -105,6 +105,24 @@ export function ProjectsSettingsPage() {
   const [artifactForm, setArtifactForm] = useState<ArtifactFormState>(emptyArtifactState);
   const [canvasNodes, setCanvasNodes] = useState<Node[]>([]);
   const [activeTab, setActiveTab] = useState("overview");
+  const projectColorLabels: Record<ProjectColor, string> = {
+    amber: t("Amber"),
+    rose: t("Rose"),
+    sky: t("Sky"),
+    emerald: t("Emerald"),
+    violet: t("Violet"),
+  };
+  const artifactKindLabels: Record<ArtifactKind, string> = {
+    note: t("Note"),
+    brief: t("Brief"),
+    checklist: t("Checklist"),
+    reference: t("Reference"),
+  };
+  const sourceKindLabels: Record<SourceFormState["kind"], string> = {
+    website: t("Website"),
+    docs: t("Docs"),
+    repo: t("Repository"),
+  };
 
   useEffect(() => {
     if (projectsQuery.data?.length && !selectedProjectId) {
@@ -138,7 +156,7 @@ export function ProjectsSettingsPage() {
             <div className="space-y-1 rounded-xl border bg-background/95 p-3 shadow-sm">
               <div className="flex items-center gap-2 text-xs text-muted-foreground">
                 <Grip className="size-3.5" />
-                <span>{artifact.kind}</span>
+                <span>{artifactKindLabels[artifact.kind as ArtifactKind] ?? artifact.kind}</span>
               </div>
               <div className="font-medium text-sm">{artifact.title}</div>
               {artifact.summary ? (
@@ -152,7 +170,7 @@ export function ProjectsSettingsPage() {
         style: { width: 240, border: "none", background: "transparent" },
       })),
     );
-  }, [projectDetailQuery.data?.artifacts]);
+  }, [artifactKindLabels, projectDetailQuery.data?.artifacts]);
 
   useEffect(() => {
     const selectedArtifact = projectDetailQuery.data?.artifacts.find(
@@ -349,7 +367,15 @@ export function ProjectsSettingsPage() {
                 <Button
                   variant="ghost"
                   size="icon"
-                  onClick={() => deleteProject.mutate({ id: activeProject.id })}
+                  aria-label={t("Delete project")}
+                  title={t("Delete project")}
+                  onClick={() => {
+                    if (!window.confirm(t("Delete this project?"))) {
+                      return;
+                    }
+
+                    deleteProject.mutate({ id: activeProject.id });
+                  }}
                   disabled={deleteProject.isPending}
                 >
                   <Trash2 className="size-4" />
@@ -445,7 +471,7 @@ export function ProjectsSettingsPage() {
                               <span
                                 className={`size-2.5 rounded-full ${projectColorClass[color]}`}
                               />
-                              <span className="capitalize">{color}</span>
+                              <span>{projectColorLabels[color]}</span>
                             </span>
                           </SelectItem>
                         ))}
@@ -565,7 +591,10 @@ export function ProjectsSettingsPage() {
                           <div className="flex items-center gap-2">
                             <Globe className="size-4 text-muted-foreground" />
                             <span className="font-medium">{source.label}</span>
-                            <Badge variant="outline">{source.kind}</Badge>
+                            <Badge variant="outline">
+                              {sourceKindLabels[source.kind as SourceFormState["kind"]] ??
+                                source.kind}
+                            </Badge>
                           </div>
                           <div className="mt-1 truncate text-xs text-muted-foreground">
                             {source.url}
@@ -574,7 +603,15 @@ export function ProjectsSettingsPage() {
                         <Button
                           variant="ghost"
                           size="icon"
-                          onClick={() => deleteSource.mutate({ id: source.id })}
+                          aria-label={t("Delete source")}
+                          title={t("Delete source")}
+                          onClick={() => {
+                            if (!window.confirm(t("Delete this source?"))) {
+                              return;
+                            }
+
+                            deleteSource.mutate({ id: source.id });
+                          }}
                           disabled={deleteSource.isPending}
                         >
                           <Trash2 className="size-4" />
@@ -757,7 +794,7 @@ export function ProjectsSettingsPage() {
                             <SelectContent>
                               {artifactKinds.map((kind) => (
                                 <SelectItem key={kind} value={kind}>
-                                  <span className="capitalize">{kind}</span>
+                                  <span>{artifactKindLabels[kind]}</span>
                                 </SelectItem>
                               ))}
                             </SelectContent>
@@ -795,9 +832,13 @@ export function ProjectsSettingsPage() {
                       <div className="flex items-center justify-between gap-2">
                         <Button
                           variant="outline"
-                          onClick={() =>
-                            artifactForm.id && deleteArtifact.mutate({ id: artifactForm.id })
-                          }
+                          onClick={() => {
+                            if (!artifactForm.id || !window.confirm(t("Delete this artifact?"))) {
+                              return;
+                            }
+
+                            deleteArtifact.mutate({ id: artifactForm.id });
+                          }}
                           disabled={!artifactForm.id || deleteArtifact.isPending}
                         >
                           {deleteArtifact.isPending ? <Spinner /> : <Trash2 className="size-4" />}

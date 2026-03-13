@@ -1,4 +1,4 @@
-import { and, eq, lt } from "drizzle-orm";
+import { and, eq, isNull, lt } from "drizzle-orm";
 import { headers } from "next/headers";
 import { NextResponse } from "next/server";
 import { z } from "zod";
@@ -6,6 +6,7 @@ import { db } from "@/db/drizzle";
 import { apiKey, deviceAuthCode } from "@/db/schema";
 import { generateApiKey, getKeyPrefix, hashApiKey } from "@/lib/api-key-utils";
 import { auth } from "@/lib/auth";
+import { decryptFromB64, encryptToB64 } from "@/lib/crypto";
 import { checkRateLimit } from "@/lib/rate-limit";
 
 function generateUserCode(): string {
@@ -45,18 +46,6 @@ async function apiKeyLimitResponse(userId: string, status: 403 | 409) {
     },
     { status },
   );
-}
-
-async function restoreDeviceAuthCode(row: typeof deviceAuthCode.$inferSelect) {
-  await db.insert(deviceAuthCode).values({
-    id: row.id,
-    userCode: row.userCode,
-    deviceCode: row.deviceCode,
-    userId: row.userId,
-    approved: row.approved,
-    expiresAt: row.expiresAt,
-    createdAt: row.createdAt,
-  });
 }
 
 export async function POST(req: Request) {
@@ -147,24 +136,54 @@ async function handleApprove(body: unknown) {
   const existingKeys = await listUserApiKeys(userId);
 
   if (existingKeys.length >= 5) {
-    if (!parsed.data.revokeKeyId) {
+    const revokeKeyId = parsed.data.revokeKeyId;
+
+    if (!revokeKeyId) {
       return apiKeyLimitResponse(userId, 409);
     }
 
-    const deleted = await db
-      .delete(apiKey)
-      .where(and(eq(apiKey.id, parsed.data.revokeKeyId), eq(apiKey.userId, userId)))
-      .returning({ id: apiKey.id });
+    try {
+      await db.transaction(async (tx) => {
+        const claimed = await tx
+          .update(deviceAuthCode)
+          .set({ approved: true, userId })
+          .where(and(eq(deviceAuthCode.id, row.id), eq(deviceAuthCode.approved, false)))
+          .returning({ id: deviceAuthCode.id });
 
-    if (deleted.length === 0) {
-      return NextResponse.json({ error: "API key not found." }, { status: 404 });
+        if (claimed.length === 0) {
+          throw new Error("DEVICE_AUTH_ALREADY_CLAIMED");
+        }
+
+        const deleted = await tx
+          .delete(apiKey)
+          .where(and(eq(apiKey.id, revokeKeyId), eq(apiKey.userId, userId)))
+          .returning({ id: apiKey.id });
+
+        if (deleted.length === 0) {
+          throw new Error("API_KEY_NOT_FOUND");
+        }
+      });
+    } catch (error) {
+      if (error instanceof Error && error.message === "API_KEY_NOT_FOUND") {
+        return NextResponse.json({ error: "API key not found." }, { status: 404 });
+      }
+      if (error instanceof Error && error.message === "DEVICE_AUTH_ALREADY_CLAIMED") {
+        return NextResponse.json({ error: "Already approved" }, { status: 409 });
+      }
+
+      throw error;
+    }
+  } else {
+    const approved = await db
+      .update(deviceAuthCode)
+      .set({ approved: true, userId })
+      .where(and(eq(deviceAuthCode.id, row.id), eq(deviceAuthCode.approved, false)))
+      .returning({ id: deviceAuthCode.id });
+
+    if (approved.length === 0) {
+      return NextResponse.json({ error: "Already approved" }, { status: 409 });
     }
   }
-
-  await db
-    .update(deviceAuthCode)
-    .set({ approved: true, userId })
-    .where(eq(deviceAuthCode.id, row.id));
 
   return NextResponse.json({ success: true });
 }
@@ -208,62 +227,70 @@ async function handlePoll(body: unknown) {
     return NextResponse.json({ approved: false });
   }
 
+  if (row.issuedApiKeyEnc) {
+    return NextResponse.json({
+      approved: true,
+      apiKey: await decryptFromB64(row.issuedApiKeyEnc),
+    });
+  }
+
   const existingKeys = await listUserApiKeys(row.userId);
 
   if (existingKeys.length >= 5) {
     return apiKeyLimitResponse(row.userId, 403);
   }
 
-  // Use DELETE ... RETURNING to atomically consume the row (prevents double key generation)
-  const [consumed] = await db
-    .delete(deviceAuthCode)
-    .where(eq(deviceAuthCode.id, row.id))
-    .returning();
-
-  if (!consumed) {
-    // Another concurrent poll already consumed this row
-    return NextResponse.json({ error: "Code already consumed" }, { status: 409 });
-  }
-
-  let insertedKeyId: string | null = null;
+  const raw = generateApiKey();
+  const keyHash = await hashApiKey(raw);
+  const keyPrefix = getKeyPrefix(raw);
+  const issuedApiKeyEnc = await encryptToB64(raw);
 
   try {
-    // Approved — generate API key and return it
-    const raw = generateApiKey();
-    const keyHash = await hashApiKey(raw);
-    const keyPrefix = getKeyPrefix(raw);
+    const createdKey = await db.transaction(async (tx) => {
+      const [inserted] = await tx
+        .insert(apiKey)
+        .values({
+          userId: row.userId!,
+          name: "Flixa Extension",
+          keyHash,
+          keyPrefix,
+        })
+        .returning({ id: apiKey.id });
 
-    const [inserted] = await db
-      .insert(apiKey)
-      .values({
-        userId: row.userId,
-        name: "Flixa Extension",
-        keyHash,
-        keyPrefix,
-      })
-      .returning({ id: apiKey.id });
+      const issued = await tx
+        .update(deviceAuthCode)
+        .set({
+          issuedApiKeyEnc,
+          issuedApiKeyId: inserted.id,
+          issuedAt: new Date(),
+        })
+        .where(and(eq(deviceAuthCode.id, row.id), isNull(deviceAuthCode.issuedApiKeyEnc)))
+        .returning({ id: deviceAuthCode.id });
 
-    insertedKeyId = inserted?.id ?? null;
-
-    const totalKeys = await listUserApiKeys(row.userId);
-    if (totalKeys.length > 5) {
-      if (insertedKeyId) {
-        await db
-          .delete(apiKey)
-          .where(and(eq(apiKey.id, insertedKeyId), eq(apiKey.userId, row.userId)));
+      if (issued.length === 0) {
+        throw new Error("DEVICE_AUTH_ALREADY_ISSUED");
       }
-      await restoreDeviceAuthCode(consumed);
-      return apiKeyLimitResponse(row.userId, 403);
+
+      return inserted;
+    });
+
+    return NextResponse.json({ approved: true, apiKey: raw, apiKeyId: createdKey.id });
+  } catch (error) {
+    if (error instanceof Error && error.message === "DEVICE_AUTH_ALREADY_ISSUED") {
+      const [issuedRow] = await db
+        .select({ issuedApiKeyEnc: deviceAuthCode.issuedApiKeyEnc })
+        .from(deviceAuthCode)
+        .where(eq(deviceAuthCode.id, row.id))
+        .limit(1);
+
+      if (issuedRow?.issuedApiKeyEnc) {
+        return NextResponse.json({
+          approved: true,
+          apiKey: await decryptFromB64(issuedRow.issuedApiKeyEnc),
+        });
+      }
     }
 
-    return NextResponse.json({ approved: true, apiKey: raw });
-  } catch (error) {
-    if (insertedKeyId) {
-      await db
-        .delete(apiKey)
-        .where(and(eq(apiKey.id, insertedKeyId), eq(apiKey.userId, row.userId)));
-    }
-    await restoreDeviceAuthCode(consumed);
     throw error;
   }
 }

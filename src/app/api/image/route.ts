@@ -72,26 +72,27 @@ export async function POST(req: Request) {
   }
 
   try {
-    await consumeUsage({ userId, category: usageCategory, amount: requestedCount });
-  } catch (error) {
-    if (error instanceof UsageLimitError) {
-      return NextResponse.json({ error: error.message, reason: "usage_limit" }, { status: 402 });
-    }
-    return NextResponse.json({ error: "Unable to check usage" }, { status: 500 });
-  }
-
-  try {
     const images = await generateImages({
       prompt: data.prompt,
       model: data.model,
       aspectRatio: data.aspectRatio,
       resolution: data.resolution,
       numberOfImages: requestedCount,
+      signal: req.signal,
       userId,
     });
 
     if (images.length === 0) {
       return NextResponse.json({ error: "No images generated." }, { status: 500 });
+    }
+
+    try {
+      await consumeUsage({ userId, category: usageCategory, amount: requestedCount });
+    } catch (error) {
+      if (error instanceof UsageLimitError) {
+        return NextResponse.json({ error: error.message, reason: "usage_limit" }, { status: 402 });
+      }
+      return NextResponse.json({ error: "Unable to check usage" }, { status: 500 });
     }
 
     if (!bypassCache) {

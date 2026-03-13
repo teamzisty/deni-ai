@@ -17,9 +17,7 @@ const Footer = () => {
             <DeniAIIcon className="w-8 h-8 text-primary" />
             <div>
               <span className="font-semibold tracking-tight">Deni AI</span>
-              <p className="text-xs text-muted-foreground mt-0.5">
-                {t("AI for Everyone")}
-              </p>
+              <p className="text-xs text-muted-foreground mt-0.5">{t("AI for Everyone")}</p>
             </div>
           </div>
 
@@ -67,7 +65,7 @@ const Footer = () => {
         {/* Copyright */}
         <div className="mt-8 pt-6 border-t border-border/40">
           <p className="text-xs text-muted-foreground text-center md:text-left">
-            © 2026 Zisty. All rights reserved.
+            {t("© 2026 Zisty. All rights reserved.")}
           </p>
         </div>
       </div>
