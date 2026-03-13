@@ -1,4 +1,4 @@
-import { eq, lt } from "drizzle-orm";
+import { and, eq, lt } from "drizzle-orm";
 import { headers } from "next/headers";
 import { NextResponse } from "next/server";
 import { z } from "zod";
@@ -20,6 +20,43 @@ function generateDeviceCode(): string {
   const bytes = new Uint8Array(32);
   crypto.getRandomValues(bytes);
   return Array.from(bytes, (b) => b.toString(16).padStart(2, "0")).join("");
+}
+
+async function listUserApiKeys(userId: string) {
+  return db
+    .select({
+      id: apiKey.id,
+      name: apiKey.name,
+      keyPrefix: apiKey.keyPrefix,
+      lastUsedAt: apiKey.lastUsedAt,
+      createdAt: apiKey.createdAt,
+    })
+    .from(apiKey)
+    .where(eq(apiKey.userId, userId))
+    .orderBy(apiKey.createdAt);
+}
+
+async function apiKeyLimitResponse(userId: string, status: 403 | 409) {
+  return NextResponse.json(
+    {
+      code: "API_KEY_LIMIT_REACHED",
+      error: "Maximum of 5 API keys allowed. Revoke an existing key first.",
+      apiKeys: await listUserApiKeys(userId),
+    },
+    { status },
+  );
+}
+
+async function restoreDeviceAuthCode(row: typeof deviceAuthCode.$inferSelect) {
+  await db.insert(deviceAuthCode).values({
+    id: row.id,
+    userCode: row.userCode,
+    deviceCode: row.deviceCode,
+    userId: row.userId,
+    approved: row.approved,
+    expiresAt: row.expiresAt,
+    createdAt: row.createdAt,
+  });
 }
 
 export async function POST(req: Request) {
@@ -73,7 +110,12 @@ async function handleInitiate(req: Request) {
 
 /** User clicks "Approve" on the web page. Requires session. */
 async function handleApprove(body: unknown) {
-  const parsed = z.object({ userCode: z.string().min(1) }).safeParse(body);
+  const parsed = z
+    .object({
+      userCode: z.string().min(1),
+      revokeKeyId: z.string().min(1).optional(),
+    })
+    .safeParse(body);
   if (!parsed.success) {
     return NextResponse.json({ error: "Invalid request" }, { status: 400 });
   }
@@ -100,6 +142,23 @@ async function handleApprove(body: unknown) {
 
   if (row.approved) {
     return NextResponse.json({ error: "Already approved" }, { status: 409 });
+  }
+
+  const existingKeys = await listUserApiKeys(userId);
+
+  if (existingKeys.length >= 5) {
+    if (!parsed.data.revokeKeyId) {
+      return apiKeyLimitResponse(userId, 409);
+    }
+
+    const deleted = await db
+      .delete(apiKey)
+      .where(and(eq(apiKey.id, parsed.data.revokeKeyId), eq(apiKey.userId, userId)))
+      .returning({ id: apiKey.id });
+
+    if (deleted.length === 0) {
+      return NextResponse.json({ error: "API key not found." }, { status: 404 });
+    }
   }
 
   await db
@@ -149,6 +208,12 @@ async function handlePoll(body: unknown) {
     return NextResponse.json({ approved: false });
   }
 
+  const existingKeys = await listUserApiKeys(row.userId);
+
+  if (existingKeys.length >= 5) {
+    return apiKeyLimitResponse(row.userId, 403);
+  }
+
   // Use DELETE ... RETURNING to atomically consume the row (prevents double key generation)
   const [consumed] = await db
     .delete(deviceAuthCode)
@@ -160,30 +225,45 @@ async function handlePoll(body: unknown) {
     return NextResponse.json({ error: "Code already consumed" }, { status: 409 });
   }
 
-  // Check API key limit before creating a new one
-  const existingKeys = await db
-    .select({ id: apiKey.id })
-    .from(apiKey)
-    .where(eq(apiKey.userId, row.userId));
+  let insertedKeyId: string | null = null;
 
-  if (existingKeys.length >= 5) {
-    return NextResponse.json(
-      { error: "Maximum of 5 API keys allowed. Revoke an existing key first." },
-      { status: 403 },
-    );
+  try {
+    // Approved — generate API key and return it
+    const raw = generateApiKey();
+    const keyHash = await hashApiKey(raw);
+    const keyPrefix = getKeyPrefix(raw);
+
+    const [inserted] = await db
+      .insert(apiKey)
+      .values({
+        userId: row.userId,
+        name: "Flixa Extension",
+        keyHash,
+        keyPrefix,
+      })
+      .returning({ id: apiKey.id });
+
+    insertedKeyId = inserted?.id ?? null;
+
+    const totalKeys = await listUserApiKeys(row.userId);
+    if (totalKeys.length > 5) {
+      if (insertedKeyId) {
+        await db
+          .delete(apiKey)
+          .where(and(eq(apiKey.id, insertedKeyId), eq(apiKey.userId, row.userId)));
+      }
+      await restoreDeviceAuthCode(consumed);
+      return apiKeyLimitResponse(row.userId, 403);
+    }
+
+    return NextResponse.json({ approved: true, apiKey: raw });
+  } catch (error) {
+    if (insertedKeyId) {
+      await db
+        .delete(apiKey)
+        .where(and(eq(apiKey.id, insertedKeyId), eq(apiKey.userId, row.userId)));
+    }
+    await restoreDeviceAuthCode(consumed);
+    throw error;
   }
-
-  // Approved — generate API key and return it
-  const raw = generateApiKey();
-  const keyHash = await hashApiKey(raw);
-  const keyPrefix = getKeyPrefix(raw);
-
-  await db.insert(apiKey).values({
-    userId: row.userId,
-    name: "Flixa Extension",
-    keyHash,
-    keyPrefix,
-  });
-
-  return NextResponse.json({ approved: true, apiKey: raw });
 }
