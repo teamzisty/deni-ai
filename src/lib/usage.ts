@@ -209,17 +209,108 @@ async function calculateUsageState({
   };
 }
 
+function buildResetWindowCondition(now: Date, targetPeriodEnd: Date | null) {
+  if (!targetPeriodEnd) {
+    return null;
+  }
+
+  return sql`${usageQuota.periodEnd} IS NULL OR ${usageQuota.periodEnd} <= ${now}`;
+}
+
+async function upsertUsageRecord({
+  userId,
+  category,
+  tier,
+  limit,
+  amount,
+  periodStart,
+  targetPeriodEnd,
+  resetWindowCondition,
+  allowOverflow,
+}: {
+  userId: string;
+  category: UsageCategory;
+  tier: SubscriptionTier;
+  limit: number;
+  amount: number;
+  periodStart: Date;
+  targetPeriodEnd: Date | null;
+  resetWindowCondition: ReturnType<typeof buildResetWindowCondition>;
+  allowOverflow: boolean;
+}) {
+  const usedExpression = resetWindowCondition
+    ? sql`CASE
+        WHEN ${resetWindowCondition} THEN ${amount}
+        ELSE ${usageQuota.used} + ${amount}
+      END`
+    : sql`${usageQuota.used} + ${amount}`;
+
+  const periodStartExpression = resetWindowCondition
+    ? sql`CASE
+        WHEN ${resetWindowCondition} THEN ${periodStart}
+        ELSE ${usageQuota.periodStart}
+      END`
+    : usageQuota.periodStart;
+
+  const periodEndExpression = resetWindowCondition
+    ? sql`CASE
+        WHEN ${resetWindowCondition} THEN ${targetPeriodEnd}
+        ELSE ${usageQuota.periodEnd}
+      END`
+    : usageQuota.periodEnd;
+
+  const remainingCondition = sql`${usageQuota.used} <= ${limit - amount}`;
+  const setWhere = allowOverflow
+    ? undefined
+    : resetWindowCondition
+      ? sql`${resetWindowCondition} OR ${remainingCondition}`
+      : remainingCondition;
+
+  const [saved] = await db
+    .insert(usageQuota)
+    .values({
+      userId,
+      category,
+      planTier: tier,
+      limitAmount: limit,
+      used: amount,
+      periodStart,
+      periodEnd: targetPeriodEnd,
+    })
+    .onConflictDoUpdate({
+      target: [usageQuota.userId, usageQuota.category],
+      set: {
+        planTier: tier,
+        limitAmount: limit,
+        used: usedExpression,
+        periodStart: periodStartExpression,
+        periodEnd: periodEndExpression,
+        updatedAt: new Date(),
+      },
+      ...(setWhere ? { setWhere } : {}),
+    })
+    .returning({ used: usageQuota.used });
+
+  return saved ?? null;
+}
+
 export async function consumeUsage({
   userId,
   category,
   now = new Date(),
   isAnonymous = false,
+  amount = 1,
 }: {
   userId: string;
   category: UsageCategory;
   now?: Date;
   isAnonymous?: boolean;
+  amount?: number;
 }) {
+  if (!Number.isInteger(amount) || amount <= 0) {
+    throw new Error("Usage amount must be a positive integer.");
+  }
+
   const state = await calculateUsageState({
     userId,
     category,
@@ -237,37 +328,24 @@ export async function consumeUsage({
     };
   }
 
-  const isLimitReached = limit <= 0 || (!state.shouldReset && state.used >= limit);
+  const resetWindowCondition = buildResetWindowCondition(now, state.targetPeriodEnd);
+  const isLimitReached = limit <= 0 || state.used + amount > limit;
 
-  // If limit reached, check for Max Mode
   if (isLimitReached) {
-    // If Max Mode is enabled, record usage and allow
     if (tierInfo.maxModeEnabled) {
-      await recordMaxModeUsage(userId, category);
+      await recordMaxModeUsage(userId, category, amount);
 
-      // Also increment the regular usage counter atomically
-      await db
-        .insert(usageQuota)
-        .values({
-          userId,
-          category,
-          planTier: tierInfo.tier,
-          limitAmount: limit,
-          used: state.used + 1,
-          periodStart: state.periodStart,
-          periodEnd: state.targetPeriodEnd,
-        })
-        .onConflictDoUpdate({
-          target: [usageQuota.userId, usageQuota.category],
-          set: {
-            planTier: tierInfo.tier,
-            limitAmount: limit,
-            used: sql`${usageQuota.used} + 1`,
-            periodStart: state.periodStart,
-            periodEnd: state.targetPeriodEnd,
-            updatedAt: new Date(),
-          },
-        });
+      await upsertUsageRecord({
+        userId,
+        category,
+        tier: tierInfo.tier,
+        limit,
+        amount,
+        periodStart: state.periodStart,
+        targetPeriodEnd: state.targetPeriodEnd,
+        resetWindowCondition,
+        allowOverflow: true,
+      });
 
       return {
         tier: tierInfo.tier,
@@ -281,34 +359,19 @@ export async function consumeUsage({
     throw new UsageLimitError("Usage limit reached for your plan.", tierInfo.maxModeEligible);
   }
 
-  const [saved] = await db
-    .insert(usageQuota)
-    .values({
-      userId,
-      category,
-      planTier: tierInfo.tier,
-      limitAmount: limit,
-      used: 1,
-      periodStart: state.periodStart,
-      periodEnd: state.targetPeriodEnd,
-    })
-    .onConflictDoUpdate({
-      target: [usageQuota.userId, usageQuota.category],
-      set: {
-        planTier: tierInfo.tier,
-        limitAmount: limit,
-        used: state.shouldReset
-          ? 1
-          : sql`CASE WHEN ${usageQuota.used} < ${limit} THEN ${usageQuota.used} + 1 ELSE ${usageQuota.used} END`,
-        periodStart: state.periodStart,
-        periodEnd: state.targetPeriodEnd,
-        updatedAt: new Date(),
-      },
-    })
-    .returning({ used: usageQuota.used });
+  const saved = await upsertUsageRecord({
+    userId,
+    category,
+    tier: tierInfo.tier,
+    limit,
+    amount,
+    periodStart: state.periodStart,
+    targetPeriodEnd: state.targetPeriodEnd,
+    resetWindowCondition,
+    allowOverflow: false,
+  });
 
-  // If the CASE expression didn't increment (used was already at limit), the request lost the race
-  if (saved.used >= limit) {
+  if (!saved) {
     throw new UsageLimitError("Usage limit reached for your plan.", tierInfo.maxModeEligible);
   }
 

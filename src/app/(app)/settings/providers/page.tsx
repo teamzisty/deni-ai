@@ -6,6 +6,7 @@ import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { SettingsPageShell } from "@/components/settings-page-shell";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -294,15 +295,10 @@ export default function ProvidersPage() {
   const apiStyleLabel = effectiveApiStyle === "chat" ? t("Chat Completions") : t("Responses API");
 
   return (
-    <div className="mx-auto flex max-w-4xl w-full flex-col gap-6">
-      {/* Page Header */}
-      <div className="space-y-1">
-        <h1 className="text-xl font-semibold tracking-tight">{t("Providers")}</h1>
-        <p className="text-muted-foreground text-sm">
-          {t("Bring your own keys and configure custom endpoints")}
-        </p>
-      </div>
-
+    <SettingsPageShell
+      title={t("Providers")}
+      description={t("Bring your own keys and configure custom endpoints")}
+    >
       <div>
         <div className="mb-4">
           <CardTitle className="text-sm font-medium">{t("API Keys (BYOK)")}</CardTitle>
@@ -597,6 +593,6 @@ export default function ProvidersPage() {
           )}
         </CardContent>
       </Card>
-    </div>
+    </SettingsPageShell>
   );
 }

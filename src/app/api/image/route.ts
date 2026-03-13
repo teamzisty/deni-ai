@@ -19,8 +19,10 @@ import {
   imageResolutions,
   type ImageModel,
   isImagenImageModel,
+  resolveImageUsageCategory,
   supportsImageHighResolution,
 } from "@/lib/image";
+import { cachePaletteImages, getCachedPaletteImages } from "@/lib/palette-cache";
 import { checkRateLimit } from "@/lib/rate-limit";
 import { consumeUsage, UsageLimitError } from "@/lib/usage";
 
@@ -32,6 +34,7 @@ const requestSchema = z.object({
   aspectRatio: z.enum(imageAspectRatios).optional(),
   resolution: z.enum(imageResolutions).optional(),
   numberOfImages: z.number().int().min(1).max(4).optional(),
+  bypassCache: z.boolean().optional(),
 });
 
 class ImageGenerationError extends Error {
@@ -169,17 +172,37 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Invalid request body" }, { status: 400 });
   }
 
+  const data = parsedBody.data;
+  const requestedCount = data.numberOfImages ?? 1;
+  const usageCategory = resolveImageUsageCategory(data.model);
+  const bypassCache = data.bypassCache ?? false;
+  const cacheInput = {
+    prompt: data.prompt,
+    model: data.model,
+    aspectRatio: data.aspectRatio,
+    resolution: data.resolution,
+    numberOfImages: requestedCount,
+  };
+
+  if (!bypassCache) {
+    try {
+      const cachedImages = await getCachedPaletteImages(cacheInput);
+      if (cachedImages) {
+        return NextResponse.json({ images: cachedImages });
+      }
+    } catch (error) {
+      console.error("Palette cache lookup failed:", error);
+    }
+  }
+
   try {
-    await consumeUsage({ userId, category: "premium" });
+    await consumeUsage({ userId, category: usageCategory, amount: requestedCount });
   } catch (error) {
     if (error instanceof UsageLimitError) {
       return NextResponse.json({ error: error.message, reason: "usage_limit" }, { status: 402 });
     }
     return NextResponse.json({ error: "Unable to check usage" }, { status: 500 });
   }
-
-  const data = parsedBody.data;
-  const requestedCount = data.numberOfImages ?? 1;
 
   try {
     const generatedBatches = isImagenImageModel(data.model)
@@ -201,6 +224,14 @@ export async function POST(req: Request) {
 
     if (images.length === 0) {
       return NextResponse.json({ error: "No images generated." }, { status: 500 });
+    }
+
+    if (!bypassCache) {
+      try {
+        await cachePaletteImages(cacheInput, images);
+      } catch (error) {
+        console.error("Palette cache write failed:", error);
+      }
     }
 
     return NextResponse.json({ images });

@@ -5,7 +5,12 @@ import { createXai } from "@ai-sdk/xai";
 import { createOpenAI, type OpenAIResponsesProviderOptions } from "@ai-sdk/openai";
 import { createOpenRouter, type OpenRouterProviderOptions } from "@openrouter/ai-sdk-provider";
 import {
+  consumeStream,
   convertToModelMessages,
+  createUIMessageStream,
+  createUIMessageStreamResponse,
+  generateId,
+  readUIMessageStream,
   type LanguageModel,
   safeValidateUIMessages,
   stepCountIs,
@@ -22,6 +27,7 @@ import { customModel, providerKey, providerSetting } from "@/db/schema";
 import { env } from "@/env";
 import { auth } from "@/lib/auth";
 import { generateTitle, getChatById, updateChat } from "@/lib/chat";
+import { clearChatGeneration, startChatGeneration } from "@/lib/chat-generation";
 import { createChatTools } from "@/lib/chat-tools";
 import { models } from "@/lib/constants";
 import { decryptFromB64 } from "@/lib/crypto";
@@ -66,6 +72,29 @@ function isPrivateUrl(url: string): boolean {
 const UIMessagesSchema = z
   .array(z.record(z.string(), z.unknown()))
   .transform((value) => value as unknown as UIMessage[]);
+
+type PendingMessageMetadata = {
+  pending?: boolean;
+  [key: string]: unknown;
+};
+
+function setPendingState(message: UIMessage, pending: boolean): UIMessage {
+  const metadata =
+    typeof message.metadata === "object" && message.metadata !== null
+      ? ({ ...message.metadata } as PendingMessageMetadata)
+      : ({} as PendingMessageMetadata);
+
+  if (pending) {
+    metadata.pending = true;
+  } else {
+    delete metadata.pending;
+  }
+
+  return {
+    ...message,
+    metadata,
+  };
+}
 
 export async function POST(req: Request) {
   const headersList = await headers();
@@ -381,6 +410,19 @@ export async function POST(req: Request) {
   if (!chat) {
     return NextResponse.json({ error: "Chat not found" }, { status: 404 });
   }
+
+  const responseMessageId = generateId();
+  const pendingAssistantMessage = setPendingState(
+    {
+      id: responseMessageId,
+      role: "assistant",
+      parts: [],
+    } as UIMessage,
+    true,
+  );
+
+  await updateChat(id, userId, [...messages, pendingAssistantMessage]);
+
   const projectPrompt = await buildProjectPrompt(chat.projectId, userId);
   const responseStyleInstruction =
     responseStyle === "detailed"
@@ -432,9 +474,11 @@ export async function POST(req: Request) {
         forceWebSearchInstruction,
       ].join(" ");
 
+  const generationAbortController = startChatGeneration(id, userId);
   const result = streamText({
     model: model,
     messages: modelMessages,
+    abortSignal: generationAbortController.signal,
     stopWhen: stepCountIs(50),
     tools,
     toolChoice: videoMode
@@ -471,12 +515,76 @@ export async function POST(req: Request) {
     system: systemPrompt,
   });
 
-  // send sources and reasoning back to the client
-  return result.toUIMessageStreamResponse({
+  let lastPersistedSignature = "";
+  let latestPersistedMessage: UIMessage = pendingAssistantMessage;
+  let partialPersistPromise: Promise<void> = Promise.resolve();
+  let lastPersistAt = 0;
+
+  const queuePartialPersist = (message: UIMessage, force: boolean = false) => {
+    const pendingMessage = setPendingState(message, true);
+    const signature = JSON.stringify(pendingMessage.parts);
+    const now = Date.now();
+
+    if (!force) {
+      if (signature === lastPersistedSignature) {
+        return;
+      }
+
+      if (now - lastPersistAt < 750) {
+        latestPersistedMessage = pendingMessage;
+        return;
+      }
+    }
+
+    latestPersistedMessage = pendingMessage;
+    lastPersistedSignature = signature;
+    lastPersistAt = now;
+
+    partialPersistPromise = partialPersistPromise
+      .catch(() => undefined)
+      .then(async () => {
+        if (!latestPersistedMessage) {
+          return;
+        }
+
+        try {
+          await updateChat(id, userId, [...messages, latestPersistedMessage]);
+        } catch (error) {
+          console.error("Failed to persist partial chat response", error);
+        }
+      });
+  };
+
+  const stream = createUIMessageStream<UIMessage>({
     originalMessages: messages,
-    sendSources: true,
-    sendReasoning: true,
-    onFinish: async ({ messages: updatedMessages }) => {
+    execute: async ({ writer }) => {
+      writer.write({
+        type: "start",
+        messageId: responseMessageId,
+      });
+
+      const uiStream = result.toUIMessageStream<UIMessage>({
+        sendReasoning: true,
+        sendSources: true,
+        sendStart: false,
+      });
+      const [clientStream, persistenceStream] = uiStream.tee();
+
+      writer.merge(clientStream);
+
+      for await (const message of readUIMessageStream<UIMessage>({
+        stream: persistenceStream,
+      })) {
+        queuePartialPersist(message);
+      }
+
+      queuePartialPersist(latestPersistedMessage, true);
+
+      await partialPersistPromise;
+    },
+    onFinish: async ({ messages: updatedMessages, isAborted }) => {
+      await partialPersistPromise;
+
       let newTitle: string | undefined;
 
       try {
@@ -488,7 +596,21 @@ export async function POST(req: Request) {
         console.error("Failed to generate title", error);
       }
 
-      await updateChat(id, userId, updatedMessages, newTitle);
+      clearChatGeneration(id, generationAbortController);
+
+      await updateChat(
+        id,
+        userId,
+        updatedMessages.map((message) =>
+          message.id === responseMessageId ? setPendingState(message, false) : message,
+        ),
+        newTitle,
+      );
+
+      if (isAborted) {
+        return;
+      }
+
       try {
         await maybeAutoSaveMemories({
           userId,
@@ -499,5 +621,10 @@ export async function POST(req: Request) {
         console.error("Failed to auto-save memories", error);
       }
     },
+  });
+
+  return createUIMessageStreamResponse({
+    stream,
+    consumeSseStream: consumeStream,
   });
 }

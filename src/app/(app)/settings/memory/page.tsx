@@ -16,6 +16,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { SettingsPageShell } from "@/components/settings-page-shell";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -264,14 +265,10 @@ export default function MemorySettingsPage() {
   ];
 
   return (
-    <div className="mx-auto flex max-w-4xl w-full flex-col gap-6">
-      <div className="space-y-1">
-        <h1 className="text-xl font-semibold tracking-tight">{t("Personalize")}</h1>
-        <p className="text-sm text-muted-foreground">
-          {t("Control how Deni responds and what it remembers about you.")}
-        </p>
-      </div>
-
+    <SettingsPageShell
+      title={t("Personalize")}
+      description={t("Control how Deni responds and what it remembers about you.")}
+    >
       <Card>
         <CardHeader>
           <CardTitle>{t("Response Style")}</CardTitle>
@@ -473,6 +470,6 @@ export default function MemorySettingsPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </div>
+    </SettingsPageShell>
   );
 }

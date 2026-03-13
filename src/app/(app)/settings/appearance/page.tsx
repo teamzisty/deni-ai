@@ -4,6 +4,7 @@ import { Check, Moon, Sun, Monitor, Palette, Layers } from "lucide-react";
 import { useExtracted } from "next-intl";
 import { useTheme } from "next-themes";
 import { LocaleSwitcher } from "@/components/locale-switcher";
+import { SettingsPageShell } from "@/components/settings-page-shell";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { type DesignStyle, useDesignStyle } from "@/hooks/use-design-style";
@@ -74,13 +75,7 @@ export default function AppearancePage() {
   ];
 
   return (
-    <div className="mx-auto flex max-w-4xl w-full flex-col gap-6">
-      {/* Page Header */}
-      <div className="space-y-1">
-        <h1 className="text-xl font-semibold tracking-tight">{t("Appearance")}</h1>
-        <p className="text-muted-foreground text-sm">{t("Customize your visual experience")}</p>
-      </div>
-
+    <SettingsPageShell title={t("Appearance")} description={t("Customize your visual experience")}>
       {/* Language Section */}
       <Card>
         <CardHeader>
@@ -203,6 +198,6 @@ export default function AppearancePage() {
           </div>
         </CardContent>
       </Card>
-    </div>
+    </SettingsPageShell>
   );
 }

@@ -15,7 +15,7 @@ export default function Header() {
   return (
     <header className="w-full fixed top-0 left-0 z-50 px-4 pt-4">
       <nav className="mx-auto max-w-3xl">
-        <div className="rounded-lg border border-border bg-background/90 backdrop-blur-sm shadow-sm px-4 py-2.5 flex items-center justify-between">
+        <div className="rounded-lg border border-border bg-background/50 backdrop-blur-sm shadow-sm px-4 py-2.5 flex items-center justify-between">
           {/* Logo */}
           <Link href="/" aria-label="Deni AI" title="Deni AI" className="flex items-center gap-2.5">
             <DeniAIIcon className="w-7 h-7 text-foreground" />

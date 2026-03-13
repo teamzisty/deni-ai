@@ -45,6 +45,10 @@ interface ChatInterfaceProps {
 }
 
 type UploadableFileUIPart = FileUIPart & { file?: File };
+type PendingMessageMetadata = {
+  pending?: boolean;
+  [key: string]: unknown;
+};
 
 function isFilePart(part: UIMessage["parts"][number]): part is FileUIPart {
   return part.type === "file";
@@ -123,6 +127,14 @@ function getMessageRenderKeys(messages: UIMessage[]) {
   });
 }
 
+function isPendingMessage(message: UIMessage | undefined) {
+  if (!message || message.role !== "assistant") {
+    return false;
+  }
+
+  return Boolean((message.metadata as PendingMessageMetadata | undefined)?.pending);
+}
+
 export function ChatInterface({
   id,
   initialMessages = [],
@@ -181,12 +193,22 @@ export function ChatInterface({
     [id],
   );
 
-  const { messages, sendMessage, regenerate, status, error, stop } = useChat({
+  const { messages, sendMessage, regenerate, setMessages, status, error, stop } = useChat({
     id,
     messages: initialMessages,
     transport,
   });
   const showMessageActions = status !== "streaming" && status !== "submitted";
+  const lastMessage = messages.at(-1);
+  const isWaitingForResponse =
+    status !== "streaming" && status !== "submitted" && isPendingMessage(lastMessage);
+  const chatQuery = trpc.chat.getChat.useQuery(
+    { id },
+    {
+      enabled: isWaitingForResponse,
+      refetchInterval: isWaitingForResponse ? 1000 : false,
+    },
+  );
 
   useInitialMessage({
     id,
@@ -201,6 +223,15 @@ export function ChatInterface({
     setDeepResearch,
     onMessageSent: () => utils.chat.getChats.invalidate(),
   });
+
+  useEffect(() => {
+    const chat = chatQuery.data?.[0];
+    if (!chat?.messages) {
+      return;
+    }
+
+    setMessages(chat.messages as UIMessage[]);
+  }, [chatQuery.data, setMessages]);
 
   const handleSubmit = async (
     message: ComposerMessage,
@@ -267,6 +298,18 @@ export function ChatInterface({
       setModel(availableModels[0].value);
     }
   }, [availableModels, selectedModel]);
+
+  const handleStop = () => {
+    stop();
+
+    void fetch("/api/chat/stop", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ id }),
+    });
+  };
 
   const messageRenderKeys = useMemo(() => getMessageRenderKeys(messages), [messages]);
 
@@ -336,6 +379,17 @@ export function ChatInterface({
             </div>
           )}
 
+          {isWaitingForResponse && (
+            <Card className="!gap-0 bg-muted/50">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Loader />
+                  <span>{t("Waiting for response...")}</span>
+                </CardTitle>
+              </CardHeader>
+            </Card>
+          )}
+
           {error && (
             <Card className="!gap-0 bg-destructive/10">
               <CardHeader>
@@ -389,7 +443,7 @@ export function ChatInterface({
         value={input}
         onValueChange={setInput}
         onSubmit={handleSubmit}
-        onStop={stop}
+        onStop={handleStop}
         status={status}
         isSubmitDisabled={isSubmitBlocked}
         model={model}

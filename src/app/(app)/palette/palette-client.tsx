@@ -3,6 +3,7 @@
 import {
   AlertCircle,
   ArrowUp,
+  Ban,
   ChevronDown,
   Copy,
   Download,
@@ -14,12 +15,15 @@ import {
   RotateCcw,
   Square,
   SlidersHorizontal,
+  TriangleAlert,
   Video,
   X,
 } from "lucide-react";
 import { useExtracted } from "next-intl";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
+import { resolveImageUsageCategory } from "@/lib/image";
+import { trpc } from "@/lib/trpc/react";
 import { cn } from "@/lib/utils";
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
 import {
@@ -314,11 +318,13 @@ function WallTile({
   index,
   onOpenImage,
   onRetry,
+  retryDisabled = false,
 }: {
   tile: FeedTile;
   index: number;
   onOpenImage: (tile: Extract<FeedTile, { kind: "image" }>) => void;
   onRetry: (batch: GenerationBatch) => void;
+  retryDisabled?: boolean;
 }) {
   return (
     <article
@@ -367,7 +373,8 @@ function WallTile({
             <button
               type="button"
               onClick={() => onRetry(tile.batch)}
-              className="mt-3 rounded-full bg-white/10 px-3 py-1.5 text-[10px] font-medium text-white hover:bg-white/20"
+              disabled={retryDisabled}
+              className="mt-3 rounded-full bg-white/10 px-3 py-1.5 text-[10px] font-medium text-white hover:bg-white/20 disabled:cursor-not-allowed disabled:opacity-40"
             >
               Retry
             </button>
@@ -384,6 +391,10 @@ function getImageModel(model: ModelId) {
 
 export default function PaletteClient() {
   const t = useExtracted();
+  const usageQuery = trpc.billing.usage.useQuery(undefined, {
+    refetchOnWindowFocus: true,
+    staleTime: 30000,
+  });
 
   const [prompt, setPrompt] = useState("");
   const [selectedModel, setSelectedModel] = useState<ModelId>(IMAGE_MODELS[1].id);
@@ -401,11 +412,38 @@ export default function PaletteClient() {
   );
 
   const selectedModelConfig = getImageModel(selectedModel);
+  const selectedUsageCategory = resolveImageUsageCategory(selectedModel);
   const availableResolutions = selectedModelConfig.resolutions;
   const liveTiles = buildFeedTiles(batches);
   const isBusy = activeCount > 0 || isGeneratingPalette;
   const latestCompletedBatch =
     [...batches].reverse().find((batch) => batch.status === "done") ?? null;
+  const selectedUsage = usageQuery.data?.usage.find(
+    (usage) => usage.category === selectedUsageCategory,
+  );
+  const usageLimit = selectedUsage?.limit;
+  const remainingUsage = selectedUsage?.remaining;
+  const usageTier = usageQuery.data?.tier ?? "free";
+  const maxModeEnabled = usageQuery.data?.maxModeEnabled ?? false;
+  const lowUsageThreshold =
+    usageLimit === null || usageLimit === undefined ? null : Math.ceil(usageLimit * 0.1);
+  const isUsageLow =
+    !maxModeEnabled &&
+    remainingUsage !== null &&
+    remainingUsage !== undefined &&
+    usageLimit !== null &&
+    usageLimit !== undefined &&
+    lowUsageThreshold !== null &&
+    remainingUsage > 0 &&
+    remainingUsage <= lowUsageThreshold;
+  const isUsageBlocked =
+    !maxModeEnabled &&
+    remainingUsage !== null &&
+    remainingUsage !== undefined &&
+    remainingUsage <= 0;
+  const usageCategoryLabel = selectedUsageCategory === "premium" ? t("Premium") : t("Basic");
+  const usageTierLabel =
+    usageTier === "free" ? t("Free") : usageTier === "plus" ? t("Plus") : t("Pro");
   const historyDateFormatter = new Intl.DateTimeFormat(undefined, {
     month: "short",
     day: "numeric",
@@ -450,6 +488,7 @@ export default function PaletteClient() {
     aspectRatio: AspectRatio;
     resolution: Resolution;
     requestedCount: number;
+    bypassCache?: boolean;
   }) {
     const batchId = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
     const modelInfo = getImageModel(options.model);
@@ -486,6 +525,7 @@ export default function PaletteClient() {
           aspectRatio: options.aspectRatio,
           resolution: effectiveResolution,
           numberOfImages: options.requestedCount,
+          bypassCache: options.bypassCache,
         }),
       });
 
@@ -535,6 +575,7 @@ export default function PaletteClient() {
       return false;
     } finally {
       setActiveCount((count) => Math.max(0, count - 1));
+      void usageQuery.refetch();
     }
   }
 
@@ -543,6 +584,7 @@ export default function PaletteClient() {
     model: ModelId;
     aspectRatio: AspectRatio;
     resolution: Resolution;
+    bypassCache?: boolean;
   }) {
     if (isGeneratingPalette) return;
 
@@ -554,6 +596,7 @@ export default function PaletteClient() {
         const succeeded = await runGenerationBatch({
           ...options,
           requestedCount: IMAGE_BATCH_SIZE,
+          bypassCache: options.bypassCache || batchIndex > 0,
         });
 
         if (!succeeded) {
@@ -580,11 +623,11 @@ export default function PaletteClient() {
 
   function startPaletteRun(
     options: PaletteRequest,
-    config?: { clearPrompt?: boolean; remember?: boolean },
+    config?: { clearPrompt?: boolean; remember?: boolean; bypassCache?: boolean },
   ) {
     const trimmedPrompt = options.prompt.trim();
 
-    if (!trimmedPrompt || isBusy) {
+    if (!trimmedPrompt || isBusy || isUsageBlocked) {
       return;
     }
 
@@ -599,7 +642,10 @@ export default function PaletteClient() {
       appendHistoryEntry(nextRequest);
     }
 
-    void runPaletteSequence(nextRequest);
+    void runPaletteSequence({
+      ...nextRequest,
+      bypassCache: config?.bypassCache,
+    });
 
     if (config?.clearPrompt) {
       setPrompt("");
@@ -632,6 +678,7 @@ export default function PaletteClient() {
       },
       {
         remember: false,
+        bypassCache: true,
       },
     );
   }
@@ -661,12 +708,17 @@ export default function PaletteClient() {
   }
 
   function handleRetry(batch: GenerationBatch) {
+    if (isUsageBlocked) {
+      return;
+    }
+
     void runGenerationBatch({
       prompt: batch.prompt,
       model: batch.model,
       aspectRatio: batch.aspectRatio,
       resolution: batch.resolution,
       requestedCount: IMAGE_BATCH_SIZE,
+      bypassCache: true,
     });
   }
 
@@ -734,6 +786,7 @@ export default function PaletteClient() {
                 index={index}
                 onOpenImage={setSelectedImage}
                 onRetry={handleRetry}
+                retryDisabled={isUsageBlocked}
               />
             ))}
           </div>
@@ -750,6 +803,55 @@ export default function PaletteClient() {
             </div>
           )}
 
+          {(isUsageLow || isUsageBlocked) && (
+            <div
+              className={cn(
+                "flex items-start gap-2 rounded-2xl border px-4 py-3 text-sm shadow-2xl backdrop-blur-xl",
+                isUsageBlocked
+                  ? "border-red-500/20 bg-red-500/10 text-red-400"
+                  : "border-amber-500/20 bg-amber-500/10 text-amber-300",
+              )}
+            >
+              {isUsageBlocked ? (
+                <Ban className="mt-0.5 size-4 shrink-0" />
+              ) : (
+                <TriangleAlert className="mt-0.5 size-4 shrink-0" />
+              )}
+              <div className="min-w-0 flex-1">
+                <p className="font-medium text-white">
+                  {isUsageBlocked ? t("Usage limit reached") : t("You are running low")}
+                </p>
+                <p className="mt-1 text-xs leading-5 text-white/70">
+                  {isUsageBlocked
+                    ? t("You've hit the {category} usage limit on your {tier} plan.", {
+                        category: usageCategoryLabel,
+                        tier: usageTierLabel,
+                      })
+                    : remainingUsage === null || remainingUsage === undefined
+                      ? t("Only a few {category} requests left on your {tier} plan.", {
+                          category: usageCategoryLabel,
+                          tier: usageTierLabel,
+                        })
+                      : t(
+                          "Only {count, plural, one {#} other {#}} {category} requests left on your {tier} plan.",
+                          {
+                            count: remainingUsage,
+                            category: usageCategoryLabel,
+                            tier: usageTierLabel,
+                          },
+                        )}
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => void usageQuery.refetch()}
+                className="rounded-full bg-white/10 px-3 py-1.5 text-[11px] font-medium text-white transition-colors hover:bg-white/15"
+              >
+                {t("Refresh usage")}
+              </button>
+            </div>
+          )}
+
           {latestCompletedBatch && activeCount === 0 && !isGeneratingPalette ? (
             <div className="flex flex-col gap-3 rounded-2xl border border-white/10 bg-black/35 px-4 py-3 text-sm text-white/70 backdrop-blur-xl sm:flex-row sm:items-center sm:justify-between">
               <div className="min-w-0">
@@ -759,7 +861,8 @@ export default function PaletteClient() {
               <button
                 type="button"
                 onClick={handleGenerateMore}
-                className="w-full rounded-full bg-white/10 px-4 py-2 text-xs font-medium text-white transition-colors hover:bg-white/15 sm:w-auto sm:shrink-0"
+                disabled={isUsageBlocked}
+                className="w-full rounded-full bg-white/10 px-4 py-2 text-xs font-medium text-white transition-colors hover:bg-white/15 disabled:cursor-not-allowed disabled:opacity-30 sm:w-auto sm:shrink-0"
               >
                 {t("Generate more")}
               </button>
@@ -783,6 +886,7 @@ export default function PaletteClient() {
                   type="text"
                   value={prompt}
                   onChange={(e) => setPrompt(e.target.value)}
+                  disabled={isUsageBlocked}
                   onKeyDown={(e) => {
                     if (e.key === "Enter" && !e.shiftKey) {
                       e.preventDefault();
@@ -790,7 +894,7 @@ export default function PaletteClient() {
                     }
                   }}
                   placeholder={t("Create your palette")}
-                  className="w-full bg-transparent py-3 text-[15px] text-white outline-none placeholder:text-white/30 sm:py-4"
+                  className="w-full bg-transparent py-3 text-[15px] text-white outline-none placeholder:text-white/30 disabled:cursor-not-allowed disabled:opacity-50 sm:py-4"
                 />
               </div>
 
@@ -888,7 +992,7 @@ export default function PaletteClient() {
 
                 <button
                   onClick={handleGenerate}
-                  disabled={!prompt.trim() || isBusy}
+                  disabled={!prompt.trim() || isBusy || isUsageBlocked}
                   className="flex size-11 shrink-0 items-center justify-center rounded-full bg-white/10 text-white shadow-lg transition-all hover:bg-white/20 disabled:opacity-20"
                 >
                   {isBusy ? (
@@ -966,7 +1070,7 @@ export default function PaletteClient() {
                       <button
                         type="button"
                         onClick={() => handleUseHistory(entry)}
-                        disabled={isBusy}
+                        disabled={isBusy || isUsageBlocked}
                         className="inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-2 text-xs font-medium text-white transition-colors hover:bg-white/15 disabled:opacity-30"
                       >
                         <RotateCcw className="size-3.5" />

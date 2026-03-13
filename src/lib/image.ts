@@ -38,6 +38,17 @@ export function resolveImageModelLabel(model: ImageModel): string {
   }
 }
 
+export function resolveImageUsageCategory(model: ImageModel): "basic" | "premium" {
+  switch (model) {
+    case "gemini-3-pro-image-preview":
+      return "premium";
+    case "gemini-2.5-flash-image":
+    case "gemini-3.1-flash-image-preview":
+    case "imagen-4.0-fast-generate-001":
+      return "basic";
+  }
+}
+
 export function supportsImageHighResolution(model: ImageModel): boolean {
   return model === "gemini-3.1-flash-image-preview" || model === "gemini-3-pro-image-preview";
 }

@@ -15,6 +15,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
+import { SettingsPageShell } from "@/components/settings-page-shell";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Dialog,
@@ -82,14 +83,10 @@ export default function ApiKeysSettingsPage() {
   };
 
   return (
-    <div className="mx-auto flex max-w-4xl w-full flex-col gap-6">
-      <div className="space-y-1">
-        <h1 className="text-xl font-semibold tracking-tight">{t("API Keys")}</h1>
-        <p className="text-muted-foreground text-sm">
-          {t("Generate API keys for the Flixa extension and other integrations.")}
-        </p>
-      </div>
-
+    <SettingsPageShell
+      title={t("API Keys")}
+      description={t("Generate API keys for the Flixa extension and other integrations.")}
+    >
       <Card>
         <CardHeader className="flex flex-row items-center justify-between">
           <div>
@@ -245,6 +242,6 @@ export default function ApiKeysSettingsPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </div>
+    </SettingsPageShell>
   );
 }

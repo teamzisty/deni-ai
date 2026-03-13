@@ -163,6 +163,7 @@ export async function disableMaxMode(
 export async function recordMaxModeUsage(
   userId: string,
   category: UsageCategory,
+  amount = 1,
 ): Promise<{ success: boolean; newUsage: number }> {
   const record = await getEffectiveBillingRecord(userId);
 
@@ -176,7 +177,7 @@ export async function recordMaxModeUsage(
   const [updated] = await db
     .update(billing)
     .set({
-      [field]: sql`${column} + 1`,
+      [field]: sql`${column} + ${amount}`,
     })
     .where(eq(billing.id, record.id))
     .returning({
@@ -192,7 +193,7 @@ export async function recordMaxModeUsage(
       event_name: `max_mode_${category}`,
       payload: {
         stripe_customer_id: record.stripeCustomerId,
-        value: "1",
+        value: String(amount),
       },
     });
   } catch (error) {

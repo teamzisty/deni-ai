@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useExtracted } from "next-intl";
 import { useState } from "react";
 import { toast } from "sonner";
+import { SettingsPageShell } from "@/components/settings-page-shell";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -64,15 +65,10 @@ export default function MigrationPage() {
   };
 
   return (
-    <div className="mx-auto flex w-full max-w-4xl flex-col gap-6">
-      {/* Page Header */}
-      <div className="space-y-1">
-        <h1 className="text-xl font-semibold tracking-tight">{t("Message Migration")}</h1>
-        <p className="text-muted-foreground text-sm">
-          {t("Move your chats from the old version into this site.")}
-        </p>
-      </div>
-
+    <SettingsPageShell
+      title={t("Message Migration")}
+      description={t("Move your chats from the old version into this site.")}
+    >
       {/* Step 1: Export */}
       <Card>
         <CardHeader>
@@ -192,6 +188,6 @@ export default function MigrationPage() {
           )}
         </CardContent>
       </Card>
-    </div>
+    </SettingsPageShell>
   );
 }
