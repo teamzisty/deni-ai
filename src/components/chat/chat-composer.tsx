@@ -1,6 +1,6 @@
 "use client";
 
-import { SiAnthropic, SiGooglegemini, SiX } from "@icons-pack/react-simple-icons";
+import { SiAnthropic, SiGooglegemini, SiOpenrouter, SiX } from "@icons-pack/react-simple-icons";
 import type { ChatStatus } from "ai";
 import type { LucideIcon } from "lucide-react";
 import {
@@ -86,6 +86,7 @@ type ModelDescriptionLabels = {
   allAroundProfessionalModel: string;
   xaiMostIntelligentModel: string;
   fastAndEfficientModel: string;
+  stealthModel: string;
 };
 
 type FeatureLabels = {
@@ -156,6 +157,9 @@ function getModelDescription(value: string, labels: ModelDescriptionLabels): str
     case "grok-4-1-fast-reasoning":
     case "grok-4-1-fast-non-reasoning":
       return labels.fastAndEfficientModel;
+    case "healer-alpha":
+    case "hunter-alpha":
+      return labels.stealthModel;
     default:
       return value;
   }
@@ -199,6 +203,8 @@ function ModelIcon({
       return <SiX className={cn("size-3.5", className)} aria-hidden="true" />;
     case "openai_compatible":
       return <Plug className={cn("size-3.5", className)} aria-hidden="true" />;
+    case "openrouter":
+      return <SiOpenrouter className={cn("size-3.5", className)} aria-hidden="true" />;
     default:
       return <Bot className={cn("size-3.5", className)} aria-hidden="true" />;
   }
@@ -218,6 +224,8 @@ function ProviderIcon({ author }: { author: string }) {
       return <SiX className="size-3.5" aria-hidden="true" />;
     case "openai_compatible":
       return <Plug className="size-3.5" aria-hidden="true" />;
+    case "openrouter":
+      return <SiOpenrouter className="size-3.5" aria-hidden="true" />;
     default:
       return <Bot className="size-3.5" aria-hidden="true" />;
   }
@@ -235,6 +243,8 @@ function getProviderLabel(author: string, labels: ProviderLabels): string {
       return "Google";
     case "xai":
       return "xAI";
+    case "openrouter":
+      return "OpenRouter";
     case "openai_compatible":
       return labels.custom;
     default:
@@ -407,6 +417,7 @@ export function ChatComposer({
     allAroundProfessionalModel: t("All-around professional model"),
     xaiMostIntelligentModel: t("xAI's most intelligent model"),
     fastAndEfficientModel: t("Fast and efficient model"),
+    stealthModel: t("Stealth model"),
   };
   const featureLabels: FeatureLabels = {
     reasoning: t("Reasoning"),
@@ -737,7 +748,7 @@ export function ChatComposer({
                 </div>
                 <div className="flex h-95 overflow-hidden">
                   {/* Left panel: Provider list */}
-                  <div className="w-35 shrink-0 border-r flex flex-col gap-0.5 p-1.5 overflow-y-auto bg-muted/30">
+                  <div className="w-40 shrink-0 border-r flex flex-col gap-0.5 p-1.5 overflow-y-auto bg-muted/30">
                     {availableProviders.map((provider) => {
                       const count = filteredProviderGroups[provider]?.length ?? 0;
                       const isActive = selectedProvider === provider;
