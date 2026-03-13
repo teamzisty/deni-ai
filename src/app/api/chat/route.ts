@@ -476,9 +476,45 @@ export async function POST(req: Request) {
     true,
   );
 
+  let generationAbortController: AbortController | undefined;
+  let pendingStateRolledBack = false;
+
+  const rollbackPendingAssistantState = async () => {
+    if (pendingStateRolledBack) {
+      return;
+    }
+
+    pendingStateRolledBack = true;
+
+    try {
+      await updateChat(id, userId, messages);
+    } catch (error) {
+      console.error("Failed to rollback pending chat response", error);
+    }
+  };
+
+  const clearGenerationLock = () => {
+    if (!generationAbortController) {
+      return;
+    }
+
+    clearChatGeneration(id, generationAbortController);
+    generationAbortController = undefined;
+  };
+
   await updateChat(id, userId, [...messages, pendingAssistantMessage]);
 
-  const projectPrompt = await buildProjectPrompt(chat.projectId, userId);
+  let projectPrompt: string | null;
+
+  try {
+    projectPrompt = await buildProjectPrompt(chat.projectId, userId);
+    generationAbortController = startChatGeneration(id, userId);
+  } catch (error) {
+    await rollbackPendingAssistantState();
+    clearGenerationLock();
+    throw error;
+  }
+
   const responseStyleInstruction =
     responseStyle === "detailed"
       ? "The user asked to regenerate the previous answer with more detail. Keep the same intent, but expand the explanation, include more useful specifics, and improve completeness."
@@ -529,65 +565,72 @@ export async function POST(req: Request) {
         forceWebSearchInstruction,
       ].join(" ");
 
-  const generationAbortController = startChatGeneration(id, userId);
-  const result = streamText({
-    model: model,
-    messages: modelMessages,
-    abortSignal: generationAbortController.signal,
-    stopWhen: stepCountIs(50),
-    tools,
-    toolChoice: videoMode
-      ? { type: "tool", toolName: "video" }
-      : imageMode
-        ? { type: "tool", toolName: "image" }
-        : undefined,
-    providerOptions: {
-      ...(openaiReasoningEffort
-        ? {
-            openai: {
-              reasoningEffort: openaiReasoningEffort,
-              reasoningSummary: "detailed",
-            } satisfies OpenAIResponsesProviderOptions,
-          }
-        : {}),
-      ...(anthropicReasoningEffort
-        ? {
-            anthropic: {
-              effort: anthropicReasoningEffort,
-            } satisfies AnthropicProviderOptions,
-          }
-        : {}),
-      ...(anthropicThinkingBudget
-        ? {
-            anthropic: {
-              thinking: {
-                type: "enabled",
-                budgetTokens: anthropicThinkingBudget,
-              },
-            } satisfies AnthropicProviderOptions,
-          }
-        : {}),
-      ...(googleThinkingLevel
-        ? {
-            google: {
-              thinkingConfig: {
-                thinkingLevel: googleThinkingLevel,
-                includeThoughts: true,
-              },
-            } satisfies GoogleGenerativeAIProviderOptions,
-          }
-        : {}),
-      ...(xaiReasoningEffort
-        ? {
-            xai: {
-              reasoningEffort: xaiReasoningEffort,
-            } satisfies XaiProviderOptions,
-          }
-        : {}),
-      gateway: gatewayOptions,
-    },
-    system: systemPrompt,
-  });
+  let result: ReturnType<typeof streamText>;
+
+  try {
+    result = streamText({
+      model: model,
+      messages: modelMessages,
+      abortSignal: generationAbortController.signal,
+      stopWhen: stepCountIs(50),
+      tools,
+      toolChoice: videoMode
+        ? { type: "tool", toolName: "video" }
+        : imageMode
+          ? { type: "tool", toolName: "image" }
+          : undefined,
+      providerOptions: {
+        ...(openaiReasoningEffort
+          ? {
+              openai: {
+                reasoningEffort: openaiReasoningEffort,
+                reasoningSummary: "detailed",
+              } satisfies OpenAIResponsesProviderOptions,
+            }
+          : {}),
+        ...(anthropicReasoningEffort
+          ? {
+              anthropic: {
+                effort: anthropicReasoningEffort,
+              } satisfies AnthropicProviderOptions,
+            }
+          : {}),
+        ...(anthropicThinkingBudget
+          ? {
+              anthropic: {
+                thinking: {
+                  type: "enabled",
+                  budgetTokens: anthropicThinkingBudget,
+                },
+              } satisfies AnthropicProviderOptions,
+            }
+          : {}),
+        ...(googleThinkingLevel
+          ? {
+              google: {
+                thinkingConfig: {
+                  thinkingLevel: googleThinkingLevel,
+                  includeThoughts: true,
+                },
+              } satisfies GoogleGenerativeAIProviderOptions,
+            }
+          : {}),
+        ...(xaiReasoningEffort
+          ? {
+              xai: {
+                reasoningEffort: xaiReasoningEffort,
+              } satisfies XaiProviderOptions,
+            }
+          : {}),
+        gateway: gatewayOptions,
+      },
+      system: systemPrompt,
+    });
+  } catch (error) {
+    await rollbackPendingAssistantState();
+    clearGenerationLock();
+    throw error;
+  }
 
   let lastPersistedSignature = "";
   let latestPersistedMessage: UIMessage = pendingAssistantMessage;
@@ -632,67 +675,80 @@ export async function POST(req: Request) {
   const stream = createUIMessageStream<UIMessage>({
     originalMessages: messages,
     execute: async ({ writer }) => {
-      writer.write({
-        type: "start",
-        messageId: responseMessageId,
-      });
+      try {
+        writer.write({
+          type: "start",
+          messageId: responseMessageId,
+        });
 
-      const uiStream = result.toUIMessageStream<UIMessage>({
-        sendReasoning: true,
-        sendSources: true,
-        sendStart: false,
-      });
-      const [clientStream, persistenceStream] = uiStream.tee();
+        const uiStream = result.toUIMessageStream<UIMessage>({
+          sendReasoning: true,
+          sendSources: true,
+          sendStart: false,
+        });
+        const [clientStream, persistenceStream] = uiStream.tee();
 
-      writer.merge(clientStream);
+        writer.merge(clientStream);
 
-      for await (const message of readUIMessageStream<UIMessage>({
-        stream: persistenceStream,
-      })) {
-        queuePartialPersist(message);
+        for await (const message of readUIMessageStream<UIMessage>({
+          stream: persistenceStream,
+        })) {
+          queuePartialPersist(message);
+        }
+
+        queuePartialPersist(latestPersistedMessage, true);
+
+        await partialPersistPromise;
+      } catch (error) {
+        await rollbackPendingAssistantState();
+        clearGenerationLock();
+        throw error;
       }
-
-      queuePartialPersist(latestPersistedMessage, true);
-
-      await partialPersistPromise;
     },
     onFinish: async ({ messages: updatedMessages, isAborted }) => {
-      await partialPersistPromise;
-
-      let newTitle: string | undefined;
-
       try {
-        const chat = await getChatById(id, userId);
-        if (chat?.title === "New Chat") {
-          newTitle = await generateTitle(updatedMessages);
+        await partialPersistPromise;
+
+        let newTitle: string | undefined;
+
+        try {
+          const chat = await getChatById(id, userId);
+          if (chat?.title === "New Chat") {
+            newTitle = await generateTitle(updatedMessages);
+          }
+        } catch (error) {
+          console.error("Failed to generate title", error);
+        }
+
+        await updateChat(
+          id,
+          userId,
+          updatedMessages.map((message) =>
+            message.id === responseMessageId ? setPendingState(message, false) : message,
+          ),
+          newTitle,
+        );
+
+        pendingStateRolledBack = true;
+
+        if (isAborted) {
+          return;
+        }
+
+        try {
+          await maybeAutoSaveMemories({
+            userId,
+            messages: updatedMessages,
+            enabled: memoryState.profile.autoMemory,
+          });
+        } catch (error) {
+          console.error("Failed to auto-save memories", error);
         }
       } catch (error) {
-        console.error("Failed to generate title", error);
-      }
-
-      clearChatGeneration(id, generationAbortController);
-
-      await updateChat(
-        id,
-        userId,
-        updatedMessages.map((message) =>
-          message.id === responseMessageId ? setPendingState(message, false) : message,
-        ),
-        newTitle,
-      );
-
-      if (isAborted) {
-        return;
-      }
-
-      try {
-        await maybeAutoSaveMemories({
-          userId,
-          messages: updatedMessages,
-          enabled: memoryState.profile.autoMemory,
-        });
-      } catch (error) {
-        console.error("Failed to auto-save memories", error);
+        await rollbackPendingAssistantState();
+        throw error;
+      } finally {
+        clearGenerationLock();
       }
     },
   });
