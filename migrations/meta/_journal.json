@@ -127,6 +127,41 @@
       "when": 1770537891632,
       "tag": "0017_polite_butterfly",
       "breakpoints": true
+    },
+    {
+      "idx": 18,
+      "version": "7",
+      "when": 1773231586016,
+      "tag": "0018_organic_toro",
+      "breakpoints": true
+    },
+    {
+      "idx": 19,
+      "version": "7",
+      "when": 1773232268921,
+      "tag": "0019_orange_wrecking_crew",
+      "breakpoints": true
+    },
+    {
+      "idx": 20,
+      "version": "7",
+      "when": 1773302979239,
+      "tag": "0020_graceful_zeigeist",
+      "breakpoints": true
+    },
+    {
+      "idx": 21,
+      "version": "7",
+      "when": 1773331161000,
+      "tag": "0021_bent_kat_farrell",
+      "breakpoints": true
+    },
+    {
+      "idx": 22,
+      "version": "7",
+      "when": 1773393612982,
+      "tag": "0022_perpetual_captain_america",
+      "breakpoints": true
     }
   ]
 }

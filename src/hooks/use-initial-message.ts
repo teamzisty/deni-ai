@@ -1,7 +1,7 @@
 import type { useChat } from "@ai-sdk/react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useRef } from "react";
-import { isReasoningEffort, type ReasoningEffort } from "@/components/chat/chat-composer";
+import { models, resolveReasoningEffort, type ReasoningEffort } from "@/lib/constants";
 
 const INITIAL_MESSAGE_STORAGE_KEY = "deni_initial_message";
 
@@ -17,6 +17,8 @@ export function useInitialMessage(params: {
   setVideoMode: (videoMode: boolean) => void;
   setImageMode: (imageMode: boolean) => void;
   setReasoningEffort: (effort: ReasoningEffort) => void;
+  setDeepResearch: (enabled: boolean) => void;
+  setProjectId?: (projectId: string | null) => void;
   onMessageSent: () => void;
 }) {
   const {
@@ -29,6 +31,8 @@ export function useInitialMessage(params: {
     setVideoMode,
     setImageMode,
     setReasoningEffort,
+    setDeepResearch,
+    setProjectId,
     onMessageSent,
   } = params;
 
@@ -47,18 +51,26 @@ export function useInitialMessage(params: {
       try {
         const parsed = JSON.parse(storedData) as {
           text: string;
-          files: Array<{
-            type: "file";
+          files?: Array<{
+            type?: "file";
             filename?: string;
-            mediaType: string;
-            url: string;
+            mediaType?: string;
+            url?: string;
           }>;
           webSearch: boolean;
           model?: string;
           videoMode?: boolean;
           imageMode?: boolean;
           reasoningEffort?: string;
+          deepResearch?: boolean;
+          projectId?: string | null;
         };
+        const files = Array.isArray(parsed.files)
+          ? parsed.files.filter(
+              (file): file is { type: "file"; filename?: string; mediaType: string; url: string } =>
+                Boolean(file?.url && file?.mediaType),
+            )
+          : [];
 
         initialMessageSentRef.current = true;
 
@@ -78,26 +90,29 @@ export function useInitialMessage(params: {
         if (parsed.imageMode) {
           setImageMode(true);
         }
+        const effectiveModel = parsed.model ?? model;
+        const selectedModel = models.find((entry) => entry.value === effectiveModel);
         const parsedReasoningEffort =
-          parsed.reasoningEffort && isReasoningEffort(parsed.reasoningEffort)
-            ? parsed.reasoningEffort
-            : "high";
+          resolveReasoningEffort(selectedModel?.efforts ?? false, parsed.reasoningEffort) ?? "high";
         setReasoningEffort(parsedReasoningEffort);
+        setDeepResearch(Boolean(parsed.deepResearch));
+        setProjectId?.(parsed.projectId ?? null);
 
         // Send the message with files
         Promise.resolve(
           sendMessage(
             {
               text: parsed.text,
-              files: parsed.files.length > 0 ? parsed.files : undefined,
+              files: files.length > 0 ? files : undefined,
             },
             {
               body: {
-                model: parsed.model ?? model,
+                model: effectiveModel,
                 webSearch: parsed.webSearch,
                 reasoningEffort: parsedReasoningEffort,
                 video: parsed.videoMode ?? false,
                 image: parsed.imageMode ?? false,
+                deepResearch: parsed.deepResearch ?? false,
                 id,
               },
             },

@@ -2,10 +2,17 @@
 
 import { useChat } from "@ai-sdk/react";
 import { sendGAEvent } from "@next/third-parties/google";
-import type { UIMessage } from "ai";
+import type { FileUIPart, UIMessage } from "ai";
 import { DefaultChatTransport } from "ai";
+import { FolderKanban } from "lucide-react";
 import { useExtracted } from "next-intl";
 import { useEffect, useMemo, useState } from "react";
+import {
+  Attachment,
+  AttachmentInfo,
+  AttachmentPreview,
+  Attachments,
+} from "@/components/ai-elements/attachments";
 import {
   Conversation,
   ConversationContent,
@@ -14,24 +21,90 @@ import {
 import { Loader } from "@/components/ai-elements/loader";
 import { Message, MessageContent, MessageResponse } from "@/components/ai-elements/message";
 import { AssistantMessage } from "@/components/chat/assistant-message";
-import {
-  ChatComposer,
-  type ComposerMessage,
-  type ReasoningEffort,
-} from "@/components/chat/chat-composer";
+import { ChatComposer, type ComposerMessage } from "@/components/chat/chat-composer";
 import { UsageAlerts } from "@/components/chat/usage-alerts";
 import { useAvailableModels } from "@/hooks/use-available-models";
 import { useInitialMessage } from "@/hooks/use-initial-message";
 import { useUsageStatus } from "@/hooks/use-usage-status";
 import { authClient } from "@/lib/auth-client";
 import { isBillingDisabled } from "@/lib/billing-config";
-import { GA_ID, models } from "@/lib/constants";
+import { GA_ID, getPreferredReasoningEffort, models, type ReasoningEffort } from "@/lib/constants";
 import { trpc } from "@/lib/trpc/react";
+import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 interface ChatInterfaceProps {
   id: string;
   initialMessages?: UIMessage[];
+  initialProjectId?: string | null;
+  initialProjectName?: string | null;
+}
+
+type UploadableFileUIPart = FileUIPart & { file?: File };
+type PendingMessageMetadata = {
+  pending?: boolean;
+  [key: string]: unknown;
+};
+
+function isFilePart(part: UIMessage["parts"][number]): part is FileUIPart {
+  return part.type === "file";
+}
+
+function isTextPart(
+  part: UIMessage["parts"][number],
+): part is Extract<UIMessage["parts"][number], { type: "text"; text: string }> {
+  return part.type === "text";
+}
+
+async function uploadAttachment(file: UploadableFileUIPart): Promise<FileUIPart> {
+  if (!file.url || !file.file) {
+    return file;
+  }
+
+  if (file.url.startsWith("https://") || file.url.startsWith("http://")) {
+    return file;
+  }
+
+  const formData = new FormData();
+  formData.set("file", file.file);
+
+  const uploadResponse = await fetch("/api/upload-attachment", {
+    method: "POST",
+    body: formData,
+  });
+
+  if (!uploadResponse.ok) {
+    throw new Error("Attachment upload failed.");
+  }
+
+  const payload = (await uploadResponse.json()) as { url?: string };
+  if (!payload.url) {
+    throw new Error("Attachment upload failed.");
+  }
+
+  return { ...file, url: payload.url };
+}
+
+async function normalizeAttachments(files?: UploadableFileUIPart[]) {
+  if (!files?.length) {
+    return undefined;
+  }
+
+  const normalized = await Promise.all(
+    files.map(async (file) => {
+      if (!file.url) {
+        return file;
+      }
+
+      if (file.url.startsWith("https://") || file.url.startsWith("http://")) {
+        return file;
+      }
+
+      return uploadAttachment(file);
+    }),
+  );
+
+  return normalized;
 }
 
 function getMessageRenderKeys(messages: UIMessage[]) {
@@ -50,7 +123,20 @@ function getMessageRenderKeys(messages: UIMessage[]) {
   });
 }
 
-export function ChatInterface({ id, initialMessages = [] }: ChatInterfaceProps) {
+function isPendingMessage(message: UIMessage | undefined) {
+  if (!message || message.role !== "assistant") {
+    return false;
+  }
+
+  return Boolean((message.metadata as PendingMessageMetadata | undefined)?.pending);
+}
+
+export function ChatInterface({
+  id,
+  initialMessages = [],
+  initialProjectId = null,
+  initialProjectName = null,
+}: ChatInterfaceProps) {
   const t = useExtracted();
   const session = authClient.useSession();
   const isAnonymous = Boolean(session.data?.user?.isAnonymous);
@@ -60,7 +146,11 @@ export function ChatInterface({ id, initialMessages = [] }: ChatInterfaceProps) 
   const [webSearch, setWebSearch] = useState(false);
   const [videoMode, setVideoMode] = useState(false);
   const [imageMode, setImageMode] = useState(false);
-  const [reasoningEffort, setReasoningEffort] = useState<ReasoningEffort>("high");
+  const [reasoningEffort, setReasoningEffort] = useState<ReasoningEffort>(
+    getPreferredReasoningEffort(models[0].efforts),
+  );
+  const [deepResearch, setDeepResearch] = useState(false);
+  const [attachmentError, setAttachmentError] = useState<string | null>(null);
   const utils = trpc.useUtils();
   const { availableModels, providerSettings, providerKeys } = useAvailableModels();
   const {
@@ -84,11 +174,12 @@ export function ChatInterface({ id, initialMessages = [] }: ChatInterfaceProps) 
       model,
       webSearch,
       reasoningEffort,
+      deepResearch,
       video: videoMode,
       image: imageMode,
       id,
     }),
-    [id, model, reasoningEffort, videoMode, imageMode, webSearch],
+    [deepResearch, id, model, reasoningEffort, videoMode, imageMode, webSearch],
   );
   const transport = useMemo(
     () =>
@@ -100,12 +191,22 @@ export function ChatInterface({ id, initialMessages = [] }: ChatInterfaceProps) 
     [id],
   );
 
-  const { messages, sendMessage, regenerate, status, error, stop } = useChat({
+  const { messages, sendMessage, regenerate, setMessages, status, error, stop } = useChat({
     id,
     messages: initialMessages,
     transport,
   });
   const showMessageActions = status !== "streaming" && status !== "submitted";
+  const lastMessage = messages.at(-1);
+  const isWaitingForResponse =
+    status !== "streaming" && status !== "submitted" && isPendingMessage(lastMessage);
+  const chatQuery = trpc.chat.getChat.useQuery(
+    { id },
+    {
+      enabled: isWaitingForResponse,
+      refetchInterval: isWaitingForResponse ? 1000 : false,
+    },
+  );
 
   useInitialMessage({
     id,
@@ -117,10 +218,20 @@ export function ChatInterface({ id, initialMessages = [] }: ChatInterfaceProps) 
     setVideoMode,
     setImageMode,
     setReasoningEffort,
+    setDeepResearch,
     onMessageSent: () => utils.chat.getChats.invalidate(),
   });
 
-  const handleSubmit = (
+  useEffect(() => {
+    const chat = chatQuery.data?.[0];
+    if (!chat?.messages) {
+      return;
+    }
+
+    setMessages(chat.messages as UIMessage[]);
+  }, [chatQuery.data, setMessages]);
+
+  const handleSubmit = async (
     message: ComposerMessage,
     options: {
       model: string;
@@ -128,12 +239,23 @@ export function ChatInterface({ id, initialMessages = [] }: ChatInterfaceProps) 
       videoMode: boolean;
       imageMode: boolean;
       reasoningEffort: ReasoningEffort;
+      deepResearch: boolean;
     },
   ) => {
     if (isSubmitBlocked) {
       return;
     }
-    const attachments = message.files && message.files.length > 0 ? message.files : undefined;
+    setAttachmentError(null);
+
+    let attachments: FileUIPart[] | undefined;
+    try {
+      attachments = await normalizeAttachments(message.files);
+    } catch (error) {
+      setAttachmentError(
+        error instanceof Error ? error.message : t("Failed to upload attachment."),
+      );
+      return;
+    }
 
     if (GA_ID) {
       sendGAEvent("chat_message_sent", {
@@ -143,11 +265,11 @@ export function ChatInterface({ id, initialMessages = [] }: ChatInterfaceProps) 
       });
     }
 
-    if (message.text) {
+    if (message.text || attachments?.length) {
       Promise.resolve(
         sendMessage(
           {
-            text: message.text,
+            text: message.text || "",
             files: attachments,
           },
           {
@@ -155,6 +277,7 @@ export function ChatInterface({ id, initialMessages = [] }: ChatInterfaceProps) 
               model: options.model,
               webSearch: options.webSearch,
               reasoningEffort: options.reasoningEffort,
+              deepResearch: options.deepResearch,
               video: options.videoMode,
               id,
             },
@@ -174,10 +297,31 @@ export function ChatInterface({ id, initialMessages = [] }: ChatInterfaceProps) 
     }
   }, [availableModels, selectedModel]);
 
+  const handleStop = () => {
+    stop();
+
+    void fetch("/api/chat/stop", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ id }),
+    });
+  };
+
   const messageRenderKeys = useMemo(() => getMessageRenderKeys(messages), [messages]);
 
   return (
     <div className="flex h-full flex-1 min-h-0 flex-col w-full max-w-3xl mx-auto p-4 overflow-hidden">
+      {initialProjectId && initialProjectName ? (
+        <div className="mb-3 flex items-center gap-2">
+          <Badge variant="outline" className="gap-1.5 rounded-full px-2.5 py-1 text-xs">
+            <FolderKanban className="size-3.5" />
+            <span className="text-muted-foreground">{t("Projects")}</span>
+            <span className="text-foreground">{initialProjectName}</span>
+          </Badge>
+        </div>
+      ) : null}
       <Conversation className="flex-1 min-h-0 h-full">
         <ConversationContent>
           {messages.map((message, index) => (
@@ -185,11 +329,28 @@ export function ChatInterface({ id, initialMessages = [] }: ChatInterfaceProps) 
               {message.role === "user" && (
                 <Message from="user">
                   <MessageContent>
-                    {message.parts[0]?.type === "text" && message.parts[0].text && (
-                      <MessageResponse shikiTheme={["github-light", "github-dark"]}>
-                        {message.parts[0].text}
+                    {message.parts.filter(isFilePart).length > 0 ? (
+                      <Attachments variant="list" className="w-full">
+                        {message.parts.filter(isFilePart).map((part, partIndex) => (
+                          <Attachment
+                            data={{ ...part, id: `${message.id}-file-${partIndex}` }}
+                            key={`${message.id}-file-${partIndex}`}
+                            className="w-full bg-background/50"
+                          >
+                            <AttachmentPreview />
+                            <AttachmentInfo showMediaType />
+                          </Attachment>
+                        ))}
+                      </Attachments>
+                    ) : null}
+                    {message.parts.filter(isTextPart).map((part, partIndex) => (
+                      <MessageResponse
+                        key={`${message.id}-text-${partIndex}`}
+                        shikiTheme={["github-light", "github-dark"]}
+                      >
+                        {part.text}
                       </MessageResponse>
-                    )}
+                    ))}
                   </MessageContent>
                 </Message>
               )}
@@ -200,8 +361,12 @@ export function ChatInterface({ id, initialMessages = [] }: ChatInterfaceProps) 
                   isStreaming={status === "streaming"}
                   showActions={showMessageActions}
                   isSubmitBlocked={isSubmitBlocked}
+                  projectId={initialProjectId}
                   requestBody={requestBody}
                   onRegenerate={regenerate}
+                  availableModels={availableModels}
+                  onModelChange={setModel}
+                  onWebSearchChange={setWebSearch}
                 />
               )}
             </div>
@@ -210,6 +375,17 @@ export function ChatInterface({ id, initialMessages = [] }: ChatInterfaceProps) 
             <div className="min-h-6">
               <Loader />
             </div>
+          )}
+
+          {isWaitingForResponse && (
+            <Card className="!gap-0 bg-muted/50">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Loader />
+                  <span>{t("Waiting for response...")}</span>
+                </CardTitle>
+              </CardHeader>
+            </Card>
           )}
 
           {error && (
@@ -225,6 +401,19 @@ export function ChatInterface({ id, initialMessages = [] }: ChatInterfaceProps) 
                     ? error
                     : error?.message || t("An unexpected error occurred.")}
                 </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {attachmentError && (
+            <Card className="!gap-0 bg-destructive/10">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <span>{t("Error")}</span>
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-sm break-words">{attachmentError}</div>
               </CardContent>
             </Card>
           )}
@@ -252,7 +441,7 @@ export function ChatInterface({ id, initialMessages = [] }: ChatInterfaceProps) 
         value={input}
         onValueChange={setInput}
         onSubmit={handleSubmit}
-        onStop={stop}
+        onStop={handleStop}
         status={status}
         isSubmitDisabled={isSubmitBlocked}
         model={model}
@@ -265,6 +454,8 @@ export function ChatInterface({ id, initialMessages = [] }: ChatInterfaceProps) 
         onImageModeChange={setImageMode}
         reasoningEffort={reasoningEffort}
         onReasoningEffortChange={setReasoningEffort}
+        deepResearch={deepResearch}
+        onDeepResearchChange={setDeepResearch}
         showByokBadge={isByokActive}
       />
     </div>

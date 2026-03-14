@@ -1,9 +1,20 @@
 "use client";
 
 import type { ToolUIPart, UIDataTypes, UIMessage, UIMessagePart, UITools } from "ai";
-import { BrainIcon, CopyIcon, Globe, RefreshCcwIcon } from "lucide-react";
+import {
+  ArrowUpIcon,
+  BookmarkPlusIcon,
+  BrainIcon,
+  CheckIcon,
+  CopyIcon,
+  Globe,
+  ListFilterIcon,
+  RefreshCcwIcon,
+} from "lucide-react";
 import Link from "next/link";
 import { useExtracted } from "next-intl";
+import { useState } from "react";
+import { toast } from "sonner";
 import {
   ChainOfThought,
   ChainOfThoughtContent,
@@ -21,7 +32,6 @@ import {
 } from "@/components/ai-elements/message";
 import { Shimmer } from "@/components/ai-elements/shimmer";
 import { Source, Sources, SourcesContent, SourcesTrigger } from "@/components/ai-elements/sources";
-import type { ReasoningEffort } from "@/components/chat/chat-composer";
 import {
   isImageToolOutput,
   isSearchResultArray,
@@ -31,10 +41,25 @@ import {
   type ImageToolOutput,
   type VideoToolOutput,
 } from "@/components/chat/chat-utils";
+import type { ReasoningEffort } from "@/lib/constants";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuSub,
+  DropdownMenuSubContent,
+  DropdownMenuSubTrigger,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Input } from "@/components/ui/input";
 import { Spinner } from "@/components/ui/spinner";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { trpc } from "@/lib/trpc/react";
+import type { ModelOption } from "./chat-composer";
 
 type VideoToolPart = ToolUIPart<{
   video: {
@@ -56,6 +81,11 @@ type ImageToolPart = ToolUIPart<{
 const isImageToolPart = (part: UIMessagePart<UIDataTypes, UITools>): part is ImageToolPart =>
   part.type === "tool-image";
 
+type TextMessagePart = Extract<UIMessage["parts"][number], { type: "text"; text: string }>;
+
+const isTextMessagePart = (part: UIMessage["parts"][number]): part is TextMessagePart =>
+  part.type === "text";
+
 interface RequestBody {
   model: string;
   webSearch: boolean;
@@ -63,6 +93,10 @@ interface RequestBody {
   video: boolean;
   image: boolean;
   id: string;
+  deepResearch?: boolean;
+  responseStyle?: "retry" | "detailed" | "concise";
+  forceWebSearch?: boolean;
+  additionalInstruction?: string;
 }
 
 interface AssistantMessageProps {
@@ -71,8 +105,12 @@ interface AssistantMessageProps {
   isStreaming: boolean;
   showActions: boolean;
   isSubmitBlocked: boolean;
+  projectId?: string | null;
   requestBody: RequestBody;
-  onRegenerate: (options: { body: RequestBody }) => void;
+  onRegenerate: (options?: { body?: RequestBody; messageId?: string }) => void;
+  availableModels: ModelOption[];
+  onModelChange: (value: string) => void;
+  onWebSearchChange: (value: boolean) => void;
 }
 
 export function AssistantMessage({
@@ -81,11 +119,67 @@ export function AssistantMessage({
   isStreaming,
   showActions,
   isSubmitBlocked,
+  projectId,
   requestBody,
   onRegenerate,
+  availableModels,
+  onModelChange,
+  onWebSearchChange,
 }: AssistantMessageProps) {
   const t = useExtracted();
   const isStreamingThis = isStreaming && isLastMessage;
+  const [retryMenuOpen, setRetryMenuOpen] = useState(false);
+  const [additionalInstruction, setAdditionalInstruction] = useState("");
+  const saveArtifact = trpc.projects.createArtifactFromText.useMutation({
+    onSuccess: () => {
+      toast.success(t("Saved as artifact"));
+    },
+    onError: (error) => {
+      toast.error(error.message || t("Failed to save artifact"));
+    },
+  });
+
+  const textContent =
+    message.parts
+      ?.filter(isTextMessagePart)
+      .map((part) => part.text.trim())
+      .filter(Boolean)
+      .join("\n\n") ?? "";
+
+  const handleSaveAsArtifact = () => {
+    if (!projectId || !textContent.trim()) {
+      return;
+    }
+
+    saveArtifact.mutate({
+      projectId,
+      text: textContent,
+      positionX: 120 + (Date.now() % 160),
+      positionY: 120 + (Date.now() % 120),
+    });
+  };
+
+  const regenerateMessage = (overrides?: Partial<RequestBody>) => {
+    onRegenerate({
+      messageId: message.id,
+      body: {
+        ...requestBody,
+        responseStyle: "retry",
+        forceWebSearch: false,
+        additionalInstruction: undefined,
+        ...overrides,
+      },
+    });
+  };
+  const handleAdditionalInstructionSubmit = () => {
+    const instruction = additionalInstruction.trim();
+    if (!instruction) {
+      return;
+    }
+    regenerateMessage({ additionalInstruction: instruction });
+    setAdditionalInstruction("");
+    setRetryMenuOpen(false);
+  };
 
   return (
     <div className="space-y-2">
@@ -211,7 +305,6 @@ export function AssistantMessage({
         </ChainOfThought>
       )}
 
-      {/* テキスト応答 */}
       {message.parts
         ?.filter((p) => p.type === "text")
         .map((part, i, textParts) => (
@@ -221,18 +314,132 @@ export function AssistantMessage({
             </MessageContent>
             {i === textParts.length - 1 && showActions && (
               <MessageActions>
-                <MessageAction
-                  disabled={isSubmitBlocked}
-                  onClick={() =>
-                    onRegenerate({
-                      body: requestBody,
-                    })
-                  }
-                  label={t("Retry")}
-                  tooltip={t("Retry")}
+                <DropdownMenu
+                  open={retryMenuOpen}
+                  onOpenChange={(open) => {
+                    setRetryMenuOpen(open);
+                    if (!open) {
+                      setAdditionalInstruction("");
+                    }
+                  }}
                 >
-                  <RefreshCcwIcon className="size-3.5" />
-                </MessageAction>
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <DropdownMenuTrigger asChild>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon-sm"
+                            disabled={isSubmitBlocked}
+                            aria-label={t("Retry")}
+                          >
+                            <RefreshCcwIcon className="size-3.5" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p>{t("Retry")}</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                  <DropdownMenuContent align="start" className="w-64">
+                    <form
+                      className="flex items-center gap-2 p-1"
+                      onSubmit={(event) => {
+                        event.preventDefault();
+                        handleAdditionalInstructionSubmit();
+                      }}
+                    >
+                      <Input
+                        value={additionalInstruction}
+                        onChange={(event) => setAdditionalInstruction(event.target.value)}
+                        placeholder={t("Refine this answer")}
+                        aria-label={t("Refine this answer")}
+                        className="h-7 bg-transparent! border-none! select-none! outline-none!"
+                      />
+                      <Button
+                        type="submit"
+                        size="icon-sm"
+                        className="h-7"
+                        disabled={isSubmitBlocked || additionalInstruction.trim().length === 0}
+                        aria-label={t("Send")}
+                      >
+                        <ArrowUpIcon className="size-4" />
+                      </Button>
+                    </form>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem onSelect={() => regenerateMessage()}>
+                      <RefreshCcwIcon className="size-4" />
+                      {t("Regenerate")}
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem
+                      onSelect={() => regenerateMessage({ responseStyle: "detailed" })}
+                    >
+                      <ListFilterIcon className="size-4" />
+                      {t("Expand answer")}
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      onSelect={() => regenerateMessage({ responseStyle: "concise" })}
+                    >
+                      <ListFilterIcon className="size-4" />
+                      {t("Shorten answer")}
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem
+                      onSelect={() => {
+                        onWebSearchChange(true);
+                        regenerateMessage({
+                          webSearch: true,
+                          forceWebSearch: true,
+                        });
+                      }}
+                    >
+                      <Globe className="size-4" />
+                      {t("Use web search")}
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      onSelect={() => {
+                        onWebSearchChange(true);
+                        regenerateMessage({
+                          webSearch: true,
+                          deepResearch: true,
+                          forceWebSearch: true,
+                        });
+                      }}
+                    >
+                      <BrainIcon className="size-4" />
+                      {t("Run deep research")}
+                    </DropdownMenuItem>
+                    <DropdownMenuSub>
+                      <DropdownMenuSubTrigger>
+                        <BrainIcon className="size-4" />
+                        {t("Change model")}
+                      </DropdownMenuSubTrigger>
+                      <DropdownMenuSubContent className="max-h-80 w-72 overflow-y-auto">
+                        {availableModels.map((modelOption) => (
+                          <DropdownMenuItem
+                            key={modelOption.value}
+                            onSelect={() => {
+                              onModelChange(modelOption.value);
+                              regenerateMessage({ model: modelOption.value });
+                            }}
+                          >
+                            <CheckIcon
+                              className={
+                                modelOption.value === requestBody.model
+                                  ? "size-4 opacity-100"
+                                  : "size-4 opacity-0"
+                              }
+                            />
+                            <span className="truncate">{modelOption.name}</span>
+                          </DropdownMenuItem>
+                        ))}
+                      </DropdownMenuSubContent>
+                    </DropdownMenuSub>
+                  </DropdownMenuContent>
+                </DropdownMenu>
                 <MessageAction
                   onClick={() => navigator.clipboard.writeText(part.text)}
                   label={t("Copy")}
@@ -240,6 +447,16 @@ export function AssistantMessage({
                 >
                   <CopyIcon className="size-3.5" />
                 </MessageAction>
+                {projectId ? (
+                  <MessageAction
+                    onClick={handleSaveAsArtifact}
+                    disabled={saveArtifact.isPending || !textContent.trim()}
+                    label={t("Save as Artifact")}
+                    tooltip={t("Save as Artifact")}
+                  >
+                    <BookmarkPlusIcon className="size-3.5" />
+                  </MessageAction>
+                ) : null}
               </MessageActions>
             )}
           </Message>
@@ -400,7 +617,9 @@ export function AssistantMessage({
                     {/* oxlint-disable-next-line: generated images don't include captions. */}
                     <img
                       src={imageUrl}
-                      alt={t("Generated image {index}", { index: String(idx + 1) })}
+                      alt={t("Generated image {index}", {
+                        index: String(idx + 1),
+                      })}
                       className="h-auto w-full"
                     />
                   </div>
@@ -411,7 +630,9 @@ export function AssistantMessage({
                 {output.aspectRatio && <Badge variant="secondary">{output.aspectRatio}</Badge>}
                 {output.numberOfImages && output.numberOfImages > 1 && (
                   <Badge variant="secondary">
-                    {t("{count} images", { count: String(output.numberOfImages) })}
+                    {t("{count} images", {
+                      count: String(output.numberOfImages),
+                    })}
                   </Badge>
                 )}
                 {resolvedModelLabel ? <Badge variant="outline">{resolvedModelLabel}</Badge> : null}
@@ -421,7 +642,9 @@ export function AssistantMessage({
                   <Button key={`download-${idx}`} asChild size="sm" variant="outline">
                     <a
                       href={imageUrl}
-                      download={t("image-{index}.png", { index: String(idx + 1) })}
+                      download={t("image-{index}.png", {
+                        index: String(idx + 1),
+                      })}
                     >
                       {t("Download image {index}", { index: String(idx + 1) })}
                     </a>

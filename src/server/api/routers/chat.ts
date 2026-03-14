@@ -10,6 +10,10 @@ export const chatRouter = router({
       .select({
         id: chats.id,
         title: chats.title,
+        projectId: chats.projectId,
+        pinned: chats.pinned,
+        folder: chats.folder,
+        tags: chats.tags,
         created_at: chats.created_at,
         updated_at: chats.updated_at,
       })
@@ -19,16 +23,25 @@ export const chatRouter = router({
       .limit(100);
     return userChats;
   }),
-  createChat: protectedProcedure.mutation(async ({ ctx }) => {
-    const newChat = await ctx.db
-      .insert(chats)
-      .values({
-        uid: ctx.userId,
-        title: "New Chat",
-      })
-      .returning();
-    return newChat[0].id;
-  }),
+  createChat: protectedProcedure
+    .input(
+      z
+        .object({
+          projectId: z.string().min(1).nullable(),
+        })
+        .optional(),
+    )
+    .mutation(async ({ ctx, input }) => {
+      const newChat = await ctx.db
+        .insert(chats)
+        .values({
+          uid: ctx.userId,
+          projectId: input?.projectId ?? null,
+          title: "New Chat",
+        })
+        .returning();
+      return newChat[0].id;
+    }),
   getChat: protectedProcedure
     .input(
       z.object({
@@ -47,7 +60,7 @@ export const chatRouter = router({
       z
         .object({
           id: z.string().min(1),
-          title: z.string(),
+          title: z.string().nullable(),
           messages: z.array(
             z.object({
               id: z.uuid(),
@@ -57,6 +70,10 @@ export const chatRouter = router({
               createdAt: z.date(),
             }),
           ),
+          pinned: z.boolean(),
+          folder: z.string().trim().max(80).nullable(),
+          projectId: z.string().trim().min(1).nullable(),
+          tags: z.array(z.string().trim().min(1).max(32)).max(12),
         })
         .partial(),
     )

@@ -6,7 +6,7 @@ This guide covers prerequisites, environment configuration, database setup, and 
 
 - [Bun](https://bun.sh/) (recommended) or [Node.js 20+](https://nodejs.org/)
 - [PostgreSQL database](https://neon.tech/) (Neon serverless recommended)
-- API keys for AI providers (Google AI, Groq, OpenRouter)
+- API keys for AI providers (Google AI, Groq, Vercel AI Gateway)
 - OAuth credentials for authentication providers
 
 ## Getting Started
@@ -47,7 +47,7 @@ GITHUB_CLIENT_SECRET=your-github-client-secret
 # AI Providers
 GOOGLE_GENERATIVE_AI_API_KEY=your-google-ai-key
 GROQ_API_KEY=gsk_your-groq-key
-OPENROUTER_API_KEY=sk-or-your-openrouter-key
+AI_GATEWAY_API_KEY=your-vercel-ai-gateway-key
 
 # Search
 BRAVE_SEARCH_API_KEY=your-brave-search-key
@@ -69,6 +69,8 @@ NEXT_PUBLIC_BILLING_DISABLED=1
 ```
 
 When adding or updating supported AI providers/models, also update `src/lib/constants.ts`.
+
+If you deploy on Vercel, AI Gateway can also authenticate with Vercel OIDC. In that case `AI_GATEWAY_API_KEY` can be omitted in deployment environments, but setting it explicitly is still the simplest option for local Bun/Node development.
 
 #### Generate `BETTER_AUTH_SECRET`
 

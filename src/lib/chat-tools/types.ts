@@ -30,7 +30,7 @@ export const veoToolInputSchema = z.object({
 
 export const imageToolInputSchema = z.object({
   prompt: z.string().min(1).max(4000).describe("Image prompt"),
-  model: z.enum(imageModelValues).optional().describe("Nano Banana Pro model"),
+  model: z.enum(imageModelValues).optional().describe("Image model"),
   aspectRatio: z.enum(imageAspectRatios).optional().describe("Aspect ratio"),
   resolution: z.enum(imageResolutions).optional().describe("Image resolution (1K, 2K, 4K)"),
   numberOfImages: z.number().int().min(1).max(4).optional().describe("Number of images (1-4)"),

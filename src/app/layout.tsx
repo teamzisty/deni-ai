@@ -183,7 +183,7 @@ export default async function RootLayout({
           </Providers>
         </NextIntlClientProvider>
       </body>
-      <GoogleAnalytics gaId={GA_ID} />
+      {process.env.NODE_ENV === "production" ? <GoogleAnalytics gaId={GA_ID} /> : null}
     </html>
   );
 }

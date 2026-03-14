@@ -1,5 +1,6 @@
 "use client";
 
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Crown, Mail, MoreHorizontal, Plus, Trash2, UserPlus, Users } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useExtracted } from "next-intl";
@@ -41,10 +42,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-
+import { SettingsPageShell } from "@/components/settings-page-shell";
 import { Spinner } from "@/components/ui/spinner";
 import { authClient } from "@/lib/auth-client";
-import { getBillingPlanCopy } from "@/lib/billing-plan-copy";
+import { useBillingPlanCopy } from "@/lib/billing-plan-copy";
 import { formatMinorCurrency } from "@/lib/currency";
 import { trpc } from "@/lib/trpc/react";
 
@@ -88,14 +89,11 @@ function formatCurrency(amount: number | null, currency: string | null) {
 export function TeamSettingsPage() {
   const t = useExtracted();
   const router = useRouter();
+  const session = authClient.useSession();
   const searchParams = useSearchParams();
+  const queryClient = useQueryClient();
 
-  const [organizations, setOrganizations] = useState<Organization[]>([]);
   const [activeOrg, setActiveOrg] = useState<Organization | null>(null);
-  const [members, setMembers] = useState<Member[]>([]);
-  const [invitations, setInvitations] = useState<Invitation[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [currentUserRole, setCurrentUserRole] = useState<string | null>(null);
 
   // Create org dialog
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
@@ -110,7 +108,39 @@ export function TeamSettingsPage() {
 
   // Remove member dialog
   const [memberToRemove, setMemberToRemove] = useState<Member | null>(null);
+  const currentUserId = session.data?.user?.id ?? null;
 
+  const organizationsQuery = useQuery({
+    queryKey: ["team", "organizations", currentUserId],
+    enabled: !session.isPending,
+    queryFn: async () => {
+      const result = await authClient.organization.list({});
+      return (result.data ?? []) as Organization[];
+    },
+  });
+  const orgDetailsQuery = useQuery({
+    queryKey: ["team", "organization", currentUserId, activeOrg?.id],
+    enabled: Boolean(activeOrg?.id),
+    queryFn: async () => {
+      const result = await authClient.organization.getFullOrganization({
+        query: { organizationId: activeOrg?.id ?? "" },
+      });
+      return result.data ?? null;
+    },
+  });
+  const monthlyPlanCopy = useBillingPlanCopy("pro_team_monthly");
+  const yearlyPlanCopy = useBillingPlanCopy("pro_team_yearly");
+
+  const createPortal = trpc.organization.createTeamPortalSession.useMutation();
+  const createTeamCheckout = trpc.organization.createTeamCheckoutSession.useMutation();
+  const cancelSub = trpc.organization.cancelTeamSubscription.useMutation();
+  const resumeSub = trpc.organization.resumeTeamSubscription.useMutation();
+  const utils = trpc.useUtils();
+  const activeOrganizationId = session.data?.session?.activeOrganizationId ?? null;
+  const organizations = organizationsQuery.data ?? [];
+  const members = (orgDetailsQuery.data?.members ?? []) as unknown as Member[];
+  const invitations = (orgDetailsQuery.data?.invitations ?? []) as unknown as Invitation[];
+  const currentUserRole = members.find((member) => member.userId === currentUserId)?.role ?? null;
   const teamBillingQuery = trpc.organization.teamBillingStatus.useQuery(
     { organizationId: activeOrg?.id ?? "" },
     { enabled: Boolean(activeOrg?.id) && currentUserRole === "owner" },
@@ -119,54 +149,27 @@ export function TeamSettingsPage() {
     enabled: Boolean(activeOrg?.id) && currentUserRole === "owner",
   });
 
-  const createPortal = trpc.organization.createTeamPortalSession.useMutation();
-  const createTeamCheckout = trpc.organization.createTeamCheckoutSession.useMutation();
-  const cancelSub = trpc.organization.cancelTeamSubscription.useMutation();
-  const resumeSub = trpc.organization.resumeTeamSubscription.useMutation();
-  const utils = trpc.useUtils();
-
   const isOwner = currentUserRole === "owner";
   const isAdmin = currentUserRole === "admin" || isOwner;
 
-  async function loadOrganizations() {
-    try {
-      const result = await authClient.organization.list({});
-      const orgs = (result.data ?? []) as Organization[];
-      setOrganizations(orgs);
-      return orgs;
-    } catch (error) {
-      console.error("Failed to load organizations", error);
-      return [];
-    }
-  }
+  useEffect(() => {
+    setActiveOrg(null);
+  }, [currentUserId]);
 
-  async function loadOrgDetails(orgId: string) {
-    try {
-      const result = await authClient.organization.getFullOrganization({
-        query: { organizationId: orgId },
-      });
-      if (result.data) {
-        setMembers((result.data.members ?? []) as unknown as Member[]);
-        setInvitations((result.data.invitations ?? []) as unknown as Invitation[]);
-      }
-
-      const memberResult = await authClient.organization.getActiveMember({});
-      setCurrentUserRole(memberResult.data?.role ?? null);
-    } catch (error) {
-      console.error("Failed to load org details", error);
-    }
-  }
-
-  async function selectOrg(org: Organization) {
+  async function selectOrg(org: Organization, options?: { persistActive?: boolean }) {
     setActiveOrg(org);
-    await authClient.organization.setActive({ organizationId: org.id });
-    await loadOrgDetails(org.id);
+    if (options?.persistActive !== false && org.id !== activeOrganizationId) {
+      await authClient.organization.setActive({ organizationId: org.id });
+      await session.refetch();
+    }
   }
 
   useEffect(() => {
-    async function init() {
-      setIsLoading(true);
+    if (session.isPending) {
+      return;
+    }
 
+    async function init() {
       // Handle invitation acceptance from URL first (before loading orgs)
       const invitationId = searchParams.get("invitationId");
       if (invitationId) {
@@ -178,20 +181,25 @@ export function TeamSettingsPage() {
           toast.error(t("Failed to accept invitation"));
         } else {
           toast.success(t("Invitation accepted"));
+          await queryClient.invalidateQueries({
+            queryKey: ["team", "organizations", currentUserId],
+          });
+          await session.refetch();
         }
       }
-
-      // Load organizations (including any newly joined org)
-      const orgs = await loadOrganizations();
-      if (orgs.length > 0) {
-        // If we just accepted an invitation, select the most recently joined org
-        await selectOrg(invitationId ? orgs[orgs.length - 1] : orgs[0]);
-      }
-      setIsLoading(false);
     }
     init();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [currentUserId, queryClient, searchParams, session, t]);
+
+  useEffect(() => {
+    if (activeOrg || organizationsQuery.isLoading) {
+      return;
+    }
+
+    const nextOrg =
+      organizations.find((org) => org.id === activeOrganizationId) ?? organizations[0] ?? null;
+    setActiveOrg(nextOrg);
+  }, [activeOrg, activeOrganizationId, organizations, organizationsQuery.isLoading]);
 
   async function handleCreateOrg() {
     if (!newOrgName.trim()) return;
@@ -206,7 +214,13 @@ export function TeamSettingsPage() {
         slug,
       });
       if (result.data) {
-        const orgs = await loadOrganizations();
+        const orgs = await queryClient.fetchQuery({
+          queryKey: ["team", "organizations", currentUserId],
+          queryFn: async () => {
+            const listResult = await authClient.organization.list({});
+            return (listResult.data ?? []) as Organization[];
+          },
+        });
         const newOrg = orgs.find((o) => o.id === result.data?.id);
         if (newOrg) {
           await selectOrg(newOrg);
@@ -233,7 +247,9 @@ export function TeamSettingsPage() {
         organizationId: activeOrg.id,
       });
       toast.success(t("Invitation sent"));
-      await loadOrgDetails(activeOrg.id);
+      await queryClient.invalidateQueries({
+        queryKey: ["team", "organization", currentUserId, activeOrg.id],
+      });
     } catch (error) {
       console.error("Failed to invite", error);
       toast.error(t("Failed to send invitation"));
@@ -253,7 +269,9 @@ export function TeamSettingsPage() {
         organizationId: activeOrg.id,
       });
       toast.success(t("Member removed"));
-      await loadOrgDetails(activeOrg.id);
+      await queryClient.invalidateQueries({
+        queryKey: ["team", "organization", currentUserId, activeOrg.id],
+      });
       setMemberToRemove(null);
     } catch (error) {
       console.error("Failed to remove member", error);
@@ -266,7 +284,9 @@ export function TeamSettingsPage() {
       await authClient.organization.cancelInvitation({ invitationId });
       toast.success(t("Invitation cancelled"));
       if (activeOrg) {
-        await loadOrgDetails(activeOrg.id);
+        await queryClient.invalidateQueries({
+          queryKey: ["team", "organization", currentUserId, activeOrg.id],
+        });
       }
     } catch (error) {
       console.error("Failed to cancel invitation", error);
@@ -331,6 +351,9 @@ export function TeamSettingsPage() {
     }
   }
 
+  const isLoading =
+    session.isPending || (organizationsQuery.isLoading && organizations.length === 0);
+
   if (isLoading) {
     return (
       <div className="flex min-h-[40vh] items-center justify-center">
@@ -342,13 +365,10 @@ export function TeamSettingsPage() {
   // No organizations yet
   if (organizations.length === 0 && !activeOrg) {
     return (
-      <div className="space-y-6">
-        <div>
-          <h2 className="text-lg font-semibold">{t("Team")}</h2>
-          <p className="text-sm text-muted-foreground">
-            {t("Create a team to share Pro access with your members.")}
-          </p>
-        </div>
+      <SettingsPageShell
+        title={t("Team")}
+        description={t("Create a team to share Pro access with your members.")}
+      >
         <Card>
           <CardContent className="flex flex-col items-center justify-center py-12 text-center">
             <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-muted">
@@ -394,7 +414,7 @@ export function TeamSettingsPage() {
             </DialogFooter>
           </DialogContent>
         </Dialog>
-      </div>
+      </SettingsPageShell>
     );
   }
 
@@ -406,20 +426,12 @@ export function TeamSettingsPage() {
   const teamPlans = teamPlansQuery.data?.plans ?? [];
   const monthlyPlan = teamPlans.find((p) => p.id === "pro_team_monthly");
   const yearlyPlan = teamPlans.find((p) => p.id === "pro_team_yearly");
-  const monthlyPlanCopy = getBillingPlanCopy(t, "pro_team_monthly");
-  const yearlyPlanCopy = getBillingPlanCopy(t, "pro_team_yearly");
-
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-lg font-semibold">{t("Team")}</h2>
-          <p className="text-sm text-muted-foreground">
-            {t("Manage your team and Pro for Teams subscription.")}
-          </p>
-        </div>
-        <div className="flex gap-2">
+    <SettingsPageShell
+      title={t("Team")}
+      description={t("Manage your team and Pro for Teams subscription.")}
+      actions={
+        <>
           {organizations.length > 1 && (
             <Select
               value={activeOrg?.id ?? ""}
@@ -444,9 +456,9 @@ export function TeamSettingsPage() {
             <Plus className="h-3.5 w-3.5" />
             {t("New Team")}
           </Button>
-        </div>
-      </div>
-
+        </>
+      }
+    >
       {/* Organization Info */}
       {activeOrg && (
         <Card className="!pb-2">
@@ -823,6 +835,6 @@ export function TeamSettingsPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </div>
+    </SettingsPageShell>
   );
 }

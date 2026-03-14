@@ -6,11 +6,11 @@ Deni AI — multi-provider AI chat app with Stripe billing, BYOK, teams, i18n (e
 
 **Commands:** `bun dev` · `bun run build` (runs tsgo + next build) · `bun run lint` (oxlint) · `bun run format` (oxfmt) · `bun run db:generate` / `db:migrate` / `db:push` · `bun run auth:generate`
 
-**Env:** Validated in `src/env.ts` via Zod. Key vars: `DATABASE_URL`, `BETTER_AUTH_SECRET` (32 chars), Google/GitHub OAuth, `STRIPE_SECRET_KEY`, `GOOGLE_GENERATIVE_AI_API_KEY`, `GROQ_API_KEY`, `OPENROUTER_API_KEY`, `BRAVE_SEARCH_API_KEY`, `TURNSTILE_SECRET_KEY`, `NEXT_PUBLIC_BETTER_AUTH_URL`, `NEXT_PUBLIC_TURNSTILE_SITE_KEY`. Optional: `STRIPE_WEBHOOK_SECRET`, `RESEND_API_KEY`.
+**Env:** Validated in `src/env.ts` via Zod. Key vars: `DATABASE_URL`, `BETTER_AUTH_SECRET` (32 chars), Google/GitHub OAuth, `STRIPE_SECRET_KEY`, `GOOGLE_GENERATIVE_AI_API_KEY`, `GROQ_API_KEY`, `AI_GATEWAY_API_KEY`, `BRAVE_SEARCH_API_KEY`, `TURNSTILE_SECRET_KEY`, `NEXT_PUBLIC_BETTER_AUTH_URL`, `NEXT_PUBLIC_TURNSTILE_SITE_KEY`. Optional: `STRIPE_WEBHOOK_SECRET`, `RESEND_API_KEY`.
 
 **API:** tRPC (`/api/trpc`) for CRUD — routers: `chat`, `billing`, `apiKeys`, `providers`, `share`, `organization`, `migration`. AI streaming via `POST /api/chat` (Vercel AI SDK). Procedures: `publicProcedure` / `protectedProcedure`.
 
-**AI providers** (`src/lib/constants.ts`): OpenAI, Anthropic (premium), Google, xAI, Groq, OpenRouter. BYOK support via `provider_key`/`provider_setting` tables. Tools: Brave search (`src/lib/chat-tools/search.ts`), image gen via Gemini, video gen via Veo.
+**AI providers** (`src/lib/constants.ts`): OpenAI, Anthropic (premium), Google, xAI, Groq. Requests are routed through Vercel AI Gateway where applicable, with BYOK support via `provider_key`/`provider_setting` tables. Tools: Brave search (`src/lib/chat-tools/search.ts`), image gen via Gemini, video gen via Veo.
 
 **DB schemas** (`src/db/schema/`): `auth-schema.ts` (auto-generated, don't edit) · `chat.ts` · `billing.ts` · `usage.ts` · `provider-keys.ts` · `provider-settings.ts` · `custom-models.ts` · `share.ts` · `api-keys.ts` · `device-auth.ts`
 

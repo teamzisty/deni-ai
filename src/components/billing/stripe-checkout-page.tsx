@@ -18,7 +18,7 @@ import { startTransition, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import type { BillingPlanId, IndividualPlanId, TeamPlanId } from "@/lib/billing";
 import { findPlanById } from "@/lib/billing";
-import { getBillingPlanCopy } from "@/lib/billing-plan-copy";
+import { useBillingPlanCopy } from "@/lib/billing-plan-copy";
 import { formatMinorCurrency } from "@/lib/currency";
 import { stripeJsPromise } from "@/lib/stripe-js";
 import { makeTRPCClient } from "@/lib/trpc/client";
@@ -187,7 +187,7 @@ function CheckoutSummary({
   planId: BillingPlanId | null;
 }) {
   const t = useExtracted();
-  const planCopy = planId ? getBillingPlanCopy(t, planId) : null;
+  const planCopy = useBillingPlanCopy(planId);
 
   return (
     <Card className="not-first:border-border/80 bg-card/80 shadow-sm backdrop-blur-sm">

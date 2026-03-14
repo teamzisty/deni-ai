@@ -1,6 +1,8 @@
-import type { BillingPlanId } from "@/lib/billing";
+"use client";
 
-type TranslateFn = (key: string, values?: Record<string, string | number | Date>) => string;
+import { useExtracted } from "next-intl";
+
+import type { BillingPlanId } from "@/lib/billing";
 
 export type BillingPlanCopy = {
   tagline: string;
@@ -8,7 +10,16 @@ export type BillingPlanCopy = {
   badge?: string;
 };
 
-export function getBillingPlanCopy(t: TranslateFn, planId: BillingPlanId): BillingPlanCopy {
+export function useBillingPlanCopy(planId: BillingPlanId): BillingPlanCopy;
+export function useBillingPlanCopy(planId: null): null;
+export function useBillingPlanCopy(planId: BillingPlanId | null): BillingPlanCopy | null;
+export function useBillingPlanCopy(planId: BillingPlanId | null): BillingPlanCopy | null {
+  const t = useExtracted();
+
+  if (!planId) {
+    return null;
+  }
+
   switch (planId) {
     case "plus_monthly":
       return {
@@ -80,9 +91,6 @@ export function getBillingPlanCopy(t: TranslateFn, planId: BillingPlanId): Billi
         ],
       };
     default:
-      return {
-        tagline: "",
-        highlights: [],
-      };
+      return null;
   }
 }

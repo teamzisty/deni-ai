@@ -1,19 +1,23 @@
 import { apiKeysRouter } from "./routers/api-keys";
 import { billingRouter } from "./routers/billing";
 import { chatRouter } from "./routers/chat";
+import { memoryRouter } from "./routers/memory";
 import { migrationRouter } from "./routers/migration";
 import { organizationRouter } from "./routers/organization";
 import { providersRouter } from "./routers/providers";
+import { projectsRouter } from "./routers/projects";
 import { shareRouter } from "./routers/share";
 import { router, t } from "./trpc";
 
 export const appRouter = router({
   apiKeys: apiKeysRouter,
   chat: chatRouter,
+  memory: memoryRouter,
   billing: billingRouter,
   migration: migrationRouter,
   organization: organizationRouter,
   providers: providersRouter,
+  projects: projectsRouter,
   share: shareRouter,
 });
 

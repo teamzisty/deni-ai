@@ -2,7 +2,7 @@
 
 > **AI Chatbot for Everyone** - Access the latest AI models for free
 
-Deni AI is a modern AI chat application designed to make advanced AI accessible to everyone, especially those who can't afford premium AI services. Chat with multiple AI providers including OpenAI, Anthropic, Google, Groq, and OpenRouter through a clean, intuitive interface.
+Deni AI is a modern AI chat application designed to make advanced AI accessible to everyone, especially those who can't afford premium AI services. Chat with multiple AI providers including OpenAI, Anthropic, Google, Groq, and xAI through a clean, intuitive interface powered by Vercel AI Gateway.
 
 ## Setup
 

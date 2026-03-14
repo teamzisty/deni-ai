@@ -65,7 +65,7 @@ const Footer = () => {
         {/* Copyright */}
         <div className="mt-8 pt-6 border-t border-border/40">
           <p className="text-xs text-muted-foreground text-center md:text-left">
-            {t("© 2025 Zisty. All rights reserved.")}
+            {t("© 2026 Zisty. All rights reserved.")}
           </p>
         </div>
       </div>

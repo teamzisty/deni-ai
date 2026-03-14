@@ -1,13 +1,17 @@
 import { headers } from "next/headers";
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { env } from "@/env";
 import { auth } from "@/lib/auth";
-import { imageAspectRatios, imageModelValues, imageResolutions } from "@/lib/image";
+import { generateImages } from "@/lib/image-generation";
+import {
+  imageAspectRatios,
+  imageModelValues,
+  imageResolutions,
+  resolveImageUsageCategory,
+} from "@/lib/image";
+import { cachePaletteImages, getCachedPaletteImages } from "@/lib/palette-cache";
 import { checkRateLimit } from "@/lib/rate-limit";
 import { consumeUsage, UsageLimitError } from "@/lib/usage";
-
-const GEMINI_BASE_URL = "https://generativelanguage.googleapis.com/v1beta";
 
 const requestSchema = z.object({
   prompt: z.string().min(1).max(4000),
@@ -15,6 +19,7 @@ const requestSchema = z.object({
   aspectRatio: z.enum(imageAspectRatios).optional(),
   resolution: z.enum(imageResolutions).optional(),
   numberOfImages: z.number().int().min(1).max(4).optional(),
+  bypassCache: z.boolean().optional(),
 });
 
 export async function POST(req: Request) {
@@ -43,92 +48,65 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Invalid request body" }, { status: 400 });
   }
 
-  try {
-    await consumeUsage({ userId, category: "premium" });
-  } catch (error) {
-    if (error instanceof UsageLimitError) {
-      return NextResponse.json({ error: error.message, reason: "usage_limit" }, { status: 402 });
-    }
-    return NextResponse.json({ error: "Unable to check usage" }, { status: 500 });
-  }
-
   const data = parsedBody.data;
-
-  const contents = [{ parts: [{ text: data.prompt }] }];
-
-  const generationConfig: Record<string, unknown> = {
-    responseModalities: ["IMAGE"],
-    numberOfImages: data.numberOfImages ?? 1,
+  const requestedCount = data.numberOfImages ?? 1;
+  const usageCategory = resolveImageUsageCategory(data.model);
+  const bypassCache = data.bypassCache ?? false;
+  const cacheInput = {
+    prompt: data.prompt,
+    model: data.model,
+    aspectRatio: data.aspectRatio,
+    resolution: data.resolution,
+    numberOfImages: requestedCount,
   };
 
-  if (data.aspectRatio) {
-    generationConfig.aspectRatio = data.aspectRatio;
-  }
-
-  if (data.resolution) {
-    generationConfig.resolution = data.resolution;
-  }
-
-  const response = await fetch(`${GEMINI_BASE_URL}/models/${data.model}:generateContent`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "x-goog-api-key": env.GOOGLE_GENERATIVE_AI_API_KEY,
-    },
-    body: JSON.stringify({
-      contents,
-      generationConfig,
-    }),
-  });
-
-  let responseData: unknown = null;
-  try {
-    responseData = await response.json();
-  } catch {
-    responseData = null;
-  }
-
-  if (!response.ok) {
-    console.error("Image generation API error:", responseData);
-    return NextResponse.json({ error: "Image generation failed" }, { status: response.status });
-  }
-
-  const candidates =
-    typeof responseData === "object" &&
-    responseData !== null &&
-    (
-      responseData as {
-        candidates?: Array<{
-          content?: {
-            parts?: Array<{
-              inlineData?: { data?: string; mimeType?: string };
-            }>;
-          };
-        }>;
+  if (!bypassCache) {
+    try {
+      const cachedImages = await getCachedPaletteImages(cacheInput);
+      if (cachedImages) {
+        return NextResponse.json({ images: cachedImages });
       }
-    ).candidates;
-
-  if (!candidates || candidates.length === 0) {
-    return NextResponse.json({ error: "No image candidates returned." }, { status: 500 });
-  }
-
-  const images: Array<{ imageBytes: string; mimeType: string }> = [];
-
-  for (const candidate of candidates) {
-    const parts = candidate.content?.parts ?? [];
-    for (const part of parts) {
-      if (part.inlineData?.data) {
-        images.push({
-          imageBytes: part.inlineData.data,
-          mimeType: part.inlineData.mimeType ?? "image/png",
-        });
-      }
+    } catch (error) {
+      console.error("Palette cache lookup failed:", error);
     }
   }
 
-  if (images.length === 0) {
-    return NextResponse.json({ error: "No images generated." }, { status: 500 });
-  }
+  try {
+    const images = await generateImages({
+      prompt: data.prompt,
+      model: data.model,
+      aspectRatio: data.aspectRatio,
+      resolution: data.resolution,
+      numberOfImages: requestedCount,
+      signal: req.signal,
+      userId,
+    });
 
-  return NextResponse.json({ images });
+    if (images.length === 0) {
+      return NextResponse.json({ error: "No images generated." }, { status: 500 });
+    }
+
+    try {
+      await consumeUsage({ userId, category: usageCategory, amount: requestedCount });
+    } catch (error) {
+      if (error instanceof UsageLimitError) {
+        return NextResponse.json({ error: error.message, reason: "usage_limit" }, { status: 402 });
+      }
+      return NextResponse.json({ error: "Unable to check usage" }, { status: 500 });
+    }
+
+    if (!bypassCache) {
+      try {
+        await cachePaletteImages(cacheInput, images);
+      } catch (error) {
+        console.error("Palette cache write failed:", error);
+      }
+    }
+
+    return NextResponse.json({ images });
+  } catch (error) {
+    console.error("Image generation API error:", error);
+    const message = error instanceof Error ? error.message : "Image generation failed";
+    return NextResponse.json({ error: message }, { status: 500 });
+  }
 }

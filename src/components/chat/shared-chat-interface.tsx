@@ -1,11 +1,17 @@
 "use client";
 
-import type { UIMessage } from "ai";
+import type { FileUIPart, UIMessage } from "ai";
 import { ChevronDownIcon, CopyIcon, GitFork, Globe, User } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useExtracted } from "next-intl";
 import { toast } from "sonner";
+import {
+  Attachment,
+  AttachmentInfo,
+  AttachmentPreview,
+  Attachments,
+} from "@/components/ai-elements/attachments";
 import {
   Conversation,
   ConversationContent,
@@ -57,6 +63,16 @@ function getMessageRenderKeys(messages: UIMessage[]) {
 
     return duplicateCount === 0 ? baseKey : `${baseKey}-${duplicateCount}`;
   });
+}
+
+function isFilePart(part: UIMessage["parts"][number]): part is FileUIPart {
+  return part.type === "file";
+}
+
+function isTextPart(
+  part: UIMessage["parts"][number],
+): part is Extract<UIMessage["parts"][number], { type: "text"; text: string }> {
+  return part.type === "text";
 }
 
 export function SharedChatInterface({
@@ -123,11 +139,28 @@ export function SharedChatInterface({
               {message.role === "user" && (
                 <Message from="user">
                   <MessageContent>
-                    {message.parts[0]?.type === "text" && message.parts[0].text && (
-                      <MessageResponse shikiTheme={["github-light", "github-dark"]}>
-                        {message.parts[0].text}
+                    {message.parts.filter(isFilePart).length > 0 ? (
+                      <Attachments variant="list" className="w-full">
+                        {message.parts.filter(isFilePart).map((part, partIndex) => (
+                          <Attachment
+                            data={{ ...part, id: `${message.id}-file-${partIndex}` }}
+                            key={`${message.id}-file-${partIndex}`}
+                            className="w-full bg-background/50"
+                          >
+                            <AttachmentPreview />
+                            <AttachmentInfo showMediaType />
+                          </Attachment>
+                        ))}
+                      </Attachments>
+                    ) : null}
+                    {message.parts.filter(isTextPart).map((part, partIndex) => (
+                      <MessageResponse
+                        key={`${message.id}-text-${partIndex}`}
+                        shikiTheme={["github-light", "github-dark"]}
+                      >
+                        {part.text}
                       </MessageResponse>
-                    )}
+                    ))}
                   </MessageContent>
                 </Message>
               )}

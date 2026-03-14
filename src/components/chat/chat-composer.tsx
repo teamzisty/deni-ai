@@ -12,6 +12,7 @@ import {
   ChevronDownIcon,
   Code,
   Film,
+  Mic,
   Gem,
   Globe,
   Image as ImageIcon,
@@ -30,10 +31,16 @@ import {
   PromptInputSelectTrigger,
   PromptInputSelectValue,
 } from "@/components/ai-elements/prompt-input";
+import { SpeechInput } from "@/components/ai-elements/speech-input";
 import { Composer, type ComposerMessage } from "@/components/chat/composer";
 import Openai from "@/components/openai";
 import { useAvailableModels } from "@/hooks/use-available-models";
-import { models } from "@/lib/constants";
+import {
+  getPreferredReasoningEffort,
+  isReasoningEffort,
+  type ModelDefinition,
+  type ReasoningEffort,
+} from "@/lib/constants";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -44,14 +51,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/component
 
 export type { ComposerMessage };
 
-const reasoningEffortValues = ["low", "medium", "high"] as const;
-export type ReasoningEffort = (typeof reasoningEffortValues)[number];
-
-export function isReasoningEffort(value: string): value is ReasoningEffort {
-  return (reasoningEffortValues as readonly string[]).includes(value);
-}
-
-type BaseModelOption = (typeof models)[number];
+type BaseModelOption = ModelDefinition;
 type CustomModelOption = {
   name: string;
   value: string;
@@ -60,6 +60,7 @@ type CustomModelOption = {
   features: string[];
   premium?: boolean;
   default?: boolean;
+  efforts: false;
   source: "custom";
 };
 export type ModelOption = BaseModelOption | CustomModelOption;
@@ -68,6 +69,37 @@ type ToolChipProps = {
   icon: LucideIcon;
   label: string;
   onRemove: () => void;
+};
+
+type ModelDescriptionLabels = {
+  generalPurposeOpenAIModel: string;
+  forComplexCodingTasks: string;
+  forQuickCodingTasks: string;
+  mostPowerfulOpenWeightModel: string;
+  mediumSizedOpenWeightModel: string;
+  bestForComplexTasks: string;
+  bestForEverydayTasks: string;
+  bestForHighVolumeTasks: string;
+  hybridReasoningModel: string;
+  legacyProfessionalModel: string;
+  allAroundProfessionalModel: string;
+  xaiMostIntelligentModel: string;
+  fastAndEfficientModel: string;
+  stealthModel: string;
+};
+
+type FeatureLabels = {
+  reasoning: string;
+  smart: string;
+  fast: string;
+  coding: string;
+  fastest: string;
+  smartest: string;
+};
+
+type ProviderLabels = {
+  featured: string;
+  custom: string;
 };
 
 function ToolChip({ icon: Icon, label, onRemove }: ToolChipProps) {
@@ -87,62 +119,67 @@ function ToolChip({ icon: Icon, label, onRemove }: ToolChipProps) {
   );
 }
 
-function getModelDescription(value: string, t: (key: string) => string): string {
+function getModelDescription(value: string, labels: ModelDescriptionLabels): string {
   switch (value) {
     case "gpt-5.4":
     case "gpt-5.2":
-      return t("General purpose OpenAI model");
+      return labels.generalPurposeOpenAIModel;
     case "gpt-5.2-codex":
     case "gpt-5.1-codex":
-      return t("For complex coding tasks");
+      return labels.forComplexCodingTasks;
     case "gpt-5.1-codex-mini":
-      return t("For quick coding tasks");
+      return labels.forQuickCodingTasks;
     case "openai/gpt-oss-120b":
-      return t("Most powerful open-weight model");
+      return labels.mostPowerfulOpenWeightModel;
     case "openai/gpt-oss-20b":
-      return t("Medium-sized open-weight model");
+      return labels.mediumSizedOpenWeightModel;
     case "gemini-3.1-pro-preview":
     case "gemini-3-pro-preview":
-      return t("Best for complex tasks");
+      return labels.bestForComplexTasks;
     case "gemini-3-flash-preview":
-      return t("Best for everyday tasks");
+      return labels.bestForEverydayTasks;
     case "gemini-3.1-flash-lite-preview":
     case "gemini-2.5-flash-lite":
-      return t("Best for high volume tasks");
+      return labels.bestForHighVolumeTasks;
     case "claude-sonnet-4.5":
     case "claude-sonnet-4.6":
     case "claude-sonnet-4":
-      return t("Hybrid reasoning model");
+      return labels.hybridReasoningModel;
     case "claude-opus-4.5":
     case "claude-opus-4.1":
     case "claude-opus-4":
-      return t("Legacy professional model");
+      return labels.legacyProfessionalModel;
     case "claude-opus-4.6":
-      return t("All-around professional model");
+      return labels.allAroundProfessionalModel;
     case "grok-4-0709":
-      return t("xAI's most intelligent model");
+    case "grok-4.20-reasoning-beta":
+      return labels.xaiMostIntelligentModel;
+    case "grok-4.20-non-reasoning-beta":
     case "grok-4-1-fast-reasoning":
     case "grok-4-1-fast-non-reasoning":
-      return t("Fast and efficient model");
+      return labels.fastAndEfficientModel;
+    case "healer-alpha":
+    case "hunter-alpha":
+      return labels.stealthModel;
     default:
       return value;
   }
 }
 
-function getFeatureLabel(feature: string, t: (key: string) => string): string {
+function getFeatureLabel(feature: string, labels: FeatureLabels): string {
   switch (feature) {
     case "reasoning":
-      return t("Reasoning");
+      return labels.reasoning;
     case "smart":
-      return t("Smart");
+      return labels.smart;
     case "fast":
-      return t("Fast");
+      return labels.fast;
     case "coding":
-      return t("Coding");
+      return labels.coding;
     case "fastest":
-      return t("Fastest");
+      return labels.fastest;
     case "smartest":
-      return t("Smartest");
+      return labels.smartest;
     default:
       return feature;
   }
@@ -152,7 +189,7 @@ function ModelIcon({
   model,
   className,
 }: {
-  model: Pick<ModelOption, "author" | "premium">;
+  model: { author: ModelOption["author"]; premium?: boolean };
   className?: string;
 }) {
   if (model.premium) return <Gem className={cn("size-3.5", className)} aria-hidden="true" />;
@@ -191,10 +228,10 @@ function ProviderIcon({ author }: { author: string }) {
   }
 }
 
-function getProviderLabel(author: string, t: (key: string) => string): string {
+function getProviderLabel(author: string, labels: ProviderLabels): string {
   switch (author) {
     case "featured":
-      return t("Featured");
+      return labels.featured;
     case "openai":
       return "OpenAI";
     case "anthropic":
@@ -204,7 +241,7 @@ function getProviderLabel(author: string, t: (key: string) => string): string {
     case "xai":
       return "xAI";
     case "openai_compatible":
-      return t("Custom");
+      return labels.custom;
     default:
       return author;
   }
@@ -214,14 +251,20 @@ function ModelPickerItem({
   model,
   isSelected,
   onSelect,
+  featureLabels,
+  modelDescriptionLabels,
 }: {
   model: ModelOption;
   isSelected: boolean;
   onSelect: () => void;
+  featureLabels: FeatureLabels;
+  modelDescriptionLabels: ModelDescriptionLabels;
 }) {
   const t = useExtracted();
   const description =
-    "description" in model ? model.description : getModelDescription(model.value, t);
+    "description" in model
+      ? model.description
+      : getModelDescription(model.value, modelDescriptionLabels);
   const highlightFeatures = model.features.filter((f) => f.includes("est"));
   const regularFeatures = model.features.filter((f) => !f.includes("est"));
 
@@ -257,7 +300,7 @@ function ModelPickerItem({
               className="size-3 text-yellow-500 dark:fill-yellow-400 mr-0.5"
               aria-hidden="true"
             />
-            {getFeatureLabel(feature, t)}
+            {getFeatureLabel(feature, featureLabels)}
           </Badge>
         ))}
       </span>
@@ -288,7 +331,7 @@ function ModelPickerItem({
                     return null;
                 }
               })()}
-              {getFeatureLabel(feature, t)}
+              {getFeatureLabel(feature, featureLabels)}
             </Badge>
           ))}
         </span>
@@ -308,6 +351,7 @@ export interface ChatComposerProps {
       videoMode: boolean;
       imageMode: boolean;
       reasoningEffort: ReasoningEffort;
+      deepResearch: boolean;
     },
   ) => void;
   onStop?: () => void;
@@ -325,6 +369,8 @@ export interface ChatComposerProps {
   onImageModeChange: (enabled: boolean) => void;
   reasoningEffort: ReasoningEffort;
   onReasoningEffortChange: (effort: ReasoningEffort) => void;
+  deepResearch: boolean;
+  onDeepResearchChange: (enabled: boolean) => void;
   showByokBadge?: boolean;
 }
 
@@ -347,9 +393,39 @@ export function ChatComposer({
   onImageModeChange,
   reasoningEffort,
   onReasoningEffortChange,
+  deepResearch,
+  onDeepResearchChange,
   showByokBadge = false,
 }: ChatComposerProps) {
   const t = useExtracted();
+  const modelDescriptionLabels: ModelDescriptionLabels = {
+    generalPurposeOpenAIModel: t("General purpose OpenAI model"),
+    forComplexCodingTasks: t("For complex coding tasks"),
+    forQuickCodingTasks: t("For quick coding tasks"),
+    mostPowerfulOpenWeightModel: t("Most powerful open-weight model"),
+    mediumSizedOpenWeightModel: t("Medium-sized open-weight model"),
+    bestForComplexTasks: t("Best for complex tasks"),
+    bestForEverydayTasks: t("Best for everyday tasks"),
+    bestForHighVolumeTasks: t("Best for high volume tasks"),
+    hybridReasoningModel: t("Hybrid reasoning model"),
+    legacyProfessionalModel: t("Legacy professional model"),
+    allAroundProfessionalModel: t("All-around professional model"),
+    xaiMostIntelligentModel: t("xAI's most intelligent model"),
+    fastAndEfficientModel: t("Fast and efficient model"),
+    stealthModel: t("Stealth model"),
+  };
+  const featureLabels: FeatureLabels = {
+    reasoning: t("Reasoning"),
+    smart: t("Smart"),
+    fast: t("Fast"),
+    coding: t("Coding"),
+    fastest: t("Fastest"),
+    smartest: t("Smartest"),
+  };
+  const providerLabels: ProviderLabels = {
+    featured: t("Featured"),
+    custom: t("Custom"),
+  };
   const { availableModels } = useAvailableModels();
   const [modelPopoverOpen, setModelPopoverOpen] = useState(false);
   const [selectedProvider, setSelectedProvider] = useState<string>("featured");
@@ -357,7 +433,28 @@ export function ChatComposer({
   const [modelQuery, setModelQuery] = useState("");
 
   const selectedModel = availableModels.find((m) => m.value === model);
-  const supportsReasoningEffort = selectedModel?.features?.includes("reasoning");
+  const supportedEfforts = selectedModel?.efforts ?? false;
+  const supportsReasoningEffort = supportedEfforts !== false;
+  const getReasoningEffortLabel = (effort: ReasoningEffort) => {
+    switch (effort) {
+      case "none":
+        return t("None");
+      case "minimal":
+        return t("Minimal");
+      case "low":
+        return t("Low");
+      case "medium":
+        return t("Medium");
+      case "high":
+        return t("High");
+      case "xhigh":
+        return t("X-High");
+      case "max":
+        return t("Max");
+      default:
+        return effort;
+    }
+  };
 
   // Group available models by author/provider, with "featured" prepended
   const providerGroups = useMemo(() => {
@@ -389,7 +486,9 @@ export function ChatComposer({
       Object.entries(providerGroups).flatMap(([provider, entries]) => {
         const filteredEntries = entries.filter((entry) => {
           const description =
-            "description" in entry ? entry.description : getModelDescription(entry.value, t);
+            "description" in entry
+              ? entry.description
+              : getModelDescription(entry.value, modelDescriptionLabels);
           const haystack = [
             entry.name,
             entry.value,
@@ -407,7 +506,7 @@ export function ChatComposer({
         return filteredEntries.length > 0 ? [[provider, filteredEntries]] : [];
       }),
     ) as Record<string, ModelOption[]>;
-  }, [normalizedModelQuery, providerGroups, t]);
+  }, [modelDescriptionLabels, normalizedModelQuery, providerGroups]);
 
   const availableProviders = useMemo(
     () => Object.keys(filteredProviderGroups),
@@ -427,6 +526,16 @@ export function ChatComposer({
     }
   }, [availableProviders, selectedProvider]);
 
+  useEffect(() => {
+    if (supportedEfforts === false) {
+      return;
+    }
+
+    if (!supportedEfforts.includes(reasoningEffort)) {
+      onReasoningEffortChange(getPreferredReasoningEffort(supportedEfforts));
+    }
+  }, [onReasoningEffortChange, reasoningEffort, supportedEfforts]);
+
   const handleModelPopoverOpenChange = (open: boolean) => {
     if (open) {
       setModelQuery("");
@@ -441,18 +550,7 @@ export function ChatComposer({
     setModelPopoverOpen(open);
   };
 
-  const reasoningEffortLabel = (() => {
-    switch (reasoningEffort) {
-      case "low":
-        return t("Low");
-      case "medium":
-        return t("Medium");
-      case "high":
-        return t("High");
-      default:
-        return reasoningEffort;
-    }
-  })();
+  const reasoningEffortLabel = getReasoningEffortLabel(reasoningEffort);
 
   const handleVideoToggle = (enabled: boolean) => {
     onVideoModeChange(enabled);
@@ -476,6 +574,18 @@ export function ChatComposer({
       onVideoModeChange(false);
       onImageModeChange(false);
     }
+    if (!enabled) {
+      onDeepResearchChange(false);
+    }
+  };
+
+  const handleResearchToggle = (enabled: boolean) => {
+    onDeepResearchChange(enabled);
+    if (enabled) {
+      onWebSearchChange(true);
+      onVideoModeChange(false);
+      onImageModeChange(false);
+    }
   };
 
   const handleSubmit = (message: ComposerMessage) => {
@@ -485,6 +595,7 @@ export function ChatComposer({
       videoMode,
       imageMode,
       reasoningEffort,
+      deepResearch,
     });
   };
 
@@ -505,9 +616,12 @@ export function ChatComposer({
         </PromptInputSelectValue>
       </PromptInputSelectTrigger>
       <PromptInputSelectContent>
-        <PromptInputSelectItem value="low">{t("Low")}</PromptInputSelectItem>
-        <PromptInputSelectItem value="medium">{t("Medium")}</PromptInputSelectItem>
-        <PromptInputSelectItem value="high">{t("High")}</PromptInputSelectItem>
+        {supportedEfforts !== false &&
+          supportedEfforts.map((effort) => (
+            <PromptInputSelectItem key={effort} value={effort}>
+              {getReasoningEffortLabel(effort)}
+            </PromptInputSelectItem>
+          ))}
       </PromptInputSelectContent>
     </PromptInputSelect>
   );
@@ -557,6 +671,13 @@ export function ChatComposer({
             <Globe className="size-4" aria-hidden="true" />
             {t("Search")}
           </DropdownMenuCheckboxItem>
+          <DropdownMenuCheckboxItem
+            checked={deepResearch}
+            onCheckedChange={(checked) => handleResearchToggle(Boolean(checked))}
+          >
+            <Sparkle className="size-4" aria-hidden="true" />
+            {t("Deep Research")}
+          </DropdownMenuCheckboxItem>
           <div className="px-2 py-1.5 md:hidden">
             {renderReasoningEffortSelector("w-full justify-between")}
           </div>
@@ -577,6 +698,26 @@ export function ChatComposer({
           {webSearch && (
             <ToolChip icon={Globe} label={t("Search")} onRemove={() => handleSearchToggle(false)} />
           )}
+          {deepResearch && (
+            <ToolChip
+              icon={Sparkle}
+              label={t("Deep Research")}
+              onRemove={() => handleResearchToggle(false)}
+            />
+          )}
+          <SpeechInput
+            size="icon-sm"
+            variant="ghost"
+            className="size-8 bg-transparent text-muted-foreground hover:bg-accent hover:text-foreground"
+            aria-label={t("Voice input")}
+            title={t("Voice input")}
+            onTranscriptionChange={(transcript) => {
+              const nextValue = value.trim() ? `${value.trim()} ${transcript}` : transcript;
+              onValueChange(nextValue.trim());
+            }}
+          >
+            <Mic className="size-4" />
+          </SpeechInput>
 
           {/* Two-panel model selector */}
           <Popover open={modelPopoverOpen} onOpenChange={handleModelPopoverOpenChange}>
@@ -625,7 +766,7 @@ export function ChatComposer({
                 </div>
                 <div className="flex h-95 overflow-hidden">
                   {/* Left panel: Provider list */}
-                  <div className="w-35 shrink-0 border-r flex flex-col gap-0.5 p-1.5 overflow-y-auto bg-muted/30">
+                  <div className="w-40 shrink-0 border-r flex flex-col gap-0.5 p-1.5 overflow-y-auto bg-muted/30">
                     {availableProviders.map((provider) => {
                       const count = filteredProviderGroups[provider]?.length ?? 0;
                       const isActive = selectedProvider === provider;
@@ -651,7 +792,7 @@ export function ChatComposer({
                             <ProviderIcon author={provider} />
                           </span>
                           <span className="flex-1 truncate leading-none">
-                            {getProviderLabel(provider, t)}
+                            {getProviderLabel(provider, providerLabels)}
                           </span>
                           <span className="tabular-nums text-xs opacity-50 shrink-0">{count}</span>
                         </button>
@@ -672,6 +813,8 @@ export function ChatComposer({
                             key={m.value}
                             model={m}
                             isSelected={m.value === model}
+                            featureLabels={featureLabels}
+                            modelDescriptionLabels={modelDescriptionLabels}
                             onSelect={() => {
                               onModelChange(m.value);
                               setModelPopoverOpen(false);
@@ -710,6 +853,8 @@ export function ChatComposer({
                                   key={m.value}
                                   model={m}
                                   isSelected={m.value === model}
+                                  featureLabels={featureLabels}
+                                  modelDescriptionLabels={modelDescriptionLabels}
                                   onSelect={() => {
                                     onModelChange(m.value);
                                     setModelPopoverOpen(false);

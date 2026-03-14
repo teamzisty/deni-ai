@@ -5,12 +5,9 @@ import { useRouter } from "next/navigation";
 import { useExtracted } from "next-intl";
 import { useState } from "react";
 import { toast } from "sonner";
-import {
-  ChatComposer,
-  type ComposerMessage,
-  type ReasoningEffort,
-} from "@/components/chat/chat-composer";
-import { models } from "@/lib/constants";
+import { ChatComposer, type ComposerMessage } from "@/components/chat/chat-composer";
+import { ProjectSelect } from "@/components/projects/project-select";
+import { getPreferredReasoningEffort, models, type ReasoningEffort } from "@/lib/constants";
 import { trpc } from "@/lib/trpc/react";
 
 // Storage key for passing initial message data to chat page
@@ -29,6 +26,8 @@ export type InitialMessageData = {
   videoMode: boolean;
   imageMode: boolean;
   reasoningEffort: ReasoningEffort;
+  deepResearch: boolean;
+  projectId: string | null;
 };
 
 type SuggestionCardProps = {
@@ -62,9 +61,14 @@ export default function ChatHome() {
   const [webSearch, setWebSearch] = useState(false);
   const [videoMode, setVideoMode] = useState(false);
   const [imageMode, setImageMode] = useState(false);
-  const [reasoningEffort, setReasoningEffort] = useState<ReasoningEffort>("high");
+  const [reasoningEffort, setReasoningEffort] = useState<ReasoningEffort>(
+    getPreferredReasoningEffort(models[0].efforts),
+  );
+  const [deepResearch, setDeepResearch] = useState(false);
+  const [projectId, setProjectId] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  const projectsQuery = trpc.projects.list.useQuery();
   const createChatMutation = trpc.chat.createChat.useMutation();
 
   const handleSubmit = async (
@@ -75,9 +79,10 @@ export default function ChatHome() {
       videoMode: boolean;
       imageMode: boolean;
       reasoningEffort: ReasoningEffort;
+      deepResearch: boolean;
     },
   ) => {
-    if (!message.text.trim() || isSubmitting) {
+    if ((!message.text.trim() && message.files.length === 0) || isSubmitting) {
       return;
     }
 
@@ -85,7 +90,7 @@ export default function ChatHome() {
 
     try {
       // Create a new chat via tRPC
-      const chatId = await createChatMutation.mutateAsync();
+      const chatId = await createChatMutation.mutateAsync({ projectId });
 
       // Store the initial message data in sessionStorage
       const initialMessageData: InitialMessageData = {
@@ -101,6 +106,8 @@ export default function ChatHome() {
         videoMode: options.videoMode,
         imageMode: options.imageMode,
         reasoningEffort: options.reasoningEffort,
+        deepResearch: options.deepResearch,
+        projectId,
       };
 
       sessionStorage.setItem(INITIAL_MESSAGE_STORAGE_KEY, JSON.stringify(initialMessageData));
@@ -177,6 +184,14 @@ export default function ChatHome() {
 
         {/* Composer */}
         <div>
+          <div className="mb-3 flex flex-wrap items-center gap-2">
+            <ProjectSelect
+              projects={projectsQuery.data ?? []}
+              value={projectId}
+              onValueChange={setProjectId}
+              onCreateClick={() => router.push("/settings/projects")}
+            />
+          </div>
           <ChatComposer
             value={input}
             onValueChange={setInput}
@@ -193,6 +208,8 @@ export default function ChatHome() {
             onImageModeChange={setImageMode}
             reasoningEffort={reasoningEffort}
             onReasoningEffortChange={setReasoningEffort}
+            deepResearch={deepResearch}
+            onDeepResearchChange={setDeepResearch}
           />
         </div>
       </div>

@@ -293,6 +293,11 @@
     @apply font-sans font-medium tracking-tight leading-[1.2];
   }
 
+  body:not(.mono):not(.design-classic) p,
+  body:not(.mono):not(.design-classic) div {
+    @apply font-sans font-medium tracking-tight;
+  }
+
   button {
     @apply cursor-pointer;
   }

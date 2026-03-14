@@ -1,69 +1,78 @@
-import { type AnthropicProviderOptions, createAnthropic } from "@ai-sdk/anthropic";
-import { createGoogleGenerativeAI, type GoogleGenerativeAIProviderOptions } from "@ai-sdk/google";
-import { createGroq } from "@ai-sdk/groq";
-import { createXai } from "@ai-sdk/xai";
-import { createOpenAI, type OpenAIResponsesProviderOptions } from "@ai-sdk/openai";
-import { createOpenRouter, type OpenRouterProviderOptions } from "@openrouter/ai-sdk-provider";
 import {
+  consumeStream,
   convertToModelMessages,
-  type LanguageModel,
+  createUIMessageStream,
+  createUIMessageStreamResponse,
+  generateId,
+  readUIMessageStream,
   safeValidateUIMessages,
   stepCountIs,
   streamText,
   type UIMessage,
 } from "ai";
 import { checkBotId } from "botid/server";
-import { and, eq } from "drizzle-orm";
 import { headers } from "next/headers";
 import { NextResponse } from "next/server";
-import { z } from "zod";
-import { db } from "@/db/drizzle";
-import { customModel, providerKey, providerSetting } from "@/db/schema";
-import { env } from "@/env";
 import { auth } from "@/lib/auth";
 import { generateTitle, getChatById, updateChat } from "@/lib/chat";
+import { clearChatGeneration, startChatGeneration } from "@/lib/chat-generation";
 import { createChatTools } from "@/lib/chat-tools";
-import { models } from "@/lib/constants";
-import { decryptFromB64 } from "@/lib/crypto";
-import { consumeUsage, getUsageSummary, type UsageCategory, UsageLimitError } from "@/lib/usage";
+import { getModelContextWindow, getModelDefinition } from "@/lib/constants";
+import { buildMemoryPrompt, getUserMemoryState, maybeAutoSaveMemories } from "@/lib/memory";
+import { buildProjectPrompt } from "@/lib/project-context";
+import { consumeUsage, UsageLimitError } from "@/lib/usage";
 import { checkRateLimit } from "@/lib/rate-limit";
+import { ChatRouteError, resolveChatModelContext } from "./_lib/model";
+import { buildChatSystemPrompt } from "./_lib/prompt";
+import { ChatRequestSchema, setPendingState } from "./_lib/schema";
 
-function isPrivateUrl(url: string): boolean {
-  try {
-    const parsed = new URL(url);
-    if (parsed.protocol !== "https:" && parsed.protocol !== "http:") {
-      return true;
+function getErrorMessage(error: unknown): string | undefined {
+  if (typeof error === "string") {
+    return error;
+  }
+
+  if (error && typeof error === "object") {
+    const message = "message" in error ? error.message : undefined;
+    if (typeof message === "string" && message.trim()) {
+      return message;
     }
-    const hostname = parsed.hostname.toLowerCase();
-    if (
-      hostname === "localhost" ||
-      hostname === "127.0.0.1" ||
-      hostname === "0.0.0.0" ||
-      hostname === "[::1]" ||
-      hostname.startsWith("10.") ||
-      hostname.startsWith("192.168.") ||
-      hostname.startsWith("169.254.") ||
-      hostname.endsWith(".internal") ||
-      hostname.endsWith(".local")
-    ) {
-      return true;
-    }
-    const match172 = hostname.match(/^172\.(\d+)\./);
-    if (match172) {
-      const second = Number.parseInt(match172[1], 10);
-      if (second >= 16 && second <= 31) {
-        return true;
+
+    const cause = "cause" in error ? error.cause : undefined;
+    if (cause) {
+      const causeMessage = getErrorMessage(cause);
+      if (causeMessage) {
+        return causeMessage;
       }
     }
-    return false;
-  } catch {
-    return true;
   }
+
+  return undefined;
 }
 
-const UIMessagesSchema = z
-  .array(z.record(z.string(), z.unknown()))
-  .transform((value) => value as unknown as UIMessage[]);
+function formatChatStreamError(error: unknown, modelId: string): string {
+  const rawMessage = getErrorMessage(error) ?? "An unexpected error occurred.";
+  const normalizedMessage = rawMessage.toLowerCase();
+  const isContextOverflow =
+    normalizedMessage.includes("context window") ||
+    normalizedMessage.includes("maximum context length") ||
+    normalizedMessage.includes("model_context_window_exceeded") ||
+    normalizedMessage.includes("prompt is too long") ||
+    normalizedMessage.includes("too many input tokens") ||
+    normalizedMessage.includes("input is too long");
+
+  if (!isContextOverflow) {
+    return rawMessage;
+  }
+
+  const modelName = getModelDefinition(modelId)?.name ?? modelId;
+  const contextWindow = getModelContextWindow(modelId);
+
+  if (contextWindow) {
+    return `${modelName} exceeded its context window (${new Intl.NumberFormat("en-US").format(contextWindow)} tokens). Start a new chat or trim earlier messages/files.`;
+  }
+
+  return `${modelName} exceeded its context window. Start a new chat or trim earlier messages/files.`;
+}
 
 export async function POST(req: Request) {
   const headersList = await headers();
@@ -96,17 +105,7 @@ export async function POST(req: Request) {
     );
   }
 
-  const parsedBody = z
-    .object({
-      id: z.string().min(1),
-      messages: UIMessagesSchema.optional(),
-      model: z.string(),
-      webSearch: z.boolean().optional(),
-      reasoningEffort: z.enum(["low", "medium", "high"]).optional(),
-      video: z.boolean().optional(),
-      image: z.boolean().optional(),
-    })
-    .safeParse(body);
+  const parsedBody = ChatRequestSchema.safeParse(body);
 
   if (!parsedBody.success) {
     return NextResponse.json({ error: "Invalid request body" }, { status: 400 });
@@ -120,6 +119,10 @@ export async function POST(req: Request) {
     reasoningEffort = "high",
     video: videoMode = false,
     image: imageMode = false,
+    deepResearch = false,
+    responseStyle = "retry",
+    forceWebSearch = false,
+    additionalInstruction,
   } = parsedBody.data;
 
   const validatedMessages = await safeValidateUIMessages<UIMessage>({
@@ -131,316 +134,254 @@ export async function POST(req: Request) {
   }
 
   const messages = validatedMessages.data;
-  const voids = createOpenAI({
-    apiKey: "no_api_key_needed",
-    baseURL: "https://capi.voids.top/v2", // safe custom openai-compatible api
-  });
-  const isCustomModel = baseModel.startsWith("custom:");
-  const customModelId = isCustomModel ? baseModel.slice("custom:".length) : null;
-  const selectedModel = models.find((m) => m.value === baseModel);
-  const customEntry = customModelId
-    ? await db
-        .select()
-        .from(customModel)
-        .where(and(eq(customModel.userId, userId), eq(customModel.id, customModelId)))
-        .limit(1)
-        .then((rows) => rows[0] ?? null)
-    : null;
 
-  if (!selectedModel && !customEntry) {
-    return NextResponse.json({ error: "Unknown model" }, { status: 400 });
-  }
+  let memoryState: Awaited<ReturnType<typeof getUserMemoryState>>;
+  let modelContext: Awaited<ReturnType<typeof resolveChatModelContext>>;
 
-  const isPremiumModel = Boolean(customEntry?.premium ?? selectedModel?.premium ?? false);
-
-  if (isAnonymous && isPremiumModel) {
-    return NextResponse.json(
-      { error: "Premium models are not available for guest sessions." },
-      { status: 403 },
-    );
-  }
-
-  const usageCategory: UsageCategory = isPremiumModel ? "premium" : "basic";
-
-  const [providerKeys, providerSettings] = await Promise.all([
-    db.select().from(providerKey).where(eq(providerKey.userId, userId)),
-    db.select().from(providerSetting).where(eq(providerSetting.userId, userId)),
-  ]);
-
-  const providerKeyMap = new Map(providerKeys.map((entry) => [entry.provider, entry.keyEnc]));
-  const providerSettingMap = new Map(providerSettings.map((entry) => [entry.provider, entry]));
-
-  const providerId = customEntry
-    ? "openai_compatible"
-    : (selectedModel?.provider ?? selectedModel?.author);
-  if (!providerId) {
-    return NextResponse.json({ error: "Unknown provider" }, { status: 400 });
-  }
-
-  let useByok = false;
-  let byokApiKey: string | undefined;
-  let byokBaseUrl: string | undefined;
-  let byokApiStyle: "chat" | "responses" = "responses";
-
-  if (providerId === "openai_compatible") {
-    const compatKey = providerKeyMap.get("openai_compatible");
-    const compatSetting = providerSettingMap.get("openai_compatible");
-    const compatBaseUrl = compatSetting?.baseUrl ?? null;
-    if (!compatKey || !compatBaseUrl) {
-      return NextResponse.json(
-        { error: "OpenAI-compatible endpoint not configured.", reason: "byok" },
-        { status: 400 },
-      );
+  try {
+    [memoryState, modelContext] = await Promise.all([
+      getUserMemoryState(userId),
+      resolveChatModelContext({
+        userId,
+        isAnonymous,
+        baseModel,
+        reasoningEffort,
+      }),
+    ]);
+  } catch (error) {
+    if (error instanceof ChatRouteError) {
+      return NextResponse.json(error.body, { status: error.status });
     }
-    byokApiKey = await decryptFromB64(compatKey);
-    byokBaseUrl = compatBaseUrl;
-    byokApiStyle = compatSetting?.apiStyle === "chat" ? "chat" : "responses";
-    useByok = true;
-  } else {
-    const keyEnc = providerKeyMap.get(providerId);
-    const setting = providerSettingMap.get(providerId);
-    const preferByok = setting?.preferByok ?? false;
-    if (preferByok && keyEnc) {
-      byokApiKey = await decryptFromB64(keyEnc);
-      byokBaseUrl = setting?.baseUrl ?? undefined;
-      byokApiStyle =
-        setting?.apiStyle === "chat" ? "chat" : providerId === "xai" ? "chat" : "responses";
-      useByok = true;
+    throw error;
+  }
+
+  const { model, providerOptions, usageCategory, useByok } = modelContext;
+
+  const webSearchEnabled = webSearch || forceWebSearch || deepResearch;
+  const tools = createChatTools({ videoMode, imageMode, webSearch: webSearchEnabled });
+
+  const modelMessages = await convertToModelMessages(messages);
+  const currentDate = new Date().toISOString().split("T")[0];
+  const persistentMemory = buildMemoryPrompt(memoryState);
+  const chat = await getChatById(id, userId);
+  if (!chat) {
+    return NextResponse.json({ error: "Chat not found" }, { status: 404 });
+  }
+
+  const responseMessageId = generateId();
+  const pendingAssistantMessage = setPendingState(
+    {
+      id: responseMessageId,
+      role: "assistant",
+      parts: [],
+    } as UIMessage,
+    true,
+  );
+
+  let generationAbortController: AbortController | undefined;
+  let pendingStateRolledBack = false;
+
+  const rollbackPendingAssistantState = async () => {
+    if (pendingStateRolledBack) {
+      return;
     }
-  }
 
-  if (providerId === "xai" && useByok && !byokBaseUrl) {
-    byokBaseUrl = "https://api.x.ai/v1";
-  }
+    pendingStateRolledBack = true;
 
-  // Validate BYOK base URL is not pointing to a private network
-  if (byokBaseUrl && isPrivateUrl(byokBaseUrl)) {
-    byokBaseUrl = undefined;
-  }
-
-  if (!useByok) {
     try {
-      const usageSummary = await getUsageSummary({ userId, isAnonymous });
-      const categoryUsage = usageSummary.usage.find((usage) => usage.category === usageCategory);
+      await updateChat(id, userId, messages);
+    } catch (error) {
+      console.error("Failed to rollback pending chat response", error);
+    }
+  };
 
-      // Allow if Max Mode is enabled, even if remaining is 0
-      const isLimitReached =
-        categoryUsage?.remaining !== null &&
-        categoryUsage?.remaining !== undefined &&
-        categoryUsage.remaining <= 0;
+  const clearGenerationLock = () => {
+    if (!generationAbortController) {
+      return;
+    }
 
-      if (isLimitReached && !usageSummary.maxModeEnabled) {
-        throw new UsageLimitError(
-          "You've hit the usage limit for your plan.",
-          usageSummary.maxModeEligible,
-        );
-      }
+    clearChatGeneration(id, generationAbortController);
+    generationAbortController = undefined;
+  };
 
-      // Consume usage upfront (atomic increment) to prevent TOCTOU race
+  await updateChat(id, userId, [...messages, pendingAssistantMessage]);
+
+  let projectPrompt: string | null;
+
+  try {
+    projectPrompt = await buildProjectPrompt(chat.projectId, userId);
+    generationAbortController = startChatGeneration(id, userId);
+    if (!useByok) {
       await consumeUsage({
         userId,
         category: usageCategory,
         isAnonymous,
       });
-    } catch (error) {
-      if (error instanceof UsageLimitError) {
-        return NextResponse.json({ error: error.message, reason: "usage_limit" }, { status: 402 });
-      }
-
-      console.error("Failed to check usage", error);
-      return NextResponse.json({ error: "Unable to check usage" }, { status: 500 });
     }
+  } catch (error) {
+    await rollbackPendingAssistantState();
+    clearGenerationLock();
+    if (error instanceof UsageLimitError) {
+      return NextResponse.json({ error: error.message, reason: "usage_limit" }, { status: 402 });
+    }
+    throw error;
   }
 
-  const resolvedModelId = customEntry?.modelId ?? selectedModel?.value;
-  if (!resolvedModelId) {
-    return NextResponse.json({ error: "Unknown model" }, { status: 400 });
-  }
-
-  let model: LanguageModel;
-  const openrouter = createOpenRouter({
-    apiKey: env.OPENROUTER_API_KEY,
-    headers: {
-      "X-Title": "Deni AI",
-      "HTTP-Referer": "https://deniai.app",
-    },
+  const systemPrompt = buildChatSystemPrompt({
+    currentDate,
+    persistentMemory,
+    projectPrompt,
+    additionalInstruction,
+    responseStyle,
+    deepResearch,
+    forceWebSearch,
+    videoMode,
+    imageMode,
   });
-  const getOpenRouterModel = () => {
-    return openrouter.chat(`${providerId}/${resolvedModelId}`, {
-      provider: {
-        allow_fallbacks: false,
-        only: ["openai", "anthropic", "google", "groq", "xai"],
-      },
+
+  let result: ReturnType<typeof streamText>;
+
+  try {
+    result = streamText({
+      model: model,
+      messages: modelMessages,
+      abortSignal: generationAbortController.signal,
+      stopWhen: stepCountIs(50),
+      tools,
+      toolChoice: videoMode
+        ? { type: "tool", toolName: "video" }
+        : imageMode
+          ? { type: "tool", toolName: "image" }
+          : undefined,
+      providerOptions,
+      system: systemPrompt,
     });
-  };
-  switch (providerId) {
-    case "openai": {
-      if (useByok) {
-        const provider = createOpenAI({
-          apiKey: byokApiKey,
-          baseURL: byokBaseUrl,
-        });
-        model =
-          byokApiStyle === "chat"
-            ? provider.chat(resolvedModelId)
-            : provider.responses(resolvedModelId);
-      } else {
-        model = getOpenRouterModel();
-      }
-      break;
-    }
-    case "anthropic": {
-      if (useByok) {
-        const provider = createAnthropic({
-          apiKey: byokApiKey,
-          baseURL: byokBaseUrl,
-        });
-        model = provider(resolvedModelId.replace(".", "-")); // fix ex. "claude-sonnet-4.5" (openrouter id) to ex. "claude-sonnet-4-5" (anthropic id)
-      } else {
-        model = getOpenRouterModel();
-      }
-      break;
-    }
-    case "google": {
-      if (useByok) {
-        const provider = createGoogleGenerativeAI({
-          apiKey: byokApiKey,
-          baseURL: byokBaseUrl,
-        });
-        model = provider(resolvedModelId);
-      } else {
-        model = getOpenRouterModel();
-      }
-      break;
-    }
-    case "xai": {
-      if (useByok) {
-        const provider = createXai({
-          apiKey: byokApiKey,
-          baseURL: byokBaseUrl,
-        });
-        model = provider.chat(resolvedModelId.replace("xai.", ""));
-      } else {
-        model = voids.chat(resolvedModelId);
-      }
-      break;
-    }
-    case "openrouter": {
-      model = getOpenRouterModel();
-      break;
-    }
-    case "groq": {
-      if (useByok) {
-        const provider = createGroq({
-          apiKey: byokApiKey,
-          baseURL: byokBaseUrl,
-        });
-        model = provider(resolvedModelId);
-      } else {
-        model = createGroq({
-          apiKey: env.GROQ_API_KEY,
-        })(resolvedModelId);
-      }
-      break;
-    }
-    case "openai_compatible": {
-      const provider = createOpenAI({
-        apiKey: byokApiKey,
-        baseURL: byokBaseUrl,
-      });
-      model =
-        byokApiStyle === "chat"
-          ? provider.chat(resolvedModelId.replace(".", "-"))
-          : provider.responses(resolvedModelId.replace(".", "-"));
-      // fix claude model ids for openai-compatible claude endpoints
-
-      break;
-    }
-    default:
-      model = voids.chat(resolvedModelId);
-      break;
+  } catch (error) {
+    await rollbackPendingAssistantState();
+    clearGenerationLock();
+    throw new Error(formatChatStreamError(error, baseModel));
   }
 
-  const tools = createChatTools({ videoMode, imageMode, webSearch });
+  let lastPersistedSignature = "";
+  let latestPersistedMessage: UIMessage = pendingAssistantMessage;
+  let partialPersistPromise: Promise<void> = Promise.resolve();
+  let lastPersistAt = 0;
 
-  const modelMessages = await convertToModelMessages(messages);
-  const currentDate = new Date().toISOString().split("T")[0];
-  const systemPrompt = videoMode
-    ? [
-        "You are a helpful AI assistant.",
-        `Current date: ${currentDate}.`,
-        "Video mode is enabled. Always call the `video` tool exactly once using the user's message as the prompt.",
-        "Do not call other tools. After the tool returns, provide a short caption for the video.",
-      ].join(" ")
-    : [
-        "You are a helpful AI assistant.",
-        `Current date: ${currentDate}.`,
-        "Guidelines:",
-        "- Provide accurate, helpful, and concise responses.",
-        "- Use the search tool when you need current information or when the user asks about recent events.",
-        "- Always cite sources when using information from search results.",
-        "- If you're unsure about something, acknowledge the uncertainty rather than making up information.",
-        "- Format code blocks with appropriate syntax highlighting.",
-        "- Use markdown formatting for better readability.",
-      ].join(" ");
+  const queuePartialPersist = (message: UIMessage, force: boolean = false) => {
+    const pendingMessage = setPendingState(message, true);
+    const signature = JSON.stringify(pendingMessage.parts);
+    const now = Date.now();
 
-  const result = streamText({
-    model: model,
-    messages: modelMessages,
-    stopWhen: stepCountIs(50),
-    tools,
-    toolChoice: videoMode
-      ? { type: "tool", toolName: "video" }
-      : imageMode
-        ? { type: "tool", toolName: "image" }
-        : undefined,
-    providerOptions: {
-      openai: {
-        reasoningEffort,
-        reasoningSummary: "detailed",
-      } satisfies OpenAIResponsesProviderOptions,
-      anthropic: {
-        effort: reasoningEffort,
-        thinking: {
-          type: "enabled",
-          budgetTokens:
-            reasoningEffort === "low" ? 1024 : reasoningEffort === "high" ? 16000 : 8192,
-        },
-      } satisfies AnthropicProviderOptions,
-      google: {
-        thinkingConfig: {
-          thinkingLevel: reasoningEffort,
-          includeThoughts: true,
-        },
-      } satisfies GoogleGenerativeAIProviderOptions,
-      openrouter: {
-        reasoning: {
-          enabled: true,
-          effort: reasoningEffort,
-        },
-      } satisfies OpenRouterProviderOptions,
-    },
-    system: systemPrompt,
-  });
+    if (!force) {
+      if (signature === lastPersistedSignature) {
+        return;
+      }
 
-  // send sources and reasoning back to the client
-  return result.toUIMessageStreamResponse({
+      if (now - lastPersistAt < 750) {
+        latestPersistedMessage = pendingMessage;
+        return;
+      }
+    }
+
+    latestPersistedMessage = pendingMessage;
+    lastPersistedSignature = signature;
+    lastPersistAt = now;
+
+    partialPersistPromise = partialPersistPromise
+      .catch(() => undefined)
+      .then(async () => {
+        try {
+          await updateChat(id, userId, [...messages, latestPersistedMessage]);
+        } catch (error) {
+          console.error("Failed to persist partial chat response", error);
+        }
+      });
+  };
+
+  const stream = createUIMessageStream<UIMessage>({
     originalMessages: messages,
-    sendSources: true,
-    sendReasoning: true,
-    onFinish: async ({ messages: updatedMessages }) => {
-      let newTitle: string | undefined;
-
+    execute: async ({ writer }) => {
       try {
-        const chat = await getChatById(id, userId);
-        if (chat?.title === "New Chat") {
-          newTitle = await generateTitle(updatedMessages);
+        writer.write({
+          type: "start",
+          messageId: responseMessageId,
+        });
+
+        const uiStream = result.toUIMessageStream<UIMessage>({
+          sendReasoning: true,
+          sendSources: true,
+          sendStart: false,
+          onError: (error) => formatChatStreamError(error, baseModel),
+        });
+        const [clientStream, persistenceStream] = uiStream.tee();
+
+        writer.merge(clientStream);
+
+        for await (const message of readUIMessageStream<UIMessage>({
+          stream: persistenceStream,
+        })) {
+          queuePartialPersist(message);
+        }
+
+        queuePartialPersist(latestPersistedMessage, true);
+
+        await partialPersistPromise;
+      } catch (error) {
+        await rollbackPendingAssistantState();
+        clearGenerationLock();
+        throw new Error(formatChatStreamError(error, baseModel));
+      }
+    },
+    onFinish: async ({ messages: updatedMessages, isAborted }) => {
+      try {
+        await partialPersistPromise;
+
+        let newTitle: string | undefined;
+
+        try {
+          const chat = await getChatById(id, userId);
+          if (chat?.title === "New Chat") {
+            newTitle = await generateTitle(updatedMessages);
+          }
+        } catch (error) {
+          console.error("Failed to generate title", error);
+        }
+
+        await updateChat(
+          id,
+          userId,
+          updatedMessages.map((message) =>
+            message.id === responseMessageId ? setPendingState(message, false) : message,
+          ),
+          newTitle,
+        );
+
+        pendingStateRolledBack = true;
+
+        if (isAborted) {
+          return;
+        }
+
+        try {
+          await maybeAutoSaveMemories({
+            userId,
+            messages: updatedMessages,
+            enabled: memoryState.profile.autoMemory,
+          });
+        } catch (error) {
+          console.error("Failed to auto-save memories", error);
         }
       } catch (error) {
-        console.error("Failed to generate title", error);
+        await rollbackPendingAssistantState();
+        throw error;
+      } finally {
+        clearGenerationLock();
       }
-
-      await updateChat(id, userId, updatedMessages, newTitle);
     },
+  });
+
+  return createUIMessageStreamResponse({
+    stream,
+    consumeSseStream: consumeStream,
   });
 }

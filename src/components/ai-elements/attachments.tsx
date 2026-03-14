@@ -232,12 +232,19 @@ export const AttachmentPreview = ({
   );
 
   const renderContent = () => {
-    if (mediaCategory === "image" && data.type === "file" && data.url) {
-      return renderAttachmentImage(data.url, data.filename, variant === "grid");
+    const previewUrl =
+      "previewUrl" in data && typeof data.previewUrl === "string"
+        ? data.previewUrl
+        : data.type === "file"
+          ? data.url
+          : undefined;
+
+    if (mediaCategory === "image" && data.type === "file" && previewUrl) {
+      return renderAttachmentImage(previewUrl, data.filename, variant === "grid");
     }
 
-    if (mediaCategory === "video" && data.type === "file" && data.url) {
-      return <video className="size-full object-cover" muted src={data.url} />;
+    if (mediaCategory === "video" && data.type === "file" && previewUrl) {
+      return <video className="size-full object-cover" muted src={previewUrl} />;
     }
 
     const Icon = mediaCategoryIcons[mediaCategory];
@@ -275,6 +282,10 @@ export const AttachmentInfo = ({
 }: AttachmentInfoProps) => {
   const { data, variant } = useAttachmentContext();
   const label = getAttachmentLabel(data);
+  const uploadStatus =
+    "uploadStatus" in data && typeof data.uploadStatus === "string" ? data.uploadStatus : null;
+  const uploadError =
+    "uploadError" in data && typeof data.uploadError === "string" ? data.uploadError : null;
 
   if (variant === "grid") {
     return null;
@@ -283,6 +294,12 @@ export const AttachmentInfo = ({
   return (
     <div className={cn("min-w-0 flex-1", className)} {...props}>
       <span className="block truncate">{label}</span>
+      {uploadStatus === "uploading" ? (
+        <span className="block truncate text-muted-foreground text-xs">Uploading...</span>
+      ) : null}
+      {uploadStatus === "error" && uploadError ? (
+        <span className="block truncate text-destructive text-xs">{uploadError}</span>
+      ) : null}
       {showMediaType && data.mediaType && (
         <span className="block truncate text-muted-foreground text-xs">{data.mediaType}</span>
       )}

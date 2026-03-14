@@ -9,10 +9,11 @@ import { toast } from "sonner";
 import type { BillingPlanId, ClientPlan, IndividualPlanId } from "@/lib/billing";
 import { isTeamPlan } from "@/lib/billing";
 import { isBillingDisabled } from "@/lib/billing-config";
-import { getBillingPlanCopy } from "@/lib/billing-plan-copy";
+import { useBillingPlanCopy } from "@/lib/billing-plan-copy";
 import { formatMinorCurrency } from "@/lib/currency";
 import { trpc } from "@/lib/trpc/react";
 import { cn } from "@/lib/utils";
+import { SettingsPageShell } from "../settings-page-shell";
 import { PlanHighlights } from "./plan-highlights";
 import {
   AlertDialog,
@@ -129,7 +130,7 @@ function PlanCard({
 }) {
   const t = useExtracted();
   const formatPriceLabel = useFormatPriceLabel();
-  const planCopy = getBillingPlanCopy(t, plan.id);
+  const planCopy = useBillingPlanCopy(plan.id);
   const mode = plan.mode ?? "subscription";
   const canChange = hasActiveSubscription && !cancelDate && !isCurrent && mode === "subscription";
   const isBlockedByCancel = Number.isInteger(cancelDate) && Boolean(activePlanId) && !isCurrent;
@@ -283,13 +284,10 @@ function BillingDisabled() {
   const t = useExtracted();
 
   return (
-    <div className="mx-auto flex max-w-4xl w-full flex-col gap-6">
-      <div className="space-y-2">
-        <h1 className="text-3xl font-semibold tracking-tight">{t("Billing")}</h1>
-        <p className="text-muted-foreground text-sm">
-          {t("Billing is disabled for this environment.")}
-        </p>
-      </div>
+    <SettingsPageShell
+      title={t("Billing")}
+      description={t("Billing is disabled for this environment.")}
+    >
       <Card>
         <CardHeader>
           <CardTitle>{t("Billing unavailable")}</CardTitle>
@@ -298,7 +296,7 @@ function BillingDisabled() {
           </CardDescription>
         </CardHeader>
       </Card>
-    </div>
+    </SettingsPageShell>
   );
 }
 
@@ -500,13 +498,7 @@ function BillingPageContent() {
   }
 
   return (
-    <div className="mx-auto flex max-w-4xl w-full flex-col gap-6">
-      {/* Page Header */}
-      <div className="space-y-1">
-        <h1 className="text-xl font-semibold tracking-tight">{t("Billing")}</h1>
-        <p className="text-muted-foreground text-sm">{t("Manage your subscription and usage")}</p>
-      </div>
-
+    <SettingsPageShell title={t("Billing")} description={t("Manage your subscription and usage")}>
       {/* Current Plan */}
       <Card>
         <CardHeader className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
@@ -829,7 +821,7 @@ function BillingPageContent() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </div>
+    </SettingsPageShell>
   );
 }
 

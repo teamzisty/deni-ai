@@ -1,40 +1,90 @@
 "use client";
 
-import { CheckCircle2, Code2, Loader2, ShieldCheck, XCircle } from "lucide-react";
+import { CheckCircle2, Code2, KeyRound, Loader2, ShieldCheck, XCircle } from "lucide-react";
 import { useSearchParams } from "next/navigation";
 import { useExtracted } from "next-intl";
 import { useCallback, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 
-type Status = "idle" | "approving" | "success" | "error";
+type Status = "idle" | "selectingKey" | "success" | "error";
+
+type ApiKeyOption = {
+  id: string;
+  name: string;
+  keyPrefix: string;
+  createdAt: string;
+  lastUsedAt: string | null;
+};
+
+type ApproveResponse = {
+  code?: string;
+  error?: string;
+  apiKeys?: ApiKeyOption[];
+};
 
 export default function FlixaAuthorizePage() {
   const t = useExtracted();
   const searchParams = useSearchParams();
   const code = searchParams.get("code");
   const [status, setStatus] = useState<Status>("idle");
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
+  const [apiKeys, setApiKeys] = useState<ApiKeyOption[]>([]);
+  const [selectedKeyId, setSelectedKeyId] = useState("");
 
-  const handleApprove = useCallback(async () => {
-    if (!code) return;
-    setStatus("approving");
-    try {
-      const res = await fetch("/api/device-auth", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action: "approve", userCode: code }),
-      });
-      if (!res.ok) {
-        const data = await res.json();
-        throw new Error(data.error || "Failed to approve");
+  const formatDate = useCallback(
+    (value: string) =>
+      new Intl.DateTimeFormat(undefined, {
+        month: "short",
+        day: "numeric",
+        year: "numeric",
+      }).format(new Date(value)),
+    [],
+  );
+
+  const handleApprove = useCallback(
+    async (revokeKeyId?: string) => {
+      if (!code) return;
+      setIsSubmitting(true);
+      setErrorMessage("");
+      try {
+        const res = await fetch("/api/device-auth", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            action: "approve",
+            userCode: code,
+            ...(revokeKeyId ? { revokeKeyId } : {}),
+          }),
+        });
+        if (!res.ok) {
+          const data = (await res.json()) as ApproveResponse;
+          if (
+            res.status === 409 &&
+            data.code === "API_KEY_LIMIT_REACHED" &&
+            Array.isArray(data.apiKeys)
+          ) {
+            setApiKeys(data.apiKeys);
+            setSelectedKeyId(data.apiKeys[0]?.id ?? "");
+            setStatus("selectingKey");
+            return;
+          }
+          throw new Error(data.error || "Failed to approve");
+        }
+        setApiKeys([]);
+        setSelectedKeyId("");
+        setStatus("success");
+      } catch (err) {
+        setErrorMessage(err instanceof Error ? err.message : "Unknown error");
+        setStatus("error");
+      } finally {
+        setIsSubmitting(false);
       }
-      setStatus("success");
-    } catch (err) {
-      setErrorMessage(err instanceof Error ? err.message : "Unknown error");
-      setStatus("error");
-    }
-  }, [code]);
+    },
+    [code],
+  );
 
   if (!code) {
     return (
@@ -95,6 +145,90 @@ export default function FlixaAuthorizePage() {
     );
   }
 
+  if (status === "selectingKey") {
+    return (
+      <div className="flex flex-1 items-center justify-center">
+        <Card className="w-full max-w-lg">
+          <CardHeader className="text-center">
+            <div className="mx-auto mb-2 flex h-12 w-12 items-center justify-center rounded-full bg-amber-500/10">
+              <KeyRound className="h-6 w-6 text-amber-600" />
+            </div>
+            <CardTitle>{t("API key limit reached")}</CardTitle>
+            <CardDescription>
+              {t(
+                "You already have 5 API keys. Revoke one to continue authorizing the Flixa extension.",
+              )}
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="space-y-2">
+              <p className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
+                {t("Select an API key to revoke.")}
+              </p>
+              <RadioGroup
+                value={selectedKeyId}
+                onValueChange={setSelectedKeyId}
+                className="space-y-2"
+              >
+                {apiKeys.map((apiKey) => (
+                  <label
+                    key={apiKey.id}
+                    htmlFor={`api-key-${apiKey.id}`}
+                    className="flex cursor-pointer items-start gap-3 rounded-lg border border-border p-3 transition-colors hover:bg-muted/40"
+                  >
+                    <RadioGroupItem
+                      value={apiKey.id}
+                      id={`api-key-${apiKey.id}`}
+                      className="mt-0.5"
+                    />
+                    <div className="min-w-0 flex-1">
+                      <div className="flex flex-wrap items-center justify-between gap-2">
+                        <span className="font-medium text-sm">{apiKey.name}</span>
+                        <code className="font-mono text-xs text-muted-foreground">
+                          {apiKey.keyPrefix}••••••••
+                        </code>
+                      </div>
+                      <div className="mt-1 flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground">
+                        <span>{t("Created {date}", { date: formatDate(apiKey.createdAt) })}</span>
+                        <span>
+                          {apiKey.lastUsedAt
+                            ? t("Last used {date}", { date: formatDate(apiKey.lastUsedAt) })
+                            : t("Never used")}
+                        </span>
+                      </div>
+                    </div>
+                  </label>
+                ))}
+              </RadioGroup>
+            </div>
+
+            <p className="text-xs text-muted-foreground">
+              {t("This immediately invalidates the selected API key.")}
+            </p>
+
+            <Button
+              onClick={() => handleApprove(selectedKeyId)}
+              disabled={!selectedKeyId || isSubmitting}
+              className="w-full"
+            >
+              {isSubmitting ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  {t("Approving...")}
+                </>
+              ) : (
+                <>
+                  <ShieldCheck className="h-4 w-4" />
+                  {t("Revoke selected key and approve")}
+                </>
+              )}
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
   return (
     <div className="flex flex-1 items-center justify-center">
       <Card className="w-full max-w-md">
@@ -120,8 +254,8 @@ export default function FlixaAuthorizePage() {
             </div>
           </div>
           <div className="flex flex-col gap-2">
-            <Button onClick={handleApprove} disabled={status === "approving"} className="w-full">
-              {status === "approving" ? (
+            <Button onClick={() => handleApprove()} disabled={isSubmitting} className="w-full">
+              {isSubmitting ? (
                 <>
                   <Loader2 className="h-4 w-4 animate-spin" />
                   {t("Approving...")}
