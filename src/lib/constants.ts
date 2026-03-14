@@ -83,6 +83,7 @@ export type ModelDefinition = {
   provider?: string;
   features: string[];
   efforts: ModelEfforts;
+  contextWindow?: number;
 };
 
 export const models: readonly ModelDefinition[] = [
@@ -93,6 +94,7 @@ export const models: readonly ModelDefinition[] = [
     featured: true,
     features: ["reasoning", "smart", "fast"],
     efforts: ["none", "low", "medium", "high", "xhigh"],
+    contextWindow: 1_000_000,
   },
   {
     name: "GPT-5.3 Codex",
@@ -267,6 +269,7 @@ export const models: readonly ModelDefinition[] = [
     featured: true,
     features: ["reasoning", "smart"],
     efforts: ["low", "medium", "high", "max"],
+    contextWindow: 1_000_000,
   },
   {
     name: "Claude Sonnet 4.6",
@@ -276,6 +279,7 @@ export const models: readonly ModelDefinition[] = [
     featured: true,
     features: ["reasoning", "smart", "fast"],
     efforts: ["low", "medium", "high"],
+    contextWindow: 1_000_000,
   },
   {
     name: "Claude Sonnet 4.5",
@@ -392,6 +396,14 @@ export const GA_ID = "G-B5H8G73JTN";
 
 // Email configuration
 export const EMAIL_FROM = "Deni AI <noreply@deniai.app>";
+
+export function getModelDefinition(modelId: string) {
+  return models.find((model) => model.value === modelId);
+}
+
+export function getModelContextWindow(modelId: string) {
+  return getModelDefinition(modelId)?.contextWindow;
+}
 
 const escapeHtml = (unsafe: string) =>
   unsafe
