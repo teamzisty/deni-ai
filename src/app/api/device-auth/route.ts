@@ -142,36 +142,35 @@ async function handleApprove(body: unknown) {
       return apiKeyLimitResponse(userId, 409);
     }
 
-    try {
-      await db.transaction(async (tx) => {
-        const claimed = await tx
-          .update(deviceAuthCode)
-          .set({ approved: true, userId })
-          .where(and(eq(deviceAuthCode.id, row.id), eq(deviceAuthCode.approved, false)))
-          .returning({ id: deviceAuthCode.id });
-
-        if (claimed.length === 0) {
-          throw new Error("DEVICE_AUTH_ALREADY_CLAIMED");
-        }
-
-        const deleted = await tx
-          .delete(apiKey)
-          .where(and(eq(apiKey.id, revokeKeyId), eq(apiKey.userId, userId)))
-          .returning({ id: apiKey.id });
-
-        if (deleted.length === 0) {
-          throw new Error("API_KEY_NOT_FOUND");
-        }
+    const deletedKeys = await db
+      .delete(apiKey)
+      .where(and(eq(apiKey.id, revokeKeyId), eq(apiKey.userId, userId)))
+      .returning({
+        id: apiKey.id,
+        userId: apiKey.userId,
+        name: apiKey.name,
+        keyHash: apiKey.keyHash,
+        keyPrefix: apiKey.keyPrefix,
+        lastUsedAt: apiKey.lastUsedAt,
+        expiresAt: apiKey.expiresAt,
+        createdAt: apiKey.createdAt,
       });
-    } catch (error) {
-      if (error instanceof Error && error.message === "API_KEY_NOT_FOUND") {
-        return NextResponse.json({ error: "API key not found." }, { status: 404 });
-      }
-      if (error instanceof Error && error.message === "DEVICE_AUTH_ALREADY_CLAIMED") {
-        return NextResponse.json({ error: "Already approved" }, { status: 409 });
-      }
 
-      throw error;
+    const deletedKey = deletedKeys[0];
+
+    if (!deletedKey) {
+      return NextResponse.json({ error: "API key not found." }, { status: 404 });
+    }
+
+    const approved = await db
+      .update(deviceAuthCode)
+      .set({ approved: true, userId })
+      .where(and(eq(deviceAuthCode.id, row.id), eq(deviceAuthCode.approved, false)))
+      .returning({ id: deviceAuthCode.id });
+
+    if (approved.length === 0) {
+      await db.insert(apiKey).values(deletedKey);
+      return NextResponse.json({ error: "Already approved" }, { status: 409 });
     }
   } else {
     const approved = await db
@@ -245,52 +244,44 @@ async function handlePoll(body: unknown) {
   const keyPrefix = getKeyPrefix(raw);
   const issuedApiKeyEnc = await encryptToB64(raw);
 
-  try {
-    const createdKey = await db.transaction(async (tx) => {
-      const [inserted] = await tx
-        .insert(apiKey)
-        .values({
-          userId: row.userId!,
-          name: "Flixa Extension",
-          keyHash,
-          keyPrefix,
-        })
-        .returning({ id: apiKey.id });
+  const [inserted] = await db
+    .insert(apiKey)
+    .values({
+      userId: row.userId,
+      name: "Flixa Extension",
+      keyHash,
+      keyPrefix,
+    })
+    .returning({ id: apiKey.id });
 
-      const issued = await tx
-        .update(deviceAuthCode)
-        .set({
-          issuedApiKeyEnc,
-          issuedApiKeyId: inserted.id,
-          issuedAt: new Date(),
-        })
-        .where(and(eq(deviceAuthCode.id, row.id), isNull(deviceAuthCode.issuedApiKeyEnc)))
-        .returning({ id: deviceAuthCode.id });
+  const issued = await db
+    .update(deviceAuthCode)
+    .set({
+      issuedApiKeyEnc,
+      issuedApiKeyId: inserted.id,
+      issuedAt: new Date(),
+    })
+    .where(and(eq(deviceAuthCode.id, row.id), isNull(deviceAuthCode.issuedApiKeyEnc)))
+    .returning({ id: deviceAuthCode.id });
 
-      if (issued.length === 0) {
-        throw new Error("DEVICE_AUTH_ALREADY_ISSUED");
-      }
+  if (issued.length === 0) {
+    await db.delete(apiKey).where(eq(apiKey.id, inserted.id));
 
-      return inserted;
-    });
+    const [issuedRow] = await db
+      .select({ issuedApiKeyEnc: deviceAuthCode.issuedApiKeyEnc })
+      .from(deviceAuthCode)
+      .where(eq(deviceAuthCode.id, row.id))
+      .limit(1);
 
-    return NextResponse.json({ approved: true, apiKey: raw, apiKeyId: createdKey.id });
-  } catch (error) {
-    if (error instanceof Error && error.message === "DEVICE_AUTH_ALREADY_ISSUED") {
-      const [issuedRow] = await db
-        .select({ issuedApiKeyEnc: deviceAuthCode.issuedApiKeyEnc })
-        .from(deviceAuthCode)
-        .where(eq(deviceAuthCode.id, row.id))
-        .limit(1);
-
-      if (issuedRow?.issuedApiKeyEnc) {
-        return NextResponse.json({
-          approved: true,
-          apiKey: await decryptFromB64(issuedRow.issuedApiKeyEnc),
-        });
-      }
+    if (issuedRow?.issuedApiKeyEnc) {
+      return NextResponse.json({
+        approved: true,
+        apiKey: await decryptFromB64(issuedRow.issuedApiKeyEnc),
+      });
     }
 
-    throw error;
+    return NextResponse.json({ approved: false });
   }
+
+  return NextResponse.json({ approved: true, apiKey: raw, apiKeyId: inserted.id });
 }
