@@ -237,7 +237,9 @@ function PlanCard({
               </CardTitle>
               {plan.trialDays ? (
                 <Badge className="border-sky-500/20 bg-sky-500/10 text-sky-700 dark:text-sky-300">
-                  {t("{days}-day free trial", { days: plan.trialDays.toString() })}
+                  {t("{days}-day free trial", {
+                    days: plan.trialDays.toString(),
+                  })}
                 </Badge>
               ) : interval === "yearly" && savingsPercent > 0 ? (
                 <Badge className="border-emerald-500/20 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300">
@@ -310,10 +312,14 @@ function PlanCard({
             {interval === "yearly" && monthlyEquivalent && (
               <div className="space-y-1">
                 <p className="text-sm font-medium text-foreground">
-                  {t("{amount}/month when billed yearly", { amount: monthlyEquivalent })}
+                  {t("{amount}/month when billed yearly", {
+                    amount: monthlyEquivalent,
+                  })}
                 </p>
                 <p className="text-xs text-muted-foreground">
-                  {t("One yearly payment of {price}", { price: formatPriceLabel(plan) })}
+                  {t("One yearly payment of {price}", {
+                    price: formatPriceLabel(plan),
+                  })}
                 </p>
               </div>
             )}
@@ -987,7 +993,10 @@ function BillingPageContent() {
                 changePlan.isPending || !changeTarget || estimateQuery.error != null || !hasAgreed
               }
               onClick={() =>
-                changeTarget && changePlan.mutate({ planId: changeTarget.id as IndividualPlanId })
+                changeTarget &&
+                changePlan.mutate({
+                  planId: changeTarget.id as IndividualPlanId,
+                })
               }
             >
               {changePlan.isPending && <Spinner />}
