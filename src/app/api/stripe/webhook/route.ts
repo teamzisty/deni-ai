@@ -30,8 +30,23 @@ async function saveSubscription(payload: SubscriptionPayload) {
   const organizationId = payload.organizationId ?? null;
   const fingerprintUpdates = await getBillingFingerprintUpdates({
     customerId: payload.customerId,
+    subscriptionId: payload.subscriptionId,
     markTrialUsed: payload.status === "trialing",
   });
+
+  const whereClause = organizationId
+    ? and(eq(billing.userId, payload.userId), eq(billing.organizationId, organizationId))
+    : and(eq(billing.userId, payload.userId), isNull(billing.organizationId));
+
+  const [existingRecord] = await db
+    .select({
+      currentPeriodEnd: billing.currentPeriodEnd,
+      firstPaidAt: billing.firstPaidAt,
+      maxModeEnabled: billing.maxModeEnabled,
+    })
+    .from(billing)
+    .where(whereClause)
+    .limit(1);
 
   const updates = {
     stripeCustomerId: payload.customerId,
@@ -46,22 +61,11 @@ async function saveSubscription(payload: SubscriptionPayload) {
     firstPaidAt:
       organizationId || payload.status === "trialing" || payload.status == null
         ? undefined
-        : new Date(),
+        : (existingRecord?.firstPaidAt ?? new Date()),
     paymentMethodFingerprint: fingerprintUpdates.paymentMethodFingerprint,
     trialPaymentMethodFingerprint: fingerprintUpdates.trialPaymentMethodFingerprint,
     trialUsedAt: fingerprintUpdates.trialUsedAt,
   };
-
-  // Check if this is a renewal (period end changed) for Max Mode reset
-  const whereClause = organizationId
-    ? and(eq(billing.userId, payload.userId), eq(billing.organizationId, organizationId))
-    : and(eq(billing.userId, payload.userId), isNull(billing.organizationId));
-
-  const [existingRecord] = await db
-    .select({ currentPeriodEnd: billing.currentPeriodEnd, maxModeEnabled: billing.maxModeEnabled })
-    .from(billing)
-    .where(whereClause)
-    .limit(1);
 
   const isRenewal =
     existingRecord?.currentPeriodEnd &&

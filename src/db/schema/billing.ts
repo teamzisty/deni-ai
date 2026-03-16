@@ -58,5 +58,11 @@ export const billing = pgTable(
       .where(sql`organization_id IS NOT NULL`),
     customerIdx: index("billing_customer_idx").on(table.stripeCustomerId),
     subscriptionIdx: index("billing_subscription_idx").on(table.stripeSubscriptionId),
+    paymentMethodFingerprintIdx: index("billing_payment_method_fingerprint_idx").on(
+      table.paymentMethodFingerprint,
+    ),
+    trialPaymentMethodFingerprintIdx: index("billing_trial_payment_method_fingerprint_idx").on(
+      table.trialPaymentMethodFingerprint,
+    ),
   }),
 );

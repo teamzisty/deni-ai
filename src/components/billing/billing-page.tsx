@@ -10,8 +10,9 @@ import type { BillingPlanId, ClientPlan, IndividualPlanId } from "@/lib/billing"
 import { isTeamPlan } from "@/lib/billing";
 import { isBillingDisabled } from "@/lib/billing-config";
 import { useBillingPlanCopy } from "@/lib/billing-plan-copy";
-import { formatMinorCurrency, minorUnitToMajor } from "@/lib/currency";
+import { formatMinorCurrency } from "@/lib/currency";
 import { trpc } from "@/lib/trpc/react";
+import { useFormatPriceParts } from "@/lib/use-format-price-parts";
 import { cn } from "@/lib/utils";
 import { SettingsPageShell } from "../settings-page-shell";
 import { PlanHighlights } from "./plan-highlights";
@@ -102,34 +103,6 @@ function usePlanIntervalLabel() {
   };
 }
 
-function useFormatPriceParts() {
-  const locale = useLocale();
-
-  return (amountMinor: number, currency?: string | null) => {
-    const currencyCode = (currency ?? "USD").toUpperCase();
-    const formatter = new Intl.NumberFormat(locale, {
-      style: "currency",
-      currency: currencyCode,
-      currencyDisplay: "code",
-      maximumFractionDigits: 0,
-    });
-    const parts = formatter.formatToParts(minorUnitToMajor(amountMinor, currencyCode));
-
-    return {
-      currency: parts
-        .filter((part) => part.type === "currency")
-        .map((part) => part.value)
-        .join(""),
-      amount: parts
-        .filter((part) =>
-          ["minusSign", "plusSign", "integer", "group", "decimal", "fraction"].includes(part.type),
-        )
-        .map((part) => part.value)
-        .join(""),
-    };
-  };
-}
-
 function PlanCard({
   plan,
   monthlyPlan,
@@ -148,8 +121,8 @@ function PlanCard({
 }: {
   plan: ClientPlan;
   monthlyPlan?: ClientPlan;
-  interval: "monthly" | "yearly";
-  onIntervalChange: (interval: "monthly" | "yearly") => void;
+  interval?: "monthly" | "yearly";
+  onIntervalChange?: (interval: "monthly" | "yearly") => void;
   isCurrent: boolean;
   hasActiveSubscription: boolean;
   cancelDate: number | false;
@@ -258,7 +231,7 @@ function PlanCard({
           {mode === "subscription" ? (
             <Tabs
               value={interval}
-              onValueChange={(v) => onIntervalChange(v as "monthly" | "yearly")}
+              onValueChange={(v) => onIntervalChange?.(v as "monthly" | "yearly")}
             >
               <TabsList className="h-8 rounded-lg">
                 <TabsTrigger value="monthly" className="text-xs px-3 h-6 rounded-md">
@@ -893,8 +866,6 @@ function BillingPageContent() {
             <div className="sm:col-span-2">
               <PlanCard
                 plan={proLifetime}
-                interval="yearly"
-                onIntervalChange={() => {}}
                 isCurrent={proLifetime.id === activePlanId && isSubscribed}
                 hasActiveSubscription={hasActiveSubscription}
                 cancelDate={cancelDate}

@@ -19,9 +19,10 @@ import { toast } from "sonner";
 import type { BillingPlanId, ClientPlan, IndividualPlanId, TeamPlanId } from "@/lib/billing";
 import { findPlanById } from "@/lib/billing";
 import { useBillingPlanCopy } from "@/lib/billing-plan-copy";
-import { formatMinorCurrency, minorUnitToMajor } from "@/lib/currency";
+import { formatMinorCurrency } from "@/lib/currency";
 import { stripeJsPromise } from "@/lib/stripe-js";
 import { makeTRPCClient } from "@/lib/trpc/client";
+import { useFormatPriceParts } from "@/lib/use-format-price-parts";
 import { PlanHighlights } from "./plan-highlights";
 import { Badge } from "../ui/badge";
 import { Button } from "../ui/button";
@@ -195,34 +196,6 @@ function useTierLabel() {
     }
 
     return planId.startsWith("pro_") ? t("Pro") : t("Plus");
-  };
-}
-
-function useFormatPriceParts() {
-  const locale = useLocale();
-
-  return (amountMinor: number, currency?: string | null) => {
-    const currencyCode = (currency ?? "USD").toUpperCase();
-    const formatter = new Intl.NumberFormat(locale, {
-      style: "currency",
-      currency: currencyCode,
-      currencyDisplay: "code",
-      maximumFractionDigits: 0,
-    });
-    const parts = formatter.formatToParts(minorUnitToMajor(amountMinor, currencyCode));
-
-    return {
-      currency: parts
-        .filter((part) => part.type === "currency")
-        .map((part) => part.value)
-        .join(""),
-      amount: parts
-        .filter((part) =>
-          ["minusSign", "plusSign", "integer", "group", "decimal", "fraction"].includes(part.type),
-        )
-        .map((part) => part.value)
-        .join(""),
-    };
   };
 }
 
@@ -803,6 +776,19 @@ export function StripeCheckoutPage(props: StripeCheckoutPageProps) {
     const monthlyPlanId = resolvedPlanId.replace("_yearly", "_monthly") as BillingPlanId;
     return availablePlans.find((plan) => plan.id === monthlyPlanId) ?? null;
   }, [availablePlans, resolvedPlanId]);
+  useEffect(() => {
+    if (!resolvedPlanId || !resolvedPlanId.endsWith("_yearly")) {
+      return;
+    }
+
+    const monthlyPlanId = resolvedPlanId.replace("_yearly", "_monthly") as BillingPlanId;
+    if (!monthlyPlan) {
+      console.warn("[stripe-checkout] Missing monthly counterpart for yearly plan", {
+        resolvedPlanId,
+        monthlyPlanId,
+      });
+    }
+  }, [monthlyPlan, resolvedPlanId]);
   const checkoutAppearance = useMemo(
     () => getStripeCheckoutAppearance(resolvedTheme),
     [resolvedTheme],

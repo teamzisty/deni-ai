@@ -10,6 +10,7 @@ import {
 } from "@/lib/billing-card-usage";
 import { isBillingDisabled } from "@/lib/billing-config";
 import { TEAM_SUBSCRIPTION_TRIAL_DAYS, TEAM_TRIAL_MAX_SEATS } from "@/lib/billing-offers";
+import { isTrialEligibleForCustomer } from "@/lib/billing-trials";
 import { escapeStripeSearchValue } from "@/lib/stripe-search";
 import { stripe } from "@/lib/stripe";
 import { customCheckoutRequestOptions } from "@/lib/stripe-checkout";
@@ -58,16 +59,6 @@ async function getPriceForPlan(plan: BillingPlan) {
   }
 
   return price;
-}
-
-async function isTeamTrialEligible(customerId: string) {
-  const subscriptions = await stripe.subscriptions.list({
-    customer: customerId,
-    status: "all",
-    limit: 1,
-  });
-
-  return subscriptions.data.length === 0;
 }
 
 async function verifyOrgOwner(ctx: ProtectedContext, organizationId: string) {
@@ -301,11 +292,18 @@ export const organizationRouter = router({
     const memberCount = organizationId ? await getOrgMemberCount(organizationId) : 0;
     const trialFingerprint = billingRecord
       ? (billingRecord.paymentMethodFingerprint ??
-        (await getCustomerPrimaryCardFingerprint(billingRecord.stripeCustomerId)))
+        (await getCustomerPrimaryCardFingerprint(
+          billingRecord.stripeCustomerId,
+          billingRecord.stripeSubscriptionId,
+        )))
       : null;
     const trialEligible = billingRecord
-      ? (await isTeamTrialEligible(billingRecord.stripeCustomerId)) &&
-        (await isTrialFingerprintEligible(trialFingerprint))
+      ? (await isTrialEligibleForCustomer(billingRecord.stripeCustomerId)) &&
+        (await isTrialFingerprintEligible(trialFingerprint, {
+          customerId: billingRecord.stripeCustomerId,
+          userId: ctx.userId,
+          organizationId,
+        }))
       : false;
     const showTrial = trialEligible && memberCount > 0 && memberCount <= TEAM_TRIAL_MAX_SEATS;
     const plans = await Promise.all(
@@ -366,10 +364,17 @@ export const organizationRouter = router({
       const billingRecord = await ensureTeamBillingRecord(ctx, ctx.userId, input.organizationId);
       const trialFingerprint =
         billingRecord.paymentMethodFingerprint ??
-        (await getCustomerPrimaryCardFingerprint(billingRecord.stripeCustomerId));
+        (await getCustomerPrimaryCardFingerprint(
+          billingRecord.stripeCustomerId,
+          billingRecord.stripeSubscriptionId,
+        ));
       const trialEligible =
-        (await isTeamTrialEligible(billingRecord.stripeCustomerId)) &&
-        (await isTrialFingerprintEligible(trialFingerprint));
+        (await isTrialEligibleForCustomer(billingRecord.stripeCustomerId)) &&
+        (await isTrialFingerprintEligible(trialFingerprint, {
+          customerId: billingRecord.stripeCustomerId,
+          userId: ctx.userId,
+          organizationId: input.organizationId,
+        }));
 
       const price = await getPriceForPlan(plan);
 

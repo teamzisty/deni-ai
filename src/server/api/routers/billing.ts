@@ -25,6 +25,7 @@ import {
   SUBSCRIPTION_TRIAL_DAYS,
 } from "@/lib/billing-offers";
 import { disableMaxMode, enableMaxMode, getMaxModeStatus, MAX_MODE_PRICING } from "@/lib/max-mode";
+import { isTrialEligibleForCustomer } from "@/lib/billing-trials";
 import { escapeStripeSearchValue } from "@/lib/stripe-search";
 import { stripe } from "@/lib/stripe";
 import { customCheckoutRequestOptions } from "@/lib/stripe-checkout";
@@ -79,16 +80,6 @@ async function getPriceForPlan(plan: BillingPlan) {
 
 function getPlanFromPrice(price: Stripe.Price | null | undefined) {
   return findPlanByLookupKey(price?.lookup_key ?? undefined);
-}
-
-async function isTrialEligibleForCustomer(customerId: string) {
-  const subscriptions = await stripe.subscriptions.list({
-    customer: customerId,
-    status: "all",
-    limit: 1,
-  });
-
-  return subscriptions.data.length === 0;
 }
 
 async function getFlashOfferCoupon() {
@@ -347,10 +338,16 @@ export const billingRouter = router({
     const billingRecord = await ensureBillingRecord(ctx, ctx.userId);
     const trialFingerprint =
       billingRecord.paymentMethodFingerprint ??
-      (await getCustomerPrimaryCardFingerprint(billingRecord.stripeCustomerId));
+      (await getCustomerPrimaryCardFingerprint(
+        billingRecord.stripeCustomerId,
+        billingRecord.stripeSubscriptionId,
+      ));
     const trialEligible =
       (await isTrialEligibleForCustomer(billingRecord.stripeCustomerId)) &&
-      (await isTrialFingerprintEligible(trialFingerprint));
+      (await isTrialFingerprintEligible(trialFingerprint, {
+        customerId: billingRecord.stripeCustomerId,
+        userId: ctx.userId,
+      }));
     const flashOfferActive = isFlashOfferActive(billingRecord.flashOfferEndsAt);
     const flashOfferEndsAt = flashOfferActive
       ? (billingRecord.flashOfferEndsAt?.toISOString() ?? null)
@@ -511,12 +508,18 @@ export const billingRouter = router({
           : false;
       const trialFingerprint =
         billingRecord.paymentMethodFingerprint ??
-        (await getCustomerPrimaryCardFingerprint(billingRecord.stripeCustomerId));
+        (await getCustomerPrimaryCardFingerprint(
+          billingRecord.stripeCustomerId,
+          billingRecord.stripeSubscriptionId,
+        ));
       const proTrialEligible =
         isProTrialPlan(plan.id, mode) &&
         trialEligible &&
         flashOfferActive &&
-        (await isTrialFingerprintEligible(trialFingerprint));
+        (await isTrialFingerprintEligible(trialFingerprint, {
+          customerId: billingRecord.stripeCustomerId,
+          userId: ctx.userId,
+        }));
 
       if (
         mode === "payment" &&
