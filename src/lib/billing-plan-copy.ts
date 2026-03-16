@@ -65,6 +65,18 @@ export function useBillingPlanCopy(planId: BillingPlanId | null): BillingPlanCop
           t("For power users"),
         ],
       };
+    case "pro_lifetime":
+      return {
+        tagline: t("One payment. Long-term Pro access."),
+        badge: t("Buy once"),
+        highlights: [
+          t("Get 10x usage for basic models"),
+          t("Get 20x usage for premium models"),
+          t("Max Mode pay-per-use available"),
+          t("Deni AI Code - Pro access"),
+          t("No recurring subscription"),
+        ],
+      };
     case "pro_team_monthly":
       return {
         tagline: t("Give your whole team Pro-tier access with per-seat pricing."),

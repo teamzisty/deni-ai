@@ -1,4 +1,9 @@
-export type IndividualPlanId = "plus_monthly" | "plus_yearly" | "pro_monthly" | "pro_yearly";
+export type IndividualPlanId =
+  | "plus_monthly"
+  | "plus_yearly"
+  | "pro_monthly"
+  | "pro_yearly"
+  | "pro_lifetime";
 
 export type TeamPlanId = "pro_team_monthly" | "pro_team_yearly";
 
@@ -15,10 +20,13 @@ export type ClientPlan = {
   priceId: string | null;
   mode: "subscription" | "payment" | null;
   amount: number | null;
+  originalAmount?: number | null;
   currency: string | null;
   interval: string | null;
   intervalCount: number;
   isTeamPlan: boolean;
+  trialDays?: number | null;
+  limitedTimeOfferEndsAt?: string | null;
 };
 
 export const billingPlans: BillingPlan[] = [
@@ -37,6 +45,10 @@ export const billingPlans: BillingPlan[] = [
   {
     id: "pro_yearly",
     lookupKey: "pro_yearly",
+  },
+  {
+    id: "pro_lifetime",
+    lookupKey: "pro_lifetime",
   },
   {
     id: "pro_team_monthly",

@@ -5,6 +5,7 @@ import { db } from "@/db/drizzle";
 import { billing } from "@/db/schema";
 import { env } from "@/env";
 import { findPlanByLookupKey, isTeamPlan } from "@/lib/billing";
+import { getBillingFingerprintUpdates } from "@/lib/billing-card-usage";
 import { resetMaxModeUsage } from "@/lib/max-mode";
 import { stripe } from "@/lib/stripe";
 import { getSubscriptionPeriodEnd } from "@/lib/stripe-subscriptions";
@@ -27,6 +28,10 @@ type SubscriptionPayload = {
 async function saveSubscription(payload: SubscriptionPayload) {
   const plan = findPlanByLookupKey(payload.lookupKey ?? undefined);
   const organizationId = payload.organizationId ?? null;
+  const fingerprintUpdates = await getBillingFingerprintUpdates({
+    customerId: payload.customerId,
+    markTrialUsed: payload.status === "trialing",
+  });
 
   const updates = {
     stripeCustomerId: payload.customerId,
@@ -37,6 +42,14 @@ async function saveSubscription(payload: SubscriptionPayload) {
     mode: "subscription" as const,
     currentPeriodEnd: payload.currentPeriodEnd ? new Date(payload.currentPeriodEnd * 1000) : null,
     organizationId,
+    flashOfferEndsAt: organizationId ? undefined : null,
+    firstPaidAt:
+      organizationId || payload.status === "trialing" || payload.status == null
+        ? undefined
+        : new Date(),
+    paymentMethodFingerprint: fingerprintUpdates.paymentMethodFingerprint,
+    trialPaymentMethodFingerprint: fingerprintUpdates.trialPaymentMethodFingerprint,
+    trialUsedAt: fingerprintUpdates.trialUsedAt,
   };
 
   // Check if this is a renewal (period end changed) for Max Mode reset

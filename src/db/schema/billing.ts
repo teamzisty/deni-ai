@@ -30,6 +30,11 @@ export const billing = pgTable(
     mode: text("mode").default("subscription"),
     currentPeriodEnd: timestamp("current_period_end"),
     checkoutSessionId: text("checkout_session_id"),
+    flashOfferEndsAt: timestamp("flash_offer_ends_at"),
+    firstPaidAt: timestamp("first_paid_at"),
+    paymentMethodFingerprint: text("payment_method_fingerprint"),
+    trialPaymentMethodFingerprint: text("trial_payment_method_fingerprint"),
+    trialUsedAt: timestamp("trial_used_at"),
     // Max Mode (Usage-based billing for Pro plan)
     maxModeEnabled: boolean("max_mode_enabled").default(false).notNull(),
     maxModeUsageBasic: integer("max_mode_usage_basic").default(0).notNull(),

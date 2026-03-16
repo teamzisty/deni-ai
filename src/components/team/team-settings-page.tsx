@@ -426,6 +426,7 @@ export function TeamSettingsPage() {
   const teamPlans = teamPlansQuery.data?.plans ?? [];
   const monthlyPlan = teamPlans.find((p) => p.id === "pro_team_monthly");
   const yearlyPlan = teamPlans.find((p) => p.id === "pro_team_yearly");
+  const teamTrialDays = monthlyPlan?.trialDays ?? yearlyPlan?.trialDays ?? null;
   return (
     <SettingsPageShell
       title={t("Team")}
@@ -487,6 +488,16 @@ export function TeamSettingsPage() {
             <CardDescription>
               {t("Pro for Teams gives every member Pro-tier access with per-seat pricing.")}
             </CardDescription>
+            {teamTrialDays && (
+              <div className="pt-2 space-y-2">
+                <Badge className="border-sky-500/20 bg-sky-500/10 text-sky-700 dark:text-sky-300">
+                  {t("{days}-day free trial", { days: teamTrialDays.toString() })}
+                </Badge>
+                <p className="text-xs text-muted-foreground">
+                  {t("Team trial is available for up to {count} seats.", { count: "5" })}
+                </p>
+              </div>
+            )}
           </CardHeader>
           <CardContent className="space-y-4">
             {teamBillingQuery.isLoading ? (
@@ -799,6 +810,11 @@ export function TeamSettingsPage() {
                 </SelectContent>
               </Select>
             </div>
+            <p className="text-xs leading-relaxed text-muted-foreground">
+              {t(
+                "When this invitation is accepted, the member joins your team immediately and your billed seat count may change.",
+              )}
+            </p>
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setIsInviteDialogOpen(false)}>

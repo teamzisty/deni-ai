@@ -8,7 +8,7 @@ import {
   useCheckout,
 } from "@stripe/react-stripe-js/checkout";
 import type { StripeCheckoutValue } from "@stripe/react-stripe-js/checkout";
-import type { Appearance } from "@stripe/stripe-js";
+import type { Appearance, Stripe } from "@stripe/stripe-js";
 import { ArrowLeft, ShieldCheck, Tag, X } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -16,13 +16,14 @@ import { useExtracted, useLocale } from "next-intl";
 import { useTheme } from "next-themes";
 import { startTransition, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
-import type { BillingPlanId, IndividualPlanId, TeamPlanId } from "@/lib/billing";
+import type { BillingPlanId, ClientPlan, IndividualPlanId, TeamPlanId } from "@/lib/billing";
 import { findPlanById } from "@/lib/billing";
 import { useBillingPlanCopy } from "@/lib/billing-plan-copy";
-import { formatMinorCurrency } from "@/lib/currency";
+import { formatMinorCurrency, minorUnitToMajor } from "@/lib/currency";
 import { stripeJsPromise } from "@/lib/stripe-js";
 import { makeTRPCClient } from "@/lib/trpc/client";
 import { PlanHighlights } from "./plan-highlights";
+import { Badge } from "../ui/badge";
 import { Button } from "../ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../ui/card";
 import { Input } from "../ui/input";
@@ -165,7 +166,11 @@ function usePlanLabel() {
       return t("Checkout");
     }
 
-    const interval = planId.endsWith("_yearly") ? t("Yearly") : t("Monthly");
+    const interval = planId.endsWith("_yearly")
+      ? t("Yearly")
+      : planId.endsWith("_lifetime")
+        ? t("Lifetime")
+        : t("Monthly");
     if (planId.startsWith("pro_team")) {
       return t("Pro for Teams {name}", { name: interval });
     }
@@ -177,23 +182,146 @@ function usePlanLabel() {
   };
 }
 
+function useTierLabel() {
+  const t = useExtracted();
+
+  return (planId: BillingPlanId | string | null | undefined) => {
+    if (!planId) {
+      return t("Checkout");
+    }
+
+    if (planId.startsWith("pro_team")) {
+      return t("Pro for Teams");
+    }
+
+    return planId.startsWith("pro_") ? t("Pro") : t("Plus");
+  };
+}
+
+function useFormatPriceParts() {
+  const locale = useLocale();
+
+  return (amountMinor: number, currency?: string | null) => {
+    const currencyCode = (currency ?? "USD").toUpperCase();
+    const formatter = new Intl.NumberFormat(locale, {
+      style: "currency",
+      currency: currencyCode,
+      currencyDisplay: "code",
+      maximumFractionDigits: 0,
+    });
+    const parts = formatter.formatToParts(minorUnitToMajor(amountMinor, currencyCode));
+
+    return {
+      currency: parts
+        .filter((part) => part.type === "currency")
+        .map((part) => part.value)
+        .join(""),
+      amount: parts
+        .filter((part) =>
+          ["minusSign", "plusSign", "integer", "group", "decimal", "fraction"].includes(part.type),
+        )
+        .map((part) => part.value)
+        .join(""),
+    };
+  };
+}
+
+function getPlanIntervalValue(planId: BillingPlanId | null | undefined) {
+  if (!planId) {
+    return null;
+  }
+
+  if (planId.endsWith("_lifetime")) {
+    return "lifetime";
+  }
+
+  return planId.endsWith("_yearly") ? "yearly" : "monthly";
+}
+
 function CheckoutSummary({
   checkout,
-  planLabel,
   planId,
+  plan,
+  monthlyPlan,
 }: {
   checkout: StripeCheckoutValue;
-  planLabel: string;
   planId: BillingPlanId | null;
+  plan: ClientPlan | null;
+  monthlyPlan: ClientPlan | null;
 }) {
   const t = useExtracted();
   const planCopy = useBillingPlanCopy(planId);
+  const tierLabel = useTierLabel()(planId);
+  const formatPriceParts = useFormatPriceParts();
+  const interval = getPlanIntervalValue(planId);
+  const offerEndsAt = plan?.limitedTimeOfferEndsAt ? new Date(plan.limitedTimeOfferEndsAt) : null;
+  const offerEndsLabel =
+    offerEndsAt && !Number.isNaN(offerEndsAt.getTime())
+      ? new Intl.DateTimeFormat(undefined, {
+          month: "short",
+          day: "numeric",
+          hour: "numeric",
+          minute: "2-digit",
+        }).format(offerEndsAt)
+      : null;
+  const priceParts = formatPriceParts(checkout.total.total.minorUnitsAmount, checkout.currency);
+  const monthlyEquivalent =
+    interval === "yearly"
+      ? formatMinorCurrency(
+          Math.round(checkout.total.total.minorUnitsAmount / 12),
+          checkout.currency,
+          {
+            currencyDisplay: "code",
+            maximumFractionDigits: 0,
+          },
+        )
+      : null;
+  const savingsPercent =
+    interval === "yearly" &&
+    plan?.amount &&
+    monthlyPlan?.amount &&
+    plan.currency === monthlyPlan.currency &&
+    monthlyPlan.amount > 0
+      ? Math.max(
+          0,
+          Math.round(((monthlyPlan.amount * 12 - plan.amount) / (monthlyPlan.amount * 12)) * 100),
+        )
+      : 0;
 
   return (
     <Card className="not-first:border-border/80 bg-card/80 shadow-sm backdrop-blur-sm">
-      <CardHeader>
+      <CardHeader className="space-y-4">
         <div className="space-y-1">
-          <CardTitle className="text-2xl">{planLabel}</CardTitle>
+          <div className="flex items-center gap-2">
+            <div className="text-[11px] font-semibold tracking-[0.22em] text-muted-foreground uppercase">
+              {tierLabel}
+            </div>
+            {plan?.trialDays ? (
+              <Badge className="border-sky-500/20 bg-sky-500/10 text-sky-700 dark:text-sky-300">
+                {t("{days}-day free trial", { days: plan.trialDays.toString() })}
+              </Badge>
+            ) : interval === "yearly" && savingsPercent > 0 ? (
+              <Badge className="border-emerald-500/20 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300">
+                {t("Save {percent}%", { percent: savingsPercent.toString() })}
+              </Badge>
+            ) : interval === "lifetime" ? (
+              <Badge variant="secondary" className="text-xs">
+                {t("Buy once")}
+              </Badge>
+            ) : null}
+            {offerEndsLabel && (
+              <Badge variant="outline" className="text-xs">
+                {t("24-hour offer")}
+              </Badge>
+            )}
+          </div>
+          <CardTitle className="text-2xl">
+            {interval === "yearly"
+              ? t("Yearly")
+              : interval === "lifetime"
+                ? t("Lifetime")
+                : t("Monthly")}
+          </CardTitle>
           {planCopy?.tagline ? (
             <CardDescription className="text-sm">{planCopy.tagline}</CardDescription>
           ) : null}
@@ -211,9 +339,30 @@ function CheckoutSummary({
 
         <div className="rounded-2xl border border-border/80 bg-muted/50 p-5">
           <div className="text-sm font-medium text-muted-foreground">{t("Due today")}</div>
-          <div className="mt-2 text-3xl font-semibold tracking-tight">
-            {checkout.total.total.amount}
+          <div className="mt-2 flex items-start gap-2">
+            <span className="pt-2 text-[11px] font-semibold tracking-[0.22em] text-muted-foreground uppercase">
+              {priceParts.currency}
+            </span>
+            <span className="text-4xl font-semibold tracking-tight">{priceParts.amount}</span>
           </div>
+          {interval === "yearly" && monthlyEquivalent && (
+            <div className="mt-3 space-y-1">
+              <div className="text-sm font-medium">
+                {t("{amount}/month when billed yearly", { amount: monthlyEquivalent })}
+              </div>
+              <div className="text-xs text-muted-foreground">
+                {t("One yearly payment of {price}", { price: checkout.total.total.amount })}
+              </div>
+            </div>
+          )}
+          {interval === "lifetime" && (
+            <div className="mt-3 text-sm font-medium">{t("One-time purchase")}</div>
+          )}
+          {offerEndsLabel && (
+            <div className="mt-3 text-xs text-muted-foreground">
+              {t("24-hour offer ends {date}", { date: offerEndsLabel })}
+            </div>
+          )}
           {checkout.recurring && (
             <div className="mt-3 text-sm text-muted-foreground">
               {t("Next renewal: {amount}/{interval}", {
@@ -383,6 +532,8 @@ function CheckoutForm({
   returnUrl,
   appearance,
   planId,
+  plan,
+  monthlyPlan,
 }: {
   planLabel: string;
   backHref: string;
@@ -390,6 +541,8 @@ function CheckoutForm({
   returnUrl: string;
   appearance: Appearance;
   planId: BillingPlanId | null;
+  plan: ClientPlan | null;
+  monthlyPlan: ClientPlan | null;
 }) {
   const t = useExtracted();
   const router = useRouter();
@@ -547,15 +700,29 @@ function CheckoutForm({
       </div>
 
       <div className="lg:sticky lg:top-6 space-y-6">
-        <CheckoutSummary checkout={activeCheckout} planLabel={planLabel} planId={planId} />
+        <CheckoutSummary
+          checkout={activeCheckout}
+          planId={planId}
+          plan={plan}
+          monthlyPlan={monthlyPlan}
+        />
         {submitError && <p className="text-sm text-destructive">{submitError}</p>}
         <Button
-          className="h-11 w-full rounded-full text-sm font-medium"
+          className="h-auto min-h-12 w-full flex-col gap-1 rounded-full py-3 text-sm font-medium"
           disabled={isSubmitting || !activeCheckout.canConfirm}
           onClick={handleConfirm}
         >
           {isSubmitting && <Spinner className="size-4" />}
-          {activeCheckout.recurring ? t("Start subscription") : t("Complete payment")}
+          <span>
+            {activeCheckout.recurring
+              ? plan?.trialDays
+                ? t("Start {days}-day trial", { days: plan.trialDays.toString() })
+                : t("Start subscription")
+              : t("Complete payment")}
+          </span>
+          <span className="text-[11px] font-normal text-current/80">
+            {activeCheckout.recurring ? t("Cancel anytime") : t("Pay once. Keep access.")}
+          </span>
         </Button>
       </div>
     </div>
@@ -615,6 +782,8 @@ export function StripeCheckoutPage(props: StripeCheckoutPageProps) {
   const { planId, scope, sessionId } = props;
   const organizationId = props.scope === "team" ? props.organizationId : null;
   const [session, setSession] = useState<CheckoutSessionSummary | null>(null);
+  const [availablePlans, setAvailablePlans] = useState<ClientPlan[]>([]);
+  const [stripeInstance, setStripeInstance] = useState<Stripe | null>(null);
   const [bootstrapError, setBootstrapError] = useState<string | null>(null);
   const [isBootstrapping, setIsBootstrapping] = useState(true);
   const resolvedPlanId = useMemo(() => {
@@ -622,6 +791,18 @@ export function StripeCheckoutPage(props: StripeCheckoutPageProps) {
     return candidate ? (findPlanById(candidate)?.id ?? null) : null;
   }, [planId, session?.planId]);
   const planLabel = usePlanLabel()(resolvedPlanId ?? session?.planId ?? planId);
+  const selectedPlan = useMemo(
+    () => availablePlans.find((plan) => plan.id === resolvedPlanId) ?? null,
+    [availablePlans, resolvedPlanId],
+  );
+  const monthlyPlan = useMemo(() => {
+    if (!resolvedPlanId || !resolvedPlanId.endsWith("_yearly")) {
+      return null;
+    }
+
+    const monthlyPlanId = resolvedPlanId.replace("_yearly", "_monthly") as BillingPlanId;
+    return availablePlans.find((plan) => plan.id === monthlyPlanId) ?? null;
+  }, [availablePlans, resolvedPlanId]);
   const checkoutAppearance = useMemo(
     () => getStripeCheckoutAppearance(resolvedTheme),
     [resolvedTheme],
@@ -644,9 +825,38 @@ export function StripeCheckoutPage(props: StripeCheckoutPageProps) {
     async function bootstrap() {
       setBootstrapError(null);
       setIsBootstrapping(true);
+      setStripeInstance(null);
 
       if (!stripeJsPromise) {
         throw new Error(t("Stripe publishable key is not configured."));
+      }
+
+      let loadedStripe: Stripe | null;
+      try {
+        loadedStripe = await stripeJsPromise;
+      } catch {
+        throw new Error(
+          t("Failed to load Stripe.js. Disable blockers or retry, then try checkout again."),
+        );
+      }
+
+      if (!loadedStripe) {
+        throw new Error(
+          t("Failed to load Stripe.js. Disable blockers or retry, then try checkout again."),
+        );
+      }
+
+      if (!cancelled) {
+        setStripeInstance(loadedStripe);
+      }
+
+      const planResult =
+        scope === "billing"
+          ? await trpcClient.billing.plans.query()
+          : await trpcClient.organization.teamPlans.query();
+
+      if (!cancelled) {
+        setAvailablePlans(planResult.plans);
       }
 
       if (scope === "team" && !organizationId) {
@@ -781,7 +991,7 @@ export function StripeCheckoutPage(props: StripeCheckoutPageProps) {
       ) : session?.clientSecret ? (
         <CheckoutProvider
           key={session.sessionId}
-          stripe={stripeJsPromise}
+          stripe={stripeInstance}
           options={{
             adaptivePricing: { allowed: true },
             clientSecret: session.clientSecret,
@@ -797,6 +1007,8 @@ export function StripeCheckoutPage(props: StripeCheckoutPageProps) {
             returnUrl={returnUrl}
             appearance={checkoutAppearance}
             planId={resolvedPlanId}
+            plan={selectedPlan}
+            monthlyPlan={monthlyPlan}
           />
         </CheckoutProvider>
       ) : (
