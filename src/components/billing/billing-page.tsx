@@ -863,7 +863,7 @@ function BillingPageContent() {
           </div>
 
           {proLifetime && (
-            <div className="sm:col-span-2">
+            <div>
               <PlanCard
                 plan={proLifetime}
                 isCurrent={proLifetime.id === activePlanId && isSubscribed}

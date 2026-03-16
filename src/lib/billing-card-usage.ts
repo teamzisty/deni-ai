@@ -63,6 +63,8 @@ function getCardFingerprintFromSubscription(subscription: Stripe.Subscription | 
     return null;
   }
 
+  // The paymentMethod/isObjectRecord guard above narrows this to the shapes
+  // getCardFingerprintFromPaymentMethod accepts, so the cast is safe.
   return getCardFingerprintFromPaymentMethod(paymentMethod as string | Stripe.PaymentMethod | null);
 }
 
@@ -144,6 +146,15 @@ export async function getBillingFingerprintUpdates({
   markTrialUsed: boolean;
 }) {
   const fingerprint = await getCustomerPrimaryCardFingerprint(customerId, subscriptionId);
+  if (markTrialUsed && !fingerprint) {
+    console.warn(
+      "[billing] getBillingFingerprintUpdates could not mark trial used because getCustomerPrimaryCardFingerprint returned no fingerprint",
+      {
+        customerId,
+        subscriptionId,
+      },
+    );
+  }
 
   return {
     paymentMethodFingerprint: fingerprint,
