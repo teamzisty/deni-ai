@@ -448,7 +448,7 @@ export default function PaletteClient() {
       : usageTier === "plus"
         ? t("Plus")
         : usageTier === "max"
-          ? "Max"
+          ? t("Max")
           : t("Pro");
   const historyDateFormatter = new Intl.DateTimeFormat(undefined, {
     month: "short",

@@ -62,7 +62,7 @@ function getTierLabel(t: ReturnType<typeof useExtracted>, planId: string) {
     return t("Pro for Teams");
   }
   if (tier === "max") {
-    return "Max";
+    return t("Max");
   }
 
   return tier === "pro" ? t("Pro") : t("Plus");

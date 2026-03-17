@@ -4,6 +4,7 @@ import { and, eq, isNotNull, isNull, like, sql } from "drizzle-orm";
 
 import { db } from "@/db/drizzle";
 import { billing, member } from "@/db/schema";
+import { isProOrHigherTier } from "@/lib/billing";
 import { stripe } from "@/lib/stripe";
 
 import type { UsageCategory } from "./usage";
@@ -16,9 +17,7 @@ export const MAX_MODE_PRICING = {
 
 // Max Mode is only available for Pro and Max plan users
 export function isMaxModeEligible(planId: string | null | undefined): boolean {
-  return Boolean(
-    planId?.startsWith("pro_") || planId?.startsWith("pro_team") || planId?.startsWith("max_"),
-  );
+  return isProOrHigherTier(planId);
 }
 
 const ACTIVE_STATUSES = new Set(["active", "trialing", "past_due", "paid"]);

@@ -121,7 +121,12 @@ export function getPlanTier(
   return null;
 }
 
-export function isProTier(planId: string | null | undefined): boolean {
+export function isProOrHigherTier(planId: string | null | undefined): boolean {
   const tier = getPlanTier(planId);
   return tier === "pro" || tier === "max" || tier === "team";
+}
+
+/** @deprecated Use isProOrHigherTier instead. */
+export function isProTier(planId: string | null | undefined): boolean {
+  return isProOrHigherTier(planId);
 }

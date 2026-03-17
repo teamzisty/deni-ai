@@ -152,7 +152,16 @@ async function getTierInfo(userId: string, now: Date): Promise<TierInfo> {
   const maxModeEligible = isMaxModeEligible(planId) && status === "active";
 
   return {
-    tier: planTier === "max" ? "max" : planTier === "pro" ? "pro" : "plus",
+    tier:
+      planTier === "max"
+        ? "max"
+        : planTier === "pro"
+          ? "pro"
+          : planTier === "team"
+            ? "pro"
+            : planTier === "plus"
+              ? "plus"
+              : "free",
     planId,
     status: status ?? null,
     periodEnd: record.currentPeriodEnd ?? null,

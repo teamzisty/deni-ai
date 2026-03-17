@@ -84,7 +84,7 @@ export function useUsageStatus(params: {
       : usageTier === "plus"
         ? t("Plus")
         : usageTier === "max"
-          ? "Max"
+          ? t("Max")
           : t("Pro");
   const maxModeEligible = usageQuery.data?.maxModeEligible ?? false;
   const canEnableMaxMode = maxModeEligible && !maxModeEnabled && isUsageBlocked;

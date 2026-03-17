@@ -107,10 +107,16 @@ function usePlanIntervalLabel() {
 function getTierLabel(t: ReturnType<typeof useExtracted>, planId: string) {
   const tier = getPlanTier(planId);
   if (tier === "max") {
-    return "Max";
+    return t("Max");
+  }
+  if (tier === "team") {
+    return t("Team");
+  }
+  if (tier === "pro") {
+    return t("Pro");
   }
 
-  return tier === "pro" || tier === "team" ? t("Pro") : t("Plus");
+  return t("Plus");
 }
 
 function PlanCard({
@@ -608,7 +614,7 @@ function BillingPageContent() {
   const usageTierLabel = (() => {
     switch (usageTier) {
       case "max":
-        return "Max";
+        return t("Max");
       case "plus":
         return t("Plus");
       case "pro":

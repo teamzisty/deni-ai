@@ -84,12 +84,6 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  // const verification = await checkBotId();
-
-  // if (verification.isBot) {
-  //   return NextResponse.json({ error: "Access denied" }, { status: 403 });
-  // }
-
   const body = await bodyPromise;
 
   const rateCheck = await checkRateLimit({
