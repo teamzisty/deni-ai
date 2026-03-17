@@ -4,7 +4,13 @@ import { z } from "zod";
 import { billing, member, user } from "@/db/schema";
 import { env } from "@/env";
 import { type BillingPlan, billingPlans, findPlanById, isTeamPlan } from "@/lib/billing";
+import {
+  getCustomerPrimaryCardFingerprint,
+  isTrialFingerprintEligible,
+} from "@/lib/billing-card-usage";
 import { isBillingDisabled } from "@/lib/billing-config";
+import { TEAM_SUBSCRIPTION_TRIAL_DAYS, TEAM_TRIAL_MAX_SEATS } from "@/lib/billing-offers";
+import { isTrialEligibleForCustomer } from "@/lib/billing-trials";
 import { escapeStripeSearchValue } from "@/lib/stripe-search";
 import { stripe } from "@/lib/stripe";
 import { customCheckoutRequestOptions } from "@/lib/stripe-checkout";
@@ -272,8 +278,34 @@ async function reuseOpenTeamCheckoutSession({
 }
 
 export const organizationRouter = router({
-  teamPlans: billingEnabledProcedure.query(async () => {
+  teamPlans: billingEnabledProcedure.query(async ({ ctx }) => {
     const teamPlans = billingPlans.filter((p) => isTeamPlan(p.id));
+    const organizations = await ctx.db
+      .select({ organizationId: member.organizationId })
+      .from(member)
+      .where(and(eq(member.userId, ctx.userId), eq(member.role, "owner")))
+      .limit(1);
+    const organizationId = organizations[0]?.organizationId;
+    const billingRecord = organizationId
+      ? await ensureTeamBillingRecord(ctx, ctx.userId, organizationId)
+      : null;
+    const memberCount = organizationId ? await getOrgMemberCount(organizationId) : 0;
+    const trialFingerprint = billingRecord
+      ? (billingRecord.paymentMethodFingerprint ??
+        (await getCustomerPrimaryCardFingerprint(
+          billingRecord.stripeCustomerId,
+          billingRecord.stripeSubscriptionId,
+        )))
+      : null;
+    const trialEligible = billingRecord
+      ? (await isTrialEligibleForCustomer(billingRecord.stripeCustomerId)) &&
+        (await isTrialFingerprintEligible(trialFingerprint, {
+          customerId: billingRecord.stripeCustomerId,
+          userId: ctx.userId,
+          organizationId,
+        }))
+      : false;
+    const showTrial = trialEligible && memberCount > 0 && memberCount <= TEAM_TRIAL_MAX_SEATS;
     const plans = await Promise.all(
       teamPlans.map(async (plan) => {
         const price = await getPriceForPlan(plan);
@@ -288,6 +320,7 @@ export const organizationRouter = router({
           interval: price.recurring?.interval ?? null,
           intervalCount: price.recurring?.interval_count ?? 1,
           isTeamPlan: true,
+          trialDays: showTrial ? TEAM_SUBSCRIPTION_TRIAL_DAYS : null,
         };
       }),
     );
@@ -329,6 +362,19 @@ export const organizationRouter = router({
 
       await syncTeamSubscription(ctx, ctx.userId, input.organizationId);
       const billingRecord = await ensureTeamBillingRecord(ctx, ctx.userId, input.organizationId);
+      const trialFingerprint =
+        billingRecord.paymentMethodFingerprint ??
+        (await getCustomerPrimaryCardFingerprint(
+          billingRecord.stripeCustomerId,
+          billingRecord.stripeSubscriptionId,
+        ));
+      const trialEligible =
+        (await isTrialEligibleForCustomer(billingRecord.stripeCustomerId)) &&
+        (await isTrialFingerprintEligible(trialFingerprint, {
+          customerId: billingRecord.stripeCustomerId,
+          userId: ctx.userId,
+          organizationId: input.organizationId,
+        }));
 
       const price = await getPriceForPlan(plan);
 
@@ -365,6 +411,7 @@ export const organizationRouter = router({
       }
 
       const memberCount = await getOrgMemberCount(input.organizationId);
+      const applyTrial = trialEligible && memberCount > 0 && memberCount <= TEAM_TRIAL_MAX_SEATS;
 
       const session = await stripe.checkout.sessions.create(
         {
@@ -392,6 +439,7 @@ export const organizationRouter = router({
               planId: plan.id,
               organizationId: input.organizationId,
             },
+            trial_period_days: applyTrial ? TEAM_SUBSCRIPTION_TRIAL_DAYS : undefined,
           },
           allow_promotion_codes: true,
           return_url: `${env.NEXT_PUBLIC_BETTER_AUTH_URL}/settings/team/checkout/{CHECKOUT_SESSION_ID}?organizationId=${input.organizationId}`,

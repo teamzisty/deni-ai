@@ -12,6 +12,7 @@ import { isBillingDisabled } from "@/lib/billing-config";
 import { useBillingPlanCopy } from "@/lib/billing-plan-copy";
 import { formatMinorCurrency } from "@/lib/currency";
 import { trpc } from "@/lib/trpc/react";
+import { useFormatPriceParts } from "@/lib/use-format-price-parts";
 import { cn } from "@/lib/utils";
 import { SettingsPageShell } from "../settings-page-shell";
 import { PlanHighlights } from "./plan-highlights";
@@ -36,10 +37,11 @@ import { Switch } from "../ui/switch";
 import { Tabs, TabsList, TabsTrigger } from "../ui/tabs";
 
 const ACTIVE_STATUSES = new Set(["active", "trialing", "paid"]);
-const usageResetFormatter = new Intl.DateTimeFormat(undefined, {
-  month: "short",
-  day: "numeric",
-});
+const usageResetFormatter = (locale: string) =>
+  new Intl.DateTimeFormat(locale, {
+    month: "short",
+    day: "numeric",
+  });
 
 function useFormatPriceLabel() {
   const t = useExtracted();
@@ -95,12 +97,16 @@ function usePlanIntervalLabel() {
     if (planId.endsWith("_yearly")) {
       return t("Yearly");
     }
+    if (planId.endsWith("_lifetime")) {
+      return t("Lifetime");
+    }
     return "";
   };
 }
 
 function PlanCard({
   plan,
+  monthlyPlan,
   interval,
   onIntervalChange,
   isCurrent,
@@ -115,8 +121,9 @@ function PlanCard({
   isOnTeamPlan,
 }: {
   plan: ClientPlan;
-  interval: "monthly" | "yearly";
-  onIntervalChange: (interval: "monthly" | "yearly") => void;
+  monthlyPlan?: ClientPlan;
+  interval?: "monthly" | "yearly";
+  onIntervalChange?: (interval: "monthly" | "yearly") => void;
   isCurrent: boolean;
   hasActiveSubscription: boolean;
   cancelDate: number | false;
@@ -129,9 +136,21 @@ function PlanCard({
   isOnTeamPlan?: boolean;
 }) {
   const t = useExtracted();
+  const locale = useLocale();
   const formatPriceLabel = useFormatPriceLabel();
+  const formatPriceParts = useFormatPriceParts();
   const planCopy = useBillingPlanCopy(plan.id);
   const mode = plan.mode ?? "subscription";
+  const offerEndsAt = plan.limitedTimeOfferEndsAt ? new Date(plan.limitedTimeOfferEndsAt) : null;
+  const offerEndsLabel =
+    offerEndsAt && !Number.isNaN(offerEndsAt.getTime())
+      ? new Intl.DateTimeFormat(locale, {
+          month: "short",
+          day: "numeric",
+          hour: "numeric",
+          minute: "2-digit",
+        }).format(offerEndsAt)
+      : null;
   const canChange = hasActiveSubscription && !cancelDate && !isCurrent && mode === "subscription";
   const isBlockedByCancel = Number.isInteger(cancelDate) && Boolean(activePlanId) && !isCurrent;
   const processing =
@@ -140,43 +159,168 @@ function PlanCard({
   const isLoadingThisPlan = isLoadingEstimate;
 
   const tierName = plan.id.startsWith("pro_") ? t("Pro") : t("Plus");
+  const priceParts =
+    plan.amount && plan.currency ? formatPriceParts(plan.amount, plan.currency) : null;
+  const monthlyEquivalent =
+    mode === "subscription" && interval === "yearly" && plan.amount && plan.currency
+      ? formatMinorCurrency(
+          Math.round(plan.amount / 12),
+          plan.currency,
+          {
+            currencyDisplay: "code",
+            maximumFractionDigits: 0,
+          },
+          locale,
+        )
+      : null;
+  const savingsPercent =
+    mode === "subscription" &&
+    interval === "yearly" &&
+    plan.amount &&
+    monthlyPlan?.amount &&
+    monthlyPlan.currency === plan.currency &&
+    monthlyPlan.amount > 0
+      ? Math.max(
+          0,
+          Math.round(((monthlyPlan.amount * 12 - plan.amount) / (monthlyPlan.amount * 12)) * 100),
+        )
+      : 0;
+  const primaryActionLabel = isOnTeamPlan
+    ? t("Team plan active")
+    : isCurrent
+      ? t("Current plan")
+      : isBlockedByCancel
+        ? t("Resume to change")
+        : canChange
+          ? t("Change plan")
+          : mode === "payment"
+            ? t("Buy once")
+            : plan.trialDays
+              ? t("Start {days}-day trial", { days: plan.trialDays.toString() })
+              : t("Subscribe");
+  const showTrustCopy = !isOnTeamPlan && !isCurrent && !isBlockedByCancel;
 
   return (
     <Card
-      className={cn("flex flex-col", isCurrent && "border-foreground ring-1 ring-foreground/10")}
+      className={cn(
+        "flex flex-col",
+        interval === "yearly" && "border-foreground/20 bg-muted/20",
+        isCurrent && "border-foreground ring-1 ring-foreground/10",
+      )}
     >
       <CardHeader className="pb-4">
         <div className="flex items-start justify-between gap-4">
           <div className="space-y-1">
             <div className="flex items-center gap-2">
-              <CardTitle className="text-lg font-semibold">{tierName}</CardTitle>
-              {planCopy.badge && (
+              <CardTitle className="text-[11px] font-semibold tracking-[0.22em] text-muted-foreground uppercase">
+                {tierName}
+              </CardTitle>
+              {plan.trialDays ? (
+                <Badge className="border-sky-500/20 bg-sky-500/10 text-sky-700 dark:text-sky-300">
+                  {t("{days}-day free trial", {
+                    days: plan.trialDays.toString(),
+                  })}
+                </Badge>
+              ) : interval === "yearly" && savingsPercent > 0 ? (
+                <Badge className="border-emerald-500/20 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300">
+                  {t("Save {percent}%", { percent: savingsPercent.toString() })}
+                </Badge>
+              ) : planCopy.badge ? (
                 <Badge variant="secondary" className="text-xs">
                   {planCopy.badge}
                 </Badge>
-              )}
+              ) : null}
             </div>
-            <CardDescription className="text-sm">{planCopy.tagline}</CardDescription>
+            <CardDescription className="text-sm leading-relaxed">
+              {planCopy.tagline}
+            </CardDescription>
           </div>
-          <Tabs value={interval} onValueChange={(v) => onIntervalChange(v as "monthly" | "yearly")}>
-            <TabsList className="h-8 rounded-lg">
-              <TabsTrigger value="monthly" className="text-xs px-3 h-6 rounded-md">
-                {t("Monthly")}
-              </TabsTrigger>
-              <TabsTrigger value="yearly" className="text-xs px-3 h-6 rounded-md">
-                {t("Yearly")}
-              </TabsTrigger>
-            </TabsList>
-          </Tabs>
+          {mode === "subscription" ? (
+            <Tabs
+              value={interval}
+              onValueChange={(v) => onIntervalChange?.(v as "monthly" | "yearly")}
+            >
+              <TabsList className="h-8 rounded-lg">
+                <TabsTrigger value="monthly" className="text-xs px-3 h-6 rounded-md">
+                  {t("Monthly")}
+                </TabsTrigger>
+                <TabsTrigger value="yearly" className="text-xs px-3 h-6 rounded-md">
+                  {t("Yearly")}
+                </TabsTrigger>
+              </TabsList>
+            </Tabs>
+          ) : (
+            <Badge variant="secondary" className="text-xs">
+              {t("Lifetime")}
+            </Badge>
+          )}
         </div>
       </CardHeader>
       <CardContent className="flex flex-1 flex-col pt-0">
         <div className="flex-1">
-          <div className="text-2xl font-semibold tracking-tight">{formatPriceLabel(plan)}</div>
+          <div className="space-y-3">
+            {priceParts ? (
+              <div className="space-y-1">
+                <div className="flex items-start gap-2">
+                  <span className="pt-2 text-[11px] font-semibold tracking-[0.22em] text-muted-foreground uppercase">
+                    {priceParts.currency}
+                  </span>
+                  <span className="text-4xl font-semibold tracking-tight">{priceParts.amount}</span>
+                  {plan.interval && (
+                    <span className="pt-3 text-sm text-muted-foreground">
+                      /
+                      {plan.interval === "month"
+                        ? t("month")
+                        : plan.interval === "year"
+                          ? t("year")
+                          : plan.interval}
+                    </span>
+                  )}
+                </div>
+                {plan.originalAmount && plan.currency && (
+                  <p className="text-sm text-muted-foreground line-through">
+                    {formatMinorCurrency(
+                      plan.originalAmount,
+                      plan.currency,
+                      {
+                        currencyDisplay: "code",
+                        maximumFractionDigits: 0,
+                      },
+                      locale,
+                    )}
+                  </p>
+                )}
+              </div>
+            ) : (
+              <div className="text-2xl font-semibold tracking-tight">{formatPriceLabel(plan)}</div>
+            )}
+            {interval === "yearly" && monthlyEquivalent && (
+              <div className="space-y-1">
+                <p className="text-sm font-medium text-foreground">
+                  {t("{amount}/month when billed yearly", {
+                    amount: monthlyEquivalent,
+                  })}
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  {t("One yearly payment of {price}", {
+                    price: formatPriceLabel(plan),
+                  })}
+                </p>
+              </div>
+            )}
+            {mode === "payment" && (
+              <p className="text-sm font-medium text-foreground">{t("One-time purchase")}</p>
+            )}
+            {offerEndsLabel && (
+              <p className="text-xs text-muted-foreground">
+                {t("24-hour offer ends {date}", { date: offerEndsLabel })}
+              </p>
+            )}
+          </div>
           <PlanHighlights items={planCopy.highlights} className="mt-5" />
         </div>
         <Button
-          className="mt-6 w-full font-medium"
+          className="mt-6 h-auto min-h-12 w-full flex-col gap-1 py-3 font-medium"
           variant={isCurrent ? "secondary" : "default"}
           disabled={
             isCurrent || processing || isBlockedByCancel || isLoadingThisPlan || isOnTeamPlan
@@ -190,15 +334,12 @@ function PlanCard({
           }}
         >
           {(processing || isLoadingThisPlan) && <Spinner className="w-4 h-4" />}
-          {isOnTeamPlan
-            ? t("Team plan active")
-            : isCurrent
-              ? t("Current plan")
-              : isBlockedByCancel
-                ? t("Resume to change")
-                : canChange
-                  ? t("Change plan")
-                  : t("Subscribe")}
+          <span>{primaryActionLabel}</span>
+          {showTrustCopy && (
+            <span className="text-[11px] font-normal text-current/80">
+              {mode === "payment" ? t("Pay once. Keep access.") : t("Cancel anytime")}
+            </span>
+          )}
         </Button>
       </CardContent>
     </Card>
@@ -223,12 +364,13 @@ function UsageRow({
   maxModeEnabled?: boolean;
 }) {
   const t = useExtracted();
+  const locale = useLocale();
   if (!item) return null;
 
   // When Max Mode is enabled, show as unlimited
   if (maxModeEnabled) {
     const periodEndLabel = item.periodEnd
-      ? usageResetFormatter.format(new Date(item.periodEnd))
+      ? usageResetFormatter(locale).format(new Date(item.periodEnd))
       : null;
 
     return (
@@ -260,7 +402,7 @@ function UsageRow({
           count: Math.max(item.remaining ?? 0, 0).toLocaleString(),
         });
   const periodEndLabel = item.periodEnd
-    ? usageResetFormatter.format(new Date(item.periodEnd))
+    ? usageResetFormatter(locale).format(new Date(item.periodEnd))
     : null;
 
   return (
@@ -302,6 +444,7 @@ function BillingDisabled() {
 
 function BillingPageContent() {
   const t = useExtracted();
+  const locale = useLocale();
   const router = useRouter();
   const getPlanIntervalLabel = usePlanIntervalLabel();
   const formatCurrencyMinor = useFormatCurrencyMinor();
@@ -483,6 +626,7 @@ function BillingPageContent() {
   const plusYearly = allPlans.find((p) => p.id === "plus_yearly");
   const proMonthly = allPlans.find((p) => p.id === "pro_monthly");
   const proYearly = allPlans.find((p) => p.id === "pro_yearly");
+  const proLifetime = allPlans.find((p) => p.id === "pro_lifetime");
 
   const selectedPlusPlan = plusInterval === "monthly" ? plusMonthly : plusYearly;
   const selectedProPlan = proInterval === "monthly" ? proMonthly : proYearly;
@@ -518,7 +662,7 @@ function BillingPageContent() {
               {cancelDate && (
                 <span className="text-destructive">
                   {t("(Cancels {date})", {
-                    date: new Date(cancelDate * 1000).toLocaleDateString(undefined, {
+                    date: new Date(cancelDate * 1000).toLocaleDateString(locale, {
                       month: "short",
                       day: "numeric",
                     }),
@@ -531,7 +675,7 @@ function BillingPageContent() {
             {statusQuery.data?.currentPeriodEnd && !cancelDate && (
               <span className="text-xs text-muted-foreground px-3 py-1 rounded-full bg-muted">
                 {t("Renews {date}", {
-                  date: new Intl.DateTimeFormat(undefined, {
+                  date: new Intl.DateTimeFormat(locale, {
                     month: "short",
                     day: "numeric",
                   }).format(new Date(statusQuery.data.currentPeriodEnd)),
@@ -689,43 +833,65 @@ function BillingPageContent() {
           </CardHeader>
         </Card>
       ) : (
-        <div className="grid gap-4 sm:grid-cols-2">
-          {/* Plus Plan Card */}
-          {selectedPlusPlan && (
-            <PlanCard
-              plan={selectedPlusPlan}
-              interval={plusInterval}
-              onIntervalChange={setPlusInterval}
-              isCurrent={selectedPlusPlan.id === activePlanId && isSubscribed}
-              hasActiveSubscription={hasActiveSubscription}
-              cancelDate={cancelDate}
-              activePlanId={activePlanId}
-              changePlan={changePlan}
-              checkout={createCheckout}
-              onChangePlanClick={handleChangePlanClick}
-              onCheckout={handleCheckout}
-              isLoadingEstimate={pendingPlanId === selectedPlusPlan.id && estimateQuery.isLoading}
-              isOnTeamPlan={isOnTeamPlan}
-            />
-          )}
+        <div className="space-y-4">
+          <div className="grid gap-4 sm:grid-cols-2">
+            {/* Plus Plan Card */}
+            {selectedPlusPlan && (
+              <PlanCard
+                plan={selectedPlusPlan}
+                monthlyPlan={plusMonthly}
+                interval={plusInterval}
+                onIntervalChange={setPlusInterval}
+                isCurrent={selectedPlusPlan.id === activePlanId && isSubscribed}
+                hasActiveSubscription={hasActiveSubscription}
+                cancelDate={cancelDate}
+                activePlanId={activePlanId}
+                changePlan={changePlan}
+                checkout={createCheckout}
+                onChangePlanClick={handleChangePlanClick}
+                onCheckout={handleCheckout}
+                isLoadingEstimate={pendingPlanId === selectedPlusPlan.id && estimateQuery.isLoading}
+                isOnTeamPlan={isOnTeamPlan}
+              />
+            )}
 
-          {/* Pro Plan Card */}
-          {selectedProPlan && (
-            <PlanCard
-              plan={selectedProPlan}
-              interval={proInterval}
-              onIntervalChange={setProInterval}
-              isCurrent={selectedProPlan.id === activePlanId && isSubscribed}
-              hasActiveSubscription={hasActiveSubscription}
-              cancelDate={cancelDate}
-              activePlanId={activePlanId}
-              changePlan={changePlan}
-              checkout={createCheckout}
-              onChangePlanClick={handleChangePlanClick}
-              onCheckout={handleCheckout}
-              isLoadingEstimate={pendingPlanId === selectedProPlan.id && estimateQuery.isLoading}
-              isOnTeamPlan={isOnTeamPlan}
-            />
+            {/* Pro Plan Card */}
+            {selectedProPlan && (
+              <PlanCard
+                plan={selectedProPlan}
+                monthlyPlan={proMonthly}
+                interval={proInterval}
+                onIntervalChange={setProInterval}
+                isCurrent={selectedProPlan.id === activePlanId && isSubscribed}
+                hasActiveSubscription={hasActiveSubscription}
+                cancelDate={cancelDate}
+                activePlanId={activePlanId}
+                changePlan={changePlan}
+                checkout={createCheckout}
+                onChangePlanClick={handleChangePlanClick}
+                onCheckout={handleCheckout}
+                isLoadingEstimate={pendingPlanId === selectedProPlan.id && estimateQuery.isLoading}
+                isOnTeamPlan={isOnTeamPlan}
+              />
+            )}
+          </div>
+
+          {proLifetime && (
+            <div>
+              <PlanCard
+                plan={proLifetime}
+                isCurrent={proLifetime.id === activePlanId && isSubscribed}
+                hasActiveSubscription={hasActiveSubscription}
+                cancelDate={cancelDate}
+                activePlanId={activePlanId}
+                changePlan={changePlan}
+                checkout={createCheckout}
+                onChangePlanClick={handleChangePlanClick}
+                onCheckout={handleCheckout}
+                isLoadingEstimate={pendingPlanId === proLifetime.id && estimateQuery.isLoading}
+                isOnTeamPlan={isOnTeamPlan}
+              />
+            </div>
           )}
         </div>
       )}
@@ -812,7 +978,10 @@ function BillingPageContent() {
                 changePlan.isPending || !changeTarget || estimateQuery.error != null || !hasAgreed
               }
               onClick={() =>
-                changeTarget && changePlan.mutate({ planId: changeTarget.id as IndividualPlanId })
+                changeTarget &&
+                changePlan.mutate({
+                  planId: changeTarget.id as IndividualPlanId,
+                })
               }
             >
               {changePlan.isPending && <Spinner />}

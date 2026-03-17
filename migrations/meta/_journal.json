@@ -162,6 +162,27 @@
       "when": 1773393612982,
       "tag": "0022_perpetual_captain_america",
       "breakpoints": true
+    },
+    {
+      "idx": 23,
+      "version": "7",
+      "when": 1773650716967,
+      "tag": "0023_round_lightspeed",
+      "breakpoints": true
+    },
+    {
+      "idx": 24,
+      "version": "7",
+      "when": 1773653410889,
+      "tag": "0024_tired_blue_marvel",
+      "breakpoints": true
+    },
+    {
+      "idx": 25,
+      "version": "7",
+      "when": 1773655108182,
+      "tag": "0025_spooky_valkyrie",
+      "breakpoints": true
     }
   ]
 }
