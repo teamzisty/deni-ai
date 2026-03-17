@@ -14,17 +14,10 @@ import { headers } from "next/headers";
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { generateTitle, getChatById, updateChat } from "@/lib/chat";
-import {
-  clearChatGeneration,
-  startChatGeneration,
-} from "@/lib/chat-generation";
+import { clearChatGeneration, startChatGeneration } from "@/lib/chat-generation";
 import { createChatTools } from "@/lib/chat-tools";
 import { getModelContextWindow, getModelDefinition } from "@/lib/constants";
-import {
-  buildMemoryPrompt,
-  getUserMemoryState,
-  maybeAutoSaveMemories,
-} from "@/lib/memory";
+import { buildMemoryPrompt, getUserMemoryState, maybeAutoSaveMemories } from "@/lib/memory";
 import { buildProjectPrompt } from "@/lib/project-context";
 import { consumeUsage, UsageLimitError } from "@/lib/usage";
 import { checkRateLimit } from "@/lib/rate-limit";
@@ -114,10 +107,7 @@ export async function POST(req: Request) {
   const parsedBody = ChatRequestSchema.safeParse(body);
 
   if (!parsedBody.success) {
-    return NextResponse.json(
-      { error: "Invalid request body" },
-      { status: 400 },
-    );
+    return NextResponse.json({ error: "Invalid request body" }, { status: 400 });
   }
 
   const {
@@ -139,10 +129,7 @@ export async function POST(req: Request) {
   });
 
   if (!validatedMessages.success) {
-    return NextResponse.json(
-      { error: "Invalid messages payload" },
-      { status: 400 },
-    );
+    return NextResponse.json({ error: "Invalid messages payload" }, { status: 400 });
   }
 
   const messages = validatedMessages.data;
@@ -238,10 +225,7 @@ export async function POST(req: Request) {
     await rollbackPendingAssistantState();
     clearGenerationLock();
     if (error instanceof UsageLimitError) {
-      return NextResponse.json(
-        { error: error.message, reason: "usage_limit" },
-        { status: 402 },
-      );
+      return NextResponse.json({ error: error.message, reason: "usage_limit" }, { status: 402 });
     }
     throw error;
   }
@@ -370,9 +354,7 @@ export async function POST(req: Request) {
           id,
           userId,
           updatedMessages.map((message) =>
-            message.id === responseMessageId
-              ? setPendingState(message, false)
-              : message,
+            message.id === responseMessageId ? setPendingState(message, false) : message,
           ),
           newTitle,
         );
