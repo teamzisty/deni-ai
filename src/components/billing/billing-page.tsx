@@ -37,10 +37,11 @@ import { Switch } from "../ui/switch";
 import { Tabs, TabsList, TabsTrigger } from "../ui/tabs";
 
 const ACTIVE_STATUSES = new Set(["active", "trialing", "paid"]);
-const usageResetFormatter = new Intl.DateTimeFormat(undefined, {
-  month: "short",
-  day: "numeric",
-});
+const usageResetFormatter = (locale: string) =>
+  new Intl.DateTimeFormat(locale, {
+    month: "short",
+    day: "numeric",
+  });
 
 function useFormatPriceLabel() {
   const t = useExtracted();
@@ -135,6 +136,7 @@ function PlanCard({
   isOnTeamPlan?: boolean;
 }) {
   const t = useExtracted();
+  const locale = useLocale();
   const formatPriceLabel = useFormatPriceLabel();
   const formatPriceParts = useFormatPriceParts();
   const planCopy = useBillingPlanCopy(plan.id);
@@ -142,7 +144,7 @@ function PlanCard({
   const offerEndsAt = plan.limitedTimeOfferEndsAt ? new Date(plan.limitedTimeOfferEndsAt) : null;
   const offerEndsLabel =
     offerEndsAt && !Number.isNaN(offerEndsAt.getTime())
-      ? new Intl.DateTimeFormat(undefined, {
+      ? new Intl.DateTimeFormat(locale, {
           month: "short",
           day: "numeric",
           hour: "numeric",
@@ -352,12 +354,13 @@ function UsageRow({
   maxModeEnabled?: boolean;
 }) {
   const t = useExtracted();
+  const locale = useLocale();
   if (!item) return null;
 
   // When Max Mode is enabled, show as unlimited
   if (maxModeEnabled) {
     const periodEndLabel = item.periodEnd
-      ? usageResetFormatter.format(new Date(item.periodEnd))
+      ? usageResetFormatter(locale).format(new Date(item.periodEnd))
       : null;
 
     return (
@@ -389,7 +392,7 @@ function UsageRow({
           count: Math.max(item.remaining ?? 0, 0).toLocaleString(),
         });
   const periodEndLabel = item.periodEnd
-    ? usageResetFormatter.format(new Date(item.periodEnd))
+    ? usageResetFormatter(locale).format(new Date(item.periodEnd))
     : null;
 
   return (
@@ -431,6 +434,7 @@ function BillingDisabled() {
 
 function BillingPageContent() {
   const t = useExtracted();
+  const locale = useLocale();
   const router = useRouter();
   const getPlanIntervalLabel = usePlanIntervalLabel();
   const formatCurrencyMinor = useFormatCurrencyMinor();
@@ -648,7 +652,7 @@ function BillingPageContent() {
               {cancelDate && (
                 <span className="text-destructive">
                   {t("(Cancels {date})", {
-                    date: new Date(cancelDate * 1000).toLocaleDateString(undefined, {
+                    date: new Date(cancelDate * 1000).toLocaleDateString(locale, {
                       month: "short",
                       day: "numeric",
                     }),
@@ -661,7 +665,7 @@ function BillingPageContent() {
             {statusQuery.data?.currentPeriodEnd && !cancelDate && (
               <span className="text-xs text-muted-foreground px-3 py-1 rounded-full bg-muted">
                 {t("Renews {date}", {
-                  date: new Intl.DateTimeFormat(undefined, {
+                  date: new Intl.DateTimeFormat(locale, {
                     month: "short",
                     day: "numeric",
                   }).format(new Date(statusQuery.data.currentPeriodEnd)),
