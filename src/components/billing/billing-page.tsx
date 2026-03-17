@@ -163,10 +163,15 @@ function PlanCard({
     plan.amount && plan.currency ? formatPriceParts(plan.amount, plan.currency) : null;
   const monthlyEquivalent =
     mode === "subscription" && interval === "yearly" && plan.amount && plan.currency
-      ? formatMinorCurrency(Math.round(plan.amount / 12), plan.currency, {
-          currencyDisplay: "code",
-          maximumFractionDigits: 0,
-        })
+      ? formatMinorCurrency(
+          Math.round(plan.amount / 12),
+          plan.currency,
+          {
+            currencyDisplay: "code",
+            maximumFractionDigits: 0,
+          },
+          locale,
+        )
       : null;
   const savingsPercent =
     mode === "subscription" &&
@@ -274,10 +279,15 @@ function PlanCard({
                 </div>
                 {plan.originalAmount && plan.currency && (
                   <p className="text-sm text-muted-foreground line-through">
-                    {formatMinorCurrency(plan.originalAmount, plan.currency, {
-                      currencyDisplay: "code",
-                      maximumFractionDigits: 0,
-                    })}
+                    {formatMinorCurrency(
+                      plan.originalAmount,
+                      plan.currency,
+                      {
+                        currencyDisplay: "code",
+                        maximumFractionDigits: 0,
+                      },
+                      locale,
+                    )}
                   </p>
                 )}
               </div>
