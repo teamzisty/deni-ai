@@ -6,11 +6,12 @@ import { db } from "@/db/drizzle";
 import { billing, member, usageQuota } from "@/db/schema";
 
 import { isMaxModeEligible, recordMaxModeUsage } from "./max-mode";
+import { getPlanTier } from "./billing";
 
 const ACTIVE_BILLING_STATUSES = new Set(["active", "trialing", "past_due", "paid"]);
 
 export type UsageCategory = "basic" | "premium";
-export type SubscriptionTier = "free" | "plus" | "pro";
+export type SubscriptionTier = "free" | "plus" | "pro" | "max";
 type UsageRecord = typeof usageQuota.$inferSelect;
 
 const USAGE_CATEGORIES: UsageCategory[] = ["basic", "premium"];
@@ -20,11 +21,13 @@ const USAGE_LIMITS: Record<UsageCategory, Record<SubscriptionTier, number | null
     free: 500,
     plus: 1500,
     pro: 3000,
+    max: 10000,
   },
   premium: {
     free: 50,
     plus: 400,
     pro: 800,
+    max: 2000,
   },
 };
 
@@ -145,11 +148,11 @@ async function getTierInfo(userId: string, now: Date): Promise<TierInfo> {
     };
   }
 
-  const isPro = (planId ?? "").startsWith("pro");
+  const planTier = getPlanTier(planId);
   const maxModeEligible = isMaxModeEligible(planId) && status === "active";
 
   return {
-    tier: isPro ? "pro" : "plus",
+    tier: planTier === "max" ? "max" : planTier === "pro" ? "pro" : "plus",
     planId,
     status: status ?? null,
     periodEnd: record.currentPeriodEnd ?? null,

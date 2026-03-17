@@ -38,6 +38,8 @@ const planIdSchema = z.enum([
   "plus_yearly",
   "pro_monthly",
   "pro_yearly",
+  "max_monthly",
+  "max_yearly",
   "pro_lifetime",
 ]);
 

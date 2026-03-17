@@ -443,7 +443,13 @@ export default function PaletteClient() {
     remainingUsage <= 0;
   const usageCategoryLabel = selectedUsageCategory === "premium" ? t("Premium") : t("Basic");
   const usageTierLabel =
-    usageTier === "free" ? t("Free") : usageTier === "plus" ? t("Plus") : t("Pro");
+    usageTier === "free"
+      ? t("Free")
+      : usageTier === "plus"
+        ? t("Plus")
+        : usageTier === "max"
+          ? "Max"
+          : t("Pro");
   const historyDateFormatter = new Intl.DateTimeFormat(undefined, {
     month: "short",
     day: "numeric",

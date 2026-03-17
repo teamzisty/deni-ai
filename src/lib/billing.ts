@@ -3,6 +3,8 @@ export type IndividualPlanId =
   | "plus_yearly"
   | "pro_monthly"
   | "pro_yearly"
+  | "max_monthly"
+  | "max_yearly"
   | "pro_lifetime";
 
 export type TeamPlanId = "pro_team_monthly" | "pro_team_yearly";
@@ -47,6 +49,14 @@ export const billingPlans: BillingPlan[] = [
     lookupKey: "pro_yearly",
   },
   {
+    id: "max_monthly",
+    lookupKey: "max_monthly",
+  },
+  {
+    id: "max_yearly",
+    lookupKey: "max_yearly",
+  },
+  {
     id: "pro_lifetime",
     lookupKey: "pro_lifetime",
   },
@@ -85,6 +95,33 @@ export function isTeamPlan(planId: string | null | undefined): boolean {
   return Boolean(planId?.startsWith("pro_team"));
 }
 
+export function getPlanTier(
+  planId: string | null | undefined,
+): "plus" | "pro" | "max" | "team" | null {
+  if (!planId) {
+    return null;
+  }
+
+  if (planId.startsWith("pro_team")) {
+    return "team";
+  }
+
+  if (planId.startsWith("max_")) {
+    return "max";
+  }
+
+  if (planId.startsWith("pro_")) {
+    return "pro";
+  }
+
+  if (planId.startsWith("plus_")) {
+    return "plus";
+  }
+
+  return null;
+}
+
 export function isProTier(planId: string | null | undefined): boolean {
-  return Boolean(planId?.startsWith("pro"));
+  const tier = getPlanTier(planId);
+  return tier === "pro" || tier === "max" || tier === "team";
 }

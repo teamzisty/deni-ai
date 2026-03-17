@@ -7,7 +7,7 @@ import { useExtracted, useLocale } from "next-intl";
 import { startTransition, useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import type { BillingPlanId, ClientPlan, IndividualPlanId } from "@/lib/billing";
-import { isTeamPlan } from "@/lib/billing";
+import { getPlanTier, isTeamPlan } from "@/lib/billing";
 import { isBillingDisabled } from "@/lib/billing-config";
 import { useBillingPlanCopy } from "@/lib/billing-plan-copy";
 import { formatMinorCurrency } from "@/lib/currency";
@@ -104,6 +104,15 @@ function usePlanIntervalLabel() {
   };
 }
 
+function getTierLabel(t: ReturnType<typeof useExtracted>, planId: string) {
+  const tier = getPlanTier(planId);
+  if (tier === "max") {
+    return "Max";
+  }
+
+  return tier === "pro" || tier === "team" ? t("Pro") : t("Plus");
+}
+
 function PlanCard({
   plan,
   monthlyPlan,
@@ -158,7 +167,7 @@ function PlanCard({
     (checkout.isPending && checkout.variables?.planId === plan.id);
   const isLoadingThisPlan = isLoadingEstimate;
 
-  const tierName = plan.id.startsWith("pro_") ? t("Pro") : t("Plus");
+  const tierName = getTierLabel(t, plan.id);
   const priceParts =
     plan.amount && plan.currency ? formatPriceParts(plan.amount, plan.currency) : null;
   const monthlyEquivalent =
@@ -209,9 +218,9 @@ function PlanCard({
       )}
     >
       <CardHeader className="pb-4">
-        <div className="flex items-start justify-between gap-4">
+        <div className="space-y-3">
           <div className="space-y-1">
-            <div className="flex items-center gap-2">
+            <div className="flex flex-wrap items-center gap-2">
               <CardTitle className="text-[11px] font-semibold tracking-[0.22em] text-muted-foreground uppercase">
                 {tierName}
               </CardTitle>
@@ -241,10 +250,10 @@ function PlanCard({
               onValueChange={(v) => onIntervalChange?.(v as "monthly" | "yearly")}
             >
               <TabsList className="h-8 rounded-lg">
-                <TabsTrigger value="monthly" className="text-xs px-3 h-6 rounded-md">
+                <TabsTrigger value="monthly" className="h-6 px-3 text-xs rounded-md">
                   {t("Monthly")}
                 </TabsTrigger>
-                <TabsTrigger value="yearly" className="text-xs px-3 h-6 rounded-md">
+                <TabsTrigger value="yearly" className="h-6 px-3 text-xs rounded-md">
                   {t("Yearly")}
                 </TabsTrigger>
               </TabsList>
@@ -452,6 +461,7 @@ function BillingPageContent() {
   const [changeTarget, setChangeTarget] = useState<ClientPlan | null>(null);
   const [plusInterval, setPlusInterval] = useState<"monthly" | "yearly">("monthly");
   const [proInterval, setProInterval] = useState<"monthly" | "yearly">("monthly");
+  const [maxInterval, setMaxInterval] = useState<"monthly" | "yearly">("monthly");
   const [hasAgreed, setHasAgreed] = useState(false);
   const [pendingPlanId, setPendingPlanId] = useState<IndividualPlanId | null>(null);
 
@@ -597,6 +607,8 @@ function BillingPageContent() {
   const usageTier = usageQuery.data?.tier ?? "free";
   const usageTierLabel = (() => {
     switch (usageTier) {
+      case "max":
+        return "Max";
       case "plus":
         return t("Plus");
       case "pro":
@@ -626,10 +638,13 @@ function BillingPageContent() {
   const plusYearly = allPlans.find((p) => p.id === "plus_yearly");
   const proMonthly = allPlans.find((p) => p.id === "pro_monthly");
   const proYearly = allPlans.find((p) => p.id === "pro_yearly");
+  const maxMonthly = allPlans.find((p) => p.id === "max_monthly");
+  const maxYearly = allPlans.find((p) => p.id === "max_yearly");
   const proLifetime = allPlans.find((p) => p.id === "pro_lifetime");
 
   const selectedPlusPlan = plusInterval === "monthly" ? plusMonthly : plusYearly;
   const selectedProPlan = proInterval === "monthly" ? proMonthly : proYearly;
+  const selectedMaxPlan = maxInterval === "monthly" ? maxMonthly : maxYearly;
   const basicUsage = usage.find((entry) => entry.category === "basic");
   const premiumUsage = usage.find((entry) => entry.category === "premium");
 
@@ -642,7 +657,11 @@ function BillingPageContent() {
   }
 
   return (
-    <SettingsPageShell title={t("Billing")} description={t("Manage your subscription and usage")}>
+    <SettingsPageShell
+      title={t("Billing")}
+      description={t("Manage your subscription and usage")}
+      className="max-w-6xl"
+    >
       {/* Current Plan */}
       <Card>
         <CardHeader className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
@@ -655,7 +674,7 @@ function BillingPageContent() {
                   })
                 : currentPlan
                   ? t("{tier} {name}", {
-                      tier: activePlanId?.startsWith("pro_") ? t("Pro") : t("Plus"),
+                      tier: activePlanId ? getTierLabel(t, activePlanId) : t("Plus"),
                       name: getPlanIntervalLabel(currentPlan.id),
                     })
                   : t("Free")}{" "}
@@ -834,7 +853,7 @@ function BillingPageContent() {
         </Card>
       ) : (
         <div className="space-y-4">
-          <div className="grid gap-4 sm:grid-cols-2">
+          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
             {/* Plus Plan Card */}
             {selectedPlusPlan && (
               <PlanCard
@@ -871,6 +890,26 @@ function BillingPageContent() {
                 onChangePlanClick={handleChangePlanClick}
                 onCheckout={handleCheckout}
                 isLoadingEstimate={pendingPlanId === selectedProPlan.id && estimateQuery.isLoading}
+                isOnTeamPlan={isOnTeamPlan}
+              />
+            )}
+
+            {/* Max Plan Card */}
+            {selectedMaxPlan && (
+              <PlanCard
+                plan={selectedMaxPlan}
+                monthlyPlan={maxMonthly}
+                interval={maxInterval}
+                onIntervalChange={setMaxInterval}
+                isCurrent={selectedMaxPlan.id === activePlanId && isSubscribed}
+                hasActiveSubscription={hasActiveSubscription}
+                cancelDate={cancelDate}
+                activePlanId={activePlanId}
+                changePlan={changePlan}
+                checkout={createCheckout}
+                onChangePlanClick={handleChangePlanClick}
+                onCheckout={handleCheckout}
+                isLoadingEstimate={pendingPlanId === selectedMaxPlan.id && estimateQuery.isLoading}
                 isOnTeamPlan={isOnTeamPlan}
               />
             )}
