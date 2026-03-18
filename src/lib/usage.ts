@@ -4,9 +4,9 @@ import { and, eq, isNotNull, isNull, like, sql } from "drizzle-orm";
 
 import { db } from "@/db/drizzle";
 import { billing, member, usageQuota } from "@/db/schema";
+import { getPlanTier } from "@/lib/billing";
 
 import { isMaxModeEligible, recordMaxModeUsage } from "./max-mode";
-import { getPlanTier } from "./billing";
 
 const ACTIVE_BILLING_STATUSES = new Set(["active", "trialing", "past_due", "paid"]);
 

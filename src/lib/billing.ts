@@ -73,6 +73,17 @@ export const billingPlans: BillingPlan[] = [
 export const lookupKeyToPlan = new Map<string, BillingPlanId>(
   billingPlans.map((plan) => [plan.lookupKey, plan.id]),
 );
+const planIdToTier = new Map<BillingPlanId, "plus" | "pro" | "max" | "team">([
+  ["plus_monthly", "plus"],
+  ["plus_yearly", "plus"],
+  ["pro_monthly", "pro"],
+  ["pro_yearly", "pro"],
+  ["pro_lifetime", "pro"],
+  ["max_monthly", "max"],
+  ["max_yearly", "max"],
+  ["pro_team_monthly", "team"],
+  ["pro_team_yearly", "team"],
+]);
 
 const teamPlanIds = new Set<TeamPlanId>(["pro_team_monthly", "pro_team_yearly"]);
 
@@ -102,23 +113,7 @@ export function getPlanTier(
     return null;
   }
 
-  if (planId.startsWith("pro_team")) {
-    return "team";
-  }
-
-  if (planId.startsWith("max_")) {
-    return "max";
-  }
-
-  if (planId.startsWith("pro_")) {
-    return "pro";
-  }
-
-  if (planId.startsWith("plus_")) {
-    return "plus";
-  }
-
-  return null;
+  return planIdToTier.get(planId as BillingPlanId) ?? null;
 }
 
 export function isProOrHigherTier(planId: string | null | undefined): boolean {
@@ -128,5 +123,5 @@ export function isProOrHigherTier(planId: string | null | undefined): boolean {
 
 /** @deprecated Use isProOrHigherTier instead. */
 export function isProTier(planId: string | null | undefined): boolean {
-  return isProOrHigherTier(planId);
+  return getPlanTier(planId) === "pro";
 }
