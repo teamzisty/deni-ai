@@ -79,7 +79,13 @@ export function useUsageStatus(params: {
     remainingUsage <= 0;
   const usageCategoryLabel = usageCategory === "premium" ? t("Premium") : t("Basic");
   const usageTierLabel =
-    usageTier === "free" ? t("Free") : usageTier === "plus" ? t("Plus") : t("Pro");
+    usageTier === "free"
+      ? t("Free")
+      : usageTier === "plus"
+        ? t("Plus")
+        : usageTier === "max"
+          ? t("Max")
+          : t("Pro");
   const maxModeEligible = usageQuery.data?.maxModeEligible ?? false;
   const canEnableMaxMode = maxModeEligible && !maxModeEnabled && isUsageBlocked;
   const isSubmitBlocked = (isUsageBlocked && !maxModeEnabled) || isByokMissingConfig;

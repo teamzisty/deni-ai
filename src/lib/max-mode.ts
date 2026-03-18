@@ -4,6 +4,7 @@ import { and, eq, isNotNull, isNull, like, sql } from "drizzle-orm";
 
 import { db } from "@/db/drizzle";
 import { billing, member } from "@/db/schema";
+import { isProOrHigherTier } from "@/lib/billing";
 import { stripe } from "@/lib/stripe";
 
 import type { UsageCategory } from "./usage";
@@ -14,9 +15,9 @@ export const MAX_MODE_PRICING = {
   premium: 5, // $0.05 per premium message
 } as const;
 
-// Max Mode is only available for Pro plan users
+// Max Mode is only available for Pro and Max plan users
 export function isMaxModeEligible(planId: string | null | undefined): boolean {
-  return Boolean(planId?.startsWith("pro"));
+  return isProOrHigherTier(planId);
 }
 
 const ACTIVE_STATUSES = new Set(["active", "trialing", "past_due", "paid"]);
@@ -113,7 +114,10 @@ export async function enableMaxMode(userId: string): Promise<{ success: boolean;
   }
 
   if (!isMaxModeEligible(record.planId)) {
-    return { success: false, error: "Max Mode is only available for Pro plan users." };
+    return {
+      success: false,
+      error: "Max Mode is only available for Pro or Max plan users.",
+    };
   }
 
   if (record.status !== "active") {

@@ -10,7 +10,6 @@ import {
   streamText,
   type UIMessage,
 } from "ai";
-import { checkBotId } from "botid/server";
 import { headers } from "next/headers";
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
@@ -85,12 +84,6 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const verification = await checkBotId();
-
-  if (verification.isBot) {
-    return NextResponse.json({ error: "Access denied" }, { status: 403 });
-  }
-
   const body = await bodyPromise;
 
   const rateCheck = await checkRateLimit({
@@ -158,7 +151,11 @@ export async function POST(req: Request) {
   const { model, providerOptions, usageCategory, useByok } = modelContext;
 
   const webSearchEnabled = webSearch || forceWebSearch || deepResearch;
-  const tools = createChatTools({ videoMode, imageMode, webSearch: webSearchEnabled });
+  const tools = createChatTools({
+    videoMode,
+    imageMode,
+    webSearch: webSearchEnabled,
+  });
 
   const modelMessages = await convertToModelMessages(messages);
   const currentDate = new Date().toISOString().split("T")[0];

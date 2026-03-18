@@ -17,7 +17,7 @@ import { useTheme } from "next-themes";
 import { startTransition, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import type { BillingPlanId, ClientPlan, IndividualPlanId, TeamPlanId } from "@/lib/billing";
-import { findPlanById } from "@/lib/billing";
+import { findPlanById, getPlanTier } from "@/lib/billing";
 import { useBillingPlanCopy } from "@/lib/billing-plan-copy";
 import { formatMinorCurrency } from "@/lib/currency";
 import { stripeJsPromise } from "@/lib/stripe-js";
@@ -55,6 +55,19 @@ type TeamCheckoutProps = {
 };
 
 type StripeCheckoutPageProps = BillingCheckoutProps | TeamCheckoutProps;
+
+function getTierLabel(t: ReturnType<typeof useExtracted>, planId: string) {
+  const tier = getPlanTier(planId);
+  if (tier === "team") {
+    return t("Pro for Teams");
+  }
+  if (tier === "max") {
+    return t("Max");
+  }
+
+  return tier === "pro" ? t("Pro") : t("Plus");
+}
+
 function getStripeCheckoutAppearance(theme: string | undefined): Appearance {
   const isDark = theme === "dark";
   const backgroundColor = isDark ? "#1a1a1a" : "#ffffff";
@@ -177,7 +190,7 @@ function usePlanLabel() {
     }
 
     return t("{tier} {name}", {
-      tier: planId.startsWith("pro_") ? t("Pro") : t("Plus"),
+      tier: getTierLabel(t, planId),
       name: interval,
     });
   };
@@ -195,7 +208,7 @@ function useTierLabel() {
       return t("Pro for Teams");
     }
 
-    return planId.startsWith("pro_") ? t("Pro") : t("Plus");
+    return getTierLabel(t, planId);
   };
 }
 

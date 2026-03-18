@@ -25,10 +25,10 @@ export function useBillingPlanCopy(planId: BillingPlanId | null): BillingPlanCop
       return {
         tagline: t("Get unbelievable usage limits"),
         highlights: [
-          t("Get 4x usage for basic models"),
-          t("Get 10x usage for premium models"),
+          t("Get 3x usage for basic models"),
+          t("Get 8x usage for premium models"),
           t("With priority support"),
-          t("Deni AI Code - Plus access"),
+          t("Deni AI Flixa - Plus access"),
           t("For trying Deni AI"),
         ],
       };
@@ -36,10 +36,10 @@ export function useBillingPlanCopy(planId: BillingPlanId | null): BillingPlanCop
       return {
         tagline: t("Incredible deal"),
         highlights: [
-          t("Get 4x usage for basic models"),
-          t("Get 10x usage for premium models"),
+          t("Get 3x usage for basic models"),
+          t("Get 8x usage for premium models"),
           t("With priority support"),
-          t("Deni AI Code - Plus access"),
+          t("Deni AI Flixa - Plus access"),
           t("Most cost-effective"),
         ],
       };
@@ -47,10 +47,10 @@ export function useBillingPlanCopy(planId: BillingPlanId | null): BillingPlanCop
       return {
         tagline: t("Great deals even for power users"),
         highlights: [
-          t("Get 10x usage for basic models"),
-          t("Get 20x usage for premium models"),
+          t("Get 6x usage for basic models"),
+          t("Get 16x usage for premium models"),
           t("Max Mode pay-per-use available"),
-          t("Deni AI Code - Pro access"),
+          t("Deni AI Flixa - Pro access"),
           t("For power users"),
         ],
       };
@@ -58,10 +58,33 @@ export function useBillingPlanCopy(planId: BillingPlanId | null): BillingPlanCop
       return {
         tagline: t("You like us, and we like you too!"),
         highlights: [
-          t("Get 10x usage for basic models"),
-          t("Get 20x usage for premium models"),
+          t("Get 6x usage for basic models"),
+          t("Get 16x usage for premium models"),
           t("Max Mode pay-per-use available"),
-          t("Deni AI Code - Pro access"),
+          t("Deni AI Flixa - Pro access"),
+          t("For power users"),
+        ],
+      };
+    case "max_monthly":
+      return {
+        tagline: t("Get unbelievable usage limits"),
+        highlights: [
+          t("Get 20x usage for basic models"),
+          t("Get 40x usage for premium models"),
+          t("Max Mode pay-per-use available"),
+          t("Deni AI Flixa - Max access"),
+          t("For power users"),
+        ],
+      };
+    case "max_yearly":
+      return {
+        tagline: t("Incredible deal"),
+        badge: t("Most cost-effective"),
+        highlights: [
+          t("Get 20x usage for basic models"),
+          t("Get 40x usage for premium models"),
+          t("Max Mode pay-per-use available"),
+          t("Deni AI Flixa - Max access"),
           t("For power users"),
         ],
       };
@@ -70,10 +93,10 @@ export function useBillingPlanCopy(planId: BillingPlanId | null): BillingPlanCop
         tagline: t("One payment. Long-term Pro access."),
         badge: t("Buy once"),
         highlights: [
-          t("Get 10x usage for basic models"),
-          t("Get 20x usage for premium models"),
+          t("Get 6x usage for basic models"),
+          t("Get 16x usage for premium models"),
           t("Max Mode pay-per-use available"),
-          t("Deni AI Code - Pro access"),
+          t("Deni AI Flixa - Pro access"),
           t("No recurring subscription"),
         ],
       };
@@ -82,8 +105,8 @@ export function useBillingPlanCopy(planId: BillingPlanId | null): BillingPlanCop
         tagline: t("Give your whole team Pro-tier access with per-seat pricing."),
         highlights: [
           t("Pro benefits for every team member"),
-          t("Get 10x usage for basic models"),
-          t("Get 20x usage for premium models"),
+          t("Get 6x usage for basic models"),
+          t("Get 16x usage for premium models"),
           t("Max Mode pay-per-use available"),
           t("Per-seat billing — pay only for active members"),
           t("Centralized billing and member management"),
@@ -95,8 +118,8 @@ export function useBillingPlanCopy(planId: BillingPlanId | null): BillingPlanCop
         badge: t("Most cost-effective"),
         highlights: [
           t("Pro benefits for every team member"),
-          t("Get 10x usage for basic models"),
-          t("Get 20x usage for premium models"),
+          t("Get 6x usage for basic models"),
+          t("Get 16x usage for premium models"),
           t("Max Mode pay-per-use available"),
           t("Per-seat billing — pay only for active members"),
           t("Centralized billing and member management"),
