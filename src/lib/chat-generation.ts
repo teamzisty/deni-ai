@@ -1,24 +1,24 @@
 import "server-only";
 
 type ActiveGeneration = {
-  userId: string;
+  generationId: string;
   abortController: AbortController;
 };
 
 const activeGenerations = new Map<string, ActiveGeneration>();
 
-export function startChatGeneration(chatId: string, userId: string) {
+export function startChatGeneration(chatId: string, generationId: string) {
   activeGenerations.get(chatId)?.abortController.abort("replaced");
 
   const abortController = new AbortController();
-  activeGenerations.set(chatId, { userId, abortController });
+  activeGenerations.set(chatId, { generationId, abortController });
 
-  return abortController;
+  return { abortController };
 }
 
-export function stopChatGeneration(chatId: string, userId: string) {
+export function stopChatGeneration(chatId: string) {
   const activeGeneration = activeGenerations.get(chatId);
-  if (!activeGeneration || activeGeneration.userId !== userId) {
+  if (!activeGeneration) {
     return false;
   }
 
@@ -27,11 +27,15 @@ export function stopChatGeneration(chatId: string, userId: string) {
   return true;
 }
 
-export function clearChatGeneration(chatId: string, abortController: AbortController) {
+export function clearChatGeneration(chatId: string, generationId: string) {
   const activeGeneration = activeGenerations.get(chatId);
-  if (activeGeneration?.abortController !== abortController) {
+  if (activeGeneration?.generationId !== generationId) {
     return;
   }
 
   activeGenerations.delete(chatId);
+}
+
+export function isCurrentChatGeneration(chatId: string, generationId: string) {
+  return activeGenerations.get(chatId)?.generationId === generationId;
 }

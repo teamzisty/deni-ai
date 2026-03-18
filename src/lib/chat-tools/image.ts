@@ -23,17 +23,17 @@ export function createImageTool() {
         prompt,
         model,
         aspectRatio: finalAspectRatio,
-        resolution: finalResolution,
+        resolution: effectiveResolution,
         numberOfImages: finalNumberOfImages,
         signal: abortSignal,
       });
 
       const imageUrls = await Promise.all(
-        generatedImages.map(async (img, idx) => {
+        generatedImages.map(async (img) => {
           const uploaded = await uploadImage(img.imageBytes, img.mimeType);
           if (uploaded) return uploaded;
-          // Fallback to base64 proxy URL when UploadThing is not configured
-          return `/api/image/file?data=${encodeURIComponent(img.imageBytes)}&mimeType=${encodeURIComponent(img.mimeType)}&index=${idx}`;
+          // Fallback to an inline data URL to avoid leaking image bytes through request URLs.
+          return `data:${img.mimeType};base64,${img.imageBytes}`;
         }),
       );
       const modelLabel = resolveImageModelLabel(model);

@@ -143,9 +143,26 @@ export const shareRouter = router({
           shareId: share.id,
           recipientId: recipient.id,
         })
+        .onConflictDoNothing({
+          target: [chatShareRecipients.shareId, chatShareRecipients.recipientId],
+        })
         .returning();
 
-      return newRecipient;
+      if (newRecipient) {
+        return newRecipient;
+      }
+
+      const [createdRecipient] = await ctx.db
+        .select()
+        .from(chatShareRecipients)
+        .where(
+          and(
+            eq(chatShareRecipients.shareId, share.id),
+            eq(chatShareRecipients.recipientId, recipient.id),
+          ),
+        );
+
+      return createdRecipient;
     }),
 
   removeRecipient: protectedProcedure

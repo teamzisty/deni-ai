@@ -1,5 +1,5 @@
 import { sql } from "drizzle-orm";
-import { boolean, index, pgEnum, pgTable, text, timestamp } from "drizzle-orm/pg-core";
+import { boolean, index, pgEnum, pgTable, text, timestamp, uniqueIndex } from "drizzle-orm/pg-core";
 import { user } from "./auth-schema";
 import { chats } from "./chat";
 
@@ -45,5 +45,6 @@ export const chatShareRecipients = pgTable(
   (table) => [
     index("chat_share_recipients_share_id_idx").on(table.shareId),
     index("chat_share_recipients_recipient_id_idx").on(table.recipientId),
+    uniqueIndex("chat_share_recipients_share_recipient_idx").on(table.shareId, table.recipientId),
   ],
 );

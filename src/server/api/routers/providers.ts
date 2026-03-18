@@ -9,6 +9,7 @@ import {
   providerSetting,
 } from "@/db/schema";
 import { decryptFromB64, encryptToB64 } from "@/lib/crypto";
+import { normalizePublicBaseUrl } from "@/lib/network-security";
 
 import { protectedProcedure, router } from "../trpc";
 
@@ -19,49 +20,6 @@ const ProviderIdSchema = z.union([
   z.literal("xai"),
   z.literal("openai_compatible"),
 ]);
-
-function normalizeBaseUrl(url: string) {
-  const trimmed = url.trim().replace(/\/$/, "");
-  if (!trimmed) return null;
-  try {
-    const parsed = new URL(trimmed);
-
-    // Only allow HTTPS (and HTTP for localhost dev)
-    if (parsed.protocol !== "https:" && parsed.protocol !== "http:") {
-      return null;
-    }
-
-    // Block internal/private network addresses to prevent SSRF
-    const hostname = parsed.hostname;
-    let blocked =
-      hostname === "localhost" ||
-      hostname === "127.0.0.1" ||
-      hostname === "0.0.0.0" ||
-      hostname === "[::1]" ||
-      hostname.startsWith("10.") ||
-      hostname.startsWith("192.168.") ||
-      hostname.startsWith("169.254.") ||
-      hostname.endsWith(".internal") ||
-      hostname.endsWith(".local");
-
-    // Check 172.16.0.0/12 (172.16.x.x - 172.31.x.x)
-    if (!blocked) {
-      const parts = hostname.split(".");
-      if (parts[0] === "172") {
-        const second = parseInt(parts[1], 10);
-        if (second >= 16 && second <= 31) blocked = true;
-      }
-    }
-
-    if (blocked) {
-      return null;
-    }
-
-    return parsed.toString().replace(/\/$/, "");
-  } catch {
-    return null;
-  }
-}
 
 export const providersRouter = router({
   getConfig: protectedProcedure.query(async ({ ctx }) => {
@@ -136,7 +94,7 @@ export const providersRouter = router({
           ? undefined
           : input.baseUrl === null
             ? null
-            : normalizeBaseUrl(input.baseUrl);
+            : await normalizePublicBaseUrl(input.baseUrl);
 
       if (input.baseUrl !== undefined && input.baseUrl !== null && !baseUrl) {
         throw new TRPCError({

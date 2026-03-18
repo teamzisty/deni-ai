@@ -4,45 +4,12 @@ import { and, eq } from "drizzle-orm";
 import { load } from "cheerio";
 import { db } from "@/db/drizzle";
 import { projectArtifacts, projects, projectSources } from "@/db/schema";
-
-function isPrivateUrl(url: string): boolean {
-  try {
-    const parsed = new URL(url);
-    if (parsed.protocol !== "https:" && parsed.protocol !== "http:") {
-      return true;
-    }
-
-    const hostname = parsed.hostname.toLowerCase();
-    if (
-      hostname === "localhost" ||
-      hostname === "127.0.0.1" ||
-      hostname === "0.0.0.0" ||
-      hostname === "[::1]" ||
-      hostname.startsWith("10.") ||
-      hostname.startsWith("192.168.") ||
-      hostname.startsWith("169.254.") ||
-      hostname.endsWith(".internal") ||
-      hostname.endsWith(".local")
-    ) {
-      return true;
-    }
-
-    const match172 = hostname.match(/^172\.(\d+)\./);
-    if (match172) {
-      const second = Number.parseInt(match172[1], 10);
-      if (second >= 16 && second <= 31) {
-        return true;
-      }
-    }
-
-    return false;
-  } catch {
-    return true;
-  }
-}
+import { assertSafePublicHttpUrl } from "@/lib/network-security";
 
 async function fetchSourceExcerpt(url: string) {
-  if (isPrivateUrl(url)) {
+  try {
+    await assertSafePublicHttpUrl(url);
+  } catch {
     return null;
   }
 
@@ -52,6 +19,7 @@ async function fetchSourceExcerpt(url: string) {
         "User-Agent": "Deni AI Project Integrations",
       },
       cache: "no-store",
+      redirect: "error",
     });
 
     if (!response.ok) {

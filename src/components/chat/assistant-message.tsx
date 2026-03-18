@@ -58,6 +58,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Spinner } from "@/components/ui/spinner";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { getSafeDisplayUrl, toSafeDownloadHref, toSafeHref } from "@/lib/safe-href";
 import { trpc } from "@/lib/trpc/react";
 import type { ModelOption } from "./chat-composer";
 
@@ -281,19 +282,22 @@ export function AssistantMessage({
                     >
                       {searchResults.length > 0 && (
                         <ChainOfThoughtSearchResults>
-                          {searchResults.map((result) => (
-                            <Link
-                              key={result.url}
-                              href={result.url}
-                              target="_blank"
-                              rel="noreferrer"
-                            >
-                              <ChainOfThoughtSearchResult>
-                                <Globe className="size-3" />
-                                {new URL(result.url).hostname}
-                              </ChainOfThoughtSearchResult>
-                            </Link>
-                          ))}
+                          {searchResults.map((result) => {
+                            const displayUrl = getSafeDisplayUrl(result.url);
+                            return (
+                              <Link
+                                key={result.url}
+                                href={displayUrl?.href ?? "#"}
+                                target="_blank"
+                                rel="noreferrer"
+                              >
+                                <ChainOfThoughtSearchResult>
+                                  <Globe className="size-3" />
+                                  {displayUrl?.hostname ?? t("Unknown")}
+                                </ChainOfThoughtSearchResult>
+                              </Link>
+                            );
+                          })}
                         </ChainOfThoughtSearchResults>
                       )}
                     </ChainOfThoughtStep>
@@ -547,7 +551,7 @@ export function AssistantMessage({
               )}
               <div>
                 <Button asChild size="sm" variant="outline">
-                  <a href={output.videoUrl} download>
+                  <a href={toSafeHref(output.videoUrl)} download>
                     {t("Download video")}
                   </a>
                 </Button>
@@ -641,7 +645,7 @@ export function AssistantMessage({
                 {output.imageUrls.map((imageUrl: string, idx: number) => (
                   <Button key={`download-${idx}`} asChild size="sm" variant="outline">
                     <a
-                      href={imageUrl}
+                      href={toSafeDownloadHref(imageUrl)}
                       download={t("image-{index}.png", {
                         index: String(idx + 1),
                       })}
@@ -668,7 +672,7 @@ export function AssistantMessage({
               .map((part, index) => (
                 <Source
                   key={`${message.id}-source-${index}`}
-                  href={part.url || "#"}
+                  href={toSafeHref(part.url)}
                   title={part.title || part.url || t("Source")}
                 />
               ))}

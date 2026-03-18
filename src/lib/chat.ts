@@ -2,9 +2,10 @@ import "server-only";
 
 import { groq } from "@ai-sdk/groq";
 import { generateText, type UIMessage } from "ai";
-import { and, eq } from "drizzle-orm";
+import { and, eq, sql } from "drizzle-orm";
 import { db } from "@/db/drizzle";
 import { chats } from "@/db/schema";
+import { setPendingState } from "@/app/api/chat/_lib/schema";
 
 type ChatUpdateFields = Partial<typeof chats.$inferInsert>;
 
@@ -42,11 +43,17 @@ export async function getChatById(id: string, userId: string) {
   return chat;
 }
 
+type ChatUpdateOptions = {
+  expectedGenerationId?: string | null;
+  nextGenerationId?: string | null;
+};
+
 export async function updateChat(
   id: string,
   userId: string,
   messages: UIMessage[],
   title?: string,
+  options?: ChatUpdateOptions,
 ) {
   const updates: ChatUpdateFields = {
     // structuredClone keeps parts/metadata intact while ensuring the payload is serializable for JSONB
@@ -58,10 +65,18 @@ export async function updateChat(
     updates.title = title;
   }
 
+  if (options?.nextGenerationId !== undefined) {
+    updates.activeGenerationId = options.nextGenerationId;
+  }
+
   const [updatedChat] = await db
     .update(chats)
     .set(updates)
-    .where(and(eq(chats.id, id), eq(chats.uid, userId)))
+    .where(
+      options?.expectedGenerationId !== undefined
+        ? sql`${chats.id} = ${id} AND ${chats.uid} = ${userId} AND ${chats.activeGenerationId} = ${options.expectedGenerationId}`
+        : and(eq(chats.id, id), eq(chats.uid, userId)),
+    )
     .returning({ id: chats.id });
 
   if (!updatedChat) {
@@ -69,4 +84,83 @@ export async function updateChat(
   }
 
   return updatedChat.id;
+}
+
+export async function removePendingAssistantMessage(id: string, userId: string) {
+  const chat = await getChatById(id, userId);
+  const messages = Array.isArray(chat?.messages) ? (chat.messages as UIMessage[]) : null;
+
+  if (!messages || messages.length === 0) {
+    return false;
+  }
+
+  const lastMessage = messages[messages.length - 1];
+  const isPendingAssistant =
+    lastMessage?.role === "assistant" &&
+    typeof lastMessage.metadata === "object" &&
+    lastMessage.metadata !== null &&
+    Boolean((lastMessage.metadata as { pending?: boolean }).pending);
+
+  if (!isPendingAssistant) {
+    return false;
+  }
+
+  const finalizedMessages = messages.map((message, index) =>
+    index === messages.length - 1 ? setPendingState(message, false) : message,
+  );
+
+  await updateChat(id, userId, finalizedMessages);
+  return true;
+}
+
+export async function clearChatGenerationState(
+  id: string,
+  userId: string,
+  generationId: string,
+  messages?: UIMessage[],
+  title?: string,
+) {
+  const updates: ChatUpdateFields = {
+    updated_at: new Date(),
+    activeGenerationId: null,
+  };
+
+  if (messages) {
+    updates.messages = structuredClone(messages);
+  }
+
+  if (title) {
+    updates.title = title;
+  }
+
+  const [updatedChat] = await db
+    .update(chats)
+    .set(updates)
+    .where(and(eq(chats.id, id), eq(chats.uid, userId), eq(chats.activeGenerationId, generationId)))
+    .returning({ id: chats.id });
+
+  return updatedChat?.id ?? null;
+}
+
+export async function stopChatGenerationState(id: string, userId: string) {
+  const [updatedChat] = await db
+    .update(chats)
+    .set({
+      activeGenerationId: null,
+      updated_at: new Date(),
+    })
+    .where(and(eq(chats.id, id), eq(chats.uid, userId)))
+    .returning({ id: chats.id });
+
+  return updatedChat?.id ?? null;
+}
+
+export async function isChatGenerationActive(id: string, userId: string, generationId: string) {
+  const [chat] = await db
+    .select({ activeGenerationId: chats.activeGenerationId })
+    .from(chats)
+    .where(and(eq(chats.id, id), eq(chats.uid, userId)))
+    .limit(1);
+
+  return chat?.activeGenerationId === generationId;
 }

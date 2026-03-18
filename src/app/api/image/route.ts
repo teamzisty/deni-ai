@@ -10,8 +10,9 @@ import {
   resolveImageUsageCategory,
 } from "@/lib/image";
 import { cachePaletteImages, getCachedPaletteImages } from "@/lib/palette-cache";
+import { parseJsonRequest } from "@/lib/json-request";
 import { checkRateLimit } from "@/lib/rate-limit";
-import { consumeUsage, UsageLimitError } from "@/lib/usage";
+import { consumeUsage, refundUsage, UsageLimitError } from "@/lib/usage";
 
 const requestSchema = z.object({
   prompt: z.string().min(1).max(4000),
@@ -42,8 +43,12 @@ export async function POST(req: Request) {
     );
   }
 
-  const body = await req.json();
-  const parsedBody = requestSchema.safeParse(body);
+  const parsedRequest = await parseJsonRequest(req);
+  if (!parsedRequest.ok) {
+    return NextResponse.json({ error: "Invalid request body" }, { status: 400 });
+  }
+
+  const parsedBody = requestSchema.safeParse(parsedRequest.body);
   if (!parsedBody.success) {
     return NextResponse.json({ error: "Invalid request body" }, { status: 400 });
   }
@@ -53,12 +58,22 @@ export async function POST(req: Request) {
   const usageCategory = resolveImageUsageCategory(data.model);
   const bypassCache = data.bypassCache ?? false;
   const cacheInput = {
+    userId,
     prompt: data.prompt,
     model: data.model,
     aspectRatio: data.aspectRatio,
     resolution: data.resolution,
     numberOfImages: requestedCount,
   };
+
+  try {
+    await consumeUsage({ userId, category: usageCategory, amount: requestedCount });
+  } catch (error) {
+    if (error instanceof UsageLimitError) {
+      return NextResponse.json({ error: error.message, reason: "usage_limit" }, { status: 402 });
+    }
+    return NextResponse.json({ error: "Unable to check usage" }, { status: 500 });
+  }
 
   if (!bypassCache) {
     try {
@@ -83,16 +98,8 @@ export async function POST(req: Request) {
     });
 
     if (images.length === 0) {
+      await refundUsage({ userId, category: usageCategory, amount: requestedCount });
       return NextResponse.json({ error: "No images generated." }, { status: 500 });
-    }
-
-    try {
-      await consumeUsage({ userId, category: usageCategory, amount: requestedCount });
-    } catch (error) {
-      if (error instanceof UsageLimitError) {
-        return NextResponse.json({ error: error.message, reason: "usage_limit" }, { status: 402 });
-      }
-      return NextResponse.json({ error: "Unable to check usage" }, { status: 500 });
     }
 
     if (!bypassCache) {
@@ -105,6 +112,7 @@ export async function POST(req: Request) {
 
     return NextResponse.json({ images });
   } catch (error) {
+    await refundUsage({ userId, category: usageCategory, amount: requestedCount });
     console.error("Image generation API error:", error);
     const message = error instanceof Error ? error.message : "Image generation failed";
     return NextResponse.json({ error: message }, { status: 500 });

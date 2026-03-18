@@ -6,7 +6,7 @@ import { db } from "@/db/drizzle";
 import { apiKey, deviceAuthCode } from "@/db/schema";
 import { generateApiKey, getKeyPrefix, hashApiKey } from "@/lib/api-key-utils";
 import { auth } from "@/lib/auth";
-import { decryptFromB64, encryptToB64 } from "@/lib/crypto";
+import { decryptFromB64 } from "@/lib/crypto";
 import { checkRateLimit } from "@/lib/rate-limit";
 
 function generateUserCode(): string {
@@ -49,14 +49,24 @@ async function apiKeyLimitResponse(userId: string, status: 403 | 409) {
 }
 
 export async function POST(req: Request) {
-  const body = await req.json();
-  const action = z.enum(["initiate", "approve", "poll"]).safeParse(body?.action);
+  let body: unknown;
+  try {
+    body = await req.json();
+  } catch {
+    return NextResponse.json({ error: "Invalid request" }, { status: 400 });
+  }
+
+  const action = z
+    .object({
+      action: z.enum(["initiate", "approve", "poll"]),
+    })
+    .safeParse(body);
 
   if (!action.success) {
     return NextResponse.json({ error: "Invalid action" }, { status: 400 });
   }
 
-  switch (action.data) {
+  switch (action.data.action) {
     case "initiate":
       return handleInitiate(req);
     case "approve":
@@ -187,7 +197,7 @@ async function handleApprove(body: unknown) {
   return NextResponse.json({ success: true });
 }
 
-/** Extension polls with deviceCode. Once approved, generates API key and returns it (one-time). */
+/** Extension polls with deviceCode. Once approved, generates API key and returns it once. */
 async function handlePoll(body: unknown) {
   const parsed = z.object({ deviceCode: z.string().min(1) }).safeParse(body);
   if (!parsed.success) {
@@ -227,6 +237,20 @@ async function handlePoll(body: unknown) {
   }
 
   if (row.issuedApiKeyEnc) {
+    const claimed = await db
+      .update(deviceAuthCode)
+      .set({
+        issuedApiKeyEnc: null,
+      })
+      .where(
+        and(eq(deviceAuthCode.id, row.id), eq(deviceAuthCode.issuedApiKeyEnc, row.issuedApiKeyEnc)),
+      )
+      .returning({ id: deviceAuthCode.id });
+
+    if (!claimed[0]) {
+      return NextResponse.json({ approved: true, apiKeyUnavailable: true });
+    }
+
     return NextResponse.json({
       approved: true,
       apiKey: await decryptFromB64(row.issuedApiKeyEnc),
@@ -239,10 +263,13 @@ async function handlePoll(body: unknown) {
     return apiKeyLimitResponse(row.userId, 403);
   }
 
+  if (row.issuedApiKeyId) {
+    return NextResponse.json({ approved: true, apiKeyUnavailable: true });
+  }
+
   const raw = generateApiKey();
   const keyHash = await hashApiKey(raw);
   const keyPrefix = getKeyPrefix(raw);
-  const issuedApiKeyEnc = await encryptToB64(raw);
 
   const [inserted] = await db
     .insert(apiKey)
@@ -257,30 +284,16 @@ async function handlePoll(body: unknown) {
   const issued = await db
     .update(deviceAuthCode)
     .set({
-      issuedApiKeyEnc,
       issuedApiKeyId: inserted.id,
       issuedAt: new Date(),
     })
-    .where(and(eq(deviceAuthCode.id, row.id), isNull(deviceAuthCode.issuedApiKeyEnc)))
+    .where(and(eq(deviceAuthCode.id, row.id), isNull(deviceAuthCode.issuedApiKeyId)))
     .returning({ id: deviceAuthCode.id });
 
   if (issued.length === 0) {
     await db.delete(apiKey).where(eq(apiKey.id, inserted.id));
 
-    const [issuedRow] = await db
-      .select({ issuedApiKeyEnc: deviceAuthCode.issuedApiKeyEnc })
-      .from(deviceAuthCode)
-      .where(eq(deviceAuthCode.id, row.id))
-      .limit(1);
-
-    if (issuedRow?.issuedApiKeyEnc) {
-      return NextResponse.json({
-        approved: true,
-        apiKey: await decryptFromB64(issuedRow.issuedApiKeyEnc),
-      });
-    }
-
-    return NextResponse.json({ approved: false });
+    return NextResponse.json({ approved: true, apiKeyUnavailable: true });
   }
 
   return NextResponse.json({ approved: true, apiKey: raw, apiKeyId: inserted.id });

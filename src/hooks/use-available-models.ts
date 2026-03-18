@@ -37,9 +37,7 @@ export function useAvailableModels() {
   }, [providersQuery.data?.customModels, t]);
 
   const availableModels = useMemo<ModelOption[]>(() => {
-    const baseModels = isAnonymous
-      ? (models as unknown as ModelOption[]).filter((entry) => !entry.premium)
-      : (models as unknown as ModelOption[]);
+    const baseModels = isAnonymous ? models.filter((entry) => !entry.premium) : [...models];
     const filteredCustomModels = isAnonymous
       ? customModels.filter((entry) => !entry.premium)
       : customModels;
