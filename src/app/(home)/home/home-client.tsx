@@ -4,7 +4,7 @@ import React from "react";
 import { motion } from "motion/react";
 import { ArrowRight, Zap, Shield, BrainCircuit } from "lucide-react";
 import Link from "next/link";
-import { useExtracted, useLocale } from "next-intl";
+import { useExtracted } from "next-intl";
 import { SiAnthropic, SiGoogle, SiX } from "@icons-pack/react-simple-icons";
 import { LoginButton } from "@/components/login-button";
 import { Button } from "@/components/ui/button";
@@ -44,8 +44,6 @@ function FeatureCard({
 
 export function ClientHome() {
   const t = useExtracted();
-  const locale = useLocale();
-  const isJapanese = locale === "ja";
 
   const aiLogos = [
     <Openai key="openai" className="size-8 opacity-40 hover:opacity-100 transition-opacity" />,
@@ -75,7 +73,7 @@ export function ClientHome() {
             {/* Main headline */}
             <h1 className="text-4xl sm:text-6xl md:text-8xl font-bold tracking-tight leading-[1.02] mb-8">
               <BlurReveal className="block" delay={0.2}>
-                {isJapanese ? t("You Deserve") : t("The AI Assistant")}
+                {t("The AI Assistant")}
               </BlurReveal>
               <motion.span
                 initial={{ opacity: 0, y: 20 }}
@@ -84,7 +82,7 @@ export function ClientHome() {
                 className="block mt-4"
               >
                 <HighlightedText from="left" delay={1.2} className="px-4 py-1">
-                  {isJapanese ? t("The AI Assistant") : t("You Deserve")}
+                  {t("You Deserve")}
                 </HighlightedText>
               </motion.span>
             </h1>
