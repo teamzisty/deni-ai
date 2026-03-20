@@ -73,6 +73,10 @@ const nextConfig: NextConfig = {
         headers: marketingCacheHeaders,
       },
       {
+        source: "/desktop",
+        headers: marketingCacheHeaders,
+      },
+      {
         source: "/legal/:path*",
         headers: legalCacheHeaders,
       },

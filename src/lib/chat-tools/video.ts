@@ -1,5 +1,6 @@
 import { tool } from "ai";
 import { env } from "@/env";
+import { createVeoAccessToken } from "@/lib/veo-access";
 import { veoModelValues } from "@/lib/veo";
 import { extractVeoErrorMessage, throwIfAborted } from "./helpers";
 import { VEO_MAX_POLL_ATTEMPTS, VEO_POLL_INTERVAL_MS, veoToolInputSchema } from "./types";
@@ -69,7 +70,7 @@ async function pollVeoOperation(operationName: string, signal?: AbortSignal) {
   throw new Error("Timed out waiting for the video.");
 }
 
-export function createVideoTool() {
+export function createVideoTool(userId?: string) {
   return tool({
     description:
       "Generate a short video with Veo. Provide a vivid visual prompt and optional settings.",
@@ -144,7 +145,14 @@ export function createVideoTool() {
       }
 
       const videoUri = await pollVeoOperation(operationName, abortSignal);
-      const proxyUrl = `/api/veo/file?uri=${encodeURIComponent(videoUri)}`;
+      const proxyUrl = `/api/veo/file?token=${encodeURIComponent(
+        createVeoAccessToken({
+          kind: "video",
+          userId: userId ?? "anonymous",
+          value: videoUri,
+          ttlSeconds: 60 * 60,
+        }),
+      )}`;
       const modelLabel = model;
 
       return {

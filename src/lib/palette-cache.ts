@@ -7,6 +7,7 @@ import type { ImageAspectRatio, ImageModel, ImageResolution } from "@/lib/image"
 import { sha256Hex } from "@/lib/hash";
 
 type PaletteCacheInput = {
+  userId: string;
   prompt: string;
   model: ImageModel;
   aspectRatio?: ImageAspectRatio;
@@ -18,6 +19,7 @@ async function buildPaletteCacheKey(input: PaletteCacheInput) {
   return sha256Hex(
     JSON.stringify({
       version: 1,
+      userId: input.userId,
       prompt: input.prompt.trim(),
       model: input.model,
       aspectRatio: input.aspectRatio ?? null,

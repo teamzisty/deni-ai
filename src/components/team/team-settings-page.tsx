@@ -66,7 +66,7 @@ type Member = {
     id: string;
     name: string;
     email: string;
-    image: string | null;
+    image?: string | null;
   };
 };
 
@@ -77,6 +77,36 @@ type Invitation = {
   status: string;
   expiresAt: Date;
 };
+
+function isMember(value: unknown): value is Member {
+  if (!value || typeof value !== "object") {
+    return false;
+  }
+
+  const member = value as Partial<Member>;
+  return (
+    typeof member.id === "string" &&
+    typeof member.userId === "string" &&
+    typeof member.role === "string" &&
+    !!member.user &&
+    typeof member.user === "object" &&
+    typeof member.user.id === "string" &&
+    typeof member.user.email === "string"
+  );
+}
+
+function isInvitation(value: unknown): value is Invitation {
+  if (!value || typeof value !== "object") {
+    return false;
+  }
+
+  const invitation = value as Partial<Invitation>;
+  return (
+    typeof invitation.id === "string" &&
+    typeof invitation.email === "string" &&
+    typeof invitation.status === "string"
+  );
+}
 
 function formatCurrency(amount: number | null, currency: string | null) {
   if (amount === null || !currency) return "—";
@@ -138,8 +168,8 @@ export function TeamSettingsPage() {
   const utils = trpc.useUtils();
   const activeOrganizationId = session.data?.session?.activeOrganizationId ?? null;
   const organizations = organizationsQuery.data ?? [];
-  const members = (orgDetailsQuery.data?.members ?? []) as unknown as Member[];
-  const invitations = (orgDetailsQuery.data?.invitations ?? []) as unknown as Invitation[];
+  const members = (orgDetailsQuery.data?.members ?? []).filter(isMember);
+  const invitations = (orgDetailsQuery.data?.invitations ?? []).filter(isInvitation);
   const currentUserRole = members.find((member) => member.userId === currentUserId)?.role ?? null;
   const teamBillingQuery = trpc.organization.teamBillingStatus.useQuery(
     { organizationId: activeOrg?.id ?? "" },
@@ -687,7 +717,15 @@ export function TeamSettingsPage() {
                       <DropdownMenuContent align="end">
                         <DropdownMenuItem
                           className="text-destructive focus:text-destructive"
-                          onClick={() => setMemberToRemove(m)}
+                          onClick={() =>
+                            setMemberToRemove({
+                              ...m,
+                              user: {
+                                ...m.user,
+                                image: m.user.image ?? null,
+                              },
+                            })
+                          }
                         >
                           <Trash2 className="h-4 w-4" />
                           {t("Remove")}

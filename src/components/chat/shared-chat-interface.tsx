@@ -36,6 +36,7 @@ import {
   isVideoToolOutput,
   resolveVeoModelLabel,
 } from "@/components/chat/chat-utils";
+import { getSafeDisplayUrl, toSafeHref } from "@/lib/safe-href";
 import { trpc } from "@/lib/trpc/react";
 import { cn } from "@/lib/utils";
 
@@ -243,36 +244,41 @@ export function SharedChatInterface({
                                 )}
                               >
                                 <div className="space-y-4 mt-4">
-                                  {searchResults.map((result) => (
-                                    <div
-                                      key={result.url}
-                                      className="p-0! bg-accent/40 hover:bg-accent rounded-md transition-colors"
-                                    >
-                                      <Link
-                                        href={result.url}
-                                        className="block p-3"
-                                        target="_blank"
-                                        rel="noopener noreferrer"
+                                  {searchResults.map((result) => {
+                                    const displayUrl = getSafeDisplayUrl(result.url);
+                                    return (
+                                      <div
+                                        key={result.url}
+                                        className="p-0! bg-accent/40 hover:bg-accent rounded-md transition-colors"
                                       >
-                                        <p className="text-sm text-primary mb-1 line-clamp-2">
-                                          <span className="text-muted-foreground">
-                                            {`${new URL(result.url).protocol}//`}
-                                          </span>
-                                          {new URL(result.url).hostname}
-                                          <span className="text-muted-foreground">
-                                            {`${new URL(result.url).pathname.slice(0, 50)}${new URL(result.url).pathname.length > 50 ? "..." : ""}`}
-                                          </span>
-                                        </p>
-                                        <p className="font-medium text-sm text-primary mb-1 line-clamp-2">
-                                          {result.title}
-                                        </p>
-                                        <div className="text-xs text-muted-foreground line-clamp-3">
-                                          {result.description.slice(0, 100)}
-                                          {result.description.length > 100 && "..."}
-                                        </div>
-                                      </Link>
-                                    </div>
-                                  ))}
+                                        <Link
+                                          href={displayUrl?.href ?? "#"}
+                                          className="block p-3"
+                                          target="_blank"
+                                          rel="noopener noreferrer"
+                                        >
+                                          {displayUrl ? (
+                                            <p className="text-sm text-primary mb-1 line-clamp-2">
+                                              <span className="text-muted-foreground">
+                                                {displayUrl.origin}
+                                              </span>
+                                              {displayUrl.hostname}
+                                              <span className="text-muted-foreground">
+                                                {`${displayUrl.pathname.slice(0, 50)}${displayUrl.pathname.length > 50 ? "..." : ""}`}
+                                              </span>
+                                            </p>
+                                          ) : null}
+                                          <p className="font-medium text-sm text-primary mb-1 line-clamp-2">
+                                            {result.title}
+                                          </p>
+                                          <div className="text-xs text-muted-foreground line-clamp-3">
+                                            {result.description.slice(0, 100)}
+                                            {result.description.length > 100 && "..."}
+                                          </div>
+                                        </Link>
+                                      </div>
+                                    );
+                                  })}
                                 </div>
                               </CollapsibleContent>
                             </Collapsible>
@@ -366,7 +372,7 @@ export function SharedChatInterface({
                               )}
                               <div>
                                 <Button asChild size="sm" variant="outline">
-                                  <a href={output.videoUrl} download>
+                                  <a href={toSafeHref(output.videoUrl)} download>
                                     {t("Download video")}
                                   </a>
                                 </Button>

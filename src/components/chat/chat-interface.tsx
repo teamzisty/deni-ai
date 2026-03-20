@@ -279,6 +279,7 @@ export function ChatInterface({
               reasoningEffort: options.reasoningEffort,
               deepResearch: options.deepResearch,
               video: options.videoMode,
+              image: options.imageMode,
               id,
             },
           },

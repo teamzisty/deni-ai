@@ -12,8 +12,8 @@ import { customModel, providerKey, providerSetting } from "@/db/schema";
 import { env } from "@/env";
 import { decryptFromB64 } from "@/lib/crypto";
 import { models, resolveReasoningEffort } from "@/lib/constants";
+import { assertSafePublicHttpUrl } from "@/lib/network-security";
 import { getUsageSummary, type UsageCategory, UsageLimitError } from "@/lib/usage";
-import { isPrivateUrl } from "./schema";
 
 const voids = createOpenAI({
   apiKey: "no_api_key_needed",
@@ -137,10 +137,14 @@ export async function resolveChatModelContext({
     byokBaseUrl = "https://api.x.ai/v1";
   }
 
-  if (byokBaseUrl && isPrivateUrl(byokBaseUrl)) {
-    throw new ChatRouteError(400, {
-      error: "BYOK endpoints to private networks are not allowed.",
-    });
+  if (byokBaseUrl) {
+    try {
+      await assertSafePublicHttpUrl(byokBaseUrl);
+    } catch {
+      throw new ChatRouteError(400, {
+        error: "BYOK endpoints to private networks are not allowed.",
+      });
+    }
   }
 
   if (!useByok) {

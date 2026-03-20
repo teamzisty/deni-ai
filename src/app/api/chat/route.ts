@@ -13,13 +13,23 @@ import {
 import { headers } from "next/headers";
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
-import { generateTitle, getChatById, updateChat } from "@/lib/chat";
-import { clearChatGeneration, startChatGeneration } from "@/lib/chat-generation";
+import {
+  clearChatGenerationState,
+  generateTitle,
+  getChatById,
+  isChatGenerationActive,
+  updateChat,
+} from "@/lib/chat";
+import {
+  clearChatGeneration,
+  isCurrentChatGeneration,
+  startChatGeneration,
+} from "@/lib/chat-generation";
 import { createChatTools } from "@/lib/chat-tools";
 import { getModelContextWindow, getModelDefinition } from "@/lib/constants";
 import { buildMemoryPrompt, getUserMemoryState, maybeAutoSaveMemories } from "@/lib/memory";
 import { buildProjectPrompt } from "@/lib/project-context";
-import { consumeUsage, UsageLimitError } from "@/lib/usage";
+import { consumeUsage, refundUsage, UsageLimitError } from "@/lib/usage";
 import { checkRateLimit } from "@/lib/rate-limit";
 import { ChatRouteError, resolveChatModelContext } from "./_lib/model";
 import { buildChatSystemPrompt } from "./_lib/prompt";
@@ -75,7 +85,6 @@ function formatChatStreamError(error: unknown, modelId: string): string {
 
 export async function POST(req: Request) {
   const headersList = await headers();
-  const bodyPromise = req.json();
   const session = await auth.api.getSession({ headers: headersList });
   const userId = session?.session?.userId;
   const isAnonymous = Boolean(session?.user?.isAnonymous);
@@ -84,7 +93,12 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const body = await bodyPromise;
+  let body: unknown;
+  try {
+    body = await req.json();
+  } catch {
+    return NextResponse.json({ error: "Invalid request body" }, { status: 400 });
+  }
 
   const rateCheck = await checkRateLimit({
     key: `chat:${userId}`,
@@ -152,6 +166,7 @@ export async function POST(req: Request) {
 
   const webSearchEnabled = webSearch || forceWebSearch || deepResearch;
   const tools = createChatTools({
+    userId,
     videoMode,
     imageMode,
     webSearch: webSearchEnabled,
@@ -166,6 +181,7 @@ export async function POST(req: Request) {
   }
 
   const responseMessageId = generateId();
+  const generationId = generateId();
   const pendingAssistantMessage = setPendingState(
     {
       id: responseMessageId,
@@ -177,6 +193,34 @@ export async function POST(req: Request) {
 
   let generationAbortController: AbortController | undefined;
   let pendingStateRolledBack = false;
+  let usageConsumed = false;
+  let usageRefunded = false;
+  let generationWatch: ReturnType<typeof setInterval> | undefined;
+  let hasAssistantOutput = false;
+
+  const ownsCurrentGeneration = async () => {
+    return (
+      isCurrentChatGeneration(id, generationId) &&
+      (await isChatGenerationActive(id, userId, generationId))
+    );
+  };
+
+  const refundConsumedUsage = async () => {
+    if (useByok || !usageConsumed || usageRefunded || hasAssistantOutput) {
+      return;
+    }
+
+    usageRefunded = true;
+
+    try {
+      await refundUsage({
+        userId,
+        category: usageCategory,
+      });
+    } catch (error) {
+      console.error("Failed to refund chat usage", error);
+    }
+  };
 
   const rollbackPendingAssistantState = async () => {
     if (pendingStateRolledBack) {
@@ -186,37 +230,50 @@ export async function POST(req: Request) {
     pendingStateRolledBack = true;
 
     try {
-      await updateChat(id, userId, messages);
+      if (!(await ownsCurrentGeneration())) {
+        return;
+      }
+      await updateChat(id, userId, messages, undefined, {
+        expectedGenerationId: generationId,
+      });
     } catch (error) {
       console.error("Failed to rollback pending chat response", error);
     }
   };
 
   const clearGenerationLock = () => {
+    if (generationWatch) {
+      clearInterval(generationWatch);
+      generationWatch = undefined;
+    }
+
     if (!generationAbortController) {
       return;
     }
 
-    clearChatGeneration(id, generationAbortController);
+    clearChatGeneration(id, generationId);
     generationAbortController = undefined;
   };
-
-  await updateChat(id, userId, [...messages, pendingAssistantMessage]);
 
   let projectPrompt: string | null;
 
   try {
+    ({ abortController: generationAbortController } = startChatGeneration(id, generationId));
+    await updateChat(id, userId, [...messages, pendingAssistantMessage], undefined, {
+      nextGenerationId: generationId,
+    });
     projectPrompt = await buildProjectPrompt(chat.projectId, userId);
-    generationAbortController = startChatGeneration(id, userId);
     if (!useByok) {
       await consumeUsage({
         userId,
         category: usageCategory,
         isAnonymous,
       });
+      usageConsumed = true;
     }
   } catch (error) {
     await rollbackPendingAssistantState();
+    await refundConsumedUsage();
     clearGenerationLock();
     if (error instanceof UsageLimitError) {
       return NextResponse.json({ error: error.message, reason: "usage_limit" }, { status: 402 });
@@ -235,6 +292,14 @@ export async function POST(req: Request) {
     videoMode,
     imageMode,
   });
+
+  generationWatch = setInterval(() => {
+    void isChatGenerationActive(id, userId, generationId).then((isActive) => {
+      if (!isActive) {
+        generationAbortController?.abort("stopped");
+      }
+    });
+  }, 1000);
 
   let result: ReturnType<typeof streamText>;
 
@@ -255,6 +320,7 @@ export async function POST(req: Request) {
     });
   } catch (error) {
     await rollbackPendingAssistantState();
+    await refundConsumedUsage();
     clearGenerationLock();
     throw new Error(formatChatStreamError(error, baseModel));
   }
@@ -266,6 +332,9 @@ export async function POST(req: Request) {
 
   const queuePartialPersist = (message: UIMessage, force: boolean = false) => {
     const pendingMessage = setPendingState(message, true);
+    if (pendingMessage.parts.length > 0) {
+      hasAssistantOutput = true;
+    }
     const signature = JSON.stringify(pendingMessage.parts);
     const now = Date.now();
 
@@ -288,7 +357,12 @@ export async function POST(req: Request) {
       .catch(() => undefined)
       .then(async () => {
         try {
-          await updateChat(id, userId, [...messages, latestPersistedMessage]);
+          if (!(await ownsCurrentGeneration())) {
+            return;
+          }
+          await updateChat(id, userId, [...messages, latestPersistedMessage], undefined, {
+            expectedGenerationId: generationId,
+          });
         } catch (error) {
           console.error("Failed to persist partial chat response", error);
         }
@@ -317,6 +391,9 @@ export async function POST(req: Request) {
         for await (const message of readUIMessageStream<UIMessage>({
           stream: persistenceStream,
         })) {
+          if (!(await ownsCurrentGeneration())) {
+            break;
+          }
           queuePartialPersist(message);
         }
 
@@ -325,6 +402,7 @@ export async function POST(req: Request) {
         await partialPersistPromise;
       } catch (error) {
         await rollbackPendingAssistantState();
+        await refundConsumedUsage();
         clearGenerationLock();
         throw new Error(formatChatStreamError(error, baseModel));
       }
@@ -332,6 +410,11 @@ export async function POST(req: Request) {
     onFinish: async ({ messages: updatedMessages, isAborted }) => {
       try {
         await partialPersistPromise;
+
+        if (!(await ownsCurrentGeneration())) {
+          pendingStateRolledBack = true;
+          return;
+        }
 
         let newTitle: string | undefined;
 
@@ -344,18 +427,27 @@ export async function POST(req: Request) {
           console.error("Failed to generate title", error);
         }
 
-        await updateChat(
+        const cleared = await clearChatGenerationState(
           id,
           userId,
+          generationId,
           updatedMessages.map((message) =>
             message.id === responseMessageId ? setPendingState(message, false) : message,
           ),
           newTitle,
         );
 
+        if (!cleared) {
+          pendingStateRolledBack = true;
+          return;
+        }
+
         pendingStateRolledBack = true;
 
         if (isAborted) {
+          if (!hasAssistantOutput) {
+            await refundConsumedUsage();
+          }
           return;
         }
 
@@ -370,6 +462,7 @@ export async function POST(req: Request) {
         }
       } catch (error) {
         await rollbackPendingAssistantState();
+        await refundConsumedUsage();
         throw error;
       } finally {
         clearGenerationLock();

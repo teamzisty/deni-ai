@@ -3,6 +3,7 @@
 import type { ComponentProps } from "react";
 
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { toSafeHref } from "@/lib/safe-href";
 import { cn } from "@/lib/utils";
 import { BookIcon, ChevronDownIcon } from "lucide-react";
 
@@ -43,7 +44,13 @@ export const SourcesContent = ({ className, ...props }: SourcesContentProps) => 
 export type SourceProps = ComponentProps<"a">;
 
 export const Source = ({ href, title, children, ...props }: SourceProps) => (
-  <a className="flex items-center gap-2" href={href} rel="noreferrer" target="_blank" {...props}>
+  <a
+    className="flex items-center gap-2"
+    href={toSafeHref(href)}
+    rel="noreferrer"
+    target="_blank"
+    {...props}
+  >
     {children ?? (
       <>
         <BookIcon className="h-4 w-4" />

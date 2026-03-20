@@ -4,7 +4,8 @@ import { z } from "zod";
 import { env } from "@/env";
 import { auth } from "@/lib/auth";
 import { checkRateLimit } from "@/lib/rate-limit";
-import { consumeUsage, UsageLimitError } from "@/lib/usage";
+import { consumeUsage, refundUsage, UsageLimitError } from "@/lib/usage";
+import { createVeoAccessToken, verifyVeoAccessToken } from "@/lib/veo-access";
 import { veoAspectRatios, veoDurations, veoModelValues, veoResolutions } from "@/lib/veo";
 
 const BASE_URL = "https://generativelanguage.googleapis.com/v1beta";
@@ -59,10 +60,24 @@ export async function POST(req: Request) {
     );
   }
 
-  const body = await req.json();
+  let body: unknown;
+  try {
+    body = await req.json();
+  } catch {
+    return NextResponse.json({ error: "Invalid request body" }, { status: 400 });
+  }
+
   const parsedBody = requestSchema.safeParse(body);
   if (!parsedBody.success) {
     return NextResponse.json({ error: "Invalid request body" }, { status: 400 });
+  }
+
+  const data = parsedBody.data;
+  if (data.resolution === "1080p" && data.durationSeconds !== 8) {
+    return NextResponse.json(
+      { error: "1080p output requires 8 seconds duration." },
+      { status: 400 },
+    );
   }
 
   try {
@@ -72,14 +87,6 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: error.message, reason: "usage_limit" }, { status: 402 });
     }
     return NextResponse.json({ error: "Unable to check usage" }, { status: 500 });
-  }
-
-  const data = parsedBody.data;
-  if (data.resolution === "1080p" && data.durationSeconds !== 8) {
-    return NextResponse.json(
-      { error: "1080p output requires 8 seconds duration." },
-      { status: 400 },
-    );
   }
 
   const instances: Record<string, unknown>[] = [
@@ -108,37 +115,53 @@ export async function POST(req: Request) {
 
   const payload = Object.keys(parameters).length > 0 ? { instances, parameters } : { instances };
 
-  const response = await fetch(`${BASE_URL}/models/${data.model}:predictLongRunning`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "x-goog-api-key": env.GOOGLE_GENERATIVE_AI_API_KEY,
-    },
-    body: JSON.stringify(payload),
-  });
-
-  let responseData: unknown = null;
   try {
-    responseData = await response.json();
-  } catch {
-    responseData = null;
+    const response = await fetch(`${BASE_URL}/models/${data.model}:predictLongRunning`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-goog-api-key": env.GOOGLE_GENERATIVE_AI_API_KEY,
+      },
+      body: JSON.stringify(payload),
+    });
+
+    let responseData: unknown = null;
+    try {
+      responseData = await response.json();
+    } catch {
+      responseData = null;
+    }
+
+    if (!response.ok) {
+      await refundUsage({ userId, category: "premium" });
+      console.error("Video generation API error:", responseData);
+      return NextResponse.json({ error: "Video generation failed" }, { status: response.status });
+    }
+
+    const operationName =
+      typeof responseData === "object" && responseData !== null
+        ? (responseData as { name?: string }).name
+        : undefined;
+
+    if (!operationName) {
+      await refundUsage({ userId, category: "premium" });
+      return NextResponse.json({ error: "Missing operation name." }, { status: 500 });
+    }
+
+    return NextResponse.json({
+      operationName,
+      operationToken: createVeoAccessToken({
+        kind: "operation",
+        userId,
+        value: operationName,
+        ttlSeconds: 60 * 60,
+      }),
+    });
+  } catch (error) {
+    await refundUsage({ userId, category: "premium" });
+    console.error("Video generation request failed:", error);
+    return NextResponse.json({ error: "Video generation failed" }, { status: 500 });
   }
-
-  if (!response.ok) {
-    console.error("Video generation API error:", responseData);
-    return NextResponse.json({ error: "Video generation failed" }, { status: response.status });
-  }
-
-  const operationName =
-    typeof responseData === "object" && responseData !== null
-      ? (responseData as { name?: string }).name
-      : undefined;
-
-  if (!operationName) {
-    return NextResponse.json({ error: "Missing operation name." }, { status: 500 });
-  }
-
-  return NextResponse.json({ operationName });
 }
 
 export async function GET(req: Request) {
@@ -148,14 +171,15 @@ export async function GET(req: Request) {
   }
 
   const { searchParams } = new URL(req.url);
-  const nameParam = searchParams.get("name");
-  if (!nameParam) {
-    return NextResponse.json({ error: "Missing operation name." }, { status: 400 });
+  const token = searchParams.get("token");
+  if (!token) {
+    return NextResponse.json({ error: "Missing operation token." }, { status: 400 });
   }
 
-  const parsedName = operationNameSchema.safeParse(nameParam);
+  const operationName = verifyVeoAccessToken(token, "operation", session.session.userId);
+  const parsedName = operationNameSchema.safeParse(operationName);
   if (!parsedName.success) {
-    return NextResponse.json({ error: "Invalid operation name." }, { status: 400 });
+    return NextResponse.json({ error: "Invalid operation token." }, { status: 400 });
   }
 
   const response = await fetch(`${BASE_URL}/${parsedName.data}`, {
@@ -197,5 +221,16 @@ export async function GET(req: Request) {
         ).response?.generateVideoResponse?.generatedSamples?.[0]?.video?.uri ?? null)
       : null;
 
-  return NextResponse.json({ done, error: errorMessage, videoUri });
+  const videoUrl = videoUri
+    ? `/api/veo/file?token=${encodeURIComponent(
+        createVeoAccessToken({
+          kind: "video",
+          userId: session.session.userId,
+          value: videoUri,
+          ttlSeconds: 60 * 60,
+        }),
+      )}`
+    : null;
+
+  return NextResponse.json({ done, error: errorMessage, videoUrl });
 }

@@ -2,6 +2,7 @@ import { headers } from "next/headers";
 import { NextResponse } from "next/server";
 import { env } from "@/env";
 import { auth } from "@/lib/auth";
+import { verifyVeoAccessToken } from "@/lib/veo-access";
 
 const GOOGLE_API_ORIGIN = "https://generativelanguage.googleapis.com";
 const ALLOWED_FILE_PATHS = [
@@ -52,10 +53,11 @@ export async function GET(req: Request) {
   }
 
   const { searchParams } = new URL(req.url);
-  const uri = searchParams.get("uri");
+  const token = searchParams.get("token");
+  const uri = token ? verifyVeoAccessToken(token, "video", session.session.userId) : null;
   const trustedUri = uri ? getTrustedGoogleFileUrl(uri) : null;
   if (!trustedUri) {
-    return NextResponse.json({ error: "Missing or invalid uri parameter." }, { status: 400 });
+    return NextResponse.json({ error: "Missing or invalid video token." }, { status: 400 });
   }
 
   const response = await fetch(trustedUri, {

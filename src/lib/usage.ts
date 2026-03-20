@@ -395,6 +395,31 @@ export async function consumeUsage({
   };
 }
 
+export async function refundUsage({
+  userId,
+  category,
+  amount = 1,
+}: {
+  userId: string;
+  category: UsageCategory;
+  amount?: number;
+}) {
+  if (!Number.isInteger(amount) || amount <= 0) {
+    throw new Error("Refund amount must be a positive integer.");
+  }
+
+  const [saved] = await db
+    .update(usageQuota)
+    .set({
+      used: sql`GREATEST(${usageQuota.used} - ${amount}, 0)`,
+      updatedAt: new Date(),
+    })
+    .where(and(eq(usageQuota.userId, userId), eq(usageQuota.category, category)))
+    .returning({ used: usageQuota.used });
+
+  return saved ?? null;
+}
+
 export type UsageSnapshot = {
   category: UsageCategory;
   limit: number | null;

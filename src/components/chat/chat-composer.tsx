@@ -72,17 +72,6 @@ type ToolChipProps = {
 };
 
 type ModelDescriptionLabels = {
-  generalPurposeOpenAIModel: string;
-  forComplexCodingTasks: string;
-  forQuickCodingTasks: string;
-  mostPowerfulOpenWeightModel: string;
-  mediumSizedOpenWeightModel: string;
-  bestForComplexTasks: string;
-  bestForEverydayTasks: string;
-  bestForHighVolumeTasks: string;
-  hybridReasoningModel: string;
-  legacyProfessionalModel: string;
-  allAroundProfessionalModel: string;
   xaiMostIntelligentModel: string;
   fastAndEfficientModel: string;
   stealthModel: string;
@@ -121,36 +110,6 @@ function ToolChip({ icon: Icon, label, onRemove }: ToolChipProps) {
 
 function getModelDescription(value: string, labels: ModelDescriptionLabels): string {
   switch (value) {
-    case "gpt-5.4":
-    case "gpt-5.2":
-      return labels.generalPurposeOpenAIModel;
-    case "gpt-5.2-codex":
-    case "gpt-5.1-codex":
-      return labels.forComplexCodingTasks;
-    case "gpt-5.1-codex-mini":
-      return labels.forQuickCodingTasks;
-    case "openai/gpt-oss-120b":
-      return labels.mostPowerfulOpenWeightModel;
-    case "openai/gpt-oss-20b":
-      return labels.mediumSizedOpenWeightModel;
-    case "gemini-3.1-pro-preview":
-    case "gemini-3-pro-preview":
-      return labels.bestForComplexTasks;
-    case "gemini-3-flash-preview":
-      return labels.bestForEverydayTasks;
-    case "gemini-3.1-flash-lite-preview":
-    case "gemini-2.5-flash-lite":
-      return labels.bestForHighVolumeTasks;
-    case "claude-sonnet-4.5":
-    case "claude-sonnet-4.6":
-    case "claude-sonnet-4":
-      return labels.hybridReasoningModel;
-    case "claude-opus-4.5":
-    case "claude-opus-4.1":
-    case "claude-opus-4":
-      return labels.legacyProfessionalModel;
-    case "claude-opus-4.6":
-      return labels.allAroundProfessionalModel;
     case "grok-4-0709":
     case "grok-4.20-reasoning-beta":
       return labels.xaiMostIntelligentModel;
@@ -399,17 +358,6 @@ export function ChatComposer({
 }: ChatComposerProps) {
   const t = useExtracted();
   const modelDescriptionLabels: ModelDescriptionLabels = {
-    generalPurposeOpenAIModel: t("General purpose OpenAI model"),
-    forComplexCodingTasks: t("For complex coding tasks"),
-    forQuickCodingTasks: t("For quick coding tasks"),
-    mostPowerfulOpenWeightModel: t("Most powerful open-weight model"),
-    mediumSizedOpenWeightModel: t("Medium-sized open-weight model"),
-    bestForComplexTasks: t("Best for complex tasks"),
-    bestForEverydayTasks: t("Best for everyday tasks"),
-    bestForHighVolumeTasks: t("Best for high volume tasks"),
-    hybridReasoningModel: t("Hybrid reasoning model"),
-    legacyProfessionalModel: t("Legacy professional model"),
-    allAroundProfessionalModel: t("All-around professional model"),
     xaiMostIntelligentModel: t("xAI's most intelligent model"),
     fastAndEfficientModel: t("Fast and efficient model"),
     stealthModel: t("Stealth model"),

@@ -11,6 +11,7 @@ export const chats = pgTable(
       .default(sql`gen_random_uuid()`),
     uid: text("user_id").references(() => user.id, { onDelete: "cascade" }),
     projectId: text("project_id").references(() => projects.id, { onDelete: "set null" }),
+    activeGenerationId: text("active_generation_id"),
     title: text("title"),
     messages: jsonb("messages").default(sql`'[]'`),
     pinned: boolean("pinned").default(false).notNull(),

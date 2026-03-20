@@ -76,6 +76,7 @@ This file applies to the entire repository tree rooted here. Follow these rules,
   2. Add the corresponding Japanese translation to `messages/ja.json`.
   3. Ensure all translation files have the same keys.
 - Use `next-intl` for translations in components (e.g., `useExtracted()` hook).
+- Do not branch UI copy on locale with flags like `isJapanese` or `locale === "ja"` when `useExtracted()` can express it. Prefer translated strings and structure the JSX so ordering and wording come from translations, not locale conditionals.
 - Before completing i18n-related changes, verify that all language files are in sync.
 
 ■ Directory Guidelines

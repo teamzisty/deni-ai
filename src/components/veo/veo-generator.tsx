@@ -176,7 +176,7 @@ export function VeoGenerator() {
     setError(null);
   };
 
-  const pollOperation = async (name: string) => {
+  const pollOperation = async (token: string) => {
     pollAbortRef.current?.abort();
     const controller = new AbortController();
     pollAbortRef.current = controller;
@@ -187,12 +187,12 @@ export function VeoGenerator() {
         return;
       }
 
-      const response = await fetch(`/api/veo?name=${encodeURIComponent(name)}`, {
+      const response = await fetch(`/api/veo?token=${encodeURIComponent(token)}`, {
         signal: controller.signal,
       });
       const data = (await response.json()) as {
         done?: boolean;
-        videoUri?: string | null;
+        videoUrl?: string | null;
         error?: string | null;
       };
 
@@ -205,12 +205,11 @@ export function VeoGenerator() {
           throw new Error(data.error);
         }
 
-        if (!data.videoUri) {
+        if (!data.videoUrl) {
           throw new Error(t("Video generation finished without a file."));
         }
 
-        const proxyUrl = `/api/veo/file?uri=${encodeURIComponent(data.videoUri)}`;
-        setVideoUrl(proxyUrl);
+        setVideoUrl(data.videoUrl);
         setStatus("done");
         return;
       }
@@ -274,6 +273,7 @@ export function VeoGenerator() {
 
       const data = (await response.json()) as {
         operationName?: string;
+        operationToken?: string;
         error?: string;
       };
 
@@ -281,12 +281,12 @@ export function VeoGenerator() {
         throw new Error(data?.error || t("Video generation failed."));
       }
 
-      if (!data.operationName) {
-        throw new Error(t("Missing operation name in response."));
+      if (!data.operationName || !data.operationToken) {
+        throw new Error(t("Missing operation token in response."));
       }
 
       setOperationName(data.operationName);
-      await pollOperation(data.operationName);
+      await pollOperation(data.operationToken);
     } catch (err) {
       if (err instanceof DOMException && err.name === "AbortError") {
         return;
