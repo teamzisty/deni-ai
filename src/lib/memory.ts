@@ -239,7 +239,7 @@ export async function maybeAutoSaveMemories({
   const existingMemories = existingItems.map((item) => item.content.trim()).filter(Boolean);
 
   const { object } = await generateObject({
-    model: gateway("google/gemini-3.1-flash-lite-preview"),
+    model: gateway("google/gemini-3-flash"),
     schema: memoryExtractionSchema,
     providerOptions: {
       gateway: {
