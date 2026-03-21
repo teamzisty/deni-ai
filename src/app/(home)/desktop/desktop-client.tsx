@@ -650,7 +650,7 @@ export function DesktopClient({ downloads }: { downloads: DesktopDownloads }) {
                       rel="noreferrer"
                     >
                       <Download className="h-4 w-4" />
-                      {t("Download")} {getOsText(selectedOption.os, t)}
+                      {t("Download")} {getOsText(selectedOption.os)}
                     </a>
                   </Button>
                   <DropdownMenu>
