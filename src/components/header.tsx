@@ -28,13 +28,7 @@ type MegaMenuSection = {
   links: MegaMenuLink[];
 };
 
-function MegaMenu({
-  label,
-  sections,
-}: {
-  label: string;
-  sections: MegaMenuSection[];
-}) {
+function MegaMenu({ label, sections }: { label: string; sections: MegaMenuSection[] }) {
   return (
     <div className="group/menu relative">
       <button
@@ -70,9 +64,7 @@ function MegaMenu({
                           <span className="block text-sm font-semibold tracking-tight text-white">
                             {link.title}
                           </span>
-                          <span className="block text-xs text-white/56">
-                            {link.description}
-                          </span>
+                          <span className="block text-xs text-white/56">{link.description}</span>
                         </span>
                       </Link>
                     );
@@ -188,12 +180,7 @@ export default function Header() {
       <nav className="mx-auto max-w-6xl">
         <div className="rounded-[1.35rem] border border-white/10 bg-black/72 px-4 py-3 shadow-[0_20px_60px_rgba(0,0,0,0.28)] backdrop-blur-xl">
           <div className="flex items-center justify-between gap-4">
-            <Link
-              href="/"
-              aria-label="Deni AI"
-              title="Deni AI"
-              className="flex items-center gap-3"
-            >
+            <Link href="/" aria-label="Deni AI" title="Deni AI" className="flex items-center gap-3">
               <DeniAIIcon className="h-7 w-7 text-white" />
               <span className="hidden text-base font-semibold tracking-tight text-white sm:inline-block">
                 Deni AI

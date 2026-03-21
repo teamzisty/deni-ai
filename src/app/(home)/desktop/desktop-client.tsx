@@ -16,14 +16,11 @@ import Link from "next/link";
 import { useExtracted } from "next-intl";
 import { BlurReveal } from "@/components/blur-reveal";
 import { HighlightedText } from "@/components/highlighted-text";
-import { LoginButton } from "@/components/login-button";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
-  DropdownMenuGroup,
   DropdownMenuItem,
-  DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
@@ -257,10 +254,7 @@ function getFormatLabel(format: string): string {
   return format.replace(/^\./, "");
 }
 
-function getOsText(
-  os: DownloadOption["os"],
-  t: ReturnType<typeof useExtracted>,
-): string {
+function getOsText(os: DownloadOption["os"]): string {
   if (os === "windows") {
     return "Windows";
   }
@@ -656,7 +650,7 @@ export function DesktopClient({ downloads }: { downloads: DesktopDownloads }) {
                       rel="noreferrer"
                     >
                       <Download className="h-4 w-4" />
-                      {t("Download")} {getOsText(selectedOption.os, t)}
+                      {t("Download")} {getOsText(selectedOption.os)}
                     </a>
                   </Button>
                   <DropdownMenu>
