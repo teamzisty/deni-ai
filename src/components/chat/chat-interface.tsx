@@ -20,6 +20,7 @@ import {
 } from "@/components/ai-elements/conversation";
 import { Loader } from "@/components/ai-elements/loader";
 import { Message, MessageContent, MessageResponse } from "@/components/ai-elements/message";
+import { AdSenseSlot } from "@/components/adsense-slot";
 import { AssistantMessage } from "@/components/chat/assistant-message";
 import { ChatComposer, type ComposerMessage } from "@/components/chat/chat-composer";
 import { UsageAlerts } from "@/components/chat/usage-alerts";
@@ -166,6 +167,7 @@ export function ChatInterface({
     usageCategoryLabel,
     usageTierLabel,
     remainingUsage,
+    usageUnitLabel,
     enableMaxMode,
   } = useUsageStatus({ model, availableModels, providerKeys, providerSettings });
 
@@ -430,6 +432,7 @@ export function ChatInterface({
         isUsageBlocked={isUsageBlocked}
         canEnableMaxMode={canEnableMaxMode}
         remainingUsage={remainingUsage}
+        usageUnitLabel={usageUnitLabel}
         usageCategoryLabel={usageCategoryLabel}
         usageTierLabel={usageTierLabel}
         billingDisabled={billingDisabled}
@@ -458,6 +461,10 @@ export function ChatInterface({
         deepResearch={deepResearch}
         onDeepResearchChange={setDeepResearch}
         showByokBadge={isByokActive}
+      />
+      <AdSenseSlot
+        slot={process.env.NEXT_PUBLIC_ADSENSE_CHAT_SLOT_ID ?? ""}
+        className="mx-auto mt-3 w-full max-w-xl border-border/40 bg-background/40 px-2 py-2 shadow-none"
       />
     </div>
   );

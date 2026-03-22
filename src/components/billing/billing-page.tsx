@@ -43,6 +43,20 @@ const usageResetFormatter = (locale: string) =>
     day: "numeric",
   });
 
+function formatCompactUsageValue(value: number) {
+  if (value >= 1_000_000) {
+    const formatted = value / 1_000_000;
+    return `${Number.isInteger(formatted) ? formatted.toFixed(0) : formatted.toFixed(1)}m`;
+  }
+
+  if (value >= 1_000) {
+    const formatted = value / 1_000;
+    return `${Number.isInteger(formatted) ? formatted.toFixed(0) : formatted.toFixed(1)}k`;
+  }
+
+  return value.toLocaleString();
+}
+
 function useFormatPriceLabel() {
   const t = useExtracted();
   const locale = useLocale();
@@ -363,6 +377,7 @@ function PlanCard({
 
 type UsageItem = {
   category: "basic" | "premium";
+  unit: "requests" | "tokens";
   limit: number | null;
   used: number;
   remaining: number | null;
@@ -382,6 +397,12 @@ function UsageRow({
   const locale = useLocale();
   if (!item) return null;
 
+  const unitLabel = item.unit === "tokens" ? t("tokens") : t("requests");
+  const compactUsageLabel =
+    item.limit === null
+      ? `${formatCompactUsageValue(item.used)} ${unitLabel}`
+      : `${formatCompactUsageValue(item.used)}/${formatCompactUsageValue(item.limit)} ${unitLabel}`;
+
   // When Max Mode is enabled, show as unlimited
   if (maxModeEnabled) {
     const periodEndLabel = item.periodEnd
@@ -392,9 +413,7 @@ function UsageRow({
       <div className="space-y-2">
         <div className="flex items-center justify-between text-sm">
           <span>{label}</span>
-          <span className="text-muted-foreground">
-            {item.used.toLocaleString()} / {t("Unlimited")}
-          </span>
+          <span className="text-muted-foreground">{compactUsageLabel}</span>
         </div>
         <div className="flex items-center justify-between text-xs text-muted-foreground">
           <span className="flex items-center gap-1">
@@ -407,15 +426,18 @@ function UsageRow({
     );
   }
 
-  const limitLabel = item.limit === null ? t("Unlimited") : item.limit.toLocaleString();
   const progress =
     item.limit === null || item.limit === 0 ? 0 : Math.min((item.used / item.limit) * 100, 100);
   const remainingLabel =
     item.limit === null
       ? t("Unlimited")
-      : t("{count} remaining", {
-          count: Math.max(item.remaining ?? 0, 0).toLocaleString(),
-        });
+      : item.unit === "tokens"
+        ? t("{count} tokens remaining", {
+            count: Math.max(item.remaining ?? 0, 0).toLocaleString(),
+          })
+        : t("{count} remaining", {
+            count: Math.max(item.remaining ?? 0, 0).toLocaleString(),
+          });
   const periodEndLabel = item.periodEnd
     ? usageResetFormatter(locale).format(new Date(item.periodEnd))
     : null;
@@ -424,9 +446,7 @@ function UsageRow({
     <div className="space-y-2">
       <div className="flex items-center justify-between text-sm">
         <span>{label}</span>
-        <span className="text-muted-foreground">
-          {item.used.toLocaleString()} / {limitLabel}
-        </span>
+        <span className="text-muted-foreground">{compactUsageLabel}</span>
       </div>
       <Progress value={progress} className="h-2" />
       <div className="flex items-center justify-between text-xs text-muted-foreground">

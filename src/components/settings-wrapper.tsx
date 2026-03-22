@@ -14,6 +14,20 @@ import { trpc } from "@/lib/trpc/react";
 import { cn } from "@/lib/utils";
 import { Progress } from "./ui/progress";
 
+function formatCompactUsageValue(value: number) {
+  if (value >= 1_000_000) {
+    const formatted = value / 1_000_000;
+    return `${Number.isInteger(formatted) ? formatted.toFixed(0) : formatted.toFixed(1)}m`;
+  }
+
+  if (value >= 1_000) {
+    const formatted = value / 1_000;
+    return `${Number.isInteger(formatted) ? formatted.toFixed(0) : formatted.toFixed(1)}k`;
+  }
+
+  return value.toLocaleString();
+}
+
 export default function SettingsWrapper({ children }: { children: React.ReactNode }) {
   const t = useExtracted();
   const pathname = usePathname();
@@ -151,11 +165,12 @@ export default function SettingsWrapper({ children }: { children: React.ReactNod
               </span>
               {usages?.map((usageItem) => {
                 const maxModeEnabled = usage?.maxModeEnabled ?? false;
-                const limitLabel = maxModeEnabled
-                  ? t("Unlimited")
+                const unitLabel = usageItem.unit === "tokens" ? t("tokens") : t("requests");
+                const summaryLabel = maxModeEnabled
+                  ? `${formatCompactUsageValue(usageItem.used)} ${unitLabel}`
                   : usageItem.limit === null
-                    ? t("Unlimited")
-                    : usageItem.limit.toLocaleString();
+                    ? `${formatCompactUsageValue(usageItem.used)} ${unitLabel}`
+                    : `${formatCompactUsageValue(usageItem.used)}/${formatCompactUsageValue(usageItem.limit)} ${unitLabel}`;
                 const progress = maxModeEnabled
                   ? 0
                   : usageItem.limit === null || usageItem.limit === 0
@@ -181,9 +196,7 @@ export default function SettingsWrapper({ children }: { children: React.ReactNod
                       <span className="capitalize">
                         {usageItem.category === "basic" ? t("Basic models") : t("Premium models")}
                       </span>
-                      <span className="tabular-nums text-muted-foreground">
-                        {usageItem.used.toLocaleString()} / {limitLabel}
-                      </span>
+                      <span className="tabular-nums text-muted-foreground">{summaryLabel}</span>
                     </div>
                     <Progress value={progress} className="h-2" />
                     <div className="flex items-center justify-between text-xs text-muted-foreground">
@@ -198,9 +211,7 @@ export default function SettingsWrapper({ children }: { children: React.ReactNod
 
               <span className="block text-xs font-medium">
                 <InfoIcon size="16" className="-mt-0.5 mr-1 inline-flex size-3 shrink-0" />
-                {t(
-                  "Successfully sent messages are counted as one each. There is no consumption per re-request, such as tool calls.",
-                )}
+                {t("Usage is measured by requests on Free and by tokens on paid plans.")}
               </span>
             </div>
           </CardContent>

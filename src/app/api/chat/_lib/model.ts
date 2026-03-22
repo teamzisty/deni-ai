@@ -49,6 +49,7 @@ type ResolvedChatModelContext = {
   model: LanguageModel;
   useByok: boolean;
   usageCategory: UsageCategory;
+  usageUnit: "requests" | "tokens";
   providerOptions: ChatProviderOptions;
 };
 
@@ -83,6 +84,7 @@ export async function resolveChatModelContext({
   }
 
   const usageCategory: UsageCategory = isPremiumModel ? "premium" : "basic";
+  let usageUnit: "requests" | "tokens" = "requests";
   const [providerKeys, providerSettings] = await Promise.all([
     db.select().from(providerKey).where(eq(providerKey.userId, userId)),
     db.select().from(providerSetting).where(eq(providerSetting.userId, userId)),
@@ -151,6 +153,7 @@ export async function resolveChatModelContext({
     try {
       const usageSummary = await getUsageSummary({ userId, isAnonymous });
       const categoryUsage = usageSummary.usage.find((usage) => usage.category === usageCategory);
+      usageUnit = categoryUsage?.unit ?? "requests";
       const isLimitReached =
         categoryUsage?.remaining !== null &&
         categoryUsage?.remaining !== undefined &&
@@ -377,6 +380,7 @@ export async function resolveChatModelContext({
     model,
     useByok,
     usageCategory,
+    usageUnit,
     providerOptions,
   };
 }

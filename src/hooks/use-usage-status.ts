@@ -29,6 +29,7 @@ export function useUsageStatus(params: {
   const categoryUsage = usageQuery.data?.usage.find((usage) => usage.category === usageCategory);
   const remainingUsage = categoryUsage?.remaining;
   const usageLimit = categoryUsage?.limit;
+  const usageUnit = categoryUsage?.unit ?? "requests";
   const usageTier = usageQuery.data?.tier ?? "free";
 
   const lowUsageThreshold = useMemo(() => {
@@ -86,6 +87,7 @@ export function useUsageStatus(params: {
         : usageTier === "max"
           ? t("Max")
           : t("Pro");
+  const usageUnitLabel = usageUnit === "tokens" ? t("tokens") : t("requests");
   const maxModeEligible = usageQuery.data?.maxModeEligible ?? false;
   const canEnableMaxMode = maxModeEligible && !maxModeEnabled && isUsageBlocked;
   const isSubmitBlocked = (isUsageBlocked && !maxModeEnabled) || isByokMissingConfig;
@@ -109,6 +111,8 @@ export function useUsageStatus(params: {
     usageCategoryLabel,
     usageTierLabel,
     remainingUsage,
+    usageUnit,
+    usageUnitLabel,
     enableMaxMode,
   };
 }

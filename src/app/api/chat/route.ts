@@ -162,7 +162,7 @@ export async function POST(req: Request) {
     throw error;
   }
 
-  const { model, providerOptions, usageCategory, useByok } = modelContext;
+  const { model, providerOptions, usageCategory, usageUnit, useByok } = modelContext;
 
   const webSearchEnabled = webSearch || forceWebSearch || deepResearch;
   const tools = createChatTools({
@@ -197,6 +197,8 @@ export async function POST(req: Request) {
   let usageRefunded = false;
   let generationWatch: ReturnType<typeof setInterval> | undefined;
   let hasAssistantOutput = false;
+  let consumedUsageAmount = 0;
+  let finalUsageAmount = 0;
 
   const ownsCurrentGeneration = async () => {
     return (
@@ -216,6 +218,7 @@ export async function POST(req: Request) {
       await refundUsage({
         userId,
         category: usageCategory,
+        amount: consumedUsageAmount,
       });
     } catch (error) {
       console.error("Failed to refund chat usage", error);
@@ -264,12 +267,16 @@ export async function POST(req: Request) {
     });
     projectPrompt = await buildProjectPrompt(chat.projectId, userId);
     if (!useByok) {
-      await consumeUsage({
-        userId,
-        category: usageCategory,
-        isAnonymous,
-      });
-      usageConsumed = true;
+      if (usageUnit === "requests") {
+        consumedUsageAmount = 1;
+        await consumeUsage({
+          userId,
+          category: usageCategory,
+          isAnonymous,
+          amount: consumedUsageAmount,
+        });
+        usageConsumed = true;
+      }
     }
   } catch (error) {
     await rollbackPendingAssistantState();
@@ -315,6 +322,12 @@ export async function POST(req: Request) {
         : imageMode
           ? { type: "tool", toolName: "image" }
           : undefined,
+      onFinish: ({ totalUsage }) => {
+        finalUsageAmount = Math.max(
+          totalUsage.totalTokens ?? (totalUsage.inputTokens ?? 0) + (totalUsage.outputTokens ?? 0),
+          0,
+        );
+      },
       providerOptions,
       system: systemPrompt,
     });
@@ -447,8 +460,32 @@ export async function POST(req: Request) {
         if (isAborted) {
           if (!hasAssistantOutput) {
             await refundConsumedUsage();
+          } else if (!useByok && usageUnit === "tokens") {
+            consumedUsageAmount = Math.max(finalUsageAmount, 1);
+            await consumeUsage({
+              userId,
+              category: usageCategory,
+              isAnonymous,
+              amount: consumedUsageAmount,
+              allowLimitOverflow: true,
+            });
+            usageConsumed = true;
           }
           return;
+        }
+
+        if (!useByok && usageUnit === "tokens") {
+          consumedUsageAmount = Math.max(finalUsageAmount, hasAssistantOutput ? 1 : 0);
+          if (consumedUsageAmount > 0) {
+            await consumeUsage({
+              userId,
+              category: usageCategory,
+              isAnonymous,
+              amount: consumedUsageAmount,
+              allowLimitOverflow: true,
+            });
+            usageConsumed = true;
+          }
         }
 
         try {

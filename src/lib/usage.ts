@@ -12,28 +12,32 @@ const ACTIVE_BILLING_STATUSES = new Set(["active", "trialing", "past_due", "paid
 
 export type UsageCategory = "basic" | "premium";
 export type SubscriptionTier = "free" | "plus" | "pro" | "max";
+export type UsageUnit = "requests" | "tokens";
 type UsageRecord = typeof usageQuota.$inferSelect;
 
 const USAGE_CATEGORIES: UsageCategory[] = ["basic", "premium"];
 
-const USAGE_LIMITS: Record<UsageCategory, Record<SubscriptionTier, number | null>> = {
+const USAGE_LIMITS: Record<
+  UsageCategory,
+  Record<SubscriptionTier, { limit: number | null; unit: UsageUnit }>
+> = {
   basic: {
-    free: 500,
-    plus: 1500,
-    pro: 3000,
-    max: 10000,
+    free: { limit: 500, unit: "requests" },
+    plus: { limit: 20_000_000, unit: "tokens" },
+    pro: { limit: 50_000_000, unit: "tokens" },
+    max: { limit: 120_000_000, unit: "tokens" },
   },
   premium: {
-    free: 50,
-    plus: 400,
-    pro: 800,
-    max: 2000,
+    free: { limit: 50, unit: "requests" },
+    plus: { limit: 5_000_000, unit: "tokens" },
+    pro: { limit: 15_000_000, unit: "tokens" },
+    max: { limit: 40_000_000, unit: "tokens" },
   },
 };
 
-const GUEST_USAGE_LIMITS: Record<UsageCategory, number> = {
-  basic: 20,
-  premium: 0,
+const GUEST_USAGE_LIMITS: Record<UsageCategory, { limit: number; unit: UsageUnit }> = {
+  basic: { limit: 20, unit: "requests" },
+  premium: { limit: 0, unit: "requests" },
 };
 
 export class UsageLimitError extends Error {
@@ -188,7 +192,8 @@ async function calculateUsageState({
   isAnonymous?: boolean;
 }) {
   const tierInfo = await getTierInfo(userId, now);
-  const limit = isAnonymous ? GUEST_USAGE_LIMITS[category] : USAGE_LIMITS[category][tierInfo.tier];
+  const config = isAnonymous ? GUEST_USAGE_LIMITS[category] : USAGE_LIMITS[category][tierInfo.tier];
+  const { limit, unit } = config;
 
   const current =
     existingRecord ??
@@ -212,6 +217,7 @@ async function calculateUsageState({
 
   return {
     tierInfo,
+    unit,
     limit,
     current,
     targetPeriodEnd,
@@ -312,12 +318,14 @@ export async function consumeUsage({
   now = new Date(),
   isAnonymous = false,
   amount = 1,
+  allowLimitOverflow = false,
 }: {
   userId: string;
   category: UsageCategory;
   now?: Date;
   isAnonymous?: boolean;
   amount?: number;
+  allowLimitOverflow?: boolean;
 }) {
   if (!Number.isInteger(amount) || amount <= 0) {
     throw new Error("Usage amount must be a positive integer.");
@@ -329,11 +337,12 @@ export async function consumeUsage({
     now,
     isAnonymous,
   });
-  const { tierInfo, limit } = state;
+  const { tierInfo, limit, unit } = state;
 
   if (limit === null) {
     return {
       tier: tierInfo.tier,
+      unit,
       limit: null,
       remaining: null,
       usedMaxMode: false,
@@ -361,9 +370,36 @@ export async function consumeUsage({
 
       return {
         tier: tierInfo.tier,
+        unit,
         limit,
         remaining: 0,
         usedMaxMode: true,
+      };
+    }
+
+    if (allowLimitOverflow) {
+      const saved = await upsertUsageRecord({
+        userId,
+        category,
+        tier: tierInfo.tier,
+        limit,
+        amount,
+        periodStart: state.periodStart,
+        targetPeriodEnd: state.targetPeriodEnd,
+        resetWindowCondition,
+        allowOverflow: true,
+      });
+
+      if (!saved) {
+        throw new UsageLimitError("Usage limit reached for your plan.", tierInfo.maxModeEligible);
+      }
+
+      return {
+        tier: tierInfo.tier,
+        unit,
+        limit,
+        remaining: Math.max(limit - saved.used, 0),
+        usedMaxMode: false,
       };
     }
 
@@ -389,6 +425,7 @@ export async function consumeUsage({
 
   return {
     tier: tierInfo.tier,
+    unit,
     limit,
     remaining: Math.max(limit - saved.used, 0),
     usedMaxMode: false,
@@ -422,6 +459,7 @@ export async function refundUsage({
 
 export type UsageSnapshot = {
   category: UsageCategory;
+  unit: UsageUnit;
   limit: number | null;
   used: number;
   remaining: number | null;
@@ -466,6 +504,7 @@ export async function getUsageSummary({
       if (state.limit === null) {
         return {
           category,
+          unit: state.unit,
           limit: null,
           used: 0,
           remaining: null,
@@ -476,6 +515,7 @@ export async function getUsageSummary({
 
       return {
         category,
+        unit: state.unit,
         limit: state.limit,
         used: state.used,
         remaining: Math.max(state.limit - state.used, 0),

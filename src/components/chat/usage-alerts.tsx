@@ -16,6 +16,7 @@ interface UsageAlertsProps {
   isUsageBlocked: boolean;
   canEnableMaxMode: boolean;
   remainingUsage: number | null | undefined;
+  usageUnitLabel: string;
   usageCategoryLabel: string;
   usageTierLabel: string;
   billingDisabled: boolean;
@@ -31,6 +32,7 @@ export function UsageAlerts({
   isUsageBlocked,
   canEnableMaxMode,
   remainingUsage,
+  usageUnitLabel,
   usageCategoryLabel,
   usageTierLabel,
   billingDisabled,
@@ -110,15 +112,17 @@ export function UsageAlerts({
                       tier: usageTierLabel,
                     })
                   : remainingUsage === null || remainingUsage === undefined
-                    ? t("Only a few {category} requests left on your {tier} plan.", {
+                    ? t("Only a few {category} {unit} left on your {tier} plan.", {
                         category: usageCategoryLabel,
+                        unit: usageUnitLabel,
                         tier: usageTierLabel,
                       })
                     : t(
-                        "Only {count, plural, one {#} other {#}} {category} requests left on your {tier} plan.",
+                        "Only {count, plural, one {#} other {#}} {category} {unit} left on your {tier} plan.",
                         {
                           count: remainingUsage,
                           category: usageCategoryLabel,
+                          unit: usageUnitLabel,
                           tier: usageTierLabel,
                         },
                       )}
