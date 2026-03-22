@@ -207,6 +207,10 @@ export function ChatInterface({
     { id },
     {
       enabled: isWaitingForResponse,
+      staleTime: 0,
+      refetchOnMount: "always",
+      refetchOnReconnect: true,
+      refetchIntervalInBackground: true,
       refetchInterval: isWaitingForResponse ? 1000 : false,
     },
   );
