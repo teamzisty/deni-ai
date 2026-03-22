@@ -423,6 +423,8 @@ export default function PaletteClient() {
   );
   const usageLimit = selectedUsage?.limit;
   const remainingUsage = selectedUsage?.remaining;
+  const usageUnit = selectedUsage?.unit ?? "requests";
+  const usageUnitLabel = usageUnit === "tokens" ? t("tokens") : t("requests");
   const usageTier = usageQuery.data?.tier ?? "free";
   const maxModeEnabled = usageQuery.data?.maxModeEnabled ?? false;
   const lowUsageThreshold =
@@ -834,15 +836,17 @@ export default function PaletteClient() {
                         tier: usageTierLabel,
                       })
                     : remainingUsage === null || remainingUsage === undefined
-                      ? t("Only a few {category} requests left on your {tier} plan.", {
+                      ? t("Only a few {category} {unit} left on your {tier} plan.", {
                           category: usageCategoryLabel,
+                          unit: usageUnitLabel,
                           tier: usageTierLabel,
                         })
                       : t(
-                          "Only {count, plural, one {#} other {#}} {category} requests left on your {tier} plan.",
+                          "Only {count, plural, one {#} other {#}} {category} {unit} left on your {tier} plan.",
                           {
                             count: remainingUsage,
                             category: usageCategoryLabel,
+                            unit: usageUnitLabel,
                             tier: usageTierLabel,
                           },
                         )}

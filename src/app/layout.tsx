@@ -10,6 +10,7 @@ import {
 } from "next/font/google";
 import { NextIntlClientProvider } from "next-intl";
 import { getExtracted, getLocale, getMessages } from "next-intl/server";
+import { AdSenseScript } from "@/components/adsense-script";
 import { Providers } from "@/components/providers";
 import { Toaster } from "@/components/ui/sonner";
 import { GA_ID } from "@/lib/constants";
@@ -175,6 +176,7 @@ export default async function RootLayout({
         >
           {t("Skip to content")}
         </a>
+        <AdSenseScript />
         <NextIntlClientProvider locale={locale} messages={messages}>
           <Providers>
             <div className="min-h-screen">{children}</div>

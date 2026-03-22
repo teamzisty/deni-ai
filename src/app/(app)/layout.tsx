@@ -8,5 +8,9 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   if (!session?.session) {
     redirect("/auth/sign-in");
   }
-  return <AppShell>{children}</AppShell>;
+  return (
+    <>
+      <AppShell>{children}</AppShell>
+    </>
+  );
 }

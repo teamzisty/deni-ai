@@ -11,7 +11,7 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { isBillingDisabled } from "@/lib/billing-config";
 import { isCheckoutSettingsRoute } from "@/lib/settings-routes";
 import { trpc } from "@/lib/trpc/react";
-import { cn } from "@/lib/utils";
+import { cn, formatCompactUsageValue } from "@/lib/utils";
 import { Progress } from "./ui/progress";
 
 export default function SettingsWrapper({ children }: { children: React.ReactNode }) {
@@ -21,13 +21,11 @@ export default function SettingsWrapper({ children }: { children: React.ReactNod
   const billingDisabled = isBillingDisabled;
   const statusQuery = trpc.billing.status.useQuery(undefined, {
     enabled: !billingDisabled && !isCheckoutRoute,
-    refetchInterval: 15000,
-    refetchOnWindowFocus: true,
+    staleTime: 60_000,
   });
   const usageQuery = trpc.billing.usage.useQuery(undefined, {
     enabled: !isCheckoutRoute,
-    refetchInterval: 30000,
-    refetchOnWindowFocus: true,
+    staleTime: 60_000,
   });
 
   if (!isCheckoutRoute && (usageQuery.isLoading || (!billingDisabled && statusQuery.isLoading))) {
@@ -151,11 +149,12 @@ export default function SettingsWrapper({ children }: { children: React.ReactNod
               </span>
               {usages?.map((usageItem) => {
                 const maxModeEnabled = usage?.maxModeEnabled ?? false;
-                const limitLabel = maxModeEnabled
-                  ? t("Unlimited")
+                const unitLabel = usageItem.unit === "tokens" ? t("tokens") : t("requests");
+                const summaryLabel = maxModeEnabled
+                  ? `${formatCompactUsageValue(usageItem.used)} ${unitLabel}`
                   : usageItem.limit === null
-                    ? t("Unlimited")
-                    : usageItem.limit.toLocaleString();
+                    ? `${formatCompactUsageValue(usageItem.used)} ${unitLabel}`
+                    : `${formatCompactUsageValue(usageItem.used)}/${formatCompactUsageValue(usageItem.limit)} ${unitLabel}`;
                 const progress = maxModeEnabled
                   ? 0
                   : usageItem.limit === null || usageItem.limit === 0
@@ -165,9 +164,13 @@ export default function SettingsWrapper({ children }: { children: React.ReactNod
                   ? t("Unlimited")
                   : usageItem.limit === null
                     ? t("Unlimited")
-                    : t("{count} remaining", {
-                        count: Math.max(usageItem.remaining ?? 0, 0).toLocaleString(),
-                      });
+                    : usageItem.unit === "tokens"
+                      ? t("{count} tokens remaining", {
+                          count: Math.max(usageItem.remaining ?? 0, 0).toLocaleString(),
+                        })
+                      : t("{count} remaining", {
+                          count: Math.max(usageItem.remaining ?? 0, 0).toLocaleString(),
+                        });
                 const periodEndLabel = usageItem.periodEnd
                   ? new Intl.DateTimeFormat(undefined, {
                       month: "short",
@@ -181,9 +184,7 @@ export default function SettingsWrapper({ children }: { children: React.ReactNod
                       <span className="capitalize">
                         {usageItem.category === "basic" ? t("Basic models") : t("Premium models")}
                       </span>
-                      <span className="tabular-nums text-muted-foreground">
-                        {usageItem.used.toLocaleString()} / {limitLabel}
-                      </span>
+                      <span className="tabular-nums text-muted-foreground">{summaryLabel}</span>
                     </div>
                     <Progress value={progress} className="h-2" />
                     <div className="flex items-center justify-between text-xs text-muted-foreground">
@@ -198,9 +199,7 @@ export default function SettingsWrapper({ children }: { children: React.ReactNod
 
               <span className="block text-xs font-medium">
                 <InfoIcon size="16" className="-mt-0.5 mr-1 inline-flex size-3 shrink-0" />
-                {t(
-                  "Successfully sent messages are counted as one each. There is no consumption per re-request, such as tool calls.",
-                )}
+                {t("Usage is measured by requests on Free and by tokens on paid plans.")}
               </span>
             </div>
           </CardContent>

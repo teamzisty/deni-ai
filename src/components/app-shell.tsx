@@ -1,10 +1,15 @@
 "use client";
 
+import dynamic from "next/dynamic";
 import { useEffect, useRef, useState } from "react";
-import { AppSidebar } from "@/components/app-sidebar";
-import { ChatSearch } from "@/components/chat/chat-search";
 import { FlixaBanner } from "@/components/flixa-banner";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
+
+const AppSidebar = dynamic(() => import("@/components/app-sidebar").then((mod) => mod.AppSidebar));
+const ChatSearch = dynamic(
+  () => import("@/components/chat/chat-search").then((mod) => mod.ChatSearch),
+  { ssr: false },
+);
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   const [isChatSearchOpen, setIsChatSearchOpen] = useState(false);

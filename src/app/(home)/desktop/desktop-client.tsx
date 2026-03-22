@@ -73,9 +73,7 @@ function FeatureCard({
         <Icon className="h-6 w-6" />
       </div>
       <h3 className="mb-2 text-lg font-semibold">{title}</h3>
-      <p className="text-sm leading-relaxed text-muted-foreground">
-        {description}
-      </p>
+      <p className="text-sm leading-relaxed text-muted-foreground">{description}</p>
     </motion.div>
   );
 }
@@ -156,18 +154,12 @@ function detectPreferredPlatform(): {
   };
 }
 
-function parseDownloadOptions(
-  assets: DesktopDownloads["assets"],
-): DownloadOption[] {
+function parseDownloadOptions(assets: DesktopDownloads["assets"]): DownloadOption[] {
   return assets
     .map((asset) => {
       const { name, browser_download_url: href } = asset;
 
-      if (
-        /\.sig$/i.test(name) ||
-        /^latest\.json$/i.test(name) ||
-        /\.app\.tar\.gz$/i.test(name)
-      ) {
+      if (/\.sig$/i.test(name) || /^latest\.json$/i.test(name) || /\.app\.tar\.gz$/i.test(name)) {
         return null;
       }
 
@@ -184,9 +176,7 @@ function parseDownloadOptions(
         return null;
       }
 
-      const archMatch = name.match(
-        /_(aarch64|arm64|x64|x86_64|amd64)(?=[._-])/i,
-      );
+      const archMatch = name.match(/_(aarch64|arm64|x64|x86_64|amd64)(?=[._-])/i);
       const arch = normalizeArchitecture(archMatch?.[1] ?? "");
 
       if (!arch) {
@@ -211,8 +201,7 @@ function parseDownloadOptions(
       }
 
       const archLabel = arch === "arm64" ? "ARM64" : "x64";
-      const macLabel =
-        os === "macos" ? (arch === "arm64" ? "Silicon" : "Intel") : "";
+      const macLabel = os === "macos" ? (arch === "arm64" ? "Silicon" : "Intel") : "";
 
       return {
         id: name,
@@ -239,10 +228,7 @@ function parseDownloadOptions(
     });
 }
 
-function getArchLabel(
-  os: DownloadOption["os"],
-  arch: DownloadOption["arch"],
-): string {
+function getArchLabel(os: DownloadOption["os"], arch: DownloadOption["arch"]): string {
   if (os === "macos") {
     return arch === "arm64" ? "Apple Silicon" : "Intel";
   }
@@ -278,9 +264,7 @@ function pickDefaultOption(
   }
 
   return (
-    options.find(
-      (option) => option.os === preferred.os && option.arch === preferred.arch,
-    ) ??
+    options.find((option) => option.os === preferred.os && option.arch === preferred.arch) ??
     options.find((option) => option.os === preferred.os) ??
     options[0]
   );
@@ -288,19 +272,10 @@ function pickDefaultOption(
 
 export function DesktopClient({ downloads }: { downloads: DesktopDownloads }) {
   const t = useExtracted();
-  const options = React.useMemo(
-    () => parseDownloadOptions(downloads.assets),
-    [downloads.assets],
-  );
-  const [selectedOs, setSelectedOs] = React.useState<
-    DownloadOption["os"] | null
-  >(null);
-  const [selectedArch, setSelectedArch] = React.useState<
-    DownloadOption["arch"] | null
-  >(null);
-  const [selectedFormat, setSelectedFormat] = React.useState<string | null>(
-    null,
-  );
+  const options = React.useMemo(() => parseDownloadOptions(downloads.assets), [downloads.assets]);
+  const [selectedOs, setSelectedOs] = React.useState<DownloadOption["os"] | null>(null);
+  const [selectedArch, setSelectedArch] = React.useState<DownloadOption["arch"] | null>(null);
+  const [selectedFormat, setSelectedFormat] = React.useState<string | null>(null);
 
   React.useEffect(() => {
     const preferred = detectPreferredPlatform();
@@ -320,27 +295,18 @@ export function DesktopClient({ downloads }: { downloads: DesktopDownloads }) {
     }),
     [options],
   );
-  const currentOs =
-    selectedOs ??
-    pickDefaultOption(options, detectPreferredPlatform())?.os ??
-    null;
+  const currentOs = selectedOs ?? pickDefaultOption(options, detectPreferredPlatform())?.os ?? null;
   const availableArchs = React.useMemo(() => {
     if (!currentOs) {
       return [];
     }
 
     return Array.from(
-      new Set(
-        options
-          .filter((option) => option.os === currentOs)
-          .map((option) => option.arch),
-      ),
+      new Set(options.filter((option) => option.os === currentOs).map((option) => option.arch)),
     );
   }, [currentOs, options]);
   const currentArch =
-    (selectedArch && availableArchs.includes(selectedArch)
-      ? selectedArch
-      : null) ??
+    (selectedArch && availableArchs.includes(selectedArch) ? selectedArch : null) ??
     availableArchs[0] ??
     null;
   const availableFormats = React.useMemo(() => {
@@ -348,13 +314,10 @@ export function DesktopClient({ downloads }: { downloads: DesktopDownloads }) {
       return [];
     }
 
-    return options.filter(
-      (option) => option.os === currentOs && option.arch === currentArch,
-    );
+    return options.filter((option) => option.os === currentOs && option.arch === currentArch);
   }, [currentArch, currentOs, options]);
   const currentFormat =
-    availableFormats.find((option) => option.format === selectedFormat)
-      ?.format ??
+    availableFormats.find((option) => option.format === selectedFormat)?.format ??
     availableFormats[0]?.format ??
     null;
   const selectedOption =
@@ -463,9 +426,7 @@ export function DesktopClient({ downloads }: { downloads: DesktopDownloads }) {
                       )}
                     </p>
                     <div className="mt-5 rounded-xl border border-border bg-secondary/50 px-4 py-3 text-sm text-muted-foreground">
-                      {t(
-                        "Quick access from the background, whenever you need it.",
-                      )}
+                      {t("Quick access from the background, whenever you need it.")}
                     </div>
                   </div>
 
@@ -501,10 +462,7 @@ export function DesktopClient({ downloads }: { downloads: DesktopDownloads }) {
         </div>
       </section>
 
-      <section
-        id="features"
-        className="relative bg-secondary/20 px-4 py-24 backdrop-blur md:py-32"
-      >
+      <section id="features" className="relative bg-secondary/20 px-4 py-24 backdrop-blur md:py-32">
         <div className="mx-auto max-w-6xl">
           <div className="mb-20 text-center">
             <motion.h2
@@ -585,9 +543,7 @@ export function DesktopClient({ downloads }: { downloads: DesktopDownloads }) {
             <DetailCard
               label={t("Always ready")}
               title={t("Stay in the tray")}
-              body={t(
-                "Leave Deni AI available all day and pull it forward only when you need it.",
-              )}
+              body={t("Leave Deni AI available all day and pull it forward only when you need it.")}
               delay={0.2}
             />
             <DetailCard
@@ -644,11 +600,7 @@ export function DesktopClient({ downloads }: { downloads: DesktopDownloads }) {
                     asChild
                     className="h-12 rounded-b-none rounded-r-none! rounded-t-xl bg-primary px-6 text-primary-foreground shadow-lg shadow-primary/20 hover:bg-primary/90 sm:rounded-r-none sm:rounded-b-xl sm:rounded-l-xl"
                   >
-                    <a
-                      href={selectedOption.href}
-                      target="_blank"
-                      rel="noreferrer"
-                    >
+                    <a href={selectedOption.href} target="_blank" rel="noreferrer">
                       <Download className="h-4 w-4" />
                       {t("Download")} {getOsText(selectedOption.os)}
                     </a>
@@ -680,8 +632,7 @@ export function DesktopClient({ downloads }: { downloads: DesktopDownloads }) {
                         </DropdownMenuItem>
                       ) : null}
                       {osOptions.macos.length > 0 &&
-                      (osOptions.windows.length > 0 ||
-                        osOptions.linux.length > 0) ? (
+                      (osOptions.windows.length > 0 || osOptions.linux.length > 0) ? (
                         <DropdownMenuSeparator className="my-2" />
                       ) : null}
                       {osOptions.windows.length > 0 ? (
@@ -696,8 +647,7 @@ export function DesktopClient({ downloads }: { downloads: DesktopDownloads }) {
                           {t("Windows build")}
                         </DropdownMenuItem>
                       ) : null}
-                      {osOptions.windows.length > 0 &&
-                      osOptions.linux.length > 0 ? (
+                      {osOptions.windows.length > 0 && osOptions.linux.length > 0 ? (
                         <DropdownMenuSeparator className="my-2" />
                       ) : null}
                       {osOptions.linux.length > 0 ? (

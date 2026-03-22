@@ -26,10 +26,6 @@ function normalizeTags(value: unknown): string[] {
     .map((entry) => entry.trim());
 }
 
-function isShortcut(event: KeyboardEvent) {
-  return (event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "k";
-}
-
 export function ChatSearch({
   open,
   onOpenChange,
@@ -40,23 +36,9 @@ export function ChatSearch({
   const t = useExtracted();
   const router = useRouter();
   const pathname = usePathname();
-  const { data } = trpc.chat.getChats.useQuery();
-
-  useEffect(() => {
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.defaultPrevented || event.altKey || event.shiftKey || !isShortcut(event)) {
-        return;
-      }
-
-      event.preventDefault();
-      onOpenChange(!open);
-    };
-
-    window.addEventListener("keydown", handleKeyDown);
-    return () => {
-      window.removeEventListener("keydown", handleKeyDown);
-    };
-  }, [onOpenChange, open]);
+  const { data } = trpc.chat.getChats.useQuery(undefined, {
+    enabled: open,
+  });
 
   useEffect(() => {
     onOpenChange(false);

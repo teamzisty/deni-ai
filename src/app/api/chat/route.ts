@@ -83,6 +83,20 @@ function formatChatStreamError(error: unknown, modelId: string): string {
   return `${modelName} exceeded its context window. Start a new chat or trim earlier messages/files.`;
 }
 
+function estimateTokenReservation({
+  modelMessages,
+  systemPrompt,
+}: {
+  modelMessages: unknown;
+  systemPrompt: string;
+}) {
+  const serializedMessages = JSON.stringify(modelMessages);
+  const estimatedPromptTokens = Math.ceil((serializedMessages.length + systemPrompt.length) / 4);
+  return Math.max(512, Math.min(8_192, estimatedPromptTokens + 1_024));
+}
+
+const TOKEN_RECONCILE_OVERFLOW_BUFFER = 256;
+
 export async function POST(req: Request) {
   const headersList = await headers();
   const session = await auth.api.getSession({ headers: headersList });
@@ -162,7 +176,7 @@ export async function POST(req: Request) {
     throw error;
   }
 
-  const { model, providerOptions, usageCategory, useByok } = modelContext;
+  const { model, providerOptions, usageCategory, usageUnit, useByok } = modelContext;
 
   const webSearchEnabled = webSearch || forceWebSearch || deepResearch;
   const tools = createChatTools({
@@ -197,6 +211,8 @@ export async function POST(req: Request) {
   let usageRefunded = false;
   let generationWatch: ReturnType<typeof setInterval> | undefined;
   let hasAssistantOutput = false;
+  let consumedUsageAmount = 0;
+  let finalUsageAmount = 0;
 
   const ownsCurrentGeneration = async () => {
     return (
@@ -216,10 +232,61 @@ export async function POST(req: Request) {
       await refundUsage({
         userId,
         category: usageCategory,
+        amount: consumedUsageAmount,
       });
     } catch (error) {
       console.error("Failed to refund chat usage", error);
     }
+  };
+
+  const reconcileConsumedUsage = async (targetAmount: number) => {
+    if (useByok || usageUnit !== "tokens") {
+      return;
+    }
+
+    const normalizedTargetAmount = Math.max(targetAmount, hasAssistantOutput ? 1 : 0);
+    if (normalizedTargetAmount === consumedUsageAmount) {
+      return;
+    }
+
+    if (!usageConsumed) {
+      if (normalizedTargetAmount <= 0) {
+        return;
+      }
+
+      await consumeUsage({
+        userId,
+        category: usageCategory,
+        isAnonymous,
+        amount: normalizedTargetAmount,
+        allowLimitOverflow: normalizedTargetAmount <= TOKEN_RECONCILE_OVERFLOW_BUFFER,
+      });
+      consumedUsageAmount = normalizedTargetAmount;
+      usageConsumed = true;
+      usageRefunded = false;
+      return;
+    }
+
+    const delta = normalizedTargetAmount - consumedUsageAmount;
+    if (delta > 0) {
+      await consumeUsage({
+        userId,
+        category: usageCategory,
+        isAnonymous,
+        amount: delta,
+        allowLimitOverflow: delta <= TOKEN_RECONCILE_OVERFLOW_BUFFER,
+      });
+    } else if (delta < 0) {
+      await refundUsage({
+        userId,
+        category: usageCategory,
+        amount: Math.abs(delta),
+      });
+    }
+
+    consumedUsageAmount = normalizedTargetAmount;
+    usageConsumed = normalizedTargetAmount > 0;
+    usageRefunded = normalizedTargetAmount === 0;
   };
 
   const rollbackPendingAssistantState = async () => {
@@ -264,12 +331,16 @@ export async function POST(req: Request) {
     });
     projectPrompt = await buildProjectPrompt(chat.projectId, userId);
     if (!useByok) {
-      await consumeUsage({
-        userId,
-        category: usageCategory,
-        isAnonymous,
-      });
-      usageConsumed = true;
+      if (usageUnit === "requests") {
+        consumedUsageAmount = 1;
+        await consumeUsage({
+          userId,
+          category: usageCategory,
+          isAnonymous,
+          amount: consumedUsageAmount,
+        });
+        usageConsumed = true;
+      }
     }
   } catch (error) {
     await rollbackPendingAssistantState();
@@ -304,6 +375,21 @@ export async function POST(req: Request) {
   let result: ReturnType<typeof streamText>;
 
   try {
+    if (!useByok && usageUnit === "tokens") {
+      consumedUsageAmount = estimateTokenReservation({
+        modelMessages,
+        systemPrompt,
+      });
+      await consumeUsage({
+        userId,
+        category: usageCategory,
+        isAnonymous,
+        amount: consumedUsageAmount,
+      });
+      usageConsumed = true;
+      usageRefunded = false;
+    }
+
     result = streamText({
       model: model,
       messages: modelMessages,
@@ -315,6 +401,12 @@ export async function POST(req: Request) {
         : imageMode
           ? { type: "tool", toolName: "image" }
           : undefined,
+      onFinish: ({ totalUsage }) => {
+        finalUsageAmount = Math.max(
+          totalUsage.totalTokens ?? (totalUsage.inputTokens ?? 0) + (totalUsage.outputTokens ?? 0),
+          0,
+        );
+      },
       providerOptions,
       system: systemPrompt,
     });
@@ -447,8 +539,14 @@ export async function POST(req: Request) {
         if (isAborted) {
           if (!hasAssistantOutput) {
             await refundConsumedUsage();
+          } else if (!useByok && usageUnit === "tokens") {
+            await reconcileConsumedUsage(finalUsageAmount);
           }
           return;
+        }
+
+        if (!useByok && usageUnit === "tokens") {
+          await reconcileConsumedUsage(finalUsageAmount);
         }
 
         try {

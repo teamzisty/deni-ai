@@ -13,7 +13,7 @@ import { useBillingPlanCopy } from "@/lib/billing-plan-copy";
 import { formatMinorCurrency } from "@/lib/currency";
 import { trpc } from "@/lib/trpc/react";
 import { useFormatPriceParts } from "@/lib/use-format-price-parts";
-import { cn } from "@/lib/utils";
+import { cn, formatCompactUsageValue } from "@/lib/utils";
 import { SettingsPageShell } from "../settings-page-shell";
 import { PlanHighlights } from "./plan-highlights";
 import {
@@ -363,6 +363,7 @@ function PlanCard({
 
 type UsageItem = {
   category: "basic" | "premium";
+  unit: "requests" | "tokens";
   limit: number | null;
   used: number;
   remaining: number | null;
@@ -382,6 +383,12 @@ function UsageRow({
   const locale = useLocale();
   if (!item) return null;
 
+  const unitLabel = item.unit === "tokens" ? t("tokens") : t("requests");
+  const compactUsageLabel =
+    item.limit === null
+      ? `${formatCompactUsageValue(item.used)} ${unitLabel}`
+      : `${formatCompactUsageValue(item.used)}/${formatCompactUsageValue(item.limit)} ${unitLabel}`;
+
   // When Max Mode is enabled, show as unlimited
   if (maxModeEnabled) {
     const periodEndLabel = item.periodEnd
@@ -392,9 +399,7 @@ function UsageRow({
       <div className="space-y-2">
         <div className="flex items-center justify-between text-sm">
           <span>{label}</span>
-          <span className="text-muted-foreground">
-            {item.used.toLocaleString()} / {t("Unlimited")}
-          </span>
+          <span className="text-muted-foreground">{compactUsageLabel}</span>
         </div>
         <div className="flex items-center justify-between text-xs text-muted-foreground">
           <span className="flex items-center gap-1">
@@ -407,15 +412,18 @@ function UsageRow({
     );
   }
 
-  const limitLabel = item.limit === null ? t("Unlimited") : item.limit.toLocaleString();
   const progress =
     item.limit === null || item.limit === 0 ? 0 : Math.min((item.used / item.limit) * 100, 100);
   const remainingLabel =
     item.limit === null
       ? t("Unlimited")
-      : t("{count} remaining", {
-          count: Math.max(item.remaining ?? 0, 0).toLocaleString(),
-        });
+      : item.unit === "tokens"
+        ? t("{count} tokens remaining", {
+            count: Math.max(item.remaining ?? 0, 0).toLocaleString(),
+          })
+        : t("{count} remaining", {
+            count: Math.max(item.remaining ?? 0, 0).toLocaleString(),
+          });
   const periodEndLabel = item.periodEnd
     ? usageResetFormatter(locale).format(new Date(item.periodEnd))
     : null;
@@ -424,9 +432,7 @@ function UsageRow({
     <div className="space-y-2">
       <div className="flex items-center justify-between text-sm">
         <span>{label}</span>
-        <span className="text-muted-foreground">
-          {item.used.toLocaleString()} / {limitLabel}
-        </span>
+        <span className="text-muted-foreground">{compactUsageLabel}</span>
       </div>
       <Progress value={progress} className="h-2" />
       <div className="flex items-center justify-between text-xs text-muted-foreground">
@@ -522,13 +528,11 @@ function BillingPageContent() {
 
   const utils = trpc.useUtils();
   const statusQuery = trpc.billing.status.useQuery(undefined, {
-    refetchInterval: 15000,
-    refetchOnWindowFocus: true,
+    staleTime: 60_000,
   });
   const plansQuery = trpc.billing.plans.useQuery();
   const usageQuery = trpc.billing.usage.useQuery(undefined, {
-    refetchInterval: 30000,
-    refetchOnWindowFocus: true,
+    staleTime: 60_000,
   });
 
   const portal = trpc.billing.createPortalSession.useMutation({
@@ -572,7 +576,7 @@ function BillingPageContent() {
 
   // Max Mode queries and mutations
   const maxModeQuery = trpc.billing.maxModeStatus.useQuery(undefined, {
-    refetchOnWindowFocus: true,
+    staleTime: 60_000,
   });
 
   const enableMaxMode = trpc.billing.enableMaxMode.useMutation({

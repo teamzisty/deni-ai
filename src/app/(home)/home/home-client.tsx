@@ -7,10 +7,12 @@ import Link from "next/link";
 import { useExtracted } from "next-intl";
 import { SiAnthropic, SiGoogle, SiX } from "@icons-pack/react-simple-icons";
 import { LoginButton } from "@/components/login-button";
+import { AdSenseSlot } from "@/components/adsense-slot";
 import { Button } from "@/components/ui/button";
 import { BlurReveal } from "@/components/blur-reveal";
 import { HighlightedText } from "@/components/highlighted-text";
 import { LogosCarousel } from "@/components/logos-carousel";
+import { env } from "@/env";
 import AnimatedGradient from "@/components/animated-gradient";
 import Openai from "@/components/openai";
 
@@ -136,6 +138,15 @@ export function ClientHome() {
                   <React.Fragment key={i}>{logo}</React.Fragment>
                 ))}
               </LogosCarousel>
+            </motion.div>
+
+            <motion.div
+              initial={{ opacity: 0, y: 18 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 2.2, duration: 0.7 }}
+              className="mt-14 w-full max-w-3xl"
+            >
+              <AdSenseSlot slot={env.NEXT_PUBLIC_ADSENSE_HOME_SLOT_ID ?? ""} />
             </motion.div>
           </div>
         </div>
