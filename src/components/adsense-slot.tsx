@@ -4,6 +4,7 @@ import { useEffect, useRef } from "react";
 import { env } from "@/env";
 import { authClient } from "@/lib/auth-client";
 import { trpc } from "@/lib/trpc/react";
+import { liveUsageQueryOptions } from "@/lib/usage-query-options";
 import { cn } from "@/lib/utils";
 
 declare global {
@@ -23,7 +24,7 @@ export function AdSenseSlot({ slot, className }: AdSenseSlotProps) {
   const hasSession = Boolean(session.data?.session);
   const usageQuery = trpc.billing.usage.useQuery(undefined, {
     enabled: hasSession,
-    staleTime: 30000,
+    ...liveUsageQueryOptions,
   });
   const usageStatePending =
     hasSession && (usageQuery.isLoading || usageQuery.isError || !usageQuery.data);

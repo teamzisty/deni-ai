@@ -24,6 +24,7 @@ import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { resolveImageUsageCategory } from "@/lib/image";
 import { trpc } from "@/lib/trpc/react";
+import { liveUsageQueryOptions } from "@/lib/usage-query-options";
 import { cn } from "@/lib/utils";
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
 import {
@@ -392,8 +393,7 @@ function getImageModel(model: ModelId) {
 export default function PaletteClient() {
   const t = useExtracted();
   const usageQuery = trpc.billing.usage.useQuery(undefined, {
-    refetchOnWindowFocus: true,
-    staleTime: 30000,
+    ...liveUsageQueryOptions,
   });
 
   const [prompt, setPrompt] = useState("");

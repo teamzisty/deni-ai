@@ -2,6 +2,7 @@ import { useExtracted } from "next-intl";
 import { useMemo } from "react";
 import type { ModelOption } from "@/components/chat/chat-composer";
 import { trpc } from "@/lib/trpc/react";
+import { liveUsageQueryOptions } from "@/lib/usage-query-options";
 
 type ProviderSetting = {
   provider: string;
@@ -20,8 +21,7 @@ export function useUsageStatus(params: {
   const { model, availableModels, providerKeys, providerSettings } = params;
 
   const usageQuery = trpc.billing.usage.useQuery(undefined, {
-    refetchOnWindowFocus: true,
-    staleTime: 30000,
+    ...liveUsageQueryOptions,
   });
 
   const selectedModel = availableModels.find((m) => m.value === model);

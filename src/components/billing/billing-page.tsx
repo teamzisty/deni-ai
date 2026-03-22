@@ -12,6 +12,7 @@ import { isBillingDisabled } from "@/lib/billing-config";
 import { useBillingPlanCopy } from "@/lib/billing-plan-copy";
 import { formatMinorCurrency } from "@/lib/currency";
 import { trpc } from "@/lib/trpc/react";
+import { liveUsageQueryOptions } from "@/lib/usage-query-options";
 import { useFormatPriceParts } from "@/lib/use-format-price-parts";
 import { cn, formatCompactUsageValue } from "@/lib/utils";
 import { SettingsPageShell } from "../settings-page-shell";
@@ -532,7 +533,7 @@ function BillingPageContent() {
   });
   const plansQuery = trpc.billing.plans.useQuery();
   const usageQuery = trpc.billing.usage.useQuery(undefined, {
-    staleTime: 60_000,
+    ...liveUsageQueryOptions,
   });
 
   const portal = trpc.billing.createPortalSession.useMutation({
