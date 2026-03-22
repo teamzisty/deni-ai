@@ -35,13 +35,11 @@ export default function SettingsWrapper({ children }: { children: React.ReactNod
   const billingDisabled = isBillingDisabled;
   const statusQuery = trpc.billing.status.useQuery(undefined, {
     enabled: !billingDisabled && !isCheckoutRoute,
-    refetchInterval: 15000,
-    refetchOnWindowFocus: true,
+    staleTime: 60_000,
   });
   const usageQuery = trpc.billing.usage.useQuery(undefined, {
     enabled: !isCheckoutRoute,
-    refetchInterval: 30000,
-    refetchOnWindowFocus: true,
+    staleTime: 60_000,
   });
 
   if (!isCheckoutRoute && (usageQuery.isLoading || (!billingDisabled && statusQuery.isLoading))) {

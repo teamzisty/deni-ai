@@ -542,13 +542,11 @@ function BillingPageContent() {
 
   const utils = trpc.useUtils();
   const statusQuery = trpc.billing.status.useQuery(undefined, {
-    refetchInterval: 15000,
-    refetchOnWindowFocus: true,
+    staleTime: 60_000,
   });
   const plansQuery = trpc.billing.plans.useQuery();
   const usageQuery = trpc.billing.usage.useQuery(undefined, {
-    refetchInterval: 30000,
-    refetchOnWindowFocus: true,
+    staleTime: 60_000,
   });
 
   const portal = trpc.billing.createPortalSession.useMutation({
@@ -592,7 +590,7 @@ function BillingPageContent() {
 
   // Max Mode queries and mutations
   const maxModeQuery = trpc.billing.maxModeStatus.useQuery(undefined, {
-    refetchOnWindowFocus: true,
+    staleTime: 60_000,
   });
 
   const enableMaxMode = trpc.billing.enableMaxMode.useMutation({

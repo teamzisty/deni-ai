@@ -28,7 +28,7 @@ export function AccountMenu() {
 
   const maxModeQuery = trpc.billing.maxModeStatus.useQuery(undefined, {
     enabled: !billingDisabled && !isAnonymous,
-    refetchInterval: 30000,
+    staleTime: 60_000,
   });
 
   const maxModeEnabled = maxModeQuery.data?.enabled ?? false;
