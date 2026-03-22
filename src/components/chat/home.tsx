@@ -8,6 +8,7 @@ import { toast } from "sonner";
 import { AdSenseSlot } from "@/components/adsense-slot";
 import { ChatComposer, type ComposerMessage } from "@/components/chat/chat-composer";
 import { ProjectSelect } from "@/components/projects/project-select";
+import { env } from "@/env";
 import { getPreferredReasoningEffort, models, type ReasoningEffort } from "@/lib/constants";
 import { trpc } from "@/lib/trpc/react";
 
@@ -213,7 +214,7 @@ export default function ChatHome() {
             onDeepResearchChange={setDeepResearch}
           />
           <AdSenseSlot
-            slot={process.env.NEXT_PUBLIC_ADSENSE_CHAT_SLOT_ID ?? ""}
+            slot={env.NEXT_PUBLIC_ADSENSE_CHAT_SLOT_ID ?? ""}
             className="mx-auto mt-3 max-w-xl border-border/40 bg-background/40 px-2 py-2 shadow-none"
           />
         </div>

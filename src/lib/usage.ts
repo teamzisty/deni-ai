@@ -178,6 +178,10 @@ function resolvePeriodEnd(now: Date) {
   return getDefaultPeriodEnd(now);
 }
 
+function isUsageUnit(value: string | null | undefined): value is UsageUnit {
+  return value === "requests" || value === "tokens";
+}
+
 async function calculateUsageState({
   userId,
   category,
@@ -205,12 +209,16 @@ async function calculateUsageState({
       .then((rows) => rows[0]));
 
   const targetPeriodEnd = isAnonymous ? null : resolvePeriodEnd(now);
+  const storedUnit = isUsageUnit(current?.unit) ? current.unit : null;
+  const hasUnitMismatch = Boolean(current) && storedUnit !== unit;
 
   const shouldReset = !current
     ? true
-    : isAnonymous
-      ? false
-      : !current.periodEnd || current.periodEnd <= now;
+    : hasUnitMismatch
+      ? true
+      : isAnonymous
+        ? false
+        : !current.periodEnd || current.periodEnd <= now;
 
   const used = limit === null ? (current?.used ?? 0) : shouldReset ? 0 : (current?.used ?? 0);
   const periodStart = shouldReset ? now : (current?.periodStart ?? now);
@@ -227,12 +235,22 @@ async function calculateUsageState({
   };
 }
 
-function buildResetWindowCondition(now: Date, targetPeriodEnd: Date | null) {
+function buildResetWindowCondition({
+  now,
+  targetPeriodEnd,
+  unit,
+}: {
+  now: Date;
+  targetPeriodEnd: Date | null;
+  unit: UsageUnit;
+}) {
+  const unitMismatchCondition = sql`${usageQuota.unit} IS DISTINCT FROM ${unit}`;
+
   if (!targetPeriodEnd) {
-    return null;
+    return unitMismatchCondition;
   }
 
-  return sql`${usageQuota.periodEnd} IS NULL OR ${usageQuota.periodEnd} <= ${now}`;
+  return sql`(${usageQuota.periodEnd} IS NULL OR ${usageQuota.periodEnd} <= ${now}) OR ${unitMismatchCondition}`;
 }
 
 async function upsertUsageRecord({
@@ -240,6 +258,7 @@ async function upsertUsageRecord({
   category,
   tier,
   limit,
+  unit,
   amount,
   periodStart,
   targetPeriodEnd,
@@ -250,6 +269,7 @@ async function upsertUsageRecord({
   category: UsageCategory;
   tier: SubscriptionTier;
   limit: number;
+  unit: UsageUnit;
   amount: number;
   periodStart: Date;
   targetPeriodEnd: Date | null;
@@ -291,6 +311,7 @@ async function upsertUsageRecord({
       category,
       planTier: tier,
       limitAmount: limit,
+      unit,
       used: amount,
       periodStart,
       periodEnd: targetPeriodEnd,
@@ -300,6 +321,7 @@ async function upsertUsageRecord({
       set: {
         planTier: tier,
         limitAmount: limit,
+        unit,
         used: usedExpression,
         periodStart: periodStartExpression,
         periodEnd: periodEndExpression,
@@ -349,7 +371,11 @@ export async function consumeUsage({
     };
   }
 
-  const resetWindowCondition = buildResetWindowCondition(now, state.targetPeriodEnd);
+  const resetWindowCondition = buildResetWindowCondition({
+    now,
+    targetPeriodEnd: state.targetPeriodEnd,
+    unit,
+  });
   const isLimitReached = limit <= 0 || state.used + amount > limit;
 
   if (isLimitReached) {
@@ -361,6 +387,7 @@ export async function consumeUsage({
         category,
         tier: tierInfo.tier,
         limit,
+        unit,
         amount,
         periodStart: state.periodStart,
         targetPeriodEnd: state.targetPeriodEnd,
@@ -383,6 +410,7 @@ export async function consumeUsage({
         category,
         tier: tierInfo.tier,
         limit,
+        unit,
         amount,
         periodStart: state.periodStart,
         targetPeriodEnd: state.targetPeriodEnd,
@@ -412,6 +440,7 @@ export async function consumeUsage({
     category,
     tier: tierInfo.tier,
     limit,
+    unit,
     amount,
     periodStart: state.periodStart,
     targetPeriodEnd: state.targetPeriodEnd,

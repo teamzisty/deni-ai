@@ -12,6 +12,7 @@ import { Button } from "@/components/ui/button";
 import { BlurReveal } from "@/components/blur-reveal";
 import { HighlightedText } from "@/components/highlighted-text";
 import { LogosCarousel } from "@/components/logos-carousel";
+import { env } from "@/env";
 import AnimatedGradient from "@/components/animated-gradient";
 import Openai from "@/components/openai";
 
@@ -145,7 +146,7 @@ export function ClientHome() {
               transition={{ delay: 2.2, duration: 0.7 }}
               className="mt-14 w-full max-w-3xl"
             >
-              <AdSenseSlot slot={process.env.NEXT_PUBLIC_ADSENSE_HOME_SLOT_ID ?? ""} />
+              <AdSenseSlot slot={env.NEXT_PUBLIC_ADSENSE_HOME_SLOT_ID ?? ""} />
             </motion.div>
           </div>
         </div>

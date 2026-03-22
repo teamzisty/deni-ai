@@ -190,6 +190,13 @@
       "when": 1773832062750,
       "tag": "0026_nostalgic_miek",
       "breakpoints": true
+    },
+    {
+      "idx": 27,
+      "version": "7",
+      "when": 1774155126978,
+      "tag": "0027_white_albert_cleary",
+      "breakpoints": true
     }
   ]
 }

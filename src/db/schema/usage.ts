@@ -15,6 +15,7 @@ export const usageQuota = pgTable(
     category: text("category").notNull(), // "basic" | "premium"
     planTier: text("plan_tier").notNull(), // "free" | "pro" | "max"
     limitAmount: integer("limit_amount"),
+    unit: text("unit"),
     used: integer("used").notNull().default(0),
     periodStart: timestamp("period_start").defaultNow().notNull(),
     periodEnd: timestamp("period_end"),

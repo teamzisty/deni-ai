@@ -432,6 +432,11 @@ const escapeHtml = (unsafe: string) =>
     .replace(/"/g, "&quot;")
     .replace(/'/g, "&#39;");
 
+const sanitizeEmailSubjectValue = (value: string, fallback: string) => {
+  const sanitized = value.replaceAll(/\r|\n/g, " ").replaceAll(/\s+/g, " ").trim().slice(0, 200);
+  return sanitized || fallback;
+};
+
 // Email templates
 export const emailTemplates = {
   resetPassword: (name: string | null, url: string) => ({
@@ -475,14 +480,17 @@ export const emailTemplates = {
     `;
     })(),
   }),
-  orgInvitation: (orgName: string, inviterName: string | null, url: string) => ({
-    subject: `You're invited to join ${orgName} on Deni AI`,
-    html: (() => {
-      const escapedOrg = escapeHtml(orgName);
-      const escapedInviter = inviterName ? escapeHtml(inviterName) : "Someone";
-      const escapedUrl = escapeHtml(url);
+  orgInvitation: (orgName: string, inviterName: string | null, url: string) => {
+    const sanitizedOrgName = sanitizeEmailSubjectValue(orgName, "your organization");
 
-      return `
+    return {
+      subject: `You're invited to join ${sanitizedOrgName} on Deni AI`,
+      html: (() => {
+        const escapedOrg = escapeHtml(sanitizedOrgName);
+        const escapedInviter = inviterName ? escapeHtml(inviterName) : "Someone";
+        const escapedUrl = escapeHtml(url);
+
+        return `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
         <h2>You're Invited!</h2>
         <p>${escapedInviter} has invited you to join <strong>${escapedOrg}</strong> on Deni AI.</p>
@@ -494,8 +502,9 @@ export const emailTemplates = {
         <p>Best,<br>Deni AI Team</p>
       </div>
     `;
-    })(),
-  }),
+      })(),
+    };
+  },
   magicLink: (url: string) => ({
     subject: "Sign in to Deni AI",
     html: (() => {

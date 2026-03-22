@@ -25,6 +25,8 @@ export function AdSenseSlot({ slot, className }: AdSenseSlotProps) {
     enabled: hasSession,
     staleTime: 30000,
   });
+  const usageStatePending =
+    hasSession && (usageQuery.isLoading || usageQuery.isError || !usageQuery.data);
   const isPaidUser = hasSession && usageQuery.data ? usageQuery.data.tier !== "free" : false;
 
   useEffect(() => {
@@ -32,6 +34,7 @@ export function AdSenseSlot({ slot, className }: AdSenseSlotProps) {
       process.env.NODE_ENV !== "production" ||
       !env.NEXT_PUBLIC_ADSENSE_CLIENT_ID ||
       !slot ||
+      usageStatePending ||
       isPaidUser
     ) {
       return;
@@ -47,14 +50,14 @@ export function AdSenseSlot({ slot, className }: AdSenseSlotProps) {
     } catch {
       // Ignore double-init and ad blocker failures.
     }
-  }, [isPaidUser, slot]);
+  }, [isPaidUser, slot, usageStatePending]);
 
   if (
     !env.NEXT_PUBLIC_ADSENSE_CLIENT_ID ||
     !slot ||
     process.env.NODE_ENV !== "production" ||
     session.isPending ||
-    (hasSession && usageQuery.isLoading) ||
+    usageStatePending ||
     isPaidUser
   ) {
     return null;

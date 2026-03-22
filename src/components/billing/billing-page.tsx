@@ -13,7 +13,7 @@ import { useBillingPlanCopy } from "@/lib/billing-plan-copy";
 import { formatMinorCurrency } from "@/lib/currency";
 import { trpc } from "@/lib/trpc/react";
 import { useFormatPriceParts } from "@/lib/use-format-price-parts";
-import { cn } from "@/lib/utils";
+import { cn, formatCompactUsageValue } from "@/lib/utils";
 import { SettingsPageShell } from "../settings-page-shell";
 import { PlanHighlights } from "./plan-highlights";
 import {
@@ -42,20 +42,6 @@ const usageResetFormatter = (locale: string) =>
     month: "short",
     day: "numeric",
   });
-
-function formatCompactUsageValue(value: number) {
-  if (value >= 1_000_000) {
-    const formatted = value / 1_000_000;
-    return `${Number.isInteger(formatted) ? formatted.toFixed(0) : formatted.toFixed(1)}m`;
-  }
-
-  if (value >= 1_000) {
-    const formatted = value / 1_000;
-    return `${Number.isInteger(formatted) ? formatted.toFixed(0) : formatted.toFixed(1)}k`;
-  }
-
-  return value.toLocaleString();
-}
 
 function useFormatPriceLabel() {
   const t = useExtracted();

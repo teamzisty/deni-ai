@@ -83,6 +83,20 @@ function formatChatStreamError(error: unknown, modelId: string): string {
   return `${modelName} exceeded its context window. Start a new chat or trim earlier messages/files.`;
 }
 
+function estimateTokenReservation({
+  modelMessages,
+  systemPrompt,
+}: {
+  modelMessages: unknown;
+  systemPrompt: string;
+}) {
+  const serializedMessages = JSON.stringify(modelMessages);
+  const estimatedPromptTokens = Math.ceil((serializedMessages.length + systemPrompt.length) / 4);
+  return Math.max(512, Math.min(8_192, estimatedPromptTokens + 1_024));
+}
+
+const TOKEN_RECONCILE_OVERFLOW_BUFFER = 256;
+
 export async function POST(req: Request) {
   const headersList = await headers();
   const session = await auth.api.getSession({ headers: headersList });
@@ -225,6 +239,56 @@ export async function POST(req: Request) {
     }
   };
 
+  const reconcileConsumedUsage = async (targetAmount: number) => {
+    if (useByok || usageUnit !== "tokens") {
+      return;
+    }
+
+    const normalizedTargetAmount = Math.max(targetAmount, hasAssistantOutput ? 1 : 0);
+    if (normalizedTargetAmount === consumedUsageAmount) {
+      return;
+    }
+
+    if (!usageConsumed) {
+      if (normalizedTargetAmount <= 0) {
+        return;
+      }
+
+      await consumeUsage({
+        userId,
+        category: usageCategory,
+        isAnonymous,
+        amount: normalizedTargetAmount,
+        allowLimitOverflow: normalizedTargetAmount <= TOKEN_RECONCILE_OVERFLOW_BUFFER,
+      });
+      consumedUsageAmount = normalizedTargetAmount;
+      usageConsumed = true;
+      usageRefunded = false;
+      return;
+    }
+
+    const delta = normalizedTargetAmount - consumedUsageAmount;
+    if (delta > 0) {
+      await consumeUsage({
+        userId,
+        category: usageCategory,
+        isAnonymous,
+        amount: delta,
+        allowLimitOverflow: delta <= TOKEN_RECONCILE_OVERFLOW_BUFFER,
+      });
+    } else if (delta < 0) {
+      await refundUsage({
+        userId,
+        category: usageCategory,
+        amount: Math.abs(delta),
+      });
+    }
+
+    consumedUsageAmount = normalizedTargetAmount;
+    usageConsumed = normalizedTargetAmount > 0;
+    usageRefunded = normalizedTargetAmount === 0;
+  };
+
   const rollbackPendingAssistantState = async () => {
     if (pendingStateRolledBack) {
       return;
@@ -311,6 +375,21 @@ export async function POST(req: Request) {
   let result: ReturnType<typeof streamText>;
 
   try {
+    if (!useByok && usageUnit === "tokens") {
+      consumedUsageAmount = estimateTokenReservation({
+        modelMessages,
+        systemPrompt,
+      });
+      await consumeUsage({
+        userId,
+        category: usageCategory,
+        isAnonymous,
+        amount: consumedUsageAmount,
+      });
+      usageConsumed = true;
+      usageRefunded = false;
+    }
+
     result = streamText({
       model: model,
       messages: modelMessages,
@@ -461,31 +540,13 @@ export async function POST(req: Request) {
           if (!hasAssistantOutput) {
             await refundConsumedUsage();
           } else if (!useByok && usageUnit === "tokens") {
-            consumedUsageAmount = Math.max(finalUsageAmount, 1);
-            await consumeUsage({
-              userId,
-              category: usageCategory,
-              isAnonymous,
-              amount: consumedUsageAmount,
-              allowLimitOverflow: true,
-            });
-            usageConsumed = true;
+            await reconcileConsumedUsage(finalUsageAmount);
           }
           return;
         }
 
         if (!useByok && usageUnit === "tokens") {
-          consumedUsageAmount = Math.max(finalUsageAmount, hasAssistantOutput ? 1 : 0);
-          if (consumedUsageAmount > 0) {
-            await consumeUsage({
-              userId,
-              category: usageCategory,
-              isAnonymous,
-              amount: consumedUsageAmount,
-              allowLimitOverflow: true,
-            });
-            usageConsumed = true;
-          }
+          await reconcileConsumedUsage(finalUsageAmount);
         }
 
         try {

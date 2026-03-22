@@ -11,22 +11,8 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { isBillingDisabled } from "@/lib/billing-config";
 import { isCheckoutSettingsRoute } from "@/lib/settings-routes";
 import { trpc } from "@/lib/trpc/react";
-import { cn } from "@/lib/utils";
+import { cn, formatCompactUsageValue } from "@/lib/utils";
 import { Progress } from "./ui/progress";
-
-function formatCompactUsageValue(value: number) {
-  if (value >= 1_000_000) {
-    const formatted = value / 1_000_000;
-    return `${Number.isInteger(formatted) ? formatted.toFixed(0) : formatted.toFixed(1)}m`;
-  }
-
-  if (value >= 1_000) {
-    const formatted = value / 1_000;
-    return `${Number.isInteger(formatted) ? formatted.toFixed(0) : formatted.toFixed(1)}k`;
-  }
-
-  return value.toLocaleString();
-}
 
 export default function SettingsWrapper({ children }: { children: React.ReactNode }) {
   const t = useExtracted();
@@ -178,9 +164,13 @@ export default function SettingsWrapper({ children }: { children: React.ReactNod
                   ? t("Unlimited")
                   : usageItem.limit === null
                     ? t("Unlimited")
-                    : t("{count} remaining", {
-                        count: Math.max(usageItem.remaining ?? 0, 0).toLocaleString(),
-                      });
+                    : usageItem.unit === "tokens"
+                      ? t("{count} tokens remaining", {
+                          count: Math.max(usageItem.remaining ?? 0, 0).toLocaleString(),
+                        })
+                      : t("{count} remaining", {
+                          count: Math.max(usageItem.remaining ?? 0, 0).toLocaleString(),
+                        });
                 const periodEndLabel = usageItem.periodEnd
                   ? new Intl.DateTimeFormat(undefined, {
                       month: "short",

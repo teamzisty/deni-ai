@@ -24,6 +24,7 @@ import { AdSenseSlot } from "@/components/adsense-slot";
 import { AssistantMessage } from "@/components/chat/assistant-message";
 import { ChatComposer, type ComposerMessage } from "@/components/chat/chat-composer";
 import { UsageAlerts } from "@/components/chat/usage-alerts";
+import { env } from "@/env";
 import { useAvailableModels } from "@/hooks/use-available-models";
 import { useInitialMessage } from "@/hooks/use-initial-message";
 import { useUsageStatus } from "@/hooks/use-usage-status";
@@ -463,7 +464,7 @@ export function ChatInterface({
         showByokBadge={isByokActive}
       />
       <AdSenseSlot
-        slot={process.env.NEXT_PUBLIC_ADSENSE_CHAT_SLOT_ID ?? ""}
+        slot={env.NEXT_PUBLIC_ADSENSE_CHAT_SLOT_ID ?? ""}
         className="mx-auto mt-3 w-full max-w-xl border-border/40 bg-background/40 px-2 py-2 shadow-none"
       />
     </div>
