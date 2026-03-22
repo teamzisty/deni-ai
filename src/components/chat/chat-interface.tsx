@@ -6,7 +6,7 @@ import type { FileUIPart, UIMessage } from "ai";
 import { DefaultChatTransport } from "ai";
 import { FolderKanban } from "lucide-react";
 import { useExtracted } from "next-intl";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   Attachment,
   AttachmentInfo,
@@ -199,6 +199,7 @@ export function ChatInterface({
     messages: initialMessages,
     transport,
   });
+  const previousStatusRef = useRef(status);
   const showMessageActions = status !== "streaming" && status !== "submitted";
   const lastMessage = messages.at(-1);
   const isWaitingForResponse =
@@ -237,6 +238,20 @@ export function ChatInterface({
 
     setMessages(chat.messages as UIMessage[]);
   }, [chatQuery.data, setMessages]);
+
+  useEffect(() => {
+    const previousStatus = previousStatusRef.current;
+    previousStatusRef.current = status;
+
+    const hadInFlightRequest = previousStatus === "submitted" || previousStatus === "streaming";
+    const requestSettled = status === "ready" || status === "error";
+
+    if (!hadInFlightRequest || !requestSettled) {
+      return;
+    }
+
+    void utils.billing.usage.invalidate();
+  }, [status, utils]);
 
   const handleSubmit = async (
     message: ComposerMessage,
@@ -292,7 +307,6 @@ export function ChatInterface({
           },
         ),
       ).finally(() => {
-        usageQuery.refetch();
         utils.chat.getChats.invalidate();
       });
       setInput("");

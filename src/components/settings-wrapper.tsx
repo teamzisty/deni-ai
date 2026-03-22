@@ -11,6 +11,7 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { isBillingDisabled } from "@/lib/billing-config";
 import { isCheckoutSettingsRoute } from "@/lib/settings-routes";
 import { trpc } from "@/lib/trpc/react";
+import { liveUsageQueryOptions } from "@/lib/usage-query-options";
 import { cn, formatCompactUsageValue } from "@/lib/utils";
 import { Progress } from "./ui/progress";
 
@@ -25,7 +26,7 @@ export default function SettingsWrapper({ children }: { children: React.ReactNod
   });
   const usageQuery = trpc.billing.usage.useQuery(undefined, {
     enabled: !isCheckoutRoute,
-    staleTime: 60_000,
+    ...liveUsageQueryOptions,
   });
 
   if (!isCheckoutRoute && (usageQuery.isLoading || (!billingDisabled && statusQuery.isLoading))) {
