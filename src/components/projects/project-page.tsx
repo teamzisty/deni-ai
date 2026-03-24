@@ -1,0 +1,287 @@
+"use client";
+
+import {
+  FileIcon,
+  MessageSquareIcon,
+  PlusIcon,
+  SaveIcon,
+  Trash2Icon,
+  UploadIcon,
+} from "lucide-react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useRef, useState } from "react";
+import { toast } from "sonner";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Spinner } from "@/components/ui/spinner";
+import { Textarea } from "@/components/ui/textarea";
+import { trpc } from "@/lib/trpc/react";
+
+interface ProjectPageProps {
+  projectId: string;
+  initialProjectName: string;
+}
+
+export function ProjectPage({ projectId, initialProjectName }: ProjectPageProps) {
+  const router = useRouter();
+  const utils = trpc.useUtils();
+
+  const projectQuery = trpc.projects.get.useQuery({ id: projectId });
+  const chatsQuery = trpc.projects.getProjectChats.useQuery({ projectId });
+
+  const project = projectQuery.data?.project;
+  const files = projectQuery.data?.files ?? [];
+  const chats = chatsQuery.data ?? [];
+
+  const [name, setName] = useState(project?.name ?? initialProjectName);
+  const [description, setDescription] = useState(project?.description ?? "");
+  const [instructions, setInstructions] = useState(project?.instructions ?? "");
+  const [isUploading, setIsUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Sync form when data loads
+  const dataLoaded = !projectQuery.isLoading && project;
+  const [synced, setSynced] = useState(false);
+  if (dataLoaded && !synced) {
+    setName(project.name);
+    setDescription(project.description ?? "");
+    setInstructions(project.instructions);
+    setSynced(true);
+  }
+
+  const updateProject = trpc.projects.update.useMutation({
+    onSuccess: () => {
+      toast.success("Project saved");
+      void utils.projects.list.invalidate();
+      void utils.projects.get.invalidate({ id: projectId });
+    },
+  });
+
+  const createChat = trpc.chat.createChat.useMutation({
+    onSuccess: (chatId) => {
+      if (chatId) router.push(`/chat/${chatId}`);
+    },
+  });
+
+  const deleteFile = trpc.projects.deleteFile.useMutation({
+    onSuccess: () => {
+      void utils.projects.get.invalidate({ id: projectId });
+    },
+  });
+
+  const recordFile = trpc.projects.recordFile.useMutation({
+    onSuccess: () => {
+      void utils.projects.get.invalidate({ id: projectId });
+    },
+  });
+
+  const handleSave = () => {
+    updateProject.mutate({
+      id: projectId,
+      name: name.trim() || initialProjectName,
+      description: description.trim() || null,
+      instructions,
+      color: project?.color ?? "amber",
+    });
+  };
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    e.target.value = "";
+
+    setIsUploading(true);
+    try {
+      const formData = new FormData();
+      formData.set("file", file);
+
+      const res = await fetch("/api/upload-project-file", {
+        method: "POST",
+        body: formData,
+      });
+
+      if (!res.ok) {
+        const err = (await res.json()) as { error?: string };
+        throw new Error(err.error ?? "Upload failed");
+      }
+
+      const { url, size, mimeType } = (await res.json()) as {
+        url: string;
+        size: number;
+        mimeType: string;
+      };
+
+      recordFile.mutate({
+        projectId,
+        filename: file.name,
+        url,
+        size,
+        mimeType,
+      });
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Upload failed");
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
+  return (
+    <div className="flex h-full min-h-0 divide-x">
+      {/* Left: Chat list */}
+      <aside className="flex w-64 shrink-0 flex-col gap-3 p-4 overflow-y-auto">
+        <div className="flex items-center justify-between">
+          <span className="text-sm font-medium text-muted-foreground">Chats</span>
+          <Button
+            size="sm"
+            variant="ghost"
+            className="h-7 gap-1 px-2 text-xs"
+            disabled={createChat.isPending}
+            onClick={() => createChat.mutate({ projectId })}
+          >
+            {createChat.isPending ? <Spinner /> : <PlusIcon className="size-3.5" />}
+            New chat
+          </Button>
+        </div>
+
+        {chatsQuery.isLoading ? (
+          <div className="flex justify-center py-6">
+            <Spinner />
+          </div>
+        ) : chats.length === 0 ? (
+          <p className="text-xs text-muted-foreground">No chats yet.</p>
+        ) : (
+          <ul className="space-y-1">
+            {chats.map((chat) => (
+              <li key={chat.id}>
+                <Link
+                  href={`/chat/${chat.id}`}
+                  className="block truncate rounded-lg px-2 py-1.5 text-sm hover:bg-muted/60 transition-colors"
+                >
+                  {chat.title ?? "Untitled chat"}
+                </Link>
+              </li>
+            ))}
+          </ul>
+        )}
+      </aside>
+
+      {/* Right: Settings + Files */}
+      <main className="flex flex-1 min-w-0 flex-col gap-6 overflow-y-auto p-6">
+        <section className="space-y-4">
+          <h2 className="flex items-center gap-2 text-sm font-semibold">
+            <MessageSquareIcon className="size-4" />
+            Project settings
+          </h2>
+
+          <div className="space-y-2">
+            <Label htmlFor="proj-name">Name</Label>
+            <Input
+              id="proj-name"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder="Project name"
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="proj-desc">Description</Label>
+            <Input
+              id="proj-desc"
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              placeholder="Short description (optional)"
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="proj-instructions">Custom instructions</Label>
+            <Textarea
+              id="proj-instructions"
+              rows={8}
+              value={instructions}
+              onChange={(e) => setInstructions(e.target.value)}
+              placeholder="Tell the AI how to behave in this project — goals, tone, constraints, output format, etc."
+            />
+          </div>
+
+          <div className="flex justify-end">
+            <Button onClick={handleSave} disabled={updateProject.isPending}>
+              {updateProject.isPending ? <Spinner /> : <SaveIcon className="size-4" />}
+              Save
+            </Button>
+          </div>
+        </section>
+
+        <section className="space-y-4">
+          <div className="flex items-center justify-between">
+            <h2 className="flex items-center gap-2 text-sm font-semibold">
+              <FileIcon className="size-4" />
+              Knowledge files
+            </h2>
+            <Button
+              size="sm"
+              variant="outline"
+              className="gap-1.5"
+              disabled={isUploading}
+              onClick={() => fileInputRef.current?.click()}
+            >
+              {isUploading ? <Spinner /> : <UploadIcon className="size-3.5" />}
+              Upload file
+            </Button>
+            <input
+              ref={fileInputRef}
+              type="file"
+              className="hidden"
+              accept=".pdf,.txt,.md,image/*"
+              onChange={handleFileUpload}
+            />
+          </div>
+
+          {projectQuery.isLoading ? (
+            <div className="flex justify-center py-6">
+              <Spinner />
+            </div>
+          ) : files.length === 0 ? (
+            <div className="rounded-xl border border-dashed p-6 text-center text-sm text-muted-foreground">
+              No files uploaded. Files are referenced in the system prompt so the AI is aware of
+              them.
+            </div>
+          ) : (
+            <ul className="space-y-2">
+              {files.map((file) => (
+                <li
+                  key={file.id}
+                  className="flex items-center justify-between gap-3 rounded-xl border px-4 py-3"
+                >
+                  <div className="flex min-w-0 items-center gap-3">
+                    <FileIcon className="size-4 shrink-0 text-muted-foreground" />
+                    <div className="min-w-0">
+                      <div className="truncate text-sm font-medium">{file.filename}</div>
+                      <div className="text-xs text-muted-foreground">
+                        {(file.size / 1024).toFixed(0)} KB · {file.mimeType}
+                      </div>
+                    </div>
+                  </div>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="size-8 shrink-0 text-muted-foreground hover:text-destructive"
+                    onClick={() => {
+                      if (!window.confirm("Delete this file?")) return;
+                      deleteFile.mutate({ id: file.id });
+                    }}
+                    disabled={deleteFile.isPending}
+                  >
+                    <Trash2Icon className="size-3.5" />
+                  </Button>
+                </li>
+              ))}
+            </ul>
+          )}
+        </section>
+      </main>
+    </div>
+  );
+}

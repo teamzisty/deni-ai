@@ -8,7 +8,12 @@ import { getPlanTier } from "@/lib/billing";
 
 import { isMaxModeEligible, recordMaxModeUsage } from "./max-mode";
 
-const ACTIVE_BILLING_STATUSES = new Set(["active", "trialing", "past_due", "paid"]);
+const ACTIVE_BILLING_STATUSES = new Set([
+  "active",
+  "trialing",
+  "past_due",
+  "paid",
+]);
 
 export type UsageCategory = "basic" | "premium";
 export type SubscriptionTier = "free" | "plus" | "pro" | "max";
@@ -22,20 +27,23 @@ const USAGE_LIMITS: Record<
   Record<SubscriptionTier, { limit: number | null; unit: UsageUnit }>
 > = {
   basic: {
-    free: { limit: 500, unit: "requests" },
-    plus: { limit: 20_000_000, unit: "tokens" },
-    pro: { limit: 50_000_000, unit: "tokens" },
-    max: { limit: 120_000_000, unit: "tokens" },
+    free: { limit: 1000, unit: "requests" },
+    plus: { limit: 100_000_000, unit: "tokens" },
+    pro: { limit: 250_000_000, unit: "tokens" },
+    max: { limit: 750_000_000, unit: "tokens" },
   },
   premium: {
-    free: { limit: 50, unit: "requests" },
-    plus: { limit: 5_000_000, unit: "tokens" },
-    pro: { limit: 15_000_000, unit: "tokens" },
-    max: { limit: 40_000_000, unit: "tokens" },
+    free: { limit: 100, unit: "requests" },
+    plus: { limit: 50_000_000, unit: "tokens" },
+    pro: { limit: 150_000_000, unit: "tokens" },
+    max: { limit: 450_000_000, unit: "tokens" },
   },
 };
 
-const GUEST_USAGE_LIMITS: Record<UsageCategory, { limit: number; unit: UsageUnit }> = {
+const GUEST_USAGE_LIMITS: Record<
+  UsageCategory,
+  { limit: number; unit: UsageUnit }
+> = {
   basic: { limit: 20, unit: "requests" },
   premium: { limit: 0, unit: "requests" },
 };
@@ -105,12 +113,17 @@ async function getTierInfo(userId: string, now: Date): Promise<TierInfo> {
     const teamPlanId = teamRecord.planId;
     const teamStatus = teamRecord.status;
     const teamHasActive =
-      Boolean(teamPlanId) && Boolean(teamStatus) && ACTIVE_BILLING_STATUSES.has(teamStatus ?? "");
+      Boolean(teamPlanId) &&
+      Boolean(teamStatus) &&
+      ACTIVE_BILLING_STATUSES.has(teamStatus ?? "");
     const teamGracePeriod =
-      teamStatus === "canceled" && teamRecord.currentPeriodEnd && teamRecord.currentPeriodEnd > now;
+      teamStatus === "canceled" &&
+      teamRecord.currentPeriodEnd &&
+      teamRecord.currentPeriodEnd > now;
 
     if (teamHasActive || teamGracePeriod) {
-      const maxModeEligible = isMaxModeEligible(teamPlanId) && teamStatus === "active";
+      const maxModeEligible =
+        isMaxModeEligible(teamPlanId) && teamStatus === "active";
       return {
         tier: "pro",
         planId: teamPlanId,
@@ -137,9 +150,13 @@ async function getTierInfo(userId: string, now: Date): Promise<TierInfo> {
   const planId = record.planId;
   const status = record.status;
   const hasActiveStatus =
-    Boolean(planId) && Boolean(status) && ACTIVE_BILLING_STATUSES.has(status ?? "");
+    Boolean(planId) &&
+    Boolean(status) &&
+    ACTIVE_BILLING_STATUSES.has(status ?? "");
   const inGracePeriod =
-    status === "canceled" && record.currentPeriodEnd && record.currentPeriodEnd > now;
+    status === "canceled" &&
+    record.currentPeriodEnd &&
+    record.currentPeriodEnd > now;
 
   if (!hasActiveStatus && !inGracePeriod) {
     return {
@@ -196,7 +213,9 @@ async function calculateUsageState({
   isAnonymous?: boolean;
 }) {
   const tierInfo = await getTierInfo(userId, now);
-  const config = isAnonymous ? GUEST_USAGE_LIMITS[category] : USAGE_LIMITS[category][tierInfo.tier];
+  const config = isAnonymous
+    ? GUEST_USAGE_LIMITS[category]
+    : USAGE_LIMITS[category][tierInfo.tier];
   const { limit, unit } = config;
 
   const current =
@@ -204,7 +223,9 @@ async function calculateUsageState({
     (await db
       .select()
       .from(usageQuota)
-      .where(and(eq(usageQuota.userId, userId), eq(usageQuota.category, category)))
+      .where(
+        and(eq(usageQuota.userId, userId), eq(usageQuota.category, category)),
+      )
       .limit(1)
       .then((rows) => rows[0]));
 
@@ -220,7 +241,12 @@ async function calculateUsageState({
         ? false
         : !current.periodEnd || current.periodEnd <= now;
 
-  const used = limit === null ? (current?.used ?? 0) : shouldReset ? 0 : (current?.used ?? 0);
+  const used =
+    limit === null
+      ? (current?.used ?? 0)
+      : shouldReset
+        ? 0
+        : (current?.used ?? 0);
   const periodStart = shouldReset ? now : (current?.periodStart ?? now);
 
   return {
@@ -419,7 +445,10 @@ export async function consumeUsage({
       });
 
       if (!saved) {
-        throw new UsageLimitError("Usage limit reached for your plan.", tierInfo.maxModeEligible);
+        throw new UsageLimitError(
+          "Usage limit reached for your plan.",
+          tierInfo.maxModeEligible,
+        );
       }
 
       return {
@@ -432,7 +461,10 @@ export async function consumeUsage({
     }
 
     // If Max Mode is eligible but not enabled, throw error with flag
-    throw new UsageLimitError("Usage limit reached for your plan.", tierInfo.maxModeEligible);
+    throw new UsageLimitError(
+      "Usage limit reached for your plan.",
+      tierInfo.maxModeEligible,
+    );
   }
 
   const saved = await upsertUsageRecord({
@@ -449,7 +481,10 @@ export async function consumeUsage({
   });
 
   if (!saved) {
-    throw new UsageLimitError("Usage limit reached for your plan.", tierInfo.maxModeEligible);
+    throw new UsageLimitError(
+      "Usage limit reached for your plan.",
+      tierInfo.maxModeEligible,
+    );
   }
 
   return {
@@ -480,7 +515,9 @@ export async function refundUsage({
       used: sql`GREATEST(${usageQuota.used} - ${amount}, 0)`,
       updatedAt: new Date(),
     })
-    .where(and(eq(usageQuota.userId, userId), eq(usageQuota.category, category)))
+    .where(
+      and(eq(usageQuota.userId, userId), eq(usageQuota.category, category)),
+    )
     .returning({ used: usageQuota.used });
 
   return saved ?? null;
@@ -518,7 +555,10 @@ export async function getUsageSummary({
   const nowDate = now;
   const tierInfo = await getTierInfo(userId, nowDate);
 
-  const records = await db.select().from(usageQuota).where(eq(usageQuota.userId, userId));
+  const records = await db
+    .select()
+    .from(usageQuota)
+    .where(eq(usageQuota.userId, userId));
 
   const usage = await Promise.all(
     USAGE_CATEGORIES.map(async (category) => {

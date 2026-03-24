@@ -6,7 +6,7 @@ import type { FileUIPart, UIMessage } from "ai";
 import { DefaultChatTransport } from "ai";
 import { FolderKanban } from "lucide-react";
 import { useExtracted } from "next-intl";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   Attachment,
   AttachmentInfo,
@@ -19,16 +19,32 @@ import {
   ConversationScrollButton,
 } from "@/components/ai-elements/conversation";
 import { Loader } from "@/components/ai-elements/loader";
-import { Message, MessageContent, MessageResponse } from "@/components/ai-elements/message";
+import {
+  Message,
+  MessageBranch,
+  MessageBranchContent,
+  MessageBranchNext,
+  MessageBranchPage,
+  MessageBranchPrevious,
+  MessageBranchSelector,
+  MessageContent,
+  MessageResponse,
+} from "@/components/ai-elements/message";
 import { AdSenseSlot } from "@/components/adsense-slot";
 import { AssistantMessage } from "@/components/chat/assistant-message";
+import { ArtifactPreviewPanel } from "@/components/chat/artifact-preview-panel";
+import { ArtifactPreviewProvider } from "@/components/chat/artifact-preview-context";
 import { ChatComposer, type ComposerMessage } from "@/components/chat/chat-composer";
+import { ChatExportMenu } from "@/components/chat/chat-export-menu";
 import { UsageAlerts } from "@/components/chat/usage-alerts";
 import { env } from "@/env";
 import { useAvailableModels } from "@/hooks/use-available-models";
 import { useInitialMessage } from "@/hooks/use-initial-message";
+import { useKeyboardShortcuts } from "@/hooks/use-keyboard-shortcuts";
+import { useChatBranches } from "@/hooks/use-chat-branches";
 import { useUsageStatus } from "@/hooks/use-usage-status";
 import { authClient } from "@/lib/auth-client";
+import { useRouter } from "next/navigation";
 import { isBillingDisabled } from "@/lib/billing-config";
 import { GA_ID, getPreferredReasoningEffort, models, type ReasoningEffort } from "@/lib/constants";
 import { trpc } from "@/lib/trpc/react";
@@ -140,6 +156,7 @@ export function ChatInterface({
   initialProjectName = null,
 }: ChatInterfaceProps) {
   const t = useExtracted();
+  const router = useRouter();
   const session = authClient.useSession();
   const isAnonymous = Boolean(session.data?.user?.isAnonymous);
   const billingDisabled = isBillingDisabled;
@@ -199,6 +216,8 @@ export function ChatInterface({
     messages: initialMessages,
     transport,
   });
+
+  const { handleRegenerate, groupedMessages } = useChatBranches({ messages, setMessages, regenerate });
   const previousStatusRef = useRef(status);
   const showMessageActions = status !== "streaming" && status !== "submitted";
   const lastMessage = messages.at(-1);
@@ -333,66 +352,138 @@ export function ChatInterface({
 
   const messageRenderKeys = useMemo(() => getMessageRenderKeys(messages), [messages]);
 
+  const createChatMutation = trpc.chat.createChat.useMutation({
+    onSuccess: (chatId) => {
+      if (chatId) router.push(`/chat/${chatId}`);
+    },
+  });
+
+  const handleFocusComposer = useCallback(() => {
+    window.dispatchEvent(new CustomEvent("deni:focus-composer"));
+  }, []);
+
+  const handleNewChat = useCallback(() => {
+    createChatMutation.mutate(undefined);
+  }, [createChatMutation]);
+
+  useKeyboardShortcuts({
+    onFocusComposer: handleFocusComposer,
+    onNewChat: handleNewChat,
+  });
+
+  const chatTitleQuery = trpc.chat.getChat.useQuery(
+    { id },
+    { staleTime: Number.POSITIVE_INFINITY, refetchOnMount: false, refetchOnWindowFocus: false },
+  );
+  const chatTitle = chatTitleQuery.data?.[0]?.title ?? null;
+
   return (
+    <ArtifactPreviewProvider>
+    <ArtifactPreviewPanel />
     <div className="flex h-full flex-1 min-h-0 flex-col w-full max-w-3xl mx-auto p-4 overflow-hidden">
-      {initialProjectId && initialProjectName ? (
-        <div className="mb-3 flex items-center gap-2">
+      <div className="mb-3 flex items-center gap-2 min-h-7">
+        {initialProjectId && initialProjectName ? (
           <Badge variant="outline" className="gap-1.5 rounded-full px-2.5 py-1 text-xs">
             <FolderKanban className="size-3.5" />
             <span className="text-muted-foreground">{t("Projects")}</span>
             <span className="text-foreground">{initialProjectName}</span>
           </Badge>
-        </div>
-      ) : null}
+        ) : null}
+        {messages.length > 0 ? (
+          <div className="ml-auto">
+            <ChatExportMenu messages={messages} chatTitle={chatTitle ?? null} />
+          </div>
+        ) : null}
+      </div>
       <Conversation className="flex-1 min-h-0 h-full">
         <ConversationContent>
-          {messages.map((message, index) => (
-            <div key={messageRenderKeys[index]}>
-              {message.role === "user" && (
-                <Message from="user">
-                  <MessageContent>
-                    {message.parts.filter(isFilePart).length > 0 ? (
-                      <Attachments variant="list" className="w-full">
-                        {message.parts.filter(isFilePart).map((part, partIndex) => (
-                          <Attachment
-                            data={{ ...part, id: `${message.id}-file-${partIndex}` }}
-                            key={`${message.id}-file-${partIndex}`}
-                            className="w-full bg-background/50"
+          {groupedMessages.map((group, groupIndex) => {
+            if (group.type === "single") {
+              const message = group.message;
+              const msgIndex = messages.indexOf(message);
+              const renderKey = messageRenderKeys[msgIndex] ?? `group-${groupIndex}`;
+              return (
+                <div key={renderKey}>
+                  {message.role === "user" && (
+                    <Message from="user">
+                      <MessageContent>
+                        {message.parts.filter(isFilePart).length > 0 ? (
+                          <Attachments variant="list" className="w-full">
+                            {message.parts.filter(isFilePart).map((part, partIndex) => (
+                              <Attachment
+                                data={{ ...part, id: `${message.id}-file-${partIndex}` }}
+                                key={`${message.id}-file-${partIndex}`}
+                                className="w-full bg-background/50"
+                              >
+                                <AttachmentPreview />
+                                <AttachmentInfo showMediaType />
+                              </Attachment>
+                            ))}
+                          </Attachments>
+                        ) : null}
+                        {message.parts.filter(isTextPart).map((part, partIndex) => (
+                          <MessageResponse
+                            key={`${message.id}-text-${partIndex}`}
+                            shikiTheme={["github-light", "github-dark"]}
                           >
-                            <AttachmentPreview />
-                            <AttachmentInfo showMediaType />
-                          </Attachment>
+                            {part.text}
+                          </MessageResponse>
                         ))}
-                      </Attachments>
-                    ) : null}
-                    {message.parts.filter(isTextPart).map((part, partIndex) => (
-                      <MessageResponse
-                        key={`${message.id}-text-${partIndex}`}
-                        shikiTheme={["github-light", "github-dark"]}
-                      >
-                        {part.text}
-                      </MessageResponse>
-                    ))}
-                  </MessageContent>
-                </Message>
-              )}
-              {message.role === "assistant" && (
-                <AssistantMessage
-                  message={message}
-                  isLastMessage={index === messages.length - 1}
-                  isStreaming={status === "streaming"}
-                  showActions={showMessageActions}
-                  isSubmitBlocked={isSubmitBlocked}
-                  projectId={initialProjectId}
-                  requestBody={requestBody}
-                  onRegenerate={regenerate}
-                  availableModels={availableModels}
-                  onModelChange={setModel}
-                  onWebSearchChange={setWebSearch}
-                />
-              )}
-            </div>
-          ))}
+                      </MessageContent>
+                    </Message>
+                  )}
+                  {message.role === "assistant" && (
+                    <AssistantMessage
+                      message={message}
+                      isLastMessage={msgIndex === messages.length - 1}
+                      isStreaming={status === "streaming"}
+                      showActions={showMessageActions}
+                      isSubmitBlocked={isSubmitBlocked}
+                      projectId={initialProjectId}
+                      requestBody={requestBody}
+                      onRegenerate={handleRegenerate}
+                      availableModels={availableModels}
+                      onModelChange={setModel}
+                      onWebSearchChange={setWebSearch}
+                    />
+                  )}
+                </div>
+              );
+            }
+
+            // Branch group: multiple assistant messages with navigation
+            const lastBranchIndex = messages.indexOf(group.messages[group.messages.length - 1]);
+            return (
+              <MessageBranch key={`branch-${group.groupId}`} defaultBranch={group.messages.length - 1}>
+                <MessageBranchSelector>
+                  <MessageBranchPrevious />
+                  <MessageBranchPage />
+                  <MessageBranchNext />
+                </MessageBranchSelector>
+                <MessageBranchContent>
+                  {group.messages.map((message, branchIdx) => (
+                    <AssistantMessage
+                      key={message.id}
+                      message={message}
+                      isLastMessage={
+                        branchIdx === group.messages.length - 1 &&
+                        lastBranchIndex === messages.length - 1
+                      }
+                      isStreaming={status === "streaming"}
+                      showActions={showMessageActions}
+                      isSubmitBlocked={isSubmitBlocked}
+                      projectId={initialProjectId}
+                      requestBody={requestBody}
+                      onRegenerate={handleRegenerate}
+                      availableModels={availableModels}
+                      onModelChange={setModel}
+                      onWebSearchChange={setWebSearch}
+                    />
+                  ))}
+                </MessageBranchContent>
+              </MessageBranch>
+            );
+          })}
           {status === "submitted" && (
             <div className="min-h-6">
               <Loader />
@@ -486,5 +577,6 @@ export function ChatInterface({
         className="mx-auto mt-3 w-full max-w-xl border-border/40 bg-background/40 px-2 py-2 shadow-none"
       />
     </div>
+    </ArtifactPreviewProvider>
   );
 }
