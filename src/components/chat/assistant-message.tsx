@@ -3,7 +3,6 @@
 import type { ToolUIPart, UIDataTypes, UIMessage, UIMessagePart, UITools } from "ai";
 import {
   ArrowUpIcon,
-  BookmarkPlusIcon,
   BrainIcon,
   CheckIcon,
   CopyIcon,
@@ -131,34 +130,12 @@ export function AssistantMessage({
   const isStreamingThis = isStreaming && isLastMessage;
   const [retryMenuOpen, setRetryMenuOpen] = useState(false);
   const [additionalInstruction, setAdditionalInstruction] = useState("");
-  const saveArtifact = trpc.projects.createArtifactFromText.useMutation({
-    onSuccess: () => {
-      toast.success(t("Saved as artifact"));
-    },
-    onError: (error) => {
-      toast.error(error.message || t("Failed to save artifact"));
-    },
-  });
-
   const textContent =
     message.parts
       ?.filter(isTextMessagePart)
       .map((part) => part.text.trim())
       .filter(Boolean)
       .join("\n\n") ?? "";
-
-  const handleSaveAsArtifact = () => {
-    if (!projectId || !textContent.trim()) {
-      return;
-    }
-
-    saveArtifact.mutate({
-      projectId,
-      text: textContent,
-      positionX: 120 + (Date.now() % 160),
-      positionY: 120 + (Date.now() % 120),
-    });
-  };
 
   const regenerateMessage = (overrides?: Partial<RequestBody>) => {
     onRegenerate({
@@ -451,16 +428,6 @@ export function AssistantMessage({
                 >
                   <CopyIcon className="size-3.5" />
                 </MessageAction>
-                {projectId ? (
-                  <MessageAction
-                    onClick={handleSaveAsArtifact}
-                    disabled={saveArtifact.isPending || !textContent.trim()}
-                    label={t("Save as Artifact")}
-                    tooltip={t("Save as Artifact")}
-                  >
-                    <BookmarkPlusIcon className="size-3.5" />
-                  </MessageAction>
-                ) : null}
               </MessageActions>
             )}
           </Message>

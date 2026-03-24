@@ -1,11 +1,7 @@
-import type { GatewayLanguageModelOptions } from "@ai-sdk/gateway";
-import { createGateway, generateObject } from "ai";
-import { nanoid } from "nanoid";
-import { and, asc, eq } from "drizzle-orm";
+import { and, asc, desc, eq } from "drizzle-orm";
 import { z } from "zod";
-import { projectArtifacts, projects, projectSources } from "@/db/schema";
-import { env } from "@/env";
-import { protectedProcedure, router, type ProtectedContext } from "../trpc";
+import { chats, projectFiles, projects } from "@/db/schema";
+import { protectedProcedure, router } from "../trpc";
 
 const projectInputSchema = z.object({
   name: z.string().trim().min(1).max(80),
@@ -13,74 +9,6 @@ const projectInputSchema = z.object({
   instructions: z.string().trim().max(4000),
   color: z.string().trim().min(1).max(32),
 });
-
-const sourceInputSchema = z.object({
-  projectId: z.string().min(1),
-  label: z.string().trim().min(1).max(80),
-  url: z.url(),
-  kind: z.enum(["website", "docs", "repo"]),
-});
-
-const artifactInputSchema = z.object({
-  projectId: z.string().min(1),
-  title: z.string().trim().min(1).max(120),
-  summary: z.string().trim().max(240).nullable(),
-  kind: z.enum(["note", "brief", "checklist", "reference"]),
-  content: z.object({
-    body: z.string().trim().max(12000).default(""),
-  }),
-  positionX: z.number().int(),
-  positionY: z.number().int(),
-});
-
-const artifactSummarySchema = z.object({
-  title: z.string().trim().min(1).max(120),
-  summary: z.string().trim().min(1).max(240),
-  body: z.string().trim().min(1).max(12000),
-  kind: z.enum(["note", "brief", "checklist", "reference"]),
-});
-
-const createArtifactFromTextSchema = z.object({
-  projectId: z.string().min(1),
-  text: z.string().trim().min(1).max(40000),
-  positionX: z.number().int().optional(),
-  positionY: z.number().int().optional(),
-});
-
-const gateway = createGateway({
-  apiKey: env.AI_GATEWAY_API_KEY,
-});
-
-async function ensureProjectOwnership(ctx: ProtectedContext, projectId: string) {
-  const [project] = await ctx.db
-    .select({ id: projects.id })
-    .from(projects)
-    .where(and(eq(projects.id, projectId), eq(projects.userId, ctx.userId)))
-    .limit(1);
-
-  if (!project) {
-    throw new Error("Project not found");
-  }
-}
-
-async function insertArtifact(ctx: ProtectedContext, input: z.infer<typeof artifactInputSchema>) {
-  const [artifact] = await ctx.db
-    .insert(projectArtifacts)
-    .values({
-      id: nanoid(),
-      projectId: input.projectId,
-      userId: ctx.userId,
-      title: input.title,
-      summary: input.summary ?? null,
-      kind: input.kind,
-      content: input.content,
-      positionX: input.positionX,
-      positionY: input.positionY,
-    })
-    .returning();
-
-  return artifact;
-}
 
 export const projectsRouter = router({
   list: protectedProcedure.query(async ({ ctx }) => {
@@ -104,22 +32,13 @@ export const projectsRouter = router({
         return null;
       }
 
-      const [sources, artifacts] = await Promise.all([
-        ctx.db
-          .select()
-          .from(projectSources)
-          .where(and(eq(projectSources.projectId, input.id), eq(projectSources.userId, ctx.userId)))
-          .orderBy(asc(projectSources.createdAt)),
-        ctx.db
-          .select()
-          .from(projectArtifacts)
-          .where(
-            and(eq(projectArtifacts.projectId, input.id), eq(projectArtifacts.userId, ctx.userId)),
-          )
-          .orderBy(asc(projectArtifacts.createdAt)),
-      ]);
+      const files = await ctx.db
+        .select()
+        .from(projectFiles)
+        .where(and(eq(projectFiles.projectId, input.id), eq(projectFiles.userId, ctx.userId)))
+        .orderBy(asc(projectFiles.createdAt));
 
-      return { project, sources, artifacts };
+      return { project, files };
     }),
 
   create: protectedProcedure.input(projectInputSchema).mutation(async ({ ctx, input }) => {
@@ -165,104 +84,78 @@ export const projectsRouter = router({
       return deleted ?? null;
     }),
 
-  createSource: protectedProcedure.input(sourceInputSchema).mutation(async ({ ctx, input }) => {
-    await ensureProjectOwnership(ctx, input.projectId);
-
-    const [source] = await ctx.db
-      .insert(projectSources)
-      .values({
-        projectId: input.projectId,
-        userId: ctx.userId,
-        label: input.label,
-        url: input.url,
-        kind: input.kind,
-      })
-      .returning();
-
-    return source;
-  }),
-
-  deleteSource: protectedProcedure
-    .input(z.object({ id: z.string().min(1) }))
-    .mutation(async ({ ctx, input }) => {
-      const [deleted] = await ctx.db
-        .delete(projectSources)
-        .where(and(eq(projectSources.id, input.id), eq(projectSources.userId, ctx.userId)))
-        .returning();
-
-      return deleted ?? null;
+  listFiles: protectedProcedure
+    .input(z.object({ projectId: z.string().min(1) }))
+    .query(async ({ ctx, input }) => {
+      return ctx.db
+        .select()
+        .from(projectFiles)
+        .where(and(eq(projectFiles.projectId, input.projectId), eq(projectFiles.userId, ctx.userId)))
+        .orderBy(asc(projectFiles.createdAt));
     }),
 
-  createArtifact: protectedProcedure.input(artifactInputSchema).mutation(async ({ ctx, input }) => {
-    await ensureProjectOwnership(ctx, input.projectId);
-    return insertArtifact(ctx, input);
-  }),
-
-  createArtifactFromText: protectedProcedure
-    .input(createArtifactFromTextSchema)
+  recordFile: protectedProcedure
+    .input(
+      z.object({
+        projectId: z.string().min(1),
+        filename: z.string().trim().min(1).max(255),
+        url: z.string().url(),
+        size: z.number().int().nonnegative(),
+        mimeType: z.string().trim().min(1).max(128),
+      }),
+    )
     .mutation(async ({ ctx, input }) => {
-      await ensureProjectOwnership(ctx, input.projectId);
+      // Verify project ownership
+      const [project] = await ctx.db
+        .select({ id: projects.id })
+        .from(projects)
+        .where(and(eq(projects.id, input.projectId), eq(projects.userId, ctx.userId)))
+        .limit(1);
 
-      const { object } = await generateObject({
-        model: gateway("google/gemini-3.1-flash-lite-preview"),
-        schema: artifactSummarySchema,
-        providerOptions: {
-          gateway: {
-            only: ["google"],
-            tags: ["project-artifact"],
-            user: ctx.userId,
-          } satisfies GatewayLanguageModelOptions,
-        },
-        system: [
-          "You convert an AI assistant response into a concise reusable project artifact.",
-          "Return a short title, a one-sentence summary, and a cleaned-up body.",
-          "The body must be a compact summary, not the full original response.",
-          "Preserve important implementation details, caveats, and concrete next steps.",
-          "Use plain markdown when useful.",
-          "Choose the most suitable kind. Prefer `brief` unless another kind is clearly better.",
-        ].join(" "),
-        prompt: input.text,
-      });
+      if (!project) {
+        throw new Error("Project not found");
+      }
 
-      return insertArtifact(ctx, {
-        projectId: input.projectId,
-        title: object.title,
-        summary: object.summary,
-        kind: object.kind,
-        content: {
-          body: object.body,
-        },
-        positionX: input.positionX ?? 120 + (Date.now() % 160),
-        positionY: input.positionY ?? 120 + (Date.now() % 120),
-      });
-    }),
-
-  updateArtifact: protectedProcedure
-    .input(artifactInputSchema.extend({ id: z.string().min(1) }))
-    .mutation(async ({ ctx, input }) => {
-      const { id, ...fields } = input;
-      const [artifact] = await ctx.db
-        .update(projectArtifacts)
-        .set({
-          ...fields,
-          summary: fields.summary ?? null,
-          updatedAt: new Date(),
+      const [file] = await ctx.db
+        .insert(projectFiles)
+        .values({
+          projectId: input.projectId,
+          userId: ctx.userId,
+          filename: input.filename,
+          url: input.url,
+          size: input.size,
+          mimeType: input.mimeType,
         })
-        .where(and(eq(projectArtifacts.id, id), eq(projectArtifacts.userId, ctx.userId)))
         .returning();
 
-      return artifact ?? null;
+      return file;
     }),
 
-  deleteArtifact: protectedProcedure
+  deleteFile: protectedProcedure
     .input(z.object({ id: z.string().min(1) }))
     .mutation(async ({ ctx, input }) => {
       const [deleted] = await ctx.db
-        .delete(projectArtifacts)
-        .where(and(eq(projectArtifacts.id, input.id), eq(projectArtifacts.userId, ctx.userId)))
+        .delete(projectFiles)
+        .where(and(eq(projectFiles.id, input.id), eq(projectFiles.userId, ctx.userId)))
         .returning();
 
       return deleted ?? null;
+    }),
+
+  getProjectChats: protectedProcedure
+    .input(z.object({ projectId: z.string().min(1) }))
+    .query(async ({ ctx, input }) => {
+      return ctx.db
+        .select({
+          id: chats.id,
+          title: chats.title,
+          created_at: chats.created_at,
+          updated_at: chats.updated_at,
+        })
+        .from(chats)
+        .where(and(eq(chats.projectId, input.projectId), eq(chats.uid, ctx.userId)))
+        .orderBy(desc(chats.updated_at))
+        .limit(100);
     }),
 });
 

@@ -933,13 +933,25 @@ export function AppSidebar({
               </SidebarMenuItem>
               <SidebarMenuItem>
                 <Button
-                  className="h-9 w-full justify-start gap-2 rounded-t-none font-medium"
+                  className="h-9 w-full justify-start gap-2 rounded-none font-medium"
                   asChild
                   variant="outline"
                 >
                   <Link href="/palette">
                     <ImageIcon className="size-4" />
                     <span>{t("Palette")}</span>
+                  </Link>
+                </Button>
+              </SidebarMenuItem>
+              <SidebarMenuItem>
+                <Button
+                  className="h-9 w-full justify-start gap-2 rounded-t-none font-medium"
+                  asChild
+                  variant="outline"
+                >
+                  <Link href="/settings/projects">
+                    <FolderClosed className="size-4" />
+                    <span>{t("Projects")}</span>
                   </Link>
                 </Button>
               </SidebarMenuItem>

@@ -23,7 +23,7 @@ import {
   XIcon,
 } from "lucide-react";
 import { useExtracted } from "next-intl";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   PromptInputSelect,
   PromptInputSelectContent,
@@ -464,6 +464,19 @@ export function ChatComposer({
   const activeModels = currentProviderModels.filter((entry) => entry.default !== false);
   const legacyModels = currentProviderModels.filter((entry) => entry.default === false);
 
+  const composerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleFocusComposer = () => {
+      const textarea = composerRef.current?.querySelector<HTMLTextAreaElement>(
+        'textarea[name="message"]',
+      );
+      textarea?.focus();
+    };
+    window.addEventListener("deni:focus-composer", handleFocusComposer);
+    return () => window.removeEventListener("deni:focus-composer", handleFocusComposer);
+  }, []);
+
   useEffect(() => {
     if (availableProviders.length === 0) {
       return;
@@ -583,6 +596,7 @@ export function ChatComposer({
         : undefined);
 
   return (
+    <div ref={composerRef}>
     <Composer
       onSubmit={handleSubmit}
       onStop={onStop}
@@ -824,5 +838,6 @@ export function ChatComposer({
         </>
       }
     />
+    </div>
   );
 }
