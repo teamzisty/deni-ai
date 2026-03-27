@@ -1,6 +1,6 @@
 import { spawnSync } from "node:child_process";
-import type { GatewayLanguageModelOptions } from "@ai-sdk/gateway";
-import { createGateway, generateObject } from "ai";
+import { createOpenRouter } from "@openrouter/ai-sdk-provider";
+import { generateObject } from "ai";
 import { z } from "zod";
 
 const DEFAULT_MODEL = "openai/gpt-5.4";
@@ -290,18 +290,13 @@ async function generateCommit(input: {
   prompt: string;
   includeDescription: boolean;
 }) {
-  const gateway = createGateway({
+  const openrouter = createOpenRouter({
     apiKey: input.apiKey,
   });
 
   const { object } = await generateObject({
-    model: gateway(input.model),
+    model: openrouter(input.model),
     schema: createCommitSchema(input.includeDescription),
-    providerOptions: {
-      gateway: {
-        tags: ["tools", "commit"],
-      } satisfies GatewayLanguageModelOptions,
-    },
     system: `You write concise conventional commit messages. Return JSON with a "subject" field${input.includeDescription ? ' and an optional "body" field' : ""}. The subject must be under 72 characters, use imperative mood, and use a suitable type like feat, fix, refactor, chore, docs, test, perf, build, ci, or style. ${input.includeDescription ? "If body is requested, keep it brief, plain text, and at most 3 short lines." : "Do not include a body unless it is requested."}`,
     prompt: input.prompt,
   });
