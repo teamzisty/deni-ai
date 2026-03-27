@@ -314,10 +314,10 @@ async function generateCommit(input: {
 
 async function main() {
   const options = parseArgs(process.argv.slice(2));
-  const apiKey = process.env.AI_GATEWAY_API_KEY;
+  const apiKey = process.env.OPENROUTER_API_KEY;
 
   if (!apiKey) {
-    throw new Error("AI_GATEWAY_API_KEY is not set");
+    throw new Error("OPENROUTER_API_KEY is not set");
   }
 
   const repoRoot = runGit(options.repoPath, ["rev-parse", "--show-toplevel"]);

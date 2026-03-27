@@ -1,4 +1,9 @@
-export type Author = "openai" | "anthropic" | "google" | "xai" | "openai_compatible";
+export type Author =
+  | "openai"
+  | "anthropic"
+  | "google"
+  | "xai"
+  | "openai_compatible";
 
 export const reasoningEffortValues = [
   "none",
@@ -16,7 +21,9 @@ export function isReasoningEffort(value: string): value is ReasoningEffort {
   return (reasoningEffortValues as readonly string[]).includes(value);
 }
 
-export function getPreferredReasoningEffort(efforts: ModelEfforts): ReasoningEffort {
+export function getPreferredReasoningEffort(
+  efforts: ModelEfforts,
+): ReasoningEffort {
   if (efforts === false) {
     return "high";
   }
@@ -48,7 +55,11 @@ export function resolveReasoningEffort(
     return undefined;
   }
 
-  if (requestedEffort && isReasoningEffort(requestedEffort) && efforts.includes(requestedEffort)) {
+  if (
+    requestedEffort &&
+    isReasoningEffort(requestedEffort) &&
+    efforts.includes(requestedEffort)
+  ) {
     return requestedEffort;
   }
 
@@ -154,7 +165,8 @@ export const models: readonly ModelDefinition[] = [
     name: "GPT-5",
     value: "gpt-5",
     author: "openai",
-    description: "Flagship model for coding, reasoning, and agentic tasks across domains.",
+    description:
+      "Flagship model for coding, reasoning, and agentic tasks across domains.",
     features: ["smart", "reasoning", "fast"],
     default: false,
     efforts: ["minimal", "low", "medium", "high"],
@@ -249,7 +261,7 @@ export const models: readonly ModelDefinition[] = [
   },
   {
     name: "Gemini 3 Flash",
-    value: "gemini-3-flash",
+    value: "gemini-3-flash-preview",
     author: "google",
     description: "Best for everyday tasks",
     featured: true,
@@ -309,7 +321,8 @@ export const models: readonly ModelDefinition[] = [
     name: "Claude Haiku 4.5",
     value: "claude-haiku-4.5",
     author: "anthropic",
-    description: "Fast, lightweight Claude model for everyday chat and quick reasoning.",
+    description:
+      "Fast, lightweight Claude model for everyday chat and quick reasoning.",
     featured: true,
     features: ["reasoning", "smart", "fast"],
     efforts: false,
@@ -358,7 +371,8 @@ export const models: readonly ModelDefinition[] = [
     name: "Grok 4.20 Multi-Agent Beta",
     value: "grok-4.20-multi-agent-beta",
     author: "xai",
-    description: "Beta Grok model for deep research with coordinated multi-agent tool use.",
+    description:
+      "Beta Grok model for deep research with coordinated multi-agent tool use.",
     features: ["reasoning", "fast"],
     efforts: false,
   },
@@ -366,7 +380,8 @@ export const models: readonly ModelDefinition[] = [
     name: "Grok 4.20 Reasoning Beta",
     value: "grok-4.20-reasoning-beta",
     author: "xai",
-    description: "Reasoning-enabled Grok 4.20 variant for agentic tool calling and harder tasks.",
+    description:
+      "Reasoning-enabled Grok 4.20 variant for agentic tool calling and harder tasks.",
     featured: true,
     features: ["reasoning", "fast"],
     efforts: ["low", "high"],
@@ -375,7 +390,8 @@ export const models: readonly ModelDefinition[] = [
     name: "Grok 4.20 Non-Reasoning Beta",
     value: "grok-4.20-non-reasoning-beta",
     author: "xai",
-    description: "Non-reasoning Grok 4.20 variant tuned for fast responses and tool use.",
+    description:
+      "Non-reasoning Grok 4.20 variant tuned for fast responses and tool use.",
     features: ["fast"],
     efforts: false,
   },
@@ -403,7 +419,8 @@ export const models: readonly ModelDefinition[] = [
     name: "Grok 4",
     value: "grok-4",
     author: "xai",
-    description: "Flagship Grok reasoning model with native tool use and real-time search.",
+    description:
+      "Flagship Grok reasoning model with native tool use and real-time search.",
     default: false,
     features: ["reasoning"],
     efforts: false,
@@ -433,7 +450,11 @@ const escapeHtml = (unsafe: string) =>
     .replace(/'/g, "&#39;");
 
 const sanitizeEmailSubjectValue = (value: string, fallback: string) => {
-  const sanitized = value.replaceAll(/\r|\n/g, " ").replaceAll(/\s+/g, " ").trim().slice(0, 200);
+  const sanitized = value
+    .replaceAll(/\r|\n/g, " ")
+    .replaceAll(/\s+/g, " ")
+    .trim()
+    .slice(0, 200);
   return sanitized || fallback;
 };
 
@@ -481,13 +502,18 @@ export const emailTemplates = {
     })(),
   }),
   orgInvitation: (orgName: string, inviterName: string | null, url: string) => {
-    const sanitizedOrgName = sanitizeEmailSubjectValue(orgName, "your organization");
+    const sanitizedOrgName = sanitizeEmailSubjectValue(
+      orgName,
+      "your organization",
+    );
 
     return {
       subject: `You're invited to join ${sanitizedOrgName} on Deni AI`,
       html: (() => {
         const escapedOrg = escapeHtml(sanitizedOrgName);
-        const escapedInviter = inviterName ? escapeHtml(inviterName) : "Someone";
+        const escapedInviter = inviterName
+          ? escapeHtml(inviterName)
+          : "Someone";
         const escapedUrl = escapeHtml(url);
 
         return `

@@ -20,7 +20,6 @@
   },
   "dependencies": {
     "@ai-sdk/anthropic": "^3.0.64",
-    "@ai-sdk/gateway": "^3.0.79",
     "@ai-sdk/google": "^3.0.53",
     "@ai-sdk/groq": "^3.0.31",
     "@ai-sdk/openai": "^3.0.48",
@@ -37,6 +36,7 @@
     "@icons-pack/react-simple-icons": "13.13.0",
     "@neondatabase/serverless": "^1.0.2",
     "@next/third-parties": "^16.2.1",
+    "@openrouter/ai-sdk-provider": "^2.3.3",
     "@radix-ui/react-tooltip": "^1.2.8",
     "@radix-ui/react-use-controllable-state": "^1.2.2",
     "@react-email/components": "^1.0.10",
