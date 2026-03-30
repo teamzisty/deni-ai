@@ -2,7 +2,7 @@
 
 import {
   BillingAddressElement,
-  CheckoutProvider,
+  CheckoutElementsProvider,
   CurrencySelectorElement,
   PaymentElement,
   useCheckout,
@@ -658,7 +658,7 @@ function CheckoutForm({
                   type: "tabs",
                   defaultCollapsed: false,
                   paymentMethodLogoPosition: "end",
-                  radios: false,
+                  radios: "never",
                   spacedAccordionItems: false,
                 },
               }}
@@ -988,7 +988,7 @@ export function StripeCheckoutPage(props: StripeCheckoutPageProps) {
           </CardContent>
         </Card>
       ) : session?.clientSecret ? (
-        <CheckoutProvider
+        <CheckoutElementsProvider
           key={session.sessionId}
           stripe={stripeInstance}
           options={{
@@ -1009,7 +1009,7 @@ export function StripeCheckoutPage(props: StripeCheckoutPageProps) {
             plan={selectedPlan}
             monthlyPlan={monthlyPlan}
           />
-        </CheckoutProvider>
+        </CheckoutElementsProvider>
       ) : (
         <Card className="border-destructive/40">
           <CardHeader>

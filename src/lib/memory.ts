@@ -42,11 +42,7 @@ export async function getUserMemoryState(userId: string) {
       .where(eq(userMemory.userId, userId))
       .limit(1)
       .then((rows) => rows[0] ?? null),
-    db
-      .select()
-      .from(memoryItem)
-      .where(eq(memoryItem.userId, userId))
-      .orderBy(memoryItem.updatedAt),
+    db.select().from(memoryItem).where(eq(memoryItem.userId, userId)).orderBy(memoryItem.updatedAt),
   ]);
 
   const profile: PersonalizationProfile = profileRow
@@ -73,9 +69,7 @@ function normalizeTone(value: string): PersonalizationProfile["tone"] {
   return "balanced";
 }
 
-function normalizeFriendliness(
-  value: string,
-): PersonalizationProfile["friendliness"] {
+function normalizeFriendliness(value: string): PersonalizationProfile["friendliness"] {
   if (value === "neutral" || value === "very-friendly") {
     return value;
   }
@@ -89,9 +83,7 @@ function normalizeWarmth(value: string): PersonalizationProfile["warmth"] {
   return "warm";
 }
 
-function normalizeEmojiStyle(
-  value: string,
-): PersonalizationProfile["emojiStyle"] {
+function normalizeEmojiStyle(value: string): PersonalizationProfile["emojiStyle"] {
   if (value === "none" || value === "expressive") {
     return value;
   }
@@ -104,9 +96,7 @@ function describeProfile(profile: PersonalizationProfile) {
     `Friendliness: ${profile.friendliness}.`,
     `Warmth: ${profile.warmth}.`,
     `Emoji style: ${profile.emojiStyle}.`,
-    profile.instructions
-      ? `Custom instructions: ${profile.instructions}`
-      : null,
+    profile.instructions ? `Custom instructions: ${profile.instructions}` : null,
   ]
     .filter(Boolean)
     .join(" ");
@@ -138,9 +128,7 @@ function getLatestUserText(messages: UIMessage[]) {
     .filter((message) => message.role === "user")
     .slice(-6)
     .flatMap((message) => message.parts)
-    .filter(
-      (part): part is { type: "text"; text: string } => part.type === "text",
-    )
+    .filter((part): part is { type: "text"; text: string } => part.type === "text")
     .map((part) => part.text.trim())
     .filter(Boolean)
     .join("\n");
@@ -184,11 +172,7 @@ function isNearDuplicateMemory(candidate: string, existing: string) {
   const candidateSignature = getLabeledMemorySignature(candidate);
   const existingSignature = getLabeledMemorySignature(existing);
 
-  if (
-    candidateSignature &&
-    existingSignature &&
-    candidateSignature === existingSignature
-  ) {
+  if (candidateSignature && existingSignature && candidateSignature === existingSignature) {
     return true;
   }
 
@@ -207,10 +191,7 @@ function isNearDuplicateMemory(candidate: string, existing: string) {
     candidateNormalized.includes(existingNormalized) ||
     existingNormalized.includes(candidateNormalized)
   ) {
-    const shorterLength = Math.min(
-      candidateNormalized.length,
-      existingNormalized.length,
-    );
+    const shorterLength = Math.min(candidateNormalized.length, existingNormalized.length);
     if (shorterLength >= 4) {
       return true;
     }
@@ -219,17 +200,11 @@ function isNearDuplicateMemory(candidate: string, existing: string) {
   const candidateTokens = tokenizeMemory(candidate);
   const existingTokens = tokenizeMemory(existing);
 
-  if (
-    candidateTokens.length === 1 &&
-    existingTokens.includes(candidateTokens[0])
-  ) {
+  if (candidateTokens.length === 1 && existingTokens.includes(candidateTokens[0])) {
     return true;
   }
 
-  if (
-    existingTokens.length === 1 &&
-    candidateTokens.includes(existingTokens[0])
-  ) {
+  if (existingTokens.length === 1 && candidateTokens.includes(existingTokens[0])) {
     return true;
   }
 
@@ -238,9 +213,7 @@ function isNearDuplicateMemory(candidate: string, existing: string) {
 
 function dedupeMemories(memories: string[]) {
   return memories.filter((memory, index) => {
-    return !memories
-      .slice(0, index)
-      .some((existing) => isNearDuplicateMemory(memory, existing));
+    return !memories.slice(0, index).some((existing) => isNearDuplicateMemory(memory, existing));
   });
 }
 
@@ -262,13 +235,8 @@ export async function maybeAutoSaveMemories({
     return;
   }
 
-  const existingItems = await db
-    .select()
-    .from(memoryItem)
-    .where(eq(memoryItem.userId, userId));
-  const existingMemories = existingItems
-    .map((item) => item.content.trim())
-    .filter(Boolean);
+  const existingItems = await db.select().from(memoryItem).where(eq(memoryItem.userId, userId));
+  const existingMemories = existingItems.map((item) => item.content.trim()).filter(Boolean);
 
   const { object } = await generateObject({
     model: openrouter.chat("google/gemini-3-flash-preview"),
@@ -283,10 +251,7 @@ export async function maybeAutoSaveMemories({
       .map((memory) => memory.trim())
       .filter(Boolean)
       .filter(
-        (memory) =>
-          !existingMemories.some((existing) =>
-            isNearDuplicateMemory(memory, existing),
-          ),
+        (memory) => !existingMemories.some((existing) => isNearDuplicateMemory(memory, existing)),
       ),
   );
 

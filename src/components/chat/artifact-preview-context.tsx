@@ -37,9 +37,7 @@ export function ArtifactPreviewProvider({ children }: { children: React.ReactNod
   );
 
   return (
-    <ArtifactPreviewContext.Provider value={value}>
-      {children}
-    </ArtifactPreviewContext.Provider>
+    <ArtifactPreviewContext.Provider value={value}>{children}</ArtifactPreviewContext.Provider>
   );
 }
 

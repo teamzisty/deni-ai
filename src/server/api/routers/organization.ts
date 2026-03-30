@@ -261,7 +261,7 @@ async function reuseOpenTeamCheckoutSession({
 
     if (
       session.status !== "open" ||
-      session.ui_mode !== "custom" ||
+      session.ui_mode !== "elements" ||
       session.client_reference_id !== userId ||
       session.metadata?.planId !== planId ||
       session.metadata?.organizationId !== organizationId ||
@@ -416,7 +416,7 @@ export const organizationRouter = router({
       const session = await stripe.checkout.sessions.create(
         {
           mode: "subscription",
-          ui_mode: "custom",
+          ui_mode: "elements",
           customer: billingRecord.stripeCustomerId,
           client_reference_id: ctx.userId,
           adaptive_pricing: {
