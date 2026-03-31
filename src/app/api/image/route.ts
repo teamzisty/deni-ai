@@ -94,7 +94,6 @@ export async function POST(req: Request) {
       resolution: data.resolution,
       numberOfImages: requestedCount,
       signal: req.signal,
-      userId,
     });
 
     if (images.length === 0) {

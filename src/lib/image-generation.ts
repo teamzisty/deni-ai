@@ -48,7 +48,6 @@ export async function generateImages({
   aspectRatio,
   resolution,
   numberOfImages = 1,
-  userId,
   signal,
 }: {
   prompt: string;
@@ -56,7 +55,6 @@ export async function generateImages({
   aspectRatio?: ImageAspectRatio;
   resolution?: ImageResolution;
   numberOfImages?: number;
-  userId?: string;
   signal?: AbortSignal;
 }): Promise<GeneratedImage[]> {
   if (isImagenImageModel(model)) {

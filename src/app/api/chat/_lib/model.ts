@@ -333,7 +333,7 @@ export async function resolveChatModelContext({
       break;
   }
 
-  const providerOptions = {
+  const directProviderOptions = {
     ...(openaiReasoningEffort
       ? {
           openai: {
@@ -364,7 +364,15 @@ export async function resolveChatModelContext({
           } satisfies XaiProviderOptions,
         }
       : {}),
-  } satisfies ChatProviderOptions;
+  };
+
+  // When routing through OpenRouter (non-BYOK), wrap provider-specific options
+  // under the openrouter key so they are forwarded in OpenRouter-compatible format.
+  const providerOptions: ChatProviderOptions = useByok
+    ? directProviderOptions
+    : Object.keys(directProviderOptions).length > 0
+      ? { openrouter: { providerOptions: directProviderOptions } }
+      : {};
 
   return {
     model,

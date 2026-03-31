@@ -31,7 +31,7 @@ function createCommitSchema(includeDescription: boolean) {
 }
 
 function printHelp() {
-  console.log(`AI Gateway commit tool
+  console.log(`OpenRouter commit tool
 
 Usage:
   bun ./tools/gateway-commit.ts [options]
@@ -42,13 +42,13 @@ Options:
   --commit             Create the git commit after generating the message
   --all                Stage all changes before generating the message
   --no-verify          Pass --no-verify to git commit
-  --model <id>         AI Gateway model to use (default: ${DEFAULT_MODEL})
+  --model <id>         OpenRouter model to use (default: ${DEFAULT_MODEL})
   --prompt <text>      Extra context for the generated commit message
   --description <text> Use this commit body instead of generating one
   --generate-description
                        Generate a short commit body in addition to the subject
   --repo <path>        Repository path (default: current working directory)
-  --max-diff-chars <n> Truncate the staged diff sent to AI Gateway
+  --max-diff-chars <n> Truncate the staged diff sent to OpenRouter
   --help               Show this help
 
 Examples:
@@ -242,7 +242,7 @@ function sanitizeCommitMessage(raw: string) {
     .replace(/^["'`]+|["'`]+$/gu, "");
 
   if (!firstLine) {
-    throw new Error("AI Gateway returned an empty commit message");
+    throw new Error("OpenRouter returned an empty commit message");
   }
 
   return firstLine.slice(0, 72);
@@ -365,7 +365,7 @@ async function main() {
     });
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
-    console.error(`AI Gateway generation failed, using fallback. ${message}`);
+    console.error(`OpenRouter generation failed, using fallback. ${message}`);
     generatedCommit = fallbackCommit({
       stagedFiles,
       includeDescription: options.generateDescription || Boolean(options.description),
