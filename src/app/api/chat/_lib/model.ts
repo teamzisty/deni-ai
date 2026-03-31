@@ -1,11 +1,11 @@
 import { type AnthropicProviderOptions, createAnthropic } from "@ai-sdk/anthropic";
 import { createGoogleGenerativeAI, type GoogleGenerativeAIProviderOptions } from "@ai-sdk/google";
-import type { GatewayLanguageModelOptions } from "@ai-sdk/gateway";
 import { createGroq } from "@ai-sdk/groq";
 import { createXai, type XaiProviderOptions } from "@ai-sdk/xai";
 import { createOpenAI, type OpenAIResponsesProviderOptions } from "@ai-sdk/openai";
+import { createOpenRouter } from "@openrouter/ai-sdk-provider";
 import type { LanguageModel } from "ai";
-import { createGateway, streamText } from "ai";
+import { streamText } from "ai";
 import { and, eq } from "drizzle-orm";
 import { db } from "@/db/drizzle";
 import { customModel, providerKey, providerSetting } from "@/db/schema";
@@ -223,30 +223,21 @@ export async function resolveChatModelContext({
       ? resolvedReasoningEffort
       : undefined;
 
-  const gateway = createGateway({
-    apiKey: env.AI_GATEWAY_API_KEY,
+  const openrouter = createOpenRouter({
+    apiKey: env.OPENROUTER_API_KEY,
   });
-  const selectedGatewayModelId = selectedModel
+  const selectedOpenRouterModelId = selectedModel
     ? selectedModel.value.includes("/")
       ? selectedModel.value
       : `${selectedModel.author}/${selectedModel.value}`
     : null;
-  const getGatewayModel = () => {
-    if (!selectedGatewayModelId) {
-      throw new Error("Gateway model is not available for the selected model.");
+  const getOpenRouterModel = () => {
+    if (!selectedOpenRouterModelId) {
+      throw new Error("OpenRouter model is not available for the selected model.");
     }
 
-    return gateway(selectedGatewayModelId);
+    return openrouter.chat(selectedOpenRouterModelId);
   };
-  const gatewayOptions = {
-    tags: ["chat"],
-    user: userId,
-    ...(selectedModel?.provider
-      ? { only: [selectedModel.provider] }
-      : selectedModel
-        ? { only: [selectedModel.author] }
-        : {}),
-  } satisfies GatewayLanguageModelOptions;
 
   const anthropicOptions: AnthropicProviderOptions = {};
   if (anthropicReasoningEffort) {
@@ -272,7 +263,7 @@ export async function resolveChatModelContext({
             ? provider.chat(resolvedModelId)
             : provider.responses(resolvedModelId);
       } else {
-        model = getGatewayModel();
+        model = getOpenRouterModel();
       }
       break;
     }
@@ -284,7 +275,7 @@ export async function resolveChatModelContext({
         });
         model = provider(resolvedModelId.replace(".", "-"));
       } else {
-        model = getGatewayModel();
+        model = getOpenRouterModel();
       }
       break;
     }
@@ -296,7 +287,7 @@ export async function resolveChatModelContext({
         });
         model = provider(resolvedModelId);
       } else {
-        model = getGatewayModel();
+        model = getOpenRouterModel();
       }
       break;
     }
@@ -308,7 +299,7 @@ export async function resolveChatModelContext({
         });
         model = provider.chat(resolvedModelId.replace("xai.", ""));
       } else {
-        model = getGatewayModel();
+        model = getOpenRouterModel();
       }
       break;
     }
@@ -342,7 +333,7 @@ export async function resolveChatModelContext({
       break;
   }
 
-  const providerOptions = {
+  const directProviderOptions = {
     ...(openaiReasoningEffort
       ? {
           openai: {
@@ -373,8 +364,15 @@ export async function resolveChatModelContext({
           } satisfies XaiProviderOptions,
         }
       : {}),
-    gateway: gatewayOptions,
-  } satisfies ChatProviderOptions;
+  };
+
+  // When routing through OpenRouter (non-BYOK), wrap provider-specific options
+  // under the openrouter key so they are forwarded in OpenRouter-compatible format.
+  const providerOptions: ChatProviderOptions = useByok
+    ? directProviderOptions
+    : Object.keys(directProviderOptions).length > 0
+      ? { openrouter: { providerOptions: directProviderOptions } }
+      : {};
 
   return {
     model,

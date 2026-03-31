@@ -1,6 +1,6 @@
 import { spawnSync } from "node:child_process";
-import type { GatewayLanguageModelOptions } from "@ai-sdk/gateway";
-import { createGateway, generateObject } from "ai";
+import { createOpenRouter } from "@openrouter/ai-sdk-provider";
+import { generateObject } from "ai";
 import { z } from "zod";
 
 const DEFAULT_MODEL = "openai/gpt-5.4";
@@ -31,7 +31,7 @@ function createCommitSchema(includeDescription: boolean) {
 }
 
 function printHelp() {
-  console.log(`AI Gateway commit tool
+  console.log(`OpenRouter commit tool
 
 Usage:
   bun ./tools/gateway-commit.ts [options]
@@ -42,13 +42,13 @@ Options:
   --commit             Create the git commit after generating the message
   --all                Stage all changes before generating the message
   --no-verify          Pass --no-verify to git commit
-  --model <id>         AI Gateway model to use (default: ${DEFAULT_MODEL})
+  --model <id>         OpenRouter model to use (default: ${DEFAULT_MODEL})
   --prompt <text>      Extra context for the generated commit message
   --description <text> Use this commit body instead of generating one
   --generate-description
                        Generate a short commit body in addition to the subject
   --repo <path>        Repository path (default: current working directory)
-  --max-diff-chars <n> Truncate the staged diff sent to AI Gateway
+  --max-diff-chars <n> Truncate the staged diff sent to OpenRouter
   --help               Show this help
 
 Examples:
@@ -242,7 +242,7 @@ function sanitizeCommitMessage(raw: string) {
     .replace(/^["'`]+|["'`]+$/gu, "");
 
   if (!firstLine) {
-    throw new Error("AI Gateway returned an empty commit message");
+    throw new Error("OpenRouter returned an empty commit message");
   }
 
   return firstLine.slice(0, 72);
@@ -290,18 +290,13 @@ async function generateCommit(input: {
   prompt: string;
   includeDescription: boolean;
 }) {
-  const gateway = createGateway({
+  const openrouter = createOpenRouter({
     apiKey: input.apiKey,
   });
 
   const { object } = await generateObject({
-    model: gateway(input.model),
+    model: openrouter(input.model),
     schema: createCommitSchema(input.includeDescription),
-    providerOptions: {
-      gateway: {
-        tags: ["tools", "commit"],
-      } satisfies GatewayLanguageModelOptions,
-    },
     system: `You write concise conventional commit messages. Return JSON with a "subject" field${input.includeDescription ? ' and an optional "body" field' : ""}. The subject must be under 72 characters, use imperative mood, and use a suitable type like feat, fix, refactor, chore, docs, test, perf, build, ci, or style. ${input.includeDescription ? "If body is requested, keep it brief, plain text, and at most 3 short lines." : "Do not include a body unless it is requested."}`,
     prompt: input.prompt,
   });
@@ -314,10 +309,10 @@ async function generateCommit(input: {
 
 async function main() {
   const options = parseArgs(process.argv.slice(2));
-  const apiKey = process.env.AI_GATEWAY_API_KEY;
+  const apiKey = process.env.OPENROUTER_API_KEY;
 
   if (!apiKey) {
-    throw new Error("AI_GATEWAY_API_KEY is not set");
+    throw new Error("OPENROUTER_API_KEY is not set");
   }
 
   const repoRoot = runGit(options.repoPath, ["rev-parse", "--show-toplevel"]);
@@ -370,7 +365,7 @@ async function main() {
     });
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
-    console.error(`AI Gateway generation failed, using fallback. ${message}`);
+    console.error(`OpenRouter generation failed, using fallback. ${message}`);
     generatedCommit = fallbackCommit({
       stagedFiles,
       includeDescription: options.generateDescription || Boolean(options.description),

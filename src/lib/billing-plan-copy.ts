@@ -12,12 +12,8 @@ export type BillingPlanCopy = {
 
 export function useBillingPlanCopy(planId: BillingPlanId): BillingPlanCopy;
 export function useBillingPlanCopy(planId: null): null;
-export function useBillingPlanCopy(
-  planId: BillingPlanId | null,
-): BillingPlanCopy | null;
-export function useBillingPlanCopy(
-  planId: BillingPlanId | null,
-): BillingPlanCopy | null {
+export function useBillingPlanCopy(planId: BillingPlanId | null): BillingPlanCopy | null;
+export function useBillingPlanCopy(planId: BillingPlanId | null): BillingPlanCopy | null {
   const t = useExtracted();
 
   if (!planId) {
@@ -106,9 +102,7 @@ export function useBillingPlanCopy(
       };
     case "pro_team_monthly":
       return {
-        tagline: t(
-          "Give your whole team Pro-tier access with per-seat pricing.",
-        ),
+        tagline: t("Give your whole team Pro-tier access with per-seat pricing."),
         highlights: [
           t("Pro benefits for every team member"),
           t("Get 250m token usage for basic models"),
@@ -120,9 +114,7 @@ export function useBillingPlanCopy(
       };
     case "pro_team_yearly":
       return {
-        tagline: t(
-          "Give your whole team Pro-tier access with per-seat pricing.",
-        ),
+        tagline: t("Give your whole team Pro-tier access with per-seat pricing."),
         badge: t("Most cost-effective"),
         highlights: [
           t("Pro benefits for every team member"),

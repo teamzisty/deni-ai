@@ -1,7 +1,7 @@
 import "server-only";
 
 import { createGoogleGenerativeAI } from "@ai-sdk/google";
-import { createGateway, generateImage } from "ai";
+import { generateImage } from "ai";
 import { env } from "@/env";
 import {
   type ImageModel,
@@ -15,12 +15,6 @@ export type GeneratedImage = {
   imageBytes: string;
   mimeType: string;
 };
-
-const gateway = env.AI_GATEWAY_API_KEY
-  ? createGateway({
-      apiKey: env.AI_GATEWAY_API_KEY,
-    })
-  : null;
 
 const google = createGoogleGenerativeAI({
   apiKey: env.GOOGLE_GENERATIVE_AI_API_KEY,
@@ -37,7 +31,6 @@ function buildGeminiProviderOptions(
   model: ImageModel,
   aspectRatio?: ImageAspectRatio,
   resolution?: ImageResolution,
-  userId?: string,
 ) {
   const imageConfig = {
     ...(aspectRatio ? { aspectRatio } : {}),
@@ -45,15 +38,6 @@ function buildGeminiProviderOptions(
   };
 
   return {
-    ...(gateway
-      ? {
-          gateway: {
-            only: ["google"],
-            tags: ["image"],
-            ...(userId ? { user: userId } : {}),
-          },
-        }
-      : {}),
     google: Object.keys(imageConfig).length > 0 ? { imageConfig } : {},
   };
 }
@@ -64,7 +48,6 @@ export async function generateImages({
   aspectRatio,
   resolution,
   numberOfImages = 1,
-  userId,
   signal,
 }: {
   prompt: string;
@@ -72,7 +55,6 @@ export async function generateImages({
   aspectRatio?: ImageAspectRatio;
   resolution?: ImageResolution;
   numberOfImages?: number;
-  userId?: string;
   signal?: AbortSignal;
 }): Promise<GeneratedImage[]> {
   if (isImagenImageModel(model)) {
@@ -87,8 +69,8 @@ export async function generateImages({
     return toGeneratedImages(result.images);
   }
 
-  const providerOptions = buildGeminiProviderOptions(model, aspectRatio, resolution, userId);
-  const geminiModel = gateway ? gateway.image(`google/${model}`) : google.image(model);
+  const providerOptions = buildGeminiProviderOptions(model, aspectRatio, resolution);
+  const geminiModel = google.image(model);
   const images: GeneratedImage[] = [];
 
   for (let index = 0; index < numberOfImages; index += 1) {

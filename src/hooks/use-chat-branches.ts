@@ -52,7 +52,11 @@ export function groupMessages(messages: UIMessage[]): GroupedMessage[] {
       // Collect all consecutive assistant messages with the same groupId
       const branchMsgs: UIMessage[] = [msg];
       let j = i + 1;
-      while (j < messages.length && messages[j].role === "assistant" && getBranchGroupId(messages[j]) === groupId) {
+      while (
+        j < messages.length &&
+        messages[j].role === "assistant" &&
+        getBranchGroupId(messages[j]) === groupId
+      ) {
         branchMsgs.push(messages[j]);
         j++;
       }

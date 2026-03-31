@@ -319,7 +319,7 @@ async function reuseOpenCheckoutSession({
 
     if (
       session.status !== "open" ||
-      session.ui_mode !== "custom" ||
+      session.ui_mode !== "elements" ||
       session.client_reference_id !== userId ||
       session.metadata?.planId !== planId ||
       !session.client_secret
@@ -537,7 +537,7 @@ export const billingRouter = router({
       const session = await stripe.checkout.sessions.create(
         {
           mode: mode === "payment" ? "payment" : "subscription",
-          ui_mode: "custom",
+          ui_mode: "elements",
           customer: billingRecord.stripeCustomerId,
           client_reference_id: ctx.userId,
           adaptive_pricing: {

@@ -3,12 +3,7 @@
 import { CopyIcon, ExternalLinkIcon, XIcon } from "lucide-react";
 import { useCallback, useState } from "react";
 import { Button } from "@/components/ui/button";
-import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-} from "@/components/ui/sheet";
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { useArtifactPreview } from "@/components/chat/artifact-preview-context";
 
 const PREVIEWABLE_LANGUAGES = new Set(["html", "htm"]);
@@ -35,7 +30,12 @@ export function ArtifactPreviewPanel() {
   }, [code]);
 
   return (
-    <Sheet open={isOpen} onOpenChange={(open) => { if (!open) close(); }}>
+    <Sheet
+      open={isOpen}
+      onOpenChange={(open) => {
+        if (!open) close();
+      }}
+    >
       <SheetContent
         side="right"
         className="flex w-[50vw] max-w-3xl min-w-80 flex-col gap-0 p-0 sm:max-w-3xl"
@@ -50,7 +50,13 @@ export function ArtifactPreviewPanel() {
             ) : null}
           </SheetTitle>
           <div className="flex items-center gap-1">
-            <Button variant="ghost" size="icon" className="size-7" onClick={handleCopy} title="Copy code">
+            <Button
+              variant="ghost"
+              size="icon"
+              className="size-7"
+              onClick={handleCopy}
+              title="Copy code"
+            >
               <CopyIcon className="size-3.5" />
               <span className="sr-only">{copied ? "Copied" : "Copy"}</span>
             </Button>

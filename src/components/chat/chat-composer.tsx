@@ -597,247 +597,258 @@ export function ChatComposer({
 
   return (
     <div ref={composerRef}>
-    <Composer
-      onSubmit={handleSubmit}
-      onStop={onStop}
-      className={className}
-      globalDrop
-      multiple
-      placeholder={resolvedPlaceholder}
-      headerClassName="py-0.5!"
-      value={value}
-      onValueChange={onValueChange}
-      status={status}
-      isSubmitDisabled={isSubmitDisabled}
-      actionMenuItems={
-        <>
-          <DropdownMenuSeparator />
-          <DropdownMenuCheckboxItem
-            checked={videoMode}
-            onCheckedChange={(checked) => handleVideoToggle(Boolean(checked))}
-          >
-            <Film className="size-4" aria-hidden="true" />
-            {t("Video")}
-          </DropdownMenuCheckboxItem>
-          <DropdownMenuCheckboxItem
-            checked={imageMode}
-            onCheckedChange={(checked) => handleImageToggle(Boolean(checked))}
-          >
-            <ImageIcon className="size-4" aria-hidden="true" />
-            {t("Image")}
-          </DropdownMenuCheckboxItem>
-          <DropdownMenuCheckboxItem
-            checked={webSearch}
-            onCheckedChange={(checked) => handleSearchToggle(Boolean(checked))}
-          >
-            <Globe className="size-4" aria-hidden="true" />
-            {t("Search")}
-          </DropdownMenuCheckboxItem>
-          <DropdownMenuCheckboxItem
-            checked={deepResearch}
-            onCheckedChange={(checked) => handleResearchToggle(Boolean(checked))}
-          >
-            <Sparkle className="size-4" aria-hidden="true" />
-            {t("Deep Research")}
-          </DropdownMenuCheckboxItem>
-          <div className="px-2 py-1.5 md:hidden">
-            {renderReasoningEffortSelector("w-full justify-between")}
-          </div>
-        </>
-      }
-      tools={
-        <>
-          {videoMode && (
-            <ToolChip icon={Film} label={t("Video")} onRemove={() => handleVideoToggle(false)} />
-          )}
-          {imageMode && (
-            <ToolChip
-              icon={ImageIcon}
-              label={t("Image")}
-              onRemove={() => handleImageToggle(false)}
-            />
-          )}
-          {webSearch && (
-            <ToolChip icon={Globe} label={t("Search")} onRemove={() => handleSearchToggle(false)} />
-          )}
-          {deepResearch && (
-            <ToolChip
-              icon={Sparkle}
-              label={t("Deep Research")}
-              onRemove={() => handleResearchToggle(false)}
-            />
-          )}
-          <SpeechInput
-            size="icon-sm"
-            variant="ghost"
-            className="size-8 bg-transparent text-muted-foreground hover:bg-accent hover:text-foreground"
-            aria-label={t("Voice input")}
-            title={t("Voice input")}
-            onTranscriptionChange={(transcript) => {
-              const nextValue = value.trim() ? `${value.trim()} ${transcript}` : transcript;
-              onValueChange(nextValue.trim());
-            }}
-          >
-            <Mic className="size-4" />
-          </SpeechInput>
+      <Composer
+        onSubmit={handleSubmit}
+        onStop={onStop}
+        className={className}
+        globalDrop
+        multiple
+        placeholder={resolvedPlaceholder}
+        headerClassName="py-0.5!"
+        value={value}
+        onValueChange={onValueChange}
+        status={status}
+        isSubmitDisabled={isSubmitDisabled}
+        actionMenuItems={
+          <>
+            <DropdownMenuSeparator />
+            <DropdownMenuCheckboxItem
+              checked={videoMode}
+              onCheckedChange={(checked) => handleVideoToggle(Boolean(checked))}
+            >
+              <Film className="size-4" aria-hidden="true" />
+              {t("Video")}
+            </DropdownMenuCheckboxItem>
+            <DropdownMenuCheckboxItem
+              checked={imageMode}
+              onCheckedChange={(checked) => handleImageToggle(Boolean(checked))}
+            >
+              <ImageIcon className="size-4" aria-hidden="true" />
+              {t("Image")}
+            </DropdownMenuCheckboxItem>
+            <DropdownMenuCheckboxItem
+              checked={webSearch}
+              onCheckedChange={(checked) => handleSearchToggle(Boolean(checked))}
+            >
+              <Globe className="size-4" aria-hidden="true" />
+              {t("Search")}
+            </DropdownMenuCheckboxItem>
+            <DropdownMenuCheckboxItem
+              checked={deepResearch}
+              onCheckedChange={(checked) => handleResearchToggle(Boolean(checked))}
+            >
+              <Sparkle className="size-4" aria-hidden="true" />
+              {t("Deep Research")}
+            </DropdownMenuCheckboxItem>
+            <div className="px-2 py-1.5 md:hidden">
+              {renderReasoningEffortSelector("w-full justify-between")}
+            </div>
+          </>
+        }
+        tools={
+          <>
+            {videoMode && (
+              <ToolChip icon={Film} label={t("Video")} onRemove={() => handleVideoToggle(false)} />
+            )}
+            {imageMode && (
+              <ToolChip
+                icon={ImageIcon}
+                label={t("Image")}
+                onRemove={() => handleImageToggle(false)}
+              />
+            )}
+            {webSearch && (
+              <ToolChip
+                icon={Globe}
+                label={t("Search")}
+                onRemove={() => handleSearchToggle(false)}
+              />
+            )}
+            {deepResearch && (
+              <ToolChip
+                icon={Sparkle}
+                label={t("Deep Research")}
+                onRemove={() => handleResearchToggle(false)}
+              />
+            )}
+            <SpeechInput
+              size="icon-sm"
+              variant="ghost"
+              className="size-8 bg-transparent text-muted-foreground hover:bg-accent hover:text-foreground"
+              aria-label={t("Voice input")}
+              title={t("Voice input")}
+              onTranscriptionChange={(transcript) => {
+                const nextValue = value.trim() ? `${value.trim()} ${transcript}` : transcript;
+                onValueChange(nextValue.trim());
+              }}
+            >
+              <Mic className="size-4" />
+            </SpeechInput>
 
-          {/* Two-panel model selector */}
-          <Popover open={modelPopoverOpen} onOpenChange={handleModelPopoverOpenChange}>
-            <PopoverTrigger asChild>
-              <Button
-                variant="ghost"
-                size="sm"
-                className={cn(
-                  "h-auto gap-1.5 border-none bg-transparent px-2 py-1.5 font-medium text-muted-foreground shadow-none transition-colors",
-                  "hover:bg-accent hover:text-foreground data-[state=open]:bg-accent data-[state=open]:text-foreground",
-                )}
+            {/* Two-panel model selector */}
+            <Popover open={modelPopoverOpen} onOpenChange={handleModelPopoverOpenChange}>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className={cn(
+                    "h-auto gap-1.5 border-none bg-transparent px-2 py-1.5 font-medium text-muted-foreground shadow-none transition-colors",
+                    "hover:bg-accent hover:text-foreground data-[state=open]:bg-accent data-[state=open]:text-foreground",
+                  )}
+                >
+                  <span className="flex items-center [&_svg]:size-3.5">
+                    <ModelIcon model={selectedModel ?? { author: "openai", premium: false }} />
+                  </span>
+                  <span className="max-w-30 truncate text-sm">
+                    {selectedModel?.name ?? t("Select model")}
+                  </span>
+                  {showByokBadge && (
+                    <Badge
+                      variant="secondary"
+                      className="bg-primary/10 text-[10px] leading-none px-1 py-0.5 h-auto"
+                    >
+                      {t("BYOK")}
+                    </Badge>
+                  )}
+                  <ChevronDownIcon className="size-3 opacity-50 shrink-0" aria-hidden="true" />
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent
+                className="w-125 p-0 shadow-lg"
+                side="top"
+                align="start"
+                sideOffset={8}
               >
-                <span className="flex items-center [&_svg]:size-3.5">
-                  <ModelIcon model={selectedModel ?? { author: "openai", premium: false }} />
-                </span>
-                <span className="max-w-30 truncate text-sm">
-                  {selectedModel?.name ?? t("Select model")}
-                </span>
-                {showByokBadge && (
-                  <Badge
-                    variant="secondary"
-                    className="bg-primary/10 text-[10px] leading-none px-1 py-0.5 h-auto"
-                  >
-                    {t("BYOK")}
-                  </Badge>
-                )}
-                <ChevronDownIcon className="size-3 opacity-50 shrink-0" aria-hidden="true" />
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent className="w-125 p-0 shadow-lg" side="top" align="start" sideOffset={8}>
-              <div className="flex flex-col rounded-[inherit]">
-                <div className="border-b">
-                  <div className="relative">
-                    <SearchIcon
-                      className="pointer-events-none absolute left-2.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground"
-                      aria-hidden="true"
-                    />
-                    <Input
-                      value={modelQuery}
-                      onChange={(event) => setModelQuery(event.target.value)}
-                      placeholder={t("Search")}
-                      aria-label={t("Search")}
-                      className="pl-8 rounded-b-none"
-                    />
+                <div className="flex flex-col rounded-[inherit]">
+                  <div className="border-b">
+                    <div className="relative">
+                      <SearchIcon
+                        className="pointer-events-none absolute left-2.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground"
+                        aria-hidden="true"
+                      />
+                      <Input
+                        value={modelQuery}
+                        onChange={(event) => setModelQuery(event.target.value)}
+                        placeholder={t("Search")}
+                        aria-label={t("Search")}
+                        className="pl-8 rounded-b-none"
+                      />
+                    </div>
                   </div>
-                </div>
-                <div className="flex h-95 overflow-hidden">
-                  {/* Left panel: Provider list */}
-                  <div className="w-40 shrink-0 border-r flex flex-col gap-0.5 p-1.5 overflow-y-auto bg-muted/30">
-                    {availableProviders.map((provider) => {
-                      const count = filteredProviderGroups[provider]?.length ?? 0;
-                      const isActive = selectedProvider === provider;
-                      return (
-                        <button
-                          key={provider}
-                          type="button"
-                          onClick={() => setSelectedProvider(provider)}
-                          className={cn(
-                            "flex w-full items-center gap-2 rounded-md px-2.5 py-2 text-sm transition-colors text-left outline-none focus-visible:ring-2 focus-visible:ring-ring",
-                            isActive
-                              ? "bg-background text-foreground font-medium shadow-sm"
-                              : "text-muted-foreground hover:bg-background/60 hover:text-foreground",
-                            provider === "featured" &&
-                              isActive &&
-                              "text-yellow-600 dark:text-yellow-400",
-                            provider === "featured" &&
-                              !isActive &&
-                              "hover:text-yellow-600 dark:hover:text-yellow-400",
+                  <div className="flex h-95 overflow-hidden">
+                    {/* Left panel: Provider list */}
+                    <div className="w-40 shrink-0 border-r flex flex-col gap-0.5 p-1.5 overflow-y-auto bg-muted/30">
+                      {availableProviders.map((provider) => {
+                        const count = filteredProviderGroups[provider]?.length ?? 0;
+                        const isActive = selectedProvider === provider;
+                        return (
+                          <button
+                            key={provider}
+                            type="button"
+                            onClick={() => setSelectedProvider(provider)}
+                            className={cn(
+                              "flex w-full items-center gap-2 rounded-md px-2.5 py-2 text-sm transition-colors text-left outline-none focus-visible:ring-2 focus-visible:ring-ring",
+                              isActive
+                                ? "bg-background text-foreground font-medium shadow-sm"
+                                : "text-muted-foreground hover:bg-background/60 hover:text-foreground",
+                              provider === "featured" &&
+                                isActive &&
+                                "text-yellow-600 dark:text-yellow-400",
+                              provider === "featured" &&
+                                !isActive &&
+                                "hover:text-yellow-600 dark:hover:text-yellow-400",
+                            )}
+                          >
+                            <span className="shrink-0 flex items-center [&_svg]:size-3.5">
+                              <ProviderIcon author={provider} />
+                            </span>
+                            <span className="flex-1 truncate leading-none">
+                              {getProviderLabel(provider, providerLabels)}
+                            </span>
+                            <span className="tabular-nums text-xs opacity-50 shrink-0">
+                              {count}
+                            </span>
+                          </button>
+                        );
+                      })}
+                    </div>
+
+                    {/* Right panel: Model list */}
+                    <div className="flex-1 overflow-y-auto p-1.5 flex flex-col gap-0.5">
+                      {currentProviderModels.length === 0 ? (
+                        <p className="text-sm text-muted-foreground text-center py-8">
+                          {t("No models available")}
+                        </p>
+                      ) : (
+                        <>
+                          {activeModels.map((m) => (
+                            <ModelPickerItem
+                              key={m.value}
+                              model={m}
+                              isSelected={m.value === model}
+                              featureLabels={featureLabels}
+                              modelDescriptionLabels={modelDescriptionLabels}
+                              onSelect={() => {
+                                onModelChange(m.value);
+                                setModelPopoverOpen(false);
+                              }}
+                            />
+                          ))}
+
+                          {legacyModels.length > 0 && (
+                            <Collapsible open={legacyModelsOpen} onOpenChange={setLegacyModelsOpen}>
+                              <CollapsibleTrigger asChild>
+                                <button
+                                  type="button"
+                                  className="flex w-full items-center gap-2 rounded-md px-2.5 py-2 text-left text-sm text-muted-foreground transition-colors hover:bg-accent/40 hover:text-foreground outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                                >
+                                  <ArchiveIcon className="size-4 shrink-0" aria-hidden="true" />
+                                  <span className="flex-1">
+                                    {t(
+                                      "{count, plural, one {# legacy model} other {# legacy models}}",
+                                      {
+                                        count: legacyModels.length,
+                                      },
+                                    )}
+                                  </span>
+                                  <ChevronDownIcon
+                                    className={cn(
+                                      "size-4 shrink-0 transition-transform",
+                                      legacyModelsOpen && "rotate-180",
+                                    )}
+                                    aria-hidden="true"
+                                  />
+                                </button>
+                              </CollapsibleTrigger>
+                              <CollapsibleContent className="mt-1 flex flex-col gap-0.5">
+                                {legacyModels.map((m) => (
+                                  <ModelPickerItem
+                                    key={m.value}
+                                    model={m}
+                                    isSelected={m.value === model}
+                                    featureLabels={featureLabels}
+                                    modelDescriptionLabels={modelDescriptionLabels}
+                                    onSelect={() => {
+                                      onModelChange(m.value);
+                                      setModelPopoverOpen(false);
+                                    }}
+                                  />
+                                ))}
+                              </CollapsibleContent>
+                            </Collapsible>
                           )}
-                        >
-                          <span className="shrink-0 flex items-center [&_svg]:size-3.5">
-                            <ProviderIcon author={provider} />
-                          </span>
-                          <span className="flex-1 truncate leading-none">
-                            {getProviderLabel(provider, providerLabels)}
-                          </span>
-                          <span className="tabular-nums text-xs opacity-50 shrink-0">{count}</span>
-                        </button>
-                      );
-                    })}
-                  </div>
-
-                  {/* Right panel: Model list */}
-                  <div className="flex-1 overflow-y-auto p-1.5 flex flex-col gap-0.5">
-                    {currentProviderModels.length === 0 ? (
-                      <p className="text-sm text-muted-foreground text-center py-8">
-                        {t("No models available")}
-                      </p>
-                    ) : (
-                      <>
-                        {activeModels.map((m) => (
-                          <ModelPickerItem
-                            key={m.value}
-                            model={m}
-                            isSelected={m.value === model}
-                            featureLabels={featureLabels}
-                            modelDescriptionLabels={modelDescriptionLabels}
-                            onSelect={() => {
-                              onModelChange(m.value);
-                              setModelPopoverOpen(false);
-                            }}
-                          />
-                        ))}
-
-                        {legacyModels.length > 0 && (
-                          <Collapsible open={legacyModelsOpen} onOpenChange={setLegacyModelsOpen}>
-                            <CollapsibleTrigger asChild>
-                              <button
-                                type="button"
-                                className="flex w-full items-center gap-2 rounded-md px-2.5 py-2 text-left text-sm text-muted-foreground transition-colors hover:bg-accent/40 hover:text-foreground outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                              >
-                                <ArchiveIcon className="size-4 shrink-0" aria-hidden="true" />
-                                <span className="flex-1">
-                                  {t(
-                                    "{count, plural, one {# legacy model} other {# legacy models}}",
-                                    {
-                                      count: legacyModels.length,
-                                    },
-                                  )}
-                                </span>
-                                <ChevronDownIcon
-                                  className={cn(
-                                    "size-4 shrink-0 transition-transform",
-                                    legacyModelsOpen && "rotate-180",
-                                  )}
-                                  aria-hidden="true"
-                                />
-                              </button>
-                            </CollapsibleTrigger>
-                            <CollapsibleContent className="mt-1 flex flex-col gap-0.5">
-                              {legacyModels.map((m) => (
-                                <ModelPickerItem
-                                  key={m.value}
-                                  model={m}
-                                  isSelected={m.value === model}
-                                  featureLabels={featureLabels}
-                                  modelDescriptionLabels={modelDescriptionLabels}
-                                  onSelect={() => {
-                                    onModelChange(m.value);
-                                    setModelPopoverOpen(false);
-                                  }}
-                                />
-                              ))}
-                            </CollapsibleContent>
-                          </Collapsible>
-                        )}
-                      </>
-                    )}
+                        </>
+                      )}
+                    </div>
                   </div>
                 </div>
-              </div>
-            </PopoverContent>
-          </Popover>
+              </PopoverContent>
+            </Popover>
 
-          <div className="hidden md:block">{renderReasoningEffortSelector()}</div>
-        </>
-      }
-    />
+            <div className="hidden md:block">{renderReasoningEffortSelector()}</div>
+          </>
+        }
+      />
     </div>
   );
 }

@@ -90,7 +90,9 @@ export const projectsRouter = router({
       return ctx.db
         .select()
         .from(projectFiles)
-        .where(and(eq(projectFiles.projectId, input.projectId), eq(projectFiles.userId, ctx.userId)))
+        .where(
+          and(eq(projectFiles.projectId, input.projectId), eq(projectFiles.userId, ctx.userId)),
+        )
         .orderBy(asc(projectFiles.createdAt));
     }),
 
