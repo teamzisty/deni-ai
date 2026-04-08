@@ -736,7 +736,7 @@ export function DesktopClient({ downloads }: { downloads: DesktopDownloads }) {
             ) : null}
             <div className="flex flex-wrap items-center justify-center gap-3 text-sm text-muted-foreground">
               <a
-                href={downloads.releaseUrl}
+                href={downloads.releasesUrl}
                 target="_blank"
                 rel="noreferrer"
                 className="inline-flex items-center gap-2 underline underline-offset-4 transition-opacity hover:opacity-80"
