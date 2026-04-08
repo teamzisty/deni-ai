@@ -178,21 +178,7 @@ export default function Header() {
     },
   ];
 
-  const mobileSections = [
-    ...productSections,
-    ...resourceSections,
-    {
-      title: t("Company"),
-      links: [
-        {
-          href: "/about",
-          icon: BookOpen,
-          title: t("About"),
-          description: t("Vision and background."),
-        },
-      ],
-    },
-  ];
+  const mobileSections = [...productSections, ...resourceSections];
 
   return (
     <header className="fixed left-0 top-0 z-50 w-full px-4 pt-4">

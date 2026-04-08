@@ -25,21 +25,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-
-type DesktopRelease = {
-  version: string | null;
-  releaseUrl: string;
-  assets: {
-    name: string;
-    browser_download_url: string;
-  }[];
-};
-
-type DesktopDownloads = {
-  latestRelease: DesktopRelease;
-  prerelease: DesktopRelease | null;
-  releasesUrl: string;
-};
+import type { DesktopDownloads, DesktopRelease } from "./types";
 
 type DownloadOption = {
   id: string;
@@ -279,14 +265,19 @@ function pickDefaultOption(
 
 export function DesktopClient({ downloads }: { downloads: DesktopDownloads }) {
   const t = useExtracted();
-  const hasPrerelease = Boolean(downloads.prerelease?.assets.length);
   const [includePrerelease, setIncludePrerelease] = React.useState(false);
-  const activeRelease =
-    includePrerelease && downloads.prerelease ? downloads.prerelease : downloads.latestRelease;
-  const options = React.useMemo(
-    () => parseDownloadOptions(activeRelease.assets),
-    [activeRelease.assets],
+  const latestOptions = React.useMemo(
+    () => parseDownloadOptions(downloads.latestRelease.assets),
+    [downloads.latestRelease.assets],
   );
+  const prereleaseOptions = React.useMemo(
+    () => parseDownloadOptions(downloads.prerelease?.assets ?? []),
+    [downloads.prerelease?.assets],
+  );
+  const hasPrerelease = prereleaseOptions.length > 0;
+  const shouldUsePrereleaseFallback = latestOptions.length === 0 && hasPrerelease;
+  const options =
+    includePrerelease || shouldUsePrereleaseFallback ? prereleaseOptions : latestOptions;
   const [selectedOs, setSelectedOs] = React.useState<DownloadOption["os"] | null>(null);
   const [selectedArch, setSelectedArch] = React.useState<DownloadOption["arch"] | null>(null);
   const [selectedFormat, setSelectedFormat] = React.useState<string | null>(null);
@@ -350,7 +341,8 @@ export function DesktopClient({ downloads }: { downloads: DesktopDownloads }) {
     availableFormats.find((option) => option.format === currentFormat) ??
     pickDefaultOption(options, detectPreferredPlatform()) ??
     null;
-  const activeChannelLabel = includePrerelease ? t("Pre-release") : t("Stable");
+  const activeChannelLabel =
+    includePrerelease || shouldUsePrereleaseFallback ? t("Pre-release") : t("Stable");
 
   return (
     <main className="relative min-h-screen overflow-hidden" id="main-content">
@@ -620,6 +612,20 @@ export function DesktopClient({ downloads }: { downloads: DesktopDownloads }) {
                 "Use Deni AI with desktop-native convenience and keep your assistant close without keeping a browser tab open.",
               )}
             </p>
+            {hasPrerelease ? (
+              <div className="mx-auto mb-6 flex w-full max-w-2xl items-center justify-center gap-3 rounded-2xl border border-border/70 bg-background/70 px-4 py-3 text-sm text-muted-foreground">
+                <label className="flex cursor-pointer items-center gap-2">
+                  <Checkbox
+                    checked={includePrerelease}
+                    onCheckedChange={(checked) => setIncludePrerelease(checked === true)}
+                  />
+                  <span>{t("Pre-release")}</span>
+                </label>
+                <span className="rounded-full border border-border bg-secondary/70 px-2.5 py-1 text-xs font-medium text-foreground">
+                  {activeChannelLabel}
+                </span>
+              </div>
+            ) : null}
             {options.length > 0 && selectedOption ? (
               <div className="mx-auto mb-4 flex w-full max-w-2xl flex-col items-stretch justify-center gap-3">
                 <div className="flex w-full flex-col items-stretch justify-center sm:flex-row">

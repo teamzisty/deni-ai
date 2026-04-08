@@ -1,14 +1,12 @@
 "use client";
 
 import type ts from "typescript";
-import type { ReactNode } from "react";
 import * as React from "react";
-import * as ReactDomClient from "react-dom/client";
-import * as ReactJsxDevRuntime from "react/jsx-dev-runtime";
-import * as ReactJsxRuntime from "react/jsx-runtime";
 import { AlertCircleIcon } from "lucide-react";
-import { Component, startTransition, useEffect, useMemo, useState } from "react";
+import { startTransition, useEffect, useRef, useState } from "react";
+import { useTranslations } from "next-intl";
 import { Spinner } from "@/components/ui/spinner";
+import { sha256Hex } from "@/lib/hash";
 import { cn } from "@/lib/utils";
 
 const DIRECT_JSX_REGEX = /^\s*(?:<>|<\w|<\s*[A-Z])/;
@@ -18,6 +16,7 @@ const REACT_IMPORT_SPECIFIERS = new Set([
   "react/jsx-dev-runtime",
   "react/jsx-runtime",
 ]);
+const PREVIEW_ERROR_MESSAGE_TYPE = "deni-ai:artifact-preview:error";
 
 const COMPONENT_NAME_PATTERNS = [
   /\bexport\s+function\s+([A-Z]\w*)\b/,
@@ -29,8 +28,10 @@ const COMPONENT_NAME_PATTERNS = [
 
 type PreviewState =
   | { status: "idle" | "loading" }
-  | { status: "ready"; element: React.ReactElement; resetKey: string }
+  | { status: "ready"; resetKey: string; srcDoc: string }
   | { status: "error"; error: Error };
+
+type PreviewTranslator = (key: string, values?: Record<string, string>) => string;
 
 const stripCodeFence = (code: string) =>
   code
@@ -43,20 +44,21 @@ const findUnsupportedImports = (source: string) =>
     .map((match) => match[1])
     .filter((specifier) => !REACT_IMPORT_SPECIFIERS.has(specifier));
 
-const resolvePreviewSource = (rawCode: string) => {
+const createUnsupportedImportsMessage = (t: PreviewTranslator, specifiers: string[]) =>
+  t("unsupportedImports", {
+    imports: specifiers.map((specifier) => `"${specifier}"`).join(", "),
+  });
+
+const resolvePreviewSource = (rawCode: string, t: PreviewTranslator) => {
   const source = stripCodeFence(rawCode);
 
   if (!source) {
-    throw new Error("Nothing to preview.");
+    throw new Error(t("nothingToPreview"));
   }
 
   const unsupportedImports = findUnsupportedImports(source);
   if (unsupportedImports.length > 0) {
-    throw new Error(
-      `Live preview does not support imports from ${unsupportedImports
-        .map((specifier) => `"${specifier}"`)
-        .join(", ")} yet.`,
-    );
+    throw new Error(createUnsupportedImportsMessage(t, unsupportedImports));
   }
 
   if (DIRECT_JSX_REGEX.test(source)) {
@@ -83,9 +85,199 @@ const formatDiagnostics = (typescript: typeof ts, diagnostics: readonly ts.Diagn
     .filter(Boolean)
     .join("\n");
 
-const evaluatePreview = async (rawCode: string) => {
+const createPreviewDocument = ({
+  previewId,
+  transpiledCode,
+  unsupportedImportsMessage,
+  exportComponentError,
+}: {
+  previewId: string;
+  transpiledCode: string;
+  unsupportedImportsMessage: string;
+  exportComponentError: string;
+}) => `<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <style>
+      :root {
+        color-scheme: light;
+      }
+
+      html,
+      body,
+      #root {
+        height: 100%;
+      }
+
+      body {
+        margin: 0;
+        background: transparent;
+        color: #111827;
+        font-family:
+          Inter,
+          ui-sans-serif,
+          system-ui,
+          -apple-system,
+          BlinkMacSystemFont,
+          "Segoe UI",
+          sans-serif;
+      }
+
+      #root {
+        box-sizing: border-box;
+        overflow: auto;
+        padding: 16px;
+      }
+
+      .artifact-preview-error {
+        white-space: pre-wrap;
+        word-break: break-word;
+        color: #b91c1c;
+        font-size: 14px;
+        line-height: 1.5;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module">
+      import React from "https://esm.sh/react@19";
+      import * as ReactDomClient from "https://esm.sh/react-dom@19/client";
+      import * as ReactJsxRuntime from "https://esm.sh/react@19/jsx-runtime";
+      import * as ReactJsxDevRuntime from "https://esm.sh/react@19/jsx-dev-runtime";
+
+      const previewId = ${JSON.stringify(previewId)};
+      const transpiledCode = ${JSON.stringify(transpiledCode)};
+      const unsupportedImportsMessage = ${JSON.stringify(unsupportedImportsMessage)};
+      const exportComponentError = ${JSON.stringify(exportComponentError)};
+
+      const rootElement = document.getElementById("root");
+
+      const escapeHtml = (value) =>
+        value
+          .replaceAll("&", "&amp;")
+          .replaceAll("<", "&lt;")
+          .replaceAll(">", "&gt;")
+          .replaceAll('"', "&quot;")
+          .replaceAll("'", "&#39;");
+
+      const sendError = (message) => {
+        window.parent.postMessage(
+          {
+            type: ${JSON.stringify(PREVIEW_ERROR_MESSAGE_TYPE)},
+            previewId,
+            message,
+          },
+          "*",
+        );
+      };
+
+      const unknownErrorMessage = ${JSON.stringify("{{unknownError}}")};
+
+      const resolveErrorMessage = (error) =>
+        error instanceof Error
+          ? error.message
+          : typeof error === "string"
+            ? error
+            : unknownErrorMessage;
+
+      let capturedElement = null;
+
+      const reactDomClientShim = {
+        createRoot() {
+          return {
+            render(children) {
+              if (React.isValidElement(children)) {
+                capturedElement = children;
+              }
+            },
+            unmount() {},
+          };
+        },
+        hydrateRoot(_container, initialChildren) {
+          if (React.isValidElement(initialChildren)) {
+            capturedElement = initialChildren;
+          }
+
+          return {
+            render(children) {
+              if (React.isValidElement(children)) {
+                capturedElement = children;
+              }
+            },
+            unmount() {},
+          };
+        },
+      };
+
+      window.addEventListener("error", (event) => {
+        sendError(resolveErrorMessage(event.error ?? event.message));
+      });
+
+      window.addEventListener("unhandledrejection", (event) => {
+        sendError(resolveErrorMessage(event.reason));
+      });
+
+      try {
+        const module = { exports: {} };
+        const exports = module.exports;
+        const require = (specifier) => {
+          if (specifier === "react") {
+            return React;
+          }
+
+          if (specifier === "react-dom/client") {
+            return reactDomClientShim;
+          }
+
+          if (specifier === "react/jsx-runtime") {
+            return ReactJsxRuntime;
+          }
+
+          if (specifier === "react/jsx-dev-runtime") {
+            return ReactJsxDevRuntime;
+          }
+
+          throw new Error(
+            unsupportedImportsMessage.replace("{imports}", \`"\${specifier}"\`),
+          );
+        };
+
+        const evaluated = new Function(
+          "exports",
+          "module",
+          "require",
+          "React",
+          \`\${transpiledCode}
+return module.exports.default ?? exports.default ?? module.exports;\`,
+        )(exports, module, require, React);
+
+        const element =
+          capturedElement ??
+          (React.isValidElement(evaluated)
+            ? evaluated
+            : typeof evaluated === "function"
+              ? React.createElement(evaluated)
+              : (() => {
+                  throw new Error(exportComponentError);
+                })());
+
+        const root = ReactDomClient.createRoot(rootElement);
+        root.render(element);
+      } catch (error) {
+        const message = resolveErrorMessage(error);
+        rootElement.innerHTML = \`<div class="artifact-preview-error">\${escapeHtml(message)}</div>\`;
+        sendError(message);
+      }
+    </script>
+  </body>
+</html>`;
+
+const evaluatePreview = async (rawCode: string, t: PreviewTranslator) => {
   const typescript = await import("typescript");
-  const source = resolvePreviewSource(rawCode);
+  const source = resolvePreviewSource(rawCode, t);
   const transpiled = typescript.transpileModule(source, {
     compilerOptions: {
       esModuleInterop: true,
@@ -104,111 +296,29 @@ const evaluatePreview = async (rawCode: string) => {
     throw new Error(formatDiagnostics(typescript, diagnostics));
   }
 
-  let capturedElement: React.ReactElement | null = null;
-  const reactDomClientShim = {
-    createRoot(_container: unknown, _options: unknown) {
-      return {
-        render(children: React.ReactNode) {
-          if (React.isValidElement(children)) {
-            capturedElement = children;
-          }
-        },
-        unmount() {},
-      };
-    },
-    hydrateRoot(_container: unknown, initialChildren: React.ReactNode, _options: unknown) {
-      if (React.isValidElement(initialChildren)) {
-        capturedElement = initialChildren;
-      }
-      return {
-        render(children: React.ReactNode) {
-          if (React.isValidElement(children)) {
-            capturedElement = children;
-          }
-        },
-        unmount() {},
-      } as ReturnType<typeof ReactDomClient.hydrateRoot>;
-    },
+  const hash = await sha256Hex(rawCode);
+  const resetKey = `${rawCode.length}:${hash}`;
+
+  return {
+    resetKey,
+    srcDoc: createPreviewDocument({
+      previewId: resetKey,
+      transpiledCode: transpiled.outputText,
+      unsupportedImportsMessage: t("unsupportedImports", { imports: "{imports}" }),
+      exportComponentError: t("exportComponentError"),
+    }).replaceAll("{{unknownError}}", t("unknownError")),
   };
-
-  const module = { exports: {} as Record<string, unknown> };
-  const exports = module.exports;
-  const require = (specifier: string) => {
-    if (specifier === "react") {
-      return React;
-    }
-
-    if (specifier === "react-dom/client") {
-      return reactDomClientShim;
-    }
-
-    if (specifier === "react/jsx-runtime") {
-      return ReactJsxRuntime;
-    }
-
-    if (specifier === "react/jsx-dev-runtime") {
-      return ReactJsxDevRuntime;
-    }
-
-    throw new Error(`Live preview does not support imports from "${specifier}" yet.`);
-  };
-
-  const evaluated = new Function(
-    "exports",
-    "module",
-    "require",
-    "React",
-    `${transpiled.outputText}\nreturn module.exports.default ?? exports.default ?? module.exports;`,
-  )(exports, module, require, React);
-
-  if (capturedElement) {
-    return capturedElement;
-  }
-
-  if (React.isValidElement(evaluated)) {
-    return evaluated;
-  }
-
-  if (typeof evaluated === "function") {
-    return React.createElement(evaluated);
-  }
-
-  throw new Error("Preview code must export a React component or JSX element.");
 };
 
-class PreviewErrorBoundary extends Component<
-  {
-    children: ReactNode;
-    resetKey: string;
-  },
-  { error: Error | null }
-> {
-  override state = { error: null as Error | null };
-
-  static getDerivedStateFromError(error: Error) {
-    return { error };
-  }
-
-  override componentDidUpdate(prevProps: Readonly<{ resetKey: string }>) {
-    if (prevProps.resetKey !== this.props.resetKey && this.state.error) {
-      this.setState({ error: null });
-    }
-  }
-
-  override render() {
-    if (this.state.error) {
-      return (
-        <div className="flex h-full items-center justify-center p-6">
-          <PreviewErrorMessage error={this.state.error} />
-        </div>
-      );
-    }
-
-    return this.props.children;
-  }
-}
-
-function PreviewErrorMessage({ error, className }: { error: Error; className?: string }) {
+function PreviewErrorMessage({
+  error,
+  title,
+  className,
+}: {
+  error: Error;
+  title: string;
+  className?: string;
+}) {
   return (
     <div
       className={cn(
@@ -218,7 +328,7 @@ function PreviewErrorMessage({ error, className }: { error: Error; className?: s
     >
       <AlertCircleIcon className="mt-0.5 size-4 shrink-0" />
       <div className="space-y-1">
-        <p className="font-medium">Preview failed</p>
+        <p className="font-medium">{title}</p>
         <p className="whitespace-pre-wrap break-words text-destructive/90">{error.message}</p>
       </div>
     </div>
@@ -226,22 +336,56 @@ function PreviewErrorMessage({ error, className }: { error: Error; className?: s
 }
 
 export function ArtifactLivePreview({ code }: { code: string }) {
+  const previewT = useTranslations("artifactPreview");
+  const iframeRef = useRef<HTMLIFrameElement | null>(null);
+  const activePreviewIdRef = useRef<string | null>(null);
   const [state, setState] = useState<PreviewState>({ status: "idle" });
-  const resetKey = useMemo(() => `${code.length}:${code.slice(0, 100)}`, [code]);
+
+  useEffect(() => {
+    const handleMessage = (event: MessageEvent) => {
+      if (event.source !== iframeRef.current?.contentWindow) {
+        return;
+      }
+
+      const data =
+        event.data && typeof event.data === "object"
+          ? (event.data as { message?: string; previewId?: string; type?: string })
+          : null;
+
+      if (
+        data?.type !== PREVIEW_ERROR_MESSAGE_TYPE ||
+        data.previewId !== activePreviewIdRef.current ||
+        !data.message
+      ) {
+        return;
+      }
+
+      startTransition(() => {
+        setState({ status: "error", error: new Error(data.message) });
+      });
+    };
+
+    window.addEventListener("message", handleMessage);
+    return () => {
+      window.removeEventListener("message", handleMessage);
+    };
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
+    activePreviewIdRef.current = null;
 
     setState({ status: "loading" });
 
-    void evaluatePreview(code)
-      .then((element) => {
+    void evaluatePreview(code, previewT)
+      .then(({ resetKey, srcDoc }) => {
         if (cancelled) {
           return;
         }
 
+        activePreviewIdRef.current = resetKey;
         startTransition(() => {
-          setState({ status: "ready", element, resetKey });
+          setState({ status: "ready", resetKey, srcDoc });
         });
       })
       .catch((error: unknown) => {
@@ -252,21 +396,22 @@ export function ArtifactLivePreview({ code }: { code: string }) {
         startTransition(() => {
           setState({
             status: "error",
-            error: error instanceof Error ? error : new Error("Preview failed."),
+            error: error instanceof Error ? error : new Error(previewT("failedTitle")),
           });
         });
       });
 
     return () => {
       cancelled = true;
+      activePreviewIdRef.current = null;
     };
-  }, [code, resetKey]);
+  }, [code, previewT]);
 
   if (state.status === "idle" || state.status === "loading") {
     return (
       <div className="flex h-full items-center justify-center gap-2 text-sm text-muted-foreground">
         <Spinner className="size-4" />
-        <span>Building preview…</span>
+        <span>{previewT("building")}</span>
       </div>
     );
   }
@@ -274,7 +419,7 @@ export function ArtifactLivePreview({ code }: { code: string }) {
   if (state.status === "error") {
     return (
       <div className="flex h-full items-center justify-center p-6">
-        <PreviewErrorMessage error={state.error} />
+        <PreviewErrorMessage error={state.error} title={previewT("failedTitle")} />
       </div>
     );
   }
@@ -284,8 +429,13 @@ export function ArtifactLivePreview({ code }: { code: string }) {
   }
 
   return (
-    <PreviewErrorBoundary resetKey={state.resetKey}>
-      <div className="h-full overflow-auto bg-background p-4">{state.element}</div>
-    </PreviewErrorBoundary>
+    <iframe
+      key={state.resetKey}
+      ref={iframeRef}
+      className="size-full border-0"
+      sandbox="allow-scripts"
+      srcDoc={state.srcDoc}
+      title={previewT("title")}
+    />
   );
 }

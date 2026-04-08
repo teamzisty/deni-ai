@@ -3,6 +3,7 @@
 import type { ComponentProps, ReactNode } from "react";
 import type { BundledLanguage } from "shiki";
 import { EyeIcon } from "lucide-react";
+import { useTranslations } from "next-intl";
 import {
   CodeBlock,
   CodeBlockActions,
@@ -54,11 +55,16 @@ function InlineCode({ className, ...props }: ComponentProps<"code">) {
 }
 
 function Code({ className, children, ...props }: StreamdownCodeProps) {
+  const previewT = useTranslations("artifactPreview");
   const { open } = useArtifactPreview();
   const isBlock = "data-block" in props;
 
   if (!isBlock) {
-    return <InlineCode className={className} {...props} />;
+    return (
+      <InlineCode className={className} {...props}>
+        {children}
+      </InlineCode>
+    );
   }
 
   const language = resolveLanguage(className) as BundledLanguage;
@@ -81,7 +87,7 @@ function Code({ className, children, ...props }: StreamdownCodeProps) {
               variant="ghost"
             >
               <EyeIcon className="size-3.5" />
-              <span className="sr-only">Preview</span>
+              <span className="sr-only">{previewT("title")}</span>
             </Button>
           ) : null}
           <CodeBlockCopyButton size="icon-sm" variant="ghost" />

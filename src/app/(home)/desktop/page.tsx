@@ -1,30 +1,14 @@
 import type { Metadata } from "next";
 import { getExtracted } from "next-intl/server";
 import { DesktopClient } from "./desktop-client";
-
-type GitHubReleaseAsset = {
-  name: string;
-  browser_download_url: string;
-};
+import type { DesktopDownloads, DesktopRelease, DesktopReleaseAsset } from "./types";
 
 type GitHubRelease = {
-  assets: GitHubReleaseAsset[];
+  assets: DesktopReleaseAsset[];
   draft: boolean;
   html_url: string;
   prerelease: boolean;
   tag_name: string;
-};
-
-type DesktopRelease = {
-  version: string | null;
-  releaseUrl: string;
-  assets: GitHubReleaseAsset[];
-};
-
-type DesktopDownloads = {
-  latestRelease: DesktopRelease;
-  prerelease: DesktopRelease | null;
-  releasesUrl: string;
 };
 
 const FALLBACK_RELEASE_URL = "https://github.com/deniaiapp/desktop/releases";
