@@ -42,9 +42,6 @@ export default function ErrorPage({ error, reset }: ErrorPageProps) {
     >
       <div className="mx-auto flex min-h-screen max-w-3xl flex-col items-center justify-center gap-10 px-6 py-16 text-center">
         <div className="flex flex-col items-center gap-4">
-          <Badge variant="destructive" className="px-3 py-1 text-xs uppercase tracking-[0.35em]">
-            {t("Error")}
-          </Badge>
           <TriangleAlert className="size-12 text-destructive" aria-hidden="true" />
           <h1 className="text-balance text-4xl font-semibold tracking-tight sm:text-5xl">
             {t("Something went wrong")}
@@ -60,9 +57,7 @@ export default function ErrorPage({ error, reset }: ErrorPageProps) {
           </div>
         </div>
         <section className="w-full max-w-2xl rounded-xl border border-border/60 bg-card/70 p-6 text-left shadow-sm">
-          <div className="text-xs font-semibold uppercase tracking-[0.2em] text-muted-foreground">
-            {t("Error report")}
-          </div>
+          <div className="text-xs font-semibold text-muted-foreground">{t("Error report")}</div>
           <pre className="mt-4 whitespace-pre-wrap break-words rounded-lg bg-muted/60 p-4 font-mono text-xs text-foreground">
             {reportText}
           </pre>

@@ -17,6 +17,7 @@ import { useExtracted } from "next-intl";
 import { BlurReveal } from "@/components/blur-reveal";
 import { HighlightedText } from "@/components/highlighted-text";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -25,13 +26,19 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
-type DesktopDownloads = {
+type DesktopRelease = {
   version: string | null;
   releaseUrl: string;
   assets: {
     name: string;
     browser_download_url: string;
   }[];
+};
+
+type DesktopDownloads = {
+  latestRelease: DesktopRelease;
+  prerelease: DesktopRelease | null;
+  releasesUrl: string;
 };
 
 type DownloadOption = {
@@ -154,7 +161,7 @@ function detectPreferredPlatform(): {
   };
 }
 
-function parseDownloadOptions(assets: DesktopDownloads["assets"]): DownloadOption[] {
+function parseDownloadOptions(assets: DesktopRelease["assets"]): DownloadOption[] {
   return assets
     .map((asset) => {
       const { name, browser_download_url: href } = asset;
@@ -272,19 +279,38 @@ function pickDefaultOption(
 
 export function DesktopClient({ downloads }: { downloads: DesktopDownloads }) {
   const t = useExtracted();
-  const options = React.useMemo(() => parseDownloadOptions(downloads.assets), [downloads.assets]);
+  const hasPrerelease = Boolean(downloads.prerelease?.assets.length);
+  const [includePrerelease, setIncludePrerelease] = React.useState(false);
+  const activeRelease =
+    includePrerelease && downloads.prerelease ? downloads.prerelease : downloads.latestRelease;
+  const options = React.useMemo(
+    () => parseDownloadOptions(activeRelease.assets),
+    [activeRelease.assets],
+  );
   const [selectedOs, setSelectedOs] = React.useState<DownloadOption["os"] | null>(null);
   const [selectedArch, setSelectedArch] = React.useState<DownloadOption["arch"] | null>(null);
   const [selectedFormat, setSelectedFormat] = React.useState<string | null>(null);
 
   React.useEffect(() => {
+    if (!hasPrerelease) {
+      setIncludePrerelease(false);
+    }
+  }, [hasPrerelease]);
+
+  React.useEffect(() => {
     const preferred = detectPreferredPlatform();
     const defaultOption = pickDefaultOption(options, preferred);
+
     if (defaultOption) {
       setSelectedOs(defaultOption.os);
       setSelectedArch(defaultOption.arch);
       setSelectedFormat(defaultOption.format);
+      return;
     }
+
+    setSelectedOs(null);
+    setSelectedArch(null);
+    setSelectedFormat(null);
   }, [options]);
 
   const osOptions = React.useMemo(
@@ -322,7 +348,9 @@ export function DesktopClient({ downloads }: { downloads: DesktopDownloads }) {
     null;
   const selectedOption =
     availableFormats.find((option) => option.format === currentFormat) ??
-    pickDefaultOption(options, detectPreferredPlatform());
+    pickDefaultOption(options, detectPreferredPlatform()) ??
+    null;
+  const activeChannelLabel = includePrerelease ? t("Pre-release") : t("Stable");
 
   return (
     <main className="relative min-h-screen overflow-hidden" id="main-content">

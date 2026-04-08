@@ -2,17 +2,21 @@
 
 import { CopyIcon, ExternalLinkIcon, XIcon } from "lucide-react";
 import { useCallback, useState } from "react";
+import { ArtifactLivePreview } from "@/components/chat/artifact-live-preview";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { useArtifactPreview } from "@/components/chat/artifact-preview-context";
 
-const PREVIEWABLE_LANGUAGES = new Set(["html", "htm"]);
+const HTML_PREVIEWABLE_LANGUAGES = new Set(["html", "htm"]);
+const LIVE_PREVIEWABLE_LANGUAGES = new Set(["html", "htm", "jsx", "tsx", "react"]);
 
 export function ArtifactPreviewPanel() {
   const { isOpen, code, language, close } = useArtifactPreview();
   const [copied, setCopied] = useState(false);
 
-  const isHtml = PREVIEWABLE_LANGUAGES.has(language.toLowerCase());
+  const normalizedLanguage = language.toLowerCase();
+  const isHtml = HTML_PREVIEWABLE_LANGUAGES.has(normalizedLanguage);
+  const isLivePreviewable = LIVE_PREVIEWABLE_LANGUAGES.has(normalizedLanguage);
 
   const handleCopy = useCallback(() => {
     void navigator.clipboard.writeText(code).then(() => {
@@ -88,11 +92,13 @@ export function ArtifactPreviewPanel() {
               className="size-full border-0"
               title="HTML preview"
             />
+          ) : isLivePreviewable ? (
+            <ArtifactLivePreview code={code} />
           ) : (
             <div className="flex h-full flex-col items-center justify-center gap-3 p-6 text-center text-sm text-muted-foreground">
               <p>
-                Live preview is only supported for HTML. For JSX/TSX, copy the code and paste it
-                into a sandbox like StackBlitz or CodeSandbox.
+                Live preview is supported for HTML, JSX, and TSX. For other languages, copy the code
+                into your own environment.
               </p>
               <Button variant="outline" size="sm" onClick={handleCopy}>
                 <CopyIcon className="size-3.5" />

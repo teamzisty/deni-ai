@@ -109,17 +109,6 @@ export function ClientHome() {
               className="flex flex-col sm:flex-row gap-5"
             >
               <LoginButton />
-              <Button
-                variant="outline"
-                size="lg"
-                asChild
-                className="group hover:bg-secondary transition-all"
-              >
-                <Link href="#features">
-                  {t("Learn More")}
-                  <ArrowRight className="w-5 h-5 transition-transform group-hover:translate-x-1" />
-                </Link>
-              </Button>
             </motion.div>
 
             {/* Logo Carousel */}
@@ -201,32 +190,6 @@ export function ClientHome() {
               delay={0.5}
             />
           </div>
-        </div>
-      </section>
-
-      {/* CTA Section */}
-      <section className="relative px-4 py-32 md:py-48">
-        <div className="mx-auto max-w-5xl">
-          <motion.div
-            initial={{ opacity: 0, scale: 0.95 }}
-            whileInView={{ opacity: 1, scale: 1 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.8 }}
-            className="relative overflow-hidden rounded-[2.5rem] border-2 border-border bg-card/50 backdrop-blur-sm p-12 md:p-24 text-center shadow-2xl"
-          >
-            <div className="absolute inset-0 -z-10 bg-[radial-gradient(circle_at_50%_50%,rgba(var(--primary),0.1),transparent)]" />
-            <h2 className="text-3xl md:text-6xl font-bold tracking-tight mb-6">
-              {t("Ready to Get Started?")}
-            </h2>
-            <p className="text-muted-foreground mb-12 max-w-lg mx-auto text-xl leading-relaxed">
-              {t(
-                "Join thousands of users who are already experiencing the future of AI assistance.",
-              )}
-            </p>
-            <div className="flex justify-center scale-110">
-              <LoginButton />
-            </div>
-          </motion.div>
         </div>
       </section>
     </main>
