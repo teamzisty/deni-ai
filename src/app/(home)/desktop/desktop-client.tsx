@@ -17,6 +17,7 @@ import { useExtracted } from "next-intl";
 import { BlurReveal } from "@/components/blur-reveal";
 import { HighlightedText } from "@/components/highlighted-text";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -24,15 +25,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-
-type DesktopDownloads = {
-  version: string | null;
-  releaseUrl: string;
-  assets: {
-    name: string;
-    browser_download_url: string;
-  }[];
-};
+import type { DesktopDownloads, DesktopRelease } from "./types";
 
 type DownloadOption = {
   id: string;
@@ -154,7 +147,7 @@ function detectPreferredPlatform(): {
   };
 }
 
-function parseDownloadOptions(assets: DesktopDownloads["assets"]): DownloadOption[] {
+function parseDownloadOptions(assets: DesktopRelease["assets"]): DownloadOption[] {
   return assets
     .map((asset) => {
       const { name, browser_download_url: href } = asset;
@@ -272,19 +265,43 @@ function pickDefaultOption(
 
 export function DesktopClient({ downloads }: { downloads: DesktopDownloads }) {
   const t = useExtracted();
-  const options = React.useMemo(() => parseDownloadOptions(downloads.assets), [downloads.assets]);
+  const [includePrerelease, setIncludePrerelease] = React.useState(false);
+  const latestOptions = React.useMemo(
+    () => parseDownloadOptions(downloads.latestRelease.assets),
+    [downloads.latestRelease.assets],
+  );
+  const prereleaseOptions = React.useMemo(
+    () => parseDownloadOptions(downloads.prerelease?.assets ?? []),
+    [downloads.prerelease?.assets],
+  );
+  const hasPrerelease = prereleaseOptions.length > 0;
+  const shouldUsePrereleaseFallback = latestOptions.length === 0 && hasPrerelease;
+  const options =
+    includePrerelease || shouldUsePrereleaseFallback ? prereleaseOptions : latestOptions;
   const [selectedOs, setSelectedOs] = React.useState<DownloadOption["os"] | null>(null);
   const [selectedArch, setSelectedArch] = React.useState<DownloadOption["arch"] | null>(null);
   const [selectedFormat, setSelectedFormat] = React.useState<string | null>(null);
 
   React.useEffect(() => {
+    if (!hasPrerelease) {
+      setIncludePrerelease(false);
+    }
+  }, [hasPrerelease]);
+
+  React.useEffect(() => {
     const preferred = detectPreferredPlatform();
     const defaultOption = pickDefaultOption(options, preferred);
+
     if (defaultOption) {
       setSelectedOs(defaultOption.os);
       setSelectedArch(defaultOption.arch);
       setSelectedFormat(defaultOption.format);
+      return;
     }
+
+    setSelectedOs(null);
+    setSelectedArch(null);
+    setSelectedFormat(null);
   }, [options]);
 
   const osOptions = React.useMemo(
@@ -322,7 +339,10 @@ export function DesktopClient({ downloads }: { downloads: DesktopDownloads }) {
     null;
   const selectedOption =
     availableFormats.find((option) => option.format === currentFormat) ??
-    pickDefaultOption(options, detectPreferredPlatform());
+    pickDefaultOption(options, detectPreferredPlatform()) ??
+    null;
+  const activeChannelLabel =
+    includePrerelease || shouldUsePrereleaseFallback ? t("Pre-release") : t("Stable");
 
   return (
     <main className="relative min-h-screen overflow-hidden" id="main-content">
@@ -592,6 +612,20 @@ export function DesktopClient({ downloads }: { downloads: DesktopDownloads }) {
                 "Use Deni AI with desktop-native convenience and keep your assistant close without keeping a browser tab open.",
               )}
             </p>
+            {hasPrerelease ? (
+              <div className="mx-auto mb-6 flex w-full max-w-2xl items-center justify-center gap-3 rounded-2xl border border-border/70 bg-background/70 px-4 py-3 text-sm text-muted-foreground">
+                <label className="flex cursor-pointer items-center gap-2">
+                  <Checkbox
+                    checked={includePrerelease}
+                    onCheckedChange={(checked) => setIncludePrerelease(checked === true)}
+                  />
+                  <span>{t("Pre-release")}</span>
+                </label>
+                <span className="rounded-full border border-border bg-secondary/70 px-2.5 py-1 text-xs font-medium text-foreground">
+                  {activeChannelLabel}
+                </span>
+              </div>
+            ) : null}
             {options.length > 0 && selectedOption ? (
               <div className="mx-auto mb-4 flex w-full max-w-2xl flex-col items-stretch justify-center gap-3">
                 <div className="flex w-full flex-col items-stretch justify-center sm:flex-row">
@@ -708,7 +742,7 @@ export function DesktopClient({ downloads }: { downloads: DesktopDownloads }) {
             ) : null}
             <div className="flex flex-wrap items-center justify-center gap-3 text-sm text-muted-foreground">
               <a
-                href={downloads.releaseUrl}
+                href={downloads.releasesUrl}
                 target="_blank"
                 rel="noreferrer"
                 className="inline-flex items-center gap-2 underline underline-offset-4 transition-opacity hover:opacity-80"

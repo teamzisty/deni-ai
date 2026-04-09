@@ -1,0 +1,443 @@
+"use client";
+
+import type ts from "typescript";
+import * as React from "react";
+import { AlertCircleIcon } from "lucide-react";
+import { startTransition, useEffect, useRef, useState } from "react";
+import { useTranslations } from "next-intl";
+import { Spinner } from "@/components/ui/spinner";
+import { sha256Hex } from "@/lib/hash";
+import { cn } from "@/lib/utils";
+
+const DIRECT_JSX_REGEX = /^\s*(?:<>|<\w|<\s*[A-Z])/;
+const REACT_IMPORT_SPECIFIERS = new Set([
+  "react",
+  "react-dom/client",
+  "react/jsx-dev-runtime",
+  "react/jsx-runtime",
+]);
+const PREVIEW_ERROR_MESSAGE_TYPE = "deni-ai:artifact-preview:error";
+
+const COMPONENT_NAME_PATTERNS = [
+  /\bexport\s+function\s+([A-Z]\w*)\b/,
+  /\bfunction\s+([A-Z]\w*)\b/,
+  /\bconst\s+([A-Z]\w*)\s*=\s*(?:async\s*)?(?:\([^)]*\)|[A-Za-z_$][\w$]*)\s*=>/,
+  /\blet\s+([A-Z]\w*)\s*=\s*(?:async\s*)?(?:\([^)]*\)|[A-Za-z_$][\w$]*)\s*=>/,
+  /\bvar\s+([A-Z]\w*)\s*=\s*(?:async\s*)?(?:\([^)]*\)|[A-Za-z_$][\w$]*)\s*=>/,
+] as const;
+
+type PreviewState =
+  | { status: "idle" | "loading" }
+  | { status: "ready"; resetKey: string; srcDoc: string }
+  | { status: "error"; error: Error };
+
+type PreviewTranslator = (key: string, values?: Record<string, string>) => string;
+
+const stripCodeFence = (code: string) =>
+  code
+    .replace(/^\s*```[\w-]*\n/, "")
+    .replace(/\n```\s*$/, "")
+    .trim();
+
+const findUnsupportedImports = (source: string) =>
+  Array.from(source.matchAll(/^\s*import[\s\S]*?from\s*["']([^"']+)["'];?\s*$/gm))
+    .map((match) => match[1])
+    .filter((specifier) => !REACT_IMPORT_SPECIFIERS.has(specifier));
+
+const createUnsupportedImportsMessage = (t: PreviewTranslator, specifiers: string[]) =>
+  t("unsupportedImports", {
+    imports: specifiers.map((specifier) => `"${specifier}"`).join(", "),
+  });
+
+const resolvePreviewSource = (rawCode: string, t: PreviewTranslator) => {
+  const source = stripCodeFence(rawCode);
+
+  if (!source) {
+    throw new Error(t("nothingToPreview"));
+  }
+
+  const unsupportedImports = findUnsupportedImports(source);
+  if (unsupportedImports.length > 0) {
+    throw new Error(createUnsupportedImportsMessage(t, unsupportedImports));
+  }
+
+  if (DIRECT_JSX_REGEX.test(source)) {
+    return `export default function Preview() { return (${source}); }`;
+  }
+
+  if (/\bexport\s+default\b/.test(source)) {
+    return source;
+  }
+
+  for (const pattern of COMPONENT_NAME_PATTERNS) {
+    const match = source.match(pattern);
+    if (match) {
+      return `${source}\n\nexport default ${match[1]};`;
+    }
+  }
+
+  return `export default function Preview() { return (${source}); }`;
+};
+
+const formatDiagnostics = (typescript: typeof ts, diagnostics: readonly ts.Diagnostic[]) =>
+  diagnostics
+    .map((diagnostic) => typescript.flattenDiagnosticMessageText(diagnostic.messageText, "\n"))
+    .filter(Boolean)
+    .join("\n");
+
+const createPreviewDocument = ({
+  previewId,
+  transpiledCode,
+  unsupportedImportsMessage,
+  exportComponentError,
+}: {
+  previewId: string;
+  transpiledCode: string;
+  unsupportedImportsMessage: string;
+  exportComponentError: string;
+}) => `<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <style>
+      :root {
+        color-scheme: light;
+      }
+
+      html,
+      body,
+      #root {
+        height: 100%;
+      }
+
+      body {
+        margin: 0;
+        background: transparent;
+        color: #111827;
+        font-family:
+          Inter,
+          ui-sans-serif,
+          system-ui,
+          -apple-system,
+          BlinkMacSystemFont,
+          "Segoe UI",
+          sans-serif;
+      }
+
+      #root {
+        box-sizing: border-box;
+        overflow: auto;
+        padding: 16px;
+      }
+
+      .artifact-preview-error {
+        white-space: pre-wrap;
+        word-break: break-word;
+        color: #b91c1c;
+        font-size: 14px;
+        line-height: 1.5;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module">
+      // Preview rendering currently depends on esm.sh for React runtime modules.
+      // If that CDN is unavailable or blocked, preview rendering fails until these imports are cached or replaced with bundled/local copies.
+      import React from "https://esm.sh/react@19";
+      import * as ReactDomClient from "https://esm.sh/react-dom@19/client";
+      import * as ReactJsxRuntime from "https://esm.sh/react@19/jsx-runtime";
+      import * as ReactJsxDevRuntime from "https://esm.sh/react@19/jsx-dev-runtime";
+
+      const previewId = ${JSON.stringify(previewId)};
+      const transpiledCode = ${JSON.stringify(transpiledCode)};
+      const unsupportedImportsMessage = ${JSON.stringify(unsupportedImportsMessage)};
+      const exportComponentError = ${JSON.stringify(exportComponentError)};
+
+      const rootElement = document.getElementById("root");
+
+      const escapeHtml = (value) =>
+        value
+          .replaceAll("&", "&amp;")
+          .replaceAll("<", "&lt;")
+          .replaceAll(">", "&gt;")
+          .replaceAll('"', "&quot;")
+          .replaceAll("'", "&#39;");
+
+      const sendError = (message) => {
+        window.parent.postMessage(
+          {
+            type: ${JSON.stringify(PREVIEW_ERROR_MESSAGE_TYPE)},
+            previewId,
+            message,
+          },
+          "*",
+        );
+      };
+
+      const unknownErrorMessage = ${JSON.stringify("{{unknownError}}")};
+
+      const resolveErrorMessage = (error) =>
+        error instanceof Error
+          ? error.message
+          : typeof error === "string"
+            ? error
+            : unknownErrorMessage;
+
+      let capturedElement = null;
+
+      const reactDomClientShim = {
+        createRoot() {
+          return {
+            render(children) {
+              if (React.isValidElement(children)) {
+                capturedElement = children;
+              }
+            },
+            unmount() {},
+          };
+        },
+        hydrateRoot(_container, initialChildren) {
+          if (React.isValidElement(initialChildren)) {
+            capturedElement = initialChildren;
+          }
+
+          return {
+            render(children) {
+              if (React.isValidElement(children)) {
+                capturedElement = children;
+              }
+            },
+            unmount() {},
+          };
+        },
+      };
+
+      window.addEventListener("error", (event) => {
+        sendError(resolveErrorMessage(event.error ?? event.message));
+      });
+
+      window.addEventListener("unhandledrejection", (event) => {
+        sendError(resolveErrorMessage(event.reason));
+      });
+
+      try {
+        const module = { exports: {} };
+        const exports = module.exports;
+        const require = (specifier) => {
+          if (specifier === "react") {
+            return React;
+          }
+
+          if (specifier === "react-dom/client") {
+            return reactDomClientShim;
+          }
+
+          if (specifier === "react/jsx-runtime") {
+            return ReactJsxRuntime;
+          }
+
+          if (specifier === "react/jsx-dev-runtime") {
+            return ReactJsxDevRuntime;
+          }
+
+          throw new Error(
+            unsupportedImportsMessage.replace("{imports}", \`"\${specifier}"\`),
+          );
+        };
+
+        const evaluated = new Function(
+          "exports",
+          "module",
+          "require",
+          "React",
+          \`\${transpiledCode}
+return module.exports.default ?? exports.default ?? module.exports;\`,
+        )(exports, module, require, React);
+
+        const element =
+          capturedElement ??
+          (React.isValidElement(evaluated)
+            ? evaluated
+            : typeof evaluated === "function"
+              ? React.createElement(evaluated)
+              : (() => {
+                  throw new Error(exportComponentError);
+                })());
+
+        const root = ReactDomClient.createRoot(rootElement);
+        root.render(element);
+      } catch (error) {
+        const message = resolveErrorMessage(error);
+        rootElement.innerHTML = \`<div class="artifact-preview-error">\${escapeHtml(message)}</div>\`;
+        sendError(message);
+      }
+    </script>
+  </body>
+</html>`;
+
+const evaluatePreview = async (rawCode: string, t: PreviewTranslator) => {
+  const typescript = await import("typescript");
+  const source = resolvePreviewSource(rawCode, t);
+  const transpiled = typescript.transpileModule(source, {
+    compilerOptions: {
+      esModuleInterop: true,
+      jsx: typescript.JsxEmit.React,
+      module: typescript.ModuleKind.CommonJS,
+      target: typescript.ScriptTarget.ES2020,
+    },
+    reportDiagnostics: true,
+  });
+
+  const diagnostics = transpiled.diagnostics?.filter(
+    (diagnostic) => diagnostic.category === typescript.DiagnosticCategory.Error,
+  );
+
+  if (diagnostics && diagnostics.length > 0) {
+    throw new Error(formatDiagnostics(typescript, diagnostics));
+  }
+
+  const hash = await sha256Hex(rawCode);
+  const resetKey = `${rawCode.length}:${hash}`;
+
+  return {
+    resetKey,
+    srcDoc: createPreviewDocument({
+      previewId: resetKey,
+      transpiledCode: transpiled.outputText,
+      unsupportedImportsMessage: t("unsupportedImports", { imports: "{imports}" }),
+      exportComponentError: t("exportComponentError"),
+    }).replaceAll("{{unknownError}}", t("unknownError")),
+  };
+};
+
+function PreviewErrorMessage({
+  error,
+  title,
+  className,
+}: {
+  error: Error;
+  title: string;
+  className?: string;
+}) {
+  return (
+    <div
+      className={cn(
+        "flex max-w-xl items-start gap-3 rounded-lg border border-destructive/40 bg-destructive/10 p-4 text-left text-sm text-destructive",
+        className,
+      )}
+    >
+      <AlertCircleIcon className="mt-0.5 size-4 shrink-0" />
+      <div className="space-y-1">
+        <p className="font-medium">{title}</p>
+        <p className="whitespace-pre-wrap break-words text-destructive/90">{error.message}</p>
+      </div>
+    </div>
+  );
+}
+
+export function ArtifactLivePreview({ code }: { code: string }) {
+  const previewT = useTranslations("artifactPreview");
+  const iframeRef = useRef<HTMLIFrameElement | null>(null);
+  const activePreviewIdRef = useRef<string | null>(null);
+  const [state, setState] = useState<PreviewState>({ status: "idle" });
+
+  useEffect(() => {
+    const handleMessage = (event: MessageEvent) => {
+      if (event.source !== iframeRef.current?.contentWindow) {
+        return;
+      }
+
+      const data =
+        event.data && typeof event.data === "object"
+          ? (event.data as { message?: string; previewId?: string; type?: string })
+          : null;
+
+      if (
+        data?.type !== PREVIEW_ERROR_MESSAGE_TYPE ||
+        data.previewId !== activePreviewIdRef.current ||
+        !data.message
+      ) {
+        return;
+      }
+
+      startTransition(() => {
+        setState({ status: "error", error: new Error(data.message) });
+      });
+    };
+
+    window.addEventListener("message", handleMessage);
+    return () => {
+      window.removeEventListener("message", handleMessage);
+    };
+  }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+    activePreviewIdRef.current = null;
+
+    setState({ status: "loading" });
+
+    void evaluatePreview(code, previewT)
+      .then(({ resetKey, srcDoc }) => {
+        if (cancelled) {
+          return;
+        }
+
+        activePreviewIdRef.current = resetKey;
+        startTransition(() => {
+          setState({ status: "ready", resetKey, srcDoc });
+        });
+      })
+      .catch((error: unknown) => {
+        if (cancelled) {
+          return;
+        }
+
+        startTransition(() => {
+          setState({
+            status: "error",
+            error: error instanceof Error ? error : new Error(previewT("failedTitle")),
+          });
+        });
+      });
+
+    return () => {
+      cancelled = true;
+      activePreviewIdRef.current = null;
+    };
+  }, [code, previewT]);
+
+  if (state.status === "idle" || state.status === "loading") {
+    return (
+      <div className="flex h-full items-center justify-center gap-2 text-sm text-muted-foreground">
+        <Spinner className="size-4" />
+        <span>{previewT("building")}</span>
+      </div>
+    );
+  }
+
+  if (state.status === "error") {
+    return (
+      <div className="flex h-full items-center justify-center p-6">
+        <PreviewErrorMessage error={state.error} title={previewT("failedTitle")} />
+      </div>
+    );
+  }
+
+  if (state.status !== "ready") {
+    return null;
+  }
+
+  return (
+    <iframe
+      key={state.resetKey}
+      ref={iframeRef}
+      className="size-full border-0"
+      sandbox="allow-scripts"
+      srcDoc={state.srcDoc}
+      title={previewT("title")}
+    />
+  );
+}

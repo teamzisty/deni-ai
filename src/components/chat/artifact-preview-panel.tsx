@@ -2,17 +2,24 @@
 
 import { CopyIcon, ExternalLinkIcon, XIcon } from "lucide-react";
 import { useCallback, useState } from "react";
-import { Button } from "@/components/ui/button";
+import { useExtracted, useTranslations } from "next-intl";
+import { ArtifactLivePreview } from "@/components/chat/artifact-live-preview";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { useArtifactPreview } from "@/components/chat/artifact-preview-context";
+import { Button } from "@/components/ui/button";
 
-const PREVIEWABLE_LANGUAGES = new Set(["html", "htm"]);
+const HTML_PREVIEWABLE_LANGUAGES = new Set(["html", "htm"]);
+const LIVE_PREVIEWABLE_LANGUAGES = new Set(["html", "htm", "jsx", "tsx", "react"]);
 
 export function ArtifactPreviewPanel() {
+  const t = useExtracted();
+  const previewT = useTranslations("artifactPreview");
   const { isOpen, code, language, close } = useArtifactPreview();
   const [copied, setCopied] = useState(false);
 
-  const isHtml = PREVIEWABLE_LANGUAGES.has(language.toLowerCase());
+  const normalizedLanguage = language.toLowerCase();
+  const isHtml = HTML_PREVIEWABLE_LANGUAGES.has(normalizedLanguage);
+  const isLivePreviewable = LIVE_PREVIEWABLE_LANGUAGES.has(normalizedLanguage);
 
   const handleCopy = useCallback(() => {
     void navigator.clipboard.writeText(code).then(() => {
@@ -42,7 +49,7 @@ export function ArtifactPreviewPanel() {
       >
         <SheetHeader className="flex flex-row items-center justify-between border-b px-4 py-3">
           <SheetTitle className="text-sm font-medium">
-            Preview
+            {previewT("title")}
             {language ? (
               <span className="ml-2 rounded bg-muted px-1.5 py-0.5 font-mono text-xs text-muted-foreground">
                 {language}
@@ -55,10 +62,10 @@ export function ArtifactPreviewPanel() {
               size="icon"
               className="size-7"
               onClick={handleCopy}
-              title="Copy code"
+              title={previewT("copyCode")}
             >
               <CopyIcon className="size-3.5" />
-              <span className="sr-only">{copied ? "Copied" : "Copy"}</span>
+              <span className="sr-only">{copied ? t("Copied!") : t("Copy")}</span>
             </Button>
             {isHtml && (
               <Button
@@ -66,15 +73,21 @@ export function ArtifactPreviewPanel() {
                 size="icon"
                 className="size-7"
                 onClick={handleOpenInTab}
-                title="Open in new tab"
+                title={previewT("openInNewTab")}
               >
                 <ExternalLinkIcon className="size-3.5" />
-                <span className="sr-only">Open in new tab</span>
+                <span className="sr-only">{previewT("openInNewTab")}</span>
               </Button>
             )}
-            <Button variant="ghost" size="icon" className="size-7" onClick={close} title="Close">
+            <Button
+              variant="ghost"
+              size="icon"
+              className="size-7"
+              onClick={close}
+              title={t("Close")}
+            >
               <XIcon className="size-3.5" />
-              <span className="sr-only">Close</span>
+              <span className="sr-only">{t("Close")}</span>
             </Button>
           </div>
         </SheetHeader>
@@ -86,17 +99,16 @@ export function ArtifactPreviewPanel() {
               srcDoc={code}
               sandbox="allow-scripts"
               className="size-full border-0"
-              title="HTML preview"
+              title={previewT("htmlTitle")}
             />
+          ) : isLivePreviewable ? (
+            <ArtifactLivePreview code={code} />
           ) : (
             <div className="flex h-full flex-col items-center justify-center gap-3 p-6 text-center text-sm text-muted-foreground">
-              <p>
-                Live preview is only supported for HTML. For JSX/TSX, copy the code and paste it
-                into a sandbox like StackBlitz or CodeSandbox.
-              </p>
+              <p>{previewT("fallback")}</p>
               <Button variant="outline" size="sm" onClick={handleCopy}>
                 <CopyIcon className="size-3.5" />
-                {copied ? "Copied!" : "Copy code"}
+                {copied ? t("Copied!") : previewT("copyCode")}
               </Button>
             </div>
           )}

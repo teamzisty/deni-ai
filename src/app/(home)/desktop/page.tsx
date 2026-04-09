@@ -1,30 +1,38 @@
 import type { Metadata } from "next";
 import { getExtracted } from "next-intl/server";
 import { DesktopClient } from "./desktop-client";
-
-type GitHubReleaseAsset = {
-  name: string;
-  browser_download_url: string;
-};
+import type { DesktopDownloads, DesktopRelease, DesktopReleaseAsset } from "./types";
 
 type GitHubRelease = {
-  assets: GitHubReleaseAsset[];
+  assets: DesktopReleaseAsset[];
+  draft: boolean;
   html_url: string;
+  prerelease: boolean;
   tag_name: string;
-};
-
-type DesktopDownloads = {
-  version: string | null;
-  releaseUrl: string;
-  assets: GitHubReleaseAsset[];
 };
 
 const FALLBACK_RELEASE_URL = "https://github.com/deniaiapp/desktop/releases";
 
+function toDesktopRelease(release: GitHubRelease): DesktopRelease {
+  return {
+    version: release.tag_name.replace(/^v/, ""),
+    releaseUrl: release.html_url,
+    assets: release.assets,
+  };
+}
+
+function createFallbackRelease(): DesktopRelease {
+  return {
+    version: null,
+    releaseUrl: FALLBACK_RELEASE_URL,
+    assets: [],
+  };
+}
+
 async function getDesktopDownloads(): Promise<DesktopDownloads> {
   try {
     const response = await fetch("https://api.github.com/repos/deniaiapp/desktop/releases", {
-      next: { revalidate: 3600 },
+      next: { revalidate: 360 },
       headers: {
         Accept: "application/vnd.github+json",
       },
@@ -32,33 +40,26 @@ async function getDesktopDownloads(): Promise<DesktopDownloads> {
 
     if (!response.ok) {
       return {
-        version: null,
-        releaseUrl: FALLBACK_RELEASE_URL,
-        assets: [],
+        latestRelease: createFallbackRelease(),
+        prerelease: null,
+        releasesUrl: FALLBACK_RELEASE_URL,
       };
     }
 
     const releases = (await response.json()) as GitHubRelease[];
-    const latestRelease = releases.find((release) => release.assets.length > 0);
-
-    if (!latestRelease) {
-      return {
-        version: null,
-        releaseUrl: FALLBACK_RELEASE_URL,
-        assets: [],
-      };
-    }
+    const latestRelease = releases.find((release) => !release.draft && !release.prerelease);
+    const prerelease = releases.find((release) => !release.draft && release.prerelease);
 
     return {
-      version: latestRelease.tag_name.replace(/^v/, ""),
-      releaseUrl: latestRelease.html_url,
-      assets: latestRelease.assets,
+      latestRelease: latestRelease ? toDesktopRelease(latestRelease) : createFallbackRelease(),
+      prerelease: prerelease ? toDesktopRelease(prerelease) : null,
+      releasesUrl: FALLBACK_RELEASE_URL,
     };
   } catch {
     return {
-      version: null,
-      releaseUrl: FALLBACK_RELEASE_URL,
-      assets: [],
+      latestRelease: createFallbackRelease(),
+      prerelease: null,
+      releasesUrl: FALLBACK_RELEASE_URL,
     };
   }
 }

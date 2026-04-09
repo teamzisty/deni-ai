@@ -4,7 +4,7 @@ import { useEffect, useRef } from "react";
 import { env } from "@/env";
 import { authClient } from "@/lib/auth-client";
 import { trpc } from "@/lib/trpc/react";
-import { liveUsageQueryOptions } from "@/lib/usage-query-options";
+import { passiveUsageQueryOptions } from "@/lib/usage-query-options";
 import { cn } from "@/lib/utils";
 
 declare global {
@@ -22,22 +22,21 @@ export function AdSenseSlot({ slot, className }: AdSenseSlotProps) {
   const slotRef = useRef<HTMLModElement | null>(null);
   const session = authClient.useSession();
   const hasSession = Boolean(session.data?.session);
+  const shouldCheckUsage =
+    hasSession &&
+    process.env.NODE_ENV === "production" &&
+    Boolean(env.NEXT_PUBLIC_ADSENSE_CLIENT_ID) &&
+    Boolean(slot);
   const usageQuery = trpc.billing.usage.useQuery(undefined, {
-    enabled: hasSession,
-    ...liveUsageQueryOptions,
+    enabled: shouldCheckUsage,
+    ...passiveUsageQueryOptions,
   });
   const usageStatePending =
-    hasSession && (usageQuery.isLoading || usageQuery.isError || !usageQuery.data);
-  const isPaidUser = hasSession && usageQuery.data ? usageQuery.data.tier !== "free" : false;
+    shouldCheckUsage && (usageQuery.isLoading || usageQuery.isError || !usageQuery.data);
+  const isPaidUser = shouldCheckUsage && usageQuery.data ? usageQuery.data.tier !== "free" : false;
 
   useEffect(() => {
-    if (
-      process.env.NODE_ENV !== "production" ||
-      !env.NEXT_PUBLIC_ADSENSE_CLIENT_ID ||
-      !slot ||
-      usageStatePending ||
-      isPaidUser
-    ) {
+    if (!shouldCheckUsage || usageStatePending || isPaidUser) {
       return;
     }
 
@@ -51,16 +50,9 @@ export function AdSenseSlot({ slot, className }: AdSenseSlotProps) {
     } catch {
       // Ignore double-init and ad blocker failures.
     }
-  }, [isPaidUser, slot, usageStatePending]);
+  }, [isPaidUser, shouldCheckUsage, usageStatePending]);
 
-  if (
-    !env.NEXT_PUBLIC_ADSENSE_CLIENT_ID ||
-    !slot ||
-    process.env.NODE_ENV !== "production" ||
-    session.isPending ||
-    usageStatePending ||
-    isPaidUser
-  ) {
+  if (!shouldCheckUsage || session.isPending || usageStatePending || isPaidUser) {
     return null;
   }
 

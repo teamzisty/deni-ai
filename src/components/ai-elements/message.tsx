@@ -14,6 +14,7 @@ import { mermaid } from "@streamdown/mermaid";
 import { ChevronLeftIcon, ChevronRightIcon } from "lucide-react";
 import { createContext, memo, useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { Streamdown } from "streamdown";
+import { htmlCodeBlockRemarkPlugin } from "@/components/chat/streamdown-remark-plugins";
 import { streamdownOverrideComponents } from "@/components/chat/streamdown-components";
 
 export type MessageProps = HTMLAttributes<HTMLDivElement> & {
@@ -273,6 +274,7 @@ export const MessageBranchPage = ({ className, ...props }: MessageBranchPageProp
 export type MessageResponseProps = ComponentProps<typeof Streamdown>;
 
 const streamdownPlugins = { cjk, code, math, mermaid };
+const streamdownRemarkPlugins = [htmlCodeBlockRemarkPlugin];
 
 export const MessageResponse = memo(
   ({ className, ...props }: MessageResponseProps) => (
@@ -280,6 +282,7 @@ export const MessageResponse = memo(
       className={cn("size-full [&>*:first-child]:mt-0 [&>*:last-child]:mb-0", className)}
       plugins={streamdownPlugins}
       components={streamdownOverrideComponents}
+      remarkPlugins={streamdownRemarkPlugins}
       {...props}
     />
   ),

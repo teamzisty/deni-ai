@@ -21,6 +21,7 @@ import {
   useState,
 } from "react";
 import { Streamdown } from "streamdown";
+import { htmlCodeBlockRemarkPlugin } from "@/components/chat/streamdown-remark-plugins";
 
 import { Shimmer } from "./shimmer";
 
@@ -190,6 +191,7 @@ export type ReasoningContentProps = ComponentProps<typeof CollapsibleContent> & 
 };
 
 const streamdownPlugins = { cjk, code, math, mermaid };
+const streamdownRemarkPlugins = [htmlCodeBlockRemarkPlugin];
 
 export const ReasoningContent = memo(({ className, children, ...props }: ReasoningContentProps) => (
   <CollapsibleContent
@@ -200,7 +202,9 @@ export const ReasoningContent = memo(({ className, children, ...props }: Reasoni
     )}
     {...props}
   >
-    <Streamdown plugins={streamdownPlugins}>{children}</Streamdown>
+    <Streamdown plugins={streamdownPlugins} remarkPlugins={streamdownRemarkPlugins}>
+      {children}
+    </Streamdown>
   </CollapsibleContent>
 ));
 

@@ -1,20 +1,22 @@
 import { UserButton } from "@daveyplate/better-auth-ui";
-import {
-  Bot,
-  BookOpen,
-  ChevronDown,
-  FileText,
-  Globe,
-  Laptop,
-  Shield,
-  Sparkles,
-} from "lucide-react";
+import { Bot, BookOpen, FileText, Globe, Laptop, Menu, Shield, Sparkles } from "lucide-react";
 import { cookies } from "next/headers";
 import Link from "next/link";
 import { useExtracted } from "next-intl";
 import type { AppLocale } from "@/i18n/locales";
 import DeniAIIcon from "./deni-ai-icon";
+import { HeaderMegaMenu } from "./header-mega-menu";
 import { LocaleSwitcher } from "./locale-switcher";
+import { Button, buttonVariants } from "./ui/button";
+import {
+  Sheet,
+  SheetClose,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "./ui/sheet";
 
 type MegaMenuLink = {
   href: string;
@@ -27,57 +29,6 @@ type MegaMenuSection = {
   title: string;
   links: MegaMenuLink[];
 };
-
-function MegaMenu({ label, sections }: { label: string; sections: MegaMenuSection[] }) {
-  return (
-    <div className="group/menu relative">
-      <button
-        type="button"
-        className="inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-black/75 px-4 py-2 text-sm font-medium text-white/88 transition-colors hover:border-white/20 hover:bg-black"
-      >
-        <span>{label}</span>
-        <ChevronDown className="h-3.5 w-3.5 text-white/55 transition-transform duration-200 group-hover/menu:rotate-180" />
-      </button>
-
-      <div className="pointer-events-none absolute left-0 top-full pt-3 opacity-0 transition duration-200 group-hover/menu:pointer-events-auto group-hover/menu:opacity-100 group-focus-within/menu:pointer-events-auto group-focus-within/menu:opacity-100">
-        <div className="w-[min(88vw,760px)] rounded-xl border border-white/10 bg-[#050505]/96 p-4 text-white shadow-[0_32px_80px_rgba(0,0,0,0.55)] backdrop-blur-xl">
-          <div className="grid gap-8 md:grid-cols-3">
-            {sections.map((section) => (
-              <div key={section.title}>
-                <p className="mb-2 text-xs font-medium uppercase tracking-[0.24em] text-white/38">
-                  {section.title}
-                </p>
-                <div className="space-y-1">
-                  {section.links.map((link) => {
-                    const Icon = link.icon;
-
-                    return (
-                      <Link
-                        key={link.href}
-                        href={link.href}
-                        className="grid grid-cols-[2.125rem_minmax(0,1fr)] items-center gap-4 rounded-md border border-white/0 px-1 py-1 transition-colors hover:border-white/10 hover:bg-white/[0.04]"
-                      >
-                        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-white/10 bg-white/[0.03]">
-                          <Icon className="h-5 w-5 text-white/80" />
-                        </span>
-                        <span className="flex min-w-0 flex-col gap-1 justify-center self-center">
-                          <span className="block text-sm font-semibold tracking-tight text-white">
-                            {link.title}
-                          </span>
-                          <span className="block text-xs text-white/56">{link.description}</span>
-                        </span>
-                      </Link>
-                    );
-                  })}
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
 
 export default function Header() {
   const t = useExtracted();
@@ -167,13 +118,7 @@ export default function Header() {
     },
   ];
 
-  const mobileLinks = productSections.flatMap((section) =>
-    section.links.map((link) => ({
-      href: link.href,
-      category: section.title,
-      title: link.title,
-    })),
-  );
+  const mobileSections = [...productSections, ...resourceSections];
 
   return (
     <header className="fixed left-0 top-0 z-50 w-full px-4 pt-4">
@@ -188,8 +133,84 @@ export default function Header() {
             </Link>
 
             <div className="hidden min-w-0 flex-1 items-center justify-center gap-3 lg:flex">
-              <MegaMenu label={t("Products")} sections={productSections} />
-              <MegaMenu label={t("Resources")} sections={resourceSections} />
+              <HeaderMegaMenu label={t("Products")} menuLabel={t("Products")}>
+                <div className="grid gap-8 md:grid-cols-3">
+                  {productSections.map((section) => (
+                    <div key={section.title}>
+                      <p className="mb-2 text-sm text-muted-foreground font-medium">
+                        {section.title}
+                      </p>
+                      <div className="space-y-1">
+                        {section.links.map((link) => {
+                          const Icon = link.icon;
+
+                          return (
+                            <Button
+                              key={link.href}
+                              variant="ghost"
+                              className="w-full h-full justify-start px-2!"
+                              asChild
+                            >
+                              <Link href={link.href} role="menuitem">
+                                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border">
+                                  <Icon className="h-5 w-5 text-white/80" />
+                                </span>
+                                <span className="flex min-w-0 flex-col gap-0.5 justify-center self-center">
+                                  <span className="block text-sm font-semibold tracking-tight">
+                                    {link.title}
+                                  </span>
+                                  <span className="block text-xs text-primary/70">
+                                    {link.description}
+                                  </span>
+                                </span>
+                              </Link>
+                            </Button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </HeaderMegaMenu>
+              <HeaderMegaMenu label={t("Resources")} menuLabel={t("Resources")}>
+                <div className="grid gap-8 md:grid-cols-3">
+                  {resourceSections.map((section) => (
+                    <div key={section.title}>
+                      <p className="mb-2 text-sm text-muted-foreground font-medium">
+                        {section.title}
+                      </p>
+                      <div className="space-y-1">
+                        {section.links.map((link) => {
+                          const Icon = link.icon;
+
+                          return (
+                            <Button
+                              key={link.href}
+                              variant="ghost"
+                              className="w-full h-full justify-start px-2!"
+                              asChild
+                            >
+                              <Link href={link.href} role="menuitem">
+                                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border">
+                                  <Icon className="h-5 w-5 text-white/80" />
+                                </span>
+                                <span className="flex min-w-0 flex-col gap-0.5 justify-center self-center">
+                                  <span className="block text-sm font-semibold tracking-tight">
+                                    {link.title}
+                                  </span>
+                                  <span className="block text-xs text-primary/70">
+                                    {link.description}
+                                  </span>
+                                </span>
+                              </Link>
+                            </Button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </HeaderMegaMenu>
               <Link
                 href="/about"
                 className="rounded-full px-4 py-2 text-sm font-medium text-white/72 transition-colors hover:text-white"
@@ -198,29 +219,94 @@ export default function Header() {
               </Link>
             </div>
 
-            <div className="flex items-center gap-2">
+            <div className="hidden items-center gap-2 lg:flex">
               <LocaleSwitcher changeLocaleAction={changeLocaleAction} />
               <div className="hidden h-5 w-px bg-white/10 sm:block" />
               <UserButton size="icon" />
             </div>
-          </div>
 
-          <div className="mt-3 border-t border-white/10 pt-3 lg:hidden">
-            <div className="flex flex-wrap gap-2">
-              {mobileLinks.map((item) => (
-                <Link
-                  key={`${item.category}-${item.href}`}
-                  href={item.href}
-                  className="min-w-0 flex-1 rounded-2xl border border-white/10 bg-white/[0.03] px-3 py-2.5 transition-colors hover:border-white/20 hover:bg-white/[0.06] sm:flex-none"
+            <div className="lg:hidden">
+              <Sheet>
+                <SheetTrigger
+                  className={buttonVariants({
+                    variant: "outline",
+                    size: "icon",
+                    className:
+                      "rounded-full border-white/10 bg-white/[0.03] text-white hover:bg-white/[0.08]",
+                  })}
+                  aria-label={t("Open menu")}
                 >
-                  <span className="block text-[10px] font-medium uppercase tracking-[0.18em] text-white/40">
-                    {item.category}
-                  </span>
-                  <span className="mt-1 block text-sm font-medium leading-tight text-white">
-                    {item.title}
-                  </span>
-                </Link>
-              ))}
+                  <Menu className="h-5 w-5" />
+                </SheetTrigger>
+                <SheetContent
+                  side="right"
+                  className="border-white/10 bg-[#050505]/96 px-0 text-white backdrop-blur-xl"
+                >
+                  <SheetHeader className="border-b border-white/10 px-5 py-5 text-left">
+                    <SheetTitle className="text-base text-white">{t("Menu")}</SheetTitle>
+                    <SheetDescription className="text-white/60">
+                      {t("Browse products, resources, language, and account options.")}
+                    </SheetDescription>
+                  </SheetHeader>
+
+                  <div className="flex min-h-0 flex-1 flex-col overflow-y-auto px-5 py-5">
+                    <div className="space-y-6">
+                      {mobileSections.map((section) => (
+                        <div key={section.title} className="space-y-2">
+                          <p className="text-[10px] font-medium uppercase tracking-[0.22em] text-white/40">
+                            {section.title}
+                          </p>
+                          <div className="space-y-2">
+                            {section.links.map((link) => {
+                              const Icon = link.icon;
+
+                              return (
+                                <SheetClose asChild key={`${section.title}-${link.href}`}>
+                                  <Button
+                                    variant="ghost"
+                                    className="h-auto w-full justify-start rounded-2xl border border-white/10 bg-white/[0.03] px-3 py-3 text-left text-white hover:bg-white/[0.08]"
+                                    asChild
+                                  >
+                                    <Link href={link.href}>
+                                      <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-white/10 bg-white/[0.03]">
+                                        <Icon className="h-5 w-5 text-white/80" />
+                                      </span>
+                                      <span className="flex min-w-0 flex-col">
+                                        <span className="text-sm font-medium leading-tight">
+                                          {link.title}
+                                        </span>
+                                        <span className="text-xs text-white/60">
+                                          {link.description}
+                                        </span>
+                                      </span>
+                                    </Link>
+                                  </Button>
+                                </SheetClose>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+
+                    <div className="mt-6 border-t border-white/10 pt-6">
+                      <p className="mb-3 text-[10px] font-medium uppercase tracking-[0.22em] text-white/40">
+                        {t("Language")}
+                      </p>
+                      <LocaleSwitcher changeLocaleAction={changeLocaleAction} />
+                    </div>
+
+                    <div className="mt-6 border-t border-white/10 pt-6">
+                      <p className="mb-3 text-[10px] font-medium uppercase tracking-[0.22em] text-white/40">
+                        {t("Account")}
+                      </p>
+                      <div className="flex items-center justify-start">
+                        <UserButton />
+                      </div>
+                    </div>
+                  </div>
+                </SheetContent>
+              </Sheet>
             </div>
           </div>
         </div>
