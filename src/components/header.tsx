@@ -1,20 +1,11 @@
 import { UserButton } from "@daveyplate/better-auth-ui";
-import {
-  Bot,
-  BookOpen,
-  ChevronDown,
-  FileText,
-  Globe,
-  Laptop,
-  Menu,
-  Shield,
-  Sparkles,
-} from "lucide-react";
+import { Bot, BookOpen, FileText, Globe, Laptop, Menu, Shield, Sparkles } from "lucide-react";
 import { cookies } from "next/headers";
 import Link from "next/link";
 import { useExtracted } from "next-intl";
 import type { AppLocale } from "@/i18n/locales";
 import DeniAIIcon from "./deni-ai-icon";
+import { HeaderMegaMenu } from "./header-mega-menu";
 import { LocaleSwitcher } from "./locale-switcher";
 import { Button, buttonVariants } from "./ui/button";
 import {
@@ -38,57 +29,6 @@ type MegaMenuSection = {
   title: string;
   links: MegaMenuLink[];
 };
-
-function MegaMenu({ label, sections }: { label: string; sections: MegaMenuSection[] }) {
-  return (
-    <div className="group/menu relative">
-      <Button type="button" variant="outline" className="rounded-4xl">
-        <span>{label}</span>
-        <ChevronDown className="h-3.5 w-3.5 text-primary transition-transform duration-200 group-hover/menu:rotate-180" />
-      </Button>
-
-      <div className="pointer-events-none absolute left-0 top-full pt-3 opacity-0 transition duration-200 group-hover/menu:pointer-events-auto group-hover/menu:opacity-100 group-focus-within/menu:pointer-events-auto group-focus-within/menu:opacity-100">
-        <div className="w-[min(88vw,760px)] rounded-xl border border-white/10 bg-[#050505]/96 p-4 text-white shadow-[0_32px_80px_rgba(0,0,0,0.55)] backdrop-blur-xl">
-          <div className="grid gap-8 md:grid-cols-3">
-            {sections.map((section) => (
-              <div key={section.title}>
-                <p className="mb-2 text-sm text-muted-foreground font-medium">{section.title}</p>
-                <div className="space-y-1">
-                  {section.links.map((link) => {
-                    const Icon = link.icon;
-
-                    return (
-                      <Button
-                        key={link.href}
-                        variant="ghost"
-                        className="w-full h-full justify-start px-2!"
-                        asChild
-                      >
-                        <Link href={link.href}>
-                          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border">
-                            <Icon className="h-5 w-5 text-white/80" />
-                          </span>
-                          <span className="flex min-w-0 flex-col gap-0.5 justify-center self-center">
-                            <span className="block text-sm font-semibold tracking-tight">
-                              {link.title}
-                            </span>
-                            <span className="block text-xs text-primary/70">
-                              {link.description}
-                            </span>
-                          </span>
-                        </Link>
-                      </Button>
-                    );
-                  })}
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
 
 export default function Header() {
   const t = useExtracted();
@@ -193,8 +133,84 @@ export default function Header() {
             </Link>
 
             <div className="hidden min-w-0 flex-1 items-center justify-center gap-3 lg:flex">
-              <MegaMenu label={t("Products")} sections={productSections} />
-              <MegaMenu label={t("Resources")} sections={resourceSections} />
+              <HeaderMegaMenu label={t("Products")} menuLabel={t("Products")}>
+                <div className="grid gap-8 md:grid-cols-3">
+                  {productSections.map((section) => (
+                    <div key={section.title}>
+                      <p className="mb-2 text-sm text-muted-foreground font-medium">
+                        {section.title}
+                      </p>
+                      <div className="space-y-1">
+                        {section.links.map((link) => {
+                          const Icon = link.icon;
+
+                          return (
+                            <Button
+                              key={link.href}
+                              variant="ghost"
+                              className="w-full h-full justify-start px-2!"
+                              asChild
+                            >
+                              <Link href={link.href} role="menuitem">
+                                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border">
+                                  <Icon className="h-5 w-5 text-white/80" />
+                                </span>
+                                <span className="flex min-w-0 flex-col gap-0.5 justify-center self-center">
+                                  <span className="block text-sm font-semibold tracking-tight">
+                                    {link.title}
+                                  </span>
+                                  <span className="block text-xs text-primary/70">
+                                    {link.description}
+                                  </span>
+                                </span>
+                              </Link>
+                            </Button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </HeaderMegaMenu>
+              <HeaderMegaMenu label={t("Resources")} menuLabel={t("Resources")}>
+                <div className="grid gap-8 md:grid-cols-3">
+                  {resourceSections.map((section) => (
+                    <div key={section.title}>
+                      <p className="mb-2 text-sm text-muted-foreground font-medium">
+                        {section.title}
+                      </p>
+                      <div className="space-y-1">
+                        {section.links.map((link) => {
+                          const Icon = link.icon;
+
+                          return (
+                            <Button
+                              key={link.href}
+                              variant="ghost"
+                              className="w-full h-full justify-start px-2!"
+                              asChild
+                            >
+                              <Link href={link.href} role="menuitem">
+                                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border">
+                                  <Icon className="h-5 w-5 text-white/80" />
+                                </span>
+                                <span className="flex min-w-0 flex-col gap-0.5 justify-center self-center">
+                                  <span className="block text-sm font-semibold tracking-tight">
+                                    {link.title}
+                                  </span>
+                                  <span className="block text-xs text-primary/70">
+                                    {link.description}
+                                  </span>
+                                </span>
+                              </Link>
+                            </Button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </HeaderMegaMenu>
               <Link
                 href="/about"
                 className="rounded-full px-4 py-2 text-sm font-medium text-white/72 transition-colors hover:text-white"
@@ -233,7 +249,7 @@ export default function Header() {
                     </SheetDescription>
                   </SheetHeader>
 
-                  <div className="flex flex-1 flex-col overflow-y-auto px-5 py-5">
+                  <div className="flex min-h-0 flex-1 flex-col overflow-y-auto px-5 py-5">
                     <div className="space-y-6">
                       {mobileSections.map((section) => (
                         <div key={section.title} className="space-y-2">

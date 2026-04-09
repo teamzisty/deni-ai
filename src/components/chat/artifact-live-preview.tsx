@@ -143,6 +143,8 @@ const createPreviewDocument = ({
   <body>
     <div id="root"></div>
     <script type="module">
+      // Preview rendering currently depends on esm.sh for React runtime modules.
+      // If that CDN is unavailable or blocked, preview rendering fails until these imports are cached or replaced with bundled/local copies.
       import React from "https://esm.sh/react@19";
       import * as ReactDomClient from "https://esm.sh/react-dom@19/client";
       import * as ReactJsxRuntime from "https://esm.sh/react@19/jsx-runtime";

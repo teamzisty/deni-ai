@@ -36,13 +36,7 @@ export function AdSenseSlot({ slot, className }: AdSenseSlotProps) {
   const isPaidUser = shouldCheckUsage && usageQuery.data ? usageQuery.data.tier !== "free" : false;
 
   useEffect(() => {
-    if (
-      process.env.NODE_ENV !== "production" ||
-      !env.NEXT_PUBLIC_ADSENSE_CLIENT_ID ||
-      !slot ||
-      usageStatePending ||
-      isPaidUser
-    ) {
+    if (!shouldCheckUsage || usageStatePending || isPaidUser) {
       return;
     }
 
@@ -56,16 +50,9 @@ export function AdSenseSlot({ slot, className }: AdSenseSlotProps) {
     } catch {
       // Ignore double-init and ad blocker failures.
     }
-  }, [isPaidUser, slot, usageStatePending]);
+  }, [isPaidUser, shouldCheckUsage, usageStatePending]);
 
-  if (
-    !env.NEXT_PUBLIC_ADSENSE_CLIENT_ID ||
-    !slot ||
-    process.env.NODE_ENV !== "production" ||
-    session.isPending ||
-    usageStatePending ||
-    isPaidUser
-  ) {
+  if (!shouldCheckUsage || session.isPending || usageStatePending || isPaidUser) {
     return null;
   }
 
