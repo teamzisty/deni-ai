@@ -2,13 +2,11 @@
 
 import React from "react";
 import { motion } from "motion/react";
-import { ArrowRight, Zap, Shield, BrainCircuit } from "lucide-react";
-import Link from "next/link";
+import { Zap, Shield, BrainCircuit } from "lucide-react";
 import { useExtracted } from "next-intl";
 import { SiAnthropic, SiGoogle, SiX } from "@icons-pack/react-simple-icons";
 import { LoginButton } from "@/components/login-button";
 import { AdSenseSlot } from "@/components/adsense-slot";
-import { Button } from "@/components/ui/button";
 import { BlurReveal } from "@/components/blur-reveal";
 import { HighlightedText } from "@/components/highlighted-text";
 import { LogosCarousel } from "@/components/logos-carousel";
