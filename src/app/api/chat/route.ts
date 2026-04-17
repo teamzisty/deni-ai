@@ -146,6 +146,11 @@ export async function POST(req: Request) {
     additionalInstruction,
   } = parsedBody.data;
 
+  const chat = await getChatById(id, userId);
+  if (!chat) {
+    return NextResponse.json({ error: "Chat not found" }, { status: 404 });
+  }
+
   const validatedMessages = await safeValidateUIMessages<UIMessage>({
     messages: rawMessages,
   });
@@ -189,10 +194,6 @@ export async function POST(req: Request) {
   const modelMessages = await convertToModelMessages(messages);
   const currentDate = new Date().toISOString().split("T")[0];
   const persistentMemory = buildMemoryPrompt(memoryState);
-  const chat = await getChatById(id, userId);
-  if (!chat) {
-    return NextResponse.json({ error: "Chat not found" }, { status: 404 });
-  }
 
   const responseMessageId = generateId();
   const generationId = generateId();
