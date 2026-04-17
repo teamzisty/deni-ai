@@ -13,7 +13,6 @@ import {
 import Link from "next/link";
 import { useExtracted } from "next-intl";
 import { useState } from "react";
-import { toast } from "sonner";
 import {
   ChainOfThought,
   ChainOfThoughtContent,
@@ -58,7 +57,6 @@ import { Input } from "@/components/ui/input";
 import { Spinner } from "@/components/ui/spinner";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { getSafeDisplayUrl, toSafeDownloadHref, toSafeHref } from "@/lib/safe-href";
-import { trpc } from "@/lib/trpc/react";
 import type { ModelOption } from "./chat-composer";
 
 type VideoToolPart = ToolUIPart<{
@@ -80,11 +78,6 @@ type ImageToolPart = ToolUIPart<{
 
 const isImageToolPart = (part: UIMessagePart<UIDataTypes, UITools>): part is ImageToolPart =>
   part.type === "tool-image";
-
-type TextMessagePart = Extract<UIMessage["parts"][number], { type: "text"; text: string }>;
-
-const isTextMessagePart = (part: UIMessage["parts"][number]): part is TextMessagePart =>
-  part.type === "text";
 
 interface RequestBody {
   model: string;
@@ -119,7 +112,7 @@ export function AssistantMessage({
   isStreaming,
   showActions,
   isSubmitBlocked,
-  projectId,
+  projectId: _projectId,
   requestBody,
   onRegenerate,
   availableModels,
@@ -130,12 +123,6 @@ export function AssistantMessage({
   const isStreamingThis = isStreaming && isLastMessage;
   const [retryMenuOpen, setRetryMenuOpen] = useState(false);
   const [additionalInstruction, setAdditionalInstruction] = useState("");
-  const textContent =
-    message.parts
-      ?.filter(isTextMessagePart)
-      .map((part) => part.text.trim())
-      .filter(Boolean)
-      .join("\n\n") ?? "";
 
   const regenerateMessage = (overrides?: Partial<RequestBody>) => {
     onRegenerate({
