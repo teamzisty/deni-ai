@@ -1,0 +1,209 @@
+import type { Metadata } from "next";
+import Link from "next/link";
+import {
+  ArrowRight,
+  BookOpenText,
+  Code2,
+  Languages,
+  Lightbulb,
+  MessagesSquare,
+} from "lucide-react";
+import { useExtracted } from "next-intl";
+import { getExtracted } from "next-intl/server";
+import { LoginButton } from "@/components/login-button";
+import { Button } from "@/components/ui/button";
+
+type UseCaseCardProps = {
+  icon: React.ElementType;
+  title: string;
+  summary: string;
+  details: string;
+};
+
+function UseCaseCard({ icon: Icon, title, summary, details }: UseCaseCardProps) {
+  return (
+    <article className="rounded-[1.5rem] border border-border/70 bg-card p-6">
+      <div className="inline-flex h-11 w-11 items-center justify-center rounded-2xl bg-secondary">
+        <Icon className="h-5 w-5" />
+      </div>
+      <h2 className="mt-5 text-xl font-semibold tracking-tight">{title}</h2>
+      <p className="mt-3 text-sm font-medium text-foreground/85">{summary}</p>
+      <p className="mt-3 text-sm leading-7 text-muted-foreground">{details}</p>
+    </article>
+  );
+}
+
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getExtracted();
+  const title = t("Use Cases");
+  const description = t(
+    "Practical examples of how Deni AI helps with research, writing, coding, and multilingual work across multiple model providers.",
+  );
+
+  return {
+    title,
+    description,
+    openGraph: {
+      title: `${title} — Deni AI`,
+      description,
+    },
+    twitter: {
+      title: `${title} | Deni AI`,
+      description,
+    },
+  };
+}
+
+export default function UseCasesPage() {
+  const t = useExtracted();
+
+  const cards = [
+    {
+      icon: BookOpenText,
+      title: t("Research and briefing"),
+      summary: t("Turn raw information into structured notes and clear next actions."),
+      details: t(
+        "Deni AI is useful when you need to summarize notes, compare explanations, or reduce a large topic into a short working brief. A faster model can help shape the first draft, while a stronger reasoning model can test assumptions or identify gaps.",
+      ),
+    },
+    {
+      icon: MessagesSquare,
+      title: t("Writing and editing"),
+      summary: t("Draft faster without losing control of tone or structure."),
+      details: t(
+        "Use the app to rewrite copy, improve clarity, tailor tone, and create variants for emails, product copy, internal docs, or support responses. The value is not only speed but also the ability to compare different model styles in one interface.",
+      ),
+    },
+    {
+      icon: Code2,
+      title: t("Coding workflows"),
+      summary: t("Move from idea to implementation with model switching built in."),
+      details: t(
+        "Developers can use Deni AI to explain stack traces, break down implementation tasks, refactor code, or compare code suggestions across providers. Coding-oriented models tend to do better on implementation details, while reasoning models are useful for architecture and tradeoffs.",
+      ),
+    },
+    {
+      icon: Languages,
+      title: t("Multilingual work"),
+      summary: t("Translate, localize, and refine wording for real audiences."),
+      details: t(
+        "For teams working across languages, Deni AI helps with translation, wording review, localization drafts, and consistency checks. This is especially useful when a literal translation is not enough and the final text still needs to read naturally.",
+      ),
+    },
+  ];
+
+  const principles = [
+    t("Use the smallest model that produces a trustworthy result."),
+    t("Escalate to stronger reasoning only when the task complexity justifies it."),
+    t("Compare more than one answer on decisions that carry product or customer risk."),
+    t("Treat AI output as draft material that still benefits from human review."),
+  ];
+
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@type": "Article",
+    headline: "Deni AI Use Cases",
+    description:
+      "Practical examples of how Deni AI helps with research, writing, coding, and multilingual work across multiple model providers.",
+    author: {
+      "@type": "Organization",
+      name: "Deni AI",
+    },
+    publisher: {
+      "@type": "Organization",
+      name: "Deni AI",
+    },
+    mainEntityOfPage: "https://deniai.app/use-cases",
+  };
+
+  return (
+    <main className="relative min-h-screen" id="main-content">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
+
+      <section className="relative px-4 pb-16 pt-32 md:pb-20 md:pt-40">
+        <div className="mx-auto max-w-4xl">
+          <p className="mb-3 text-sm font-semibold uppercase tracking-[0.18em] text-muted-foreground/70">
+            {t("Use Cases")}
+          </p>
+          <h1 className="max-w-3xl text-3xl font-semibold tracking-tight sm:text-4xl md:text-5xl">
+            {t("Practical ways people can use Deni AI")}
+          </h1>
+          <p className="mt-6 max-w-3xl text-base leading-8 text-muted-foreground">
+            {t(
+              "This page exists to explain the product in concrete terms. Deni AI is not just a generic chat interface. It is a workspace for people who need to move between AI models during research, writing, coding, and multilingual work without juggling separate services.",
+            )}
+          </p>
+
+          <div className="mt-8 flex flex-wrap gap-3">
+            <Button variant="outline" asChild>
+              <Link href="/models">
+                {t("Compare models")}
+                <ArrowRight className="h-4 w-4" />
+              </Link>
+            </Button>
+            <Button variant="outline" asChild>
+              <Link href="/about">
+                {t("Learn about the product")}
+                <ArrowRight className="h-4 w-4" />
+              </Link>
+            </Button>
+          </div>
+        </div>
+      </section>
+
+      <section className="relative px-4 pb-16 md:pb-24">
+        <div className="mx-auto grid max-w-6xl gap-4 md:grid-cols-2">
+          {cards.map((card) => (
+            <UseCaseCard key={card.title} {...card} />
+          ))}
+        </div>
+      </section>
+
+      <section className="relative border-y border-border/50 bg-secondary/20 px-4 py-16 md:py-24">
+        <div className="mx-auto max-w-4xl">
+          <div className="rounded-[1.5rem] border border-border/70 bg-card p-6 md:p-8">
+            <div className="inline-flex h-11 w-11 items-center justify-center rounded-2xl bg-secondary">
+              <Lightbulb className="h-5 w-5" />
+            </div>
+            <h2 className="mt-5 text-2xl font-semibold tracking-tight">
+              {t("How to get useful output from multi-model AI")}
+            </h2>
+            <p className="mt-4 text-sm leading-7 text-muted-foreground">
+              {t(
+                "The real advantage of a multi-model workspace is not novelty. It is being able to route different types of work to different strengths. In practice, that means starting with a quick pass, escalating when the task is hard, and validating important answers instead of trusting the first response by default.",
+              )}
+            </p>
+
+            <ul className="mt-6 space-y-3 text-sm leading-7 text-muted-foreground">
+              {principles.map((principle) => (
+                <li key={principle} className="flex gap-3">
+                  <span className="mt-2 h-2 w-2 rounded-full bg-primary" aria-hidden="true" />
+                  <span>{principle}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      <section className="relative px-4 py-16 md:py-24">
+        <div className="mx-auto max-w-4xl rounded-[1.75rem] border border-border/70 bg-card p-8 text-center md:p-10">
+          <h2 className="text-2xl font-semibold tracking-tight">
+            {t("Want to try these workflows yourself?")}
+          </h2>
+          <p className="mx-auto mt-4 max-w-2xl text-sm leading-7 text-muted-foreground">
+            {t(
+              "You can start with the public product information, review the model list, and then open the app once you know which workflow you want to test.",
+            )}
+          </p>
+          <div className="mt-6 flex flex-col items-center gap-4">
+            <LoginButton />
+          </div>
+        </div>
+      </section>
+    </main>
+  );
+}

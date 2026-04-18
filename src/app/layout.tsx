@@ -64,7 +64,7 @@ export const viewport: Viewport = {
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getExtracted();
   const description = t(
-    "Access GPT, Claude, Gemini and more AI models in one place. Free, fast, and private AI chat for everyone.",
+    "Free multi-model AI chat with GPT, Claude, Gemini, and more in one place.",
   );
 
   return {
@@ -148,6 +148,7 @@ export default async function RootLayout({
                 "@context": "https://schema.org",
                 "@type": "WebSite",
                 name: "Deni AI",
+                alternateName: "deniai.app",
                 url: "https://deniai.app",
                 potentialAction: {
                   "@type": "SearchAction",
@@ -158,9 +159,17 @@ export default async function RootLayout({
               {
                 "@context": "https://schema.org",
                 "@type": "SiteNavigationElement",
-                name: ["About", "AI Models", "Flixa", "Terms of Service", "Privacy Policy"],
+                name: [
+                  "About",
+                  "Use Cases",
+                  "AI Models",
+                  "Flixa",
+                  "Terms of Service",
+                  "Privacy Policy",
+                ],
                 url: [
                   "https://deniai.app/about",
+                  "https://deniai.app/use-cases",
                   "https://deniai.app/models",
                   "https://deniai.app/flixa",
                   "https://deniai.app/legal/terms",

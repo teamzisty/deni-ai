@@ -65,6 +65,10 @@ const nextConfig: NextConfig = {
         headers: marketingCacheHeaders,
       },
       {
+        source: "/use-cases",
+        headers: marketingCacheHeaders,
+      },
+      {
         source: "/models",
         headers: marketingCacheHeaders,
       },

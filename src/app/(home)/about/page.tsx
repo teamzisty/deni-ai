@@ -8,7 +8,7 @@ export async function generateMetadata(): Promise<Metadata> {
   const t = await getExtracted();
   const title = t("About");
   const description = t(
-    "Deni AI is a free, fast, and private multi-model AI chat platform. Access GPT, Claude, Gemini, and more from a single interface.",
+    "Learn about Deni AI, our product mission, and how the multi-model chat platform is designed.",
   );
 
   return {
@@ -16,6 +16,10 @@ export async function generateMetadata(): Promise<Metadata> {
     description,
     openGraph: {
       title: `${title} — Deni AI`,
+      description,
+    },
+    twitter: {
+      title: `${title} | Deni AI`,
       description,
     },
   };

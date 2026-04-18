@@ -5,7 +5,7 @@ import { getExtracted } from "next-intl/server";
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getExtracted();
   return {
-    title: t("Terms of Service | Deni AI"),
+    title: t("Terms of Service"),
     description: t("The terms and conditions for using Deni AI."),
   };
 }

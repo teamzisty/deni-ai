@@ -1,8 +1,10 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { useExtracted } from "next-intl";
 import { getExtracted } from "next-intl/server";
 import { LoginButton } from "@/components/login-button";
 import { models, type ModelDefinition } from "@/lib/constants";
+import { Button } from "@/components/ui/button";
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getExtracted();
@@ -62,6 +64,60 @@ export default function ModelsPage() {
     })),
   };
 
+  const providerGuides = [
+    {
+      provider: "OpenAI",
+      summary: t(
+        "A broad mix of general-purpose, reasoning, and coding models. Useful when you want the widest range of task coverage in one family.",
+      ),
+    },
+    {
+      provider: "Anthropic",
+      summary: t(
+        "Often a strong choice for structured writing, analysis, and long-form reasoning where tone and coherence matter.",
+      ),
+    },
+    {
+      provider: "Google",
+      summary: t(
+        "Useful when you want another high-capability option for multimodal and general productivity workflows inside the same workspace.",
+      ),
+    },
+    {
+      provider: "xAI",
+      summary: t(
+        "Helpful to compare against other providers when you want a different response style or model behavior for the same prompt.",
+      ),
+    },
+  ];
+
+  const selectionGuide = [
+    {
+      title: t("Start with the task, not the brand"),
+      description: t(
+        "Choose based on the job you need done: quick drafting, careful reasoning, coding, or side-by-side comparison.",
+      ),
+    },
+    {
+      title: t("Use faster models for iteration"),
+      description: t(
+        "When the work is exploratory, speed matters. Fast models help you refine prompts before moving to more expensive reasoning models.",
+      ),
+    },
+    {
+      title: t("Escalate to stronger reasoning when the stakes increase"),
+      description: t(
+        "Planning, debugging, evaluations, and nuanced tradeoffs usually benefit from a model with stronger reasoning behavior.",
+      ),
+    },
+    {
+      title: t("Compare outputs before you trust them"),
+      description: t(
+        "No model is correct all the time. Deni AI is most valuable when you can inspect multiple answers without changing products.",
+      ),
+    },
+  ];
+
   return (
     <main className="relative min-h-screen" id="main-content">
       <script
@@ -86,6 +142,27 @@ export default function ModelsPage() {
       {/* Models by Provider */}
       <section className="relative px-4 pb-16 md:pb-24">
         <div className="mx-auto max-w-4xl space-y-12">
+          <div className="rounded-[1.5rem] border border-border/70 bg-card/80 p-6 md:p-8">
+            <h2 className="text-xl font-semibold tracking-tight">{t("How to read this page")}</h2>
+            <p className="mt-3 text-sm leading-7 text-muted-foreground">
+              {t(
+                "This page is meant to help visitors understand the role of each model family before they sign up. Instead of only listing brand names, it explains where each provider tends to fit and how to choose a model based on the work you need to do.",
+              )}
+            </p>
+          </div>
+
+          <div className="grid gap-4 md:grid-cols-2">
+            {providerGuides.map((guide) => (
+              <div
+                key={guide.provider}
+                className="rounded-[1.5rem] border border-border/70 bg-card p-5"
+              >
+                <h2 className="text-lg font-semibold">{guide.provider}</h2>
+                <p className="mt-3 text-sm leading-7 text-muted-foreground">{guide.summary}</p>
+              </div>
+            ))}
+          </div>
+
           {Object.entries(grouped).map(([author, authorModels]) => (
             <div key={author}>
               <h2 className="text-xl font-semibold tracking-tight mb-4">
@@ -107,6 +184,11 @@ export default function ModelsPage() {
                         {model.description}
                       </p>
                     )}
+                    {"contextWindow" in model && model.contextWindow ? (
+                      <p className="mb-3 text-xs text-muted-foreground">
+                        {t("Context window")}: {model.contextWindow.toLocaleString()}
+                      </p>
+                    ) : null}
                     {model.features && (
                       <div className="flex flex-wrap gap-1.5">
                         {model.features.map((feature) => (
@@ -124,6 +206,39 @@ export default function ModelsPage() {
               </div>
             </div>
           ))}
+        </div>
+      </section>
+
+      <section className="relative border-y border-border/50 bg-secondary/20 px-4 py-16 md:py-24">
+        <div className="mx-auto max-w-5xl">
+          <div className="max-w-3xl">
+            <h2 className="text-2xl md:text-3xl font-semibold tracking-tight">
+              {t("A practical guide to choosing the right model")}
+            </h2>
+            <p className="mt-4 text-sm leading-7 text-muted-foreground">
+              {t(
+                "People often compare providers by hype alone. In practice, a better rule is to start with what the task demands, then move to the smallest model that produces a trustworthy result. That is the operating idea behind Deni AI.",
+              )}
+            </p>
+          </div>
+
+          <div className="mt-8 grid gap-4 md:grid-cols-2">
+            {selectionGuide.map((item) => (
+              <div
+                key={item.title}
+                className="rounded-[1.5rem] border border-border/70 bg-card p-6"
+              >
+                <h3 className="text-lg font-semibold">{item.title}</h3>
+                <p className="mt-3 text-sm leading-7 text-muted-foreground">{item.description}</p>
+              </div>
+            ))}
+          </div>
+
+          <div className="mt-8 flex flex-wrap gap-3">
+            <Button variant="outline" asChild>
+              <Link href="/use-cases">{t("See example use cases")}</Link>
+            </Button>
+          </div>
         </div>
       </section>
 

@@ -1,5 +1,15 @@
 import { UserButton } from "@daveyplate/better-auth-ui";
-import { Bot, BookOpen, FileText, Globe, Laptop, Menu, Shield, Sparkles } from "lucide-react";
+import {
+  Bot,
+  BookOpen,
+  BriefcaseBusiness,
+  FileText,
+  Globe,
+  Laptop,
+  Menu,
+  Shield,
+  Sparkles,
+} from "lucide-react";
 import { cookies } from "next/headers";
 import Link from "next/link";
 import { useExtracted } from "next-intl";
@@ -96,6 +106,12 @@ export default function Header() {
           icon: BookOpen,
           title: t("About"),
           description: t("Vision and background."),
+        },
+        {
+          href: "/use-cases",
+          icon: BriefcaseBusiness,
+          title: t("Use Cases"),
+          description: t("Practical workflows."),
         },
       ],
     },
