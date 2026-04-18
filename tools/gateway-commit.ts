@@ -1,6 +1,6 @@
 import { spawnSync } from "node:child_process";
-import { createOpenRouter } from "@openrouter/ai-sdk-provider";
 import { generateObject } from "ai";
+import { createDeniOpenRouter } from "../src/lib/openrouter-provider";
 import { z } from "zod";
 
 const DEFAULT_MODEL = "openai/gpt-5.4";
@@ -290,7 +290,7 @@ async function generateCommit(input: {
   prompt: string;
   includeDescription: boolean;
 }) {
-  const openrouter = createOpenRouter({
+  const openrouter = createDeniOpenRouter({
     apiKey: input.apiKey,
   });
 

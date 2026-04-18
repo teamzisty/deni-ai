@@ -3,7 +3,6 @@ import { createGoogleGenerativeAI, type GoogleGenerativeAIProviderOptions } from
 import { createGroq } from "@ai-sdk/groq";
 import { createXai, type XaiProviderOptions } from "@ai-sdk/xai";
 import { createOpenAI, type OpenAIResponsesProviderOptions } from "@ai-sdk/openai";
-import { createOpenRouter } from "@openrouter/ai-sdk-provider";
 import type { LanguageModel } from "ai";
 import { streamText } from "ai";
 import { and, eq } from "drizzle-orm";
@@ -13,6 +12,7 @@ import { env } from "@/env";
 import { decryptFromB64 } from "@/lib/crypto";
 import { models, resolveReasoningEffort } from "@/lib/constants";
 import { assertSafePublicHttpUrl } from "@/lib/network-security";
+import { createDeniOpenRouter } from "@/lib/openrouter-provider";
 import { getUsageSummary, type UsageCategory, UsageLimitError } from "@/lib/usage";
 
 const voids = createOpenAI({
@@ -167,7 +167,10 @@ export async function resolveChatModelContext({
       }
     } catch (error) {
       if (error instanceof UsageLimitError) {
-        throw new ChatRouteError(402, { error: error.message, reason: "usage_limit" });
+        throw new ChatRouteError(402, {
+          error: error.message,
+          reason: "usage_limit",
+        });
       }
 
       console.error("Failed to check usage", error);
@@ -223,7 +226,7 @@ export async function resolveChatModelContext({
       ? resolvedReasoningEffort
       : undefined;
 
-  const openrouter = createOpenRouter({
+  const openrouter = createDeniOpenRouter({
     apiKey: env.OPENROUTER_API_KEY,
   });
   const selectedOpenRouterModelId = selectedModel
@@ -236,7 +239,12 @@ export async function resolveChatModelContext({
       throw new Error("OpenRouter model is not available for the selected model.");
     }
 
-    return openrouter.chat(selectedOpenRouterModelId);
+    return openrouter.chat(selectedOpenRouterModelId, {
+      cache_control: {
+        type: "ephemeral",
+        ttl: "1h",
+      },
+    });
   };
 
   const anthropicOptions: AnthropicProviderOptions = {};

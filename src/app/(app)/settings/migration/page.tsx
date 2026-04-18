@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowRight, Check, Upload, AlertTriangle, FileJson } from "lucide-react";
+import { ArrowRight, Check, Upload, AlertTriangle, FileJson, AlertCircle } from "lucide-react";
 import Link from "next/link";
 import { useExtracted } from "next-intl";
 import { useState } from "react";
@@ -12,6 +12,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Spinner } from "@/components/ui/spinner";
 import { trpc } from "@/lib/trpc/react";
+import { cn } from "@/lib/utils";
 
 type ImportResult = {
   success: boolean;
@@ -85,14 +86,36 @@ export default function MigrationPage() {
           </CardDescription>
         </CardHeader>
         <CardContent>
+          <div
+            role="status"
+            aria-live="polite"
+            className={cn(
+              "mb-4 relative overflow-hidden rounded-xl border px-3.5 py-3 shadow-sm transition-all",
+              "before:pointer-events-none before:absolute before:inset-y-0 before:left-0 before:w-1",
+              "bg-rose-100 dark:bg-rose-900",
+            )}
+          >
+            <div className="flex items-center gap-3">
+              <div
+                className={cn(
+                  "flex shrink-0 items-center justify-center",
+                  "border-rose-200 bg-rose-100/80 text-rose-700 dark:border-rose-800 dark:bg-rose-900/60 dark:text-rose-300",
+                )}
+              >
+                <AlertCircle className="h-4 w-4" />
+              </div>
+              <div className="min-w-0">
+                <p className="text-[13px] font-medium tracking-tight">
+                  {t("Deni AI Migrator ended on April 1st. Only existing files can be imported.")}
+                </p>
+              </div>
+            </div>
+          </div>
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
-            <Button variant="secondary" className="gap-2" asChild>
-              <Link href="https://migrate.deniai.app" target="_blank">
-                <ArrowRight className="w-4 h-4" />
-                {t("Go to migrator tool")}
-              </Link>
+            <Button variant="secondary" className="gap-2" disabled>
+              <ArrowRight className="w-4 h-4" />
+              {t("Go to migrator tool")}
             </Button>
-            <p className="text-xs text-muted-foreground">{t("Opens in a new tab")}</p>
           </div>
         </CardContent>
       </Card>

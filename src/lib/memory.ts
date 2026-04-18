@@ -1,12 +1,12 @@
 import "server-only";
 
-import { createOpenRouter } from "@openrouter/ai-sdk-provider";
 import { generateObject, type UIMessage } from "ai";
 import { and, eq } from "drizzle-orm";
 import { z } from "zod";
 import { db } from "@/db/drizzle";
 import { memoryItem, userMemory } from "@/db/schema";
 import { env } from "@/env";
+import { createDeniOpenRouter } from "@/lib/openrouter-provider";
 
 export type PersonalizationProfile = {
   instructions: string;
@@ -30,7 +30,7 @@ const defaultProfile: PersonalizationProfile = {
   autoMemory: true,
 };
 
-const openrouter = createOpenRouter({
+const openrouter = createDeniOpenRouter({
   apiKey: env.OPENROUTER_API_KEY,
 });
 

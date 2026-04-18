@@ -344,9 +344,14 @@ function ThemeStep() {
 
   useEffect(() => {
     const isStandardTheme = theme === "light" || theme === "dark" || theme === "system";
-    const isCustomPreset = preset === "t3-chat" || preset === "tangerine" || preset === "mono";
+    const isCustomPreset =
+      preset === "t3-chat" ||
+      preset === "tangerine" ||
+      preset === "mono" ||
+      preset === "deep-dark" ||
+      preset === "deep-dark-high-contrast";
     if (isStandardTheme && !isCustomPreset) {
-      setPreset(theme as ThemeName);
+      setPreset("default");
     }
   }, [preset, setPreset, theme]);
 
@@ -374,6 +379,16 @@ function ThemeStep() {
         return {
           title: t("Mono"),
           description: t("Neutral grayscale, minimal distractions"),
+        };
+      case "deep-dark":
+        return {
+          title: t("Deep Dark"),
+          description: t("Pure black surfaces with crisp OLED contrast"),
+        };
+      case "deep-dark-high-contrast":
+        return {
+          title: t("Deep Dark (high contrast)"),
+          description: t("Absolute black with maximum contrast for OLED screens"),
         };
       default:
         return { title: key, description: "" };

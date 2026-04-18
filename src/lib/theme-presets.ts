@@ -1,4 +1,13 @@
-export type ThemeName = "light" | "dark" | "system" | "default" | "t3-chat" | "tangerine" | "mono";
+export type ThemeName =
+  | "light"
+  | "dark"
+  | "system"
+  | "default"
+  | "t3-chat"
+  | "tangerine"
+  | "mono"
+  | "deep-dark"
+  | "deep-dark-high-contrast";
 
 type ThemePreset = {
   key: ThemeName;
@@ -8,7 +17,7 @@ type ThemePreset = {
 export const themePresets: ThemePreset[] = [
   {
     key: "default",
-    preview: ["bg-[#8b6f47]", "bg-[#d4a574]", "bg-[#f5e6d3]"],
+    preview: ["bg-[#171717]", "bg-[#737373]", "bg-[#f5f5f5]"],
   },
   {
     key: "t3-chat",
@@ -21,6 +30,14 @@ export const themePresets: ThemePreset[] = [
   {
     key: "mono",
     preview: ["bg-[#0b0b0f]", "bg-[#52525b]", "bg-[#a1a1aa]"],
+  },
+  {
+    key: "deep-dark",
+    preview: ["bg-[#000000]", "bg-[#0a0a0f]", "bg-[#1f2937]"],
+  },
+  {
+    key: "deep-dark-high-contrast",
+    preview: ["bg-[#000000]", "bg-[#525252]", "bg-[#ffffff]"],
   },
 ];
 

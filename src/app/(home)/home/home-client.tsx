@@ -3,29 +3,13 @@
 import React from "react";
 import { motion } from "motion/react";
 import Link from "next/link";
-import {
-  ArrowRight,
-  BookOpenText,
-  BrainCircuit,
-  CircleHelp,
-  FileSearch,
-  Shield,
-  Sparkles,
-  Users,
-  Zap,
-} from "lucide-react";
+import { ArrowRight, BookOpenText, BrainCircuit, Code, PencilLine, Zap } from "lucide-react";
 import { useExtracted } from "next-intl";
 import { SiAnthropic, SiGoogle, SiX } from "@icons-pack/react-simple-icons";
 import { LoginButton } from "@/components/login-button";
 import { BlurReveal } from "@/components/blur-reveal";
 import { HighlightedText } from "@/components/highlighted-text";
 import { LogosCarousel } from "@/components/logos-carousel";
-import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from "@/components/ui/accordion";
 import { Button } from "@/components/ui/button";
 import AnimatedGradient from "@/components/animated-gradient";
 import Openai from "@/components/openai";
@@ -61,109 +45,45 @@ function FeatureCard({
 export function ClientHome() {
   const t = useExtracted();
 
-  const valuePoints = [
+  const quickUses = [
     {
-      icon: Sparkles,
-      title: t("One place for leading AI models"),
+      icon: BrainCircuit,
+      title: t("Ask and compare"),
       description: t(
-        "Switch between GPT, Claude, Gemini, and other models without changing apps or managing separate tabs.",
+        "Try the same question with different models when you want a clearer answer or a second opinion.",
       ),
     },
     {
-      icon: FileSearch,
-      title: t("Model choice with context"),
+      icon: PencilLine,
+      title: t("Write a little faster"),
       description: t(
-        "Use the faster models for quick drafts, reasoning models for harder tasks, and coding models when you need implementation help.",
+        "Draft messages, notes, captions, and small pieces of writing without getting stuck on the first version.",
       ),
     },
     {
-      icon: Users,
-      title: t("Built for daily work"),
+      icon: BookOpenText,
+      title: t("Study or explore"),
       description: t(
-        "Deni AI is designed for research, writing, coding, translation, planning, and team workflows rather than one-off demos.",
+        "Break down topics, summarize what you are reading, and keep learning moving when you want help thinking something through.",
       ),
     },
   ];
 
-  const workflows = [
+  const modelTips = [
     {
-      title: t("Research and summarization"),
+      title: t("Start with something fast"),
+      description: t("If you just want a quick answer or rough draft, that is usually enough."),
+    },
+    {
+      title: t("Switch when you want more depth"),
       description: t(
-        "Compare explanations, summarize long notes, and turn rough questions into clear next steps when you need a second brain for everyday work.",
+        "If the first answer feels thin, move to a stronger model for better reasoning or explanation.",
       ),
     },
     {
-      title: t("Coding and debugging"),
+      title: t("Use coding models for code"),
       description: t(
-        "Use stronger reasoning and coding models to review errors, generate implementation plans, and iterate on production code faster.",
-      ),
-    },
-    {
-      title: t("Writing and translation"),
-      description: t(
-        "Draft emails, improve copy, translate between languages, and adjust tone without moving between multiple tools.",
-      ),
-    },
-    {
-      title: t("Team handoff and reuse"),
-      description: t(
-        "Share outputs, keep model access in one workspace, and reduce the friction of everyone using different AI subscriptions.",
-      ),
-    },
-  ];
-
-  const comparisonRows = [
-    {
-      situation: t("Quick answers and lightweight tasks"),
-      recommendation: t("Start with fast general models"),
-      reason: t("They respond quickly and keep simple tasks inexpensive and easy to iterate."),
-    },
-    {
-      situation: t("Hard reasoning or planning"),
-      recommendation: t("Use reasoning-focused models"),
-      reason: t(
-        "They perform better when tasks involve tradeoffs, logic, or longer chains of thought.",
-      ),
-    },
-    {
-      situation: t("Implementation and refactoring"),
-      recommendation: t("Use coding-oriented models"),
-      reason: t(
-        "They are tuned for code generation, debugging, and repository-level changes rather than general chat alone.",
-      ),
-    },
-    {
-      situation: t("Comparing answers before acting"),
-      recommendation: t("Check more than one model"),
-      reason: t(
-        "Different providers have different strengths, so comparison helps reduce blind spots on important tasks.",
-      ),
-    },
-  ];
-
-  const faqs = [
-    {
-      question: t("What makes Deni AI different from a single-model chat app?"),
-      answer: t(
-        "Deni AI is built around comparison and flexibility. Instead of committing to one provider, you can choose the model that fits the task, which is useful when speed, reasoning quality, price, and output style all matter.",
-      ),
-    },
-    {
-      question: t("Who is this product for?"),
-      answer: t(
-        "The product is aimed at people who use AI repeatedly in real workflows: developers, solo founders, students, operators, marketers, and teams who need more than a novelty chat box.",
-      ),
-    },
-    {
-      question: t("Can I understand which model to use without prior experience?"),
-      answer: t(
-        "Yes. The public pages explain the role of each model family, and the app is designed so you can start with a general model and switch when you need stronger reasoning, faster responses, or coding help.",
-      ),
-    },
-    {
-      question: t("Is Deni AI only useful after signup?"),
-      answer: t(
-        "No. The public site explains what the product does, who it helps, how model selection works, and where to find supporting legal and company information before you create an account.",
+        "When the task is implementation, debugging, or refactoring, pick a model made for that kind of work.",
       ),
     },
   ];
@@ -241,10 +161,6 @@ export function ClientHome() {
                 <Link href="/use-cases" className="transition-colors hover:text-foreground">
                   {t("See use cases")}
                 </Link>
-                <span aria-hidden="true">/</span>
-                <Link href="/about" className="transition-colors hover:text-foreground">
-                  {t("Learn about Deni AI")}
-                </Link>
               </div>
             </motion.div>
 
@@ -279,7 +195,7 @@ export function ClientHome() {
               viewport={{ once: true }}
               className="text-4xl md:text-5xl font-bold tracking-tight mb-6"
             >
-              {t("Why Choose Deni AI?")}
+              {t("A few things you can do with Deni AI")}
             </motion.h2>
             <motion.p
               initial={{ opacity: 0, y: 20 }}
@@ -288,228 +204,133 @@ export function ClientHome() {
               transition={{ delay: 0.2 }}
               className="text-muted-foreground text-xl max-w-2xl mx-auto"
             >
-              {t("Built for everyone who wants access to cutting-edge AI technology.")}
+              {t(
+                "Pick the model that fits the moment, whether you want a quick answer, help writing, or a second opinion while you work.",
+              )}
             </motion.p>
           </div>
 
           <div className="grid md:grid-cols-3 gap-8">
-            <FeatureCard
-              icon={BrainCircuit}
-              title={t("Latest Models")}
-              description={t(
-                "Access GPT-5, Claude, Gemini, and more. Always up-to-date with the newest AI capabilities.",
-              )}
-              delay={0.3}
-            />
-            <FeatureCard
-              icon={Zap}
-              title={t("Lightning Fast")}
-              description={t(
-                "Optimized infrastructure for instant responses. No waiting, just pure speed.",
-              )}
-              delay={0.4}
-            />
-            <FeatureCard
-              icon={Shield}
-              title={t("Private & Secure")}
-              description={t(
-                "Your conversations stay yours. Enterprise-grade security without the enterprise price.",
-              )}
-              delay={0.5}
-            />
+            {quickUses.map((item, index) => (
+              <FeatureCard
+                key={item.title}
+                icon={item.icon}
+                title={item.title}
+                description={item.description}
+                delay={0.3 + index * 0.1}
+              />
+            ))}
           </div>
         </div>
       </section>
 
       <section className="relative px-4 py-24 md:py-32">
-        <div className="mx-auto max-w-6xl">
-          <div className="grid gap-8 lg:grid-cols-[1.1fr_0.9fr]">
-            <div>
-              <p className="mb-3 text-sm font-semibold uppercase tracking-[0.18em] text-muted-foreground/70">
-                {t("Why this site exists")}
-              </p>
-              <h2 className="text-4xl font-bold tracking-tight">
-                {t("A practical guide to using AI well, not just a place to open a chat box")}
-              </h2>
-              <p className="mt-6 max-w-2xl text-base leading-8 text-muted-foreground">
-                {t(
-                  "Most AI products ask users to commit to one provider before they understand the tradeoffs. Deni AI is meant to reduce that friction. The public site explains what the product is for, how model selection works, and where the service fits into real workflows so visitors can decide whether the app is useful before they sign up.",
-                )}
-              </p>
-            </div>
-            <div className="grid gap-4">
-              {valuePoints.map(({ icon, title, description }) => {
-                const Icon = icon;
+        <div className="mx-auto max-w-5xl">
+          <div className="max-w-3xl">
+            <p className="mb-3 text-sm font-semibold uppercase tracking-[0.18em] text-muted-foreground/70">
+              {t("Picking a model")}
+            </p>
+            <h2 className="text-4xl font-bold tracking-tight">
+              {t("You can keep this part simple")}
+            </h2>
+            <p className="mt-5 text-base leading-8 text-muted-foreground">
+              {t(
+                "You do not need to memorize every model name. Start with something quick, then switch when you want a better answer, more reasoning, or help with code.",
+              )}
+            </p>
+          </div>
 
-                return (
-                  <div
-                    key={title}
-                    className="rounded-[1.5rem] border border-border/70 bg-card/80 p-5 backdrop-blur-sm"
-                  >
-                    <div className="mb-3 inline-flex h-11 w-11 items-center justify-center rounded-2xl bg-secondary">
-                      <Icon className="h-5 w-5" />
-                    </div>
-                    <h3 className="text-lg font-semibold">{title}</h3>
-                    <p className="mt-2 text-sm leading-7 text-muted-foreground">{description}</p>
-                  </div>
-                );
-              })}
-            </div>
+          <div className="mt-12 grid gap-4 md:grid-cols-3">
+            {modelTips.map((tip, index) => (
+              <div
+                key={tip.title}
+                className="rounded-[1.5rem] border border-border/70 bg-card/90 p-6 shadow-sm"
+              >
+                <div className="mb-4 inline-flex h-10 w-10 items-center justify-center rounded-2xl bg-secondary text-sm font-semibold">
+                  {index === 0 ? <Zap /> : index === 1 ? <BrainCircuit /> : <Code />}
+                </div>
+                <h3 className="text-lg font-semibold">{tip.title}</h3>
+                <p className="mt-3 text-sm leading-7 text-muted-foreground">{tip.description}</p>
+              </div>
+            ))}
           </div>
         </div>
       </section>
 
       <section className="relative border-y border-border/40 bg-background/80 px-4 py-24 md:py-28">
-        <div className="mx-auto max-w-6xl">
+        <div className="mx-auto max-w-5xl">
           <div className="max-w-3xl">
             <p className="mb-3 text-sm font-semibold uppercase tracking-[0.18em] text-muted-foreground/70">
-              {t("Typical workflows")}
+              {t("Start wherever feels easy")}
             </p>
             <h2 className="text-4xl font-bold tracking-tight">
-              {t("What people can actually do with Deni AI")}
+              {t("You do not need a big setup")}
             </h2>
             <p className="mt-5 text-base leading-8 text-muted-foreground">
               {t(
-                "This product is most useful when a person needs a reliable place to move between models during normal work. These are common patterns the site is built around.",
+                "If you just want to look around first, these are the two easiest places to start.",
               )}
             </p>
           </div>
 
-          <div className="mt-12 grid gap-4 md:grid-cols-2">
-            {workflows.map((workflow, index) => (
-              <div
-                key={workflow.title}
-                className="rounded-[1.5rem] border border-border/70 bg-card p-6 shadow-sm"
-              >
-                <div className="mb-4 inline-flex h-8 w-8 items-center justify-center rounded-full bg-primary/10 text-sm font-semibold text-primary">
-                  {index + 1}
-                </div>
-                <h3 className="text-lg font-semibold">{workflow.title}</h3>
-                <p className="mt-3 text-sm leading-7 text-muted-foreground">
-                  {workflow.description}
-                </p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      <section className="relative px-4 py-24 md:py-32">
-        <div className="mx-auto max-w-6xl">
-          <div className="flex flex-col gap-5 md:flex-row md:items-end md:justify-between">
-            <div className="max-w-3xl">
-              <p className="mb-3 text-sm font-semibold uppercase tracking-[0.18em] text-muted-foreground/70">
-                {t("Model selection")}
-              </p>
-              <h2 className="text-4xl font-bold tracking-tight">
-                {t("How to choose a model without guessing")}
-              </h2>
-              <p className="mt-5 text-base leading-8 text-muted-foreground">
+          <div className="mt-10 grid gap-5 md:grid-cols-2">
+            <Link
+              href="/models"
+              className="rounded-[1.5rem] border border-border/70 bg-card p-6 transition-transform hover:-translate-y-1"
+            >
+              <Zap className="h-5 w-5 text-primary" />
+              <h3 className="mt-5 text-xl font-semibold">{t("See the models")}</h3>
+              <p className="mt-3 text-sm leading-7 text-muted-foreground">
                 {t(
-                  "A large part of the product value is helping people understand when they should prioritize speed, reasoning depth, or coding ability. This summary mirrors how the app is intended to be used.",
+                  "Take a quick look at what is available and pick one that feels right for the moment.",
                 )}
               </p>
-            </div>
+            </Link>
+            <Link
+              href="/use-cases"
+              className="rounded-[1.5rem] border border-border/70 bg-card p-6 transition-transform hover:-translate-y-1"
+            >
+              <BookOpenText className="h-5 w-5 text-primary" />
+              <h3 className="mt-5 text-xl font-semibold">{t("See how people use it")}</h3>
+              <p className="mt-3 text-sm leading-7 text-muted-foreground">
+                {t(
+                  "Get a feel for the small everyday ways Deni AI can help with writing, studying, and thinking things through.",
+                )}
+              </p>
+            </Link>
+          </div>
+
+          <div className="mt-10 flex justify-start">
             <Button variant="outline" asChild>
               <Link href="/models">
-                {t("Open the full model list")}
+                {t("Open the model list")}
                 <ArrowRight className="h-4 w-4" />
               </Link>
             </Button>
           </div>
-
-          <div className="mt-10 overflow-hidden rounded-[1.75rem] border border-border/70 bg-card">
-            <div className="grid border-b border-border/60 bg-secondary/30 px-5 py-4 text-sm font-semibold text-foreground/80 md:grid-cols-[1fr_1fr_1.2fr]">
-              <span>{t("Situation")}</span>
-              <span>{t("Recommended approach")}</span>
-              <span>{t("Why it helps")}</span>
-            </div>
-            {comparisonRows.map((row) => (
-              <div
-                key={row.situation}
-                className="grid gap-2 border-b border-border/50 px-5 py-5 text-sm last:border-b-0 md:grid-cols-[1fr_1fr_1.2fr] md:gap-6"
-              >
-                <p className="font-medium">{row.situation}</p>
-                <p className="text-foreground/85">{row.recommendation}</p>
-                <p className="leading-7 text-muted-foreground">{row.reason}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      <section className="relative bg-secondary/20 px-4 py-24 md:py-28">
-        <div className="mx-auto max-w-5xl">
-          <div className="max-w-3xl">
-            <p className="mb-3 text-sm font-semibold uppercase tracking-[0.18em] text-muted-foreground/70">
-              {t("Questions people ask")}
-            </p>
-            <h2 className="text-4xl font-bold tracking-tight">{t("Frequently asked questions")}</h2>
-            <p className="mt-5 text-base leading-8 text-muted-foreground">
-              {t(
-                "These answers are here so visitors can understand the product before creating an account, rather than being pushed straight into the app.",
-              )}
-            </p>
-          </div>
-
-          <Accordion
-            type="single"
-            collapsible
-            className="mt-10 rounded-[1.75rem] border border-border/70 bg-card px-6"
-          >
-            {faqs.map((item, index) => (
-              <AccordionItem key={item.question} value={`faq-${index}`}>
-                <AccordionTrigger className="py-5 text-left text-base font-semibold">
-                  <span className="inline-flex items-center gap-3">
-                    <CircleHelp className="h-4 w-4 text-primary" />
-                    {item.question}
-                  </span>
-                </AccordionTrigger>
-                <AccordionContent className="pb-5 text-sm leading-7 text-muted-foreground">
-                  {item.answer}
-                </AccordionContent>
-              </AccordionItem>
-            ))}
-          </Accordion>
         </div>
       </section>
 
       <section className="relative px-4 py-24 md:py-28">
-        <div className="mx-auto grid max-w-6xl gap-5 md:grid-cols-3">
+        <div className="mx-auto grid max-w-6xl gap-5 md:grid-cols-2">
           <Link
             href="/use-cases"
             className="rounded-[1.5rem] border border-border/70 bg-card p-6 transition-transform hover:-translate-y-1"
           >
             <BookOpenText className="h-5 w-5 text-primary" />
-            <h3 className="mt-5 text-xl font-semibold">{t("Read practical use cases")}</h3>
+            <h3 className="mt-5 text-xl font-semibold">{t("Read a few examples")}</h3>
             <p className="mt-3 text-sm leading-7 text-muted-foreground">
-              {t(
-                "See concrete examples of where Deni AI helps and how different model families fit different jobs.",
-              )}
+              {t("See a few simple examples of how Deni AI can help with everyday personal use.")}
             </p>
           </Link>
           <Link
-            href="/about"
+            href="/chat"
             className="rounded-[1.5rem] border border-border/70 bg-card p-6 transition-transform hover:-translate-y-1"
           >
-            <Users className="h-5 w-5 text-primary" />
-            <h3 className="mt-5 text-xl font-semibold">{t("Review company background")}</h3>
+            <BrainCircuit className="h-5 w-5 text-primary" />
+            <h3 className="mt-5 text-xl font-semibold">{t("Jump into chat")}</h3>
             <p className="mt-3 text-sm leading-7 text-muted-foreground">
-              {t(
-                "Understand the product mission, operating principles, and the type of experience the team is trying to build.",
-              )}
-            </p>
-          </Link>
-          <Link
-            href="/legal/privacy-policy"
-            className="rounded-[1.5rem] border border-border/70 bg-card p-6 transition-transform hover:-translate-y-1"
-          >
-            <Shield className="h-5 w-5 text-primary" />
-            <h3 className="mt-5 text-xl font-semibold">{t("Check privacy information")}</h3>
-            <p className="mt-3 text-sm leading-7 text-muted-foreground">
-              {t(
-                "Privacy, terms, and commerce disclosures are available publicly so users can evaluate the service before signup.",
-              )}
+              {t("If you already know what you want to ask, you can open chat and start there.")}
             </p>
           </Link>
         </div>
