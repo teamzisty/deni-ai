@@ -10,8 +10,7 @@ import {
 } from "next/font/google";
 import { NextIntlClientProvider } from "next-intl";
 import { getExtracted, getLocale, getMessages } from "next-intl/server";
-import { AdSenseScript } from "@/components/adsense-script";
-import { Providers } from "@/components/providers";
+import { ThemeProvider } from "@/components/ui/theme-provider";
 import { Toaster } from "@/components/ui/sonner";
 import { GA_ID } from "@/lib/constants";
 import "./globals.css";
@@ -185,13 +184,11 @@ export default async function RootLayout({
         >
           {t("Skip to content")}
         </a>
-        <AdSenseScript />
         <NextIntlClientProvider locale={locale} messages={messages}>
-          <Providers>
+          <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
             <div className="min-h-screen">{children}</div>
-
             <Toaster position="top-center" />
-          </Providers>
+          </ThemeProvider>
         </NextIntlClientProvider>
       </body>
       {process.env.NODE_ENV === "production" ? <GoogleAnalytics gaId={GA_ID} /> : null}
