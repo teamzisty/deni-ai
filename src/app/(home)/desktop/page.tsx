@@ -79,7 +79,7 @@ export async function generateMetadata(): Promise<Metadata> {
       description,
     },
     twitter: {
-      title: `${title} | Deni AI`,
+      title: `${title} — Deni AI`,
       description,
     },
   };

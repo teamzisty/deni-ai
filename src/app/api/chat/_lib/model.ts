@@ -3,7 +3,7 @@ import { createGoogleGenerativeAI, type GoogleGenerativeAIProviderOptions } from
 import { createGroq } from "@ai-sdk/groq";
 import { createXai, type XaiProviderOptions } from "@ai-sdk/xai";
 import { createOpenAI, type OpenAIResponsesProviderOptions } from "@ai-sdk/openai";
-import type { LanguageModel } from "ai";
+import type { LanguageModel, ModelMessage, SystemModelMessage } from "ai";
 import { streamText } from "ai";
 import { and, eq } from "drizzle-orm";
 import { db } from "@/db/drizzle";
@@ -36,6 +36,11 @@ export class ChatRouteError extends Error {
   }
 }
 
+const OPENROUTER_CACHE_CONTROL = {
+  type: "ephemeral",
+  ttl: "1h",
+} as const;
+
 type ResolveChatModelContextParams = {
   userId: string;
   isAnonymous: boolean;
@@ -48,10 +53,60 @@ type ChatProviderOptions = NonNullable<Parameters<typeof streamText>[0]["provide
 type ResolvedChatModelContext = {
   model: LanguageModel;
   useByok: boolean;
+  usesOpenRouter: boolean;
   usageCategory: UsageCategory;
   usageUnit: "requests" | "tokens";
   providerOptions: ChatProviderOptions;
 };
+
+function mergeProviderOptions(
+  existing: ChatProviderOptions | undefined,
+  additions: ChatProviderOptions,
+): ChatProviderOptions {
+  return {
+    ...existing,
+    ...additions,
+  };
+}
+
+export function addOpenRouterCacheControl(
+  messages: ModelMessage[],
+  system: string,
+): { messages: ModelMessage[]; system: SystemModelMessage } {
+  const cacheProviderOptions = {
+    openrouter: {
+      cacheControl: OPENROUTER_CACHE_CONTROL,
+    },
+  } satisfies ChatProviderOptions;
+
+  return {
+    system: {
+      role: "system",
+      content: system,
+      providerOptions: cacheProviderOptions,
+    },
+    messages: messages.map((message) => {
+      if (typeof message.content === "string") {
+        return {
+          ...message,
+          providerOptions: mergeProviderOptions(message.providerOptions, cacheProviderOptions),
+        } as ModelMessage;
+      }
+
+      return {
+        ...message,
+        content: message.content.map((part) =>
+          part.type === "text"
+            ? {
+                ...part,
+                providerOptions: mergeProviderOptions(part.providerOptions, cacheProviderOptions),
+              }
+            : part,
+        ),
+      } as ModelMessage;
+    }),
+  };
+}
 
 export async function resolveChatModelContext({
   userId,
@@ -239,12 +294,7 @@ export async function resolveChatModelContext({
       throw new Error("OpenRouter model is not available for the selected model.");
     }
 
-    return openrouter.chat(selectedOpenRouterModelId, {
-      cache_control: {
-        type: "ephemeral",
-        ttl: "1h",
-      },
-    });
+    return openrouter.chat(selectedOpenRouterModelId);
   };
 
   const anthropicOptions: AnthropicProviderOptions = {};
@@ -385,6 +435,7 @@ export async function resolveChatModelContext({
   return {
     model,
     useByok,
+    usesOpenRouter: !useByok && ["openai", "anthropic", "google", "xai"].includes(providerId),
     usageCategory,
     usageUnit,
     providerOptions,

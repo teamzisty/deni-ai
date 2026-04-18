@@ -56,9 +56,15 @@ export async function generateMetadata(): Promise<Metadata> {
 
 export default function UseCasesPage() {
   const t = useExtracted();
+  const headline = t("Practical ways people can use Deni AI");
+  const description = t(
+    "This page exists to explain the product in concrete terms. Deni AI is not just a generic chat interface. It is a workspace for people who need to move between AI models during research, writing, coding, and multilingual work without juggling separate services.",
+  );
+  const canonicalUrl = new URL("/use-cases", "https://deniai.app").toString();
 
   const cards = [
     {
+      id: "research",
       icon: BookOpenText,
       title: t("Research and briefing"),
       summary: t("Turn raw information into structured notes and clear next actions."),
@@ -67,6 +73,7 @@ export default function UseCasesPage() {
       ),
     },
     {
+      id: "writing",
       icon: MessagesSquare,
       title: t("Writing and editing"),
       summary: t("Draft faster without losing control of tone or structure."),
@@ -75,6 +82,7 @@ export default function UseCasesPage() {
       ),
     },
     {
+      id: "coding",
       icon: Code2,
       title: t("Coding workflows"),
       summary: t("Move from idea to implementation with model switching built in."),
@@ -83,6 +91,7 @@ export default function UseCasesPage() {
       ),
     },
     {
+      id: "multilingual",
       icon: Languages,
       title: t("Multilingual work"),
       summary: t("Translate, localize, and refine wording for real audiences."),
@@ -93,18 +102,29 @@ export default function UseCasesPage() {
   ];
 
   const principles = [
-    t("Use the smallest model that produces a trustworthy result."),
-    t("Escalate to stronger reasoning only when the task complexity justifies it."),
-    t("Compare more than one answer on decisions that carry product or customer risk."),
-    t("Treat AI output as draft material that still benefits from human review."),
+    {
+      id: "smallest-trustworthy",
+      text: t("Use the smallest model that produces a trustworthy result."),
+    },
+    {
+      id: "escalate-for-complexity",
+      text: t("Escalate to stronger reasoning only when the task complexity justifies it."),
+    },
+    {
+      id: "compare-risky-decisions",
+      text: t("Compare more than one answer on decisions that carry product or customer risk."),
+    },
+    {
+      id: "human-review",
+      text: t("Treat AI output as draft material that still benefits from human review."),
+    },
   ];
 
   const jsonLd = {
     "@context": "https://schema.org",
     "@type": "Article",
-    headline: "Deni AI Use Cases",
-    description:
-      "Practical examples of how Deni AI helps with research, writing, coding, and multilingual work across multiple model providers.",
+    headline,
+    description,
     author: {
       "@type": "Organization",
       name: "Deni AI",
@@ -113,14 +133,14 @@ export default function UseCasesPage() {
       "@type": "Organization",
       name: "Deni AI",
     },
-    mainEntityOfPage: "https://deniai.app/use-cases",
+    mainEntityOfPage: canonicalUrl,
   };
 
   return (
     <main className="relative min-h-screen" id="main-content">
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd).replace(/</g, "\\u003c") }}
       />
 
       <section className="relative px-4 pb-16 pt-32 md:pb-20 md:pt-40">
@@ -129,13 +149,9 @@ export default function UseCasesPage() {
             {t("Use Cases")}
           </p>
           <h1 className="max-w-3xl text-3xl font-semibold tracking-tight sm:text-4xl md:text-5xl">
-            {t("Practical ways people can use Deni AI")}
+            {headline}
           </h1>
-          <p className="mt-6 max-w-3xl text-base leading-8 text-muted-foreground">
-            {t(
-              "This page exists to explain the product in concrete terms. Deni AI is not just a generic chat interface. It is a workspace for people who need to move between AI models during research, writing, coding, and multilingual work without juggling separate services.",
-            )}
-          </p>
+          <p className="mt-6 max-w-3xl text-base leading-8 text-muted-foreground">{description}</p>
 
           <div className="mt-8 flex flex-wrap gap-3">
             <Button variant="outline" asChild>
@@ -157,7 +173,7 @@ export default function UseCasesPage() {
       <section className="relative px-4 pb-16 md:pb-24">
         <div className="mx-auto grid max-w-6xl gap-4 md:grid-cols-2">
           {cards.map((card) => (
-            <UseCaseCard key={card.title} {...card} />
+            <UseCaseCard key={card.id} {...card} />
           ))}
         </div>
       </section>
@@ -179,9 +195,9 @@ export default function UseCasesPage() {
 
             <ul className="mt-6 space-y-3 text-sm leading-7 text-muted-foreground">
               {principles.map((principle) => (
-                <li key={principle} className="flex gap-3">
+                <li key={principle.id} className="flex gap-3">
                   <span className="mt-2 h-2 w-2 rounded-full bg-primary" aria-hidden="true" />
-                  <span>{principle}</span>
+                  <span>{principle.text}</span>
                 </li>
               ))}
             </ul>

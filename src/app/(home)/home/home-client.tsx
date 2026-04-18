@@ -71,16 +71,19 @@ export function ClientHome() {
 
   const modelTips = [
     {
+      icon: Zap,
       title: t("Start with something fast"),
       description: t("If you just want a quick answer or rough draft, that is usually enough."),
     },
     {
+      icon: BrainCircuit,
       title: t("Switch when you want more depth"),
       description: t(
         "If the first answer feels thin, move to a stronger model for better reasoning or explanation.",
       ),
     },
     {
+      icon: Code,
       title: t("Use coding models for code"),
       description: t(
         "When the task is implementation, debugging, or refactoring, pick a model made for that kind of work.",
@@ -241,13 +244,13 @@ export function ClientHome() {
           </div>
 
           <div className="mt-12 grid gap-4 md:grid-cols-3">
-            {modelTips.map((tip, index) => (
+            {modelTips.map((tip) => (
               <div
                 key={tip.title}
                 className="rounded-[1.5rem] border border-border/70 bg-card/90 p-6 shadow-sm"
               >
                 <div className="mb-4 inline-flex h-10 w-10 items-center justify-center rounded-2xl bg-secondary text-sm font-semibold">
-                  {index === 0 ? <Zap /> : index === 1 ? <BrainCircuit /> : <Code />}
+                  <tip.icon />
                 </div>
                 <h3 className="text-lg font-semibold">{tip.title}</h3>
                 <p className="mt-3 text-sm leading-7 text-muted-foreground">{tip.description}</p>

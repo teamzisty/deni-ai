@@ -53,27 +53,34 @@ function applyPresetClass(value: ThemeName) {
 export function ThemePresetProvider({ children }: { children: ReactNode }) {
   const [preset, setPresetState] = useState<ThemeName>("default");
 
-  const applyAndPersist = useCallback((value: ThemeName) => {
+  const applyWithoutPersist = useCallback((value: ThemeName) => {
     const normalizedValue = normalizePreset(value);
     setPresetState(normalizedValue);
-    if (typeof window !== "undefined") {
-      localStorage.setItem(STORAGE_KEY, normalizedValue);
-    }
     applyPresetClass(normalizedValue);
   }, []);
+
+  const applyAndPersist = useCallback(
+    (value: ThemeName) => {
+      const normalizedValue = normalizePreset(value);
+      applyWithoutPersist(normalizedValue);
+      if (typeof window !== "undefined") {
+        localStorage.setItem(STORAGE_KEY, normalizedValue);
+      }
+    },
+    [applyWithoutPersist],
+  );
 
   useEffect(() => {
     const stored = localStorage.getItem(STORAGE_KEY);
     if (stored) {
       if (isThemeName(stored)) {
-        applyAndPersist(stored);
+        applyWithoutPersist(stored);
         return;
       }
       localStorage.removeItem(STORAGE_KEY);
     }
-    setPresetState("default");
-    applyPresetClass("default");
-  }, [applyAndPersist]);
+    applyWithoutPersist("default");
+  }, [applyWithoutPersist]);
 
   const value = useMemo(
     () => ({

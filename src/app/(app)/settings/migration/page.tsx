@@ -1,7 +1,6 @@
 "use client";
 
 import { ArrowRight, Check, Upload, AlertTriangle, FileJson, AlertCircle } from "lucide-react";
-import Link from "next/link";
 import { useExtracted } from "next-intl";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -92,13 +91,14 @@ export default function MigrationPage() {
             className={cn(
               "mb-4 relative overflow-hidden rounded-xl border px-3.5 py-3 shadow-sm transition-all",
               "before:pointer-events-none before:absolute before:inset-y-0 before:left-0 before:w-1",
+              "before:bg-rose-300 dark:before:bg-rose-700",
               "bg-rose-100 dark:bg-rose-900",
             )}
           >
             <div className="flex items-center gap-3">
               <div
                 className={cn(
-                  "flex shrink-0 items-center justify-center",
+                  "flex h-8 w-8 shrink-0 items-center justify-center rounded-full border p-1.5",
                   "border-rose-200 bg-rose-100/80 text-rose-700 dark:border-rose-800 dark:bg-rose-900/60 dark:text-rose-300",
                 )}
               >
@@ -106,7 +106,9 @@ export default function MigrationPage() {
               </div>
               <div className="min-w-0">
                 <p className="text-[13px] font-medium tracking-tight">
-                  {t("Deni AI Migrator ended on April 1st. Only existing files can be imported.")}
+                  {t(
+                    "Deni AI Migrator ended on April 1, 2026. Only existing files can be imported.",
+                  )}
                 </p>
               </div>
             </div>

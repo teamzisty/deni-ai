@@ -125,7 +125,7 @@ export default function AboutPage() {
             />
             <ValueCard
               icon={Lock}
-              title={t("Private")}
+              title={t("PrivateTitle")}
               description={t(
                 "Your conversations stay yours. We do not use your data to train models.",
               )}

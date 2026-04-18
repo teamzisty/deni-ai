@@ -8,6 +8,8 @@ import {
   safeValidateUIMessages,
   stepCountIs,
   streamText,
+  type ModelMessage,
+  type SystemModelMessage,
   type UIMessage,
 } from "ai";
 import { headers } from "next/headers";
@@ -31,7 +33,7 @@ import { buildMemoryPrompt, getUserMemoryState, maybeAutoSaveMemories } from "@/
 import { buildProjectPrompt } from "@/lib/project-context";
 import { consumeUsage, refundUsage, UsageLimitError } from "@/lib/usage";
 import { checkRateLimit } from "@/lib/rate-limit";
-import { ChatRouteError, resolveChatModelContext } from "./_lib/model";
+import { addOpenRouterCacheControl, ChatRouteError, resolveChatModelContext } from "./_lib/model";
 import { buildChatSystemPrompt } from "./_lib/prompt";
 import { ChatRequestSchema, setPendingState } from "./_lib/schema";
 
@@ -181,7 +183,8 @@ export async function POST(req: Request) {
     throw error;
   }
 
-  const { model, providerOptions, usageCategory, usageUnit, useByok } = modelContext;
+  const { model, providerOptions, usageCategory, usageUnit, useByok, usesOpenRouter } =
+    modelContext;
 
   const webSearchEnabled = webSearch || forceWebSearch || deepResearch;
   const tools = createChatTools({
@@ -197,6 +200,7 @@ export async function POST(req: Request) {
 
   const responseMessageId = generateId();
   const generationId = generateId();
+  const shouldGenerateTitle = chat.title === "New Chat";
   const pendingAssistantMessage = setPendingState(
     {
       id: responseMessageId,
@@ -365,6 +369,15 @@ export async function POST(req: Request) {
     imageMode,
   });
 
+  let requestMessages: ModelMessage[] = modelMessages;
+  let requestSystem: string | SystemModelMessage = systemPrompt;
+
+  if (usesOpenRouter) {
+    const cachedPrompt = addOpenRouterCacheControl(modelMessages, systemPrompt);
+    requestMessages = cachedPrompt.messages;
+    requestSystem = cachedPrompt.system;
+  }
+
   generationWatch = setInterval(() => {
     void isChatGenerationActive(id, userId, generationId).then((isActive) => {
       if (!isActive) {
@@ -393,7 +406,7 @@ export async function POST(req: Request) {
 
     result = streamText({
       model: model,
-      messages: modelMessages,
+      messages: requestMessages,
       abortSignal: generationAbortController.signal,
       stopWhen: stepCountIs(50),
       tools,
@@ -409,7 +422,7 @@ export async function POST(req: Request) {
         );
       },
       providerOptions,
-      system: systemPrompt,
+      system: requestSystem,
     });
   } catch (error) {
     await rollbackPendingAssistantState();
@@ -512,8 +525,7 @@ export async function POST(req: Request) {
         let newTitle: string | undefined;
 
         try {
-          const chat = await getChatById(id, userId);
-          if (chat?.title === "New Chat") {
+          if (shouldGenerateTitle) {
             newTitle = await generateTitle(updatedMessages);
           }
         } catch (error) {

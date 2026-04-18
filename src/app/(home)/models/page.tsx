@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { useExtracted } from "next-intl";
+import { useExtracted, useLocale } from "next-intl";
 import { getExtracted } from "next-intl/server";
 import { LoginButton } from "@/components/login-button";
 import { models, type ModelDefinition } from "@/lib/constants";
@@ -41,6 +41,8 @@ const featureStyles: Record<string, string> = {
 
 export default function ModelsPage() {
   const t = useExtracted();
+  const locale = useLocale();
+  const formatNumber = new Intl.NumberFormat(locale);
 
   const grouped = models.reduce(
     (acc, model) => {
@@ -64,32 +66,34 @@ export default function ModelsPage() {
     })),
   };
 
-  const providerGuides = [
-    {
-      provider: "OpenAI",
-      summary: t(
-        "A broad mix of general-purpose, reasoning, and coding models. Useful when you want the widest range of task coverage in one family.",
-      ),
-    },
-    {
-      provider: "Anthropic",
-      summary: t(
-        "Often a strong choice for structured writing, analysis, and long-form reasoning where tone and coherence matter.",
-      ),
-    },
-    {
-      provider: "Google",
-      summary: t(
-        "Useful when you want another high-capability option for multimodal and general productivity workflows inside the same workspace.",
-      ),
-    },
-    {
-      provider: "xAI",
-      summary: t(
-        "Helpful to compare against other providers when you want a different response style or model behavior for the same prompt.",
-      ),
-    },
-  ];
+  const providerGuideSummaries: Partial<Record<keyof typeof authorLabels, string>> = {
+    openai: t(
+      "A broad mix of general-purpose, reasoning, and coding models. Useful when you want the widest range of task coverage in one family.",
+    ),
+    anthropic: t(
+      "Often a strong choice for structured writing, analysis, and long-form reasoning where tone and coherence matter.",
+    ),
+    google: t(
+      "Useful when you want another high-capability option for multimodal and general productivity workflows inside the same workspace.",
+    ),
+    xai: t(
+      "Helpful to compare against other providers when you want a different response style or model behavior for the same prompt.",
+    ),
+  };
+
+  const providerGuides = Object.keys(grouped)
+    .map((providerKey) => {
+      const summary = providerGuideSummaries[providerKey as keyof typeof providerGuideSummaries];
+      if (!summary) {
+        return null;
+      }
+
+      return {
+        provider: authorLabels[providerKey] ?? providerKey,
+        summary,
+      };
+    })
+    .filter((guide): guide is { provider: string; summary: string } => guide !== null);
 
   const selectionGuide = [
     {
@@ -186,7 +190,7 @@ export default function ModelsPage() {
                     )}
                     {"contextWindow" in model && model.contextWindow ? (
                       <p className="mb-3 text-xs text-muted-foreground">
-                        {t("Context window")}: {model.contextWindow.toLocaleString()}
+                        {t("Context window")}: {formatNumber.format(model.contextWindow)}
                       </p>
                     ) : null}
                     {model.features && (
