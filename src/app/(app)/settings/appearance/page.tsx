@@ -43,6 +43,16 @@ export default function AppearancePage() {
           title: t("Mono"),
           description: t("Neutral grayscale, minimal distractions"),
         };
+      case "deep-dark":
+        return {
+          title: t("Deep Dark"),
+          description: t("Pure black surfaces with crisp OLED contrast"),
+        };
+      case "deep-dark-high-contrast":
+        return {
+          title: t("Deep Dark (high contrast)"),
+          description: t("Absolute black with maximum contrast for OLED screens"),
+        };
       default:
         return { title: key, description: "" };
     }

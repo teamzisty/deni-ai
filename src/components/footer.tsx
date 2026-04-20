@@ -30,6 +30,12 @@ const Footer = () => {
               {t("About")}
             </Link>
             <Link
+              href="/use-cases"
+              className="text-muted-foreground transition-colors hover:text-foreground editorial-underline"
+            >
+              {t("Use Cases")}
+            </Link>
+            <Link
               href="/models"
               className="text-muted-foreground transition-colors hover:text-foreground editorial-underline"
             >

@@ -3,8 +3,7 @@ import { createGoogleGenerativeAI, type GoogleGenerativeAIProviderOptions } from
 import { createGroq } from "@ai-sdk/groq";
 import { createXai, type XaiProviderOptions } from "@ai-sdk/xai";
 import { createOpenAI, type OpenAIResponsesProviderOptions } from "@ai-sdk/openai";
-import { createOpenRouter } from "@openrouter/ai-sdk-provider";
-import type { LanguageModel } from "ai";
+import type { LanguageModel, ModelMessage, SystemModelMessage } from "ai";
 import { streamText } from "ai";
 import { and, eq } from "drizzle-orm";
 import { db } from "@/db/drizzle";
@@ -13,6 +12,7 @@ import { env } from "@/env";
 import { decryptFromB64 } from "@/lib/crypto";
 import { models, resolveReasoningEffort } from "@/lib/constants";
 import { assertSafePublicHttpUrl } from "@/lib/network-security";
+import { createDeniOpenRouter } from "@/lib/openrouter-provider";
 import { getUsageSummary, type UsageCategory, UsageLimitError } from "@/lib/usage";
 
 const voids = createOpenAI({
@@ -36,6 +36,11 @@ export class ChatRouteError extends Error {
   }
 }
 
+const OPENROUTER_CACHE_CONTROL = {
+  type: "ephemeral",
+  ttl: "1h",
+} as const;
+
 type ResolveChatModelContextParams = {
   userId: string;
   isAnonymous: boolean;
@@ -48,10 +53,60 @@ type ChatProviderOptions = NonNullable<Parameters<typeof streamText>[0]["provide
 type ResolvedChatModelContext = {
   model: LanguageModel;
   useByok: boolean;
+  usesOpenRouter: boolean;
   usageCategory: UsageCategory;
   usageUnit: "requests" | "tokens";
   providerOptions: ChatProviderOptions;
 };
+
+function mergeProviderOptions(
+  existing: ChatProviderOptions | undefined,
+  additions: ChatProviderOptions,
+): ChatProviderOptions {
+  return {
+    ...existing,
+    ...additions,
+  };
+}
+
+export function addOpenRouterCacheControl(
+  messages: ModelMessage[],
+  system: string,
+): { messages: ModelMessage[]; system: SystemModelMessage } {
+  const cacheProviderOptions = {
+    openrouter: {
+      cacheControl: OPENROUTER_CACHE_CONTROL,
+    },
+  } satisfies ChatProviderOptions;
+
+  return {
+    system: {
+      role: "system",
+      content: system,
+      providerOptions: cacheProviderOptions,
+    },
+    messages: messages.map((message) => {
+      if (typeof message.content === "string") {
+        return {
+          ...message,
+          providerOptions: mergeProviderOptions(message.providerOptions, cacheProviderOptions),
+        } as ModelMessage;
+      }
+
+      return {
+        ...message,
+        content: message.content.map((part) =>
+          part.type === "text"
+            ? {
+                ...part,
+                providerOptions: mergeProviderOptions(part.providerOptions, cacheProviderOptions),
+              }
+            : part,
+        ),
+      } as ModelMessage;
+    }),
+  };
+}
 
 export async function resolveChatModelContext({
   userId,
@@ -167,7 +222,10 @@ export async function resolveChatModelContext({
       }
     } catch (error) {
       if (error instanceof UsageLimitError) {
-        throw new ChatRouteError(402, { error: error.message, reason: "usage_limit" });
+        throw new ChatRouteError(402, {
+          error: error.message,
+          reason: "usage_limit",
+        });
       }
 
       console.error("Failed to check usage", error);
@@ -223,7 +281,7 @@ export async function resolveChatModelContext({
       ? resolvedReasoningEffort
       : undefined;
 
-  const openrouter = createOpenRouter({
+  const openrouter = createDeniOpenRouter({
     apiKey: env.OPENROUTER_API_KEY,
   });
   const selectedOpenRouterModelId = selectedModel
@@ -377,6 +435,7 @@ export async function resolveChatModelContext({
   return {
     model,
     useByok,
+    usesOpenRouter: !useByok && ["openai", "anthropic", "google", "xai"].includes(providerId),
     usageCategory,
     usageUnit,
     providerOptions,

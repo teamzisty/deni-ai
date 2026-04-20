@@ -66,16 +66,20 @@ async function getDesktopDownloads(): Promise<DesktopDownloads> {
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getExtracted();
-  const title = t("Deni AI Desktop");
+  const title = t("Desktop App");
   const description = t(
-    "Deni AI Desktop brings tray access, native notifications, and a lightweight desktop companion for faster everyday use.",
+    "Download the Deni AI desktop app for tray access, notifications, and quick reopen during daily work.",
   );
 
   return {
     title,
     description,
     openGraph: {
-      title: `${title} by Deni AI`,
+      title: `${title} — Deni AI`,
+      description,
+    },
+    twitter: {
+      title: `${title} — Deni AI`,
       description,
     },
   };

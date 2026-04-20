@@ -56,16 +56,20 @@ type TeamCheckoutProps = {
 
 type StripeCheckoutPageProps = BillingCheckoutProps | TeamCheckoutProps;
 
-function getTierLabel(t: ReturnType<typeof useExtracted>, planId: string) {
-  const tier = getPlanTier(planId);
-  if (tier === "team") {
-    return t("Pro for Teams");
-  }
-  if (tier === "max") {
-    return t("Max");
-  }
+function useTierLabelValue() {
+  const t = useExtracted();
 
-  return tier === "pro" ? t("Pro") : t("Plus");
+  return (planId: string) => {
+    const tier = getPlanTier(planId);
+    if (tier === "team") {
+      return t("Pro for Teams");
+    }
+    if (tier === "max") {
+      return t("Max");
+    }
+
+    return tier === "pro" ? t("Pro") : t("Plus");
+  };
 }
 
 function getStripeCheckoutAppearance(theme: string | undefined): Appearance {
@@ -174,6 +178,7 @@ function getStripeCheckoutAppearance(theme: string | undefined): Appearance {
 
 function usePlanLabel() {
   const t = useExtracted();
+  const getTierLabel = useTierLabelValue();
 
   return (planId: BillingPlanId | string | null | undefined) => {
     if (!planId) {
@@ -190,7 +195,7 @@ function usePlanLabel() {
     }
 
     return t("{tier} {name}", {
-      tier: getTierLabel(t, planId),
+      tier: getTierLabel(planId),
       name: interval,
     });
   };
@@ -198,6 +203,7 @@ function usePlanLabel() {
 
 function useTierLabel() {
   const t = useExtracted();
+  const getTierLabel = useTierLabelValue();
 
   return (planId: BillingPlanId | string | null | undefined) => {
     if (!planId) {
@@ -208,7 +214,7 @@ function useTierLabel() {
       return t("Pro for Teams");
     }
 
-    return getTierLabel(t, planId);
+    return getTierLabel(planId);
   };
 }
 

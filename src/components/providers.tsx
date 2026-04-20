@@ -14,12 +14,11 @@ import { authClient } from "@/lib/auth-client";
 import { makeTRPCClient } from "@/lib/trpc/client";
 import { trpc } from "@/lib/trpc/react";
 import { ServiceWorkerRegistration } from "./pwa/service-worker-registration";
-import { ThemeProvider } from "./ui/theme-provider";
 import { TooltipProvider } from "./ui/tooltip";
 
 const trpcClient = makeTRPCClient();
 
-export function Providers({ children }: { children: ReactNode }) {
+export function AppProviders({ children }: { children: ReactNode }) {
   const t = useExtracted();
   const router = useRouter();
   const [queryClient] = useState(
@@ -36,56 +35,54 @@ export function Providers({ children }: { children: ReactNode }) {
   );
 
   return (
-    <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
-      <ThemePresetProvider>
-        <DesignStyleProvider>
-          <TooltipProvider>
-            <QueryClientProvider client={queryClient}>
-              <trpc.Provider client={trpcClient} queryClient={queryClient}>
-                <AuthQueryProvider>
-                  <AuthUIProviderTanstack
-                    authClient={authClient}
-                    avatar={{
-                      upload: async (file: File) => {
-                        return await new Promise<string>((resolve, reject) => {
-                          const reader = new FileReader();
-                          reader.onerror = () => reject(new Error(t("Failed to read file")));
-                          reader.onload = () => {
-                            const result = reader.result;
-                            if (typeof result === "string") resolve(result);
-                            else reject(new Error(t("Unexpected result from FileReader")));
-                          };
-                          reader.readAsDataURL(file);
-                        });
-                      },
-                    }}
-                    navigate={router.push}
-                    replace={router.replace}
-                    onSessionChange={() => {
-                      // Clear router cache (protected routes)
-                      router.refresh();
-                    }}
-                    social={{ providers: ["google", "github"] }}
-                    twoFactor={["totp"]}
-                    captcha={{
-                      provider: "cloudflare-turnstile",
-                      siteKey: env.NEXT_PUBLIC_TURNSTILE_SITE_KEY,
-                    }}
-                    credentials={{ forgotPassword: true }}
-                    emailVerification
-                    deleteUser
-                    passkey
-                    Link={Link}
-                  >
-                    {children}
-                    <ServiceWorkerRegistration />
-                  </AuthUIProviderTanstack>
-                </AuthQueryProvider>
-              </trpc.Provider>
-            </QueryClientProvider>
-          </TooltipProvider>
-        </DesignStyleProvider>
-      </ThemePresetProvider>
-    </ThemeProvider>
+    <ThemePresetProvider>
+      <DesignStyleProvider>
+        <TooltipProvider>
+          <QueryClientProvider client={queryClient}>
+            <trpc.Provider client={trpcClient} queryClient={queryClient}>
+              <AuthQueryProvider>
+                <AuthUIProviderTanstack
+                  authClient={authClient}
+                  avatar={{
+                    upload: async (file: File) => {
+                      return await new Promise<string>((resolve, reject) => {
+                        const reader = new FileReader();
+                        reader.onerror = () => reject(new Error(t("Failed to read file")));
+                        reader.onload = () => {
+                          const result = reader.result;
+                          if (typeof result === "string") resolve(result);
+                          else reject(new Error(t("Unexpected result from FileReader")));
+                        };
+                        reader.readAsDataURL(file);
+                      });
+                    },
+                  }}
+                  navigate={router.push}
+                  replace={router.replace}
+                  onSessionChange={() => {
+                    // Clear router cache (protected routes)
+                    router.refresh();
+                  }}
+                  social={{ providers: ["google", "github"] }}
+                  twoFactor={["totp"]}
+                  captcha={{
+                    provider: "cloudflare-turnstile",
+                    siteKey: env.NEXT_PUBLIC_TURNSTILE_SITE_KEY,
+                  }}
+                  credentials={{ forgotPassword: true }}
+                  emailVerification
+                  deleteUser
+                  passkey
+                  Link={Link}
+                >
+                  {children}
+                  <ServiceWorkerRegistration />
+                </AuthUIProviderTanstack>
+              </AuthQueryProvider>
+            </trpc.Provider>
+          </QueryClientProvider>
+        </TooltipProvider>
+      </DesignStyleProvider>
+    </ThemePresetProvider>
   );
 }

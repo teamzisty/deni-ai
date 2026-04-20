@@ -22,10 +22,10 @@ const USAGE_LIMITS: Record<
   Record<SubscriptionTier, { limit: number | null; unit: UsageUnit }>
 > = {
   basic: {
-    free: { limit: 1000, unit: "requests" },
-    plus: { limit: 100_000_000, unit: "tokens" },
-    pro: { limit: 250_000_000, unit: "tokens" },
-    max: { limit: 750_000_000, unit: "tokens" },
+    free: { limit: 300, unit: "requests" },
+    plus: { limit: 150_000_000, unit: "tokens" },
+    pro: { limit: 300_000_000, unit: "tokens" },
+    max: { limit: 800_000_000, unit: "tokens" },
   },
   premium: {
     free: { limit: 100, unit: "requests" },

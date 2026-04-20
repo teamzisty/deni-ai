@@ -2,15 +2,15 @@
 
 import React from "react";
 import { motion } from "motion/react";
-import { Zap, Shield, BrainCircuit } from "lucide-react";
+import Link from "next/link";
+import { ArrowRight, BookOpenText, BrainCircuit, Code, PencilLine, Zap } from "lucide-react";
 import { useExtracted } from "next-intl";
 import { SiAnthropic, SiGoogle, SiX } from "@icons-pack/react-simple-icons";
 import { LoginButton } from "@/components/login-button";
-import { AdSenseSlot } from "@/components/adsense-slot";
 import { BlurReveal } from "@/components/blur-reveal";
 import { HighlightedText } from "@/components/highlighted-text";
 import { LogosCarousel } from "@/components/logos-carousel";
-import { env } from "@/env";
+import { Button } from "@/components/ui/button";
 import AnimatedGradient from "@/components/animated-gradient";
 import Openai from "@/components/openai";
 
@@ -45,6 +45,52 @@ function FeatureCard({
 export function ClientHome() {
   const t = useExtracted();
 
+  const quickUses = [
+    {
+      icon: BrainCircuit,
+      title: t("Ask and compare"),
+      description: t(
+        "Try the same question with different models when you want a clearer answer or a second opinion.",
+      ),
+    },
+    {
+      icon: PencilLine,
+      title: t("Write a little faster"),
+      description: t(
+        "Draft messages, notes, captions, and small pieces of writing without getting stuck on the first version.",
+      ),
+    },
+    {
+      icon: BookOpenText,
+      title: t("Study or explore"),
+      description: t(
+        "Break down topics, summarize what you are reading, and keep learning moving when you want help thinking something through.",
+      ),
+    },
+  ];
+
+  const modelTips = [
+    {
+      icon: Zap,
+      title: t("Start with something fast"),
+      description: t("If you just want a quick answer or rough draft, that is usually enough."),
+    },
+    {
+      icon: BrainCircuit,
+      title: t("Switch when you want more depth"),
+      description: t(
+        "If the first answer feels thin, move to a stronger model for better reasoning or explanation.",
+      ),
+    },
+    {
+      icon: Code,
+      title: t("Use coding models for code"),
+      description: t(
+        "When the task is implementation, debugging, or refactoring, pick a model made for that kind of work.",
+      ),
+    },
+  ];
+
   const aiLogos = [
     <Openai key="openai" className="size-8 opacity-40 hover:opacity-100 transition-opacity" />,
     <SiGoogle key="google" className="size-8 opacity-40 hover:opacity-100 transition-opacity" />,
@@ -71,7 +117,10 @@ export function ClientHome() {
         <div className="mx-auto max-w-5xl">
           <div className="flex flex-col items-center text-center">
             {/* Main headline */}
-            <h1 className="text-4xl sm:text-6xl md:text-8xl font-bold tracking-tight leading-[1.02] mb-8">
+            <h1
+              data-nosnippet
+              className="text-4xl sm:text-6xl md:text-8xl font-bold tracking-tight leading-[1.02] mb-8"
+            >
               <BlurReveal className="block" delay={0.2}>
                 {t("The AI Assistant")}
               </BlurReveal>
@@ -104,9 +153,18 @@ export function ClientHome() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 1.6, duration: 0.8 }}
-              className="flex flex-col sm:flex-row gap-5"
+              className="flex flex-col items-center gap-5"
             >
               <LoginButton />
+              <div className="flex flex-wrap items-center justify-center gap-3 text-sm text-muted-foreground">
+                <Link href="/models" className="transition-colors hover:text-foreground">
+                  {t("Browse models")}
+                </Link>
+                <span aria-hidden="true">/</span>
+                <Link href="/use-cases" className="transition-colors hover:text-foreground">
+                  {t("See use cases")}
+                </Link>
+              </div>
             </motion.div>
 
             {/* Logo Carousel */}
@@ -126,15 +184,6 @@ export function ClientHome() {
                 ))}
               </LogosCarousel>
             </motion.div>
-
-            <motion.div
-              initial={{ opacity: 0, y: 18 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 2.2, duration: 0.7 }}
-              className="mt-14 w-full max-w-3xl"
-            >
-              <AdSenseSlot slot={env.NEXT_PUBLIC_ADSENSE_HOME_SLOT_ID ?? ""} />
-            </motion.div>
           </div>
         </div>
       </section>
@@ -149,7 +198,7 @@ export function ClientHome() {
               viewport={{ once: true }}
               className="text-4xl md:text-5xl font-bold tracking-tight mb-6"
             >
-              {t("Why Choose Deni AI?")}
+              {t("A few things you can do with Deni AI")}
             </motion.h2>
             <motion.p
               initial={{ opacity: 0, y: 20 }}
@@ -158,36 +207,135 @@ export function ClientHome() {
               transition={{ delay: 0.2 }}
               className="text-muted-foreground text-xl max-w-2xl mx-auto"
             >
-              {t("Built for everyone who wants access to cutting-edge AI technology.")}
+              {t(
+                "Pick the model that fits the moment, whether you want a quick answer, help writing, or a second opinion while you work.",
+              )}
             </motion.p>
           </div>
 
           <div className="grid md:grid-cols-3 gap-8">
-            <FeatureCard
-              icon={BrainCircuit}
-              title={t("Latest Models")}
-              description={t(
-                "Access GPT-5, Claude, Gemini, and more. Always up-to-date with the newest AI capabilities.",
-              )}
-              delay={0.3}
-            />
-            <FeatureCard
-              icon={Zap}
-              title={t("Lightning Fast")}
-              description={t(
-                "Optimized infrastructure for instant responses. No waiting, just pure speed.",
-              )}
-              delay={0.4}
-            />
-            <FeatureCard
-              icon={Shield}
-              title={t("Private & Secure")}
-              description={t(
-                "Your conversations stay yours. Enterprise-grade security without the enterprise price.",
-              )}
-              delay={0.5}
-            />
+            {quickUses.map((item, index) => (
+              <FeatureCard
+                key={item.title}
+                icon={item.icon}
+                title={item.title}
+                description={item.description}
+                delay={0.3 + index * 0.1}
+              />
+            ))}
           </div>
+        </div>
+      </section>
+
+      <section className="relative px-4 py-24 md:py-32">
+        <div className="mx-auto max-w-5xl">
+          <div className="max-w-3xl">
+            <p className="mb-3 text-sm font-semibold uppercase tracking-[0.18em] text-muted-foreground/70">
+              {t("Picking a model")}
+            </p>
+            <h2 className="text-4xl font-bold tracking-tight">
+              {t("You can keep this part simple")}
+            </h2>
+            <p className="mt-5 text-base leading-8 text-muted-foreground">
+              {t(
+                "You do not need to memorize every model name. Start with something quick, then switch when you want a better answer, more reasoning, or help with code.",
+              )}
+            </p>
+          </div>
+
+          <div className="mt-12 grid gap-4 md:grid-cols-3">
+            {modelTips.map((tip) => (
+              <div
+                key={tip.title}
+                className="rounded-[1.5rem] border border-border/70 bg-card/90 p-6 shadow-sm"
+              >
+                <div className="mb-4 inline-flex h-10 w-10 items-center justify-center rounded-2xl bg-secondary text-sm font-semibold">
+                  <tip.icon />
+                </div>
+                <h3 className="text-lg font-semibold">{tip.title}</h3>
+                <p className="mt-3 text-sm leading-7 text-muted-foreground">{tip.description}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <section className="relative border-y border-border/40 bg-background/80 px-4 py-24 md:py-28">
+        <div className="mx-auto max-w-5xl">
+          <div className="max-w-3xl">
+            <p className="mb-3 text-sm font-semibold uppercase tracking-[0.18em] text-muted-foreground/70">
+              {t("Start wherever feels easy")}
+            </p>
+            <h2 className="text-4xl font-bold tracking-tight">
+              {t("You do not need a big setup")}
+            </h2>
+            <p className="mt-5 text-base leading-8 text-muted-foreground">
+              {t(
+                "If you just want to look around first, these are the two easiest places to start.",
+              )}
+            </p>
+          </div>
+
+          <div className="mt-10 grid gap-5 md:grid-cols-2">
+            <Link
+              href="/models"
+              className="rounded-[1.5rem] border border-border/70 bg-card p-6 transition-transform hover:-translate-y-1"
+            >
+              <Zap className="h-5 w-5 text-primary" />
+              <h3 className="mt-5 text-xl font-semibold">{t("See the models")}</h3>
+              <p className="mt-3 text-sm leading-7 text-muted-foreground">
+                {t(
+                  "Take a quick look at what is available and pick one that feels right for the moment.",
+                )}
+              </p>
+            </Link>
+            <Link
+              href="/use-cases"
+              className="rounded-[1.5rem] border border-border/70 bg-card p-6 transition-transform hover:-translate-y-1"
+            >
+              <BookOpenText className="h-5 w-5 text-primary" />
+              <h3 className="mt-5 text-xl font-semibold">{t("See how people use it")}</h3>
+              <p className="mt-3 text-sm leading-7 text-muted-foreground">
+                {t(
+                  "Get a feel for the small everyday ways Deni AI can help with writing, studying, and thinking things through.",
+                )}
+              </p>
+            </Link>
+          </div>
+
+          <div className="mt-10 flex justify-start">
+            <Button variant="outline" asChild>
+              <Link href="/models">
+                {t("Open the model list")}
+                <ArrowRight className="h-4 w-4" />
+              </Link>
+            </Button>
+          </div>
+        </div>
+      </section>
+
+      <section className="relative px-4 py-24 md:py-28">
+        <div className="mx-auto grid max-w-6xl gap-5 md:grid-cols-2">
+          <Link
+            href="/use-cases"
+            className="rounded-[1.5rem] border border-border/70 bg-card p-6 transition-transform hover:-translate-y-1"
+          >
+            <BookOpenText className="h-5 w-5 text-primary" />
+            <h3 className="mt-5 text-xl font-semibold">{t("Read a few examples")}</h3>
+            <p className="mt-3 text-sm leading-7 text-muted-foreground">
+              {t("See a few simple examples of how Deni AI can help with everyday personal use.")}
+            </p>
+          </Link>
+          <Link
+            href="/chat"
+            className="rounded-[1.5rem] border border-border/70 bg-card p-6 transition-transform hover:-translate-y-1"
+          >
+            <BrainCircuit className="h-5 w-5 text-primary" />
+            <h3 className="mt-5 text-xl font-semibold">{t("Jump into chat")}</h3>
+            <p className="mt-3 text-sm leading-7 text-muted-foreground">
+              {t("If you already know what you want to ask, you can open chat and start there.")}
+            </p>
+          </Link>
         </div>
       </section>
     </main>

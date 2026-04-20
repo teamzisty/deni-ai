@@ -105,19 +105,23 @@ function usePlanIntervalLabel() {
   };
 }
 
-function getTierLabel(t: ReturnType<typeof useExtracted>, planId: string) {
-  const tier = getPlanTier(planId);
-  if (tier === "max") {
-    return t("Max");
-  }
-  if (tier === "team") {
-    return t("Team");
-  }
-  if (tier === "pro") {
-    return t("Pro");
-  }
+function useTierLabel() {
+  const t = useExtracted();
 
-  return t("Plus");
+  return (planId: string) => {
+    const tier = getPlanTier(planId);
+    if (tier === "max") {
+      return t("Max");
+    }
+    if (tier === "team") {
+      return t("Team");
+    }
+    if (tier === "pro") {
+      return t("Pro");
+    }
+
+    return t("Plus");
+  };
 }
 
 function PlanCard({
@@ -155,6 +159,7 @@ function PlanCard({
   const locale = useLocale();
   const formatPriceLabel = useFormatPriceLabel();
   const formatPriceParts = useFormatPriceParts();
+  const getTierLabel = useTierLabel();
   const planCopy = useBillingPlanCopy(plan.id);
   const mode = plan.mode ?? "subscription";
   const offerEndsAt = plan.limitedTimeOfferEndsAt ? new Date(plan.limitedTimeOfferEndsAt) : null;
@@ -174,7 +179,7 @@ function PlanCard({
     (checkout.isPending && checkout.variables?.planId === plan.id);
   const isLoadingThisPlan = isLoadingEstimate;
 
-  const tierName = getTierLabel(t, plan.id);
+  const tierName = getTierLabel(plan.id);
   const priceParts =
     plan.amount && plan.currency ? formatPriceParts(plan.amount, plan.currency) : null;
   const monthlyEquivalent =
@@ -468,6 +473,7 @@ function BillingPageContent() {
   const t = useExtracted();
   const locale = useLocale();
   const router = useRouter();
+  const getTierLabel = useTierLabel();
   const getPlanIntervalLabel = usePlanIntervalLabel();
   const formatCurrencyMinor = useFormatCurrencyMinor();
   const [isChangePlanOpen, setIsChangePlanOpen] = useState(false);
@@ -685,7 +691,7 @@ function BillingPageContent() {
                   })
                 : currentPlan
                   ? t("{tier} {name}", {
-                      tier: activePlanId ? getTierLabel(t, activePlanId) : t("Plus"),
+                      tier: activePlanId ? getTierLabel(activePlanId) : t("Plus"),
                       name: getPlanIntervalLabel(currentPlan.id),
                     })
                   : t("Free")}{" "}

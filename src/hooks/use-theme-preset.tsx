@@ -1,12 +1,18 @@
 "use client";
 
-import { useTheme } from "next-themes";
 import type { ReactNode } from "react";
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
 import type { ThemeName } from "@/lib/theme-presets";
 
 const STORAGE_KEY = "deni-theme-preset";
-const CUSTOM_CLASSES: ThemeName[] = ["t3-chat", "tangerine", "mono"];
+const CUSTOM_CLASSES: ThemeName[] = [
+  "t3-chat",
+  "tangerine",
+  "mono",
+  "deep-dark",
+  "deep-dark-high-contrast",
+];
+const STANDARD_THEMES: ThemeName[] = ["light", "dark", "system"];
 
 type ThemePresetContextValue = {
   preset: ThemeName;
@@ -20,10 +26,17 @@ function isThemeName(value: string): value is ThemeName {
     value === "light" ||
     value === "dark" ||
     value === "system" ||
+    value === "default" ||
     value === "t3-chat" ||
     value === "tangerine" ||
-    value === "mono"
+    value === "mono" ||
+    value === "deep-dark" ||
+    value === "deep-dark-high-contrast"
   );
+}
+
+function normalizePreset(value: ThemeName) {
+  return STANDARD_THEMES.includes(value) ? "default" : value;
 }
 
 function applyPresetClass(value: ThemeName) {
@@ -38,31 +51,36 @@ function applyPresetClass(value: ThemeName) {
 }
 
 export function ThemePresetProvider({ children }: { children: ReactNode }) {
-  const { theme } = useTheme();
-  const [preset, setPresetState] = useState<ThemeName>("system");
+  const [preset, setPresetState] = useState<ThemeName>("default");
 
-  const applyAndPersist = useCallback((value: ThemeName) => {
-    setPresetState(value);
-    if (typeof window !== "undefined") {
-      localStorage.setItem(STORAGE_KEY, value);
-    }
-    applyPresetClass(value);
+  const applyWithoutPersist = useCallback((value: ThemeName) => {
+    const normalizedValue = normalizePreset(value);
+    setPresetState(normalizedValue);
+    applyPresetClass(normalizedValue);
   }, []);
+
+  const applyAndPersist = useCallback(
+    (value: ThemeName) => {
+      const normalizedValue = normalizePreset(value);
+      applyWithoutPersist(normalizedValue);
+      if (typeof window !== "undefined") {
+        localStorage.setItem(STORAGE_KEY, normalizedValue);
+      }
+    },
+    [applyWithoutPersist],
+  );
 
   useEffect(() => {
     const stored = localStorage.getItem(STORAGE_KEY);
     if (stored) {
       if (isThemeName(stored)) {
-        applyAndPersist(stored);
+        applyWithoutPersist(stored);
         return;
       }
       localStorage.removeItem(STORAGE_KEY);
     }
-    if (theme && isThemeName(theme)) {
-      setPresetState(theme);
-      applyPresetClass(theme);
-    }
-  }, [applyAndPersist, theme]);
+    applyWithoutPersist("default");
+  }, [applyWithoutPersist]);
 
   const value = useMemo(
     () => ({

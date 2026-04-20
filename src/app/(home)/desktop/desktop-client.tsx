@@ -359,7 +359,10 @@ export function DesktopClient({ downloads }: { downloads: DesktopDownloads }) {
               {t("Desktop Companion")}
             </motion.div>
 
-            <h1 className="mb-8 text-4xl font-bold leading-[1.02] tracking-tight sm:text-6xl md:text-8xl">
+            <h1
+              data-nosnippet
+              className="mb-8 text-4xl font-bold leading-[1.02] tracking-tight sm:text-6xl md:text-8xl"
+            >
               <BlurReveal className="block" delay={0.2}>
                 {t("Deni AI Desktop")}
               </BlurReveal>
