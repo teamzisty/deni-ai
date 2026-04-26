@@ -16,6 +16,9 @@ export async function generateMetadata(): Promise<Metadata> {
   return {
     title,
     description,
+    alternates: {
+      canonical: "https://deniai.app/flixa",
+    },
     openGraph: {
       title: `${title} by Deni AI`,
       description,
@@ -72,11 +75,63 @@ function IDECard({
   );
 }
 
+const flixaJsonLd = [
+  {
+    "@context": "https://schema.org",
+    "@type": "SoftwareApplication",
+    name: "Flixa",
+    applicationCategory: "DeveloperApplication",
+    operatingSystem: "Windows, macOS, Linux",
+    url: "https://deniai.app/flixa",
+    offers: {
+      "@type": "Offer",
+      price: "0",
+      priceCurrency: "USD",
+    },
+    description:
+      "AI coding agent extension for VS Code, Cursor, and Windsurf. Provides intelligent code completion, refactoring, and natural language commands.",
+  },
+  {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    mainEntity: [
+      {
+        "@type": "Question",
+        name: "What is Flixa?",
+        acceptedAnswer: {
+          "@type": "Answer",
+          text: "Flixa is an AI coding agent extension by Deni AI. It provides intelligent code completion, instant refactoring, and natural language commands directly inside your IDE.",
+        },
+      },
+      {
+        "@type": "Question",
+        name: "Which IDEs does Flixa support?",
+        acceptedAnswer: {
+          "@type": "Answer",
+          text: "Flixa is available for VS Code (via the official marketplace), Cursor, Windsurf, and Antigravity (via Open VSX Registry).",
+        },
+      },
+      {
+        "@type": "Question",
+        name: "Is Flixa free?",
+        acceptedAnswer: {
+          "@type": "Answer",
+          text: "Yes, Flixa is powered by Deni AI and is free to use.",
+        },
+      },
+    ],
+  },
+];
+
 export default function FlixaPage() {
   const t = useExtracted();
 
   return (
     <main className="relative min-h-screen" id="main-content">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(flixaJsonLd).replace(/</g, "\\u003c") }}
+      />
       {/* Hero Section */}
       <section className="relative px-4 pt-32 pb-20 md:pt-40 md:pb-28">
         <div className="mx-auto max-w-3xl">

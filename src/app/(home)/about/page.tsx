@@ -14,6 +14,9 @@ export async function generateMetadata(): Promise<Metadata> {
   return {
     title,
     description,
+    alternates: {
+      canonical: "https://deniai.app/about",
+    },
     openGraph: {
       title: `${title} — Deni AI`,
       description,

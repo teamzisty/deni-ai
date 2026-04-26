@@ -50,13 +50,13 @@ export function FlixaBanner() {
         <div className="flex items-center gap-2 min-w-0">
           <Code2 className="w-3.5 h-3.5 shrink-0 text-muted-foreground" />
           <span className="truncate text-muted-foreground">
-            {t("Try Flixa — AI coding agent for VS Code, Cursor & more.")}
+            {t("2FA - Enhance your security with two-factor authentication")}
           </span>
           <Link
-            href="/flixa"
+            href="/account/settings"
             className="shrink-0 inline-flex items-center gap-1 font-medium text-foreground hover:underline"
           >
-            {t("Learn more")}
+            {t("Setup")}
             <ArrowRight className="w-3 h-3" />
           </Link>
         </div>
