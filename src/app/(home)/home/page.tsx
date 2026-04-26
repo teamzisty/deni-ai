@@ -14,7 +14,7 @@ export async function generateMetadata(): Promise<Metadata> {
     },
     description,
     alternates: {
-      canonical: "https://deniai.app/",
+      canonical: "https://deniai.app/home",
     },
     openGraph: {
       title: "Deni AI — Free AI Chat with GPT, Claude & Gemini",
