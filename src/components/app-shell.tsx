@@ -2,7 +2,7 @@
 
 import dynamic from "next/dynamic";
 import { useEffect, useRef, useState } from "react";
-import { FlixaBanner } from "@/components/flixa-banner";
+import { TwoFactorBanner } from "@/components/two-factor-banner";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 
 const AppSidebar = dynamic(() => import("@/components/app-sidebar").then((mod) => mod.AppSidebar));
@@ -50,7 +50,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       <ChatSearch open={isChatSearchOpen} onOpenChange={setIsChatSearchOpen} />
       <AppSidebar onOpenChatSearch={() => setIsChatSearchOpen(true)} onNewChatRef={newChatRef} />
       <SidebarInset>
-        <FlixaBanner />
+        <TwoFactorBanner />
         <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-auto p-4">{children}</div>
       </SidebarInset>
     </SidebarProvider>

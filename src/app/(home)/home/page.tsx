@@ -10,15 +10,18 @@ export async function generateMetadata(): Promise<Metadata> {
 
   return {
     title: {
-      absolute: "Deni AI",
+      absolute: "Deni AI — Free AI Chat with GPT, Claude & Gemini",
     },
     description,
+    alternates: {
+      canonical: "https://deniai.app/home",
+    },
     openGraph: {
-      title: "Deni AI",
+      title: "Deni AI — Free AI Chat with GPT, Claude & Gemini",
       description,
     },
     twitter: {
-      title: "Deni AI",
+      title: "Deni AI — Free AI Chat with GPT, Claude & Gemini",
       description,
     },
   };

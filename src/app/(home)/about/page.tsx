@@ -14,6 +14,9 @@ export async function generateMetadata(): Promise<Metadata> {
   return {
     title,
     description,
+    alternates: {
+      canonical: "https://deniai.app/about",
+    },
     openGraph: {
       title: `${title} — Deni AI`,
       description,
@@ -60,7 +63,7 @@ export default function AboutPage() {
     <main className="relative min-h-screen" id="main-content">
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd).replace(/</g, "\\u003c") }}
       />
 
       {/* Hero */}

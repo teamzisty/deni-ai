@@ -1,20 +1,22 @@
 "use client";
 
-import { Code2, X, ArrowRight } from "lucide-react";
+import { ShieldCheck, X, ArrowRight } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useExtracted } from "next-intl";
 import { useEffect, useState } from "react";
+import { authClient } from "@/lib/auth-client";
 import { isCheckoutSettingsRoute } from "@/lib/settings-routes";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 
-const DISMISSED_KEY = "flixa-banner-dismissed";
+const DISMISSED_KEY = "flixa-2fa-dismissed";
 
-export function FlixaBanner() {
+export function TwoFactorBanner() {
   const t = useExtracted();
   const pathname = usePathname();
+  const session = authClient.useSession();
   const [visible, setVisible] = useState(false);
 
   useEffect(() => {
@@ -24,8 +26,17 @@ export function FlixaBanner() {
     }
   }, []);
 
-  if (isCheckoutSettingsRoute(pathname)) {
-    return null;
+  if (
+    isCheckoutSettingsRoute(pathname) ||
+    pathname === "/account/settings" ||
+    session.data?.user?.twoFactorEnabled
+  ) {
+    return (
+      <header className="flex h-10 shrink-0 items-center gap-2 border-b px-4">
+        <SidebarTrigger className="-ml-1" />
+        <Separator orientation="vertical" className="mr-2 h-4" />
+      </header>
+    );
   }
 
   const dismiss = () => {
@@ -48,15 +59,15 @@ export function FlixaBanner() {
       <Separator orientation="vertical" className="h-4" />
       <div className="flex flex-1 items-center justify-between gap-2 min-w-0">
         <div className="flex items-center gap-2 min-w-0">
-          <Code2 className="w-3.5 h-3.5 shrink-0 text-muted-foreground" />
+          <ShieldCheck className="w-3.5 h-3.5 shrink-0 text-muted-foreground" />
           <span className="truncate text-muted-foreground">
-            {t("Try Flixa — AI coding agent for VS Code, Cursor & more.")}
+            {t("2FA - Enhance your security with two-factor authentication")}
           </span>
           <Link
-            href="/flixa"
+            href="/account/settings"
             className="shrink-0 inline-flex items-center gap-1 font-medium text-foreground hover:underline"
           >
-            {t("Learn more")}
+            {t("Setup")}
             <ArrowRight className="w-3 h-3" />
           </Link>
         </div>
