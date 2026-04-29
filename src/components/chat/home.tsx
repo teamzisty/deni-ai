@@ -153,9 +153,9 @@ export default function ChatHome() {
   return (
     <section
       aria-labelledby="chat-home-title"
-      className="relative flex min-h-screen flex-col items-center justify-center p-4"
+      className="relative flex min-h-0 flex-1 flex-col items-center overflow-y-auto p-4 [justify-content:safe_center]"
     >
-      <div className="w-full max-w-2xl space-y-6">
+      <div className="w-full max-w-2xl space-y-6 py-6">
         {/* Greeting */}
         <div className="text-center space-y-2">
           <div className="inline-flex items-center justify-center w-12 h-12 rounded-lg bg-secondary mb-2">

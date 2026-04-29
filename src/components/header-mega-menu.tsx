@@ -75,7 +75,7 @@ export function HeaderMegaMenu({ label, menuLabel, children }: HeaderMegaMenuPro
       >
         <div
           className={cn(
-            "w-[min(88vw,760px)] rounded-xl border border-white/10 bg-[#050505]/96 p-4 text-white shadow-[0_32px_80px_rgba(0,0,0,0.55)] backdrop-blur-xl transition duration-200",
+            "w-[min(88vw,760px)] rounded-xl border border-border bg-popover/96 p-4 text-popover-foreground shadow-2xl backdrop-blur-xl transition duration-200",
             isOpen ? "translate-y-0 scale-100" : "-translate-y-1 scale-[0.98]",
           )}
         >

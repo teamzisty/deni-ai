@@ -60,11 +60,13 @@ export default async function ChatPage({ params }: { params: Promise<{ id: strin
     : [];
 
   return (
-    <ChatInterface
-      id={id}
-      initialMessages={initialMessages}
-      initialProjectId={chat.projectId}
-      initialProjectName={project?.name ?? null}
-    />
+    <div className="-m-4 flex min-h-0 flex-1 overflow-hidden">
+      <ChatInterface
+        id={id}
+        initialMessages={initialMessages}
+        initialProjectId={chat.projectId}
+        initialProjectName={project?.name ?? null}
+      />
+    </div>
   );
 }

@@ -21,8 +21,8 @@ export async function generateMetadata(): Promise<Metadata> {
 
 export default function PalettePage() {
   return (
-    <main id="main-content">
+    <div className="-m-4 flex min-h-0 flex-1 overflow-hidden">
       <PaletteClient />
-    </main>
+    </div>
   );
 }
