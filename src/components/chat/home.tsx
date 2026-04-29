@@ -9,7 +9,7 @@ import { AdSenseSlot } from "@/components/adsense-slot";
 import { ChatComposer, type ComposerMessage } from "@/components/chat/chat-composer";
 import { ProjectSelect } from "@/components/projects/project-select";
 import { env } from "@/env";
-import { getPreferredReasoningEffort, models, type ReasoningEffort } from "@/lib/constants";
+import { defaultModel, getPreferredReasoningEffort, type ReasoningEffort } from "@/lib/constants";
 import { trpc } from "@/lib/trpc/react";
 
 // Storage key for passing initial message data to chat page
@@ -59,12 +59,12 @@ export default function ChatHome() {
   const t = useExtracted();
   const router = useRouter();
   const [input, setInput] = useState("");
-  const [model, setModel] = useState(models[0].value);
+  const [model, setModel] = useState(defaultModel.value);
   const [webSearch, setWebSearch] = useState(false);
   const [videoMode, setVideoMode] = useState(false);
   const [imageMode, setImageMode] = useState(false);
   const [reasoningEffort, setReasoningEffort] = useState<ReasoningEffort>(
-    getPreferredReasoningEffort(models[0].efforts),
+    getPreferredReasoningEffort(defaultModel.efforts),
   );
   const [deepResearch, setDeepResearch] = useState(false);
   const [projectId, setProjectId] = useState<string | null>(null);

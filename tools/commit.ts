@@ -31,10 +31,10 @@ function createCommitSchema(includeDescription: boolean) {
 }
 
 function printHelp() {
-  console.log(`OpenRouter commit tool
+  console.log(`Commit tool
 
 Usage:
-  bun ./tools/gateway-commit.ts [options]
+  bun ./tools/commit.ts [options]
 
 Options:
   --it                 Alias for --all --generate-description --commit
@@ -52,12 +52,12 @@ Options:
   --help               Show this help
 
 Examples:
-  bun ./tools/gateway-commit.ts --it
-  bun ./tools/gateway-commit.ts --check
-  bun ./tools/gateway-commit.ts --all
-  bun ./tools/gateway-commit.ts --all --commit
-  bun ./tools/gateway-commit.ts --all --generate-description --commit
-  bun ./tools/gateway-commit.ts --prompt "Focus on billing checkout changes"
+  bun ./tools/commit.ts --it
+  bun ./tools/commit.ts --check
+  bun ./tools/commit.ts --all
+  bun ./tools/commit.ts --all --commit
+  bun ./tools/commit.ts --all --generate-description --commit
+  bun ./tools/commit.ts --prompt "Focus on billing checkout changes"
 `);
 }
 
@@ -186,7 +186,8 @@ function tryRunGit(repoPath: string, args: string[]) {
 
 function isSensitivePath(filePath: string) {
   return (
-    (/(^|\/)\.env($|\..+)$/u.test(filePath) && !/(^|\/)\.env\.example$/u.test(filePath)) ||
+    (/(^|\/)\.env($|\..+)$/u.test(filePath) &&
+      !/(^|\/)\.env\.example$/u.test(filePath)) ||
     /(^|\/).*\.pem$/u.test(filePath) ||
     /(^|\/).*\.key$/u.test(filePath) ||
     /(^|\/)id_(rsa|ed25519)$/u.test(filePath)
@@ -280,7 +281,9 @@ function fallbackCommit(input: {
 
   return {
     subject: "chore: update staged files",
-    body: input.includeDescription ? `Update ${fileCount} staged files.` : undefined,
+    body: input.includeDescription
+      ? `Update ${fileCount} staged files.`
+      : undefined,
   };
 }
 
@@ -319,9 +322,12 @@ async function main() {
 
   const statusBeforeStaging = runGit(repoRoot, ["status", "--short"]);
   if (options.stageAll) {
-    const sensitiveCandidates = extractPathsFromStatus(statusBeforeStaging).filter(isSensitivePath);
+    const sensitiveCandidates =
+      extractPathsFromStatus(statusBeforeStaging).filter(isSensitivePath);
     if (sensitiveCandidates.length > 0) {
-      throw new Error(`Refusing to stage sensitive files: ${sensitiveCandidates.join(", ")}`);
+      throw new Error(
+        `Refusing to stage sensitive files: ${sensitiveCandidates.join(", ")}`,
+      );
     }
     runGit(repoRoot, ["add", "-A"]);
   }
@@ -338,13 +344,17 @@ async function main() {
     .filter(isSensitivePath);
 
   if (sensitiveFiles.length > 0) {
-    throw new Error(`Refusing to commit sensitive files: ${sensitiveFiles.join(", ")}`);
+    throw new Error(
+      `Refusing to commit sensitive files: ${sensitiveFiles.join(", ")}`,
+    );
   }
 
-  const diffPatch = runGit(repoRoot, ["diff", "--cached", "--unified=2", "--no-ext-diff"]).slice(
-    0,
-    options.maxDiffChars,
-  );
+  const diffPatch = runGit(repoRoot, [
+    "diff",
+    "--cached",
+    "--unified=2",
+    "--no-ext-diff",
+  ]).slice(0, options.maxDiffChars);
 
   const prompt = buildPrompt({
     recentCommits: tryRunGit(repoRoot, ["log", "--oneline", "-8"]),
@@ -361,18 +371,22 @@ async function main() {
       apiKey,
       model: options.model,
       prompt,
-      includeDescription: options.generateDescription || Boolean(options.description),
+      includeDescription:
+        options.generateDescription || Boolean(options.description),
     });
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
     console.error(`OpenRouter generation failed, using fallback. ${message}`);
     generatedCommit = fallbackCommit({
       stagedFiles,
-      includeDescription: options.generateDescription || Boolean(options.description),
+      includeDescription:
+        options.generateDescription || Boolean(options.description),
     });
   }
 
-  const commitDescription = sanitizeCommitBody(options.description ?? generatedCommit.body ?? "");
+  const commitDescription = sanitizeCommitBody(
+    options.description ?? generatedCommit.body ?? "",
+  );
 
   console.log(`Commit message: ${generatedCommit.subject}`);
   if (commitDescription) {

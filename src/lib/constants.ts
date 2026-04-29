@@ -93,6 +93,7 @@ export const models: readonly ModelDefinition[] = [
     author: "openai",
     description: "A new class of intelligence for coding and professional work.",
     featured: true,
+    default: true,
     features: ["smartest", "reasoning", "coding", "fast"],
     efforts: ["none", "low", "medium", "high", "xhigh"],
     contextWindow: 1_000_000,
@@ -448,6 +449,8 @@ export const models: readonly ModelDefinition[] = [
     efforts: false,
   },
 ];
+
+export const defaultModel = models.find((model) => model.default === true) ?? models[0];
 
 // Google Analytics
 export const GA_ID = "G-B5H8G73JTN";
