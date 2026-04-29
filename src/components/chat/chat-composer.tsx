@@ -41,6 +41,7 @@ import {
   type ModelDefinition,
   type ReasoningEffort,
 } from "@/lib/constants";
+import { translateModelDescription, useModelDescriptionCopy } from "@/lib/model-description-copy";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -212,17 +213,19 @@ function ModelPickerItem({
   onSelect,
   featureLabels,
   modelDescriptionLabels,
+  modelDescriptionCopy,
 }: {
   model: ModelOption;
   isSelected: boolean;
   onSelect: () => void;
   featureLabels: FeatureLabels;
   modelDescriptionLabels: ModelDescriptionLabels;
+  modelDescriptionCopy: Record<string, string>;
 }) {
   const t = useExtracted();
   const description =
     "description" in model
-      ? model.description
+      ? translateModelDescription(model, modelDescriptionCopy)
       : getModelDescription(model.value, modelDescriptionLabels);
   const highlightFeatures = model.features.filter((f) => f.includes("est"));
   const regularFeatures = model.features.filter((f) => !f.includes("est"));
@@ -362,6 +365,7 @@ export function ChatComposer({
     fastAndEfficientModel: t("Fast and efficient model"),
     stealthModel: t("Stealth model"),
   };
+  const modelDescriptionCopy = useModelDescriptionCopy();
   const featureLabels: FeatureLabels = {
     reasoning: t("Reasoning"),
     smart: t("Smart"),
@@ -435,7 +439,7 @@ export function ChatComposer({
         const filteredEntries = entries.filter((entry) => {
           const description =
             "description" in entry
-              ? entry.description
+              ? translateModelDescription(entry, modelDescriptionCopy)
               : getModelDescription(entry.value, modelDescriptionLabels);
           const haystack = [
             entry.name,
@@ -454,7 +458,7 @@ export function ChatComposer({
         return filteredEntries.length > 0 ? [[provider, filteredEntries]] : [];
       }),
     ) as Record<string, ModelOption[]>;
-  }, [modelDescriptionLabels, normalizedModelQuery, providerGroups]);
+  }, [modelDescriptionCopy, modelDescriptionLabels, normalizedModelQuery, providerGroups]);
 
   const availableProviders = useMemo(
     () => Object.keys(filteredProviderGroups),
@@ -788,6 +792,7 @@ export function ChatComposer({
                               isSelected={m.value === model}
                               featureLabels={featureLabels}
                               modelDescriptionLabels={modelDescriptionLabels}
+                              modelDescriptionCopy={modelDescriptionCopy}
                               onSelect={() => {
                                 onModelChange(m.value);
                                 setModelPopoverOpen(false);
@@ -828,6 +833,7 @@ export function ChatComposer({
                                     isSelected={m.value === model}
                                     featureLabels={featureLabels}
                                     modelDescriptionLabels={modelDescriptionLabels}
+                                    modelDescriptionCopy={modelDescriptionCopy}
                                     onSelect={() => {
                                       onModelChange(m.value);
                                       setModelPopoverOpen(false);

@@ -88,14 +88,44 @@ export type ModelDefinition = {
 
 export const models: readonly ModelDefinition[] = [
   {
+    name: "GPT-5.5",
+    value: "gpt-5.5",
+    author: "openai",
+    description: "A new class of intelligence for coding and professional work.",
+    featured: true,
+    default: true,
+    features: ["smartest", "reasoning", "coding", "fast"],
+    efforts: ["none", "low", "medium", "high", "xhigh"],
+    contextWindow: 1_000_000,
+  },
+  {
     name: "GPT-5.4",
     value: "gpt-5.4",
     author: "openai",
-    description: "General purpose OpenAI model",
+    description: "A more affordable model for coding and professional work.",
     featured: true,
     features: ["reasoning", "smart", "fast"],
     efforts: ["none", "low", "medium", "high", "xhigh"],
     contextWindow: 1_000_000,
+  },
+  {
+    name: "GPT-5.4 mini",
+    value: "gpt-5.4-mini",
+    author: "openai",
+    description: "Our strongest mini model yet for coding, computer use, and subagents.",
+    featured: true,
+    features: ["coding", "reasoning", "fast"],
+    efforts: ["none", "low", "medium", "high", "xhigh"],
+    contextWindow: 400_000,
+  },
+  {
+    name: "GPT-5.4 nano",
+    value: "gpt-5.4-nano",
+    author: "openai",
+    description: "Our cheapest GPT-5.4-class model for simple high-volume tasks.",
+    features: ["reasoning", "fastest", "fast"],
+    efforts: ["none", "low", "medium", "high", "xhigh"],
+    contextWindow: 400_000,
   },
   {
     name: "GPT-5.3 Codex",
@@ -419,6 +449,8 @@ export const models: readonly ModelDefinition[] = [
     efforts: false,
   },
 ];
+
+export const defaultModel = models.find((model) => model.default === true) ?? models[0];
 
 // Google Analytics
 export const GA_ID = "G-B5H8G73JTN";

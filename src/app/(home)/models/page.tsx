@@ -4,6 +4,7 @@ import { useExtracted, useLocale } from "next-intl";
 import { getExtracted } from "next-intl/server";
 import { LoginButton } from "@/components/login-button";
 import { models, type ModelDefinition } from "@/lib/constants";
+import { translateModelDescription, useModelDescriptionCopy } from "@/lib/model-description-copy";
 import { Button } from "@/components/ui/button";
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -44,6 +45,7 @@ const featureStyles: Record<string, string> = {
 
 export default function ModelsPage() {
   const t = useExtracted();
+  const modelDescriptionCopy = useModelDescriptionCopy();
   const locale = useLocale();
   const formatNumber = new Intl.NumberFormat(locale);
 
@@ -188,7 +190,7 @@ export default function ModelsPage() {
                     </div>
                     {"description" in model && model.description && (
                       <p className="mb-3 text-sm leading-relaxed text-muted-foreground">
-                        {model.description}
+                        {translateModelDescription(model, modelDescriptionCopy)}
                       </p>
                     )}
                     {"contextWindow" in model && model.contextWindow ? (

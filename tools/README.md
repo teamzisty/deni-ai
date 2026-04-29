@@ -3,7 +3,7 @@
 **Scripts**:
 
 - codename-generator.ts: generates deni ai version codenames
-- gateway-commit.ts: generates conventional commit messages with OpenRouter and can create the commit
+- commit.ts: generates conventional commit messages with OpenRouter and can create the commit
 
 ## AI Gateway commit tool
 

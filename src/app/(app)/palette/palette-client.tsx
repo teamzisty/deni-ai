@@ -339,7 +339,7 @@ function WallTile({
     >
       <div
         className={cn(
-          "relative overflow-hidden rounded-2xl border border-white/5 bg-white/5 transition-transform duration-300 hover:scale-[1.01]",
+          "relative overflow-hidden rounded-2xl border border-border bg-muted transition-transform duration-300 hover:scale-[1.01]",
           tile.kind === "image" && "cursor-zoom-in",
           TILE_ASPECT_CLASS[tile.aspectRatio],
         )}
@@ -357,25 +357,25 @@ function WallTile({
           <>
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src={tile.dataUrl} alt={tile.prompt} className="h-full w-full object-cover" />
-            <div className="absolute inset-0 bg-black/0 transition-colors group-hover:bg-black/10" />
+            <div className="absolute inset-0 bg-foreground/0 transition-colors group-hover:bg-foreground/10" />
           </>
         ) : null}
 
         {tile.kind === "pending" ? (
-          <div className="absolute inset-0 overflow-hidden bg-white/5">
-            <div className="absolute inset-y-0 -left-1/2 w-1/2 -skew-x-12 animate-[pulse_2.4s_ease-in-out_infinite] bg-[linear-gradient(90deg,transparent,rgba(255,255,255,0.05),transparent)]" />
+          <div className="absolute inset-0 overflow-hidden bg-muted">
+            <div className="absolute inset-y-0 -left-1/2 w-1/2 -skew-x-12 animate-[pulse_2.4s_ease-in-out_infinite] bg-gradient-to-r from-transparent via-foreground/5 to-transparent" />
           </div>
         ) : null}
 
         {tile.kind === "error" ? (
-          <div className="absolute inset-0 flex flex-col items-center justify-center bg-red-950/20 p-4 text-center">
-            <AlertCircle className="mb-2 size-6 text-red-500" />
-            <p className="text-xs font-medium text-white/80">Failed to generate</p>
+          <div className="absolute inset-0 flex flex-col items-center justify-center bg-destructive/10 p-4 text-center">
+            <AlertCircle className="mb-2 size-6 text-destructive" />
+            <p className="text-xs font-medium text-destructive">Failed to generate</p>
             <button
               type="button"
               onClick={() => onRetry(tile.batch)}
               disabled={retryDisabled}
-              className="mt-3 rounded-full bg-white/10 px-3 py-1.5 text-[10px] font-medium text-white hover:bg-white/20 disabled:cursor-not-allowed disabled:opacity-40"
+              className="mt-3 rounded-full bg-destructive px-3 py-1.5 text-[10px] font-medium text-destructive-foreground hover:bg-destructive/90 disabled:cursor-not-allowed disabled:opacity-40"
             >
               Retry
             </button>
@@ -764,12 +764,12 @@ export default function PaletteClient() {
   }
 
   return (
-    <div className="flex h-screen flex-col overflow-hidden">
-      <div className="pointer-events-none fixed inset-x-0 top-3 z-20 flex justify-end px-3 sm:top-6 sm:px-6">
+    <div className="relative flex min-h-0 flex-1 flex-col overflow-hidden bg-background text-foreground">
+      <div className="pointer-events-none absolute inset-x-0 top-3 z-20 flex justify-end px-3 sm:top-6 sm:px-6">
         <button
           type="button"
           onClick={() => setIsHistoryOpen(true)}
-          className="pointer-events-auto inline-flex items-center gap-2 rounded-full border border-white/10 bg-black/35 px-4 py-2 text-sm font-medium text-white/85 shadow-2xl backdrop-blur-xl transition-colors hover:bg-black/50"
+          className="pointer-events-auto inline-flex items-center gap-2 rounded-full border border-border bg-background/80 px-4 py-2 text-sm font-medium text-foreground shadow-2xl backdrop-blur-xl transition-colors hover:bg-accent hover:text-accent-foreground"
         >
           <History className="size-4" />
           <span>{t("History")}</span>
@@ -777,9 +777,9 @@ export default function PaletteClient() {
       </div>
 
       {/* Main Grid */}
-      <main className="scrollbar-hide flex-1 overflow-y-auto px-3 pt-4 pb-56 sm:px-6 sm:pt-6 sm:pb-40">
+      <div className="scrollbar-hide min-h-0 flex-1 overflow-y-auto px-3 pt-4 pb-56 sm:px-6 sm:pt-6 sm:pb-40">
         {liveTiles.length === 0 ? (
-          <div className="flex h-full items-center justify-center text-white/30">
+          <div className="flex h-full items-center justify-center text-muted-foreground">
             <div className="text-center">
               <ImageIcon className="mx-auto mb-4 size-12 opacity-20" />
               <p>{t("Empty")}</p>
@@ -799,13 +799,13 @@ export default function PaletteClient() {
             ))}
           </div>
         )}
-      </main>
+      </div>
 
       {/* Floating Input Dock */}
-      <div className="fixed inset-x-0 bottom-3 z-20 px-3 sm:bottom-10 sm:left-1/2 sm:right-auto sm:w-full sm:max-w-3xl sm:-translate-x-1/2 sm:px-6 lg:-translate-x-1/3">
+      <div className="absolute inset-x-0 bottom-3 z-20 px-3 sm:bottom-10 sm:left-1/2 sm:right-auto sm:w-full sm:max-w-3xl sm:-translate-x-1/2 sm:px-6 lg:-translate-x-1/3">
         <div className="flex flex-col gap-3">
           {feedError && (
-            <div className="flex items-start gap-2 rounded-2xl border border-red-500/20 bg-red-500/10 px-4 py-3 text-sm text-red-400 shadow-2xl backdrop-blur-xl">
+            <div className="flex items-start gap-2 rounded-2xl border border-destructive/20 bg-destructive/10 px-4 py-3 text-sm text-destructive shadow-2xl backdrop-blur-xl">
               <AlertCircle className="mt-0.5 size-4 shrink-0" />
               <span className="min-w-0 break-words">{feedError}</span>
             </div>
@@ -816,8 +816,8 @@ export default function PaletteClient() {
               className={cn(
                 "flex items-start gap-2 rounded-2xl border px-4 py-3 text-sm shadow-2xl backdrop-blur-xl",
                 isUsageBlocked
-                  ? "border-red-500/20 bg-red-500/10 text-red-400"
-                  : "border-amber-500/20 bg-amber-500/10 text-amber-300",
+                  ? "border-destructive/20 bg-destructive/10 text-destructive"
+                  : "border-border bg-accent text-accent-foreground",
               )}
             >
               {isUsageBlocked ? (
@@ -826,10 +826,10 @@ export default function PaletteClient() {
                 <TriangleAlert className="mt-0.5 size-4 shrink-0" />
               )}
               <div className="min-w-0 flex-1">
-                <p className="font-medium text-white">
+                <p className="font-medium text-foreground">
                   {isUsageBlocked ? t("Usage limit reached") : t("You are running low")}
                 </p>
-                <p className="mt-1 text-xs leading-5 text-white/70">
+                <p className="mt-1 text-xs leading-5 text-muted-foreground">
                   {isUsageBlocked
                     ? t("You've hit the {category} usage limit on your {tier} plan.", {
                         category: usageCategoryLabel,
@@ -855,7 +855,7 @@ export default function PaletteClient() {
               <button
                 type="button"
                 onClick={() => void usageQuery.refetch()}
-                className="rounded-full bg-white/10 px-3 py-1.5 text-[11px] font-medium text-white transition-colors hover:bg-white/15"
+                className="rounded-full bg-secondary px-3 py-1.5 text-[11px] font-medium text-secondary-foreground transition-colors hover:bg-secondary/80"
               >
                 {t("Refresh usage")}
               </button>
@@ -863,23 +863,25 @@ export default function PaletteClient() {
           )}
 
           {latestCompletedBatch && activeCount === 0 && !isGeneratingPalette ? (
-            <div className="flex flex-col gap-3 rounded-2xl border border-white/10 bg-black/35 px-4 py-3 text-sm text-white/70 backdrop-blur-xl sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex flex-col gap-3 rounded-2xl border border-border bg-card/85 px-4 py-3 text-sm text-muted-foreground backdrop-blur-xl sm:flex-row sm:items-center sm:justify-between">
               <div className="min-w-0">
-                <p className="font-medium text-white">{t("Generate more?")}</p>
-                <p className="truncate text-xs text-white/45">{latestCompletedBatch.prompt}</p>
+                <p className="font-medium text-card-foreground">{t("Generate more?")}</p>
+                <p className="truncate text-xs text-muted-foreground">
+                  {latestCompletedBatch.prompt}
+                </p>
               </div>
               <button
                 type="button"
                 onClick={handleGenerateMore}
                 disabled={isUsageBlocked}
-                className="w-full rounded-full bg-white/10 px-4 py-2 text-xs font-medium text-white transition-colors hover:bg-white/15 disabled:cursor-not-allowed disabled:opacity-30 sm:w-auto sm:shrink-0"
+                className="w-full rounded-full bg-secondary px-4 py-2 text-xs font-medium text-secondary-foreground transition-colors hover:bg-secondary/80 disabled:cursor-not-allowed disabled:opacity-30 sm:w-auto sm:shrink-0"
               >
                 {t("Generate more")}
               </button>
             </div>
           ) : null}
 
-          <div className="relative rounded-[2rem] bg-[#1a1a1a]/90 p-2 shadow-[0_32px_64px_-16px_rgba(0,0,0,0.6)] ring-1 ring-white/10 backdrop-blur-2xl sm:rounded-[2.5rem]">
+          <div className="relative rounded-[2rem] bg-card/90 p-2 text-card-foreground shadow-2xl ring-1 ring-border backdrop-blur-2xl sm:rounded-[2.5rem]">
             <div className="flex flex-col gap-2 px-1 py-1 sm:flex-row sm:items-center sm:gap-1 sm:px-2 sm:py-0">
               <div className="flex items-center gap-1">
                 <Button variant={"secondary"} size="icon">
@@ -891,7 +893,7 @@ export default function PaletteClient() {
               </div>
 
               {/* Input */}
-              <div className="min-w-0 flex-1 rounded-[1.5rem] bg-black/20 px-4 ring-1 ring-white/6">
+              <div className="min-w-0 flex-1 rounded-[1.5rem] bg-background/70 px-4 ring-1 ring-border">
                 <input
                   type="text"
                   value={prompt}
@@ -904,7 +906,7 @@ export default function PaletteClient() {
                     }
                   }}
                   placeholder={t("Create your palette")}
-                  className="w-full bg-transparent py-3 text-[15px] text-white outline-none placeholder:text-white/30 disabled:cursor-not-allowed disabled:opacity-50 sm:py-4"
+                  className="w-full bg-transparent py-3 text-[15px] text-foreground outline-none placeholder:text-muted-foreground disabled:cursor-not-allowed disabled:opacity-50 sm:py-4"
                 />
               </div>
 
@@ -912,7 +914,7 @@ export default function PaletteClient() {
               <div className="flex items-center gap-2 sm:gap-1 sm:pr-1">
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <button className="flex min-w-0 flex-1 items-center justify-center gap-1.5 rounded-full bg-white/5 px-3 py-2 text-xs font-medium text-white/90 transition-colors hover:bg-white/10 sm:flex-none sm:px-4">
+                    <button className="flex min-w-0 flex-1 items-center justify-center gap-1.5 rounded-full bg-secondary px-3 py-2 text-xs font-medium text-secondary-foreground transition-colors hover:bg-secondary/80 sm:flex-none sm:px-4">
                       <AspectRatioIcon ratio={selectedAspectRatio} />
                       <span>{selectedAspectRatio}</span>
                       <ChevronDown className="size-3 opacity-50" />
@@ -920,13 +922,13 @@ export default function PaletteClient() {
                   </DropdownMenuTrigger>
                   <DropdownMenuContent
                     align="end"
-                    className="w-32 border-white/10 bg-[#1a1a1a] text-white"
+                    className="w-32 border-border bg-popover text-popover-foreground"
                   >
                     {ASPECT_RATIOS.map((ratio) => (
                       <DropdownMenuItem
                         key={ratio}
                         onClick={() => setSelectedAspectRatio(ratio)}
-                        className="flex items-center gap-2 hover:bg-white/5 focus:bg-white/5"
+                        className="flex items-center gap-2 hover:bg-accent focus:bg-accent"
                       >
                         <AspectRatioIcon ratio={ratio} />
                         {ratio}
@@ -937,16 +939,16 @@ export default function PaletteClient() {
 
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <button className="flex size-10 shrink-0 items-center justify-center rounded-full bg-white/5 text-white/90 transition-colors hover:bg-white/10">
+                    <button className="flex size-10 shrink-0 items-center justify-center rounded-full bg-secondary text-secondary-foreground transition-colors hover:bg-secondary/80">
                       <SlidersHorizontal className="size-4" />
                     </button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent
                     align="end"
-                    className="w-64 space-y-4 border-white/10 bg-[#1a1a1a] p-3 text-white"
+                    className="w-64 space-y-4 border-border bg-popover p-3 text-popover-foreground"
                   >
                     <div className="space-y-2">
-                      <p className="px-2 text-[10px] font-bold tracking-wider text-white/40 uppercase">
+                      <p className="px-2 text-[10px] font-bold tracking-wider text-muted-foreground uppercase">
                         Model
                       </p>
                       {IMAGE_MODELS.map((model) => (
@@ -956,23 +958,23 @@ export default function PaletteClient() {
                           className={cn(
                             "flex flex-col items-start gap-0.5 rounded-lg px-2 py-1.5",
                             selectedModel === model.id
-                              ? "bg-white/10"
-                              : "hover:bg-white/5 focus:bg-white/5",
+                              ? "bg-accent text-accent-foreground"
+                              : "hover:bg-accent focus:bg-accent",
                           )}
                         >
                           <span className="text-sm font-medium">{model.name}</span>
-                          <span className="text-[10px] text-white/40">{model.note}</span>
+                          <span className="text-[10px] text-muted-foreground">{model.note}</span>
                         </DropdownMenuItem>
                       ))}
                     </div>
 
-                    <div className="h-px bg-white/5" />
+                    <div className="h-px bg-border" />
 
                     <div className="space-y-2">
-                      <p className="px-2 text-[10px] font-bold tracking-wider text-white/40 uppercase">
+                      <p className="px-2 text-[10px] font-bold tracking-wider text-muted-foreground uppercase">
                         Resolution
                       </p>
-                      <div className="flex gap-1 rounded-xl bg-white/5 p-1">
+                      <div className="flex gap-1 rounded-xl bg-muted p-1">
                         {RESOLUTIONS.map((res) => {
                           const disabled = !modelSupportsResolution(
                             availableResolutions,
@@ -986,8 +988,8 @@ export default function PaletteClient() {
                               className={cn(
                                 "flex-1 rounded-lg py-1 text-xs transition-colors",
                                 selectedResolution === res.value
-                                  ? "bg-white/10 text-white"
-                                  : "text-white/40 hover:text-white/60",
+                                  ? "bg-background text-foreground"
+                                  : "text-muted-foreground hover:text-foreground",
                                 disabled && "cursor-not-allowed opacity-20",
                               )}
                             >
@@ -1003,7 +1005,7 @@ export default function PaletteClient() {
                 <button
                   onClick={handleGenerate}
                   disabled={!prompt.trim() || isBusy || isUsageBlocked}
-                  className="flex size-11 shrink-0 items-center justify-center rounded-full bg-white/10 text-white shadow-lg transition-all hover:bg-white/20 disabled:opacity-20"
+                  className="flex size-11 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-lg transition-all hover:bg-primary/90 disabled:opacity-20"
                 >
                   {isBusy ? (
                     <RefreshCw className="size-5 animate-spin" />
@@ -1020,12 +1022,12 @@ export default function PaletteClient() {
       <Sheet open={isHistoryOpen} onOpenChange={setIsHistoryOpen}>
         <SheetContent
           side="right"
-          className="gap-0 border-white/10 bg-[#050505] p-0 text-white sm:max-w-md"
+          className="gap-0 border-border bg-background p-0 text-foreground sm:max-w-md"
         >
-          <SheetHeader className="gap-3 border-b border-white/10 px-5 py-5">
+          <SheetHeader className="gap-3 border-b border-border px-5 py-5">
             <div className="space-y-1 pr-10">
-              <SheetTitle className="text-base text-white">{t("History")}</SheetTitle>
-              <SheetDescription className="text-white/45">
+              <SheetTitle className="text-base text-foreground">{t("History")}</SheetTitle>
+              <SheetDescription className="text-muted-foreground">
                 {t("Review previous prompts and rerun them instantly.")}
               </SheetDescription>
             </div>
@@ -1034,7 +1036,7 @@ export default function PaletteClient() {
               <button
                 type="button"
                 onClick={handleClearHistory}
-                className="inline-flex w-fit items-center rounded-full border border-white/10 px-3 py-1.5 text-xs font-medium text-white/70 transition-colors hover:bg-white/5 hover:text-white"
+                className="inline-flex w-fit items-center rounded-full border border-border px-3 py-1.5 text-xs font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground"
               >
                 {t("Clear")}
               </button>
@@ -1043,10 +1045,10 @@ export default function PaletteClient() {
 
           <div className="scrollbar-hide flex-1 overflow-y-auto p-3">
             {historyEntries.length === 0 ? (
-              <div className="flex h-full min-h-64 flex-col items-center justify-center rounded-3xl border border-dashed border-white/10 bg-white/[0.03] px-6 text-center">
-                <History className="mb-4 size-10 text-white/20" />
-                <p className="text-sm font-medium text-white/80">{t("No history yet.")}</p>
-                <p className="mt-2 text-sm text-white/40">
+              <div className="flex h-full min-h-64 flex-col items-center justify-center rounded-3xl border border-dashed border-border bg-muted/60 px-6 text-center">
+                <History className="mb-4 size-10 text-muted-foreground" />
+                <p className="text-sm font-medium text-foreground">{t("No history yet.")}</p>
+                <p className="mt-2 text-sm text-muted-foreground">
                   {t("Your recent palette prompts will appear here.")}
                 </p>
               </div>
@@ -1055,23 +1057,27 @@ export default function PaletteClient() {
                 {historyEntries.map((entry) => (
                   <article
                     key={entry.id}
-                    className="rounded-3xl border border-white/8 bg-white/[0.03] p-4"
+                    className="rounded-3xl border border-border bg-card p-4 text-card-foreground"
                   >
                     <div className="flex items-start justify-between gap-3">
                       <div className="min-w-0">
-                        <p className="line-clamp-3 text-sm leading-6 text-white">{entry.prompt}</p>
-                        <p className="mt-2 text-xs text-white/35">
+                        <p className="line-clamp-3 text-sm leading-6 text-card-foreground">
+                          {entry.prompt}
+                        </p>
+                        <p className="mt-2 text-xs text-muted-foreground">
                           {historyDateFormatter.format(entry.createdAt)}
                         </p>
                       </div>
                     </div>
 
-                    <div className="mt-3 flex flex-wrap gap-2 text-[11px] text-white/55">
-                      <span className="rounded-full bg-white/6 px-2.5 py-1">{entry.modelName}</span>
-                      <span className="rounded-full bg-white/6 px-2.5 py-1">
+                    <div className="mt-3 flex flex-wrap gap-2 text-[11px] text-muted-foreground">
+                      <span className="rounded-full bg-secondary px-2.5 py-1 text-secondary-foreground">
+                        {entry.modelName}
+                      </span>
+                      <span className="rounded-full bg-secondary px-2.5 py-1 text-secondary-foreground">
                         {entry.aspectRatio}
                       </span>
-                      <span className="rounded-full bg-white/6 px-2.5 py-1">
+                      <span className="rounded-full bg-secondary px-2.5 py-1 text-secondary-foreground">
                         {entry.resolution}
                       </span>
                     </div>
@@ -1081,7 +1087,7 @@ export default function PaletteClient() {
                         type="button"
                         onClick={() => handleUseHistory(entry)}
                         disabled={isBusy || isUsageBlocked}
-                        className="inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-2 text-xs font-medium text-white transition-colors hover:bg-white/15 disabled:opacity-30"
+                        className="inline-flex items-center gap-2 rounded-full bg-primary px-3 py-2 text-xs font-medium text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-30"
                       >
                         <RotateCcw className="size-3.5" />
                         {t("Use again")}
@@ -1089,7 +1095,7 @@ export default function PaletteClient() {
                       <button
                         type="button"
                         onClick={() => handleFillFromHistory(entry)}
-                        className="rounded-full border border-white/10 px-3 py-2 text-xs font-medium text-white/70 transition-colors hover:bg-white/5 hover:text-white"
+                        className="rounded-full border border-border px-3 py-2 text-xs font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground"
                       >
                         {t("Fill prompt")}
                       </button>
@@ -1108,7 +1114,7 @@ export default function PaletteClient() {
       >
         <DialogContent
           showCloseButton={false}
-          className="h-[94vh] max-w-[96vw] overflow-hidden border-white/10 bg-[#050505] p-0 text-white shadow-[0_40px_180px_-56px_rgba(0,0,0,0.98)]"
+          className="h-[94vh] max-w-[96vw] overflow-hidden border-border bg-background p-0 text-foreground shadow-2xl"
         >
           {selectedImage ? (
             <div className="relative h-full w-full">
@@ -1125,7 +1131,7 @@ export default function PaletteClient() {
                   aria-hidden="true"
                   className="h-full w-full scale-110 object-cover opacity-30 blur-2xl"
                 />
-                <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(255,255,255,0.04),transparent_32%),linear-gradient(180deg,rgba(0,0,0,0.18),rgba(0,0,0,0.7))]" />
+                <div className="absolute inset-0 bg-background/70" />
               </div>
 
               <div className="absolute right-5 top-5 z-10 flex items-center gap-2">
@@ -1133,7 +1139,7 @@ export default function PaletteClient() {
                   type="button"
                   onClick={handleDownloadImage}
                   aria-label="Download image"
-                  className="flex size-11 items-center justify-center rounded-full border border-white/10 bg-black/36 text-white/82 backdrop-blur-xl transition-colors hover:bg-black/52"
+                  className="flex size-11 items-center justify-center rounded-full border border-border bg-background/80 text-foreground backdrop-blur-xl transition-colors hover:bg-accent hover:text-accent-foreground"
                 >
                   <Download className="size-4.5" />
                 </button>
@@ -1141,7 +1147,7 @@ export default function PaletteClient() {
                   type="button"
                   onClick={handleCopyImage}
                   aria-label="Copy image"
-                  className="flex size-11 items-center justify-center rounded-full border border-white/10 bg-black/36 text-white/82 backdrop-blur-xl transition-colors hover:bg-black/52"
+                  className="flex size-11 items-center justify-center rounded-full border border-border bg-background/80 text-foreground backdrop-blur-xl transition-colors hover:bg-accent hover:text-accent-foreground"
                 >
                   <Copy className="size-4.5" />
                 </button>
@@ -1149,7 +1155,7 @@ export default function PaletteClient() {
                   type="button"
                   onClick={() => setSelectedImage(null)}
                   aria-label="Close dialog"
-                  className="flex size-11 items-center justify-center rounded-full border border-white/10 bg-black/36 text-white/82 backdrop-blur-xl transition-colors hover:bg-black/52"
+                  className="flex size-11 items-center justify-center rounded-full border border-border bg-background/80 text-foreground backdrop-blur-xl transition-colors hover:bg-accent hover:text-accent-foreground"
                 >
                   <X className="size-4.5" />
                 </button>
@@ -1160,7 +1166,7 @@ export default function PaletteClient() {
                 <img
                   src={selectedImage.dataUrl}
                   alt={selectedImage.prompt}
-                  className="max-h-full max-w-full rounded-[1.6rem] object-contain shadow-[0_30px_120px_-40px_rgba(0,0,0,0.95)]"
+                  className="max-h-full max-w-full rounded-[1.6rem] object-contain shadow-2xl"
                 />
               </div>
             </div>

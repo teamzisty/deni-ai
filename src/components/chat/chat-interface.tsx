@@ -46,7 +46,12 @@ import { useUsageStatus } from "@/hooks/use-usage-status";
 import { authClient } from "@/lib/auth-client";
 import { useRouter } from "next/navigation";
 import { isBillingDisabled } from "@/lib/billing-config";
-import { GA_ID, getPreferredReasoningEffort, models, type ReasoningEffort } from "@/lib/constants";
+import {
+  defaultModel,
+  GA_ID,
+  getPreferredReasoningEffort,
+  type ReasoningEffort,
+} from "@/lib/constants";
 import { trpc } from "@/lib/trpc/react";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -161,12 +166,12 @@ export function ChatInterface({
   const isAnonymous = Boolean(session.data?.user?.isAnonymous);
   const billingDisabled = isBillingDisabled;
   const [input, setInput] = useState("");
-  const [model, setModel] = useState(models[0].value);
+  const [model, setModel] = useState(defaultModel.value);
   const [webSearch, setWebSearch] = useState(false);
   const [videoMode, setVideoMode] = useState(false);
   const [imageMode, setImageMode] = useState(false);
   const [reasoningEffort, setReasoningEffort] = useState<ReasoningEffort>(
-    getPreferredReasoningEffort(models[0].efforts),
+    getPreferredReasoningEffort(defaultModel.efforts),
   );
   const [deepResearch, setDeepResearch] = useState(false);
   const [attachmentError, setAttachmentError] = useState<string | null>(null);

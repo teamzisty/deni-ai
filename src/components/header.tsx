@@ -139,11 +139,11 @@ export default function Header() {
   return (
     <header className="fixed left-0 top-0 z-50 w-full px-4 pt-4">
       <nav className="mx-auto max-w-6xl">
-        <div className="rounded-[1.35rem] border border-white/10 bg-black/72 px-4 py-3 shadow-[0_20px_60px_rgba(0,0,0,0.28)] backdrop-blur-xl">
+        <div className="rounded-[1.35rem] border border-border/70 bg-background/80 px-4 py-3 text-foreground shadow-xl backdrop-blur-xl">
           <div className="flex items-center justify-between gap-4">
             <Link href="/" aria-label="Deni AI" title="Deni AI" className="flex items-center gap-3">
-              <DeniAIIcon className="h-7 w-7 text-white" />
-              <span className="hidden text-base font-semibold tracking-tight text-white sm:inline-block">
+              <DeniAIIcon className="h-7 w-7 text-foreground" />
+              <span className="hidden text-base font-semibold tracking-tight text-foreground sm:inline-block">
                 Deni AI
               </span>
             </Link>
@@ -169,13 +169,13 @@ export default function Header() {
                             >
                               <Link href={link.href} role="menuitem">
                                 <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border">
-                                  <Icon className="h-5 w-5 text-white/80" />
+                                  <Icon className="h-5 w-5 text-muted-foreground" />
                                 </span>
                                 <span className="flex min-w-0 flex-col gap-0.5 justify-center self-center">
                                   <span className="block text-sm font-semibold tracking-tight">
                                     {link.title}
                                   </span>
-                                  <span className="block text-xs text-primary/70">
+                                  <span className="block text-xs text-muted-foreground">
                                     {link.description}
                                   </span>
                                 </span>
@@ -208,13 +208,13 @@ export default function Header() {
                             >
                               <Link href={link.href} role="menuitem">
                                 <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border">
-                                  <Icon className="h-5 w-5 text-white/80" />
+                                  <Icon className="h-5 w-5 text-muted-foreground" />
                                 </span>
                                 <span className="flex min-w-0 flex-col gap-0.5 justify-center self-center">
                                   <span className="block text-sm font-semibold tracking-tight">
                                     {link.title}
                                   </span>
-                                  <span className="block text-xs text-primary/70">
+                                  <span className="block text-xs text-muted-foreground">
                                     {link.description}
                                   </span>
                                 </span>
@@ -229,7 +229,7 @@ export default function Header() {
               </HeaderMegaMenu>
               <Link
                 href="/about"
-                className="rounded-full px-4 py-2 text-sm font-medium text-white/72 transition-colors hover:text-white"
+                className="rounded-full px-4 py-2 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
               >
                 {t("About")}
               </Link>
@@ -237,7 +237,7 @@ export default function Header() {
 
             <div className="hidden items-center gap-2 lg:flex">
               <LocaleSwitcher changeLocaleAction={changeLocaleAction} />
-              <div className="hidden h-5 w-px bg-white/10 sm:block" />
+              <div className="hidden h-5 w-px bg-border sm:block" />
               <UserButton size="icon" />
             </div>
 
@@ -248,7 +248,7 @@ export default function Header() {
                     variant: "outline",
                     size: "icon",
                     className:
-                      "rounded-full border-white/10 bg-white/[0.03] text-white hover:bg-white/[0.08]",
+                      "rounded-full border-border bg-background/60 text-foreground hover:bg-accent hover:text-accent-foreground",
                   })}
                   aria-label={t("Open menu")}
                 >
@@ -256,11 +256,11 @@ export default function Header() {
                 </SheetTrigger>
                 <SheetContent
                   side="right"
-                  className="border-white/10 bg-[#050505]/96 px-0 text-white backdrop-blur-xl"
+                  className="border-border bg-background/96 px-0 text-foreground backdrop-blur-xl"
                 >
-                  <SheetHeader className="border-b border-white/10 px-5 py-5 text-left">
-                    <SheetTitle className="text-base text-white">{t("Menu")}</SheetTitle>
-                    <SheetDescription className="text-white/60">
+                  <SheetHeader className="border-b border-border px-5 py-5 text-left">
+                    <SheetTitle className="text-base text-foreground">{t("Menu")}</SheetTitle>
+                    <SheetDescription className="text-muted-foreground">
                       {t("Browse products, resources, language, and account options.")}
                     </SheetDescription>
                   </SheetHeader>
@@ -269,7 +269,7 @@ export default function Header() {
                     <div className="space-y-6">
                       {mobileSections.map((section) => (
                         <div key={section.title} className="space-y-2">
-                          <p className="text-[10px] font-medium uppercase tracking-[0.22em] text-white/40">
+                          <p className="text-[10px] font-medium uppercase tracking-[0.22em] text-muted-foreground">
                             {section.title}
                           </p>
                           <div className="space-y-2">
@@ -280,18 +280,18 @@ export default function Header() {
                                 <SheetClose asChild key={`${section.title}-${link.href}`}>
                                   <Button
                                     variant="ghost"
-                                    className="h-auto w-full justify-start rounded-2xl border border-white/10 bg-white/[0.03] px-3 py-3 text-left text-white hover:bg-white/[0.08]"
+                                    className="h-auto w-full justify-start rounded-2xl border border-border bg-card/70 px-3 py-3 text-left text-card-foreground hover:bg-accent hover:text-accent-foreground"
                                     asChild
                                   >
                                     <Link href={link.href}>
-                                      <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-white/10 bg-white/[0.03]">
-                                        <Icon className="h-5 w-5 text-white/80" />
+                                      <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-border bg-muted">
+                                        <Icon className="h-5 w-5 text-muted-foreground" />
                                       </span>
                                       <span className="flex min-w-0 flex-col">
                                         <span className="text-sm font-medium leading-tight">
                                           {link.title}
                                         </span>
-                                        <span className="text-xs text-white/60">
+                                        <span className="text-xs text-muted-foreground">
                                           {link.description}
                                         </span>
                                       </span>
@@ -305,15 +305,15 @@ export default function Header() {
                       ))}
                     </div>
 
-                    <div className="mt-6 border-t border-white/10 pt-6">
-                      <p className="mb-3 text-[10px] font-medium uppercase tracking-[0.22em] text-white/40">
+                    <div className="mt-6 border-t border-border pt-6">
+                      <p className="mb-3 text-[10px] font-medium uppercase tracking-[0.22em] text-muted-foreground">
                         {t("Language")}
                       </p>
                       <LocaleSwitcher changeLocaleAction={changeLocaleAction} />
                     </div>
 
-                    <div className="mt-6 border-t border-white/10 pt-6">
-                      <p className="mb-3 text-[10px] font-medium uppercase tracking-[0.22em] text-white/40">
+                    <div className="mt-6 border-t border-border pt-6">
+                      <p className="mb-3 text-[10px] font-medium uppercase tracking-[0.22em] text-muted-foreground">
                         {t("Account")}
                       </p>
                       <div className="flex items-center justify-start">

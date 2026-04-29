@@ -9,7 +9,7 @@ import { AdSenseSlot } from "@/components/adsense-slot";
 import { ChatComposer, type ComposerMessage } from "@/components/chat/chat-composer";
 import { ProjectSelect } from "@/components/projects/project-select";
 import { env } from "@/env";
-import { getPreferredReasoningEffort, models, type ReasoningEffort } from "@/lib/constants";
+import { defaultModel, getPreferredReasoningEffort, type ReasoningEffort } from "@/lib/constants";
 import { trpc } from "@/lib/trpc/react";
 
 // Storage key for passing initial message data to chat page
@@ -59,12 +59,12 @@ export default function ChatHome() {
   const t = useExtracted();
   const router = useRouter();
   const [input, setInput] = useState("");
-  const [model, setModel] = useState(models[0].value);
+  const [model, setModel] = useState(defaultModel.value);
   const [webSearch, setWebSearch] = useState(false);
   const [videoMode, setVideoMode] = useState(false);
   const [imageMode, setImageMode] = useState(false);
   const [reasoningEffort, setReasoningEffort] = useState<ReasoningEffort>(
-    getPreferredReasoningEffort(models[0].efforts),
+    getPreferredReasoningEffort(defaultModel.efforts),
   );
   const [deepResearch, setDeepResearch] = useState(false);
   const [projectId, setProjectId] = useState<string | null>(null);
@@ -153,9 +153,9 @@ export default function ChatHome() {
   return (
     <section
       aria-labelledby="chat-home-title"
-      className="relative flex min-h-screen flex-col items-center justify-center p-4"
+      className="relative flex min-h-0 flex-1 flex-col items-center overflow-y-auto p-4 [justify-content:safe_center]"
     >
-      <div className="w-full max-w-2xl space-y-6">
+      <div className="w-full max-w-2xl space-y-6 py-6">
         {/* Greeting */}
         <div className="text-center space-y-2">
           <div className="inline-flex items-center justify-center w-12 h-12 rounded-lg bg-secondary mb-2">
