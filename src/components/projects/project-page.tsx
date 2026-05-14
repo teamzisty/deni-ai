@@ -9,7 +9,6 @@ import {
   UploadIcon,
 } from "lucide-react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { useRef, useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -17,6 +16,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Spinner } from "@/components/ui/spinner";
 import { Textarea } from "@/components/ui/textarea";
+import { useNewChat } from "@/hooks/use-new-chat";
 import { trpc } from "@/lib/trpc/react";
 
 interface ProjectPageProps {
@@ -25,7 +25,6 @@ interface ProjectPageProps {
 }
 
 export function ProjectPage({ projectId, initialProjectName }: ProjectPageProps) {
-  const router = useRouter();
   const utils = trpc.useUtils();
 
   const projectQuery = trpc.projects.get.useQuery({ id: projectId });
@@ -59,11 +58,13 @@ export function ProjectPage({ projectId, initialProjectName }: ProjectPageProps)
     },
   });
 
-  const createChat = trpc.chat.createChat.useMutation({
-    onSuccess: (chatId) => {
-      if (chatId) router.push(`/chat/${chatId}`);
-    },
-  });
+  const startNewChat = useNewChat();
+  const [isStartingChat, setIsStartingChat] = useState(false);
+  const handleNewProjectChat = () => {
+    if (isStartingChat) return;
+    setIsStartingChat(true);
+    startNewChat({ projectId });
+  };
 
   const deleteFile = trpc.projects.deleteFile.useMutation({
     onSuccess: () => {
@@ -137,10 +138,10 @@ export function ProjectPage({ projectId, initialProjectName }: ProjectPageProps)
             size="sm"
             variant="ghost"
             className="h-7 gap-1 px-2 text-xs"
-            disabled={createChat.isPending}
-            onClick={() => createChat.mutate({ projectId })}
+            onClick={handleNewProjectChat}
+            disabled={isStartingChat}
           >
-            {createChat.isPending ? <Spinner /> : <PlusIcon className="size-3.5" />}
+            {isStartingChat ? <Spinner className="size-3.5" /> : <PlusIcon className="size-3.5" />}
             New chat
           </Button>
         </div>

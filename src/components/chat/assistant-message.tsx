@@ -94,10 +94,12 @@ interface RequestBody {
 
 interface AssistantMessageProps {
   message: UIMessage;
-  isLastMessage: boolean;
-  isStreaming: boolean;
-  showActions: boolean;
-  isSubmitBlocked: boolean;
+  state: {
+    isLastMessage: boolean;
+    isStreaming: boolean;
+    showActions: boolean;
+    isSubmitBlocked: boolean;
+  };
   projectId?: string | null;
   requestBody: RequestBody;
   onRegenerate: (options?: { body?: RequestBody; messageId?: string }) => void;
@@ -108,10 +110,7 @@ interface AssistantMessageProps {
 
 export function AssistantMessage({
   message,
-  isLastMessage,
-  isStreaming,
-  showActions,
-  isSubmitBlocked,
+  state,
   projectId: _projectId,
   requestBody,
   onRegenerate,
@@ -120,7 +119,7 @@ export function AssistantMessage({
   onWebSearchChange,
 }: AssistantMessageProps) {
   const t = useExtracted();
-  const isStreamingThis = isStreaming && isLastMessage;
+  const isStreamingThis = state.isStreaming && state.isLastMessage;
   const [retryMenuOpen, setRetryMenuOpen] = useState(false);
   const [additionalInstruction, setAdditionalInstruction] = useState("");
 
@@ -145,11 +144,17 @@ export function AssistantMessage({
     setAdditionalInstruction("");
     setRetryMenuOpen(false);
   };
+  const reasoningParts =
+    message.parts?.filter((part) => part.type === "reasoning" || part.type === "tool-search") ?? [];
+  const textParts = message.parts?.filter((part) => part.type === "text") ?? [];
+  const videoToolParts = message.parts?.filter(isVideoToolPart) ?? [];
+  const imageToolParts = message.parts?.filter(isImageToolPart) ?? [];
+  const sourceParts = message.parts?.filter((part) => part.type === "source-url") ?? [];
 
   return (
     <div className="space-y-2">
       {/* Chain of Thought - reasoning と search を統合表示 */}
-      {message.parts?.some((p) => p.type === "reasoning" || p.type === "tool-search") && (
+      {reasoningParts.length > 0 && (
         <ChainOfThought defaultOpen={isStreamingThis}>
           <ChainOfThoughtHeader>
             {isStreamingThis && !message.parts?.some((p) => p.type === "text") ? (
@@ -159,268 +164,264 @@ export function AssistantMessage({
             )}
           </ChainOfThoughtHeader>
           <ChainOfThoughtContent>
-            {message.parts
-              ?.filter((p) => p.type === "reasoning" || p.type === "tool-search")
-              .map((part, i) => {
-                if (part.type === "reasoning") {
-                  const lines = (part.text ?? "").replace(/\r\n?/g, "\n").split("\n");
-                  const titleRegex = /^\*\*(.+?)\*\*\s*$/;
+            {reasoningParts.map((part, i) => {
+              if (part.type === "reasoning") {
+                const lines = (part.text ?? "").replace(/\r\n?/g, "\n").split("\n");
+                const titleRegex = /^\*\*(.+?)\*\*\s*$/;
 
-                  type Section = {
-                    title: string;
-                    content: string[];
-                  };
-                  const sections: Section[] = [];
+                type Section = {
+                  title: string;
+                  content: string[];
+                };
+                const sections: Section[] = [];
 
-                  let currentTitle: string | null = null;
-                  let currentContent: string[] = [];
+                let currentTitle: string | null = null;
+                let currentContent: string[] = [];
 
-                  const flush = () => {
-                    if (currentTitle === null && currentContent.length === 0) return;
+                const flush = () => {
+                  if (currentTitle === null && currentContent.length === 0) return;
 
-                    sections.push({
-                      title: (currentTitle ?? t("Reasoning")).trim() || t("Reasoning"),
-                      content: currentContent,
-                    });
+                  sections.push({
+                    title: (currentTitle ?? t("Reasoning")).trim() || t("Reasoning"),
+                    content: currentContent,
+                  });
 
-                    currentTitle = null;
-                    currentContent = [];
-                  };
+                  currentTitle = null;
+                  currentContent = [];
+                };
 
-                  for (const rawLine of lines) {
-                    const line = rawLine;
-                    const trimmed = line.trim();
-                    const m = trimmed.match(titleRegex);
+                for (const rawLine of lines) {
+                  const line = rawLine;
+                  const trimmed = line.trim();
+                  const m = trimmed.match(titleRegex);
 
-                    if (m) {
-                      flush();
-                      currentTitle = m[1]; // **Title** の中身
-                    } else {
-                      currentContent.push(line);
-                    }
+                  if (m) {
+                    flush();
+                    currentTitle = m[1]; // **Title** の中身
+                  } else {
+                    currentContent.push(line);
                   }
-                  flush();
+                }
+                flush();
 
-                  if (sections.length === 0) {
-                    sections.push({
-                      title: t("Reasoning"),
-                      content: [],
-                    });
-                  }
-
-                  return sections.map((s, sIdx) => {
-                    const content = s.content.join("\n").trim();
-                    return (
-                      <ChainOfThoughtStep
-                        key={`${message.id}-cot-${i}-${sIdx}`}
-                        icon={BrainIcon}
-                        label={s.title || t("Reasoning")}
-                        description={content || t("No details")}
-                        className="whitespace-pre-wrap"
-                        status="complete"
-                      />
-                    );
+                if (sections.length === 0) {
+                  sections.push({
+                    title: t("Reasoning"),
+                    content: [],
                   });
                 }
 
-                if (part.type === "tool-search") {
-                  const isSearching =
-                    part.state !== "output-available" && part.state !== "output-error";
-                  const searchResults = isSearchResultArray(part.output) ? part.output : [];
+                return sections.map((s, sIdx) => {
+                  const content = s.content.join("\n").trim();
                   return (
                     <ChainOfThoughtStep
-                      key={`${message.id}-cot-${i}`}
-                      icon={Globe}
-                      label={
-                        isSearching ? (
-                          <Shimmer duration={2}>{t("Searching...")}</Shimmer>
-                        ) : part.state === "output-error" ? (
-                          t("Search failed")
-                        ) : (
-                          t("Found {count} results", {
-                            count: searchResults.length.toString(),
-                          })
-                        )
-                      }
-                      status={isSearching ? "active" : "complete"}
-                    >
-                      {searchResults.length > 0 && (
-                        <ChainOfThoughtSearchResults>
-                          {searchResults.map((result) => {
-                            const displayUrl = getSafeDisplayUrl(result.url);
-                            return (
-                              <Link
-                                key={result.url}
-                                href={displayUrl?.href ?? "#"}
-                                target="_blank"
-                                rel="noreferrer"
-                              >
-                                <ChainOfThoughtSearchResult>
-                                  <Globe className="size-3" />
-                                  {displayUrl?.hostname ?? t("Unknown")}
-                                </ChainOfThoughtSearchResult>
-                              </Link>
-                            );
-                          })}
-                        </ChainOfThoughtSearchResults>
-                      )}
-                    </ChainOfThoughtStep>
+                      key={`${message.id}-cot-${i}-${sIdx}`}
+                      icon={BrainIcon}
+                      label={s.title || t("Reasoning")}
+                      description={content || t("No details")}
+                      className="whitespace-pre-wrap"
+                      status="complete"
+                    />
                   );
-                }
-                return null;
-              })}
+                });
+              }
+
+              if (part.type === "tool-search") {
+                const isSearching =
+                  part.state !== "output-available" && part.state !== "output-error";
+                const searchResults = isSearchResultArray(part.output) ? part.output : [];
+                return (
+                  <ChainOfThoughtStep
+                    key={`${message.id}-cot-${i}`}
+                    icon={Globe}
+                    label={
+                      isSearching ? (
+                        <Shimmer duration={2}>{t("Searching...")}</Shimmer>
+                      ) : part.state === "output-error" ? (
+                        t("Search failed")
+                      ) : (
+                        t("Found {count} results", {
+                          count: searchResults.length.toString(),
+                        })
+                      )
+                    }
+                    status={isSearching ? "active" : "complete"}
+                  >
+                    {searchResults.length > 0 && (
+                      <ChainOfThoughtSearchResults>
+                        {searchResults.map((result) => {
+                          const displayUrl = getSafeDisplayUrl(result.url);
+                          return (
+                            <Link
+                              key={result.url}
+                              href={displayUrl?.href ?? "#"}
+                              target="_blank"
+                              rel="noreferrer"
+                            >
+                              <ChainOfThoughtSearchResult>
+                                <Globe className="size-3" />
+                                {displayUrl?.hostname ?? t("Unknown")}
+                              </ChainOfThoughtSearchResult>
+                            </Link>
+                          );
+                        })}
+                      </ChainOfThoughtSearchResults>
+                    )}
+                  </ChainOfThoughtStep>
+                );
+              }
+              return null;
+            })}
           </ChainOfThoughtContent>
         </ChainOfThought>
       )}
 
-      {message.parts
-        ?.filter((p) => p.type === "text")
-        .map((part, i, textParts) => (
-          <Message key={`${message.id}-text-${i}`} from={message.role}>
-            <MessageContent>
-              <MessageResponse>{part.text}</MessageResponse>
-            </MessageContent>
-            {i === textParts.length - 1 && showActions && (
-              <MessageActions>
-                <DropdownMenu
-                  open={retryMenuOpen}
-                  onOpenChange={(open) => {
-                    setRetryMenuOpen(open);
-                    if (!open) {
-                      setAdditionalInstruction("");
-                    }
-                  }}
-                >
-                  <TooltipProvider>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <DropdownMenuTrigger asChild>
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="icon-sm"
-                            disabled={isSubmitBlocked}
-                            aria-label={t("Retry")}
-                          >
-                            <RefreshCcwIcon className="size-3.5" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                      </TooltipTrigger>
-                      <TooltipContent>
-                        <p>{t("Retry")}</p>
-                      </TooltipContent>
-                    </Tooltip>
-                  </TooltipProvider>
-                  <DropdownMenuContent align="start" className="w-64">
-                    <form
-                      className="flex items-center gap-2 p-1"
-                      onSubmit={(event) => {
-                        event.preventDefault();
-                        handleAdditionalInstructionSubmit();
-                      }}
+      {textParts.map((part, i) => (
+        <Message key={`${message.id}-text-${i}`} from={message.role}>
+          <MessageContent>
+            <MessageResponse>{part.text}</MessageResponse>
+          </MessageContent>
+          {i === textParts.length - 1 && state.showActions && (
+            <MessageActions>
+              <DropdownMenu
+                open={retryMenuOpen}
+                onOpenChange={(open) => {
+                  setRetryMenuOpen(open);
+                  if (!open) {
+                    setAdditionalInstruction("");
+                  }
+                }}
+              >
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <DropdownMenuTrigger asChild>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon-sm"
+                          disabled={state.isSubmitBlocked}
+                          aria-label={t("Retry")}
+                        >
+                          <RefreshCcwIcon className="size-3.5" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>{t("Retry")}</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+                <DropdownMenuContent align="start" className="w-64">
+                  <form
+                    className="flex items-center gap-2 p-1"
+                    onSubmit={(event) => {
+                      event.preventDefault();
+                      handleAdditionalInstructionSubmit();
+                    }}
+                  >
+                    <Input
+                      value={additionalInstruction}
+                      onChange={(event) => setAdditionalInstruction(event.target.value)}
+                      placeholder={t("Refine this answer")}
+                      aria-label={t("Refine this answer")}
+                      className="h-7 bg-transparent! border-none! select-none! outline-none!"
+                    />
+                    <Button
+                      type="submit"
+                      size="icon-sm"
+                      className="h-7"
+                      disabled={state.isSubmitBlocked || additionalInstruction.trim().length === 0}
+                      aria-label={t("Send")}
                     >
-                      <Input
-                        value={additionalInstruction}
-                        onChange={(event) => setAdditionalInstruction(event.target.value)}
-                        placeholder={t("Refine this answer")}
-                        aria-label={t("Refine this answer")}
-                        className="h-7 bg-transparent! border-none! select-none! outline-none!"
-                      />
-                      <Button
-                        type="submit"
-                        size="icon-sm"
-                        className="h-7"
-                        disabled={isSubmitBlocked || additionalInstruction.trim().length === 0}
-                        aria-label={t("Send")}
-                      >
-                        <ArrowUpIcon className="size-4" />
-                      </Button>
-                    </form>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem onSelect={() => regenerateMessage()}>
-                      <RefreshCcwIcon className="size-4" />
-                      {t("Regenerate")}
-                    </DropdownMenuItem>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem
-                      onSelect={() => regenerateMessage({ responseStyle: "detailed" })}
-                    >
-                      <ListFilterIcon className="size-4" />
-                      {t("Expand answer")}
-                    </DropdownMenuItem>
-                    <DropdownMenuItem
-                      onSelect={() => regenerateMessage({ responseStyle: "concise" })}
-                    >
-                      <ListFilterIcon className="size-4" />
-                      {t("Shorten answer")}
-                    </DropdownMenuItem>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem
-                      onSelect={() => {
-                        onWebSearchChange(true);
-                        regenerateMessage({
-                          webSearch: true,
-                          forceWebSearch: true,
-                        });
-                      }}
-                    >
-                      <Globe className="size-4" />
-                      {t("Use web search")}
-                    </DropdownMenuItem>
-                    <DropdownMenuItem
-                      onSelect={() => {
-                        onWebSearchChange(true);
-                        regenerateMessage({
-                          webSearch: true,
-                          deepResearch: true,
-                          forceWebSearch: true,
-                        });
-                      }}
-                    >
+                      <ArrowUpIcon className="size-4" />
+                    </Button>
+                  </form>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onSelect={() => regenerateMessage()}>
+                    <RefreshCcwIcon className="size-4" />
+                    {t("Regenerate")}
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem
+                    onSelect={() => regenerateMessage({ responseStyle: "detailed" })}
+                  >
+                    <ListFilterIcon className="size-4" />
+                    {t("Expand answer")}
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    onSelect={() => regenerateMessage({ responseStyle: "concise" })}
+                  >
+                    <ListFilterIcon className="size-4" />
+                    {t("Shorten answer")}
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem
+                    onSelect={() => {
+                      onWebSearchChange(true);
+                      regenerateMessage({
+                        webSearch: true,
+                        forceWebSearch: true,
+                      });
+                    }}
+                  >
+                    <Globe className="size-4" />
+                    {t("Use web search")}
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    onSelect={() => {
+                      onWebSearchChange(true);
+                      regenerateMessage({
+                        webSearch: true,
+                        deepResearch: true,
+                        forceWebSearch: true,
+                      });
+                    }}
+                  >
+                    <BrainIcon className="size-4" />
+                    {t("Run deep research")}
+                  </DropdownMenuItem>
+                  <DropdownMenuSub>
+                    <DropdownMenuSubTrigger>
                       <BrainIcon className="size-4" />
-                      {t("Run deep research")}
-                    </DropdownMenuItem>
-                    <DropdownMenuSub>
-                      <DropdownMenuSubTrigger>
-                        <BrainIcon className="size-4" />
-                        {t("Change model")}
-                      </DropdownMenuSubTrigger>
-                      <DropdownMenuSubContent className="max-h-80 w-72 overflow-y-auto">
-                        {availableModels.map((modelOption) => (
-                          <DropdownMenuItem
-                            key={modelOption.value}
-                            onSelect={() => {
-                              onModelChange(modelOption.value);
-                              regenerateMessage({ model: modelOption.value });
-                            }}
-                          >
-                            <CheckIcon
-                              className={
-                                modelOption.value === requestBody.model
-                                  ? "size-4 opacity-100"
-                                  : "size-4 opacity-0"
-                              }
-                            />
-                            <span className="truncate">{modelOption.name}</span>
-                          </DropdownMenuItem>
-                        ))}
-                      </DropdownMenuSubContent>
-                    </DropdownMenuSub>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-                <MessageAction
-                  onClick={() => navigator.clipboard.writeText(part.text)}
-                  label={t("Copy")}
-                  tooltip={t("Copy")}
-                >
-                  <CopyIcon className="size-3.5" />
-                </MessageAction>
-              </MessageActions>
-            )}
-          </Message>
-        ))}
+                      {t("Change model")}
+                    </DropdownMenuSubTrigger>
+                    <DropdownMenuSubContent className="max-h-80 w-72 overflow-y-auto">
+                      {availableModels.map((modelOption) => (
+                        <DropdownMenuItem
+                          key={modelOption.value}
+                          onSelect={() => {
+                            onModelChange(modelOption.value);
+                            regenerateMessage({ model: modelOption.value });
+                          }}
+                        >
+                          <CheckIcon
+                            className={
+                              modelOption.value === requestBody.model
+                                ? "size-4 opacity-100"
+                                : "size-4 opacity-0"
+                            }
+                          />
+                          <span className="truncate">{modelOption.name}</span>
+                        </DropdownMenuItem>
+                      ))}
+                    </DropdownMenuSubContent>
+                  </DropdownMenuSub>
+                </DropdownMenuContent>
+              </DropdownMenu>
+              <MessageAction
+                onClick={() => navigator.clipboard.writeText(part.text)}
+                label={t("Copy")}
+                tooltip={t("Copy")}
+              >
+                <CopyIcon className="size-3.5" />
+              </MessageAction>
+            </MessageActions>
+          )}
+        </Message>
+      ))}
 
-      {message.parts?.filter(isVideoToolPart).map((part, i) => {
+      {videoToolParts.map((part, i) => {
         if (part.state !== "output-available" && part.state !== "output-error") {
           return (
             <Message key={`${message.id}-video-${i}`} from="assistant">
@@ -515,7 +516,7 @@ export function AssistantMessage({
         );
       })}
 
-      {message.parts?.filter(isImageToolPart).map((part, i) => {
+      {imageToolParts.map((part, i) => {
         if (part.state !== "output-available" && part.state !== "output-error") {
           return (
             <Message key={`${message.id}-image-${i}`} from="assistant">
@@ -615,21 +616,17 @@ export function AssistantMessage({
       })}
 
       {/* ソース */}
-      {message.parts?.some((p) => p.type === "source-url") && (
+      {sourceParts.length > 0 && (
         <Sources className="mt-2">
-          <SourcesTrigger count={message.parts.filter((p) => p.type === "source-url").length}>
-            {t("Sources")}
-          </SourcesTrigger>
+          <SourcesTrigger count={sourceParts.length}>{t("Sources")}</SourcesTrigger>
           <SourcesContent>
-            {message.parts
-              .filter((p) => p.type === "source-url")
-              .map((part, index) => (
-                <Source
-                  key={`${message.id}-source-${index}`}
-                  href={toSafeHref(part.url)}
-                  title={part.title || part.url || t("Source")}
-                />
-              ))}
+            {sourceParts.map((part, index) => (
+              <Source
+                key={`${message.id}-source-${index}`}
+                href={toSafeHref(part.url)}
+                title={part.title || part.url || t("Source")}
+              />
+            ))}
           </SourcesContent>
         </Sources>
       )}

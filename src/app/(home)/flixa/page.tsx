@@ -37,8 +37,8 @@ function FeatureCard({
 }) {
   return (
     <div className="group relative p-6 rounded-lg border border-border bg-card">
-      <div className="inline-flex items-center justify-center w-10 h-10 rounded-lg bg-secondary text-foreground mb-4">
-        <Icon className="w-5 h-5" />
+      <div className="inline-flex items-center justify-center size-10 rounded-lg bg-secondary text-foreground mb-4">
+        <Icon className="size-5" />
       </div>
       <h3 className="text-base font-semibold mb-2">{title}</h3>
       <p className="text-muted-foreground text-sm leading-relaxed">{description}</p>
@@ -68,7 +68,7 @@ function IDECard({
       <h3 className="text-base font-semibold mb-1">{name}</h3>
       <p className="text-muted-foreground text-sm mb-4">{description}</p>
       <span className="gap-2 inline-flex items-center text-sm font-medium text-foreground group-hover:underline">
-        <Download className="w-4 h-4" />
+        <Download className="size-4" />
         Install
       </span>
     </Link>
@@ -138,7 +138,7 @@ export default function FlixaPage() {
           <div className="flex flex-col items-center text-center">
             {/* Badge */}
             <div className="mb-6 inline-flex items-center gap-1.5 rounded-md border border-border bg-secondary px-3 py-1 text-sm text-muted-foreground">
-              <Code2 className="w-3.5 h-3.5" />
+              <Code2 className="size-3.5" />
               {t("AI Coding Agent")}
             </div>
 
@@ -165,14 +165,14 @@ export default function FlixaPage() {
                   target="_blank"
                   rel="noopener noreferrer"
                 >
-                  <Download className="w-4 h-4" />
+                  <Download className="size-4" />
                   {t("Install for VS Code")}
                 </Link>
               </Button>
               <Button variant="outline" size="lg" asChild className="group">
                 <Link href="#platforms">
                   {t("View All Platforms")}
-                  <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-0.5" />
+                  <ArrowRight className="size-4 transition-transform group-hover:translate-x-0.5" />
                 </Link>
               </Button>
             </div>
@@ -244,7 +244,7 @@ export default function FlixaPage() {
                 <svg
                   role="img"
                   viewBox="0 0 24 24"
-                  className="w-8 h-8 fill-foreground"
+                  className="size-8 fill-foreground"
                   xmlns="http://www.w3.org/2000/svg"
                 >
                   <title>Visual Studio Code</title>
@@ -260,7 +260,7 @@ export default function FlixaPage() {
                 <svg
                   role="img"
                   viewBox="0 0 24 24"
-                  className="w-8 h-8 fill-foreground"
+                  className="size-8 fill-foreground"
                   xmlns="http://www.w3.org/2000/svg"
                 >
                   <title>Cursor</title>
@@ -272,13 +272,13 @@ export default function FlixaPage() {
               name="Windsurf"
               description={t("Open VSX Registry")}
               href="https://open-vsx.org/extension/deniai/flixa"
-              icon={<SiWindsurf className="w-8 h-8" />}
+              icon={<SiWindsurf className="size-8" />}
             />
             <IDECard
               name="Antigravity"
               description={t("Open VSX Registry")}
               href="https://open-vsx.org/extension/deniai/flixa"
-              icon={<SiGoogle className="w-8 h-8" />}
+              icon={<SiGoogle className="size-8" />}
             />
           </div>
         </div>
@@ -303,14 +303,14 @@ export default function FlixaPage() {
                   target="_blank"
                   rel="noopener noreferrer"
                 >
-                  <Download className="w-4 h-4" />
+                  <Download className="size-4" />
                   {t("Get Flixa for VS Code")}
                 </Link>
               </Button>
               <Button variant="outline" size="lg" asChild className="group">
                 <Link href="/">
                   {t("Try Deni AI")}
-                  <ArrowRight className="w-4 h-4" />
+                  <ArrowRight className="size-4" />
                 </Link>
               </Button>
             </div>

@@ -31,7 +31,15 @@ import {
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useExtracted } from "next-intl";
-import { Fragment, startTransition, useEffect, useMemo, useRef, useState } from "react";
+import {
+  Fragment,
+  startTransition,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { toast } from "sonner";
 import {
   AlertDialog,
@@ -76,6 +84,7 @@ import { ShareDialog } from "@/components/chat/share-dialog";
 import DeniAIIcon from "@/components/deni-ai-icon";
 import { isCheckoutSettingsRoute } from "@/lib/settings-routes";
 import { trpc } from "@/lib/trpc/react";
+import { useNewChat } from "@/hooks/use-new-chat";
 
 const KONAMI_SEQUENCE = [
   "arrowup",
@@ -114,6 +123,20 @@ type FolderGroup = {
   folder: string;
   items: ChatListItem[];
 };
+
+type ChatItemDraft = {
+  title: string;
+  folder: string;
+  tagsInput: string;
+};
+
+function createChatItemDraft(item: ChatListItem): ChatItemDraft {
+  return {
+    title: item.title ?? "",
+    folder: item.folder ?? "",
+    tagsInput: item.tags.join(", "),
+  };
+}
 
 function normalizeTags(value: unknown): string[] {
   if (!Array.isArray(value)) {
@@ -214,8 +237,8 @@ function groupChatsByFolder(items: ChatListItem[]) {
     folderMap.set(item.folder, [item]);
   }
 
-  return [...folderMap.entries()]
-    .sort(([left], [right]) => left.localeCompare(right))
+  return Array.from(folderMap.entries())
+    .toSorted(([left], [right]) => left.localeCompare(right))
     .map(([folder, folderItems]) => ({
       folder,
       items: folderItems.toSorted((a, b) => compareDesc(a.updated_at, b.updated_at)),
@@ -233,7 +256,33 @@ function mergeFolderGroups(groups: FolderGroup[], customFolders: string[]) {
     folderMap.set(folder, { folder, items: [] });
   }
 
-  return [...folderMap.values()].sort((left, right) => left.folder.localeCompare(right.folder));
+  return Array.from(folderMap.values()).toSorted((left, right) =>
+    left.folder.localeCompare(right.folder),
+  );
+}
+
+function readStoredCustomFolders() {
+  const storedFolders = window.localStorage.getItem(SIDEBAR_CUSTOM_FOLDERS_KEY);
+  if (!storedFolders) {
+    return [];
+  }
+
+  const parsed = JSON.parse(storedFolders);
+  if (!Array.isArray(parsed)) {
+    return [];
+  }
+
+  return parsed.flatMap((value) => {
+    if (typeof value !== "string") {
+      return [];
+    }
+    const folder = value.trim();
+    return folder ? [folder] : [];
+  });
+}
+
+function writeStoredCustomFolders(folders: string[]) {
+  window.localStorage.setItem(SIDEBAR_CUSTOM_FOLDERS_KEY, JSON.stringify(folders));
 }
 
 function getChatDragId(chatId: string) {
@@ -259,13 +308,11 @@ function readFolderDropId(id: string | null) {
 function ChatItem({ item }: { item: ChatListItem }) {
   const t = useExtracted();
   const pathname = usePathname();
-  const router = useRouter();
+  const { push } = useRouter();
   const utils = trpc.useUtils();
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
   const [isShareOpen, setIsShareOpen] = useState(false);
-  const [title, setTitle] = useState(item.title ?? "");
-  const [folder, setFolder] = useState(item.folder ?? "");
-  const [tagsInput, setTagsInput] = useState(item.tags.join(", "));
+  const [draft, setDraft] = useState(() => createChatItemDraft(item));
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
     id: getChatDragId(item.id),
     data: {
@@ -277,9 +324,7 @@ function ChatItem({ item }: { item: ChatListItem }) {
 
   useEffect(() => {
     if (!isDetailsOpen) {
-      setTitle(item.title ?? "");
-      setFolder(item.folder ?? "");
-      setTagsInput(item.tags.join(", "));
+      setDraft(createChatItemDraft(item));
     }
   }, [isDetailsOpen, item.folder, item.tags, item.title]);
 
@@ -287,7 +332,7 @@ function ChatItem({ item }: { item: ChatListItem }) {
     onSuccess: async () => {
       await utils.chat.getChats.invalidate();
       if (pathname === `/chat/${item.id}`) {
-        router.push("/chat");
+        push("/chat");
       }
     },
   });
@@ -300,13 +345,13 @@ function ChatItem({ item }: { item: ChatListItem }) {
   });
 
   const handleSave = () => {
-    const normalizedTitle = title.trim() || null;
+    const normalizedTitle = draft.title.trim() || null;
 
     updateChat.mutate({
       id: item.id,
       title: normalizedTitle,
-      folder: folder.trim() || null,
-      tags: parseTagsInput(tagsInput),
+      folder: draft.folder.trim() || null,
+      tags: parseTagsInput(draft.tagsInput),
     });
   };
 
@@ -401,8 +446,10 @@ function ChatItem({ item }: { item: ChatListItem }) {
                 aria-label={t("Chat title")}
                 autoComplete="off"
                 name="chat-title"
-                value={title}
-                onChange={(event) => setTitle(event.target.value)}
+                value={draft.title}
+                onChange={(event) =>
+                  setDraft((current) => ({ ...current, title: event.target.value }))
+                }
               />
             </div>
             <div className="space-y-2">
@@ -412,8 +459,10 @@ function ChatItem({ item }: { item: ChatListItem }) {
                 autoComplete="off"
                 name="chat-folder"
                 placeholder={t("e.g. Work")}
-                value={folder}
-                onChange={(event) => setFolder(event.target.value)}
+                value={draft.folder}
+                onChange={(event) =>
+                  setDraft((current) => ({ ...current, folder: event.target.value }))
+                }
               />
             </div>
             <div className="space-y-2">
@@ -423,8 +472,10 @@ function ChatItem({ item }: { item: ChatListItem }) {
                 autoComplete="off"
                 name="chat-tags"
                 placeholder={t("Comma-separated tags")}
-                value={tagsInput}
-                onChange={(event) => setTagsInput(event.target.value)}
+                value={draft.tagsInput}
+                onChange={(event) =>
+                  setDraft((current) => ({ ...current, tagsInput: event.target.value }))
+                }
               />
             </div>
             <Button
@@ -578,7 +629,7 @@ function FolderSection({
       </SidebarMenuItem>
       {folderGroups.length === 0 ? (
         <SidebarMenuItem>
-          <div className="px-2 py-2 text-xs text-muted-foreground">{t("No folders yet")}</div>
+          <div className="p-2 text-xs text-muted-foreground">{t("No folders yet")}</div>
         </SidebarMenuItem>
       ) : null}
       {folderGroups.map((group) => {
@@ -621,7 +672,7 @@ function RemoveFromFolderDropZone({ visible }: { visible: boolean }) {
       <button
         ref={setNodeRef}
         className={[
-          "flex w-full items-center gap-2 rounded-md border border-dashed px-2 py-2 text-left text-xs transition-colors",
+          "flex w-full items-center gap-2 rounded-md border border-dashed p-2 text-left text-xs transition-colors",
           isOver
             ? "border-sidebar-primary/50 bg-sidebar-primary/10 text-sidebar-foreground"
             : "border-sidebar-border/80 text-muted-foreground hover:border-sidebar-primary/30 hover:bg-sidebar-accent/60",
@@ -643,10 +694,11 @@ export function AppSidebar({
   onNewChatRef?: React.RefObject<(() => void) | null>;
 }) {
   const t = useExtracted();
-  const router = useRouter();
+  const { push } = useRouter();
   const pathname = usePathname();
   const isCheckoutRoute = isCheckoutSettingsRoute(pathname);
   const utils = trpc.useUtils();
+  const startNewChat = useNewChat();
   const sensors = useSensors(
     useSensor(PointerSensor, {
       activationConstraint: {
@@ -660,7 +712,11 @@ export function AppSidebar({
   const [newFolderName, setNewFolderName] = useState("");
   const [customFolders, setCustomFolders] = useState<string[]>([]);
   const konamiIndexRef = useRef(0);
-  const { isLoading, error, data } = trpc.chat.getChats.useQuery();
+  const { isLoading, error, data } = trpc.chat.getChats.useQuery(undefined, {
+    staleTime: 60_000,
+    refetchOnWindowFocus: false,
+    refetchOnMount: false,
+  });
 
   const chats = useMemo<ChatListItem[]>(
     () =>
@@ -693,31 +749,12 @@ export function AppSidebar({
   const activeChatId = pathname?.startsWith("/chat/") ? pathname.slice("/chat/".length) : null;
 
   useEffect(() => {
-    const storedFolders = window.localStorage.getItem(SIDEBAR_CUSTOM_FOLDERS_KEY);
-    if (!storedFolders) {
-      return;
-    }
-
     try {
-      const parsed = JSON.parse(storedFolders);
-      if (!Array.isArray(parsed)) {
-        return;
-      }
-
-      setCustomFolders(
-        parsed
-          .filter((value): value is string => typeof value === "string")
-          .map((value) => value.trim())
-          .filter(Boolean),
-      );
+      setCustomFolders(readStoredCustomFolders());
     } catch {
       window.localStorage.removeItem(SIDEBAR_CUSTOM_FOLDERS_KEY);
     }
   }, []);
-
-  useEffect(() => {
-    window.localStorage.setItem(SIDEBAR_CUSTOM_FOLDERS_KEY, JSON.stringify(customFolders));
-  }, [customFolders]);
 
   const moveChatToFolder = trpc.chat.updateChat.useMutation({
     onSuccess: async () => {
@@ -730,21 +767,17 @@ export function AppSidebar({
     },
   });
 
-  const createConversation = trpc.chat.createChat.useMutation({
-    onSuccess: async (res) => {
-      await utils.chat.getChats.invalidate();
-      if (res) {
-        router.push(`/chat/${res}`);
-      }
-    },
-  });
+  // Sidebar "new chat" button — navigate immediately; chat page upserts the row.
+  const handleNewConversation = useCallback(() => {
+    startNewChat();
+  }, [startNewChat]);
 
   const deleteAllChats = trpc.chat.deleteAllChats.useMutation({
     onSuccess: async () => {
       await utils.chat.getChats.invalidate();
       setIsDeleteAllDialogOpen(false);
       if (pathname?.startsWith("/chat/")) {
-        router.push("/chat");
+        push("/chat");
       }
       toast.success(t("All conversations have been deleted."));
     },
@@ -786,9 +819,7 @@ export function AppSidebar({
     };
   }, [isCheckoutRoute, isDeleteAllDialogOpen]);
 
-  const handleNewChat = () => {
-    createConversation.mutate();
-  };
+  const handleNewChat = handleNewConversation;
 
   useEffect(() => {
     if (!onNewChatRef) {
@@ -827,7 +858,9 @@ export function AppSidebar({
         return current;
       }
 
-      return [...current, normalizedFolder];
+      const nextFolders = [...current, normalizedFolder];
+      writeStoredCustomFolders(nextFolders);
+      return nextFolders;
     });
     setNewFolderName("");
     setIsCreateFolderOpen(false);
@@ -893,7 +926,7 @@ export function AppSidebar({
         <SidebarGroup>
           <div className="mb-4 flex items-center justify-between">
             <Link href="/chat" className="flex items-center gap-2">
-              <DeniAIIcon className="h-7 w-7 text-sidebar-foreground" />
+              <DeniAIIcon className="size-7 text-sidebar-foreground" />
               <h1 className="text-base font-semibold tracking-tight text-sidebar-foreground">
                 {t("Deni AI")}
               </h1>
@@ -904,14 +937,9 @@ export function AppSidebar({
               <SidebarMenuItem>
                 <Button
                   className="group/newchat h-9 w-full justify-start gap-2 rounded-b-none font-medium"
-                  disabled={createConversation.isPending}
                   onClick={handleNewChat}
                 >
-                  {createConversation.isPending ? (
-                    <Spinner className="h-4 w-4" />
-                  ) : (
-                    <Plus className="h-4 w-4" />
-                  )}
+                  <Plus className="size-4" />
                   {t("New Chat")}
                   <Kbd className="ml-auto opacity-0 transition-opacity duration-150 group-hover/newchat:opacity-100 bg-sidebar text-sidebar-foreground/80">
                     Ctrl+N
@@ -961,7 +989,7 @@ export function AppSidebar({
 
         {isLoading ? (
           <div className="flex flex-col items-center justify-center py-8">
-            <Spinner className="h-5 w-5 text-muted-foreground" />
+            <Spinner className="size-5 text-muted-foreground" />
           </div>
         ) : error ? (
           <div className="px-3 py-4 text-sm text-destructive">
@@ -980,8 +1008,8 @@ export function AppSidebar({
                 <SidebarMenu>
                   {chats.length === 0 ? (
                     <div className="flex flex-col items-center justify-center px-4 py-8 text-center">
-                      <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-lg bg-secondary">
-                        <MessageSquare className="h-5 w-5 text-muted-foreground" />
+                      <div className="mb-3 flex size-10 items-center justify-center rounded-lg bg-secondary">
+                        <MessageSquare className="size-5 text-muted-foreground" />
                       </div>
                       <p className="text-sm text-muted-foreground">{t("No chats yet")}</p>
                       <p className="mt-1 text-xs text-muted-foreground/70">
@@ -1039,7 +1067,13 @@ export function AppSidebar({
           </SidebarGroupContent>
         </SidebarGroup>
       </SidebarContent>
-      <AlertDialog open={isDeleteAllDialogOpen} onOpenChange={setIsDeleteAllDialogOpen}>
+      <AlertDialog
+        open={isDeleteAllDialogOpen}
+        onOpenChange={(open) => {
+          if (deleteAllChats.isPending) return;
+          setIsDeleteAllDialogOpen(open);
+        }}
+      >
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>{t("Delete all conversations with Deni AI?")}</AlertDialogTitle>
@@ -1054,6 +1088,7 @@ export function AppSidebar({
             <AlertDialogAction
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
               disabled={deleteAllChats.isPending}
+              loading={deleteAllChats.isPending}
               onClick={handleDeleteAllChats}
             >
               {deleteAllChats.isPending ? <Spinner /> : null}

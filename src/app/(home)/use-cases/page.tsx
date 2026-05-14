@@ -23,8 +23,8 @@ type UseCaseCardProps = {
 function UseCaseCard({ icon: Icon, title, summary, details }: UseCaseCardProps) {
   return (
     <article className="rounded-[1.5rem] border border-border/70 bg-card p-6">
-      <div className="inline-flex h-11 w-11 items-center justify-center rounded-2xl bg-secondary">
-        <Icon className="h-5 w-5" />
+      <div className="inline-flex size-11 items-center justify-center rounded-2xl bg-secondary">
+        <Icon className="size-5" />
       </div>
       <h2 className="mt-5 text-xl font-semibold tracking-tight">{title}</h2>
       <p className="mt-3 text-sm font-medium text-foreground/85">{summary}</p>
@@ -160,13 +160,13 @@ export default function UseCasesPage() {
             <Button variant="outline" asChild>
               <Link href="/models">
                 {t("Compare models")}
-                <ArrowRight className="h-4 w-4" />
+                <ArrowRight className="size-4" />
               </Link>
             </Button>
             <Button variant="outline" asChild>
               <Link href="/about">
                 {t("Learn about the product")}
-                <ArrowRight className="h-4 w-4" />
+                <ArrowRight className="size-4" />
               </Link>
             </Button>
           </div>
@@ -184,8 +184,8 @@ export default function UseCasesPage() {
       <section className="relative border-y border-border/50 bg-secondary/20 px-4 py-16 md:py-24">
         <div className="mx-auto max-w-4xl">
           <div className="rounded-[1.5rem] border border-border/70 bg-card p-6 md:p-8">
-            <div className="inline-flex h-11 w-11 items-center justify-center rounded-2xl bg-secondary">
-              <Lightbulb className="h-5 w-5" />
+            <div className="inline-flex size-11 items-center justify-center rounded-2xl bg-secondary">
+              <Lightbulb className="size-5" />
             </div>
             <h2 className="mt-5 text-2xl font-semibold tracking-tight">
               {t("How to get useful output from multi-model AI")}
@@ -199,7 +199,7 @@ export default function UseCasesPage() {
             <ul className="mt-6 space-y-3 text-sm leading-7 text-muted-foreground">
               {principles.map((principle) => (
                 <li key={principle.id} className="flex gap-3">
-                  <span className="mt-2 h-2 w-2 rounded-full bg-primary" aria-hidden="true" />
+                  <span className="mt-2 size-2 rounded-full bg-primary" aria-hidden="true" />
                   <span>{principle.text}</span>
                 </li>
               ))}

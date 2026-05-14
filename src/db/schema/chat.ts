@@ -25,5 +25,7 @@ export const chats = pgTable(
   (table) => ({
     userIdIdx: index("chats_user_id_idx").on(table.uid),
     projectIdIdx: index("chats_project_id_idx").on(table.projectId),
+    // Speeds up the sidebar list query (uid filter + updated_at DESC).
+    userUpdatedIdx: index("chats_user_updated_idx").on(table.uid, table.updated_at.desc()),
   }),
 );

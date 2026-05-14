@@ -59,7 +59,7 @@ export function AdSenseSlot({ slot, className }: AdSenseSlotProps) {
   return (
     <div
       className={cn(
-        "relative overflow-hidden rounded-[1.75rem] border border-border/60 bg-background/55 px-3 py-3 shadow-[0_24px_80px_-48px_rgba(15,23,42,0.65)] backdrop-blur-md",
+        "relative overflow-hidden rounded-[1.75rem] border border-border/60 bg-background/55 p-3 shadow-[0_24px_80px_-48px_rgba(15,23,42,0.65)] backdrop-blur-md",
         "before:pointer-events-none before:absolute before:inset-x-8 before:top-0 before:h-px before:bg-gradient-to-r before:from-transparent before:via-foreground/20 before:to-transparent",
         className,
       )}

@@ -21,9 +21,7 @@ function normalizeTags(value: unknown): string[] {
     return [];
   }
 
-  return value
-    .filter((entry): entry is string => typeof entry === "string")
-    .map((entry) => entry.trim());
+  return value.flatMap((entry) => (typeof entry === "string" ? [entry.trim()] : []));
 }
 
 export function ChatSearch({
@@ -34,10 +32,12 @@ export function ChatSearch({
   onOpenChange: (open: boolean) => void;
 }) {
   const t = useExtracted();
-  const router = useRouter();
+  const { push } = useRouter();
   const pathname = usePathname();
   const { data } = trpc.chat.getChats.useQuery(undefined, {
     enabled: open,
+    staleTime: 60_000,
+    refetchOnWindowFocus: false,
   });
 
   useEffect(() => {
@@ -46,7 +46,7 @@ export function ChatSearch({
 
   const handleSelect = (href: string) => {
     onOpenChange(false);
-    router.push(href);
+    push(href);
   };
 
   return (

@@ -62,8 +62,8 @@ function FeatureCard({
       transition={{ duration: 0.5, delay }}
       className="group relative rounded-2xl border border-border bg-card/20 p-6 backdrop-blur-sm transition-all hover:-translate-y-1 hover:bg-card hover:shadow-xl"
     >
-      <div className="mb-4 inline-flex h-12 w-12 items-center justify-center rounded-xl bg-secondary text-foreground transition-all duration-300 group-hover:scale-110 group-hover:bg-primary group-hover:text-primary-foreground">
-        <Icon className="h-6 w-6" />
+      <div className="mb-4 inline-flex size-12 items-center justify-center rounded-xl bg-secondary text-foreground transition-all duration-300 group-hover:scale-110 group-hover:bg-primary group-hover:text-primary-foreground">
+        <Icon className="size-6" />
       </div>
       <h3 className="mb-2 text-lg font-semibold">{title}</h3>
       <p className="text-sm leading-relaxed text-muted-foreground">{description}</p>
@@ -149,11 +149,11 @@ function detectPreferredPlatform(): {
 
 function parseDownloadOptions(assets: DesktopRelease["assets"]): DownloadOption[] {
   return assets
-    .map((asset) => {
+    .flatMap((asset) => {
       const { name, browser_download_url: href } = asset;
 
       if (/\.sig$/i.test(name) || /^latest\.json$/i.test(name) || /\.app\.tar\.gz$/i.test(name)) {
-        return null;
+        return [];
       }
 
       let os: DownloadOption["os"] | null = null;
@@ -166,14 +166,14 @@ function parseDownloadOptions(assets: DesktopRelease["assets"]): DownloadOption[
       }
 
       if (!os) {
-        return null;
+        return [];
       }
 
       const archMatch = name.match(/_(aarch64|arm64|x64|x86_64|amd64)(?=[._-])/i);
       const arch = normalizeArchitecture(archMatch?.[1] ?? "");
 
       if (!arch) {
-        return null;
+        return [];
       }
 
       let format = "";
@@ -190,22 +190,23 @@ function parseDownloadOptions(assets: DesktopRelease["assets"]): DownloadOption[
       } else if (/\.rpm$/i.test(name)) {
         format = ".rpm";
       } else {
-        return null;
+        return [];
       }
 
       const archLabel = arch === "arm64" ? "ARM64" : "x64";
       const macLabel = os === "macos" ? (arch === "arm64" ? "Silicon" : "Intel") : "";
 
-      return {
-        id: name,
-        shortLabel: `${macLabel ? `${macLabel} ` : archLabel} ${format}`,
-        href,
-        os,
-        arch,
-        format,
-      } satisfies DownloadOption;
+      return [
+        {
+          id: name,
+          shortLabel: `${macLabel ? `${macLabel} ` : archLabel} ${format}`,
+          href,
+          os,
+          arch,
+          format,
+        } satisfies DownloadOption,
+      ];
     })
-    .filter((option): option is DownloadOption => Boolean(option))
     .sort((a, b) => {
       const osOrder = { windows: 0, macos: 1, linux: 2 };
 
@@ -318,9 +319,13 @@ export function DesktopClient({ downloads }: { downloads: DesktopDownloads }) {
       return [];
     }
 
-    return Array.from(
-      new Set(options.filter((option) => option.os === currentOs).map((option) => option.arch)),
-    );
+    const archs = new Set<DownloadOption["arch"]>();
+    for (const option of options) {
+      if (option.os === currentOs) {
+        archs.add(option.arch);
+      }
+    }
+    return Array.from(archs);
   }, [currentOs, options]);
   const currentArch =
     (selectedArch && availableArchs.includes(selectedArch) ? selectedArch : null) ??
@@ -355,13 +360,13 @@ export function DesktopClient({ downloads }: { downloads: DesktopDownloads }) {
               transition={{ duration: 0.6 }}
               className="mb-6 inline-flex items-center gap-2 rounded-md border border-border bg-secondary/70 px-3 py-1.5 text-sm text-muted-foreground backdrop-blur"
             >
-              <AppWindowMac className="h-3.5 w-3.5" />
+              <AppWindowMac className="size-3.5" />
               {t("Desktop Companion")}
             </motion.div>
 
             <h1
               data-nosnippet
-              className="mb-8 text-4xl font-bold leading-[1.02] tracking-tight sm:text-6xl md:text-8xl"
+              className="mb-8 text-4xl font-semibold leading-[1.02] tracking-tight sm:text-6xl md:text-8xl"
             >
               <BlurReveal className="block" delay={0.2}>
                 {t("Deni AI Desktop")}
@@ -402,7 +407,7 @@ export function DesktopClient({ downloads }: { downloads: DesktopDownloads }) {
                 className="group transition-all hover:bg-secondary"
               >
                 <Link href="#download">
-                  <Download className="h-5 w-5 transition-transform group-hover:translate-x-1" />
+                  <Download className="size-5 transition-transform group-hover:translate-x-1" />
                   {t("Download")}
                 </Link>
               </Button>
@@ -414,7 +419,7 @@ export function DesktopClient({ downloads }: { downloads: DesktopDownloads }) {
               >
                 <Link href="#features">
                   {t("Learn More")}
-                  <ArrowRight className="h-5 w-5 transition-transform group-hover:translate-x-1" />
+                  <ArrowRight className="size-5 transition-transform group-hover:translate-x-1" />
                 </Link>
               </Button>
             </motion.div>
@@ -428,9 +433,9 @@ export function DesktopClient({ downloads }: { downloads: DesktopDownloads }) {
               <div className="rounded-[1.5rem] border border-border/70 bg-background/80 p-5">
                 <div className="mb-5 flex items-center justify-between gap-4 border-b border-border/70 pb-4">
                   <div className="flex items-center gap-2">
-                    <span className="h-3 w-3 rounded-full bg-rose-400" />
-                    <span className="h-3 w-3 rounded-full bg-amber-400" />
-                    <span className="h-3 w-3 rounded-full bg-emerald-400" />
+                    <span className="size-3 rounded-full bg-rose-400" />
+                    <span className="size-3 rounded-full bg-amber-400" />
+                    <span className="size-3 rounded-full bg-emerald-400" />
                   </div>
                   <div className="rounded-full border border-border bg-secondary/70 px-3 py-1 text-xs text-muted-foreground">
                     {t("Running in tray")}
@@ -440,7 +445,7 @@ export function DesktopClient({ downloads }: { downloads: DesktopDownloads }) {
                 <div className="grid gap-4 md:grid-cols-[0.95fr_1.05fr]">
                   <div className="rounded-2xl border border-border bg-card p-5 text-left">
                     <div className="mb-3 flex items-center gap-2 text-sm font-medium">
-                      <Workflow className="h-4 w-4 text-muted-foreground" />
+                      <Workflow className="size-4 text-muted-foreground" />
                       {t("Tray")}
                     </div>
                     <p className="text-sm leading-7 text-muted-foreground">
@@ -456,7 +461,7 @@ export function DesktopClient({ downloads }: { downloads: DesktopDownloads }) {
                   <div className="grid gap-4 text-left">
                     <div className="rounded-2xl border border-border bg-card p-5">
                       <div className="mb-3 flex items-center gap-2 text-sm font-medium">
-                        <BellRing className="h-4 w-4 text-muted-foreground" />
+                        <BellRing className="size-4 text-muted-foreground" />
                         {t("Native notifications")}
                       </div>
                       <p className="text-sm leading-7 text-muted-foreground">
@@ -468,7 +473,7 @@ export function DesktopClient({ downloads }: { downloads: DesktopDownloads }) {
 
                     <div className="rounded-2xl border border-border bg-card p-5">
                       <div className="mb-3 flex items-center gap-2 text-sm font-medium">
-                        <Feather className="h-4 w-4 text-muted-foreground" />
+                        <Feather className="size-4 text-muted-foreground" />
                         {t("Lightweight")}
                       </div>
                       <p className="text-sm leading-7 text-muted-foreground">
@@ -492,7 +497,7 @@ export function DesktopClient({ downloads }: { downloads: DesktopDownloads }) {
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
-              className="mb-6 text-4xl font-bold tracking-tight md:text-5xl"
+              className="mb-6 text-4xl font-semibold tracking-tight md:text-5xl"
             >
               {t("Why Use Deni AI Desktop?")}
             </motion.h2>
@@ -545,7 +550,7 @@ export function DesktopClient({ downloads }: { downloads: DesktopDownloads }) {
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
-              className="mb-6 text-3xl font-bold tracking-tight md:text-5xl"
+              className="mb-6 text-3xl font-semibold tracking-tight md:text-5xl"
             >
               {t("Desktop-first workflow")}
             </motion.h2>
@@ -607,7 +612,7 @@ export function DesktopClient({ downloads }: { downloads: DesktopDownloads }) {
             className="relative overflow-hidden rounded-[2.5rem] border-2 border-border bg-card/50 p-12 md:p-16 text-center shadow-2xl backdrop-blur-sm"
           >
             <div className="absolute inset-0 -z-10 bg-[radial-gradient(circle_at_50%_50%,rgba(var(--primary),0.1),transparent)]" />
-            <h2 className="mb-6 text-3xl font-bold tracking-tight md:text-6xl">
+            <h2 className="mb-6 text-3xl font-semibold tracking-tight md:text-6xl">
               {t("Ready to try Deni AI Desktop?")}
             </h2>
             <p className="mx-auto mb-10 max-w-2xl text-xl leading-relaxed text-muted-foreground">
@@ -638,7 +643,7 @@ export function DesktopClient({ downloads }: { downloads: DesktopDownloads }) {
                     className="h-12 rounded-b-none rounded-r-none! rounded-t-xl bg-primary px-6 text-primary-foreground shadow-lg shadow-primary/20 hover:bg-primary/90 sm:rounded-r-none sm:rounded-b-xl sm:rounded-l-xl"
                   >
                     <a href={selectedOption.href} target="_blank" rel="noreferrer">
-                      <Download className="h-4 w-4" />
+                      <Download className="size-4" />
                       {t("Download")} {getOsText(selectedOption.os)}
                     </a>
                   </Button>
@@ -649,7 +654,7 @@ export function DesktopClient({ downloads }: { downloads: DesktopDownloads }) {
                         variant="default"
                         className="h-12 rounded-t-none rounded-l-none! rounded-b-xl border-0 border-t border-primary-foreground/15 bg-primary px-4 text-primary-foreground shadow-lg shadow-primary/20 hover:bg-primary/90 sm:w-14 sm:rounded-l-none sm:rounded-r-xl sm:rounded-b-xl sm:rounded-t-xl sm:border-t-0 sm:border-l"
                       >
-                        <ChevronDown className="h-4 w-4" />
+                        <ChevronDown className="size-4" />
                       </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent
@@ -658,7 +663,7 @@ export function DesktopClient({ downloads }: { downloads: DesktopDownloads }) {
                     >
                       {osOptions.macos.length > 0 ? (
                         <DropdownMenuItem
-                          className="px-1.5 py-1.5 font-medium"
+                          className="p-1.5 font-medium"
                           onSelect={() => {
                             setSelectedOs("macos");
                             setSelectedArch(null);
@@ -674,7 +679,7 @@ export function DesktopClient({ downloads }: { downloads: DesktopDownloads }) {
                       ) : null}
                       {osOptions.windows.length > 0 ? (
                         <DropdownMenuItem
-                          className="px-1.5 py-1.5 font-medium"
+                          className="p-1.5 font-medium"
                           onSelect={() => {
                             setSelectedOs("windows");
                             setSelectedArch(null);
@@ -689,7 +694,7 @@ export function DesktopClient({ downloads }: { downloads: DesktopDownloads }) {
                       ) : null}
                       {osOptions.linux.length > 0 ? (
                         <DropdownMenuItem
-                          className="px-1.5 py-1.5 font-medium"
+                          className="p-1.5 font-medium"
                           onSelect={() => {
                             setSelectedOs("linux");
                             setSelectedArch(null);
@@ -750,7 +755,7 @@ export function DesktopClient({ downloads }: { downloads: DesktopDownloads }) {
                 rel="noreferrer"
                 className="inline-flex items-center gap-2 underline underline-offset-4 transition-opacity hover:opacity-80"
               >
-                <Package className="h-4 w-4" />
+                <Package className="size-4" />
                 {t("View all releases")}
               </a>
             </div>

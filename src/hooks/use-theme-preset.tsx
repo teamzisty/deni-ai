@@ -1,7 +1,7 @@
 "use client";
 
 import type { ReactNode } from "react";
-import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
+import { createContext, use, useCallback, useEffect, useMemo, useState } from "react";
 import type { ThemeName } from "@/lib/theme-presets";
 
 const STORAGE_KEY = "deni-theme-preset";
@@ -94,7 +94,7 @@ export function ThemePresetProvider({ children }: { children: ReactNode }) {
 }
 
 export function useThemePreset() {
-  const value = useContext(ThemePresetContext);
+  const value = use(ThemePresetContext);
   if (!value) {
     throw new Error("useThemePreset must be used within ThemePresetProvider");
   }

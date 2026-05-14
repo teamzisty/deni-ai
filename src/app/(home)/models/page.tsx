@@ -86,19 +86,19 @@ export default function ModelsPage() {
     ),
   };
 
-  const providerGuides = Object.keys(grouped)
-    .map((providerKey) => {
-      const summary = providerGuideSummaries[providerKey as keyof typeof providerGuideSummaries];
-      if (!summary) {
-        return null;
-      }
+  const providerGuides = Object.keys(grouped).flatMap((providerKey) => {
+    const summary = providerGuideSummaries[providerKey as keyof typeof providerGuideSummaries];
+    if (!summary) {
+      return [];
+    }
 
-      return {
+    return [
+      {
         provider: authorLabels[providerKey] ?? providerKey,
         summary,
-      };
-    })
-    .filter((guide): guide is { provider: string; summary: string } => guide !== null);
+      },
+    ];
+  });
 
   const selectionGuide = [
     {

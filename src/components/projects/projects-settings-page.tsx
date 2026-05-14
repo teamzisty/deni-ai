@@ -20,7 +20,7 @@ const projectColorClass: Record<string, string> = {
 
 export function ProjectsSettingsPage() {
   const t = useExtracted();
-  const router = useRouter();
+  const { push } = useRouter();
   const utils = trpc.useUtils();
   const projectsQuery = trpc.projects.list.useQuery();
 
@@ -28,7 +28,7 @@ export function ProjectsSettingsPage() {
     onSuccess: async (project) => {
       await utils.projects.list.invalidate();
       if (project?.id) {
-        router.push(`/projects/${project.id}`);
+        push(`/projects/${project.id}`);
       }
     },
   });

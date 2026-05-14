@@ -21,7 +21,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "./ui/t
 
 export function AccountMenu() {
   const t = useExtracted();
-  const router = useRouter();
+  const { push } = useRouter();
   const session = authClient.useSession();
   const isAnonymous = Boolean(session.data?.user?.isAnonymous);
   const billingDisabled = isBillingDisabled;
@@ -140,7 +140,7 @@ export function AccountMenu() {
           className="gap-2 text-sm"
           onClick={() => {
             authClient.signOut();
-            router.push("/");
+            push("/");
           }}
         >
           <LogOut className="size-4" />

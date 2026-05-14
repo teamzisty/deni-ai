@@ -2,7 +2,7 @@
 
 import { Brain, Plus, Save, Trash2 } from "lucide-react";
 import { useExtracted } from "next-intl";
-import { useEffect, useState } from "react";
+import { useEffect, useReducer } from "react";
 import { toast } from "sonner";
 import {
   AlertDialog,
@@ -39,6 +39,62 @@ type ProfileState = {
   emojiStyle: EmojiStyle;
   autoMemory: boolean;
 };
+
+const DEFAULT_PROFILE: ProfileState = {
+  instructions: "",
+  tone: "balanced",
+  friendliness: "friendly",
+  warmth: "warm",
+  emojiStyle: "light",
+  autoMemory: true,
+};
+
+type MemoryUiState = {
+  profile: ProfileState;
+  instructionsDraft: string;
+  profileInitialized: boolean;
+  newMemory: string;
+  isClearDialogOpen: boolean;
+};
+
+type MemoryUiAction =
+  | { type: "syncProfile"; profile: ProfileState }
+  | { type: "setProfile"; profile: ProfileState }
+  | { type: "setInstructionsDraft"; value: string }
+  | { type: "setNewMemory"; value: string }
+  | { type: "setClearDialogOpen"; value: boolean };
+
+function memoryUiReducer(state: MemoryUiState, action: MemoryUiAction): MemoryUiState {
+  switch (action.type) {
+    case "syncProfile":
+      return {
+        ...state,
+        profile: action.profile,
+        instructionsDraft: action.profile.instructions,
+        profileInitialized: true,
+      };
+    case "setProfile":
+      return {
+        ...state,
+        profile: action.profile,
+      };
+    case "setInstructionsDraft":
+      return {
+        ...state,
+        instructionsDraft: action.value,
+      };
+    case "setNewMemory":
+      return {
+        ...state,
+        newMemory: action.value,
+      };
+    case "setClearDialogOpen":
+      return {
+        ...state,
+        isClearDialogOpen: action.value,
+      };
+  }
+}
 
 function OptionGroup<T extends string>({
   label,
@@ -81,18 +137,14 @@ export default function MemorySettingsPage() {
   const t = useExtracted();
   const utils = trpc.useUtils();
   const memoryQuery = trpc.memory.get.useQuery();
-  const [profile, setProfile] = useState<ProfileState>({
-    instructions: "",
-    tone: "balanced",
-    friendliness: "friendly",
-    warmth: "warm",
-    emojiStyle: "light",
-    autoMemory: true,
+  const [memoryUi, dispatchMemoryUi] = useReducer(memoryUiReducer, {
+    profile: DEFAULT_PROFILE,
+    instructionsDraft: "",
+    profileInitialized: false,
+    newMemory: "",
+    isClearDialogOpen: false,
   });
-  const [instructionsDraft, setInstructionsDraft] = useState("");
-  const [profileInitialized, setProfileInitialized] = useState(false);
-  const [newMemory, setNewMemory] = useState("");
-  const [isClearDialogOpen, setIsClearDialogOpen] = useState(false);
+  const { profile, instructionsDraft, profileInitialized, newMemory, isClearDialogOpen } = memoryUi;
 
   useEffect(() => {
     if (!memoryQuery.isSuccess || !memoryQuery.data) {
@@ -105,16 +157,17 @@ export default function MemorySettingsPage() {
       return;
     }
 
-    setProfile({
-      instructions: memoryQuery.data.profile.instructions,
-      tone: memoryQuery.data.profile.tone as Tone,
-      friendliness: memoryQuery.data.profile.friendliness as Friendliness,
-      warmth: memoryQuery.data.profile.warmth as Warmth,
-      emojiStyle: memoryQuery.data.profile.emojiStyle as EmojiStyle,
-      autoMemory: memoryQuery.data.profile.autoMemory,
+    dispatchMemoryUi({
+      type: "syncProfile",
+      profile: {
+        instructions: memoryQuery.data.profile.instructions,
+        tone: memoryQuery.data.profile.tone as Tone,
+        friendliness: memoryQuery.data.profile.friendliness as Friendliness,
+        warmth: memoryQuery.data.profile.warmth as Warmth,
+        emojiStyle: memoryQuery.data.profile.emojiStyle as EmojiStyle,
+        autoMemory: memoryQuery.data.profile.autoMemory,
+      },
     });
-    setInstructionsDraft(memoryQuery.data.profile.instructions);
-    setProfileInitialized(true);
   }, [
     instructionsDraft,
     memoryQuery.data,
@@ -127,7 +180,7 @@ export default function MemorySettingsPage() {
 
   const addItem = trpc.memory.addItem.useMutation({
     onSuccess: async () => {
-      setNewMemory("");
+      dispatchMemoryUi({ type: "setNewMemory", value: "" });
       await utils.memory.get.invalidate();
       toast.success(t("Memory added."));
     },
@@ -148,7 +201,7 @@ export default function MemorySettingsPage() {
 
   const clearItems = trpc.memory.clearItems.useMutation({
     onSuccess: async () => {
-      setIsClearDialogOpen(false);
+      dispatchMemoryUi({ type: "setClearDialogOpen", value: false });
       await utils.memory.get.invalidate();
       toast.success(t("All saved memories cleared."));
     },
@@ -158,7 +211,7 @@ export default function MemorySettingsPage() {
   });
 
   const persistProfileInstant = (nextProfile: ProfileState) => {
-    setProfile(nextProfile);
+    dispatchMemoryUi({ type: "setProfile", profile: nextProfile });
     saveProfile.mutate(
       {
         ...nextProfile,
@@ -180,7 +233,7 @@ export default function MemorySettingsPage() {
 
     saveProfile.mutate(nextProfile, {
       onSuccess: async () => {
-        setProfile(nextProfile);
+        dispatchMemoryUi({ type: "setProfile", profile: nextProfile });
         await utils.memory.get.invalidate();
         toast.success(t("Personalization saved."));
       },
@@ -356,7 +409,9 @@ export default function MemorySettingsPage() {
                 <div className="text-sm font-medium">{t("Instructions")}</div>
                 <Textarea
                   value={instructionsDraft}
-                  onChange={(event) => setInstructionsDraft(event.target.value)}
+                  onChange={(event) =>
+                    dispatchMemoryUi({ type: "setInstructionsDraft", value: event.target.value })
+                  }
                   rows={7}
                   maxLength={4000}
                   placeholder={t(
@@ -409,7 +464,7 @@ export default function MemorySettingsPage() {
           <Button
             variant="outline"
             className="w-full shrink-0 text-destructive hover:text-destructive"
-            onClick={() => setIsClearDialogOpen(true)}
+            onClick={() => dispatchMemoryUi({ type: "setClearDialogOpen", value: true })}
             disabled={
               !memoryQuery.data?.items.length || clearItems.isPending || memoryQuery.isLoading
             }
@@ -420,7 +475,9 @@ export default function MemorySettingsPage() {
           <div className="flex gap-2">
             <Input
               value={newMemory}
-              onChange={(event) => setNewMemory(event.target.value)}
+              onChange={(event) =>
+                dispatchMemoryUi({ type: "setNewMemory", value: event.target.value })
+              }
               placeholder={t("Add something Deni should remember about you")}
             />
             <Button onClick={handleAddMemory} disabled={addItem.isPending || !newMemory.trim()}>
@@ -471,7 +528,13 @@ export default function MemorySettingsPage() {
         </CardContent>
       </Card>
 
-      <AlertDialog open={isClearDialogOpen} onOpenChange={setIsClearDialogOpen}>
+      <AlertDialog
+        open={isClearDialogOpen}
+        onOpenChange={(open) => {
+          if (clearItems.isPending) return;
+          dispatchMemoryUi({ type: "setClearDialogOpen", value: open });
+        }}
+      >
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>{t("Clear saved memories?")}</AlertDialogTitle>
@@ -486,6 +549,7 @@ export default function MemorySettingsPage() {
             <AlertDialogAction
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
               disabled={clearItems.isPending}
+              loading={clearItems.isPending}
               onClick={handleClearMemories}
             >
               {clearItems.isPending ? <Spinner /> : null}

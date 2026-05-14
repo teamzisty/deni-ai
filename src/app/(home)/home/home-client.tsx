@@ -33,8 +33,8 @@ function FeatureCard({
       transition={{ duration: 0.5, delay }}
       className="group relative p-6 rounded-2xl border border-border bg-card/20 backdrop-blur-sm transition-all hover:bg-card hover:shadow-xl hover:-translate-y-1"
     >
-      <div className="inline-flex items-center justify-center w-12 h-12 rounded-xl bg-secondary text-foreground mb-4 group-hover:scale-110 group-hover:bg-primary group-hover:text-primary-foreground transition-all duration-300">
-        <Icon className="w-6 h-6" />
+      <div className="inline-flex items-center justify-center size-12 rounded-xl bg-secondary text-foreground mb-4 group-hover:scale-110 group-hover:bg-primary group-hover:text-primary-foreground transition-all duration-300">
+        <Icon className="size-6" />
       </div>
       <h3 className="text-lg font-semibold mb-2">{title}</h3>
       <p className="text-muted-foreground text-sm leading-relaxed">{description}</p>
@@ -119,7 +119,7 @@ export function ClientHome() {
             {/* Main headline */}
             <h1
               data-nosnippet
-              className="text-4xl sm:text-6xl md:text-8xl font-bold tracking-tight leading-[1.02] mb-8"
+              className="mb-8 text-4xl font-semibold leading-[1.02] tracking-tight sm:text-6xl md:text-8xl"
             >
               <BlurReveal className="block" delay={0.2}>
                 {t("The AI Assistant")}
@@ -196,7 +196,7 @@ export function ClientHome() {
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
-              className="text-4xl md:text-5xl font-bold tracking-tight mb-6"
+              className="mb-6 text-4xl font-semibold tracking-tight md:text-5xl"
             >
               {t("A few things you can do with Deni AI")}
             </motion.h2>
@@ -233,7 +233,7 @@ export function ClientHome() {
             <p className="mb-3 text-sm font-semibold uppercase tracking-[0.18em] text-muted-foreground/70">
               {t("Picking a model")}
             </p>
-            <h2 className="text-4xl font-bold tracking-tight">
+            <h2 className="text-4xl font-semibold tracking-tight">
               {t("You can keep this part simple")}
             </h2>
             <p className="mt-5 text-base leading-8 text-muted-foreground">
@@ -249,7 +249,7 @@ export function ClientHome() {
                 key={tip.title}
                 className="rounded-[1.5rem] border border-border/70 bg-card/90 p-6 shadow-sm"
               >
-                <div className="mb-4 inline-flex h-10 w-10 items-center justify-center rounded-2xl bg-secondary text-sm font-semibold">
+                <div className="mb-4 inline-flex size-10 items-center justify-center rounded-2xl bg-secondary text-sm font-semibold">
                   <tip.icon />
                 </div>
                 <h3 className="text-lg font-semibold">{tip.title}</h3>
@@ -266,7 +266,7 @@ export function ClientHome() {
             <p className="mb-3 text-sm font-semibold uppercase tracking-[0.18em] text-muted-foreground/70">
               {t("Start wherever feels easy")}
             </p>
-            <h2 className="text-4xl font-bold tracking-tight">
+            <h2 className="text-4xl font-semibold tracking-tight">
               {t("You do not need a big setup")}
             </h2>
             <p className="mt-5 text-base leading-8 text-muted-foreground">
@@ -281,7 +281,7 @@ export function ClientHome() {
               href="/models"
               className="rounded-[1.5rem] border border-border/70 bg-card p-6 transition-transform hover:-translate-y-1"
             >
-              <Zap className="h-5 w-5 text-primary" />
+              <Zap className="size-5 text-primary" />
               <h3 className="mt-5 text-xl font-semibold">{t("See the models")}</h3>
               <p className="mt-3 text-sm leading-7 text-muted-foreground">
                 {t(
@@ -293,7 +293,7 @@ export function ClientHome() {
               href="/use-cases"
               className="rounded-[1.5rem] border border-border/70 bg-card p-6 transition-transform hover:-translate-y-1"
             >
-              <BookOpenText className="h-5 w-5 text-primary" />
+              <BookOpenText className="size-5 text-primary" />
               <h3 className="mt-5 text-xl font-semibold">{t("See how people use it")}</h3>
               <p className="mt-3 text-sm leading-7 text-muted-foreground">
                 {t(
@@ -307,7 +307,7 @@ export function ClientHome() {
             <Button variant="outline" asChild>
               <Link href="/models">
                 {t("Open the model list")}
-                <ArrowRight className="h-4 w-4" />
+                <ArrowRight className="size-4" />
               </Link>
             </Button>
           </div>
@@ -320,7 +320,7 @@ export function ClientHome() {
             href="/use-cases"
             className="rounded-[1.5rem] border border-border/70 bg-card p-6 transition-transform hover:-translate-y-1"
           >
-            <BookOpenText className="h-5 w-5 text-primary" />
+            <BookOpenText className="size-5 text-primary" />
             <h3 className="mt-5 text-xl font-semibold">{t("Read a few examples")}</h3>
             <p className="mt-3 text-sm leading-7 text-muted-foreground">
               {t("See a few simple examples of how Deni AI can help with everyday personal use.")}
@@ -330,7 +330,7 @@ export function ClientHome() {
             href="/chat"
             className="rounded-[1.5rem] border border-border/70 bg-card p-6 transition-transform hover:-translate-y-1"
           >
-            <BrainCircuit className="h-5 w-5 text-primary" />
+            <BrainCircuit className="size-5 text-primary" />
             <h3 className="mt-5 text-xl font-semibold">{t("Jump into chat")}</h3>
             <p className="mt-3 text-sm leading-7 text-muted-foreground">
               {t("If you already know what you want to ask, you can open chat and start there.")}

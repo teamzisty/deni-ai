@@ -142,7 +142,7 @@ export default function Header() {
         <div className="rounded-[1.35rem] border border-border/70 bg-background/80 px-4 py-3 text-foreground shadow-xl backdrop-blur-xl">
           <div className="flex items-center justify-between gap-4">
             <Link href="/" aria-label="Deni AI" title="Deni AI" className="flex items-center gap-3">
-              <DeniAIIcon className="h-7 w-7 text-foreground" />
+              <DeniAIIcon className="size-7 text-foreground" />
               <span className="hidden text-base font-semibold tracking-tight text-foreground sm:inline-block">
                 Deni AI
               </span>
@@ -164,12 +164,12 @@ export default function Header() {
                             <Button
                               key={link.href}
                               variant="ghost"
-                              className="w-full h-full justify-start px-2!"
+                              className="size-full justify-start px-2!"
                               asChild
                             >
                               <Link href={link.href} role="menuitem">
-                                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border">
-                                  <Icon className="h-5 w-5 text-muted-foreground" />
+                                <span className="flex size-10 shrink-0 items-center justify-center rounded-lg border">
+                                  <Icon className="size-5 text-muted-foreground" />
                                 </span>
                                 <span className="flex min-w-0 flex-col gap-0.5 justify-center self-center">
                                   <span className="block text-sm font-semibold tracking-tight">
@@ -203,12 +203,12 @@ export default function Header() {
                             <Button
                               key={link.href}
                               variant="ghost"
-                              className="w-full h-full justify-start px-2!"
+                              className="size-full justify-start px-2!"
                               asChild
                             >
                               <Link href={link.href} role="menuitem">
-                                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border">
-                                  <Icon className="h-5 w-5 text-muted-foreground" />
+                                <span className="flex size-10 shrink-0 items-center justify-center rounded-lg border">
+                                  <Icon className="size-5 text-muted-foreground" />
                                 </span>
                                 <span className="flex min-w-0 flex-col gap-0.5 justify-center self-center">
                                   <span className="block text-sm font-semibold tracking-tight">
@@ -252,20 +252,20 @@ export default function Header() {
                   })}
                   aria-label={t("Open menu")}
                 >
-                  <Menu className="h-5 w-5" />
+                  <Menu className="size-5" />
                 </SheetTrigger>
                 <SheetContent
                   side="right"
                   className="border-border bg-background/96 px-0 text-foreground backdrop-blur-xl"
                 >
-                  <SheetHeader className="border-b border-border px-5 py-5 text-left">
+                  <SheetHeader className="border-b border-border p-5 text-left">
                     <SheetTitle className="text-base text-foreground">{t("Menu")}</SheetTitle>
                     <SheetDescription className="text-muted-foreground">
                       {t("Browse products, resources, language, and account options.")}
                     </SheetDescription>
                   </SheetHeader>
 
-                  <div className="flex min-h-0 flex-1 flex-col overflow-y-auto px-5 py-5">
+                  <div className="flex min-h-0 flex-1 flex-col overflow-y-auto p-5">
                     <div className="space-y-6">
                       {mobileSections.map((section) => (
                         <div key={section.title} className="space-y-2">
@@ -280,12 +280,12 @@ export default function Header() {
                                 <SheetClose asChild key={`${section.title}-${link.href}`}>
                                   <Button
                                     variant="ghost"
-                                    className="h-auto w-full justify-start rounded-2xl border border-border bg-card/70 px-3 py-3 text-left text-card-foreground hover:bg-accent hover:text-accent-foreground"
+                                    className="h-auto w-full justify-start rounded-2xl border border-border bg-card/70 p-3 text-left text-card-foreground hover:bg-accent hover:text-accent-foreground"
                                     asChild
                                   >
                                     <Link href={link.href}>
-                                      <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-border bg-muted">
-                                        <Icon className="h-5 w-5 text-muted-foreground" />
+                                      <span className="flex size-10 shrink-0 items-center justify-center rounded-xl border border-border bg-muted">
+                                        <Icon className="size-5 text-muted-foreground" />
                                       </span>
                                       <span className="flex min-w-0 flex-col">
                                         <span className="text-sm font-medium leading-tight">

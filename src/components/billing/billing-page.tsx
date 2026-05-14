@@ -4,7 +4,7 @@ import { Zap, Users } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useExtracted, useLocale } from "next-intl";
-import { startTransition, useCallback, useEffect, useMemo, useState } from "react";
+import { startTransition, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import type { BillingPlanId, ClientPlan, IndividualPlanId } from "@/lib/billing";
 import { getPlanTier, isTeamPlan } from "@/lib/billing";
@@ -129,31 +129,30 @@ function PlanCard({
   monthlyPlan,
   interval,
   onIntervalChange,
-  isCurrent,
-  hasActiveSubscription,
+  status,
   cancelDate,
   activePlanId,
   changePlan,
   checkout,
   onChangePlanClick,
   onCheckout,
-  isLoadingEstimate,
-  isOnTeamPlan,
 }: {
   plan: ClientPlan;
   monthlyPlan?: ClientPlan;
   interval?: "monthly" | "yearly";
   onIntervalChange?: (interval: "monthly" | "yearly") => void;
-  isCurrent: boolean;
-  hasActiveSubscription: boolean;
+  status: {
+    isCurrent: boolean;
+    hasActiveSubscription: boolean;
+    isLoadingEstimate: boolean;
+    isOnTeamPlan?: boolean;
+  };
   cancelDate: number | false;
   activePlanId: string | undefined;
   changePlan: { isPending: boolean; variables?: { planId: IndividualPlanId } };
   checkout: { isPending: boolean; variables?: { planId: IndividualPlanId } };
   onChangePlanClick: (plan: ClientPlan) => void;
   onCheckout: (planId: IndividualPlanId) => void;
-  isLoadingEstimate: boolean;
-  isOnTeamPlan?: boolean;
 }) {
   const t = useExtracted();
   const locale = useLocale();
@@ -172,12 +171,14 @@ function PlanCard({
           minute: "2-digit",
         }).format(offerEndsAt)
       : null;
-  const canChange = hasActiveSubscription && !cancelDate && !isCurrent && mode === "subscription";
-  const isBlockedByCancel = Number.isInteger(cancelDate) && Boolean(activePlanId) && !isCurrent;
+  const canChange =
+    status.hasActiveSubscription && !cancelDate && !status.isCurrent && mode === "subscription";
+  const isBlockedByCancel =
+    Number.isInteger(cancelDate) && Boolean(activePlanId) && !status.isCurrent;
   const processing =
     (changePlan.isPending && changePlan.variables?.planId === plan.id) ||
     (checkout.isPending && checkout.variables?.planId === plan.id);
-  const isLoadingThisPlan = isLoadingEstimate;
+  const isLoadingThisPlan = status.isLoadingEstimate;
 
   const tierName = getTierLabel(plan.id);
   const priceParts =
@@ -206,9 +207,9 @@ function PlanCard({
           Math.round(((monthlyPlan.amount * 12 - plan.amount) / (monthlyPlan.amount * 12)) * 100),
         )
       : 0;
-  const primaryActionLabel = isOnTeamPlan
+  const primaryActionLabel = status.isOnTeamPlan
     ? t("Team plan active")
-    : isCurrent
+    : status.isCurrent
       ? t("Current plan")
       : isBlockedByCancel
         ? t("Resume to change")
@@ -219,14 +220,14 @@ function PlanCard({
             : plan.trialDays
               ? t("Start {days}-day trial", { days: plan.trialDays.toString() })
               : t("Subscribe");
-  const showTrustCopy = !isOnTeamPlan && !isCurrent && !isBlockedByCancel;
+  const showTrustCopy = !status.isOnTeamPlan && !status.isCurrent && !isBlockedByCancel;
 
   return (
     <Card
       className={cn(
         "flex flex-col",
         interval === "yearly" && "border-foreground/20 bg-muted/20",
-        isCurrent && "border-foreground ring-1 ring-foreground/10",
+        status.isCurrent && "border-foreground ring-1 ring-foreground/10",
       )}
     >
       <CardHeader className="pb-4">
@@ -342,9 +343,13 @@ function PlanCard({
         </div>
         <Button
           className="mt-6 h-auto min-h-12 w-full flex-col gap-1 py-3 font-medium"
-          variant={isCurrent ? "secondary" : "default"}
+          variant={status.isCurrent ? "secondary" : "default"}
           disabled={
-            isCurrent || processing || isBlockedByCancel || isLoadingThisPlan || isOnTeamPlan
+            status.isCurrent ||
+            processing ||
+            isBlockedByCancel ||
+            isLoadingThisPlan ||
+            status.isOnTeamPlan
           }
           onClick={() => {
             if (canChange) {
@@ -354,7 +359,7 @@ function PlanCard({
             }
           }}
         >
-          {(processing || isLoadingThisPlan) && <Spinner className="w-4 h-4" />}
+          {(processing || isLoadingThisPlan) && <Spinner className="size-4" />}
           <span>{primaryActionLabel}</span>
           {showTrustCopy && (
             <span className="text-[11px] font-normal text-current/80">
@@ -472,7 +477,7 @@ function BillingDisabled() {
 function BillingPageContent() {
   const t = useExtracted();
   const locale = useLocale();
-  const router = useRouter();
+  const { push } = useRouter();
   const getTierLabel = useTierLabel();
   const getPlanIntervalLabel = usePlanIntervalLabel();
   const formatCurrencyMinor = useFormatCurrencyMinor();
@@ -501,8 +506,10 @@ function BillingPageContent() {
     }
   }, [pendingPlanId, estimateQuery.isLoading]);
 
-  // Reset state when dialog closes
+  // Reset state when dialog closes (declared above changePlan; reads pending via ref)
+  const changePlanPendingRef = useRef(false);
   const handleDialogOpenChange = useCallback((open: boolean) => {
+    if (changePlanPendingRef.current) return;
     setIsChangePlanOpen(open);
     if (!open) {
       setHasAgreed(false);
@@ -524,13 +531,13 @@ function BillingPageContent() {
       try {
         const result = await createCheckout.mutateAsync({ planId });
         startTransition(() => {
-          router.push(`/settings/billing/checkout/${result.sessionId}`);
+          push(`/settings/billing/checkout/${result.sessionId}`);
         });
       } catch (error) {
         toast.error(error instanceof Error ? error.message : t("Unable to load checkout."));
       }
     },
-    [createCheckout, router, t],
+    [createCheckout, push, t],
   );
 
   const utils = trpc.useUtils();
@@ -560,8 +567,17 @@ function BillingPageContent() {
       await utils.billing.usage.invalidate();
     },
     onError: (error) => toast.error(error.message),
-    onSettled: () => setChangeTarget(null),
+    onSettled: () => {
+      setIsChangePlanOpen(false);
+      setChangeTarget(null);
+      setPendingPlanId(null);
+      setHasAgreed(false);
+    },
   });
+
+  useEffect(() => {
+    changePlanPendingRef.current = changePlan.isPending;
+  }, [changePlan.isPending]);
 
   const cancel = trpc.billing.cancelSubscription.useMutation({
     onSuccess: async () => {
@@ -731,7 +747,7 @@ function BillingPageContent() {
                     disabled={portal.isPending}
                     onClick={() => portal.mutate()}
                   >
-                    {portal.isPending && <Spinner className="w-4 h-4 mr-1" />}
+                    {portal.isPending && <Spinner className="size-4 mr-1" />}
                     {t("Manage")}
                   </Button>
                 )}
@@ -743,13 +759,13 @@ function BillingPageContent() {
                     disabled={cancel.isPending}
                     onClick={() => cancel.mutate()}
                   >
-                    {cancel.isPending && <Spinner className="w-4 h-4 mr-1" />}
+                    {cancel.isPending && <Spinner className="size-4 mr-1" />}
                     {t("Cancel")}
                   </Button>
                 )}
                 {cancelDate && (
                   <Button size="sm" disabled={resume.isPending} onClick={() => resume.mutate()}>
-                    {resume.isPending && <Spinner className="w-4 h-4 mr-1" />}
+                    {resume.isPending && <Spinner className="size-4 mr-1" />}
                     {t("Resume")}
                   </Button>
                 )}
@@ -878,16 +894,19 @@ function BillingPageContent() {
                 monthlyPlan={plusMonthly}
                 interval={plusInterval}
                 onIntervalChange={setPlusInterval}
-                isCurrent={selectedPlusPlan.id === activePlanId && isSubscribed}
-                hasActiveSubscription={hasActiveSubscription}
+                status={{
+                  isCurrent: selectedPlusPlan.id === activePlanId && isSubscribed,
+                  hasActiveSubscription,
+                  isLoadingEstimate:
+                    pendingPlanId === selectedPlusPlan.id && estimateQuery.isLoading,
+                  isOnTeamPlan,
+                }}
                 cancelDate={cancelDate}
                 activePlanId={activePlanId}
                 changePlan={changePlan}
                 checkout={createCheckout}
                 onChangePlanClick={handleChangePlanClick}
                 onCheckout={handleCheckout}
-                isLoadingEstimate={pendingPlanId === selectedPlusPlan.id && estimateQuery.isLoading}
-                isOnTeamPlan={isOnTeamPlan}
               />
             )}
 
@@ -898,16 +917,19 @@ function BillingPageContent() {
                 monthlyPlan={proMonthly}
                 interval={proInterval}
                 onIntervalChange={setProInterval}
-                isCurrent={selectedProPlan.id === activePlanId && isSubscribed}
-                hasActiveSubscription={hasActiveSubscription}
+                status={{
+                  isCurrent: selectedProPlan.id === activePlanId && isSubscribed,
+                  hasActiveSubscription,
+                  isLoadingEstimate:
+                    pendingPlanId === selectedProPlan.id && estimateQuery.isLoading,
+                  isOnTeamPlan,
+                }}
                 cancelDate={cancelDate}
                 activePlanId={activePlanId}
                 changePlan={changePlan}
                 checkout={createCheckout}
                 onChangePlanClick={handleChangePlanClick}
                 onCheckout={handleCheckout}
-                isLoadingEstimate={pendingPlanId === selectedProPlan.id && estimateQuery.isLoading}
-                isOnTeamPlan={isOnTeamPlan}
               />
             )}
 
@@ -918,16 +940,19 @@ function BillingPageContent() {
                 monthlyPlan={maxMonthly}
                 interval={maxInterval}
                 onIntervalChange={setMaxInterval}
-                isCurrent={selectedMaxPlan.id === activePlanId && isSubscribed}
-                hasActiveSubscription={hasActiveSubscription}
+                status={{
+                  isCurrent: selectedMaxPlan.id === activePlanId && isSubscribed,
+                  hasActiveSubscription,
+                  isLoadingEstimate:
+                    pendingPlanId === selectedMaxPlan.id && estimateQuery.isLoading,
+                  isOnTeamPlan,
+                }}
                 cancelDate={cancelDate}
                 activePlanId={activePlanId}
                 changePlan={changePlan}
                 checkout={createCheckout}
                 onChangePlanClick={handleChangePlanClick}
                 onCheckout={handleCheckout}
-                isLoadingEstimate={pendingPlanId === selectedMaxPlan.id && estimateQuery.isLoading}
-                isOnTeamPlan={isOnTeamPlan}
               />
             )}
           </div>
@@ -936,16 +961,18 @@ function BillingPageContent() {
             <div>
               <PlanCard
                 plan={proLifetime}
-                isCurrent={proLifetime.id === activePlanId && isSubscribed}
-                hasActiveSubscription={hasActiveSubscription}
+                status={{
+                  isCurrent: proLifetime.id === activePlanId && isSubscribed,
+                  hasActiveSubscription,
+                  isLoadingEstimate: pendingPlanId === proLifetime.id && estimateQuery.isLoading,
+                  isOnTeamPlan,
+                }}
                 cancelDate={cancelDate}
                 activePlanId={activePlanId}
                 changePlan={changePlan}
                 checkout={createCheckout}
                 onChangePlanClick={handleChangePlanClick}
                 onCheckout={handleCheckout}
-                isLoadingEstimate={pendingPlanId === proLifetime.id && estimateQuery.isLoading}
-                isOnTeamPlan={isOnTeamPlan}
               />
             </div>
           )}
@@ -1016,7 +1043,7 @@ function BillingPageContent() {
               </div>
             </AlertDialogDescription>
           </AlertDialogHeader>
-          <div className="flex items-start space-x-2 py-4">
+          <div className="flex items-start gap-x-2 py-4">
             <Checkbox
               id="agree-plan-change"
               checked={hasAgreed}
@@ -1033,6 +1060,7 @@ function BillingPageContent() {
               disabled={
                 changePlan.isPending || !changeTarget || estimateQuery.error != null || !hasAgreed
               }
+              loading={changePlan.isPending}
               onClick={() =>
                 changeTarget &&
                 changePlan.mutate({

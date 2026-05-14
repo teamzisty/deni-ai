@@ -14,7 +14,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useExtracted, useLocale } from "next-intl";
 import { useTheme } from "next-themes";
-import { startTransition, useEffect, useMemo, useState } from "react";
+import { startTransition, useEffect, useMemo, useReducer, useState } from "react";
 import { toast } from "sonner";
 import type { BillingPlanId, ClientPlan, IndividualPlanId, TeamPlanId } from "@/lib/billing";
 import { findPlanById, getPlanTier } from "@/lib/billing";
@@ -55,6 +55,61 @@ type TeamCheckoutProps = {
 };
 
 type StripeCheckoutPageProps = BillingCheckoutProps | TeamCheckoutProps;
+
+type CheckoutBootstrapState = {
+  session: CheckoutSessionSummary | null;
+  availablePlans: ClientPlan[];
+  stripeInstance: Stripe | null;
+  bootstrapError: string | null;
+  isBootstrapping: boolean;
+};
+
+type CheckoutBootstrapAction =
+  | { type: "start" }
+  | {
+      type: "success";
+      session: CheckoutSessionSummary;
+      availablePlans: ClientPlan[];
+      stripeInstance: Stripe;
+    }
+  | { type: "failure"; message: string };
+
+const INITIAL_CHECKOUT_BOOTSTRAP_STATE: CheckoutBootstrapState = {
+  session: null,
+  availablePlans: [],
+  stripeInstance: null,
+  bootstrapError: null,
+  isBootstrapping: true,
+};
+
+function checkoutBootstrapReducer(
+  state: CheckoutBootstrapState,
+  action: CheckoutBootstrapAction,
+): CheckoutBootstrapState {
+  switch (action.type) {
+    case "start":
+      return {
+        ...state,
+        bootstrapError: null,
+        isBootstrapping: true,
+        stripeInstance: null,
+      };
+    case "success":
+      return {
+        session: action.session,
+        availablePlans: action.availablePlans,
+        stripeInstance: action.stripeInstance,
+        bootstrapError: null,
+        isBootstrapping: false,
+      };
+    case "failure":
+      return {
+        ...state,
+        bootstrapError: action.message,
+        isBootstrapping: false,
+      };
+  }
+}
 
 function useTierLabelValue() {
   const t = useExtracted();
@@ -537,7 +592,7 @@ function CheckoutForm({
   monthlyPlan: ClientPlan | null;
 }) {
   const t = useExtracted();
-  const router = useRouter();
+  const { replace } = useRouter();
   const checkoutState = useCheckout();
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -623,7 +678,7 @@ function CheckoutForm({
       }
 
       startTransition(() => {
-        router.replace(returnUrl);
+        replace(returnUrl);
       });
     } catch (error) {
       const message =
@@ -768,16 +823,17 @@ function ServerSessionComplete({
 
 export function StripeCheckoutPage(props: StripeCheckoutPageProps) {
   const t = useExtracted();
-  const router = useRouter();
+  const { replace } = useRouter();
   const { resolvedTheme } = useTheme();
   const trpcClient = useMemo(() => makeTRPCClient(), []);
   const { planId, scope, sessionId } = props;
   const organizationId = props.scope === "team" ? props.organizationId : null;
-  const [session, setSession] = useState<CheckoutSessionSummary | null>(null);
-  const [availablePlans, setAvailablePlans] = useState<ClientPlan[]>([]);
-  const [stripeInstance, setStripeInstance] = useState<Stripe | null>(null);
-  const [bootstrapError, setBootstrapError] = useState<string | null>(null);
-  const [isBootstrapping, setIsBootstrapping] = useState(true);
+  const [bootstrapState, dispatchBootstrap] = useReducer(
+    checkoutBootstrapReducer,
+    INITIAL_CHECKOUT_BOOTSTRAP_STATE,
+  );
+  const { session, availablePlans, stripeInstance, bootstrapError, isBootstrapping } =
+    bootstrapState;
   const resolvedPlanId = useMemo(() => {
     const candidate = session?.planId ?? planId;
     return candidate ? (findPlanById(candidate)?.id ?? null) : null;
@@ -828,9 +884,7 @@ export function StripeCheckoutPage(props: StripeCheckoutPageProps) {
     let cancelled = false;
 
     async function bootstrap() {
-      setBootstrapError(null);
-      setIsBootstrapping(true);
-      setStripeInstance(null);
+      dispatchBootstrap({ type: "start" });
 
       if (!stripeJsPromise) {
         throw new Error(t("Stripe publishable key is not configured."));
@@ -851,18 +905,10 @@ export function StripeCheckoutPage(props: StripeCheckoutPageProps) {
         );
       }
 
-      if (!cancelled) {
-        setStripeInstance(loadedStripe);
-      }
-
       const planResult =
         scope === "billing"
           ? await trpcClient.billing.plans.query()
           : await trpcClient.organization.teamPlans.query();
-
-      if (!cancelled) {
-        setAvailablePlans(planResult.plans);
-      }
 
       if (scope === "team" && !organizationId) {
         throw new Error(t("An organization is required to start team checkout."));
@@ -878,9 +924,14 @@ export function StripeCheckoutPage(props: StripeCheckoutPageProps) {
               });
 
         if (!cancelled) {
-          setSession({
-            ...result,
-            status: result.status ?? "open",
+          dispatchBootstrap({
+            type: "success",
+            session: {
+              ...result,
+              status: result.status ?? "open",
+            },
+            availablePlans: planResult.plans,
+            stripeInstance: loadedStripe,
           });
         }
         return;
@@ -902,7 +953,7 @@ export function StripeCheckoutPage(props: StripeCheckoutPageProps) {
         return;
       }
 
-      setSession({
+      const nextSession: CheckoutSessionSummary = {
         sessionId: result.sessionId,
         clientSecret: result.clientSecret,
         status: "open",
@@ -911,35 +962,36 @@ export function StripeCheckoutPage(props: StripeCheckoutPageProps) {
         currency: null,
         mode: "subscription",
         planId,
-      });
+      };
 
       const nextHref =
         scope === "billing"
           ? `/settings/billing/checkout/${result.sessionId}`
           : `/settings/team/checkout/${result.sessionId}?organizationId=${organizationId}`;
 
+      dispatchBootstrap({
+        type: "success",
+        session: nextSession,
+        availablePlans: planResult.plans,
+        stripeInstance: loadedStripe,
+      });
+
       startTransition(() => {
-        router.replace(nextHref);
+        replace(nextHref);
       });
     }
 
-    bootstrap()
-      .catch((error: unknown) => {
-        if (!cancelled) {
-          const message = error instanceof Error ? error.message : t("Unable to load checkout.");
-          setBootstrapError(message);
-        }
-      })
-      .finally(() => {
-        if (!cancelled) {
-          setIsBootstrapping(false);
-        }
-      });
+    bootstrap().catch((error: unknown) => {
+      if (!cancelled) {
+        const message = error instanceof Error ? error.message : t("Unable to load checkout.");
+        dispatchBootstrap({ type: "failure", message });
+      }
+    });
 
     return () => {
       cancelled = true;
     };
-  }, [organizationId, planId, router, scope, sessionId, t, trpcClient]);
+  }, [organizationId, planId, replace, scope, sessionId, t, trpcClient]);
 
   return (
     <div className="mx-auto flex max-w-5xl flex-col gap-6">

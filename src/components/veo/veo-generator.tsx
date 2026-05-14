@@ -78,10 +78,7 @@ export function VeoGenerator() {
   const pollAbortRef = useRef<AbortController | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
-  const effectiveDuration = useMemo(
-    () => (resolution === "1080p" ? 8 : durationSeconds),
-    [resolution, durationSeconds],
-  );
+  const effectiveDuration = resolution === "1080p" ? 8 : durationSeconds;
 
   const modelOptions = useMemo(
     () => [

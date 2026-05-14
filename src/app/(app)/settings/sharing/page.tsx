@@ -238,11 +238,11 @@ export default function SharingSettingsPage() {
         <CardContent>
           {myShares.isLoading ? (
             <div className="flex justify-center py-12">
-              <Spinner className="w-6 h-6" />
+              <Spinner className="size-6" />
             </div>
           ) : myShares.data?.length === 0 ? (
             <div className="text-center py-12 text-muted-foreground">
-              <div className="inline-flex items-center justify-center w-10 h-10 rounded-lg bg-secondary mb-3">
+              <div className="inline-flex items-center justify-center size-10 rounded-lg bg-secondary mb-3">
                 <Link2 className="size-5 text-muted-foreground" />
               </div>
               <p className="font-medium text-sm">{t("No shared conversations yet.")}</p>
@@ -276,11 +276,11 @@ export default function SharingSettingsPage() {
         <CardContent>
           {sharedWithMe.isLoading ? (
             <div className="flex justify-center py-12">
-              <Spinner className="w-6 h-6" />
+              <Spinner className="size-6" />
             </div>
           ) : sharedWithMe.data?.length === 0 ? (
             <div className="text-center py-12 text-muted-foreground">
-              <div className="inline-flex items-center justify-center w-10 h-10 rounded-lg bg-secondary mb-3">
+              <div className="inline-flex items-center justify-center size-10 rounded-lg bg-secondary mb-3">
                 <Users className="size-5 text-muted-foreground" />
               </div>
               <p className="font-medium text-sm">
@@ -321,7 +321,13 @@ export default function SharingSettingsPage() {
         </CardContent>
       </Card>
 
-      <AlertDialog open={!!deleteTarget} onOpenChange={(open) => !open && setDeleteTarget(null)}>
+      <AlertDialog
+        open={!!deleteTarget}
+        onOpenChange={(open) => {
+          if (deleteShare.isPending) return;
+          if (!open) setDeleteTarget(null);
+        }}
+      >
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>{t("Revoke shared access?")}</AlertDialogTitle>
@@ -336,6 +342,7 @@ export default function SharingSettingsPage() {
             <AlertDialogAction
               onClick={confirmDelete}
               disabled={deleteShare.isPending}
+              loading={deleteShare.isPending}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
               {deleteShare.isPending && <Spinner />}

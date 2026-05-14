@@ -119,15 +119,15 @@ export default function AppearancePage() {
                 >
                   <div className="flex items-start justify-between gap-2">
                     <div className="flex items-center gap-2.5">
-                      <Icon className="w-4 h-4 text-muted-foreground" />
+                      <Icon className="size-4 text-muted-foreground" />
                       <div className="space-y-0.5">
                         <p className="font-medium text-sm">{label}</p>
                         <p className="text-xs text-muted-foreground">{description}</p>
                       </div>
                     </div>
                     {selected && (
-                      <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-foreground text-background shrink-0">
-                        <Check className="w-3 h-3" />
+                      <span className="inline-flex items-center justify-center size-5 rounded-full bg-foreground text-background shrink-0">
+                        <Check className="size-3" />
                       </span>
                     )}
                   </div>
@@ -154,7 +154,7 @@ export default function AppearancePage() {
                 onClick={() => setTheme(value)}
                 className="flex-1 gap-2 h-9"
               >
-                <Icon className="w-4 h-4" />
+                <Icon className="size-4" />
                 {label}
               </Button>
             ))}
@@ -190,8 +190,8 @@ export default function AppearancePage() {
                       <p className="text-xs text-muted-foreground">{copy.description}</p>
                     </div>
                     {selected && (
-                      <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-foreground text-background shrink-0">
-                        <Check className="w-3 h-3" />
+                      <span className="inline-flex items-center justify-center size-5 rounded-full bg-foreground text-background shrink-0">
+                        <Check className="size-3" />
                       </span>
                     )}
                   </div>

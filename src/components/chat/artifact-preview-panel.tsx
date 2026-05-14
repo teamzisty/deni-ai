@@ -2,7 +2,7 @@
 
 import { CopyIcon, ExternalLinkIcon, XIcon } from "lucide-react";
 import { useCallback, useState } from "react";
-import { useExtracted, useTranslations } from "next-intl";
+import { useExtracted } from "next-intl";
 import { ArtifactLivePreview } from "@/components/chat/artifact-live-preview";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { useArtifactPreview } from "@/components/chat/artifact-preview-context";
@@ -13,7 +13,6 @@ const LIVE_PREVIEWABLE_LANGUAGES = new Set(["html", "htm", "jsx", "tsx", "react"
 
 export function ArtifactPreviewPanel() {
   const t = useExtracted();
-  const previewT = useTranslations("artifactPreview");
   const { isOpen, code, language, close } = useArtifactPreview();
   const [copied, setCopied] = useState(false);
 
@@ -49,7 +48,7 @@ export function ArtifactPreviewPanel() {
       >
         <SheetHeader className="flex flex-row items-center justify-between border-b px-4 py-3">
           <SheetTitle className="text-sm font-medium">
-            {previewT("title")}
+            {t("Preview")}
             {language ? (
               <span className="ml-2 rounded bg-muted px-1.5 py-0.5 font-mono text-xs text-muted-foreground">
                 {language}
@@ -62,7 +61,7 @@ export function ArtifactPreviewPanel() {
               size="icon"
               className="size-7"
               onClick={handleCopy}
-              title={previewT("copyCode")}
+              title={t("Copy code")}
             >
               <CopyIcon className="size-3.5" />
               <span className="sr-only">{copied ? t("Copied!") : t("Copy")}</span>
@@ -73,10 +72,10 @@ export function ArtifactPreviewPanel() {
                 size="icon"
                 className="size-7"
                 onClick={handleOpenInTab}
-                title={previewT("openInNewTab")}
+                title={t("Open in new tab")}
               >
                 <ExternalLinkIcon className="size-3.5" />
-                <span className="sr-only">{previewT("openInNewTab")}</span>
+                <span className="sr-only">{t("Open in new tab")}</span>
               </Button>
             )}
             <Button
@@ -99,16 +98,16 @@ export function ArtifactPreviewPanel() {
               srcDoc={code}
               sandbox="allow-scripts"
               className="size-full border-0"
-              title={previewT("htmlTitle")}
+              title={t("HTML preview")}
             />
           ) : isLivePreviewable ? (
             <ArtifactLivePreview code={code} />
           ) : (
             <div className="flex h-full flex-col items-center justify-center gap-3 p-6 text-center text-sm text-muted-foreground">
-              <p>{previewT("fallback")}</p>
+              <p>{t("Preview is not available for this content.")}</p>
               <Button variant="outline" size="sm" onClick={handleCopy}>
                 <CopyIcon className="size-3.5" />
-                {copied ? t("Copied!") : previewT("copyCode")}
+                {copied ? t("Copied!") : t("Copy code")}
               </Button>
             </div>
           )}

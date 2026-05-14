@@ -56,7 +56,7 @@ export function HeaderMegaMenu({ label, menuLabel, children }: HeaderMegaMenuPro
         <span>{label}</span>
         <ChevronDown
           className={cn(
-            "h-3.5 w-3.5 text-primary transition-transform duration-200",
+            "size-3.5 text-primary transition-transform duration-200",
             isOpen && "rotate-180",
           )}
         />

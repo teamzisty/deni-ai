@@ -1,7 +1,7 @@
 "use client";
 
 import type { ReactNode } from "react";
-import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
+import { createContext, use, useCallback, useEffect, useMemo, useState } from "react";
 
 const STORAGE_KEY = "deni-design-style";
 
@@ -57,7 +57,7 @@ export function DesignStyleProvider({ children }: { children: ReactNode }) {
 }
 
 export function useDesignStyle() {
-  const value = useContext(DesignStyleContext);
+  const value = use(DesignStyleContext);
   if (!value) {
     throw new Error("useDesignStyle must be used within DesignStyleProvider");
   }

@@ -1,6 +1,7 @@
 import type { UIMessage } from "ai";
 import { safeValidateUIMessages } from "ai";
 import { and, eq } from "drizzle-orm";
+import type { Metadata } from "next";
 import { headers } from "next/headers";
 import { notFound, redirect } from "next/navigation";
 import dynamic from "next/dynamic";
@@ -18,6 +19,11 @@ const SharedChatInterface = dynamic(
 import { db } from "@/db/drizzle";
 import { chatShareRecipients, chatShares, chats, user } from "@/db/schema";
 import { auth } from "@/lib/auth";
+
+export const metadata: Metadata = {
+  title: "Shared Chat | Deni AI",
+  description: "View a shared Deni AI conversation.",
+};
 
 export default async function SharedChatPage({ params }: { params: Promise<{ shareId: string }> }) {
   const { shareId } = await params;

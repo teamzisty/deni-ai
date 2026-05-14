@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useCallback, useContext, useMemo, useState } from "react";
+import { createContext, use, useCallback, useMemo, useState } from "react";
 
 interface ArtifactPreviewContextType {
   isOpen: boolean;
@@ -42,5 +42,5 @@ export function ArtifactPreviewProvider({ children }: { children: React.ReactNod
 }
 
 export function useArtifactPreview() {
-  return useContext(ArtifactPreviewContext);
+  return use(ArtifactPreviewContext);
 }

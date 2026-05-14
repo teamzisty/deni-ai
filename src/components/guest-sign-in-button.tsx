@@ -20,7 +20,7 @@ export function GuestSignInButton({
   variant = "outline",
 }: GuestSignInButtonProps) {
   const t = useExtracted();
-  const router = useRouter();
+  const { push, refresh } = useRouter();
   const { data: session, isPending } = authClient.useSession();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -33,8 +33,8 @@ export function GuestSignInButton({
     setIsSubmitting(true);
     try {
       await authClient.signIn.anonymous();
-      router.push("/chat");
-      router.refresh();
+      push("/chat");
+      refresh();
     } catch (error) {
       const message =
         error instanceof Error && error.message

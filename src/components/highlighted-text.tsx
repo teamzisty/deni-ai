@@ -52,7 +52,7 @@ export function HighlightedText({
       viewport={{ once }}
     >
       <motion.span
-        className="absolute inset-0 -left-[0.15em] -right-[0.18em] bg-black dark:bg-white z-0"
+        className="absolute inset-0 -left-[0.15em] -right-[0.18em] z-0 bg-zinc-950 dark:bg-white"
         variants={variants}
         transition={{
           type: "spring",

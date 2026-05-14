@@ -16,7 +16,7 @@ import { motion } from "motion/react";
 import { useRouter } from "next/navigation";
 import { useExtracted } from "next-intl";
 import { useTheme } from "next-themes";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
@@ -93,7 +93,7 @@ function Intro() {
         {texts.map((text, index) => (
           <h1
             key={`${text}`} // do not use index as key to avoid remounting
-            className="text-balance absolute left-1/2 top-1/2 w-full max-w-full -translate-x-1/2 -translate-y-1/2 transform text-2xl font-bold md:text-4xl lg:text-6xl tracking-tighter"
+            className="text-balance absolute left-1/2 top-1/2 w-full max-w-full -translate-x-1/2 -translate-y-1/2 transform text-2xl font-semibold tracking-tighter md:text-4xl lg:text-6xl"
             style={{
               opacity: 0,
               animation: `fadeCycle ${totalMs}ms linear`,
@@ -116,7 +116,7 @@ function SetupScreen({
   preloadImage?: string | null;
 }) {
   const t = useExtracted();
-  const router = useRouter();
+  const { push } = useRouter();
   const steps = [
     {
       key: "account",
@@ -150,13 +150,13 @@ function SetupScreen({
 
   const canPrev = index > 0;
   const canNext = index < steps.length - 1;
-  const percentage = useMemo(() => ((index + 1) / steps.length) * 100, [index, steps.length]);
+  const percentage = ((index + 1) / steps.length) * 100;
 
   return (
     <>
       {/* Header */}
       <div className="space-y-2 animate-fade-in">
-        <h1 className="text-balance bg-gradient-to-br from-foreground to-foreground/60 bg-clip-text text-3xl font-semibold text-transparent md:text-4xl">
+        <h1 className="text-balance text-3xl font-semibold text-foreground md:text-4xl">
           {t("Let’s get your space ready")}
         </h1>
         <p className="text-muted-foreground">{t("Let’s set up the AI chatbot for yours.")}</p>
@@ -203,7 +203,7 @@ function SetupScreen({
           </div>
           <Button
             className="order-3 w-full md:w-auto"
-            onClick={() => (canNext ? carouselApi?.scrollNext() : router.push("/chat"))}
+            onClick={() => (canNext ? carouselApi?.scrollNext() : push("/chat"))}
           >
             {canNext ? (
               <>
@@ -441,7 +441,7 @@ function ThemeStep() {
                       layoutId="tick"
                       className="mt-0.5 inline-flex items-center justify-center rounded-full border border-emerald-300/30 bg-emerald-400/10 p-1"
                     >
-                      <Check className="h-3.5 w-3.5" />
+                      <Check className="size-3.5" />
                     </motion.span>
                   )}
                 </div>

@@ -86,13 +86,13 @@ export function SharedChatInterface({
   isLoggedIn,
 }: SharedChatInterfaceProps) {
   const t = useExtracted();
-  const router = useRouter();
+  const { push } = useRouter();
   const messageRenderKeys = getMessageRenderKeys(messages);
 
   const forkChat = trpc.share.forkChat.useMutation({
     onSuccess: (forkedChat) => {
       toast.success(t("Conversation forked!"));
-      router.push(`/chat/${forkedChat.id}`);
+      push(`/chat/${forkedChat.id}`);
     },
     onError: (error) => {
       toast.error(error.message);
@@ -101,7 +101,7 @@ export function SharedChatInterface({
 
   const handleFork = () => {
     if (!isLoggedIn) {
-      router.push("/auth/sign-in");
+      push("/auth/sign-in");
       return;
     }
     forkChat.mutate({ shareId });
@@ -135,260 +135,265 @@ export function SharedChatInterface({
 
       <Conversation className="flex-1 min-h-0 h-full">
         <ConversationContent>
-          {messages.map((message, index) => (
-            <div key={messageRenderKeys[index]}>
-              {message.role === "user" && (
-                <Message from="user">
-                  <MessageContent>
-                    {message.parts.filter(isFilePart).length > 0 ? (
-                      <Attachments variant="list" className="w-full">
-                        {message.parts.filter(isFilePart).map((part, partIndex) => (
-                          <Attachment
-                            data={{ ...part, id: `${message.id}-file-${partIndex}` }}
-                            key={`${message.id}-file-${partIndex}`}
-                            className="w-full bg-background/50"
-                          >
-                            <AttachmentPreview />
-                            <AttachmentInfo showMediaType />
-                          </Attachment>
-                        ))}
-                      </Attachments>
-                    ) : null}
-                    {message.parts.filter(isTextPart).map((part, partIndex) => (
-                      <MessageResponse
-                        key={`${message.id}-text-${partIndex}`}
-                        shikiTheme={["github-light", "github-dark"]}
-                      >
-                        {part.text}
-                      </MessageResponse>
-                    ))}
-                  </MessageContent>
-                </Message>
-              )}
-              {message.role === "assistant" && (
-                <div className="space-y-2">
-                  {message.parts?.map((part, i) => {
-                    switch (part.type) {
-                      case "text":
-                        return (
-                          <Message key={`${message.id}-${i}`} from={message.role}>
-                            <MessageContent>
-                              <MessageResponse>{part.text}</MessageResponse>
-                            </MessageContent>
-                            {i === (message.parts?.length ?? 0) - 1 && (
-                              <MessageActions>
-                                <MessageAction
-                                  onClick={() => navigator.clipboard.writeText(part.text)}
-                                  label={t("Copy")}
-                                >
-                                  <CopyIcon className="size-3.5" />
-                                </MessageAction>
-                              </MessageActions>
-                            )}
-                          </Message>
-                        );
-                      case "reasoning":
-                        return (
-                          <Reasoning key={`${message.id}-${i}`} className="w-full">
-                            <ReasoningTrigger />
-                            <ReasoningContent>{part.text}</ReasoningContent>
-                          </Reasoning>
-                        );
-                      case "tool-search": {
-                        if (part.state !== "output-available" && part.state !== "output-error") {
-                          return (
-                            <div
-                              key={part.toolCallId}
-                              className="flex items-center gap-2 text-muted-foreground text-sm transition-colors hover:text-foreground"
+          {messages.map((message, index) => {
+            const fileParts = message.parts.filter(isFilePart);
+            const textParts = message.parts.filter(isTextPart);
+
+            return (
+              <div key={messageRenderKeys[index]}>
+                {message.role === "user" && (
+                  <Message from="user">
+                    <MessageContent>
+                      {fileParts.length > 0 ? (
+                        <Attachments variant="list" className="w-full">
+                          {fileParts.map((part, partIndex) => (
+                            <Attachment
+                              data={{ ...part, id: `${message.id}-file-${partIndex}` }}
+                              key={`${message.id}-file-${partIndex}`}
+                              className="w-full bg-background/50"
                             >
-                              <Globe className="size-4" />
-                              <Shimmer>{t("Searching...")}</Shimmer>
-                            </div>
-                          );
-                        }
-
-                        if (part.state === "output-error") {
+                              <AttachmentPreview />
+                              <AttachmentInfo showMediaType />
+                            </Attachment>
+                          ))}
+                        </Attachments>
+                      ) : null}
+                      {textParts.map((part, partIndex) => (
+                        <MessageResponse
+                          key={`${message.id}-text-${partIndex}`}
+                          shikiTheme={["github-light", "github-dark"]}
+                        >
+                          {part.text}
+                        </MessageResponse>
+                      ))}
+                    </MessageContent>
+                  </Message>
+                )}
+                {message.role === "assistant" && (
+                  <div className="space-y-2">
+                    {message.parts?.map((part, i) => {
+                      switch (part.type) {
+                        case "text":
                           return (
-                            <div
-                              key={part.toolCallId}
-                              className="flex items-center gap-2 text-muted-foreground text-sm"
-                            >
-                              <Globe className="size-4" />
-                              {t("Search failed")}
-                            </div>
+                            <Message key={`${message.id}-${i}`} from={message.role}>
+                              <MessageContent>
+                                <MessageResponse>{part.text}</MessageResponse>
+                              </MessageContent>
+                              {i === (message.parts?.length ?? 0) - 1 && (
+                                <MessageActions>
+                                  <MessageAction
+                                    onClick={() => navigator.clipboard.writeText(part.text)}
+                                    label={t("Copy")}
+                                  >
+                                    <CopyIcon className="size-3.5" />
+                                  </MessageAction>
+                                </MessageActions>
+                              )}
+                            </Message>
                           );
-                        }
-
-                        const searchResults = isSearchResultArray(part.output) ? part.output : [];
-
-                        return (
-                          <div className="w-full my-4" key={`${message.id}-${i}`}>
-                            <Collapsible>
-                              <CollapsibleTrigger className="flex items-center gap-2 text-muted-foreground text-sm transition-colors hover:text-foreground">
-                                <Globe className="size-4" />
-                                {t("Searched {count} websites", {
-                                  count: searchResults.length.toString(),
-                                })}
-                                {searchResults.length !== 0 && (
-                                  <ChevronDownIcon
-                                    className={cn(
-                                      "size-4 ml-auto transition-transform",
-                                      "group-data-[state=open]:rotate-180",
-                                    )}
-                                  />
-                                )}
-                              </CollapsibleTrigger>
-                              <CollapsibleContent
-                                className={cn(
-                                  "data-[state=closed]:fade-out-0 data-[state=closed]:slide-out-to-top-2 data-[state=open]:slide-in-from-top-2 text-muted-foreground outline-none data-[state=closed]:animate-out data-[state=open]:animate-in",
-                                )}
+                        case "reasoning":
+                          return (
+                            <Reasoning key={`${message.id}-${i}`} className="w-full">
+                              <ReasoningTrigger />
+                              <ReasoningContent>{part.text}</ReasoningContent>
+                            </Reasoning>
+                          );
+                        case "tool-search": {
+                          if (part.state !== "output-available" && part.state !== "output-error") {
+                            return (
+                              <div
+                                key={part.toolCallId}
+                                className="flex items-center gap-2 text-muted-foreground text-sm transition-colors hover:text-foreground"
                               >
-                                <div className="space-y-4 mt-4">
-                                  {searchResults.map((result) => {
-                                    const displayUrl = getSafeDisplayUrl(result.url);
-                                    return (
-                                      <div
-                                        key={result.url}
-                                        className="p-0! bg-accent/40 hover:bg-accent rounded-md transition-colors"
-                                      >
-                                        <Link
-                                          href={displayUrl?.href ?? "#"}
-                                          className="block p-3"
-                                          target="_blank"
-                                          rel="noopener noreferrer"
+                                <Globe className="size-4" />
+                                <Shimmer>{t("Searching...")}</Shimmer>
+                              </div>
+                            );
+                          }
+
+                          if (part.state === "output-error") {
+                            return (
+                              <div
+                                key={part.toolCallId}
+                                className="flex items-center gap-2 text-muted-foreground text-sm"
+                              >
+                                <Globe className="size-4" />
+                                {t("Search failed")}
+                              </div>
+                            );
+                          }
+
+                          const searchResults = isSearchResultArray(part.output) ? part.output : [];
+
+                          return (
+                            <div className="w-full my-4" key={`${message.id}-${i}`}>
+                              <Collapsible>
+                                <CollapsibleTrigger className="group flex items-center gap-2 text-muted-foreground text-sm transition-colors hover:text-foreground">
+                                  <Globe className="size-4" />
+                                  {t("Searched {count} websites", {
+                                    count: searchResults.length.toString(),
+                                  })}
+                                  {searchResults.length !== 0 && (
+                                    <ChevronDownIcon
+                                      className={cn(
+                                        "size-4 ml-auto transition-transform",
+                                        "group-data-[state=open]:rotate-180",
+                                      )}
+                                    />
+                                  )}
+                                </CollapsibleTrigger>
+                                <CollapsibleContent
+                                  className={cn(
+                                    "data-[state=closed]:fade-out-0 data-[state=closed]:slide-out-to-top-2 data-[state=open]:slide-in-from-top-2 text-muted-foreground outline-none data-[state=closed]:animate-out data-[state=open]:animate-in",
+                                  )}
+                                >
+                                  <div className="space-y-4 mt-4">
+                                    {searchResults.map((result) => {
+                                      const displayUrl = getSafeDisplayUrl(result.url);
+                                      return (
+                                        <div
+                                          key={result.url}
+                                          className="p-0! bg-accent/40 hover:bg-accent rounded-md transition-colors"
                                         >
-                                          {displayUrl ? (
-                                            <p className="text-sm text-primary mb-1 line-clamp-2">
-                                              <span className="text-muted-foreground">
-                                                {displayUrl.origin}
-                                              </span>
-                                              {displayUrl.hostname}
-                                              <span className="text-muted-foreground">
-                                                {`${displayUrl.pathname.slice(0, 50)}${displayUrl.pathname.length > 50 ? "..." : ""}`}
-                                              </span>
+                                          <Link
+                                            href={displayUrl?.href ?? "#"}
+                                            className="block p-3"
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                          >
+                                            {displayUrl ? (
+                                              <p className="text-sm text-primary mb-1 line-clamp-2">
+                                                <span className="text-muted-foreground">
+                                                  {displayUrl.origin}
+                                                </span>
+                                                {displayUrl.hostname}
+                                                <span className="text-muted-foreground">
+                                                  {`${displayUrl.pathname.slice(0, 50)}${displayUrl.pathname.length > 50 ? "..." : ""}`}
+                                                </span>
+                                              </p>
+                                            ) : null}
+                                            <p className="font-medium text-sm text-primary mb-1 line-clamp-2">
+                                              {result.title}
                                             </p>
-                                          ) : null}
-                                          <p className="font-medium text-sm text-primary mb-1 line-clamp-2">
-                                            {result.title}
-                                          </p>
-                                          <div className="text-xs text-muted-foreground line-clamp-3">
-                                            {result.description.slice(0, 100)}
-                                            {result.description.length > 100 && "..."}
-                                          </div>
-                                        </Link>
-                                      </div>
-                                    );
-                                  })}
-                                </div>
-                              </CollapsibleContent>
-                            </Collapsible>
-                          </div>
-                        );
-                      }
-                      case "tool-video": {
-                        if (part.state !== "output-available" && part.state !== "output-error") {
-                          return (
-                            <Message key={`${message.id}-${i}`} from={message.role}>
-                              <MessageContent className="w-full gap-2 rounded-lg border border-border/60 bg-muted/20 px-4 py-3 text-sm text-muted-foreground">
-                                <div className="flex items-center gap-2">
-                                  <Spinner className="size-4" />
-                                  <span>{t("Generating video...")}</span>
-                                </div>
-                              </MessageContent>
-                            </Message>
-                          );
-                        }
-
-                        if (part.state === "output-error") {
-                          return (
-                            <Message key={`${message.id}-${i}`} from={message.role}>
-                              <MessageContent className="w-full text-sm text-destructive">
-                                {t("Video generation failed.")}
-                              </MessageContent>
-                            </Message>
-                          );
-                        }
-
-                        const output = isVideoToolOutput(part.output) ? part.output : null;
-
-                        if (!output) {
-                          return (
-                            <Message key={`${message.id}-${i}`} from={message.role}>
-                              <MessageContent className="w-full text-sm text-destructive">
-                                {t("Video output unavailable.")}
-                              </MessageContent>
-                            </Message>
-                          );
-                        }
-
-                        const resolvedModelLabel = resolveVeoModelLabel(
-                          output.model,
-                          output.modelLabel,
-                          t,
-                        );
-
-                        return (
-                          <Message key={`${message.id}-${i}`} from={message.role}>
-                            <MessageContent className="w-full gap-3 rounded-lg border border-border/60 bg-background/90 px-4 py-3">
-                              {output.negativePrompt && (
-                                <div className="rounded-md border border-border/60 bg-muted/30 px-3 py-2 text-xs">
-                                  <p className="text-xs font-medium text-foreground">
-                                    {t("Negative prompt")}
-                                  </p>
-                                  <p className="text-muted-foreground">{output.negativePrompt}</p>
-                                </div>
-                              )}
-                              <div className="overflow-hidden rounded-lg border border-border/70 bg-muted/30">
-                                {/* oxlint-disable-next-line: generated videos don't include captions. */}
-                                <video controls src={output.videoUrl} className="h-auto w-full" />
-                              </div>
-                              <div className="flex flex-wrap items-center gap-2 text-xs">
-                                {output.resolution && (
-                                  <Badge variant="secondary">{output.resolution}</Badge>
-                                )}
-                                {output.aspectRatio && (
-                                  <Badge variant="secondary">{output.aspectRatio}</Badge>
-                                )}
-                                {output.durationSeconds && (
-                                  <Badge variant="secondary">{output.durationSeconds}s</Badge>
-                                )}
-                                {resolvedModelLabel ? (
-                                  <Badge variant="outline">{resolvedModelLabel}</Badge>
-                                ) : null}
-                                {output.seed !== null && output.seed !== undefined && (
-                                  <Badge variant="outline">
-                                    {t("Seed {seed}", {
-                                      seed: output.seed.toString(),
+                                            <div className="text-xs text-muted-foreground line-clamp-3">
+                                              {result.description.slice(0, 100)}
+                                              {result.description.length > 100 && "..."}
+                                            </div>
+                                          </Link>
+                                        </div>
+                                      );
                                     })}
-                                  </Badge>
+                                  </div>
+                                </CollapsibleContent>
+                              </Collapsible>
+                            </div>
+                          );
+                        }
+                        case "tool-video": {
+                          if (part.state !== "output-available" && part.state !== "output-error") {
+                            return (
+                              <Message key={`${message.id}-${i}`} from={message.role}>
+                                <MessageContent className="w-full gap-2 rounded-lg border border-border/60 bg-muted/20 px-4 py-3 text-sm text-muted-foreground">
+                                  <div className="flex items-center gap-2">
+                                    <Spinner className="size-4" />
+                                    <span>{t("Generating video...")}</span>
+                                  </div>
+                                </MessageContent>
+                              </Message>
+                            );
+                          }
+
+                          if (part.state === "output-error") {
+                            return (
+                              <Message key={`${message.id}-${i}`} from={message.role}>
+                                <MessageContent className="w-full text-sm text-destructive">
+                                  {t("Video generation failed.")}
+                                </MessageContent>
+                              </Message>
+                            );
+                          }
+
+                          const output = isVideoToolOutput(part.output) ? part.output : null;
+
+                          if (!output) {
+                            return (
+                              <Message key={`${message.id}-${i}`} from={message.role}>
+                                <MessageContent className="w-full text-sm text-destructive">
+                                  {t("Video output unavailable.")}
+                                </MessageContent>
+                              </Message>
+                            );
+                          }
+
+                          const resolvedModelLabel = resolveVeoModelLabel(
+                            output.model,
+                            output.modelLabel,
+                            t,
+                          );
+
+                          return (
+                            <Message key={`${message.id}-${i}`} from={message.role}>
+                              <MessageContent className="w-full gap-3 rounded-lg border border-border/60 bg-background/90 px-4 py-3">
+                                {output.negativePrompt && (
+                                  <div className="rounded-md border border-border/60 bg-muted/30 px-3 py-2 text-xs">
+                                    <p className="text-xs font-medium text-foreground">
+                                      {t("Negative prompt")}
+                                    </p>
+                                    <p className="text-muted-foreground">{output.negativePrompt}</p>
+                                  </div>
                                 )}
-                              </div>
-                              {output.operationName && (
-                                <p className="break-words text-xs text-muted-foreground">
-                                  {t("Operation: {name}", {
-                                    name: output.operationName,
-                                  })}
-                                </p>
-                              )}
-                              <div>
-                                <Button asChild size="sm" variant="outline">
-                                  <a href={toSafeHref(output.videoUrl)} download>
-                                    {t("Download video")}
-                                  </a>
-                                </Button>
-                              </div>
-                            </MessageContent>
-                          </Message>
-                        );
+                                <div className="overflow-hidden rounded-lg border border-border/70 bg-muted/30">
+                                  {/* oxlint-disable-next-line: generated videos don't include captions. */}
+                                  <video controls src={output.videoUrl} className="h-auto w-full" />
+                                </div>
+                                <div className="flex flex-wrap items-center gap-2 text-xs">
+                                  {output.resolution && (
+                                    <Badge variant="secondary">{output.resolution}</Badge>
+                                  )}
+                                  {output.aspectRatio && (
+                                    <Badge variant="secondary">{output.aspectRatio}</Badge>
+                                  )}
+                                  {output.durationSeconds && (
+                                    <Badge variant="secondary">{output.durationSeconds}s</Badge>
+                                  )}
+                                  {resolvedModelLabel ? (
+                                    <Badge variant="outline">{resolvedModelLabel}</Badge>
+                                  ) : null}
+                                  {output.seed !== null && output.seed !== undefined && (
+                                    <Badge variant="outline">
+                                      {t("Seed {seed}", {
+                                        seed: output.seed.toString(),
+                                      })}
+                                    </Badge>
+                                  )}
+                                </div>
+                                {output.operationName && (
+                                  <p className="break-words text-xs text-muted-foreground">
+                                    {t("Operation: {name}", {
+                                      name: output.operationName,
+                                    })}
+                                  </p>
+                                )}
+                                <div>
+                                  <Button asChild size="sm" variant="outline">
+                                    <a href={toSafeHref(output.videoUrl)} download>
+                                      {t("Download video")}
+                                    </a>
+                                  </Button>
+                                </div>
+                              </MessageContent>
+                            </Message>
+                          );
+                        }
+                        default:
+                          return null;
                       }
-                      default:
-                        return null;
-                    }
-                  })}
-                </div>
-              )}
-            </div>
-          ))}
+                    })}
+                  </div>
+                )}
+              </div>
+            );
+          })}
         </ConversationContent>
         <ConversationScrollButton />
       </Conversation>

@@ -4,7 +4,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Crown, Mail, MoreHorizontal, Plus, Trash2, UserPlus, Users } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useExtracted } from "next-intl";
-import { startTransition, useEffect, useState } from "react";
+import { startTransition, Suspense, useEffect, useState } from "react";
 import { toast } from "sonner";
 import {
   AlertDialog,
@@ -116,9 +116,9 @@ function formatCurrency(amount: number | null, currency: string | null) {
   });
 }
 
-export function TeamSettingsPage() {
+function TeamSettingsContent() {
   const t = useExtracted();
-  const router = useRouter();
+  const { push } = useRouter();
   const session = authClient.useSession();
   const searchParams = useSearchParams();
   const queryClient = useQueryClient();
@@ -138,6 +138,7 @@ export function TeamSettingsPage() {
 
   // Remove member dialog
   const [memberToRemove, setMemberToRemove] = useState<Member | null>(null);
+  const [isRemovingMember, setIsRemovingMember] = useState(false);
   const currentUserId = session.data?.user?.id ?? null;
 
   const organizationsQuery = useQuery({
@@ -170,6 +171,7 @@ export function TeamSettingsPage() {
   const organizations = organizationsQuery.data ?? [];
   const members = (orgDetailsQuery.data?.members ?? []).filter(isMember);
   const invitations = (orgDetailsQuery.data?.invitations ?? []).filter(isInvitation);
+  const pendingInvitations = invitations.filter((inv) => inv.status === "pending");
   const currentUserRole = members.find((member) => member.userId === currentUserId)?.role ?? null;
   const teamBillingQuery = trpc.organization.teamBillingStatus.useQuery(
     { organizationId: activeOrg?.id ?? "" },
@@ -219,7 +221,7 @@ export function TeamSettingsPage() {
       }
     }
     init();
-  }, [currentUserId, queryClient, searchParams, session, t]);
+  }, [currentUserId, searchParams, queryClient, session, t]);
 
   useEffect(() => {
     if (activeOrg || organizationsQuery.isLoading) {
@@ -293,6 +295,7 @@ export function TeamSettingsPage() {
 
   async function handleRemoveMember(memberId: string) {
     if (!activeOrg) return;
+    setIsRemovingMember(true);
     try {
       await authClient.organization.removeMember({
         memberIdOrEmail: memberId,
@@ -306,6 +309,8 @@ export function TeamSettingsPage() {
     } catch (error) {
       console.error("Failed to remove member", error);
       toast.error(t("Failed to remove member"));
+    } finally {
+      setIsRemovingMember(false);
     }
   }
 
@@ -332,7 +337,7 @@ export function TeamSettingsPage() {
         planId,
       });
       startTransition(() => {
-        router.push(`/settings/team/checkout/${result.sessionId}?organizationId=${activeOrg.id}`);
+        push(`/settings/team/checkout/${result.sessionId}?organizationId=${activeOrg.id}`);
       });
     } catch (error) {
       console.error("Failed to create checkout session", error);
@@ -401,15 +406,15 @@ export function TeamSettingsPage() {
       >
         <Card>
           <CardContent className="flex flex-col items-center justify-center py-12 text-center">
-            <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-muted">
-              <Users className="h-6 w-6 text-muted-foreground" />
+            <div className="mb-4 flex size-12 items-center justify-center rounded-full bg-muted">
+              <Users className="size-6 text-muted-foreground" />
             </div>
             <h3 className="text-base font-medium">{t("No team yet")}</h3>
             <p className="mt-1 text-sm text-muted-foreground">
               {t("Create your first team to get started with Pro for Teams.")}
             </p>
             <Button className="mt-4" onClick={() => setIsCreateDialogOpen(true)}>
-              <Plus className="h-4 w-4" />
+              <Plus className="size-4" />
               {t("Create Team")}
             </Button>
           </CardContent>
@@ -438,7 +443,7 @@ export function TeamSettingsPage() {
                 {t("Cancel")}
               </Button>
               <Button onClick={handleCreateOrg} disabled={isCreatingOrg || !newOrgName.trim()}>
-                {isCreatingOrg && <Spinner className="h-3.5 w-3.5" />}
+                {isCreatingOrg && <Spinner className="size-3.5" />}
                 {t("Create")}
               </Button>
             </DialogFooter>
@@ -484,7 +489,7 @@ export function TeamSettingsPage() {
             </Select>
           )}
           <Button variant="outline" onClick={() => setIsCreateDialogOpen(true)}>
-            <Plus className="h-3.5 w-3.5" />
+            <Plus className="size-3.5" />
             {t("New Team")}
           </Button>
         </>
@@ -495,8 +500,8 @@ export function TeamSettingsPage() {
         <Card className="!pb-2">
           <CardHeader className="pb-3">
             <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
-                <Users className="h-5 w-5 text-primary" />
+              <div className="flex size-10 items-center justify-center rounded-lg bg-primary/10">
+                <Users className="size-5 text-primary" />
               </div>
               <div>
                 <CardTitle className="text-base">{activeOrg.name}</CardTitle>
@@ -569,7 +574,7 @@ export function TeamSettingsPage() {
                     </Button>
                     {isCanceled ? (
                       <Button size="sm" onClick={handleResume} disabled={resumeSub.isPending}>
-                        {resumeSub.isPending && <Spinner className="h-3.5 w-3.5" />}
+                        {resumeSub.isPending && <Spinner className="size-3.5" />}
                         {t("Resume")}
                       </Button>
                     ) : (
@@ -579,7 +584,7 @@ export function TeamSettingsPage() {
                         onClick={handleCancel}
                         disabled={cancelSub.isPending}
                       >
-                        {cancelSub.isPending && <Spinner className="h-3.5 w-3.5" />}
+                        {cancelSub.isPending && <Spinner className="size-3.5" />}
                         {t("Cancel")}
                       </Button>
                     )}
@@ -618,7 +623,7 @@ export function TeamSettingsPage() {
                       >
                         {createTeamCheckout.isPending &&
                         createTeamCheckout.variables?.planId === "pro_team_monthly" ? (
-                          <Spinner className="h-3.5 w-3.5" />
+                          <Spinner className="size-3.5" />
                         ) : null}
                         {t("Subscribe")}
                       </Button>
@@ -662,7 +667,7 @@ export function TeamSettingsPage() {
                       >
                         {createTeamCheckout.isPending &&
                         createTeamCheckout.variables?.planId === "pro_team_yearly" ? (
-                          <Spinner className="h-3.5 w-3.5" />
+                          <Spinner className="size-3.5" />
                         ) : null}
                         {t("Subscribe")}
                       </Button>
@@ -684,7 +689,7 @@ export function TeamSettingsPage() {
           </div>
           {isAdmin && (
             <Button size="sm" onClick={() => setIsInviteDialogOpen(true)}>
-              <UserPlus className="h-3.5 w-3.5" />
+              <UserPlus className="size-3.5" />
               {t("Invite")}
             </Button>
           )}
@@ -694,7 +699,7 @@ export function TeamSettingsPage() {
             {members.map((m) => (
               <div key={m.id} className="flex items-center justify-between rounded-lg border p-3">
                 <div className="flex items-center gap-3">
-                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-muted text-xs font-medium uppercase">
+                  <div className="flex size-8 items-center justify-center rounded-full bg-muted text-xs font-medium uppercase">
                     {m.user.name?.charAt(0) ?? m.user.email?.charAt(0) ?? "?"}
                   </div>
                   <div>
@@ -704,14 +709,14 @@ export function TeamSettingsPage() {
                 </div>
                 <div className="flex items-center gap-2">
                   <Badge variant={m.role === "owner" ? "default" : "secondary"} className="text-xs">
-                    {m.role === "owner" && <Crown className="mr-1 h-3 w-3" />}
+                    {m.role === "owner" && <Crown className="mr-1 size-3" />}
                     {m.role}
                   </Badge>
                   {isAdmin && m.role !== "owner" && (
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="icon" className="h-7 w-7">
-                          <MoreHorizontal className="h-4 w-4" />
+                        <Button variant="ghost" size="icon" className="size-7">
+                          <MoreHorizontal className="size-4" />
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
@@ -727,7 +732,7 @@ export function TeamSettingsPage() {
                             })
                           }
                         >
-                          <Trash2 className="h-4 w-4" />
+                          <Trash2 className="size-4" />
                           {t("Remove")}
                         </DropdownMenuItem>
                       </DropdownMenuContent>
@@ -741,47 +746,45 @@ export function TeamSettingsPage() {
       </Card>
 
       {/* Pending Invitations */}
-      {invitations.filter((inv) => inv.status === "pending").length > 0 && (
+      {pendingInvitations.length > 0 && (
         <Card>
           <CardHeader>
             <CardTitle className="text-base">{t("Pending Invitations")}</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="space-y-2">
-              {invitations
-                .filter((inv) => inv.status === "pending")
-                .map((inv) => (
-                  <div
-                    key={inv.id}
-                    className="flex items-center justify-between rounded-lg border p-3"
-                  >
-                    <div className="flex items-center gap-3">
-                      <div className="flex h-8 w-8 items-center justify-center rounded-full bg-muted">
-                        <Mail className="h-4 w-4 text-muted-foreground" />
-                      </div>
-                      <div>
-                        <p className="text-sm font-medium">{inv.email}</p>
-                        <p className="text-xs text-muted-foreground">
-                          {inv.role ?? "member"} · {t("Expires")}{" "}
-                          {new Intl.DateTimeFormat(undefined, {
-                            month: "short",
-                            day: "numeric",
-                          }).format(new Date(inv.expiresAt))}
-                        </p>
-                      </div>
+              {pendingInvitations.map((inv) => (
+                <div
+                  key={inv.id}
+                  className="flex items-center justify-between rounded-lg border p-3"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="flex size-8 items-center justify-center rounded-full bg-muted">
+                      <Mail className="size-4 text-muted-foreground" />
                     </div>
-                    {isAdmin && (
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="text-destructive hover:text-destructive"
-                        onClick={() => handleCancelInvitation(inv.id)}
-                      >
-                        {t("Cancel")}
-                      </Button>
-                    )}
+                    <div>
+                      <p className="text-sm font-medium">{inv.email}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {inv.role ?? t("Member")} · {t("Expires")}{" "}
+                        {new Intl.DateTimeFormat(undefined, {
+                          month: "short",
+                          day: "numeric",
+                        }).format(new Date(inv.expiresAt))}
+                      </p>
+                    </div>
                   </div>
-                ))}
+                  {isAdmin && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="text-destructive hover:text-destructive"
+                      onClick={() => handleCancelInvitation(inv.id)}
+                    >
+                      {t("Cancel")}
+                    </Button>
+                  )}
+                </div>
+              ))}
             </div>
           </CardContent>
         </Card>
@@ -811,7 +814,7 @@ export function TeamSettingsPage() {
               {t("Cancel")}
             </Button>
             <Button onClick={handleCreateOrg} disabled={isCreatingOrg || !newOrgName.trim()}>
-              {isCreatingOrg && <Spinner className="h-3.5 w-3.5" />}
+              {isCreatingOrg && <Spinner className="size-3.5" />}
               {t("Create")}
             </Button>
           </DialogFooter>
@@ -859,14 +862,20 @@ export function TeamSettingsPage() {
               {t("Cancel")}
             </Button>
             <Button onClick={handleInvite} disabled={isInviting || !inviteEmail.trim()}>
-              {isInviting && <Spinner className="h-3.5 w-3.5" />}
+              {isInviting && <Spinner className="size-3.5" />}
               {t("Send Invitation")}
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
 
-      <AlertDialog open={!!memberToRemove} onOpenChange={() => setMemberToRemove(null)}>
+      <AlertDialog
+        open={!!memberToRemove}
+        onOpenChange={(open) => {
+          if (isRemovingMember) return;
+          if (!open) setMemberToRemove(null);
+        }}
+      >
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>{t("Remove member?")}</AlertDialogTitle>
@@ -877,18 +886,38 @@ export function TeamSettingsPage() {
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>{t("Cancel")}</AlertDialogCancel>
+            <AlertDialogCancel disabled={isRemovingMember}>{t("Cancel")}</AlertDialogCancel>
             <AlertDialogAction
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              disabled={isRemovingMember}
+              loading={isRemovingMember}
               onClick={() => {
                 if (memberToRemove) handleRemoveMember(memberToRemove.id);
               }}
             >
+              {isRemovingMember && <Spinner className="size-3.5" />}
               {t("Remove")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
     </SettingsPageShell>
+  );
+}
+
+function TeamSettingsLoading() {
+  const t = useExtracted();
+  return (
+    <div className="flex min-h-[60vh] w-full items-center justify-center text-sm text-muted-foreground">
+      {t("Loading team settings…")}
+    </div>
+  );
+}
+
+export function TeamSettingsPage() {
+  return (
+    <Suspense fallback={<TeamSettingsLoading />}>
+      <TeamSettingsContent />
+    </Suspense>
   );
 }

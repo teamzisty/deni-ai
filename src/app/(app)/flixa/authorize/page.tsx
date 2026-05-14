@@ -3,7 +3,7 @@
 import { CheckCircle2, Code2, KeyRound, Loader2, ShieldCheck, XCircle } from "lucide-react";
 import { useSearchParams } from "next/navigation";
 import { useExtracted } from "next-intl";
-import { useCallback, useState } from "react";
+import { Suspense, useCallback, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
@@ -24,7 +24,7 @@ type ApproveResponse = {
   apiKeys?: ApiKeyOption[];
 };
 
-export default function FlixaAuthorizePage() {
+function FlixaAuthorizeContent() {
   const t = useExtracted();
   const searchParams = useSearchParams();
   const code = searchParams.get("code");
@@ -91,8 +91,8 @@ export default function FlixaAuthorizePage() {
       <div className="flex flex-1 items-center justify-center">
         <Card className="w-full max-w-md">
           <CardHeader className="text-center">
-            <div className="mx-auto mb-2 flex h-12 w-12 items-center justify-center rounded-full bg-destructive/10">
-              <XCircle className="h-6 w-6 text-destructive" />
+            <div className="mx-auto mb-2 flex size-12 items-center justify-center rounded-full bg-destructive/10">
+              <XCircle className="size-6 text-destructive" />
             </div>
             <CardTitle>{t("Invalid Request")}</CardTitle>
             <CardDescription>
@@ -109,8 +109,8 @@ export default function FlixaAuthorizePage() {
       <div className="flex flex-1 items-center justify-center">
         <Card className="w-full max-w-md">
           <CardHeader className="text-center">
-            <div className="mx-auto mb-2 flex h-12 w-12 items-center justify-center rounded-full bg-green-500/10">
-              <CheckCircle2 className="h-6 w-6 text-green-500" />
+            <div className="mx-auto mb-2 flex size-12 items-center justify-center rounded-full bg-green-500/10">
+              <CheckCircle2 className="size-6 text-green-500" />
             </div>
             <CardTitle>{t("Device Authorized")}</CardTitle>
             <CardDescription>
@@ -129,8 +129,8 @@ export default function FlixaAuthorizePage() {
       <div className="flex flex-1 items-center justify-center">
         <Card className="w-full max-w-md">
           <CardHeader className="text-center">
-            <div className="mx-auto mb-2 flex h-12 w-12 items-center justify-center rounded-full bg-destructive/10">
-              <XCircle className="h-6 w-6 text-destructive" />
+            <div className="mx-auto mb-2 flex size-12 items-center justify-center rounded-full bg-destructive/10">
+              <XCircle className="size-6 text-destructive" />
             </div>
             <CardTitle>{t("Authorization Failed")}</CardTitle>
             <CardDescription>{errorMessage}</CardDescription>
@@ -150,8 +150,8 @@ export default function FlixaAuthorizePage() {
       <div className="flex flex-1 items-center justify-center">
         <Card className="w-full max-w-lg">
           <CardHeader className="text-center">
-            <div className="mx-auto mb-2 flex h-12 w-12 items-center justify-center rounded-full bg-amber-500/10">
-              <KeyRound className="h-6 w-6 text-amber-600" />
+            <div className="mx-auto mb-2 flex size-12 items-center justify-center rounded-full bg-amber-500/10">
+              <KeyRound className="size-6 text-amber-600" />
             </div>
             <CardTitle>{t("API key limit reached")}</CardTitle>
             <CardDescription>
@@ -213,12 +213,12 @@ export default function FlixaAuthorizePage() {
             >
               {isSubmitting ? (
                 <>
-                  <Loader2 className="h-4 w-4 animate-spin" />
+                  <Loader2 className="size-4 animate-spin" />
                   {t("Approving...")}
                 </>
               ) : (
                 <>
-                  <ShieldCheck className="h-4 w-4" />
+                  <ShieldCheck className="size-4" />
                   {t("Revoke selected key and approve")}
                 </>
               )}
@@ -233,8 +233,8 @@ export default function FlixaAuthorizePage() {
     <div className="flex flex-1 items-center justify-center">
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
-          <div className="mx-auto mb-2 flex h-12 w-12 items-center justify-center rounded-full bg-secondary">
-            <ShieldCheck className="h-6 w-6 text-foreground" />
+          <div className="mx-auto mb-2 flex size-12 items-center justify-center rounded-full bg-secondary">
+            <ShieldCheck className="size-6 text-foreground" />
           </div>
           <CardTitle>{t("Authorize Flixa Extension")}</CardTitle>
           <CardDescription>
@@ -249,7 +249,7 @@ export default function FlixaAuthorizePage() {
               {t("Confirmation Code")}
             </p>
             <div className="flex items-center gap-1.5">
-              <Code2 className="h-5 w-5 text-muted-foreground" />
+              <Code2 className="size-5 text-muted-foreground" />
               <span className="text-3xl font-mono font-bold tracking-[0.2em]">{code}</span>
             </div>
           </div>
@@ -257,12 +257,12 @@ export default function FlixaAuthorizePage() {
             <Button onClick={() => handleApprove()} disabled={isSubmitting} className="w-full">
               {isSubmitting ? (
                 <>
-                  <Loader2 className="h-4 w-4 animate-spin" />
+                  <Loader2 className="size-4 animate-spin" />
                   {t("Approving...")}
                 </>
               ) : (
                 <>
-                  <ShieldCheck className="h-4 w-4" />
+                  <ShieldCheck className="size-4" />
                   {t("Approve")}
                 </>
               )}
@@ -271,5 +271,13 @@ export default function FlixaAuthorizePage() {
         </CardContent>
       </Card>
     </div>
+  );
+}
+
+export default function FlixaAuthorizePage() {
+  return (
+    <Suspense fallback={null}>
+      <FlixaAuthorizeContent />
+    </Suspense>
   );
 }
