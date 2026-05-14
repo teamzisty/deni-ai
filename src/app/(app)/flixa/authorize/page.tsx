@@ -26,8 +26,8 @@ type ApproveResponse = {
 
 function FlixaAuthorizeContent() {
   const t = useExtracted();
-  const { get } = useSearchParams();
-  const code = get("code");
+  const searchParams = useSearchParams();
+  const code = searchParams.get("code");
   const [status, setStatus] = useState<Status>("idle");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");

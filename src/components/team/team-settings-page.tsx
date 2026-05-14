@@ -120,7 +120,7 @@ function TeamSettingsContent() {
   const t = useExtracted();
   const { push } = useRouter();
   const session = authClient.useSession();
-  const { get } = useSearchParams();
+  const searchParams = useSearchParams();
   const queryClient = useQueryClient();
 
   const [activeOrg, setActiveOrg] = useState<Organization | null>(null);
@@ -203,7 +203,7 @@ function TeamSettingsContent() {
 
     async function init() {
       // Handle invitation acceptance from URL first (before loading orgs)
-      const invitationId = get("invitationId");
+      const invitationId = searchParams.get("invitationId");
       if (invitationId) {
         // Remove invitationId from URL immediately to prevent double-accept on remount
         window.history.replaceState({}, "", window.location.pathname);
@@ -221,7 +221,7 @@ function TeamSettingsContent() {
       }
     }
     init();
-  }, [currentUserId, get, queryClient, session, t]);
+  }, [currentUserId, searchParams, queryClient, session, t]);
 
   useEffect(() => {
     if (activeOrg || organizationsQuery.isLoading) {
@@ -765,7 +765,7 @@ function TeamSettingsContent() {
                     <div>
                       <p className="text-sm font-medium">{inv.email}</p>
                       <p className="text-xs text-muted-foreground">
-                        {inv.role ?? "member"} · {t("Expires")}{" "}
+                        {inv.role ?? t("Member")} · {t("Expires")}{" "}
                         {new Intl.DateTimeFormat(undefined, {
                           month: "short",
                           day: "numeric",
@@ -905,15 +905,18 @@ function TeamSettingsContent() {
   );
 }
 
+function TeamSettingsLoading() {
+  const t = useExtracted();
+  return (
+    <div className="flex min-h-[60vh] w-full items-center justify-center text-sm text-muted-foreground">
+      {t("Loading team settings…")}
+    </div>
+  );
+}
+
 export function TeamSettingsPage() {
   return (
-    <Suspense
-      fallback={
-        <div className="flex min-h-[60vh] w-full items-center justify-center text-sm text-muted-foreground">
-          Loading team settings…
-        </div>
-      }
-    >
+    <Suspense fallback={<TeamSettingsLoading />}>
       <TeamSettingsContent />
     </Suspense>
   );

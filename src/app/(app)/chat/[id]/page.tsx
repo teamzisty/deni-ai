@@ -55,7 +55,21 @@ export default async function ChatPage({
       redirect("/chat");
     }
 
-    const projectIdFromQuery = resolvedSearch?.projectId ?? null;
+    // Validate the projectId from the query string: it must be a UUID AND
+    // belong to the current user. Anything else gets dropped (null) so we
+    // never persist an unverified or cross-tenant project reference.
+    const rawProjectId = resolvedSearch?.projectId ?? null;
+    let projectIdFromQuery: string | null = null;
+    if (rawProjectId && UUID_RE.test(rawProjectId)) {
+      const [ownedProject] = await db
+        .select({ id: projects.id })
+        .from(projects)
+        .where(and(eq(projects.id, rawProjectId), eq(projects.userId, userId)))
+        .limit(1);
+      if (ownedProject) {
+        projectIdFromQuery = ownedProject.id;
+      }
+    }
 
     await db
       .insert(chats)

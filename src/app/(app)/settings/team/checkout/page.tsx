@@ -3,13 +3,14 @@
 import { useSearchParams } from "next/navigation";
 import { Suspense } from "react";
 import { StripeCheckoutPage } from "@/components/billing/stripe-checkout-page";
-import type { TeamPlanId } from "@/lib/billing";
+import { isTeamPlanId } from "@/lib/billing";
 
 function TeamCheckoutSettingsContent() {
-  const { get } = useSearchParams();
-  const organizationId = get("organizationId");
-  const planId = get("planId") as TeamPlanId | null;
-  const sessionId = get("session_id");
+  const searchParams = useSearchParams();
+  const organizationId = searchParams.get("organizationId");
+  const rawPlanId = searchParams.get("planId");
+  const planId = isTeamPlanId(rawPlanId) ? rawPlanId : null;
+  const sessionId = searchParams.get("session_id");
 
   return (
     <StripeCheckoutPage

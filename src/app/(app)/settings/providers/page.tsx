@@ -288,6 +288,7 @@ export default function ProvidersPage() {
   };
 
   const handlePreferToggle = async (providerId: ProviderId, value: boolean) => {
+    const previousValue = preferByok[providerId];
     dispatchProvidersUi({ type: "setPreferByok", providerId, value });
     try {
       await upsertSetting.mutateAsync({
@@ -296,6 +297,8 @@ export default function ProvidersPage() {
       });
       await utils.providers.getConfig.invalidate();
     } catch (error) {
+      // Roll back the optimistic update so the toggle reflects server truth.
+      dispatchProvidersUi({ type: "setPreferByok", providerId, value: previousValue });
       toast.error(error instanceof Error ? error.message : t("Failed to update preference."));
     }
   };

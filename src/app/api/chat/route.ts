@@ -215,6 +215,7 @@ export async function POST(req: Request) {
   let usageConsumed = false;
   let usageRefunded = false;
   let generationWatch: ReturnType<typeof setInterval> | undefined;
+  let trailingPersistTimer: ReturnType<typeof setTimeout> | undefined;
   let hasAssistantOutput = false;
   let consumedUsageAmount = 0;
   let finalUsageAmount = 0;
@@ -317,6 +318,11 @@ export async function POST(req: Request) {
     if (generationWatch) {
       clearInterval(generationWatch);
       generationWatch = undefined;
+    }
+
+    if (trailingPersistTimer) {
+      clearTimeout(trailingPersistTimer);
+      trailingPersistTimer = undefined;
     }
 
     if (!generationAbortController) {
@@ -440,7 +446,6 @@ export async function POST(req: Request) {
   let latestPersistedMessage: UIMessage = pendingAssistantMessage;
   let partialPersistPromise: Promise<void> = Promise.resolve();
   let lastPersistAt = 0;
-  let trailingPersistTimer: ReturnType<typeof setTimeout> | undefined;
   let pendingDirty = false;
 
   const runPersist = () => {

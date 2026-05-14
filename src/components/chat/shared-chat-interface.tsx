@@ -228,7 +228,7 @@ export function SharedChatInterface({
                           return (
                             <div className="w-full my-4" key={`${message.id}-${i}`}>
                               <Collapsible>
-                                <CollapsibleTrigger className="flex items-center gap-2 text-muted-foreground text-sm transition-colors hover:text-foreground">
+                                <CollapsibleTrigger className="group flex items-center gap-2 text-muted-foreground text-sm transition-colors hover:text-foreground">
                                   <Globe className="size-4" />
                                   {t("Searched {count} websites", {
                                     count: searchResults.length.toString(),

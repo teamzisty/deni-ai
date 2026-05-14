@@ -6,9 +6,9 @@ import { StripeCheckoutPage } from "@/components/billing/stripe-checkout-page";
 import type { IndividualPlanId } from "@/lib/billing";
 
 function BillingCheckoutSettingsContent() {
-  const { get } = useSearchParams();
-  const planId = get("planId") as IndividualPlanId | null;
-  const sessionId = get("session_id");
+  const searchParams = useSearchParams();
+  const planId = searchParams.get("planId") as IndividualPlanId | null;
+  const sessionId = searchParams.get("session_id");
 
   return <StripeCheckoutPage scope="billing" planId={planId} sessionId={sessionId} />;
 }

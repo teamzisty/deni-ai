@@ -59,7 +59,10 @@ export function ProjectPage({ projectId, initialProjectName }: ProjectPageProps)
   });
 
   const startNewChat = useNewChat();
+  const [isStartingChat, setIsStartingChat] = useState(false);
   const handleNewProjectChat = () => {
+    if (isStartingChat) return;
+    setIsStartingChat(true);
     startNewChat({ projectId });
   };
 
@@ -136,8 +139,9 @@ export function ProjectPage({ projectId, initialProjectName }: ProjectPageProps)
             variant="ghost"
             className="h-7 gap-1 px-2 text-xs"
             onClick={handleNewProjectChat}
+            disabled={isStartingChat}
           >
-            <PlusIcon className="size-3.5" />
+            {isStartingChat ? <Spinner className="size-3.5" /> : <PlusIcon className="size-3.5" />}
             New chat
           </Button>
         </div>

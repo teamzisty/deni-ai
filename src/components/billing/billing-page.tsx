@@ -570,6 +570,8 @@ function BillingPageContent() {
     onSettled: () => {
       setIsChangePlanOpen(false);
       setChangeTarget(null);
+      setPendingPlanId(null);
+      setHasAgreed(false);
     },
   });
 
