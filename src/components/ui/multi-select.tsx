@@ -42,6 +42,7 @@ export function MultiSelect({
   maxBadges = 2,
 }: MultiSelectProps) {
   const [open, setOpen] = React.useState(false);
+  const listId = React.useId();
 
   const toggleOption = (val: string) => {
     if (value.includes(val)) {
@@ -65,6 +66,7 @@ export function MultiSelect({
           type="button"
           variant="outline"
           role="combobox"
+          aria-controls={listId}
           aria-expanded={open}
           disabled={disabled}
           className={cn(
@@ -104,7 +106,7 @@ export function MultiSelect({
       <PopoverContent className="w-[260px] p-0" align="start">
         <Command>
           {/* 検索バー欲しければ CommandInput をここに追加 */}
-          <CommandList>
+          <CommandList id={listId}>
             <CommandEmpty>{emptyText}</CommandEmpty>
             <CommandGroup>
               {options.map((opt) => {
@@ -117,11 +119,11 @@ export function MultiSelect({
                   >
                     <span
                       className={cn(
-                        "mr-2 flex h-4 w-4 items-center justify-center rounded-sm border",
+                        "mr-2 flex size-4 items-center justify-center rounded-sm border",
                         isSelected ? "bg-primary text-primary-foreground" : "opacity-50",
                       )}
                     >
-                      {isSelected && <Check className="h-3 w-3" />}
+                      {isSelected && <Check className="size-3" />}
                     </span>
                     {opt.icon}
                     <span>{opt.label}</span>

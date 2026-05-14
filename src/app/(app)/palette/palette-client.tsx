@@ -231,8 +231,8 @@ function parsePaletteHistory(value: string) {
   }
 
   return parsed
-    .filter(
-      (entry): entry is PaletteHistoryEntry =>
+    .flatMap((entry) => {
+      if (
         typeof entry === "object" &&
         entry !== null &&
         typeof entry.id === "string" &&
@@ -242,16 +242,21 @@ function parsePaletteHistory(value: string) {
         entry.prompt.trim().length > 0 &&
         isModelId(entry.model) &&
         isAspectRatio(entry.aspectRatio) &&
-        isResolution(entry.resolution),
-    )
-    .map((entry) => ({
-      ...entry,
-      modelName:
-        typeof entry.modelName === "string" && entry.modelName.trim().length > 0
-          ? entry.modelName
-          : getImageModel(entry.model).name,
-      prompt: entry.prompt.trim(),
-    }))
+        isResolution(entry.resolution)
+      ) {
+        return [
+          {
+            ...entry,
+            modelName:
+              typeof entry.modelName === "string" && entry.modelName.trim().length > 0
+                ? entry.modelName
+                : getImageModel(entry.model).name,
+            prompt: entry.prompt.trim(),
+          },
+        ];
+      }
+      return [];
+    })
     .slice(0, PALETTE_HISTORY_LIMIT);
 }
 
@@ -356,7 +361,7 @@ function WallTile({
         {tile.kind === "image" ? (
           <>
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={tile.dataUrl} alt={tile.prompt} className="h-full w-full object-cover" />
+            <img src={tile.dataUrl} alt={tile.prompt} className="size-full object-cover" />
             <div className="absolute inset-0 bg-foreground/0 transition-colors group-hover:bg-foreground/10" />
           </>
         ) : null}
@@ -882,7 +887,7 @@ export default function PaletteClient() {
           ) : null}
 
           <div className="relative rounded-[2rem] bg-card/90 p-2 text-card-foreground shadow-2xl ring-1 ring-border backdrop-blur-2xl sm:rounded-[2.5rem]">
-            <div className="flex flex-col gap-2 px-1 py-1 sm:flex-row sm:items-center sm:gap-1 sm:px-2 sm:py-0">
+            <div className="flex flex-col gap-2 p-1 sm:flex-row sm:items-center sm:gap-1 sm:px-2 sm:py-0">
               <div className="flex items-center gap-1">
                 <Button variant={"secondary"} size="icon">
                   <ImageIcon className="size-4" />
@@ -1024,7 +1029,7 @@ export default function PaletteClient() {
           side="right"
           className="gap-0 border-border bg-background p-0 text-foreground sm:max-w-md"
         >
-          <SheetHeader className="gap-3 border-b border-border px-5 py-5">
+          <SheetHeader className="gap-3 border-b border-border p-5">
             <div className="space-y-1 pr-10">
               <SheetTitle className="text-base text-foreground">{t("History")}</SheetTitle>
               <SheetDescription className="text-muted-foreground">
@@ -1117,7 +1122,7 @@ export default function PaletteClient() {
           className="h-[94vh] max-w-[96vw] overflow-hidden border-border bg-background p-0 text-foreground shadow-2xl"
         >
           {selectedImage ? (
-            <div className="relative h-full w-full">
+            <div className="relative size-full">
               <DialogTitle className="sr-only">Generated image</DialogTitle>
               <DialogDescription className="sr-only">
                 Preview, copy, download, or close this image.
@@ -1129,7 +1134,7 @@ export default function PaletteClient() {
                   src={selectedImage.dataUrl}
                   alt=""
                   aria-hidden="true"
-                  className="h-full w-full scale-110 object-cover opacity-30 blur-2xl"
+                  className="size-full scale-110 object-cover opacity-30 blur-2xl"
                 />
                 <div className="absolute inset-0 bg-background/70" />
               </div>

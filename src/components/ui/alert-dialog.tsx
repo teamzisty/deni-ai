@@ -103,9 +103,23 @@ function AlertDialogDescription({
 
 function AlertDialogAction({
   className,
+  loading,
+  onClick,
   ...props
-}: React.ComponentProps<typeof AlertDialogPrimitive.Action>) {
-  return <AlertDialogPrimitive.Action className={cn(buttonVariants(), className)} {...props} />;
+}: React.ComponentProps<typeof AlertDialogPrimitive.Action> & { loading?: boolean }) {
+  return (
+    <AlertDialogPrimitive.Action
+      className={cn(buttonVariants(), className)}
+      onClick={(event) => {
+        if (loading !== undefined) {
+          event.preventDefault();
+          if (loading) return;
+        }
+        onClick?.(event);
+      }}
+      {...props}
+    />
+  );
 }
 
 function AlertDialogCancel({

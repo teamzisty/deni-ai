@@ -9,41 +9,31 @@ import { Spinner } from "@/components/ui/spinner";
 import { cn } from "@/lib/utils";
 
 interface UsageAlertsProps {
-  isAnonymous: boolean;
-  isByokActive: boolean;
-  isByokMissingConfig: boolean;
-  isUsageLow: boolean;
-  isUsageBlocked: boolean;
-  canEnableMaxMode: boolean;
-  remainingUsage: number | null | undefined;
-  usageUnitLabel: string;
-  usageCategoryLabel: string;
-  usageTierLabel: string;
-  billingDisabled: boolean;
+  status: {
+    isAnonymous: boolean;
+    isByokActive: boolean;
+    isByokMissingConfig: boolean;
+    isUsageLow: boolean;
+    isUsageBlocked: boolean;
+    canEnableMaxMode: boolean;
+    billingDisabled: boolean;
+  };
+  usage: {
+    remaining: number | null | undefined;
+    unitLabel: string;
+    categoryLabel: string;
+    tierLabel: string;
+  };
   enableMaxMode: { mutate: () => void; isPending: boolean };
   onRefreshUsage: () => void;
 }
 
-export function UsageAlerts({
-  isAnonymous,
-  isByokActive,
-  isByokMissingConfig,
-  isUsageLow,
-  isUsageBlocked,
-  canEnableMaxMode,
-  remainingUsage,
-  usageUnitLabel,
-  usageCategoryLabel,
-  usageTierLabel,
-  billingDisabled,
-  enableMaxMode,
-  onRefreshUsage,
-}: UsageAlertsProps) {
+export function UsageAlerts({ status, usage, enableMaxMode, onRefreshUsage }: UsageAlertsProps) {
   const t = useExtracted();
 
   return (
     <>
-      {isByokMissingConfig && (
+      {status.isByokMissingConfig && (
         <Alert className="mt-3 border-destructive/40 bg-destructive/10 text-destructive-foreground dark:border-destructive/30">
           <Ban className="mt-0.5 size-4" />
           <AlertTitle>{t("Endpoint not configured")}</AlertTitle>
@@ -51,7 +41,7 @@ export function UsageAlerts({
             <p>
               {t("Configure an OpenAI-compatible base URL and API key before using this model.")}
             </p>
-            {!isAnonymous && (
+            {!status.isAnonymous && (
               <div className="flex flex-wrap gap-2">
                 <Button size="sm" asChild>
                   <Link href="/settings/providers">
@@ -65,7 +55,7 @@ export function UsageAlerts({
         </Alert>
       )}
 
-      {isByokActive && !isByokMissingConfig && (
+      {status.isByokActive && !status.isByokMissingConfig && (
         <Alert className="mt-3 border-emerald-500/40 bg-emerald-100/40 text-emerald-900 dark:border-emerald-500/30 dark:bg-emerald-500/10 dark:text-emerald-50">
           <Plug className="mt-0.5 size-4" />
           <AlertTitle>{t("BYOK active")}</AlertTitle>
@@ -75,60 +65,60 @@ export function UsageAlerts({
         </Alert>
       )}
 
-      {(isUsageLow || isUsageBlocked) && (
+      {(status.isUsageLow || status.isUsageBlocked) && (
         <Alert
           className={cn(
             "mt-3 border-amber-500/50 bg-amber-100/40 text-amber-900 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-50",
-            isUsageBlocked &&
-              !canEnableMaxMode &&
+            status.isUsageBlocked &&
+              !status.canEnableMaxMode &&
               "border-destructive/40 bg-destructive/10 text-destructive-foreground dark:border-destructive/30",
-            canEnableMaxMode &&
+            status.canEnableMaxMode &&
               "border-blue-500/50 bg-blue-100/40 text-blue-900 dark:border-blue-500/30 dark:bg-blue-500/10 dark:text-blue-50",
           )}
         >
-          {canEnableMaxMode ? (
+          {status.canEnableMaxMode ? (
             <Zap className="mt-0.5 size-4" />
-          ) : isUsageBlocked ? (
+          ) : status.isUsageBlocked ? (
             <Ban className="mt-0.5 size-4" />
           ) : (
             <TriangleAlert className="mt-0.5 size-4" />
           )}
           <AlertTitle>
-            {canEnableMaxMode
+            {status.canEnableMaxMode
               ? t("Enable Max Mode to continue")
-              : isUsageBlocked
+              : status.isUsageBlocked
                 ? t("Usage limit reached")
                 : t("You are running low")}
           </AlertTitle>
           <AlertDescription className="flex flex-col gap-2">
             <p>
-              {canEnableMaxMode
+              {status.canEnableMaxMode
                 ? t(
                     "You've reached your limit. Enable Max Mode to continue with pay-per-use pricing.",
                   )
-                : isUsageBlocked
+                : status.isUsageBlocked
                   ? t("You've hit the {category} usage limit on your {tier} plan.", {
-                      category: usageCategoryLabel,
-                      tier: usageTierLabel,
+                      category: usage.categoryLabel,
+                      tier: usage.tierLabel,
                     })
-                  : remainingUsage === null || remainingUsage === undefined
+                  : usage.remaining === null || usage.remaining === undefined
                     ? t("Only a few {category} {unit} left on your {tier} plan.", {
-                        category: usageCategoryLabel,
-                        unit: usageUnitLabel,
-                        tier: usageTierLabel,
+                        category: usage.categoryLabel,
+                        unit: usage.unitLabel,
+                        tier: usage.tierLabel,
                       })
                     : t(
                         "Only {count, plural, one {#} other {#}} {category} {unit} left on your {tier} plan.",
                         {
-                          count: remainingUsage,
-                          category: usageCategoryLabel,
-                          unit: usageUnitLabel,
-                          tier: usageTierLabel,
+                          count: usage.remaining,
+                          category: usage.categoryLabel,
+                          unit: usage.unitLabel,
+                          tier: usage.tierLabel,
                         },
                       )}
             </p>
             <div className="flex flex-wrap gap-2">
-              {canEnableMaxMode && (
+              {status.canEnableMaxMode && (
                 <Button
                   size="sm"
                   onClick={() => enableMaxMode.mutate()}
@@ -139,7 +129,7 @@ export function UsageAlerts({
                   {t("Enable Max Mode")}
                 </Button>
               )}
-              {!isAnonymous && !billingDisabled && !canEnableMaxMode && (
+              {!status.isAnonymous && !status.billingDisabled && !status.canEnableMaxMode && (
                 <Button size="sm" asChild>
                   <Link href="/settings/billing">
                     {t("Upgrade plan")}

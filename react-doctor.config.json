@@ -1,0 +1,37 @@
+{
+  "lint": true,
+  "deadCode": true,
+  "ignore": {
+    "rules": [
+      "jsx-a11y/no-static-element-interactions",
+      "knip/duplicates",
+      "knip/exports",
+      "knip/files",
+      "knip/types",
+      "react/no-danger",
+      "react/no-unknown-property",
+      "react-doctor/async-await-in-loop",
+      "react-doctor/design-no-space-on-flex-children",
+      "react-doctor/js-batch-dom-css",
+      "react-doctor/js-hoist-intl",
+      "react-doctor/nextjs-no-client-side-redirect",
+      "react-doctor/nextjs-no-img-element",
+      "react-doctor/no-array-index-as-key",
+      "react-doctor/no-cascading-set-state",
+      "react-doctor/no-derived-state-effect",
+      "react-doctor/no-effect-chain",
+      "react-doctor/no-generic-handler-names",
+      "react-doctor/no-giant-component",
+      "react-doctor/no-prevent-default",
+      "react-doctor/no-prop-callback-in-effect",
+      "react-doctor/no-render-in-render",
+      "react-doctor/prefer-useReducer",
+      "react-doctor/rendering-hydration-mismatch-time",
+      "react-doctor/rendering-svg-precision",
+      "react-doctor/rerender-state-only-in-handlers",
+      "react-doctor/rerender-memo-with-default-value",
+      "react-doctor/use-lazy-motion"
+    ],
+    "files": ["public/**", "tools/**", "src/components/ai-elements/**", "src/components/ui/**"]
+  }
+}

@@ -42,9 +42,9 @@ import { useAvailableModels } from "@/hooks/use-available-models";
 import { useInitialMessage } from "@/hooks/use-initial-message";
 import { useKeyboardShortcuts } from "@/hooks/use-keyboard-shortcuts";
 import { useChatBranches } from "@/hooks/use-chat-branches";
+import { useNewChat } from "@/hooks/use-new-chat";
 import { useUsageStatus } from "@/hooks/use-usage-status";
 import { authClient } from "@/lib/auth-client";
-import { useRouter } from "next/navigation";
 import { isBillingDisabled } from "@/lib/billing-config";
 import {
   defaultModel,
@@ -161,7 +161,6 @@ export function ChatInterface({
   initialProjectName = null,
 }: ChatInterfaceProps) {
   const t = useExtracted();
-  const router = useRouter();
   const session = authClient.useSession();
   const isAnonymous = Boolean(session.data?.user?.isAnonymous);
   const billingDisabled = isBillingDisabled;
@@ -170,7 +169,7 @@ export function ChatInterface({
   const [webSearch, setWebSearch] = useState(false);
   const [videoMode, setVideoMode] = useState(false);
   const [imageMode, setImageMode] = useState(false);
-  const [reasoningEffort, setReasoningEffort] = useState<ReasoningEffort>(
+  const [reasoningEffort, setReasoningEffort] = useState<ReasoningEffort>(() =>
     getPreferredReasoningEffort(defaultModel.efforts),
   );
   const [deepResearch, setDeepResearch] = useState(false);
@@ -360,20 +359,23 @@ export function ChatInterface({
   };
 
   const messageRenderKeys = useMemo(() => getMessageRenderKeys(messages), [messages]);
+  const messageIndexMap = useMemo(() => {
+    const map = new Map<UIMessage, number>();
+    for (let i = 0; i < messages.length; i++) {
+      map.set(messages[i], i);
+    }
+    return map;
+  }, [messages]);
 
-  const createChatMutation = trpc.chat.createChat.useMutation({
-    onSuccess: (chatId) => {
-      if (chatId) router.push(`/chat/${chatId}`);
-    },
-  });
+  const startNewChat = useNewChat();
 
   const handleFocusComposer = useCallback(() => {
     window.dispatchEvent(new CustomEvent("deni:focus-composer"));
   }, []);
 
   const handleNewChat = useCallback(() => {
-    createChatMutation.mutate(undefined);
-  }, [createChatMutation]);
+    startNewChat();
+  }, [startNewChat]);
 
   useKeyboardShortcuts({
     onFocusComposer: handleFocusComposer,
@@ -409,16 +411,18 @@ export function ChatInterface({
             {groupedMessages.map((group, groupIndex) => {
               if (group.type === "single") {
                 const message = group.message;
-                const msgIndex = messages.indexOf(message);
+                const msgIndex = messageIndexMap.get(message) ?? -1;
                 const renderKey = messageRenderKeys[msgIndex] ?? `group-${groupIndex}`;
+                const fileParts = message.parts.filter(isFilePart);
+                const textParts = message.parts.filter(isTextPart);
                 return (
                   <div key={renderKey}>
                     {message.role === "user" && (
                       <Message from="user">
                         <MessageContent>
-                          {message.parts.filter(isFilePart).length > 0 ? (
+                          {fileParts.length > 0 ? (
                             <Attachments variant="list" className="w-full">
-                              {message.parts.filter(isFilePart).map((part, partIndex) => (
+                              {fileParts.map((part, partIndex) => (
                                 <Attachment
                                   data={{ ...part, id: `${message.id}-file-${partIndex}` }}
                                   key={`${message.id}-file-${partIndex}`}
@@ -430,7 +434,7 @@ export function ChatInterface({
                               ))}
                             </Attachments>
                           ) : null}
-                          {message.parts.filter(isTextPart).map((part, partIndex) => (
+                          {textParts.map((part, partIndex) => (
                             <MessageResponse
                               key={`${message.id}-text-${partIndex}`}
                               shikiTheme={["github-light", "github-dark"]}
@@ -444,10 +448,12 @@ export function ChatInterface({
                     {message.role === "assistant" && (
                       <AssistantMessage
                         message={message}
-                        isLastMessage={msgIndex === messages.length - 1}
-                        isStreaming={status === "streaming"}
-                        showActions={showMessageActions}
-                        isSubmitBlocked={isSubmitBlocked}
+                        state={{
+                          isLastMessage: msgIndex === messages.length - 1,
+                          isStreaming: status === "streaming",
+                          showActions: showMessageActions,
+                          isSubmitBlocked,
+                        }}
                         projectId={initialProjectId}
                         requestBody={requestBody}
                         onRegenerate={handleRegenerate}
@@ -461,7 +467,8 @@ export function ChatInterface({
               }
 
               // Branch group: multiple assistant messages with navigation
-              const lastBranchIndex = messages.indexOf(group.messages[group.messages.length - 1]);
+              const lastBranchIndex =
+                messageIndexMap.get(group.messages[group.messages.length - 1]) ?? -1;
               return (
                 <MessageBranch
                   key={`branch-${group.groupId}`}
@@ -477,13 +484,14 @@ export function ChatInterface({
                       <AssistantMessage
                         key={message.id}
                         message={message}
-                        isLastMessage={
-                          branchIdx === group.messages.length - 1 &&
-                          lastBranchIndex === messages.length - 1
-                        }
-                        isStreaming={status === "streaming"}
-                        showActions={showMessageActions}
-                        isSubmitBlocked={isSubmitBlocked}
+                        state={{
+                          isLastMessage:
+                            branchIdx === group.messages.length - 1 &&
+                            lastBranchIndex === messages.length - 1,
+                          isStreaming: status === "streaming",
+                          showActions: showMessageActions,
+                          isSubmitBlocked,
+                        }}
                         projectId={initialProjectId}
                         requestBody={requestBody}
                         onRegenerate={handleRegenerate}
@@ -547,17 +555,21 @@ export function ChatInterface({
         </Conversation>
 
         <UsageAlerts
-          isAnonymous={isAnonymous}
-          isByokActive={isByokActive}
-          isByokMissingConfig={isByokMissingConfig}
-          isUsageLow={isUsageLow}
-          isUsageBlocked={isUsageBlocked}
-          canEnableMaxMode={canEnableMaxMode}
-          remainingUsage={remainingUsage}
-          usageUnitLabel={usageUnitLabel}
-          usageCategoryLabel={usageCategoryLabel}
-          usageTierLabel={usageTierLabel}
-          billingDisabled={billingDisabled}
+          status={{
+            isAnonymous,
+            isByokActive,
+            isByokMissingConfig,
+            isUsageLow,
+            isUsageBlocked,
+            canEnableMaxMode,
+            billingDisabled,
+          }}
+          usage={{
+            remaining: remainingUsage,
+            unitLabel: usageUnitLabel,
+            categoryLabel: usageCategoryLabel,
+            tierLabel: usageTierLabel,
+          }}
           enableMaxMode={enableMaxMode}
           onRefreshUsage={() => usageQuery.refetch()}
         />
@@ -586,7 +598,7 @@ export function ChatInterface({
         />
         <AdSenseSlot
           slot={env.NEXT_PUBLIC_ADSENSE_CHAT_SLOT_ID ?? ""}
-          className="mx-auto mt-3 w-full max-w-xl border-border/40 bg-background/40 px-2 py-2 shadow-none"
+          className="mx-auto mt-3 w-full max-w-xl border-border/40 bg-background/40 p-2 shadow-none"
         />
       </div>
     </ArtifactPreviewProvider>

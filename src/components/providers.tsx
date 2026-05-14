@@ -20,7 +20,7 @@ const trpcClient = makeTRPCClient();
 
 export function AppProviders({ children }: { children: ReactNode }) {
   const t = useExtracted();
-  const router = useRouter();
+  const { push, refresh, replace } = useRouter();
   const [queryClient] = useState(
     () =>
       new QueryClient({
@@ -57,11 +57,11 @@ export function AppProviders({ children }: { children: ReactNode }) {
                       });
                     },
                   }}
-                  navigate={router.push}
-                  replace={router.replace}
+                  navigate={push}
+                  replace={replace}
                   onSessionChange={() => {
                     // Clear router cache (protected routes)
-                    router.refresh();
+                    refresh();
                   }}
                   social={{ providers: ["google", "github"] }}
                   twoFactor={["totp"]}

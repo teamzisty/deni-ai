@@ -1,14 +1,15 @@
 "use client";
 
 import { useSearchParams } from "next/navigation";
+import { Suspense } from "react";
 import { StripeCheckoutPage } from "@/components/billing/stripe-checkout-page";
 import type { TeamPlanId } from "@/lib/billing";
 
-export default function TeamCheckoutSettingsPage() {
-  const searchParams = useSearchParams();
-  const organizationId = searchParams.get("organizationId");
-  const planId = searchParams.get("planId") as TeamPlanId | null;
-  const sessionId = searchParams.get("session_id");
+function TeamCheckoutSettingsContent() {
+  const { get } = useSearchParams();
+  const organizationId = get("organizationId");
+  const planId = get("planId") as TeamPlanId | null;
+  const sessionId = get("session_id");
 
   return (
     <StripeCheckoutPage
@@ -17,5 +18,13 @@ export default function TeamCheckoutSettingsPage() {
       planId={planId}
       sessionId={sessionId}
     />
+  );
+}
+
+export default function TeamCheckoutSettingsPage() {
+  return (
+    <Suspense fallback={null}>
+      <TeamCheckoutSettingsContent />
+    </Suspense>
   );
 }

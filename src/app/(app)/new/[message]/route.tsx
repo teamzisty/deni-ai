@@ -13,15 +13,11 @@ export async function GET(request: Request, { params }: { params: Promise<{ mess
     const chatId = await chatPromise;
     const baseUrl = new URL(request.url);
 
-    // Build redirect URL preserving query parameters from the original request
-    const redirectParams = new URLSearchParams();
-    redirectParams.set("message", resolvedParams.message);
-
-    // Forward webSearch parameter if present
     const webSearch = baseUrl.searchParams.get("webSearch");
-    if (webSearch === "true") {
-      redirectParams.set("webSearch", "true");
-    }
+    const redirectParams = new URLSearchParams([
+      ["message", resolvedParams.message],
+      ...(webSearch === "true" ? [["webSearch", "true"]] : []),
+    ]);
 
     const redirectUrl = new URL(`/chat/${chatId}?${redirectParams.toString()}`, baseUrl.origin);
     return NextResponse.redirect(redirectUrl);

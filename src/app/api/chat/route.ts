@@ -431,34 +431,25 @@ export async function POST(req: Request) {
     throw new Error(formatChatStreamError(error, baseModel));
   }
 
+  // Throttle JSONB writes during streaming. Each write serializes the full
+  // messages array, so high-frequency persistence is expensive on long chats.
+  // We persist at most every PERSIST_INTERVAL_MS, and a trailing-edge timer
+  // ensures the most recent chunk eventually lands even if nothing new arrives.
+  const PERSIST_INTERVAL_MS = 1500;
   let lastPersistedSignature = "";
   let latestPersistedMessage: UIMessage = pendingAssistantMessage;
   let partialPersistPromise: Promise<void> = Promise.resolve();
   let lastPersistAt = 0;
+  let trailingPersistTimer: ReturnType<typeof setTimeout> | undefined;
+  let pendingDirty = false;
 
-  const queuePartialPersist = (message: UIMessage, force: boolean = false) => {
-    const pendingMessage = setPendingState(message, true);
-    if (pendingMessage.parts.length > 0) {
-      hasAssistantOutput = true;
+  const runPersist = () => {
+    pendingDirty = false;
+    lastPersistAt = Date.now();
+    if (trailingPersistTimer) {
+      clearTimeout(trailingPersistTimer);
+      trailingPersistTimer = undefined;
     }
-    const signature = JSON.stringify(pendingMessage.parts);
-    const now = Date.now();
-
-    if (!force) {
-      if (signature === lastPersistedSignature) {
-        return;
-      }
-
-      if (now - lastPersistAt < 750) {
-        latestPersistedMessage = pendingMessage;
-        return;
-      }
-    }
-
-    latestPersistedMessage = pendingMessage;
-    lastPersistedSignature = signature;
-    lastPersistAt = now;
-
     partialPersistPromise = partialPersistPromise
       .catch(() => undefined)
       .then(async () => {
@@ -473,6 +464,35 @@ export async function POST(req: Request) {
           console.error("Failed to persist partial chat response", error);
         }
       });
+  };
+
+  const queuePartialPersist = (message: UIMessage, force: boolean = false) => {
+    const pendingMessage = setPendingState(message, true);
+    if (pendingMessage.parts.length > 0) {
+      hasAssistantOutput = true;
+    }
+    const signature = JSON.stringify(pendingMessage.parts);
+
+    if (!force && signature === lastPersistedSignature) {
+      return;
+    }
+
+    latestPersistedMessage = pendingMessage;
+    lastPersistedSignature = signature;
+    pendingDirty = true;
+
+    const elapsed = Date.now() - lastPersistAt;
+    if (force || elapsed >= PERSIST_INTERVAL_MS) {
+      runPersist();
+      return;
+    }
+
+    if (!trailingPersistTimer) {
+      trailingPersistTimer = setTimeout(() => {
+        trailingPersistTimer = undefined;
+        if (pendingDirty) runPersist();
+      }, PERSIST_INTERVAL_MS - elapsed);
+    }
   };
 
   const stream = createUIMessageStream<UIMessage>({
@@ -503,6 +523,10 @@ export async function POST(req: Request) {
           queuePartialPersist(message);
         }
 
+        if (trailingPersistTimer) {
+          clearTimeout(trailingPersistTimer);
+          trailingPersistTimer = undefined;
+        }
         queuePartialPersist(latestPersistedMessage, true);
 
         await partialPersistPromise;

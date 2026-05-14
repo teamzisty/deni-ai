@@ -15,7 +15,7 @@ export function PlanHighlights({ items, className }: PlanHighlightsProps) {
     <ul className={cn("space-y-2.5", className)}>
       {items.map((item) => (
         <li key={item} className="flex items-start gap-2.5 text-sm">
-          <Check className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
+          <Check className="mt-0.5 size-4 shrink-0 text-muted-foreground" />
           <span className="text-muted-foreground">{item}</span>
         </li>
       ))}

@@ -59,7 +59,7 @@ export function TwoFactorBanner() {
       <Separator orientation="vertical" className="h-4" />
       <div className="flex flex-1 items-center justify-between gap-2 min-w-0">
         <div className="flex items-center gap-2 min-w-0">
-          <ShieldCheck className="w-3.5 h-3.5 shrink-0 text-muted-foreground" />
+          <ShieldCheck className="size-3.5 shrink-0 text-muted-foreground" />
           <span className="truncate text-muted-foreground">
             {t("2FA - Enhance your security with two-factor authentication")}
           </span>
@@ -68,17 +68,17 @@ export function TwoFactorBanner() {
             className="shrink-0 inline-flex items-center gap-1 font-medium text-foreground hover:underline"
           >
             {t("Setup")}
-            <ArrowRight className="w-3 h-3" />
+            <ArrowRight className="size-3" />
           </Link>
         </div>
         <Button
           variant="ghost"
           size="icon"
-          className="shrink-0 h-5 w-5"
+          className="shrink-0 size-5"
           onClick={dismiss}
           aria-label={t("Dismiss")}
         >
-          <X className="w-3 h-3" />
+          <X className="size-3" />
         </Button>
       </div>
     </header>

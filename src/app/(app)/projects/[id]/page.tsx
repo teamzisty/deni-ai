@@ -7,8 +7,8 @@ import { and, eq } from "drizzle-orm";
 import { ProjectPage } from "@/components/projects/project-page";
 
 export default async function ProjectDetailPage({ params }: { params: Promise<{ id: string }> }) {
-  const { id } = await params;
-  const session = await auth.api.getSession({ headers: await headers() });
+  const [{ id }, headersList] = await Promise.all([params, headers()]);
+  const session = await auth.api.getSession({ headers: headersList });
   if (!session?.user) {
     notFound();
   }

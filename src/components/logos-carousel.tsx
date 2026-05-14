@@ -13,6 +13,30 @@ export interface LogosCarouselProps {
   initialDelay?: number;
 }
 
+type CarouselState = {
+  index: number;
+  animate: boolean;
+  nextIndex: number;
+};
+
+type CarouselAction =
+  | { type: "reset" }
+  | { type: "start"; groupsLength: number }
+  | { type: "advance"; groupsLength: number };
+
+function carouselReducer(state: CarouselState, action: CarouselAction): CarouselState {
+  switch (action.type) {
+    case "reset":
+      return { index: 0, animate: false, nextIndex: 0 };
+    case "start":
+      return { ...state, animate: true, nextIndex: (state.index + 1) % action.groupsLength };
+    case "advance": {
+      const index = (state.index + 1) % action.groupsLength;
+      return { ...state, index, nextIndex: (index + 1) % action.groupsLength };
+    }
+  }
+}
+
 export function LogosCarousel({
   children,
   stagger = 0.14,
@@ -22,9 +46,11 @@ export function LogosCarousel({
   interval = 2500,
   initialDelay = 500,
 }: LogosCarouselProps) {
-  const [index, setIndex] = React.useState(0);
-  const [animate, setAnimate] = React.useState(false);
-  const [nextIndex, setNextIndex] = React.useState(1);
+  const [{ index, animate, nextIndex }, dispatch] = React.useReducer(carouselReducer, {
+    index: 0,
+    animate: false,
+    nextIndex: 1,
+  });
 
   const childrenArray = React.Children.toArray(children);
   const normalizedCount =
@@ -40,14 +66,12 @@ export function LogosCarousel({
 
   React.useEffect(() => {
     if (groupsLength < 2) {
-      setAnimate(false);
-      setIndex(0);
-      setNextIndex(0);
+      dispatch({ type: "reset" });
       return;
     }
 
     const id = setTimeout(() => {
-      setAnimate(true);
+      dispatch({ type: "start", groupsLength });
     }, initialDelay);
 
     return () => {
@@ -60,15 +84,9 @@ export function LogosCarousel({
       return;
     }
 
-    function loop() {
-      setIndex((prevIndex) => {
-        const newIndex = (prevIndex + 1) % groupsLength;
-        setNextIndex((newIndex + 1) % groupsLength);
-        return newIndex;
-      });
-    }
-
-    const intervalId = setInterval(loop, interval);
+    const intervalId = setInterval(() => {
+      dispatch({ type: "advance", groupsLength });
+    }, interval);
 
     return () => {
       clearInterval(intervalId);

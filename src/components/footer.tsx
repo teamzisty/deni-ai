@@ -14,7 +14,7 @@ const Footer = () => {
         <div className="flex flex-col gap-8 md:flex-row md:items-center md:justify-between">
           {/* Brand */}
           <div className="flex items-center gap-3">
-            <DeniAIIcon className="w-8 h-8 text-primary" />
+            <DeniAIIcon className="size-8 text-primary" />
             <div>
               <span className="font-semibold tracking-tight">Deni AI</span>
               <p className="text-xs text-muted-foreground mt-0.5">{t("AI for Everyone")}</p>

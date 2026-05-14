@@ -718,13 +718,13 @@ export function ChatComposer({
                 </Button>
               </PopoverTrigger>
               <PopoverContent
-                className="w-125 p-0 shadow-lg"
+                className="w-[calc(100vw-1rem)] max-w-125 max-h-[min(31rem,var(--radix-popover-content-available-height))] overflow-hidden p-0 shadow-lg sm:w-125"
                 side="top"
                 align="start"
                 sideOffset={8}
               >
-                <div className="flex flex-col rounded-[inherit]">
-                  <div className="border-b">
+                <div className="flex max-h-[inherit] min-h-0 flex-col rounded-[inherit]">
+                  <div className="shrink-0 border-b">
                     <div className="relative">
                       <SearchIcon
                         className="pointer-events-none absolute left-2.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground"
@@ -739,9 +739,9 @@ export function ChatComposer({
                       />
                     </div>
                   </div>
-                  <div className="flex h-95 overflow-hidden">
+                  <div className="flex h-[min(23.75rem,calc(var(--radix-popover-content-available-height)-2.75rem))] min-h-0 overflow-hidden">
                     {/* Left panel: Provider list */}
-                    <div className="w-40 shrink-0 border-r flex flex-col gap-0.5 p-1.5 overflow-y-auto bg-muted/30">
+                    <div className="w-32 shrink-0 border-r flex flex-col gap-0.5 overflow-y-auto overscroll-contain bg-muted/30 p-1.5 [-webkit-overflow-scrolling:touch] sm:w-40">
                       {availableProviders.map((provider) => {
                         const count = filteredProviderGroups[provider]?.length ?? 0;
                         const isActive = selectedProvider === provider;
@@ -778,7 +778,7 @@ export function ChatComposer({
                     </div>
 
                     {/* Right panel: Model list */}
-                    <div className="flex-1 overflow-y-auto p-1.5 flex flex-col gap-0.5">
+                    <div className="flex min-w-0 flex-1 flex-col gap-0.5 overflow-y-auto overscroll-contain p-1.5 [-webkit-overflow-scrolling:touch]">
                       {currentProviderModels.length === 0 ? (
                         <p className="text-sm text-muted-foreground text-center py-8">
                           {t("No models available")}

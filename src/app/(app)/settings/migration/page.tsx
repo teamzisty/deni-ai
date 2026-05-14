@@ -73,7 +73,7 @@ export default function MigrationPage() {
       <Card>
         <CardHeader>
           <div className="flex items-center gap-2">
-            <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-foreground text-background text-xs font-medium">
+            <span className="inline-flex items-center justify-center size-5 rounded-full bg-foreground text-background text-xs font-medium">
               1
             </span>
             <CardTitle className="text-sm font-medium">
@@ -98,11 +98,11 @@ export default function MigrationPage() {
             <div className="flex items-center gap-3">
               <div
                 className={cn(
-                  "flex h-8 w-8 shrink-0 items-center justify-center rounded-full border p-1.5",
+                  "flex size-8 shrink-0 items-center justify-center rounded-full border p-1.5",
                   "border-rose-200 bg-rose-100/80 text-rose-700 dark:border-rose-800 dark:bg-rose-900/60 dark:text-rose-300",
                 )}
               >
-                <AlertCircle className="h-4 w-4" />
+                <AlertCircle className="size-4" />
               </div>
               <div className="min-w-0">
                 <p className="text-[13px] font-medium tracking-tight">
@@ -115,7 +115,7 @@ export default function MigrationPage() {
           </div>
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
             <Button variant="secondary" className="gap-2" disabled>
-              <ArrowRight className="w-4 h-4" />
+              <ArrowRight className="size-4" />
               {t("Go to migrator tool")}
             </Button>
           </div>
@@ -126,7 +126,7 @@ export default function MigrationPage() {
       <Card>
         <CardHeader>
           <div className="flex items-center gap-2">
-            <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-foreground text-background text-xs font-medium">
+            <span className="inline-flex items-center justify-center size-5 rounded-full bg-foreground text-background text-xs font-medium">
               2
             </span>
             <CardTitle className="text-sm font-medium">{t("Import into this site")}</CardTitle>
@@ -138,7 +138,7 @@ export default function MigrationPage() {
         <CardContent className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="message-file" className="flex items-center gap-2 text-sm">
-              <FileJson className="w-4 h-4 text-muted-foreground" />
+              <FileJson className="size-4 text-muted-foreground" />
               {t("message.json")}
             </Label>
             <Input
@@ -153,7 +153,7 @@ export default function MigrationPage() {
             />
             {file && (
               <p className="text-xs text-muted-foreground flex items-center gap-2">
-                <Check className="w-3 h-3 text-green-600" />
+                <Check className="size-3 text-green-600" />
                 {t("Selected: {filename}", { filename: file.name })}
               </p>
             )}
@@ -165,9 +165,9 @@ export default function MigrationPage() {
             className="gap-2"
           >
             {importMutation.isPending ? (
-              <Spinner className="w-4 h-4" />
+              <Spinner className="size-4" />
             ) : (
-              <Upload className="w-4 h-4" />
+              <Upload className="size-4" />
             )}
             {t("Import messages")}
           </Button>
@@ -182,9 +182,9 @@ export default function MigrationPage() {
             >
               <div className="flex items-center gap-2 font-medium">
                 {result.success ? (
-                  <Check className="w-4 h-4 text-green-600" />
+                  <Check className="size-4 text-green-600" />
                 ) : (
-                  <AlertTriangle className="w-4 h-4 text-destructive" />
+                  <AlertTriangle className="size-4 text-destructive" />
                 )}
                 {t("Import summary")}
               </div>
@@ -197,7 +197,7 @@ export default function MigrationPage() {
               {result.warnings?.length ? (
                 <details className="mt-3 text-xs text-muted-foreground">
                   <summary className="cursor-pointer font-medium hover:text-foreground">
-                    <AlertTriangle className="w-3 h-3 inline mr-1" />
+                    <AlertTriangle className="size-3 inline mr-1" />
                     {t("{count, plural, one {# warning} other {# warnings}}", {
                       count: result.warnings.length,
                     })}

@@ -7,7 +7,7 @@
 .deep-dark-high-contrast,
 .dark > .deep-dark-high-contrast {
   --app-font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
-  --app-font-serif: var(--font-instrument-serif), serif;
+  --app-font-serif: ui-serif, Georgia, serif;
   --app-font-mono: var(--font-jetbrains-mono), ui-monospace, monospace;
 }
 

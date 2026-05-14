@@ -3,7 +3,7 @@
 import type ts from "typescript";
 import * as React from "react";
 import { AlertCircleIcon } from "lucide-react";
-import { startTransition, useEffect, useRef, useState } from "react";
+import { startTransition, useEffect, useReducer, useRef } from "react";
 import { useTranslations } from "next-intl";
 import { Spinner } from "@/components/ui/spinner";
 import { sha256Hex } from "@/lib/hash";
@@ -31,6 +31,11 @@ type PreviewState =
   | { status: "ready"; resetKey: string; srcDoc: string }
   | { status: "error"; error: Error };
 
+type PreviewAction =
+  | { type: "loading" }
+  | { type: "ready"; resetKey: string; srcDoc: string }
+  | { type: "error"; error: Error };
+
 type PreviewTranslator = (key: string, values?: Record<string, string>) => string;
 
 const stripCodeFence = (code: string) =>
@@ -39,10 +44,24 @@ const stripCodeFence = (code: string) =>
     .replace(/\n```\s*$/, "")
     .trim();
 
+function previewReducer(_state: PreviewState, action: PreviewAction): PreviewState {
+  switch (action.type) {
+    case "loading":
+      return { status: "loading" };
+    case "ready":
+      return { status: "ready", resetKey: action.resetKey, srcDoc: action.srcDoc };
+    case "error":
+      return { status: "error", error: action.error };
+  }
+}
+
 const findUnsupportedImports = (source: string) =>
-  Array.from(source.matchAll(/^\s*import[\s\S]*?from\s*["']([^"']+)["'];?\s*$/gm))
-    .map((match) => match[1])
-    .filter((specifier) => !REACT_IMPORT_SPECIFIERS.has(specifier));
+  Array.from(source.matchAll(/^\s*import[\s\S]*?from\s*["']([^"']+)["'];?\s*$/gm)).flatMap(
+    (match) => {
+      const specifier = match[1];
+      return REACT_IMPORT_SPECIFIERS.has(specifier) ? [] : [specifier];
+    },
+  );
 
 const createUnsupportedImportsMessage = (t: PreviewTranslator, specifiers: string[]) =>
   t("unsupportedImports", {
@@ -81,8 +100,10 @@ const resolvePreviewSource = (rawCode: string, t: PreviewTranslator) => {
 
 const formatDiagnostics = (typescript: typeof ts, diagnostics: readonly ts.Diagnostic[]) =>
   diagnostics
-    .map((diagnostic) => typescript.flattenDiagnosticMessageText(diagnostic.messageText, "\n"))
-    .filter(Boolean)
+    .flatMap((diagnostic) => {
+      const message = typescript.flattenDiagnosticMessageText(diagnostic.messageText, "\n");
+      return message ? [message] : [];
+    })
     .join("\n");
 
 const createPreviewDocument = ({
@@ -341,7 +362,7 @@ export function ArtifactLivePreview({ code }: { code: string }) {
   const previewT = useTranslations("artifactPreview");
   const iframeRef = useRef<HTMLIFrameElement | null>(null);
   const activePreviewIdRef = useRef<string | null>(null);
-  const [state, setState] = useState<PreviewState>({ status: "idle" });
+  const [state, dispatchPreview] = useReducer(previewReducer, { status: "idle" });
 
   useEffect(() => {
     const handleMessage = (event: MessageEvent) => {
@@ -363,7 +384,7 @@ export function ArtifactLivePreview({ code }: { code: string }) {
       }
 
       startTransition(() => {
-        setState({ status: "error", error: new Error(data.message) });
+        dispatchPreview({ type: "error", error: new Error(data.message) });
       });
     };
 
@@ -377,7 +398,7 @@ export function ArtifactLivePreview({ code }: { code: string }) {
     let cancelled = false;
     activePreviewIdRef.current = null;
 
-    setState({ status: "loading" });
+    dispatchPreview({ type: "loading" });
 
     void evaluatePreview(code, previewT)
       .then(({ resetKey, srcDoc }) => {
@@ -387,7 +408,7 @@ export function ArtifactLivePreview({ code }: { code: string }) {
 
         activePreviewIdRef.current = resetKey;
         startTransition(() => {
-          setState({ status: "ready", resetKey, srcDoc });
+          dispatchPreview({ type: "ready", resetKey, srcDoc });
         });
       })
       .catch((error: unknown) => {
@@ -396,8 +417,8 @@ export function ArtifactLivePreview({ code }: { code: string }) {
         }
 
         startTransition(() => {
-          setState({
-            status: "error",
+          dispatchPreview({
+            type: "error",
             error: error instanceof Error ? error : new Error(previewT("failedTitle")),
           });
         });
