@@ -1,4 +1,6 @@
 {
+  "rfioQa": "Sign in required",
+  "1rJ5l4": "Guest accounts cannot authorize the Flixa extension. Please sign in with a permanent account to continue.",
   "zAe+nv": "Invalid Request",
   "4fxotg": "No authorization code was provided. Please try again from the Flixa extension.",
   "3MnksO": "Device Authorized",
@@ -53,6 +55,8 @@
   "jDvHYJ": "Your API Keys",
   "Y2RzpI": "Keys you've created for external integrations.",
   "VzzYJk": "Create",
+  "T4m9p8": "Sign in to create API keys.",
+  "648Hmr": "Guest accounts cannot create API keys or use the Flixa extension.",
   "kCrHat": "No API keys yet.",
   "uwFJeq": "Create a key to connect the Flixa extension.",
   "wPtCEB": "API Key Created",
