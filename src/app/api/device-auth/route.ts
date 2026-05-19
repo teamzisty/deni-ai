@@ -125,6 +125,16 @@ async function handleApprove(body: unknown) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
+  if (session?.user?.isAnonymous) {
+    return NextResponse.json(
+      {
+        error: "Guest accounts cannot authorize the Flixa extension. Please sign in with an account.",
+        reason: "anonymous_forbidden",
+      },
+      { status: 403 },
+    );
+  }
+
   const [row] = await db
     .select()
     .from(deviceAuthCode)

@@ -47,6 +47,7 @@ export async function POST(req: Request) {
   }
 
   const userId = session.session.userId;
+  const isAnonymous = Boolean(session.user?.isAnonymous);
 
   const rateCheck = await checkRateLimit({
     key: `veo:${userId}`,
@@ -81,7 +82,7 @@ export async function POST(req: Request) {
   }
 
   try {
-    await consumeUsage({ userId, category: "premium" });
+    await consumeUsage({ userId, category: "premium", isAnonymous });
   } catch (error) {
     if (error instanceof UsageLimitError) {
       return NextResponse.json({ error: error.message, reason: "usage_limit" }, { status: 402 });

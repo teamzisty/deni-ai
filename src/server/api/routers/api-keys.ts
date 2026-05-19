@@ -26,6 +26,12 @@ export const apiKeysRouter = router({
   create: protectedProcedure
     .input(z.object({ name: z.string().min(1).max(100) }))
     .mutation(async ({ ctx, input }) => {
+      if (ctx.session?.user?.isAnonymous) {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: "Guest accounts cannot create API keys. Please sign in with an account.",
+        });
+      }
       const raw = generateApiKey();
       const keyHash = await hashApiKey(raw);
       const keyPrefix = getKeyPrefix(raw);

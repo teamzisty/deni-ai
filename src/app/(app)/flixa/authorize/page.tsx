@@ -7,6 +7,7 @@ import { Suspense, useCallback, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { authClient } from "@/lib/auth-client";
 
 type Status = "idle" | "selectingKey" | "success" | "error";
 
@@ -28,6 +29,8 @@ function FlixaAuthorizeContent() {
   const t = useExtracted();
   const searchParams = useSearchParams();
   const code = searchParams.get("code");
+  const { data: session } = authClient.useSession();
+  const isAnonymous = Boolean(session?.user?.isAnonymous);
   const [status, setStatus] = useState<Status>("idle");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
@@ -85,6 +88,26 @@ function FlixaAuthorizeContent() {
     },
     [code],
   );
+
+  if (isAnonymous) {
+    return (
+      <div className="flex flex-1 items-center justify-center">
+        <Card className="w-full max-w-md">
+          <CardHeader className="text-center">
+            <div className="mx-auto mb-2 flex size-12 items-center justify-center rounded-full bg-destructive/10">
+              <XCircle className="size-6 text-destructive" />
+            </div>
+            <CardTitle>{t("Sign in required")}</CardTitle>
+            <CardDescription>
+              {t(
+                "Guest accounts cannot authorize the Flixa extension. Please sign in with a permanent account to continue.",
+              )}
+            </CardDescription>
+          </CardHeader>
+        </Card>
+      </div>
+    );
+  }
 
   if (!code) {
     return (

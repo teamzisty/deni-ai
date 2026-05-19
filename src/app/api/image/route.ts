@@ -30,6 +30,7 @@ export async function POST(req: Request) {
   }
 
   const userId = session.session.userId;
+  const isAnonymous = Boolean(session.user?.isAnonymous);
 
   const rateCheck = await checkRateLimit({
     key: `image:${userId}`,
@@ -67,7 +68,7 @@ export async function POST(req: Request) {
   };
 
   try {
-    await consumeUsage({ userId, category: usageCategory, amount: requestedCount });
+    await consumeUsage({ userId, category: usageCategory, amount: requestedCount, isAnonymous });
   } catch (error) {
     if (error instanceof UsageLimitError) {
       return NextResponse.json({ error: error.message, reason: "usage_limit" }, { status: 402 });

@@ -28,11 +28,14 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Spinner } from "@/components/ui/spinner";
+import { authClient } from "@/lib/auth-client";
 import { trpc } from "@/lib/trpc/react";
 
 export default function ApiKeysSettingsPage() {
   const t = useExtracted();
   const utils = trpc.useUtils();
+  const { data: session } = authClient.useSession();
+  const isAnonymous = Boolean(session?.user?.isAnonymous);
 
   const keysQuery = trpc.apiKeys.list.useQuery();
   const createMutation = trpc.apiKeys.create.useMutation({
@@ -96,14 +99,24 @@ export default function ApiKeysSettingsPage() {
           <Button
             size="sm"
             onClick={() => setCreateOpen(true)}
-            disabled={(keysQuery.data?.length ?? 0) >= 5}
+            disabled={isAnonymous || (keysQuery.data?.length ?? 0) >= 5}
           >
             <Plus className="size-4" />
             {t("Create")}
           </Button>
         </CardHeader>
         <CardContent>
-          {keysQuery.isLoading ? (
+          {isAnonymous ? (
+            <div className="text-center py-12 text-muted-foreground">
+              <div className="inline-flex items-center justify-center size-10 rounded-lg bg-secondary mb-3">
+                <Key className="size-5 text-muted-foreground" />
+              </div>
+              <p className="font-medium text-sm">{t("Sign in to create API keys.")}</p>
+              <p className="text-xs mt-1">
+                {t("Guest accounts cannot create API keys or use the Flixa extension.")}
+              </p>
+            </div>
+          ) : keysQuery.isLoading ? (
             <div className="flex justify-center py-12">
               <Spinner className="size-6" />
             </div>
