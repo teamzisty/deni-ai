@@ -128,7 +128,8 @@ async function handleApprove(body: unknown) {
   if (session?.user?.isAnonymous) {
     return NextResponse.json(
       {
-        error: "Guest accounts cannot authorize the Flixa extension. Please sign in with an account.",
+        error:
+          "Guest accounts cannot authorize the Flixa extension. Please sign in with an account.",
         reason: "anonymous_forbidden",
       },
       { status: 403 },
