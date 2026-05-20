@@ -28,7 +28,11 @@ import {
   startChatGeneration,
 } from "@/lib/chat-generation";
 import { createChatTools } from "@/lib/chat-tools";
-import { getModelContextWindow, getModelDefinition } from "@/lib/constants";
+import {
+  getModelContextWindow,
+  getModelDefinition,
+  getModelTokenMultiplier,
+} from "@/lib/constants";
 import { buildMemoryPrompt, getUserMemoryState, maybeAutoSaveMemories } from "@/lib/memory";
 import { buildProjectPrompt } from "@/lib/project-context";
 import { consumeUsage, refundUsage, UsageLimitError } from "@/lib/usage";
@@ -185,6 +189,7 @@ export async function POST(req: Request) {
 
   const { model, providerOptions, usageCategory, usageUnit, useByok, usesOpenRouter } =
     modelContext;
+  const tokenMultiplier = getModelTokenMultiplier(baseModel);
 
   const webSearchEnabled = webSearch || forceWebSearch || deepResearch;
   const tools = createChatTools({
@@ -396,10 +401,12 @@ export async function POST(req: Request) {
 
   try {
     if (!useByok && usageUnit === "tokens") {
-      consumedUsageAmount = estimateTokenReservation({
-        modelMessages,
-        systemPrompt,
-      });
+      consumedUsageAmount = Math.ceil(
+        estimateTokenReservation({
+          modelMessages,
+          systemPrompt,
+        }) * tokenMultiplier,
+      );
       await consumeUsage({
         userId,
         category: usageCategory,
@@ -422,10 +429,11 @@ export async function POST(req: Request) {
           ? { type: "tool", toolName: "image" }
           : undefined,
       onFinish: ({ totalUsage }) => {
-        finalUsageAmount = Math.max(
+        const rawTotal = Math.max(
           totalUsage.totalTokens ?? (totalUsage.inputTokens ?? 0) + (totalUsage.outputTokens ?? 0),
           0,
         );
+        finalUsageAmount = Math.ceil(rawTotal * tokenMultiplier);
       },
       providerOptions,
       system: requestSystem,

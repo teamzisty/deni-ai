@@ -1,6 +1,10 @@
 "use client";
 
-import { SiAnthropic, SiGooglegemini, SiX } from "@icons-pack/react-simple-icons";
+import {
+  SiAnthropic,
+  SiGooglegemini,
+  SiX,
+} from "@icons-pack/react-simple-icons";
 import type { ChatStatus } from "ai";
 import type { LucideIcon } from "lucide-react";
 import {
@@ -11,6 +15,7 @@ import {
   BrainIcon,
   ChevronDownIcon,
   Code,
+  Coins,
   Film,
   Mic,
   Gem,
@@ -41,14 +46,28 @@ import {
   type ModelDefinition,
   type ReasoningEffort,
 } from "@/lib/constants";
-import { translateModelDescription, useModelDescriptionCopy } from "@/lib/model-description-copy";
+import {
+  translateModelDescription,
+  useModelDescriptionCopy,
+} from "@/lib/model-description-copy";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { DropdownMenuCheckboxItem, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
+import {
+  DropdownMenuCheckboxItem,
+  DropdownMenuSeparator,
+} from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
 
 export type { ComposerMessage };
 
@@ -109,7 +128,10 @@ function ToolChip({ icon: Icon, label, onRemove }: ToolChipProps) {
   );
 }
 
-function getModelDescription(value: string, labels: ModelDescriptionLabels): string {
+function getModelDescription(
+  value: string,
+  labels: ModelDescriptionLabels,
+): string {
   switch (value) {
     case "grok-4-0709":
     case "grok-4.20-reasoning-beta":
@@ -152,14 +174,22 @@ function ModelIcon({
   model: { author: ModelOption["author"]; premium?: boolean };
   className?: string;
 }) {
-  if (model.premium) return <Gem className={cn("size-3.5", className)} aria-hidden="true" />;
+  if (model.premium)
+    return <Gem className={cn("size-3.5", className)} aria-hidden="true" />;
   switch (model.author) {
     case "openai":
       return <Openai aria-hidden="true" />;
     case "anthropic":
-      return <SiAnthropic className={cn("size-3.5", className)} aria-hidden="true" />;
+      return (
+        <SiAnthropic className={cn("size-3.5", className)} aria-hidden="true" />
+      );
     case "google":
-      return <SiGooglegemini className={cn("size-3.5", className)} aria-hidden="true" />;
+      return (
+        <SiGooglegemini
+          className={cn("size-3.5", className)}
+          aria-hidden="true"
+        />
+      );
     case "xai":
       return <SiX className={cn("size-3.5", className)} aria-hidden="true" />;
     case "openai_compatible":
@@ -236,7 +266,9 @@ function ModelPickerItem({
       onClick={onSelect}
       className={cn(
         "w-full flex flex-col gap-1 rounded-md p-2 text-left transition-colors outline-none focus-visible:ring-2 focus-visible:ring-ring",
-        isSelected ? "bg-accent/70 text-accent-foreground" : "text-foreground hover:bg-accent/40",
+        isSelected
+          ? "bg-accent/70 text-accent-foreground"
+          : "text-foreground hover:bg-accent/40",
       )}
     >
       <span className="flex items-center gap-1.5 font-medium text-sm leading-none flex-wrap">
@@ -252,6 +284,20 @@ function ModelPickerItem({
             {t("BYOK")}
           </Badge>
         )}
+        {"tokenMultiplier" in model &&
+          typeof model.tokenMultiplier === "number" &&
+          model.tokenMultiplier > 1 && (
+            <Badge
+              variant="secondary"
+              className="bg-amber-500/15 text-amber-700 dark:text-amber-400 text-[10px] leading-none py-0.5 h-auto"
+              title={t("Each token counts {multiplier}× toward your usage", {
+                multiplier: String(model.tokenMultiplier),
+              })}
+            >
+              <Coins className="size-3" aria-hidden="true" />
+              {model.tokenMultiplier}x
+            </Badge>
+          )}
         {highlightFeatures.map((feature) => (
           <Badge
             variant="secondary"
@@ -268,7 +314,9 @@ function ModelPickerItem({
       </span>
 
       {description && (
-        <span className="text-xs text-muted-foreground leading-snug pl-5">{description}</span>
+        <span className="text-xs text-muted-foreground leading-snug pl-5">
+          {description}
+        </span>
       )}
 
       {regularFeatures.length > 0 && (
@@ -282,13 +330,27 @@ function ModelPickerItem({
               {(() => {
                 switch (feature) {
                   case "smart":
-                    return <Sparkle className="size-3 mr-0.5" aria-hidden="true" />;
+                    return (
+                      <Sparkle className="size-3 mr-0.5" aria-hidden="true" />
+                    );
                   case "reasoning":
-                    return <BrainCircuit className="size-3 mr-0.5" aria-hidden="true" />;
+                    return (
+                      <BrainCircuit
+                        className="size-3 mr-0.5"
+                        aria-hidden="true"
+                      />
+                    );
                   case "fast":
-                    return <ArrowBigUpDash className="size-3 mr-0.5" aria-hidden="true" />;
+                    return (
+                      <ArrowBigUpDash
+                        className="size-3 mr-0.5"
+                        aria-hidden="true"
+                      />
+                    );
                   case "coding":
-                    return <Code className="size-3 mr-0.5" aria-hidden="true" />;
+                    return (
+                      <Code className="size-3 mr-0.5" aria-hidden="true" />
+                    );
                   default:
                     return null;
                 }
@@ -413,7 +475,9 @@ export function ChatComposer({
     const groups: Record<string, ModelOption[]> = {};
 
     // Featured virtual category first
-    const featuredModels = availableModels.filter((m) => "featured" in m && m.featured === true);
+    const featuredModels = availableModels.filter(
+      (m) => "featured" in m && m.featured === true,
+    );
     if (featuredModels.length > 0) {
       groups["featured"] = featuredModels;
     }
@@ -458,15 +522,24 @@ export function ChatComposer({
         return filteredEntries.length > 0 ? [[provider, filteredEntries]] : [];
       }),
     ) as Record<string, ModelOption[]>;
-  }, [modelDescriptionCopy, modelDescriptionLabels, normalizedModelQuery, providerGroups]);
+  }, [
+    modelDescriptionCopy,
+    modelDescriptionLabels,
+    normalizedModelQuery,
+    providerGroups,
+  ]);
 
   const availableProviders = useMemo(
     () => Object.keys(filteredProviderGroups),
     [filteredProviderGroups],
   );
   const currentProviderModels = filteredProviderGroups[selectedProvider] ?? [];
-  const activeModels = currentProviderModels.filter((entry) => entry.default !== false);
-  const legacyModels = currentProviderModels.filter((entry) => entry.default === false);
+  const activeModels = currentProviderModels.filter(
+    (entry) => entry.default !== false,
+  );
+  const legacyModels = currentProviderModels.filter(
+    (entry) => entry.default === false,
+  );
 
   const composerRef = useRef<HTMLDivElement>(null);
 
@@ -478,7 +551,8 @@ export function ChatComposer({
       textarea?.focus();
     };
     window.addEventListener("deni:focus-composer", handleFocusComposer);
-    return () => window.removeEventListener("deni:focus-composer", handleFocusComposer);
+    return () =>
+      window.removeEventListener("deni:focus-composer", handleFocusComposer);
   }, []);
 
   useEffect(() => {
@@ -507,9 +581,13 @@ export function ChatComposer({
       setLegacyModelsOpen(false);
       // Default to featured, or fall back to the current model's provider
       const isFeatured =
-        selectedModel && "featured" in selectedModel && selectedModel.featured === true;
+        selectedModel &&
+        "featured" in selectedModel &&
+        selectedModel.featured === true;
       setSelectedProvider(
-        isFeatured || providerGroups["featured"] ? "featured" : (selectedModel?.author ?? "openai"),
+        isFeatured || providerGroups["featured"]
+          ? "featured"
+          : (selectedModel?.author ?? "openai"),
       );
     }
     setModelPopoverOpen(open);
@@ -632,14 +710,18 @@ export function ChatComposer({
             </DropdownMenuCheckboxItem>
             <DropdownMenuCheckboxItem
               checked={webSearch}
-              onCheckedChange={(checked) => handleSearchToggle(Boolean(checked))}
+              onCheckedChange={(checked) =>
+                handleSearchToggle(Boolean(checked))
+              }
             >
               <Globe className="size-4" aria-hidden="true" />
               {t("Search")}
             </DropdownMenuCheckboxItem>
             <DropdownMenuCheckboxItem
               checked={deepResearch}
-              onCheckedChange={(checked) => handleResearchToggle(Boolean(checked))}
+              onCheckedChange={(checked) =>
+                handleResearchToggle(Boolean(checked))
+              }
             >
               <Sparkle className="size-4" aria-hidden="true" />
               {t("Deep Research")}
@@ -652,7 +734,11 @@ export function ChatComposer({
         tools={
           <>
             {videoMode && (
-              <ToolChip icon={Film} label={t("Video")} onRemove={() => handleVideoToggle(false)} />
+              <ToolChip
+                icon={Film}
+                label={t("Video")}
+                onRemove={() => handleVideoToggle(false)}
+              />
             )}
             {imageMode && (
               <ToolChip
@@ -682,7 +768,9 @@ export function ChatComposer({
               aria-label={t("Voice input")}
               title={t("Voice input")}
               onTranscriptionChange={(transcript) => {
-                const nextValue = value.trim() ? `${value.trim()} ${transcript}` : transcript;
+                const nextValue = value.trim()
+                  ? `${value.trim()} ${transcript}`
+                  : transcript;
                 onValueChange(nextValue.trim());
               }}
             >
@@ -690,7 +778,10 @@ export function ChatComposer({
             </SpeechInput>
 
             {/* Two-panel model selector */}
-            <Popover open={modelPopoverOpen} onOpenChange={handleModelPopoverOpenChange}>
+            <Popover
+              open={modelPopoverOpen}
+              onOpenChange={handleModelPopoverOpenChange}
+            >
               <PopoverTrigger asChild>
                 <Button
                   variant="ghost"
@@ -701,7 +792,11 @@ export function ChatComposer({
                   )}
                 >
                   <span className="flex items-center [&_svg]:size-3.5">
-                    <ModelIcon model={selectedModel ?? { author: "openai", premium: false }} />
+                    <ModelIcon
+                      model={
+                        selectedModel ?? { author: "openai", premium: false }
+                      }
+                    />
                   </span>
                   <span className="max-w-30 truncate text-sm">
                     {selectedModel?.name ?? t("Select model")}
@@ -714,7 +809,25 @@ export function ChatComposer({
                       {t("BYOK")}
                     </Badge>
                   )}
-                  <ChevronDownIcon className="size-3 opacity-50 shrink-0" aria-hidden="true" />
+                  {selectedModel &&
+                    "tokenMultiplier" in selectedModel &&
+                    typeof selectedModel.tokenMultiplier === "number" &&
+                    selectedModel.tokenMultiplier > 1 && (
+                      <Badge
+                        variant="secondary"
+                        className="bg-amber-500/15 text-amber-700 dark:text-amber-400 text-[10px] leading-none px-1 py-0.5 h-auto"
+                        title={t("Each token counts {multiplier}× toward your usage", {
+                          multiplier: String(selectedModel.tokenMultiplier),
+                        })}
+                      >
+                        <Coins className="size-3 mr-0.5" aria-hidden="true" />
+                        {selectedModel.tokenMultiplier}x
+                      </Badge>
+                    )}
+                  <ChevronDownIcon
+                    className="size-3 opacity-50 shrink-0"
+                    aria-hidden="true"
+                  />
                 </Button>
               </PopoverTrigger>
               <PopoverContent
@@ -743,7 +856,8 @@ export function ChatComposer({
                     {/* Left panel: Provider list */}
                     <div className="w-32 shrink-0 border-r flex flex-col gap-0.5 overflow-y-auto overscroll-contain bg-muted/30 p-1.5 [-webkit-overflow-scrolling:touch] sm:w-40">
                       {availableProviders.map((provider) => {
-                        const count = filteredProviderGroups[provider]?.length ?? 0;
+                        const count =
+                          filteredProviderGroups[provider]?.length ?? 0;
                         const isActive = selectedProvider === provider;
                         return (
                           <button
@@ -801,13 +915,19 @@ export function ChatComposer({
                           ))}
 
                           {legacyModels.length > 0 && (
-                            <Collapsible open={legacyModelsOpen} onOpenChange={setLegacyModelsOpen}>
+                            <Collapsible
+                              open={legacyModelsOpen}
+                              onOpenChange={setLegacyModelsOpen}
+                            >
                               <CollapsibleTrigger asChild>
                                 <button
                                   type="button"
                                   className="flex w-full items-center gap-2 rounded-md px-2.5 py-2 text-left text-sm text-muted-foreground transition-colors hover:bg-accent/40 hover:text-foreground outline-none focus-visible:ring-2 focus-visible:ring-ring"
                                 >
-                                  <ArchiveIcon className="size-4 shrink-0" aria-hidden="true" />
+                                  <ArchiveIcon
+                                    className="size-4 shrink-0"
+                                    aria-hidden="true"
+                                  />
                                   <span className="flex-1">
                                     {t(
                                       "{count, plural, one {# legacy model} other {# legacy models}}",
@@ -832,7 +952,9 @@ export function ChatComposer({
                                     model={m}
                                     isSelected={m.value === model}
                                     featureLabels={featureLabels}
-                                    modelDescriptionLabels={modelDescriptionLabels}
+                                    modelDescriptionLabels={
+                                      modelDescriptionLabels
+                                    }
                                     modelDescriptionCopy={modelDescriptionCopy}
                                     onSelect={() => {
                                       onModelChange(m.value);
@@ -851,7 +973,9 @@ export function ChatComposer({
               </PopoverContent>
             </Popover>
 
-            <div className="hidden md:block">{renderReasoningEffortSelector()}</div>
+            <div className="hidden md:block">
+              {renderReasoningEffortSelector()}
+            </div>
           </>
         }
       />
