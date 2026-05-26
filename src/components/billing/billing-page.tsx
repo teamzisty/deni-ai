@@ -16,6 +16,7 @@ import { settingsUsageQueryOptions } from "@/lib/usage-query-options";
 import { useFormatPriceParts } from "@/lib/use-format-price-parts";
 import { cn, formatCompactUsageValue } from "@/lib/utils";
 import { SettingsPageShell } from "../settings-page-shell";
+import { CardVerificationCard } from "./card-verification-card";
 import { PlanHighlights } from "./plan-highlights";
 import {
   AlertDialog,
@@ -809,6 +810,12 @@ function BillingPageContent() {
           )}
         </CardContent>
       </Card>
+
+      {/* Card verification (free-tier boost) */}
+      <CardVerificationCard
+        isFreeTier={usageTier === "free"}
+        hasVerifiedPaymentMethod={usageQuery.data?.hasVerifiedPaymentMethod ?? false}
+      />
 
       {/* Max Mode - Only show for Pro users */}
       {maxModeQuery.data?.eligible && (

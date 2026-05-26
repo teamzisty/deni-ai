@@ -12,8 +12,10 @@ import {
   isTeamPlan,
 } from "@/lib/billing";
 import {
+  type CardFunding,
+  checkCardEligibility,
   getBillingFingerprintUpdates,
-  getCustomerPrimaryCardFingerprint,
+  getCustomerPrimaryCardInfo,
   isTrialFingerprintEligible,
 } from "@/lib/billing-card-usage";
 import { isBillingDisabled } from "@/lib/billing-config";
@@ -338,17 +340,22 @@ export const billingRouter = router({
   plans: billingEnabledProcedure.query(async ({ ctx }) => {
     const individualPlans = billingPlans.filter((p) => !isTeamPlan(p.id));
     const billingRecord = await ensureBillingRecord(ctx, ctx.userId);
-    const trialFingerprint =
-      billingRecord.paymentMethodFingerprint ??
-      (await getCustomerPrimaryCardFingerprint(
+    let trialFingerprint: string | null = billingRecord.paymentMethodFingerprint ?? null;
+    let trialFunding: CardFunding = (billingRecord.cardFunding as CardFunding | null) ?? "unknown";
+    if (!trialFingerprint) {
+      const info = await getCustomerPrimaryCardInfo(
         billingRecord.stripeCustomerId,
         billingRecord.stripeSubscriptionId,
-      ));
+      );
+      trialFingerprint = info.fingerprint;
+      trialFunding = info.funding;
+    }
     const trialEligible =
       (await isTrialEligibleForCustomer(billingRecord.stripeCustomerId)) &&
       (await isTrialFingerprintEligible(trialFingerprint, {
         customerId: billingRecord.stripeCustomerId,
         userId: ctx.userId,
+        funding: trialFunding,
       }));
     const flashOfferActive = isFlashOfferActive(billingRecord.flashOfferEndsAt);
     const flashOfferEndsAt = flashOfferActive
@@ -508,12 +515,16 @@ export const billingRouter = router({
         mode === "subscription"
           ? await isTrialEligibleForCustomer(billingRecord.stripeCustomerId)
           : false;
-      const trialFingerprint =
-        billingRecord.paymentMethodFingerprint ??
-        (await getCustomerPrimaryCardFingerprint(
+      let trialFingerprint: string | null = billingRecord.paymentMethodFingerprint ?? null;
+      let trialFunding: CardFunding = (billingRecord.cardFunding as CardFunding | null) ?? "unknown";
+      if (!trialFingerprint) {
+        const info = await getCustomerPrimaryCardInfo(
           billingRecord.stripeCustomerId,
           billingRecord.stripeSubscriptionId,
-        ));
+        );
+        trialFingerprint = info.fingerprint;
+        trialFunding = info.funding;
+      }
       const proTrialEligible =
         isProTrialPlan(plan.id, mode) &&
         trialEligible &&
@@ -521,6 +532,7 @@ export const billingRouter = router({
         (await isTrialFingerprintEligible(trialFingerprint, {
           customerId: billingRecord.stripeCustomerId,
           userId: ctx.userId,
+          funding: trialFunding,
         }));
 
       if (
@@ -703,6 +715,9 @@ export const billingRouter = router({
         updates.firstPaidAt = billingRecord.firstPaidAt ?? new Date();
         updates.flashOfferEndsAt = null;
         updates.paymentMethodFingerprint = fingerprintUpdates.paymentMethodFingerprint;
+        if (fingerprintUpdates.cardFunding) {
+          updates.cardFunding = fingerprintUpdates.cardFunding;
+        }
         if (fingerprintUpdates.trialPaymentMethodFingerprint) {
           updates.trialPaymentMethodFingerprint = fingerprintUpdates.trialPaymentMethodFingerprint;
           updates.trialUsedAt = fingerprintUpdates.trialUsedAt;
@@ -722,6 +737,9 @@ export const billingRouter = router({
         updates.firstPaidAt = billingRecord.firstPaidAt ?? new Date();
         updates.flashOfferEndsAt = null;
         updates.paymentMethodFingerprint = fingerprintUpdates.paymentMethodFingerprint;
+        if (fingerprintUpdates.cardFunding) {
+          updates.cardFunding = fingerprintUpdates.cardFunding;
+        }
       } else if (session.payment_status === "paid") {
         const fingerprintUpdates = await getBillingFingerprintUpdates({
           customerId:
@@ -732,6 +750,9 @@ export const billingRouter = router({
         updates.firstPaidAt = billingRecord.firstPaidAt ?? new Date();
         updates.flashOfferEndsAt = null;
         updates.paymentMethodFingerprint = fingerprintUpdates.paymentMethodFingerprint;
+        if (fingerprintUpdates.cardFunding) {
+          updates.cardFunding = fingerprintUpdates.cardFunding;
+        }
       }
 
       const [saved] = await ctx.db
@@ -1058,5 +1079,190 @@ export const billingRouter = router({
       });
     }
     return { success: true };
+  }),
+  // ---- Free-tier card verification (manual-capture auth, then cancel) ----
+  createCardSetupIntent: billingEnabledProcedure.mutation(async ({ ctx }) => {
+    const billingRecord = await ensureBillingRecord(ctx, ctx.userId);
+    // $1.00 (USD has cents → amount=100) authorization. We never capture —
+    // the bank auth itself is the verification, and we cancel immediately to
+    // release the hold.
+    const intent = await stripe.paymentIntents.create({
+      customer: billingRecord.stripeCustomerId,
+      amount: 100,
+      currency: "usd",
+      payment_method_types: ["card"],
+      capture_method: "manual",
+      setup_future_usage: "off_session",
+      description: "Card verification (released immediately, never charged)",
+      metadata: {
+        userId: ctx.userId,
+        purpose: "free_tier_verification",
+      },
+    });
+    if (!intent.client_secret) {
+      throw new TRPCError({
+        code: "INTERNAL_SERVER_ERROR",
+        message: "Stripe did not return a client secret for the verification intent.",
+      });
+    }
+    return {
+      clientSecret: intent.client_secret,
+      paymentIntentId: intent.id,
+    };
+  }),
+  confirmCardSetup: billingEnabledProcedure
+    .input(z.object({ paymentIntentId: z.string().min(1) }))
+    .mutation(async ({ ctx, input }) => {
+      const billingRecord = await ensureBillingRecord(ctx, ctx.userId);
+      const intent = await stripe.paymentIntents.retrieve(input.paymentIntentId, {
+        expand: ["payment_method"],
+      });
+
+      if (intent.metadata?.userId && intent.metadata.userId !== ctx.userId) {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: "Verification intent does not belong to you.",
+        });
+      }
+      // Manual capture: a successful auth lands the PI in `requires_capture`.
+      // `succeeded` would mean it was somehow captured (shouldn't happen here).
+      if (intent.status !== "requires_capture" && intent.status !== "succeeded") {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: `Verification not yet authorized (status: ${intent.status}).`,
+        });
+      }
+
+      const paymentMethod = intent.payment_method;
+      const pm =
+        typeof paymentMethod === "string"
+          ? await stripe.paymentMethods.retrieve(paymentMethod)
+          : paymentMethod;
+      if (!pm || pm.type !== "card" || !pm.card?.fingerprint) {
+        // Release the hold before erroring out.
+        if (intent.status === "requires_capture") {
+          await stripe.paymentIntents.cancel(intent.id).catch(() => {});
+        }
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "Only card payment methods are supported.",
+        });
+      }
+
+      const fingerprint = pm.card.fingerprint;
+      const funding: CardFunding =
+        pm.card.funding === "credit" || pm.card.funding === "debit" || pm.card.funding === "prepaid"
+          ? pm.card.funding
+          : "unknown";
+
+      const eligibility = await checkCardEligibility({
+        fingerprint,
+        funding,
+        userId: ctx.userId,
+      });
+      if (!eligibility.eligible) {
+        // Always release the $1 USD hold first.
+        if (intent.status === "requires_capture") {
+          await stripe.paymentIntents.cancel(intent.id).catch((err) => {
+            console.warn("[billing] Failed to cancel rejected verification PI", err);
+          });
+        }
+        try {
+          await stripe.paymentMethods.detach(pm.id);
+        } catch (err) {
+          console.warn("[billing] Failed to detach rejected payment method", err);
+        }
+        // Don't leak the limit policy — surface a generic decline. Log the
+        // real reason server-side for support.
+        console.info("[billing] Card verification declined by eligibility policy", {
+          userId: ctx.userId,
+          reason: eligibility.reason,
+        });
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "Your card was declined. Please try a different card.",
+        });
+      }
+
+      // Auth passed and eligibility passed — release the $1 USD hold now.
+      if (intent.status === "requires_capture") {
+        await stripe.paymentIntents.cancel(intent.id).catch((err) => {
+          console.warn("[billing] Failed to cancel verification PI after success", err);
+        });
+      }
+
+      // Ensure it's also attached + set as default for future invoices.
+      try {
+        await stripe.customers.update(billingRecord.stripeCustomerId, {
+          invoice_settings: { default_payment_method: pm.id },
+        });
+      } catch (err) {
+        console.warn("[billing] Failed to set default payment method", err);
+      }
+
+      const [saved] = await ctx.db
+        .insert(billing)
+        .values({
+          userId: ctx.userId,
+          stripeCustomerId: billingRecord.stripeCustomerId,
+          paymentMethodFingerprint: fingerprint,
+          cardFunding: funding,
+          cardVerifiedAt: new Date(),
+        })
+        .onConflictDoUpdate({
+          target: billing.userId,
+          targetWhere: sql`organization_id IS NULL`,
+          set: {
+            paymentMethodFingerprint: fingerprint,
+            cardFunding: funding,
+            cardVerifiedAt: new Date(),
+            updatedAt: new Date(),
+          },
+        })
+        .returning();
+
+      return {
+        verified: true,
+        funding,
+        cardVerifiedAt: saved?.cardVerifiedAt?.toISOString() ?? null,
+      };
+    }),
+  removeVerifiedCard: billingEnabledProcedure.mutation(async ({ ctx }) => {
+    const billingRecord = await ensureBillingRecord(ctx, ctx.userId);
+    // Refuse to remove if there's an active subscription depending on the card.
+    if (
+      billingRecord.stripeSubscriptionId &&
+      ACTIVE_SUB_STATUSES.has(billingRecord.status ?? "")
+    ) {
+      throw new TRPCError({
+        code: "BAD_REQUEST",
+        message: "Cancel your subscription before removing the card.",
+      });
+    }
+    try {
+      const paymentMethods = await stripe.customers.listPaymentMethods(
+        billingRecord.stripeCustomerId,
+        { type: "card", limit: 10 },
+      );
+      await Promise.all(
+        paymentMethods.data.map((pm) =>
+          stripe.paymentMethods.detach(pm.id).catch((err) => {
+            console.warn("[billing] Failed to detach payment method", err);
+          }),
+        ),
+      );
+    } catch (err) {
+      console.warn("[billing] Failed to list payment methods on removal", err);
+    }
+    await ctx.db
+      .update(billing)
+      .set({
+        paymentMethodFingerprint: null,
+        cardFunding: null,
+        cardVerifiedAt: null,
+        updatedAt: new Date(),
+      })
+      .where(and(eq(billing.userId, ctx.userId), isNull(billing.organizationId)));
+    return { removed: true };
   }),
 });

@@ -276,6 +276,12 @@
     @apply bg-background text-foreground;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+    letter-spacing: -0.02em;
+  }
+
+  body.mono,
+  body .mono {
+    letter-spacing: normal;
   }
 
   h1 {

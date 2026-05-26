@@ -41,10 +41,7 @@ export default async function ChatPage({
       projectName: projects.name,
     })
     .from(chats)
-    .leftJoin(
-      projects,
-      and(eq(projects.id, chats.projectId), eq(projects.userId, userId)),
-    )
+    .leftJoin(projects, and(eq(projects.id, chats.projectId), eq(projects.userId, userId)))
     .where(and(eq(chats.id, id), eq(chats.uid, userId)));
 
   // Upsert path: client navigates to /chat/<uuid> immediately when starting a new
@@ -87,10 +84,7 @@ export default async function ChatPage({
         projectName: projects.name,
       })
       .from(chats)
-      .leftJoin(
-        projects,
-        and(eq(projects.id, chats.projectId), eq(projects.userId, userId)),
-      )
+      .leftJoin(projects, and(eq(projects.id, chats.projectId), eq(projects.userId, userId)))
       .where(and(eq(chats.id, id), eq(chats.uid, userId)));
 
     if (!row) {

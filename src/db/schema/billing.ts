@@ -33,6 +33,10 @@ export const billing = pgTable(
     flashOfferEndsAt: timestamp("flash_offer_ends_at"),
     firstPaidAt: timestamp("first_paid_at"),
     paymentMethodFingerprint: text("payment_method_fingerprint"),
+    // Card funding type from Stripe: "credit" | "debit" | "prepaid" | "unknown"
+    cardFunding: text("card_funding"),
+    // When the user verified a card via SetupIntent (free-tier boost)
+    cardVerifiedAt: timestamp("card_verified_at"),
     trialPaymentMethodFingerprint: text("trial_payment_method_fingerprint"),
     trialUsedAt: timestamp("trial_used_at"),
     // Max Mode (Usage-based billing for Pro plan)

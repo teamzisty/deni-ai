@@ -1,3 +1,4 @@
+import { Coins } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { useExtracted, useLocale } from "next-intl";
@@ -182,11 +183,26 @@ export default function ModelsPage() {
                   <div key={model.value} className="rounded-lg border border-border bg-card p-4">
                     <div className="flex items-start justify-between gap-2 mb-2">
                       <h3 className="font-medium text-sm">{model.name}</h3>
-                      {"premium" in model && model.premium && (
-                        <span className="shrink-0 text-[10px] font-medium px-1.5 py-0.5 rounded bg-primary/10 text-primary">
-                          Pro
-                        </span>
-                      )}
+                      <div className="flex items-center gap-1 shrink-0">
+                        {"tokenMultiplier" in model &&
+                          typeof model.tokenMultiplier === "number" &&
+                          model.tokenMultiplier > 1 && (
+                            <span
+                              className="inline-flex items-center gap-0.5 text-[10px] font-medium px-1.5 py-0.5 rounded bg-amber-500/10 text-amber-700 dark:text-amber-400"
+                              title={t("Each token counts {multiplier}× toward your usage", {
+                                multiplier: String(model.tokenMultiplier),
+                              })}
+                            >
+                              <Coins className="size-3" aria-hidden="true" />
+                              {model.tokenMultiplier}x
+                            </span>
+                          )}
+                        {"premium" in model && model.premium && (
+                          <span className="text-[10px] font-medium px-1.5 py-0.5 rounded bg-primary/10 text-primary">
+                            Pro
+                          </span>
+                        )}
+                      </div>
                     </div>
                     {"description" in model && model.description && (
                       <p className="mb-3 text-sm leading-relaxed text-muted-foreground">

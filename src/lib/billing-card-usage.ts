@@ -6,7 +6,31 @@ import { db } from "@/db/drizzle";
 import { billing } from "@/db/schema";
 import { stripe } from "@/lib/stripe";
 
-export const MAX_TRIALS_PER_CARD = 2;
+// Same card may be attached across at most this many distinct users (incl. for trials).
+export const MAX_USES_PER_CARD = 2;
+// Prepaid cards are more abuse-prone (gift cards, virtual numbers).
+export const MAX_USES_PER_PREPAID_CARD = 1;
+
+// Back-compat alias — old code referenced this name.
+export const MAX_TRIALS_PER_CARD = MAX_USES_PER_CARD;
+
+export type CardFunding = "credit" | "debit" | "prepaid" | "unknown";
+
+function normalizeFunding(value: string | null | undefined): CardFunding {
+  if (value === "credit" || value === "debit" || value === "prepaid") {
+    return value;
+  }
+  return "unknown";
+}
+
+function getCardFundingFromPaymentMethod(
+  paymentMethod: string | Stripe.PaymentMethod | null | undefined,
+): CardFunding {
+  if (!paymentMethod || typeof paymentMethod === "string" || paymentMethod.type !== "card") {
+    return "unknown";
+  }
+  return normalizeFunding(paymentMethod.card?.funding);
+}
 
 const ACTIVE_SUBSCRIPTION_STATUSES = new Set([
   "trialing",
@@ -30,27 +54,39 @@ function getCardFingerprintFromPaymentMethod(
   return paymentMethod.card?.fingerprint ?? null;
 }
 
-function getCardFingerprintFromSubscription(subscription: Stripe.Subscription | null | undefined) {
+export type CardInfo = {
+  fingerprint: string | null;
+  funding: CardFunding;
+};
+
+function getCardInfoFromPaymentMethod(
+  paymentMethod: string | Stripe.PaymentMethod | null | undefined,
+): CardInfo {
+  return {
+    fingerprint: getCardFingerprintFromPaymentMethod(paymentMethod),
+    funding: getCardFundingFromPaymentMethod(paymentMethod),
+  };
+}
+
+function getCardInfoFromSubscription(subscription: Stripe.Subscription | null | undefined): CardInfo {
   if (!subscription) {
-    return null;
+    return { fingerprint: null, funding: "unknown" };
   }
 
-  const defaultPaymentMethodFingerprint = getCardFingerprintFromPaymentMethod(
-    subscription.default_payment_method,
-  );
-  if (defaultPaymentMethodFingerprint) {
-    return defaultPaymentMethodFingerprint;
+  const fromDefault = getCardInfoFromPaymentMethod(subscription.default_payment_method);
+  if (fromDefault.fingerprint) {
+    return fromDefault;
   }
 
   const latestInvoice = subscription.latest_invoice;
   if (!latestInvoice || typeof latestInvoice === "string") {
-    return null;
+    return { fingerprint: null, funding: "unknown" };
   }
 
   const paymentIntent =
     "payment_intent" in latestInvoice ? (latestInvoice.payment_intent ?? null) : null;
   if (!paymentIntent || typeof paymentIntent === "string" || !isObjectRecord(paymentIntent)) {
-    return null;
+    return { fingerprint: null, funding: "unknown" };
   }
 
   const paymentMethod =
@@ -60,26 +96,24 @@ function getCardFingerprintFromSubscription(subscription: Stripe.Subscription | 
     typeof paymentMethod !== "string" &&
     !isObjectRecord(paymentMethod)
   ) {
-    return null;
+    return { fingerprint: null, funding: "unknown" };
   }
 
-  // The paymentMethod/isObjectRecord guard above narrows this to the shapes
-  // getCardFingerprintFromPaymentMethod accepts, so the cast is safe.
-  return getCardFingerprintFromPaymentMethod(paymentMethod as string | Stripe.PaymentMethod | null);
+  return getCardInfoFromPaymentMethod(paymentMethod as string | Stripe.PaymentMethod | null);
 }
 
-export async function getCustomerPrimaryCardFingerprint(
+export async function getCustomerPrimaryCardInfo(
   customerId: string,
   subscriptionId?: string | null,
-) {
+): Promise<CardInfo> {
   try {
     if (subscriptionId) {
       const subscription = await stripe.subscriptions.retrieve(subscriptionId, {
         expand: ["default_payment_method", "latest_invoice.payment_intent.payment_method"],
       });
-      const subscriptionFingerprint = getCardFingerprintFromSubscription(subscription);
-      if (subscriptionFingerprint) {
-        return subscriptionFingerprint;
+      const info = getCardInfoFromSubscription(subscription);
+      if (info.fingerprint) {
+        return info;
       }
     }
 
@@ -93,9 +127,9 @@ export async function getCustomerPrimaryCardFingerprint(
       subscriptions.data.find((subscription) =>
         ACTIVE_SUBSCRIPTION_STATUSES.has(subscription.status),
       ) ?? subscriptions.data.at(0);
-    const subscriptionFingerprint = getCardFingerprintFromSubscription(preferredSubscription);
-    if (subscriptionFingerprint) {
-      return subscriptionFingerprint;
+    const subInfo = getCardInfoFromSubscription(preferredSubscription);
+    if (subInfo.fingerprint) {
+      return subInfo;
     }
 
     const paymentMethods = await stripe.customers.listPaymentMethods(customerId, {
@@ -103,20 +137,96 @@ export async function getCustomerPrimaryCardFingerprint(
       limit: 1,
     });
 
-    return paymentMethods.data[0]?.card?.fingerprint ?? null;
+    const pm = paymentMethods.data[0];
+    if (!pm) {
+      return { fingerprint: null, funding: "unknown" };
+    }
+    return {
+      fingerprint: pm.card?.fingerprint ?? null,
+      funding: normalizeFunding(pm.card?.funding),
+    };
   } catch (error) {
     console.warn("Failed to load customer payment method fingerprint", error);
-    return null;
+    return { fingerprint: null, funding: "unknown" };
   }
 }
 
-export async function countTrialUsesByFingerprint(fingerprint: string) {
+// Back-compat: callers that only need the fingerprint.
+export async function getCustomerPrimaryCardFingerprint(
+  customerId: string,
+  subscriptionId?: string | null,
+) {
+  const info = await getCustomerPrimaryCardInfo(customerId, subscriptionId);
+  return info.fingerprint;
+}
+
+// Count distinct users (excluding `excludeUserId`, typically the caller) that
+// have this card fingerprint on their billing record. Used for both card-
+// registration and trial eligibility under a single rule.
+export async function countCardUsesByFingerprint(
+  fingerprint: string,
+  options: { excludeUserId?: string } = {},
+) {
+  const whereClause = options.excludeUserId
+    ? sql`${billing.paymentMethodFingerprint} = ${fingerprint} AND ${billing.userId} <> ${options.excludeUserId}`
+    : eq(billing.paymentMethodFingerprint, fingerprint);
+
   const [result] = await db
-    .select({ count: sql<number>`count(*)::int` })
+    .select({ count: sql<number>`count(distinct ${billing.userId})::int` })
     .from(billing)
-    .where(eq(billing.trialPaymentMethodFingerprint, fingerprint));
+    .where(whereClause);
 
   return result?.count ?? 0;
+}
+
+export function getMaxUsesForFunding(funding: CardFunding) {
+  return funding === "prepaid" ? MAX_USES_PER_PREPAID_CARD : MAX_USES_PER_CARD;
+}
+
+export type CardEligibilityReason = "missing_fingerprint" | "limit_exceeded" | "prepaid_limit";
+
+export type CardEligibilityResult =
+  | { eligible: true }
+  | { eligible: false; reason: CardEligibilityReason; usedCount: number; maxUses: number };
+
+// Single source of truth for "may this card be used (for trial or free-tier
+// verification) on this account?" credit/debit: 2 distinct users max, prepaid: 1.
+// The current user's own prior use does not count against them.
+export async function checkCardEligibility({
+  fingerprint,
+  funding,
+  userId,
+}: {
+  fingerprint: string | null;
+  funding: CardFunding;
+  userId: string;
+}): Promise<CardEligibilityResult> {
+  if (!fingerprint) {
+    return { eligible: false, reason: "missing_fingerprint", usedCount: 0, maxUses: 0 };
+  }
+
+  const usedByOthers = await countCardUsesByFingerprint(fingerprint, {
+    excludeUserId: userId,
+  });
+  const maxUses = getMaxUsesForFunding(funding);
+  // The current user counts as 1 use of the slot, so others may take up to maxUses-1.
+  if (usedByOthers + 1 > maxUses) {
+    return {
+      eligible: false,
+      reason: funding === "prepaid" ? "prepaid_limit" : "limit_exceeded",
+      usedCount: usedByOthers,
+      maxUses,
+    };
+  }
+  return { eligible: true };
+}
+
+// Legacy callers — trial eligibility now flows through checkCardEligibility.
+// We don't know the funding here, so assume non-prepaid (the caller path for
+// trials always goes through Stripe subscription creation, which can detect
+// funding before charging).
+export async function countTrialUsesByFingerprint(fingerprint: string) {
+  return countCardUsesByFingerprint(fingerprint);
 }
 
 export async function isTrialFingerprintEligible(
@@ -125,6 +235,7 @@ export async function isTrialFingerprintEligible(
     customerId?: string;
     userId?: string;
     organizationId?: string | null;
+    funding?: CardFunding;
   },
 ) {
   if (!fingerprint) {
@@ -132,8 +243,15 @@ export async function isTrialFingerprintEligible(
     return false;
   }
 
-  const count = await countTrialUsesByFingerprint(fingerprint);
-  return count < MAX_TRIALS_PER_CARD;
+  const funding = context?.funding ?? "unknown";
+  const userId = context?.userId;
+  if (userId) {
+    const result = await checkCardEligibility({ fingerprint, funding, userId });
+    return result.eligible;
+  }
+  // Fallback when userId is unavailable: count globally without self-exclusion.
+  const count = await countCardUsesByFingerprint(fingerprint);
+  return count < getMaxUsesForFunding(funding);
 }
 
 export async function getBillingFingerprintUpdates({
@@ -145,10 +263,10 @@ export async function getBillingFingerprintUpdates({
   subscriptionId?: string | null;
   markTrialUsed: boolean;
 }) {
-  const fingerprint = await getCustomerPrimaryCardFingerprint(customerId, subscriptionId);
+  const { fingerprint, funding } = await getCustomerPrimaryCardInfo(customerId, subscriptionId);
   if (markTrialUsed && !fingerprint) {
     console.warn(
-      "[billing] getBillingFingerprintUpdates could not mark trial used because getCustomerPrimaryCardFingerprint returned no fingerprint",
+      "[billing] getBillingFingerprintUpdates could not mark trial used because getCustomerPrimaryCardInfo returned no fingerprint",
       {
         customerId,
         subscriptionId,
@@ -158,6 +276,7 @@ export async function getBillingFingerprintUpdates({
 
   return {
     paymentMethodFingerprint: fingerprint,
+    cardFunding: fingerprint ? funding : undefined,
     trialPaymentMethodFingerprint: markTrialUsed && fingerprint ? fingerprint : undefined,
     trialUsedAt: markTrialUsed && fingerprint ? new Date() : undefined,
   };

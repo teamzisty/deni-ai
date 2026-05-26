@@ -63,6 +63,7 @@ async function saveSubscription(payload: SubscriptionPayload) {
         ? undefined
         : (existingRecord?.firstPaidAt ?? new Date()),
     paymentMethodFingerprint: fingerprintUpdates.paymentMethodFingerprint,
+    cardFunding: fingerprintUpdates.cardFunding,
     trialPaymentMethodFingerprint: fingerprintUpdates.trialPaymentMethodFingerprint,
     trialUsedAt: fingerprintUpdates.trialUsedAt,
   };
