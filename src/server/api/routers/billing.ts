@@ -415,22 +415,21 @@ export const billingRouter = router({
           isNotNull(billing.organizationId),
           like(billing.planId, "pro_team%"),
         ),
-      )
-      .limit(1);
+      );
 
-    const teamRecord = teamRecords[0];
-    const teamActive =
-      teamRecord &&
-      teamRecord.planId &&
-      teamRecord.status &&
-      ACTIVE_SUB_STATUSES.has(teamRecord.status);
-    const teamGrace =
-      teamRecord &&
-      teamRecord.status === "canceled" &&
-      teamRecord.currentPeriodEnd &&
-      teamRecord.currentPeriodEnd > new Date();
+    const now = new Date();
+    const teamRecord = teamRecords.find((candidate) => {
+      const teamActive =
+        candidate.planId && candidate.status && ACTIVE_SUB_STATUSES.has(candidate.status);
+      const teamGrace =
+        candidate.status === "canceled" &&
+        candidate.currentPeriodEnd &&
+        candidate.currentPeriodEnd > now;
 
-    if (teamActive || teamGrace) {
+      return teamActive || teamGrace;
+    });
+
+    if (teamRecord) {
       return {
         planId: teamRecord.planId ?? null,
         status: teamRecord.status ?? null,
@@ -516,7 +515,8 @@ export const billingRouter = router({
           ? await isTrialEligibleForCustomer(billingRecord.stripeCustomerId)
           : false;
       let trialFingerprint: string | null = billingRecord.paymentMethodFingerprint ?? null;
-      let trialFunding: CardFunding = (billingRecord.cardFunding as CardFunding | null) ?? "unknown";
+      let trialFunding: CardFunding =
+        (billingRecord.cardFunding as CardFunding | null) ?? "unknown";
       if (!trialFingerprint) {
         const info = await getCustomerPrimaryCardInfo(
           billingRecord.stripeCustomerId,
@@ -1230,10 +1230,7 @@ export const billingRouter = router({
   removeVerifiedCard: billingEnabledProcedure.mutation(async ({ ctx }) => {
     const billingRecord = await ensureBillingRecord(ctx, ctx.userId);
     // Refuse to remove if there's an active subscription depending on the card.
-    if (
-      billingRecord.stripeSubscriptionId &&
-      ACTIVE_SUB_STATUSES.has(billingRecord.status ?? "")
-    ) {
+    if (billingRecord.stripeSubscriptionId && ACTIVE_SUB_STATUSES.has(billingRecord.status ?? "")) {
       throw new TRPCError({
         code: "BAD_REQUEST",
         message: "Cancel your subscription before removing the card.",

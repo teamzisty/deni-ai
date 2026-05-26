@@ -106,32 +106,34 @@ async function getTierInfo(userId: string, now: Date): Promise<TierInfo> {
         isNotNull(billing.organizationId),
         like(billing.planId, "pro_team%"),
       ),
-    )
-    .limit(1);
+    );
 
-  const teamRecord = teamRecords[0];
+  const teamRecord = teamRecords.find((candidate) => {
+    const teamStatus = candidate.status;
+    const teamHasActive =
+      Boolean(candidate.planId) &&
+      Boolean(teamStatus) &&
+      ACTIVE_BILLING_STATUSES.has(teamStatus ?? "");
+    const teamGracePeriod =
+      teamStatus === "canceled" && candidate.currentPeriodEnd && candidate.currentPeriodEnd > now;
+
+    return teamHasActive || teamGracePeriod;
+  });
 
   // 3. If user has an active team plan, check it first
   if (teamRecord) {
     const teamPlanId = teamRecord.planId;
     const teamStatus = teamRecord.status;
-    const teamHasActive =
-      Boolean(teamPlanId) && Boolean(teamStatus) && ACTIVE_BILLING_STATUSES.has(teamStatus ?? "");
-    const teamGracePeriod =
-      teamStatus === "canceled" && teamRecord.currentPeriodEnd && teamRecord.currentPeriodEnd > now;
-
-    if (teamHasActive || teamGracePeriod) {
-      const maxModeEligible = isMaxModeEligible(teamPlanId) && teamStatus === "active";
-      return {
-        tier: "pro",
-        planId: teamPlanId,
-        status: teamStatus ?? null,
-        periodEnd: teamRecord.currentPeriodEnd ?? null,
-        maxModeEnabled: maxModeEligible && teamRecord.maxModeEnabled,
-        maxModeEligible,
-        hasVerifiedPaymentMethod,
-      };
-    }
+    const maxModeEligible = isMaxModeEligible(teamPlanId) && teamStatus === "active";
+    return {
+      tier: "pro",
+      planId: teamPlanId,
+      status: teamStatus ?? null,
+      periodEnd: teamRecord.currentPeriodEnd ?? null,
+      maxModeEnabled: maxModeEligible && teamRecord.maxModeEnabled,
+      maxModeEligible,
+      hasVerifiedPaymentMethod,
+    };
   }
 
   // 4. Fall back to personal billing

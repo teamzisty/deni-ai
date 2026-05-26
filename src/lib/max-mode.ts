@@ -41,7 +41,7 @@ async function getEffectiveBillingRecord(userId: string) {
   };
 
   // Check for active team plan first
-  const [teamRecord] = await db
+  const teamRecords = await db
     .select(selectFields)
     .from(billing)
     .innerJoin(member, eq(billing.organizationId, member.organizationId))
@@ -51,10 +51,13 @@ async function getEffectiveBillingRecord(userId: string) {
         isNotNull(billing.organizationId),
         like(billing.planId, "pro_team%"),
       ),
-    )
-    .limit(1);
+    );
 
-  if (teamRecord && teamRecord.status && ACTIVE_STATUSES.has(teamRecord.status)) {
+  const teamRecord = teamRecords.find(
+    (candidate) => candidate.status && ACTIVE_STATUSES.has(candidate.status),
+  );
+
+  if (teamRecord) {
     return teamRecord;
   }
 
