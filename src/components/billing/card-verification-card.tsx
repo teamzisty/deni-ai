@@ -134,12 +134,12 @@ function CardSetupDialog({
   const { resolvedTheme } = useTheme();
   const createIntent = trpc.billing.createCardSetupIntent.useMutation();
   const [clientSecret, setClientSecret] = useState<string | null>(null);
-  const [setupIntentId, setSetupIntentId] = useState<string | null>(null);
+  const [paymentIntentId, setPaymentIntentId] = useState<string | null>(null);
 
   useEffect(() => {
     if (!open) {
       setClientSecret(null);
-      setSetupIntentId(null);
+      setPaymentIntentId(null);
       return;
     }
     let cancelled = false;
@@ -148,7 +148,7 @@ function CardSetupDialog({
       .then((data) => {
         if (cancelled) return;
         setClientSecret(data.clientSecret);
-        setSetupIntentId(data.setupIntentId);
+        setPaymentIntentId(data.paymentIntentId);
       })
       .catch((err) => {
         toast.error(err?.message ?? t("Failed to start card verification."));
@@ -178,13 +178,13 @@ function CardSetupDialog({
             )}
           </DialogDescription>
         </DialogHeader>
-        {clientSecret && setupIntentId && stripeJsPromise ? (
+        {clientSecret && paymentIntentId && stripeJsPromise ? (
           <Elements
             stripe={stripeJsPromise}
             options={{ clientSecret, appearance }}
             key={clientSecret}
           >
-            <CardSetupForm setupIntentId={setupIntentId} onDone={() => onOpenChange(false)} />
+            <CardSetupForm paymentIntentId={paymentIntentId} onDone={() => onOpenChange(false)} />
           </Elements>
         ) : (
           <div className="flex items-center justify-center py-10">
@@ -197,10 +197,10 @@ function CardSetupDialog({
 }
 
 function CardSetupForm({
-  setupIntentId,
+  paymentIntentId,
   onDone,
 }: {
-  setupIntentId: string;
+  paymentIntentId: string;
   onDone: () => void;
 }) {
   const t = useExtracted();
@@ -230,7 +230,7 @@ function CardSetupForm({
     }
 
     try {
-      const data = await confirmSetup.mutateAsync({ setupIntentId });
+      const data = await confirmSetup.mutateAsync({ paymentIntentId });
       toast.success(
         data.funding === "prepaid"
           ? t("Card verified (prepaid).")

@@ -1107,14 +1107,14 @@ export const billingRouter = router({
     }
     return {
       clientSecret: intent.client_secret,
-      setupIntentId: intent.id,
+      paymentIntentId: intent.id,
     };
   }),
   confirmCardSetup: billingEnabledProcedure
-    .input(z.object({ setupIntentId: z.string().min(1) }))
+    .input(z.object({ paymentIntentId: z.string().min(1) }))
     .mutation(async ({ ctx, input }) => {
       const billingRecord = await ensureBillingRecord(ctx, ctx.userId);
-      const intent = await stripe.paymentIntents.retrieve(input.setupIntentId, {
+      const intent = await stripe.paymentIntents.retrieve(input.paymentIntentId, {
         expand: ["payment_method"],
       });
 
@@ -1161,7 +1161,7 @@ export const billingRouter = router({
         userId: ctx.userId,
       });
       if (!eligibility.eligible) {
-        // Always release the ¥10 hold first.
+        // Always release the $1 USD hold first.
         if (intent.status === "requires_capture") {
           await stripe.paymentIntents.cancel(intent.id).catch((err) => {
             console.warn("[billing] Failed to cancel rejected verification PI", err);
@@ -1184,7 +1184,7 @@ export const billingRouter = router({
         });
       }
 
-      // Auth passed and eligibility passed — release the ¥10 hold now.
+      // Auth passed and eligibility passed — release the $1 USD hold now.
       if (intent.status === "requires_capture") {
         await stripe.paymentIntents.cancel(intent.id).catch((err) => {
           console.warn("[billing] Failed to cancel verification PI after success", err);
