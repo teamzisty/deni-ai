@@ -132,8 +132,6 @@ function getStripeCheckoutAppearance(theme: string | undefined): Appearance {
   const backgroundColor = isDark ? "#1a1a1a" : "#ffffff";
   const foregroundColor = isDark ? "#fafafa" : "#171717";
   const mutedColor = isDark ? "#a3a3a3" : "#737373";
-  const borderColor = isDark ? "#404040" : "#e5e5e5";
-  const focusRingColor = isDark ? "rgba(115, 115, 115, 0.35)" : "rgba(23, 23, 23, 0.12)";
 
   return {
     theme: isDark ? "night" : "stripe",
@@ -153,80 +151,6 @@ function getStripeCheckoutAppearance(theme: string | undefined): Appearance {
       fontWeightNormal: "400",
       spacingUnit: "4px",
       gridRowSpacing: "12px",
-    },
-    rules: {
-      ".Label": {
-        color: foregroundColor,
-        fontSize: "14px",
-        fontWeight: "500",
-        marginBottom: "6px",
-      },
-      ".Input": {
-        backgroundColor,
-        border: `1px solid ${borderColor}`,
-        borderRadius: "8px",
-        boxShadow: "none",
-        color: foregroundColor,
-        fontSize: "14px",
-        lineHeight: "20px",
-        padding: "8px 12px",
-      },
-      ".Input:focus": {
-        border: `1px solid ${borderColor}`,
-        boxShadow: `0 0 0 3px ${focusRingColor}`,
-        outline: "none",
-      },
-      ".Input::placeholder": {
-        color: mutedColor,
-      },
-      ".Block": {
-        backgroundColor: "transparent",
-        border: "none",
-        boxShadow: "none",
-        padding: "0",
-      },
-      ".Tab": {
-        backgroundColor: "transparent",
-        border: "none",
-        borderRadius: "0",
-        boxShadow: "none",
-        padding: "0",
-      },
-      ".Tab:hover": {
-        backgroundColor: "transparent",
-        border: "none",
-        boxShadow: "none",
-      },
-      ".Tab--selected": {
-        backgroundColor: "transparent",
-        border: "none",
-        boxShadow: "none",
-        color: foregroundColor,
-      },
-      ".TabLabel": {
-        color: "transparent",
-        fontSize: "0",
-        padding: "0",
-        textShadow: "none",
-      },
-      ".AccordionItem": {
-        backgroundColor: "transparent",
-        border: "none",
-        boxShadow: "none",
-        padding: "0",
-      },
-      ".AccordionItem--selected": {
-        backgroundColor: "transparent",
-        border: "none",
-        boxShadow: "none",
-        padding: "0",
-      },
-      ".RadioIconOuter": {
-        stroke: "transparent",
-      },
-      ".RadioIconInner": {
-        fill: "transparent",
-      },
     },
   };
 }
