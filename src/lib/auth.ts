@@ -1,5 +1,6 @@
 import { passkey } from "@better-auth/passkey";
 import { betterAuth } from "better-auth";
+import { APIError } from "better-auth/api";
 import { drizzleAdapter } from "@better-auth/drizzle-adapter";
 import {
   anonymous,
@@ -18,6 +19,7 @@ import * as schema from "@/db/schema";
 import { VerificationEmail, verificationEmailSubject } from "@/emails/verification-email";
 import { env } from "@/env";
 import { EMAIL_FROM, emailTemplates } from "@/lib/constants";
+import { isDisposableEmail } from "@/lib/disposable-email";
 import { cancelPersonalSubscription, updateTeamSeatCount } from "@/lib/team-billing";
 
 const resend = env.RESEND_API_KEY ? new Resend(env.RESEND_API_KEY) : null;
@@ -156,4 +158,18 @@ export const auth = betterAuth({
     updateAge: 60 * 60 * 24, // 1 day (every 1 day the session expiration is updated)
   },
   experimental: { joins: true },
+  databaseHooks: {
+    user: {
+      create: {
+        before: async (user) => {
+          if (user.email && isDisposableEmail(user.email)) {
+            throw new APIError("BAD_REQUEST", {
+              message: "Disposable email addresses are not allowed.",
+              code: "DISPOSABLE_EMAIL_NOT_ALLOWED",
+            });
+          }
+        },
+      },
+    },
+  },
 });

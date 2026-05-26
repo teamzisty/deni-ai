@@ -22,17 +22,24 @@ const USAGE_LIMITS: Record<
   Record<SubscriptionTier, { limit: number | null; unit: UsageUnit }>
 > = {
   basic: {
-    free: { limit: 300, unit: "requests" },
+    free: { limit: 10_000_000, unit: "tokens" },
     plus: { limit: 150_000_000, unit: "tokens" },
     pro: { limit: 300_000_000, unit: "tokens" },
     max: { limit: 800_000_000, unit: "tokens" },
   },
   premium: {
-    free: { limit: 100, unit: "requests" },
+    free: { limit: 2_000_000, unit: "tokens" },
     plus: { limit: 50_000_000, unit: "tokens" },
     pro: { limit: 150_000_000, unit: "tokens" },
     max: { limit: 450_000_000, unit: "tokens" },
   },
+};
+
+// Boosted limits for free-tier users who have a verified payment method on file
+// (anti-abuse: card verification is a non-trivial trust signal).
+const VERIFIED_FREE_LIMITS: Record<UsageCategory, { limit: number; unit: UsageUnit }> = {
+  basic: { limit: 25_000_000, unit: "tokens" },
+  premium: { limit: 10_000_000, unit: "tokens" },
 };
 
 const GUEST_USAGE_LIMITS: Record<UsageCategory, { limit: number; unit: UsageUnit }> = {
@@ -57,6 +64,7 @@ type TierInfo = {
   periodEnd: Date | null;
   maxModeEnabled: boolean;
   maxModeEligible: boolean;
+  hasVerifiedPaymentMethod: boolean;
 };
 
 function getDefaultPeriodEnd(now: Date) {
@@ -74,10 +82,13 @@ async function getTierInfo(userId: string, now: Date): Promise<TierInfo> {
       status: billing.status,
       currentPeriodEnd: billing.currentPeriodEnd,
       maxModeEnabled: billing.maxModeEnabled,
+      paymentMethodFingerprint: billing.paymentMethodFingerprint,
     })
     .from(billing)
     .where(and(eq(billing.userId, userId), isNull(billing.organizationId)))
     .limit(1);
+
+  const hasVerifiedPaymentMethod = Boolean(record?.paymentMethodFingerprint);
 
   // 2. Check if user belongs to any org with an active team plan
   const teamRecords = await db
@@ -118,6 +129,7 @@ async function getTierInfo(userId: string, now: Date): Promise<TierInfo> {
         periodEnd: teamRecord.currentPeriodEnd ?? null,
         maxModeEnabled: maxModeEligible && teamRecord.maxModeEnabled,
         maxModeEligible,
+        hasVerifiedPaymentMethod,
       };
     }
   }
@@ -131,6 +143,7 @@ async function getTierInfo(userId: string, now: Date): Promise<TierInfo> {
       periodEnd: getDefaultPeriodEnd(now),
       maxModeEnabled: false,
       maxModeEligible: false,
+      hasVerifiedPaymentMethod,
     };
   }
 
@@ -149,6 +162,7 @@ async function getTierInfo(userId: string, now: Date): Promise<TierInfo> {
       periodEnd: getDefaultPeriodEnd(now),
       maxModeEnabled: false,
       maxModeEligible: false,
+      hasVerifiedPaymentMethod,
     };
   }
 
@@ -171,6 +185,7 @@ async function getTierInfo(userId: string, now: Date): Promise<TierInfo> {
     periodEnd: record.currentPeriodEnd ?? null,
     maxModeEnabled: maxModeEligible && record.maxModeEnabled,
     maxModeEligible,
+    hasVerifiedPaymentMethod,
   };
 }
 
@@ -196,7 +211,13 @@ async function calculateUsageState({
   isAnonymous?: boolean;
 }) {
   const tierInfo = await getTierInfo(userId, now);
-  const config = isAnonymous ? GUEST_USAGE_LIMITS[category] : USAGE_LIMITS[category][tierInfo.tier];
+  const baseConfig = isAnonymous
+    ? GUEST_USAGE_LIMITS[category]
+    : USAGE_LIMITS[category][tierInfo.tier];
+  const config =
+    !isAnonymous && tierInfo.tier === "free" && tierInfo.hasVerifiedPaymentMethod
+      ? VERIFIED_FREE_LIMITS[category]
+      : baseConfig;
   const { limit, unit } = config;
 
   const current =
@@ -504,6 +525,7 @@ export type UsageSummary = {
   usage: UsageSnapshot[];
   maxModeEnabled: boolean;
   maxModeEligible: boolean;
+  hasVerifiedPaymentMethod: boolean;
 };
 
 export async function getUsageSummary({
@@ -562,5 +584,6 @@ export async function getUsageSummary({
     usage,
     maxModeEnabled: tierInfo.maxModeEnabled,
     maxModeEligible: tierInfo.maxModeEligible,
+    hasVerifiedPaymentMethod: tierInfo.hasVerifiedPaymentMethod,
   };
 }

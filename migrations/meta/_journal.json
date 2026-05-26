@@ -211,6 +211,13 @@
       "when": 1778762700393,
       "tag": "0029_conscious_the_phantom",
       "breakpoints": true
+    },
+    {
+      "idx": 30,
+      "version": "7",
+      "when": 1779612614349,
+      "tag": "0030_flippant_solo",
+      "breakpoints": true
     }
   ]
 }
