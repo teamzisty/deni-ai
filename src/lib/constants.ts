@@ -1,9 +1,4 @@
-export type Author =
-  | "openai"
-  | "anthropic"
-  | "google"
-  | "xai"
-  | "openai_compatible";
+export type Author = "openai" | "anthropic" | "google" | "xai" | "openai_compatible";
 
 export const reasoningEffortValues = [
   "none",
@@ -21,9 +16,7 @@ export function isReasoningEffort(value: string): value is ReasoningEffort {
   return (reasoningEffortValues as readonly string[]).includes(value);
 }
 
-export function getPreferredReasoningEffort(
-  efforts: ModelEfforts,
-): ReasoningEffort {
+export function getPreferredReasoningEffort(efforts: ModelEfforts): ReasoningEffort {
   if (efforts === false) {
     return "high";
   }
@@ -55,11 +48,7 @@ export function resolveReasoningEffort(
     return undefined;
   }
 
-  if (
-    requestedEffort &&
-    isReasoningEffort(requestedEffort) &&
-    efforts.includes(requestedEffort)
-  ) {
+  if (requestedEffort && isReasoningEffort(requestedEffort) && efforts.includes(requestedEffort)) {
     return requestedEffort;
   }
 
@@ -109,8 +98,7 @@ export const models: readonly ModelDefinition[] = [
     name: "GPT-5.5",
     value: "gpt-5.5",
     author: "openai",
-    description:
-      "A new class of intelligence for coding and professional work.",
+    description: "A new class of intelligence for coding and professional work.",
     featured: true,
     default: true,
     features: ["smartest", "reasoning", "coding", "fast"],
@@ -132,8 +120,7 @@ export const models: readonly ModelDefinition[] = [
     name: "GPT-5.4 mini",
     value: "gpt-5.4-mini",
     author: "openai",
-    description:
-      "Our strongest mini model yet for coding, computer use, and subagents.",
+    description: "Our strongest mini model yet for coding, computer use, and subagents.",
     featured: true,
     features: ["coding", "reasoning", "fast"],
     efforts: ["none", "low", "medium", "high", "xhigh"],
@@ -143,8 +130,7 @@ export const models: readonly ModelDefinition[] = [
     name: "GPT-5.4 nano",
     value: "gpt-5.4-nano",
     author: "openai",
-    description:
-      "Our cheapest GPT-5.4-class model for simple high-volume tasks.",
+    description: "Our cheapest GPT-5.4-class model for simple high-volume tasks.",
     features: ["reasoning", "fastest", "fast"],
     efforts: ["none", "low", "medium", "high", "xhigh"],
     contextWindow: 400_000,
@@ -206,8 +192,7 @@ export const models: readonly ModelDefinition[] = [
     name: "GPT-5",
     value: "gpt-5",
     author: "openai",
-    description:
-      "Flagship model for coding, reasoning, and agentic tasks across domains.",
+    description: "Flagship model for coding, reasoning, and agentic tasks across domains.",
     features: ["smart", "reasoning", "fast"],
     default: false,
     efforts: ["minimal", "low", "medium", "high"],
@@ -385,8 +370,7 @@ export const models: readonly ModelDefinition[] = [
     name: "Claude Haiku 4.5",
     value: "claude-haiku-4.5",
     author: "anthropic",
-    description:
-      "Fast, lightweight Claude model for everyday chat and quick reasoning.",
+    description: "Fast, lightweight Claude model for everyday chat and quick reasoning.",
     featured: true,
     features: ["reasoning", "smart", "fast"],
     efforts: false,
@@ -438,8 +422,7 @@ export const models: readonly ModelDefinition[] = [
     name: "Grok 4.20 Multi-Agent Beta",
     value: "grok-4.20-multi-agent-beta",
     author: "xai",
-    description:
-      "Beta Grok model for deep research with coordinated multi-agent tool use.",
+    description: "Beta Grok model for deep research with coordinated multi-agent tool use.",
     features: ["reasoning", "fast"],
     efforts: false,
   },
@@ -447,8 +430,7 @@ export const models: readonly ModelDefinition[] = [
     name: "Grok 4.20 Reasoning Beta",
     value: "grok-4.20-reasoning-beta",
     author: "xai",
-    description:
-      "Reasoning-enabled Grok 4.20 variant for agentic tool calling and harder tasks.",
+    description: "Reasoning-enabled Grok 4.20 variant for agentic tool calling and harder tasks.",
     featured: true,
     features: ["reasoning", "fast"],
     efforts: ["low", "high"],
@@ -457,8 +439,7 @@ export const models: readonly ModelDefinition[] = [
     name: "Grok 4.20 Non-Reasoning Beta",
     value: "grok-4.20-non-reasoning-beta",
     author: "xai",
-    description:
-      "Non-reasoning Grok 4.20 variant tuned for fast responses and tool use.",
+    description: "Non-reasoning Grok 4.20 variant tuned for fast responses and tool use.",
     features: ["fast"],
     efforts: false,
   },
@@ -486,16 +467,14 @@ export const models: readonly ModelDefinition[] = [
     name: "Grok 4",
     value: "grok-4",
     author: "xai",
-    description:
-      "Flagship Grok reasoning model with native tool use and real-time search.",
+    description: "Flagship Grok reasoning model with native tool use and real-time search.",
     default: false,
     features: ["reasoning"],
     efforts: false,
   },
 ];
 
-export const defaultModel =
-  models.find((model) => model.default === true) ?? models[0];
+export const defaultModel = models.find((model) => model.default === true) ?? models[0];
 
 // Google Analytics
 export const GA_ID = "G-B5H8G73JTN";
@@ -513,11 +492,7 @@ export function getModelContextWindow(modelId: string) {
 
 export function getModelTokenMultiplier(modelId: string): number {
   const multiplier = getModelDefinition(modelId)?.tokenMultiplier;
-  if (
-    typeof multiplier !== "number" ||
-    !Number.isFinite(multiplier) ||
-    multiplier < 1
-  ) {
+  if (typeof multiplier !== "number" || !Number.isFinite(multiplier) || multiplier < 1) {
     return 1;
   }
   return multiplier;
@@ -532,11 +507,7 @@ const escapeHtml = (unsafe: string) =>
     .replace(/'/g, "&#39;");
 
 const sanitizeEmailSubjectValue = (value: string, fallback: string) => {
-  const sanitized = value
-    .replaceAll(/\r|\n/g, " ")
-    .replaceAll(/\s+/g, " ")
-    .trim()
-    .slice(0, 200);
+  const sanitized = value.replaceAll(/\r|\n/g, " ").replaceAll(/\s+/g, " ").trim().slice(0, 200);
   return sanitized || fallback;
 };
 
@@ -584,18 +555,13 @@ export const emailTemplates = {
     })(),
   }),
   orgInvitation: (orgName: string, inviterName: string | null, url: string) => {
-    const sanitizedOrgName = sanitizeEmailSubjectValue(
-      orgName,
-      "your organization",
-    );
+    const sanitizedOrgName = sanitizeEmailSubjectValue(orgName, "your organization");
 
     return {
       subject: `You're invited to join ${sanitizedOrgName} on Deni AI`,
       html: (() => {
         const escapedOrg = escapeHtml(sanitizedOrgName);
-        const escapedInviter = inviterName
-          ? escapeHtml(inviterName)
-          : "Someone";
+        const escapedInviter = inviterName ? escapeHtml(inviterName) : "Someone";
         const escapedUrl = escapeHtml(url);
 
         return `

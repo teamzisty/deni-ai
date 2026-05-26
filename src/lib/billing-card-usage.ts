@@ -68,7 +68,9 @@ function getCardInfoFromPaymentMethod(
   };
 }
 
-function getCardInfoFromSubscription(subscription: Stripe.Subscription | null | undefined): CardInfo {
+function getCardInfoFromSubscription(
+  subscription: Stripe.Subscription | null | undefined,
+): CardInfo {
   if (!subscription) {
     return { fingerprint: null, funding: "unknown" };
   }
