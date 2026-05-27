@@ -10,4 +10,5 @@ export * from "./project";
 export * from "./provider-keys";
 export * from "./provider-settings";
 export * from "./share";
+export * from "./team-usage-policy";
 export * from "./usage";

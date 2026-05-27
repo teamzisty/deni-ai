@@ -3,7 +3,7 @@ import "server-only";
 import { and, eq, isNotNull, isNull, like, sql } from "drizzle-orm";
 
 import { db } from "@/db/drizzle";
-import { billing, member, usageQuota } from "@/db/schema";
+import { billing, member, teamMemberUsagePolicy, teamUsagePolicy, usageQuota } from "@/db/schema";
 import { getPlanTier } from "@/lib/billing";
 
 import { isMaxModeEligible, recordMaxModeUsage } from "./max-mode";
@@ -47,6 +47,10 @@ const GUEST_USAGE_LIMITS: Record<UsageCategory, { limit: number; unit: UsageUnit
   premium: { limit: 0, unit: "requests" },
 };
 
+export function getUsageLimitConfig(category: UsageCategory, tier: SubscriptionTier) {
+  return USAGE_LIMITS[category][tier];
+}
+
 export class UsageLimitError extends Error {
   public maxModeAvailable: boolean;
 
@@ -64,6 +68,9 @@ type TierInfo = {
   periodEnd: Date | null;
   maxModeEnabled: boolean;
   maxModeEligible: boolean;
+  maxModeMemberEnabled: boolean;
+  maxModeLimitBasic: number | null;
+  maxModeLimitPremium: number | null;
   hasVerifiedPaymentMethod: boolean;
 };
 
@@ -78,6 +85,7 @@ async function getTierInfo(userId: string, now: Date): Promise<TierInfo> {
   // 1. Check personal billing (where organizationId is NULL)
   const [record] = await db
     .select({
+      organizationId: billing.organizationId,
       planId: billing.planId,
       status: billing.status,
       currentPeriodEnd: billing.currentPeriodEnd,
@@ -93,6 +101,7 @@ async function getTierInfo(userId: string, now: Date): Promise<TierInfo> {
   // 2. Check if user belongs to any org with an active team plan
   const teamRecords = await db
     .select({
+      organizationId: billing.organizationId,
       planId: billing.planId,
       status: billing.status,
       currentPeriodEnd: billing.currentPeriodEnd,
@@ -125,13 +134,51 @@ async function getTierInfo(userId: string, now: Date): Promise<TierInfo> {
     const teamPlanId = teamRecord.planId;
     const teamStatus = teamRecord.status;
     const maxModeEligible = isMaxModeEligible(teamPlanId) && teamStatus === "active";
+    const [memberPolicy, defaultPolicy] = teamRecord.organizationId
+      ? await Promise.all([
+          db
+            .select({
+              maxModeEnabled: teamMemberUsagePolicy.maxModeEnabled,
+              maxModeLimitBasic: teamMemberUsagePolicy.maxModeLimitBasic,
+              maxModeLimitPremium: teamMemberUsagePolicy.maxModeLimitPremium,
+            })
+            .from(teamMemberUsagePolicy)
+            .where(
+              and(
+                eq(teamMemberUsagePolicy.organizationId, teamRecord.organizationId),
+                eq(teamMemberUsagePolicy.userId, userId),
+              ),
+            )
+            .limit(1)
+            .then((rows) => rows[0]),
+          db
+            .select({
+              defaultMaxModeEnabled: teamUsagePolicy.defaultMaxModeEnabled,
+              defaultMaxModeLimitBasic: teamUsagePolicy.defaultMaxModeLimitBasic,
+              defaultMaxModeLimitPremium: teamUsagePolicy.defaultMaxModeLimitPremium,
+            })
+            .from(teamUsagePolicy)
+            .where(eq(teamUsagePolicy.organizationId, teamRecord.organizationId))
+            .limit(1)
+            .then((rows) => rows[0]),
+        ])
+      : [];
+
+    const memberMaxModeEnabled =
+      memberPolicy?.maxModeEnabled ?? defaultPolicy?.defaultMaxModeEnabled ?? true;
+
     return {
       tier: "pro",
       planId: teamPlanId,
       status: teamStatus ?? null,
       periodEnd: teamRecord.currentPeriodEnd ?? null,
-      maxModeEnabled: maxModeEligible && teamRecord.maxModeEnabled,
-      maxModeEligible,
+      maxModeEnabled: maxModeEligible && teamRecord.maxModeEnabled && memberMaxModeEnabled,
+      maxModeEligible: maxModeEligible && memberMaxModeEnabled,
+      maxModeMemberEnabled: memberMaxModeEnabled,
+      maxModeLimitBasic:
+        memberPolicy?.maxModeLimitBasic ?? defaultPolicy?.defaultMaxModeLimitBasic ?? null,
+      maxModeLimitPremium:
+        memberPolicy?.maxModeLimitPremium ?? defaultPolicy?.defaultMaxModeLimitPremium ?? null,
       hasVerifiedPaymentMethod,
     };
   }
@@ -145,6 +192,9 @@ async function getTierInfo(userId: string, now: Date): Promise<TierInfo> {
       periodEnd: getDefaultPeriodEnd(now),
       maxModeEnabled: false,
       maxModeEligible: false,
+      maxModeMemberEnabled: true,
+      maxModeLimitBasic: null,
+      maxModeLimitPremium: null,
       hasVerifiedPaymentMethod,
     };
   }
@@ -164,6 +214,9 @@ async function getTierInfo(userId: string, now: Date): Promise<TierInfo> {
       periodEnd: getDefaultPeriodEnd(now),
       maxModeEnabled: false,
       maxModeEligible: false,
+      maxModeMemberEnabled: true,
+      maxModeLimitBasic: null,
+      maxModeLimitPremium: null,
       hasVerifiedPaymentMethod,
     };
   }
@@ -187,6 +240,9 @@ async function getTierInfo(userId: string, now: Date): Promise<TierInfo> {
     periodEnd: record.currentPeriodEnd ?? null,
     maxModeEnabled: maxModeEligible && record.maxModeEnabled,
     maxModeEligible,
+    maxModeMemberEnabled: true,
+    maxModeLimitBasic: null,
+    maxModeLimitPremium: null,
     hasVerifiedPaymentMethod,
   };
 }
@@ -403,6 +459,14 @@ export async function consumeUsage({
 
   if (isLimitReached) {
     if (tierInfo.maxModeEnabled) {
+      const maxModeLimit =
+        category === "basic" ? tierInfo.maxModeLimitBasic : tierInfo.maxModeLimitPremium;
+      const currentMaxModeUsage = Math.max(state.used - limit, 0);
+
+      if (maxModeLimit !== null && currentMaxModeUsage + amount > maxModeLimit) {
+        throw new UsageLimitError("Usage limit reached for your plan.", tierInfo.maxModeEligible);
+      }
+
       await recordMaxModeUsage(userId, category, amount);
 
       await upsertUsageRecord({

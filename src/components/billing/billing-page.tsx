@@ -90,6 +90,10 @@ function useFormatCurrencyMinor() {
     formatMinorCurrency(amountMinor, currency, { currencyDisplay: "code" }, locale);
 }
 
+function formatDollarFromCents(cents: number) {
+  return `$${(cents / 100).toFixed(2)}`;
+}
+
 function usePlanIntervalLabel() {
   const t = useExtracted();
   return (planId: BillingPlanId) => {
@@ -846,24 +850,34 @@ function BillingPageContent() {
           <CardContent className="space-y-4">
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="rounded-lg border border-border p-4">
-                <div className="text-sm text-muted-foreground">{t("Basic model messages")}</div>
+                <div className="text-sm text-muted-foreground">{t("Basic model tokens")}</div>
                 <div className="mt-1 flex items-baseline gap-2">
                   <span className="text-2xl font-semibold">
-                    {maxModeQuery.data?.usageBasic ?? 0}
+                    {formatCompactUsageValue(maxModeQuery.data?.usageBasic ?? 0)}
                   </span>
                   <span className="text-sm text-muted-foreground">
-                    × ${(maxModeQuery.data?.pricing.basic ?? 1) / 100}
+                    {t("{price} / {tokens} tokens", {
+                      price: formatDollarFromCents(maxModeQuery.data?.pricing.basic ?? 1),
+                      tokens: formatCompactUsageValue(
+                        maxModeQuery.data?.pricing.unitTokens ?? 1_000,
+                      ),
+                    })}
                   </span>
                 </div>
               </div>
               <div className="rounded-lg border border-border p-4">
-                <div className="text-sm text-muted-foreground">{t("Premium model messages")}</div>
+                <div className="text-sm text-muted-foreground">{t("Premium model tokens")}</div>
                 <div className="mt-1 flex items-baseline gap-2">
                   <span className="text-2xl font-semibold">
-                    {maxModeQuery.data?.usagePremium ?? 0}
+                    {formatCompactUsageValue(maxModeQuery.data?.usagePremium ?? 0)}
                   </span>
                   <span className="text-sm text-muted-foreground">
-                    × ${(maxModeQuery.data?.pricing.premium ?? 5) / 100}
+                    {t("{price} / {tokens} tokens", {
+                      price: formatDollarFromCents(maxModeQuery.data?.pricing.premium ?? 5),
+                      tokens: formatCompactUsageValue(
+                        maxModeQuery.data?.pricing.unitTokens ?? 1_000,
+                      ),
+                    })}
                   </span>
                 </div>
               </div>
@@ -876,7 +890,7 @@ function BillingPageContent() {
             </div>
             <p className="text-xs text-muted-foreground">
               {t(
-                "Max Mode charges are billed at the end of each billing cycle. Pricing: $0.01 per basic message, $0.05 per premium message.",
+                "Max Mode charges are billed at the end of each billing cycle. Pricing: $0.01 per 1K basic tokens, $0.05 per 1K premium tokens.",
               )}
             </p>
           </CardContent>
