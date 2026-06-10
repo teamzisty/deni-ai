@@ -151,27 +151,23 @@ export default function SettingsWrapper({ children }: { children: React.ReactNod
               {usages?.map((usageItem) => {
                 const maxModeEnabled = usage?.maxModeEnabled ?? false;
                 const unitLabel = usageItem.unit === "tokens" ? t("tokens") : t("requests");
+                const hasLimit =
+                  !maxModeEnabled && usageItem.limit !== null && usageItem.limit > 0;
+                const usedPercent = hasLimit
+                  ? Math.min((usageItem.used / (usageItem.limit ?? 1)) * 100, 100)
+                  : 0;
+                const remainingPercent = Math.max(100 - usedPercent, 0);
                 const summaryLabel = maxModeEnabled
                   ? `${formatCompactUsageValue(usageItem.used)} ${unitLabel}`
-                  : usageItem.limit === null
-                    ? `${formatCompactUsageValue(usageItem.used)} ${unitLabel}`
-                    : `${formatCompactUsageValue(usageItem.used)}/${formatCompactUsageValue(usageItem.limit)} ${unitLabel}`;
-                const progress = maxModeEnabled
-                  ? 0
-                  : usageItem.limit === null || usageItem.limit === 0
-                    ? 0
-                    : Math.min((usageItem.used / usageItem.limit) * 100, 100);
+                  : hasLimit
+                    ? t("{percent}% used", { percent: usedPercent.toFixed(1) })
+                    : `${formatCompactUsageValue(usageItem.used)} ${unitLabel}`;
+                const progress = hasLimit ? usedPercent : 0;
                 const remainingLabel = maxModeEnabled
                   ? t("Unlimited")
-                  : usageItem.limit === null
-                    ? t("Unlimited")
-                    : usageItem.unit === "tokens"
-                      ? t("{count} tokens remaining", {
-                          count: Math.max(usageItem.remaining ?? 0, 0).toLocaleString(),
-                        })
-                      : t("{count} remaining", {
-                          count: Math.max(usageItem.remaining ?? 0, 0).toLocaleString(),
-                        });
+                  : hasLimit
+                    ? t("{percent}% remaining", { percent: remainingPercent.toFixed(1) })
+                    : t("Unlimited");
                 const periodEndLabel = usageItem.periodEnd
                   ? new Intl.DateTimeFormat(undefined, {
                       month: "short",

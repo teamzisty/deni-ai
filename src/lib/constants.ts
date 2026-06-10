@@ -1,4 +1,4 @@
-export type Author = "openai" | "anthropic" | "google" | "xai" | "openai_compatible";
+export type Author = "openai" | "anthropic" | "google" | "xai";
 
 export const reasoningEffortValues = [
   "none",
@@ -60,7 +60,6 @@ export enum AuthorEnum {
   anthropic = "Anthropic",
   google = "Google",
   xai = "xAI",
-  openai_compatible = "OpenAI-compatible",
 }
 
 export type Models = {

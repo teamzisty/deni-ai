@@ -4,7 +4,6 @@ import { boolean, pgTable, text, timestamp, uniqueIndex } from "drizzle-orm/pg-c
 import { user } from "./auth-schema";
 
 export type BuiltinProviderId = "openai" | "anthropic" | "google" | "xai";
-export type OpenAICompatibleApiStyle = "chat" | "responses";
 
 export const providerSetting = pgTable(
   "provider_setting",

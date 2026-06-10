@@ -1,7 +1,19 @@
 "use client";
 
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Crown, Mail, MoreHorizontal, Plus, Trash2, UserPlus, Users } from "lucide-react";
+import {
+  Crown,
+  Download,
+  History,
+  Mail,
+  MoreHorizontal,
+  Plus,
+  ShieldCheck,
+  Trash2,
+  UserPlus,
+  Users,
+  Zap,
+} from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useExtracted } from "next-intl";
 import { startTransition, Suspense, useEffect, useState } from "react";
@@ -44,6 +56,7 @@ import {
 } from "@/components/ui/select";
 import { SettingsPageShell } from "@/components/settings-page-shell";
 import { Spinner } from "@/components/ui/spinner";
+import { Switch } from "@/components/ui/switch";
 import { authClient } from "@/lib/auth-client";
 import { useBillingPlanCopy } from "@/lib/billing-plan-copy";
 import { formatMinorCurrency } from "@/lib/currency";
@@ -116,6 +129,26 @@ function formatCurrency(amount: number | null, currency: string | null) {
   });
 }
 
+function formatTokenLimit(value: number | null) {
+  if (value === null) return "";
+  return new Intl.NumberFormat(undefined).format(value);
+}
+
+function parseTokenLimit(value: string) {
+  const normalized = value.replace(/[,_\s]/g, "");
+  if (!normalized) return null;
+  const parsed = Number(normalized);
+  if (!Number.isInteger(parsed) || parsed < 0) {
+    return undefined;
+  }
+  return parsed;
+}
+
+function escapeCsvCell(value: string | number | null | undefined) {
+  const text = value === null || value === undefined ? "" : String(value);
+  return `"${text.replaceAll('"', '""')}"`;
+}
+
 function TeamSettingsContent() {
   const t = useExtracted();
   const { push } = useRouter();
@@ -166,6 +199,10 @@ function TeamSettingsContent() {
   const createTeamCheckout = trpc.organization.createTeamCheckoutSession.useMutation();
   const cancelSub = trpc.organization.cancelTeamSubscription.useMutation();
   const resumeSub = trpc.organization.resumeTeamSubscription.useMutation();
+  const updateTeamMaxMode = trpc.organization.updateTeamMaxModeEnabled.useMutation();
+  const updateTeamMaxModeDefaultPolicy =
+    trpc.organization.updateTeamMaxModeDefaultPolicy.useMutation();
+  const updateMemberMaxModePolicy = trpc.organization.updateTeamMemberMaxModePolicy.useMutation();
   const utils = trpc.useUtils();
   const activeOrganizationId = session.data?.session?.activeOrganizationId ?? null;
   const organizations = organizationsQuery.data ?? [];
@@ -174,6 +211,10 @@ function TeamSettingsContent() {
   const pendingInvitations = invitations.filter((inv) => inv.status === "pending");
   const currentUserRole = members.find((member) => member.userId === currentUserId)?.role ?? null;
   const teamBillingQuery = trpc.organization.teamBillingStatus.useQuery(
+    { organizationId: activeOrg?.id ?? "" },
+    { enabled: Boolean(activeOrg?.id) && currentUserRole === "owner" },
+  );
+  const teamMaxModeQuery = trpc.organization.teamMaxModeSettings.useQuery(
     { organizationId: activeOrg?.id ?? "" },
     { enabled: Boolean(activeOrg?.id) && currentUserRole === "owner" },
   );
@@ -384,6 +425,156 @@ function TeamSettingsContent() {
       console.error("Failed to resume", error);
       toast.error(t("Failed to resume subscription"));
     }
+  }
+
+  async function handleTeamMaxModeToggle(enabled: boolean) {
+    if (!activeOrg) return;
+    try {
+      await updateTeamMaxMode.mutateAsync({ organizationId: activeOrg.id, enabled });
+      toast.success(enabled ? t("Max Mode enabled.") : t("Max Mode disabled."));
+      await Promise.all([
+        utils.organization.teamMaxModeSettings.invalidate({ organizationId: activeOrg.id }),
+        utils.billing.maxModeStatus.invalidate(),
+        utils.billing.usage.invalidate(),
+      ]);
+    } catch (error) {
+      console.error("Failed to update team Max Mode", error);
+      toast.error(error instanceof Error ? error.message : t("Failed to update Max Mode."));
+    }
+  }
+
+  async function updateMemberPolicy(input: {
+    userId: string;
+    maxModeEnabled: boolean;
+    maxModeLimitBasic: number | null;
+    maxModeLimitPremium: number | null;
+  }) {
+    if (!activeOrg) return;
+    try {
+      await updateMemberMaxModePolicy.mutateAsync({
+        organizationId: activeOrg.id,
+        ...input,
+      });
+      await Promise.all([
+        utils.organization.teamMaxModeSettings.invalidate({ organizationId: activeOrg.id }),
+        utils.billing.maxModeStatus.invalidate(),
+        utils.billing.usage.invalidate(),
+      ]);
+      toast.success(t("Member Max Mode policy updated."));
+    } catch (error) {
+      console.error("Failed to update member Max Mode policy", error);
+      toast.error(error instanceof Error ? error.message : t("Failed to update Max Mode."));
+    }
+  }
+
+  async function updateDefaultPolicy(input: {
+    maxModeEnabled: boolean;
+    maxModeLimitBasic: number | null;
+    maxModeLimitPremium: number | null;
+  }) {
+    if (!activeOrg) return;
+    try {
+      await updateTeamMaxModeDefaultPolicy.mutateAsync({
+        organizationId: activeOrg.id,
+        ...input,
+      });
+      await utils.organization.teamMaxModeSettings.invalidate({ organizationId: activeOrg.id });
+      toast.success(t("Default Max Mode policy updated."));
+    } catch (error) {
+      console.error("Failed to update default Max Mode policy", error);
+      toast.error(error instanceof Error ? error.message : t("Failed to update Max Mode."));
+    }
+  }
+
+  async function handleDefaultLimitChange({
+    maxModeEnabled,
+    maxModeLimitBasic,
+    maxModeLimitPremium,
+    category,
+    value,
+  }: {
+    maxModeEnabled: boolean;
+    maxModeLimitBasic: number | null;
+    maxModeLimitPremium: number | null;
+    category: "basic" | "premium";
+    value: string;
+  }) {
+    const parsedLimit = parseTokenLimit(value);
+    if (parsedLimit === undefined) {
+      toast.error(t("Enter a whole number or leave the field blank."));
+      return;
+    }
+
+    await updateDefaultPolicy({
+      maxModeEnabled,
+      maxModeLimitBasic: category === "basic" ? parsedLimit : maxModeLimitBasic,
+      maxModeLimitPremium: category === "premium" ? parsedLimit : maxModeLimitPremium,
+    });
+  }
+
+  async function handleMemberLimitChange({
+    userId,
+    maxModeEnabled,
+    maxModeLimitBasic,
+    maxModeLimitPremium,
+    category,
+    value,
+  }: {
+    userId: string;
+    maxModeEnabled: boolean;
+    maxModeLimitBasic: number | null;
+    maxModeLimitPremium: number | null;
+    category: "basic" | "premium";
+    value: string;
+  }) {
+    const parsedLimit = parseTokenLimit(value);
+    if (parsedLimit === undefined) {
+      toast.error(t("Enter a whole number or leave the field blank."));
+      return;
+    }
+
+    await updateMemberPolicy({
+      userId,
+      maxModeEnabled,
+      maxModeLimitBasic: category === "basic" ? parsedLimit : maxModeLimitBasic,
+      maxModeLimitPremium: category === "premium" ? parsedLimit : maxModeLimitPremium,
+    });
+  }
+
+  function handleExportMaxModeCsv() {
+    const settings = teamMaxModeQuery.data;
+    if (!settings || !activeOrg) return;
+
+    const headers = [
+      "name",
+      "email",
+      "role",
+      "max_mode_enabled",
+      "basic_token_limit",
+      "premium_token_limit",
+      "basic_tokens_used",
+      "premium_tokens_used",
+    ];
+    const rows = settings.members.map((memberPolicy) => [
+      memberPolicy.name ?? "",
+      memberPolicy.email,
+      memberPolicy.role,
+      memberPolicy.maxModeEnabled ? "enabled" : "disabled",
+      memberPolicy.maxModeLimitBasic ?? "",
+      memberPolicy.maxModeLimitPremium ?? "",
+      memberPolicy.maxModeUsageBasic,
+      memberPolicy.maxModeUsagePremium,
+    ]);
+    const csv = [headers, ...rows]
+      .map((row) => row.map((cell) => escapeCsvCell(cell)).join(","))
+      .join("\n");
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const anchor = document.createElement("a");
+    anchor.href = url;
+    anchor.download = `${activeOrg.slug ?? activeOrg.id}-max-mode.csv`;
+    anchor.click();
+    URL.revokeObjectURL(url);
   }
 
   const isLoading =
@@ -675,6 +866,308 @@ function TeamSettingsContent() {
                   </Card>
                 )}
               </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
+
+      {isOwner && (
+        <Card>
+          <CardHeader>
+            <div className="flex items-start justify-between gap-4">
+              <div className="space-y-1">
+                <CardTitle className="flex items-center gap-2 text-base">
+                  <Zap className="size-4 text-primary" />
+                  {t("Team Max Mode")}
+                </CardTitle>
+                <CardDescription>
+                  {t("Set the team-wide Max Mode switch and per-member overage token limits.")}
+                </CardDescription>
+              </div>
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  disabled={!teamMaxModeQuery.data}
+                  onClick={handleExportMaxModeCsv}
+                >
+                  <Download className="size-3.5" />
+                  {t("Export CSV")}
+                </Button>
+                <Switch
+                  aria-label={t("Enable Max Mode for the team")}
+                  checked={teamMaxModeQuery.data?.enabled ?? false}
+                  disabled={
+                    teamMaxModeQuery.isLoading ||
+                    !teamMaxModeQuery.data?.eligible ||
+                    updateTeamMaxMode.isPending
+                  }
+                  onCheckedChange={handleTeamMaxModeToggle}
+                />
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {teamMaxModeQuery.isLoading ? (
+              <Spinner />
+            ) : (
+              <>
+                <div className="grid gap-3 sm:grid-cols-3">
+                  <div className="rounded-lg border p-3">
+                    <p className="text-xs text-muted-foreground">{t("Status")}</p>
+                    <p className="mt-1 text-sm font-medium">
+                      {teamMaxModeQuery.data?.enabled ? t("Enabled") : t("Disabled")}
+                    </p>
+                  </div>
+                  <div className="rounded-lg border p-3">
+                    <p className="text-xs text-muted-foreground">{t("Basic Max Mode usage")}</p>
+                    <p className="mt-1 text-sm font-medium">
+                      {new Intl.NumberFormat(undefined).format(
+                        teamMaxModeQuery.data?.usageBasic ?? 0,
+                      )}{" "}
+                      {t("tokens")}
+                    </p>
+                  </div>
+                  <div className="rounded-lg border p-3">
+                    <p className="text-xs text-muted-foreground">{t("Premium Max Mode usage")}</p>
+                    <p className="mt-1 text-sm font-medium">
+                      {new Intl.NumberFormat(undefined).format(
+                        teamMaxModeQuery.data?.usagePremium ?? 0,
+                      )}{" "}
+                      {t("tokens")}
+                    </p>
+                  </div>
+                </div>
+
+                {teamMaxModeQuery.data?.defaultPolicy && (
+                  <div className="rounded-lg border bg-muted/20 p-3">
+                    <div className="mb-3 flex items-center justify-between gap-3">
+                      <div>
+                        <p className="text-sm font-medium">{t("Default member policy")}</p>
+                        <p className="text-xs text-muted-foreground">
+                          {t("Applied to new members and members without custom settings.")}
+                        </p>
+                      </div>
+                      <Switch
+                        aria-label={t("Enable Max Mode by default")}
+                        checked={teamMaxModeQuery.data.defaultPolicy.maxModeEnabled}
+                        disabled={
+                          teamMaxModeQuery.isLoading || updateTeamMaxModeDefaultPolicy.isPending
+                        }
+                        onCheckedChange={(checked) =>
+                          updateDefaultPolicy({
+                            maxModeEnabled: checked,
+                            maxModeLimitBasic:
+                              teamMaxModeQuery.data?.defaultPolicy.maxModeLimitBasic ?? null,
+                            maxModeLimitPremium:
+                              teamMaxModeQuery.data?.defaultPolicy.maxModeLimitPremium ?? null,
+                          })
+                        }
+                      />
+                    </div>
+                    <div className="grid gap-3 sm:grid-cols-2">
+                      <div className="space-y-1">
+                        <Label>{t("Default basic token limit")}</Label>
+                        <Input
+                          className="h-8"
+                          defaultValue={formatTokenLimit(
+                            teamMaxModeQuery.data.defaultPolicy.maxModeLimitBasic,
+                          )}
+                          disabled={
+                            teamMaxModeQuery.isLoading || updateTeamMaxModeDefaultPolicy.isPending
+                          }
+                          inputMode="numeric"
+                          placeholder={t("Unlimited")}
+                          onBlur={(event) =>
+                            handleDefaultLimitChange({
+                              maxModeEnabled:
+                                teamMaxModeQuery.data?.defaultPolicy.maxModeEnabled ?? true,
+                              maxModeLimitBasic:
+                                teamMaxModeQuery.data?.defaultPolicy.maxModeLimitBasic ?? null,
+                              maxModeLimitPremium:
+                                teamMaxModeQuery.data?.defaultPolicy.maxModeLimitPremium ?? null,
+                              category: "basic",
+                              value: event.currentTarget.value,
+                            })
+                          }
+                        />
+                      </div>
+                      <div className="space-y-1">
+                        <Label>{t("Default premium token limit")}</Label>
+                        <Input
+                          className="h-8"
+                          defaultValue={formatTokenLimit(
+                            teamMaxModeQuery.data.defaultPolicy.maxModeLimitPremium,
+                          )}
+                          disabled={
+                            teamMaxModeQuery.isLoading || updateTeamMaxModeDefaultPolicy.isPending
+                          }
+                          inputMode="numeric"
+                          placeholder={t("Unlimited")}
+                          onBlur={(event) =>
+                            handleDefaultLimitChange({
+                              maxModeEnabled:
+                                teamMaxModeQuery.data?.defaultPolicy.maxModeEnabled ?? true,
+                              maxModeLimitBasic:
+                                teamMaxModeQuery.data?.defaultPolicy.maxModeLimitBasic ?? null,
+                              maxModeLimitPremium:
+                                teamMaxModeQuery.data?.defaultPolicy.maxModeLimitPremium ?? null,
+                              category: "premium",
+                              value: event.currentTarget.value,
+                            })
+                          }
+                        />
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                <div className="space-y-2">
+                  <div className="hidden grid-cols-[minmax(0,1fr)_88px_120px_120px] gap-3 px-3 text-xs font-medium text-muted-foreground md:grid">
+                    <span>{t("Member")}</span>
+                    <span>{t("Enabled")}</span>
+                    <span>{t("Basic token limit")}</span>
+                    <span>{t("Premium token limit")}</span>
+                  </div>
+                  {teamMaxModeQuery.data?.members.map((memberPolicy) => (
+                    <div
+                      key={memberPolicy.userId}
+                      className="grid grid-cols-1 items-center gap-3 rounded-lg border p-3 md:grid-cols-[minmax(0,1fr)_88px_120px_120px]"
+                    >
+                      <div className="min-w-0">
+                        <p className="truncate text-sm font-medium">
+                          {memberPolicy.name || memberPolicy.email}
+                        </p>
+                        <p className="truncate text-xs text-muted-foreground">
+                          {memberPolicy.email}
+                        </p>
+                      </div>
+                      <Switch
+                        aria-label={t("Enable Max Mode for {name}", {
+                          name: memberPolicy.name || memberPolicy.email,
+                        })}
+                        checked={memberPolicy.maxModeEnabled}
+                        disabled={teamMaxModeQuery.isLoading || updateMemberMaxModePolicy.isPending}
+                        onCheckedChange={(checked) =>
+                          updateMemberPolicy({
+                            userId: memberPolicy.userId,
+                            maxModeEnabled: checked,
+                            maxModeLimitBasic: memberPolicy.maxModeLimitBasic,
+                            maxModeLimitPremium: memberPolicy.maxModeLimitPremium,
+                          })
+                        }
+                      />
+                      <div className="space-y-1">
+                        <Input
+                          aria-label={t("Basic Max Mode token limit for {name}", {
+                            name: memberPolicy.name || memberPolicy.email,
+                          })}
+                          className="h-8"
+                          defaultValue={formatTokenLimit(memberPolicy.maxModeLimitBasic)}
+                          disabled={
+                            teamMaxModeQuery.isLoading || updateMemberMaxModePolicy.isPending
+                          }
+                          inputMode="numeric"
+                          placeholder={t("Unlimited")}
+                          onBlur={(event) =>
+                            handleMemberLimitChange({
+                              userId: memberPolicy.userId,
+                              maxModeEnabled: memberPolicy.maxModeEnabled,
+                              maxModeLimitBasic: memberPolicy.maxModeLimitBasic,
+                              maxModeLimitPremium: memberPolicy.maxModeLimitPremium,
+                              category: "basic",
+                              value: event.currentTarget.value,
+                            })
+                          }
+                        />
+                        <p className="text-[11px] text-muted-foreground">
+                          {t("Used {count}", {
+                            count: new Intl.NumberFormat(undefined).format(
+                              memberPolicy.maxModeUsageBasic,
+                            ),
+                          })}
+                        </p>
+                      </div>
+                      <div className="space-y-1">
+                        <Input
+                          aria-label={t("Premium Max Mode token limit for {name}", {
+                            name: memberPolicy.name || memberPolicy.email,
+                          })}
+                          className="h-8"
+                          defaultValue={formatTokenLimit(memberPolicy.maxModeLimitPremium)}
+                          disabled={
+                            teamMaxModeQuery.isLoading || updateMemberMaxModePolicy.isPending
+                          }
+                          inputMode="numeric"
+                          placeholder={t("Unlimited")}
+                          onBlur={(event) =>
+                            handleMemberLimitChange({
+                              userId: memberPolicy.userId,
+                              maxModeEnabled: memberPolicy.maxModeEnabled,
+                              maxModeLimitBasic: memberPolicy.maxModeLimitBasic,
+                              maxModeLimitPremium: memberPolicy.maxModeLimitPremium,
+                              category: "premium",
+                              value: event.currentTarget.value,
+                            })
+                          }
+                        />
+                        <p className="text-[11px] text-muted-foreground">
+                          {t("Used {count}", {
+                            count: new Intl.NumberFormat(undefined).format(
+                              memberPolicy.maxModeUsagePremium,
+                            ),
+                          })}
+                        </p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                <div className="flex items-start gap-2 rounded-lg border bg-muted/30 p-3 text-xs text-muted-foreground">
+                  <ShieldCheck className="mt-0.5 size-3.5 shrink-0" />
+                  <p>
+                    {t(
+                      "Blank member limits allow unlimited Max Mode token overage while the team switch is enabled.",
+                    )}
+                  </p>
+                </div>
+                {teamMaxModeQuery.data?.auditLog.length ? (
+                  <div className="space-y-2 rounded-lg border p-3">
+                    <div className="flex items-center gap-2 text-sm font-medium">
+                      <History className="size-3.5 text-muted-foreground" />
+                      {t("Recent policy changes")}
+                    </div>
+                    <div className="space-y-2">
+                      {teamMaxModeQuery.data.auditLog.map((entry) => {
+                        const actionLabel =
+                          entry.action === "max_mode_enabled"
+                            ? t("Team Max Mode enabled")
+                            : entry.action === "max_mode_disabled"
+                              ? t("Team Max Mode disabled")
+                              : entry.action === "default_policy_updated"
+                                ? t("Default policy updated")
+                                : t("Member policy updated");
+
+                        return (
+                          <div
+                            key={entry.id}
+                            className="flex items-center justify-between gap-3 text-xs"
+                          >
+                            <span className="text-muted-foreground">{actionLabel}</span>
+                            <span className="shrink-0 text-muted-foreground">
+                              {new Intl.DateTimeFormat(undefined, {
+                                month: "short",
+                                day: "numeric",
+                                hour: "2-digit",
+                                minute: "2-digit",
+                              }).format(new Date(entry.createdAt))}
+                            </span>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                ) : null}
+              </>
             )}
           </CardContent>
         </Card>

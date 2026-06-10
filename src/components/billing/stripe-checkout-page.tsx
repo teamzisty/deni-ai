@@ -9,7 +9,7 @@ import {
 } from "@stripe/react-stripe-js/checkout";
 import type { StripeCheckoutValue } from "@stripe/react-stripe-js/checkout";
 import type { Appearance, Stripe } from "@stripe/stripe-js";
-import { ArrowLeft, ShieldCheck, Tag, X } from "lucide-react";
+import { ArrowLeft, Clock, ReceiptText, ShieldCheck, Sparkles, Tag, X } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useExtracted, useLocale } from "next-intl";
@@ -209,6 +209,90 @@ function getPlanIntervalValue(planId: BillingPlanId | null | undefined) {
   return planId.endsWith("_yearly") ? "yearly" : "monthly";
 }
 
+function calculateYearlySavingsPercent(
+  yearlyPlan: ClientPlan | null | undefined,
+  monthlyPlan: ClientPlan | null | undefined,
+) {
+  if (
+    !yearlyPlan?.amount ||
+    !monthlyPlan?.amount ||
+    yearlyPlan.currency !== monthlyPlan.currency ||
+    monthlyPlan.amount <= 0
+  ) {
+    return 0;
+  }
+
+  return Math.max(
+    0,
+    Math.round(((monthlyPlan.amount * 12 - yearlyPlan.amount) / (monthlyPlan.amount * 12)) * 100),
+  );
+}
+
+function CheckoutAssurancePanel({
+  isRecurring,
+  hasTrial,
+  interval,
+}: {
+  isRecurring: boolean;
+  hasTrial: boolean;
+  interval: "monthly" | "yearly" | "lifetime" | null;
+}) {
+  const t = useExtracted();
+
+  const items = [
+    {
+      icon: ShieldCheck,
+      label: t("Secure payment"),
+      description: t("Payment details are handled by Stripe and are not stored by Deni AI."),
+    },
+    {
+      icon: Sparkles,
+      label: hasTrial ? t("Trial starts first") : t("Access updates after checkout"),
+      description: hasTrial
+        ? t("Your upgraded limits are available during the trial.")
+        : t("Your plan and usage limits refresh after checkout completes."),
+    },
+    {
+      icon: isRecurring ? Clock : ReceiptText,
+      label: isRecurring ? t("Manage anytime") : t("No renewal"),
+      description: isRecurring
+        ? t("You can change or cancel from the billing page after subscribing.")
+        : t("This purchase does not create a recurring subscription."),
+    },
+  ];
+
+  return (
+    <div className="rounded-lg border border-border/80 bg-muted/30 p-4">
+      <div className="flex items-center justify-between gap-3">
+        <div className="text-sm font-medium">{t("Before you complete checkout")}</div>
+        {interval === "yearly" && (
+          <div className="rounded-full bg-emerald-500/10 px-2.5 py-1 text-xs font-medium text-emerald-700 dark:text-emerald-300">
+            {t("Yearly value")}
+          </div>
+        )}
+      </div>
+      <div className="mt-4 space-y-3">
+        {items.map((item) => {
+          const Icon = item.icon;
+          return (
+            <div key={item.label} className="flex gap-3">
+              <div className="flex size-8 shrink-0 items-center justify-center rounded-md border border-border/70 bg-background">
+                <Icon className="size-4 text-muted-foreground" />
+              </div>
+              <div>
+                <div className="text-sm font-medium leading-snug">{item.label}</div>
+                <p className="mt-0.5 text-xs leading-relaxed text-muted-foreground">
+                  {item.description}
+                </p>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
 function CheckoutSummary({
   checkout,
   planId,
@@ -248,16 +332,7 @@ function CheckoutSummary({
         )
       : null;
   const savingsPercent =
-    interval === "yearly" &&
-    plan?.amount &&
-    monthlyPlan?.amount &&
-    plan.currency === monthlyPlan.currency &&
-    monthlyPlan.amount > 0
-      ? Math.max(
-          0,
-          Math.round(((monthlyPlan.amount * 12 - plan.amount) / (monthlyPlan.amount * 12)) * 100),
-        )
-      : 0;
+    interval === "yearly" ? calculateYearlySavingsPercent(plan, monthlyPlan) : 0;
 
   return (
     <Card className="not-first:border-border/80 bg-card/80 shadow-sm backdrop-blur-sm">
@@ -695,6 +770,11 @@ function CheckoutForm({
             {activeCheckout.recurring ? t("Cancel anytime") : t("Pay once. Keep access.")}
           </span>
         </Button>
+        <CheckoutAssurancePanel
+          isRecurring={Boolean(activeCheckout.recurring)}
+          hasTrial={Boolean(plan?.trialDays)}
+          interval={getPlanIntervalValue(planId)}
+        />
       </div>
     </div>
   );

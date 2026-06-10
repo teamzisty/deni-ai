@@ -8,7 +8,6 @@ type ProviderSetting = {
   provider: string;
   preferByok: boolean;
   baseUrl: string | null;
-  apiStyle: string;
 };
 
 export function useUsageStatus(params: {
@@ -46,20 +45,12 @@ export function useUsageStatus(params: {
   }, [remainingUsage, usageLimit]);
 
   const selectedProvider = selectedModel?.author ?? null;
-  const openAiCompatSetting = providerSettings.get("openai_compatible");
-  const openAiCompatReady =
-    providerKeys.has("openai_compatible") && Boolean(openAiCompatSetting?.baseUrl);
 
   const isByokActive = (() => {
     if (!selectedProvider) return false;
-    if (selectedProvider === "openai_compatible") {
-      return openAiCompatReady;
-    }
     const prefer = providerSettings.get(selectedProvider)?.preferByok ?? false;
     return prefer && providerKeys.has(selectedProvider);
   })();
-
-  const isByokMissingConfig = selectedProvider === "openai_compatible" && !openAiCompatReady;
 
   const maxModeEnabled = usageQuery.data?.maxModeEnabled ?? false;
   const isUsageLow =
@@ -90,7 +81,7 @@ export function useUsageStatus(params: {
   const usageUnitLabel = usageUnit === "tokens" ? t("tokens") : t("requests");
   const maxModeEligible = usageQuery.data?.maxModeEligible ?? false;
   const canEnableMaxMode = maxModeEligible && !maxModeEnabled && isUsageBlocked;
-  const isSubmitBlocked = (isUsageBlocked && !maxModeEnabled) || isByokMissingConfig;
+  const isSubmitBlocked = isUsageBlocked && !maxModeEnabled;
 
   const enableMaxMode = trpc.billing.enableMaxMode.useMutation({
     onSuccess: () => {
@@ -103,7 +94,6 @@ export function useUsageStatus(params: {
     selectedModel,
     usageTier,
     isByokActive,
-    isByokMissingConfig,
     isUsageLow,
     isUsageBlocked,
     canEnableMaxMode,

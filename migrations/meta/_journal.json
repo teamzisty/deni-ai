@@ -218,6 +218,34 @@
       "when": 1779612614349,
       "tag": "0030_flippant_solo",
       "breakpoints": true
+    },
+    {
+      "idx": 31,
+      "version": "7",
+      "when": 1779786219607,
+      "tag": "0031_lumpy_flatman",
+      "breakpoints": true
+    },
+    {
+      "idx": 32,
+      "version": "7",
+      "when": 1779786714062,
+      "tag": "0032_tiresome_tarantula",
+      "breakpoints": true
+    },
+    {
+      "idx": 33,
+      "version": "7",
+      "when": 1779875720002,
+      "tag": "0033_boring_micromacro",
+      "breakpoints": true
+    },
+    {
+      "idx": 34,
+      "version": "7",
+      "when": 1779880975299,
+      "tag": "0034_organic_goliath",
+      "breakpoints": true
     }
   ]
 }

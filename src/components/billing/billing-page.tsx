@@ -1,6 +1,6 @@
 "use client";
 
-import { Zap, Users } from "lucide-react";
+import { BadgePercent, Clock, Gift, ShieldCheck, Sparkles, Zap, Users } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useExtracted, useLocale } from "next-intl";
@@ -90,6 +90,29 @@ function useFormatCurrencyMinor() {
     formatMinorCurrency(amountMinor, currency, { currencyDisplay: "code" }, locale);
 }
 
+function formatDollarFromCents(cents: number) {
+  return `$${(cents / 100).toFixed(2)}`;
+}
+
+function calculateYearlySavingsPercent(
+  yearlyPlan?: ClientPlan | null,
+  monthlyPlan?: ClientPlan | null,
+) {
+  if (
+    !yearlyPlan?.amount ||
+    !monthlyPlan?.amount ||
+    yearlyPlan.currency !== monthlyPlan.currency ||
+    monthlyPlan.amount <= 0
+  ) {
+    return 0;
+  }
+
+  return Math.max(
+    0,
+    Math.round(((monthlyPlan.amount * 12 - yearlyPlan.amount) / (monthlyPlan.amount * 12)) * 100),
+  );
+}
+
 function usePlanIntervalLabel() {
   const t = useExtracted();
   return (planId: BillingPlanId) => {
@@ -123,6 +146,96 @@ function useTierLabel() {
 
     return t("Plus");
   };
+}
+
+function usePlanFitCopy() {
+  const t = useExtracted();
+
+  return (planId: BillingPlanId) => {
+    const tier = getPlanTier(planId);
+    if (tier === "max") {
+      return t("Best when limits are blocking your daily work.");
+    }
+    if (tier === "pro") {
+      return t("Best for regular projects and premium model usage.");
+    }
+    if (tier === "team") {
+      return t("Best for shared workspaces and centralized billing.");
+    }
+
+    return t("Best first upgrade from the free plan.");
+  };
+}
+
+function UpgradeDecisionPanel({
+  yearlySavingsPercent,
+  hasActiveSubscription,
+}: {
+  yearlySavingsPercent: number;
+  hasActiveSubscription: boolean;
+}) {
+  const t = useExtracted();
+
+  const items = [
+    {
+      icon: Sparkles,
+      label: t("Start with the plan that matches your usage"),
+      description: t(
+        "Plus is for trying Deni AI, Pro is for daily work, and Max is for heavy premium usage.",
+      ),
+    },
+    {
+      icon: BadgePercent,
+      label:
+        yearlySavingsPercent > 0
+          ? t("Annual billing can save up to {percent}%", {
+              percent: yearlySavingsPercent.toString(),
+            })
+          : t("Annual billing keeps the monthly equivalent clear"),
+      description: t("Each yearly option shows the monthly equivalent before checkout."),
+    },
+    {
+      icon: hasActiveSubscription ? Clock : Gift,
+      label: hasActiveSubscription
+        ? t("Switch plans with an estimate first")
+        : t("Trial and coupon support before payment"),
+      description: hasActiveSubscription
+        ? t("Plan changes show the estimated charge before you confirm.")
+        : t("Eligible trials, discounts, and the final amount are shown before payment."),
+    },
+  ];
+
+  return (
+    <section className="rounded-lg border border-border/80 bg-muted/30 p-4">
+      <div className="flex flex-col gap-4 md:items-start md:justify-between">
+        <div className="max-w-xl space-y-1">
+          <div className="text-sm font-medium">{t("Choose with less guesswork")}</div>
+          <p className="text-sm leading-relaxed text-muted-foreground">
+            {t(
+              "The upgrade path is ordered by usage intensity, with billing terms visible before you commit.",
+            )}
+          </p>
+        </div>
+        <div className="grid flex-1 gap-3 sm:grid-cols-3">
+          {items.map((item) => {
+            const Icon = item.icon;
+            return (
+              <div
+                key={item.label}
+                className="rounded-md border border-border/70 bg-background/70 p-3"
+              >
+                <Icon className="mb-2 size-4 text-muted-foreground" />
+                <div className="text-sm font-medium leading-snug">{item.label}</div>
+                <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
+                  {item.description}
+                </p>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    </section>
+  );
 }
 
 function PlanCard({
@@ -160,6 +273,7 @@ function PlanCard({
   const formatPriceLabel = useFormatPriceLabel();
   const formatPriceParts = useFormatPriceParts();
   const getTierLabel = useTierLabel();
+  const getPlanFitCopy = usePlanFitCopy();
   const planCopy = useBillingPlanCopy(plan.id);
   const mode = plan.mode ?? "subscription";
   const offerEndsAt = plan.limitedTimeOfferEndsAt ? new Date(plan.limitedTimeOfferEndsAt) : null;
@@ -197,16 +311,8 @@ function PlanCard({
         )
       : null;
   const savingsPercent =
-    mode === "subscription" &&
-    interval === "yearly" &&
-    plan.amount &&
-    monthlyPlan?.amount &&
-    monthlyPlan.currency === plan.currency &&
-    monthlyPlan.amount > 0
-      ? Math.max(
-          0,
-          Math.round(((monthlyPlan.amount * 12 - plan.amount) / (monthlyPlan.amount * 12)) * 100),
-        )
+    mode === "subscription" && interval === "yearly"
+      ? calculateYearlySavingsPercent(plan, monthlyPlan)
       : 0;
   const primaryActionLabel = status.isOnTeamPlan
     ? t("Team plan active")
@@ -340,6 +446,23 @@ function PlanCard({
               </p>
             )}
           </div>
+          <div className="mt-5 rounded-md border border-border/70 bg-background/70 p-3">
+            <div className="flex items-start gap-2">
+              <Sparkles className="mt-0.5 size-4 shrink-0 text-muted-foreground" />
+              <div>
+                <div className="text-sm font-medium">{getPlanFitCopy(plan.id)}</div>
+                <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
+                  {plan.trialDays
+                    ? t("Try the upgraded limits first. You only continue if it fits.")
+                    : interval === "yearly" && savingsPercent > 0
+                      ? t("Lock in the lower monthly equivalent for the year.")
+                      : mode === "payment"
+                        ? t("Keep Pro access without a recurring subscription.")
+                        : t("Upgrade now and manage or cancel from billing anytime.")}
+                </p>
+              </div>
+            </div>
+          </div>
           <PlanHighlights items={planCopy.highlights} className="mt-5" />
         </div>
         <Button
@@ -368,6 +491,12 @@ function PlanCard({
             </span>
           )}
         </Button>
+        {showTrustCopy && (
+          <div className="mt-3 flex items-center justify-center gap-2 text-xs text-muted-foreground">
+            <ShieldCheck className="size-3.5" />
+            <span>{t("A 3D Secure compatible card is required.")}</span>
+          </div>
+        )}
       </CardContent>
     </Card>
   );
@@ -396,10 +525,12 @@ function UsageRow({
   if (!item) return null;
 
   const unitLabel = item.unit === "tokens" ? t("tokens") : t("requests");
-  const compactUsageLabel =
-    item.limit === null
-      ? `${formatCompactUsageValue(item.used)} ${unitLabel}`
-      : `${formatCompactUsageValue(item.used)}/${formatCompactUsageValue(item.limit)} ${unitLabel}`;
+  const hasLimit = item.limit !== null && item.limit > 0;
+  const usedPercent = hasLimit ? Math.min((item.used / (item.limit ?? 1)) * 100, 100) : 0;
+  const remainingPercent = Math.max(100 - usedPercent, 0);
+  const compactUsageLabel = hasLimit
+    ? t("{percent}% used", { percent: usedPercent.toFixed(1) })
+    : `${formatCompactUsageValue(item.used)} ${unitLabel}`;
 
   // When Max Mode is enabled, show as unlimited
   if (maxModeEnabled) {
@@ -426,16 +557,9 @@ function UsageRow({
 
   const progress =
     item.limit === null || item.limit === 0 ? 0 : Math.min((item.used / item.limit) * 100, 100);
-  const remainingLabel =
-    item.limit === null
-      ? t("Unlimited")
-      : item.unit === "tokens"
-        ? t("{count} tokens remaining", {
-            count: Math.max(item.remaining ?? 0, 0).toLocaleString(),
-          })
-        : t("{count} remaining", {
-            count: Math.max(item.remaining ?? 0, 0).toLocaleString(),
-          });
+  const remainingLabel = hasLimit
+    ? t("{percent}% remaining", { percent: remainingPercent.toFixed(1) })
+    : t("Unlimited");
   const periodEndLabel = item.periodEnd
     ? usageResetFormatter(locale).format(new Date(item.periodEnd))
     : null;
@@ -679,6 +803,11 @@ function BillingPageContent() {
   const selectedPlusPlan = plusInterval === "monthly" ? plusMonthly : plusYearly;
   const selectedProPlan = proInterval === "monthly" ? proMonthly : proYearly;
   const selectedMaxPlan = maxInterval === "monthly" ? maxMonthly : maxYearly;
+  const yearlySavingsPercent = Math.max(
+    calculateYearlySavingsPercent(plusYearly, plusMonthly),
+    calculateYearlySavingsPercent(proYearly, proMonthly),
+    calculateYearlySavingsPercent(maxYearly, maxMonthly),
+  );
   const basicUsage = usage.find((entry) => entry.category === "basic");
   const premiumUsage = usage.find((entry) => entry.category === "premium");
 
@@ -846,24 +975,34 @@ function BillingPageContent() {
           <CardContent className="space-y-4">
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="rounded-lg border border-border p-4">
-                <div className="text-sm text-muted-foreground">{t("Basic model messages")}</div>
+                <div className="text-sm text-muted-foreground">{t("Basic model tokens")}</div>
                 <div className="mt-1 flex items-baseline gap-2">
                   <span className="text-2xl font-semibold">
-                    {maxModeQuery.data?.usageBasic ?? 0}
+                    {formatCompactUsageValue(maxModeQuery.data?.usageBasic ?? 0)}
                   </span>
                   <span className="text-sm text-muted-foreground">
-                    × ${(maxModeQuery.data?.pricing.basic ?? 1) / 100}
+                    {t("{price} / {tokens} tokens", {
+                      price: formatDollarFromCents(maxModeQuery.data?.pricing.basic ?? 1),
+                      tokens: formatCompactUsageValue(
+                        maxModeQuery.data?.pricing.unitTokens ?? 1_000,
+                      ),
+                    })}
                   </span>
                 </div>
               </div>
               <div className="rounded-lg border border-border p-4">
-                <div className="text-sm text-muted-foreground">{t("Premium model messages")}</div>
+                <div className="text-sm text-muted-foreground">{t("Premium model tokens")}</div>
                 <div className="mt-1 flex items-baseline gap-2">
                   <span className="text-2xl font-semibold">
-                    {maxModeQuery.data?.usagePremium ?? 0}
+                    {formatCompactUsageValue(maxModeQuery.data?.usagePremium ?? 0)}
                   </span>
                   <span className="text-sm text-muted-foreground">
-                    × ${(maxModeQuery.data?.pricing.premium ?? 5) / 100}
+                    {t("{price} / {tokens} tokens", {
+                      price: formatDollarFromCents(maxModeQuery.data?.pricing.premium ?? 5),
+                      tokens: formatCompactUsageValue(
+                        maxModeQuery.data?.pricing.unitTokens ?? 1_000,
+                      ),
+                    })}
                   </span>
                 </div>
               </div>
@@ -876,7 +1015,7 @@ function BillingPageContent() {
             </div>
             <p className="text-xs text-muted-foreground">
               {t(
-                "Max Mode charges are billed at the end of each billing cycle. Pricing: $0.01 per basic message, $0.05 per premium message.",
+                "Max Mode charges are billed at the end of each billing cycle. Pricing: $0.01 per 1K basic tokens, $0.05 per 1K premium tokens.",
               )}
             </p>
           </CardContent>
@@ -893,6 +1032,11 @@ function BillingPageContent() {
         </Card>
       ) : (
         <div className="space-y-4">
+          <UpgradeDecisionPanel
+            yearlySavingsPercent={yearlySavingsPercent}
+            hasActiveSubscription={hasActiveSubscription}
+          />
+
           <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
             {/* Plus Plan Card */}
             {selectedPlusPlan && (

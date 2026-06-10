@@ -1,4 +1,3 @@
-import { useExtracted } from "next-intl";
 import { useMemo } from "react";
 import type { ModelOption } from "@/components/chat/chat-composer";
 import { authClient } from "@/lib/auth-client";
@@ -9,11 +8,9 @@ type ProviderSetting = {
   provider: string;
   preferByok: boolean;
   baseUrl: string | null;
-  apiStyle: string;
 };
 
 export function useAvailableModels() {
-  const t = useExtracted();
   const session = authClient.useSession();
   const isAnonymous = Boolean(session.data?.user?.isAnonymous);
 
@@ -22,27 +19,9 @@ export function useAvailableModels() {
     staleTime: 30000,
   });
 
-  const customModels = useMemo<ModelOption[]>(() => {
-    return (providersQuery.data?.customModels ?? []).map((entry) => ({
-      name: entry.name,
-      value: `custom:${entry.id}`,
-      description: entry.description ?? t("Custom model"),
-      author: "openai_compatible" as const,
-      features: [],
-      efforts: false,
-      premium: entry.premium,
-      default: false,
-      source: "custom" as const,
-    }));
-  }, [providersQuery.data?.customModels, t]);
-
   const availableModels = useMemo<ModelOption[]>(() => {
-    const baseModels = isAnonymous ? models.filter((entry) => !entry.premium) : [...models];
-    const filteredCustomModels = isAnonymous
-      ? customModels.filter((entry) => !entry.premium)
-      : customModels;
-    return [...baseModels, ...filteredCustomModels];
-  }, [customModels, isAnonymous]);
+    return isAnonymous ? models.filter((entry) => !entry.premium) : [...models];
+  }, [isAnonymous]);
 
   const providerSettings = useMemo(() => {
     return new Map<string, ProviderSetting>(
@@ -56,7 +35,6 @@ export function useAvailableModels() {
 
   return {
     availableModels,
-    customModels,
     providerSettings,
     providerKeys,
     providersQuery,

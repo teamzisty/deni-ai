@@ -19,7 +19,6 @@ import {
   ChevronRight,
   FolderClosed,
   FolderOpen,
-  ImageIcon,
   MessageSquare,
   MoreHorizontal,
   Pencil,
@@ -957,18 +956,6 @@ export function AppSidebar({
                   <Kbd className="ml-auto opacity-0 transition-opacity duration-150 group-hover/search:opacity-100 bg-sidebar text-sidebar-foreground/80">
                     Ctrl+K
                   </Kbd>
-                </Button>
-              </SidebarMenuItem>
-              <SidebarMenuItem>
-                <Button
-                  className="h-9 w-full justify-start gap-2 rounded-none font-medium"
-                  asChild
-                  variant="outline"
-                >
-                  <Link href="/palette">
-                    <ImageIcon className="size-4" />
-                    <span>{t("Palette")}</span>
-                  </Link>
                 </Button>
               </SidebarMenuItem>
               <SidebarMenuItem>

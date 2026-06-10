@@ -1,7 +1,15 @@
 import { TRPCError } from "@trpc/server";
-import { and, eq, sql } from "drizzle-orm";
+import { and, desc, eq, inArray, sql } from "drizzle-orm";
 import { z } from "zod";
-import { billing, member, user } from "@/db/schema";
+import {
+  billing,
+  member,
+  teamMemberUsagePolicy,
+  teamUsageAuditLog,
+  teamUsagePolicy,
+  usageQuota,
+  user,
+} from "@/db/schema";
 import { env } from "@/env";
 import { type BillingPlan, billingPlans, findPlanById, isTeamPlan } from "@/lib/billing";
 import {
@@ -16,11 +24,13 @@ import { stripe } from "@/lib/stripe";
 import { customCheckoutRequestOptions } from "@/lib/stripe-checkout";
 import { getSubscriptionPeriodEndDate } from "@/lib/stripe-subscriptions";
 import { getOrgMemberCount, updateTeamSeatCount } from "@/lib/team-billing";
+import { getUsageLimitConfig } from "@/lib/usage";
 import { type ProtectedContext, protectedProcedure, router } from "../trpc";
 
 import type Stripe from "stripe";
 
 const teamPlanIdSchema = z.enum(["pro_team_monthly", "pro_team_yearly"]);
+const maxModeLimitSchema = z.number().int().min(0).nullable();
 
 type BillingRecord = typeof billing.$inferSelect;
 
@@ -74,6 +84,75 @@ async function verifyOrgOwner(ctx: ProtectedContext, organizationId: string) {
       message: "Only organization owners can manage team billing.",
     });
   }
+}
+
+async function getOwnedTeamBillingRecord(ctx: ProtectedContext, organizationId: string) {
+  await verifyOrgOwner(ctx, organizationId);
+  const subscription = await syncTeamSubscription(ctx, ctx.userId, organizationId);
+  if (!subscription.planId || !isTeamPlan(subscription.planId)) {
+    throw new TRPCError({
+      code: "PRECONDITION_FAILED",
+      message: "An active team subscription is required to manage Max Mode.",
+    });
+  }
+
+  if (subscription.status !== "active") {
+    throw new TRPCError({
+      code: "PRECONDITION_FAILED",
+      message: "Max Mode requires an active team subscription.",
+    });
+  }
+
+  return subscription;
+}
+
+async function ensureTeamUsagePolicy(ctx: ProtectedContext, organizationId: string) {
+  const [policy] = await ctx.db
+    .insert(teamUsagePolicy)
+    .values({ organizationId })
+    .onConflictDoNothing({ target: teamUsagePolicy.organizationId })
+    .returning();
+
+  if (policy) {
+    return policy;
+  }
+
+  const [existing] = await ctx.db
+    .select()
+    .from(teamUsagePolicy)
+    .where(eq(teamUsagePolicy.organizationId, organizationId))
+    .limit(1);
+
+  if (!existing) {
+    throw new TRPCError({
+      code: "INTERNAL_SERVER_ERROR",
+      message: "Unable to load team usage policy.",
+    });
+  }
+
+  return existing;
+}
+
+async function recordTeamUsageAuditLog({
+  ctx,
+  organizationId,
+  action,
+  targetUserId,
+  metadata,
+}: {
+  ctx: ProtectedContext;
+  organizationId: string;
+  action: string;
+  targetUserId?: string | null;
+  metadata?: Record<string, unknown>;
+}) {
+  await ctx.db.insert(teamUsageAuditLog).values({
+    organizationId,
+    actorUserId: ctx.userId,
+    targetUserId: targetUserId ?? null,
+    action,
+    metadata,
+  });
 }
 
 async function fetchUserProfile(ctx: ProtectedContext, userId: string) {
@@ -343,6 +422,239 @@ export const organizationRouter = router({
         stripeCustomerId: subscription.stripeCustomerId,
         memberCount,
       };
+    }),
+
+  teamMaxModeSettings: billingEnabledProcedure
+    .input(z.object({ organizationId: z.string().min(1) }))
+    .query(async ({ ctx, input }) => {
+      await verifyOrgOwner(ctx, input.organizationId);
+      const subscription = await syncTeamSubscription(ctx, ctx.userId, input.organizationId);
+      const defaultPolicy = await ensureTeamUsagePolicy(ctx, input.organizationId);
+      const members = await ctx.db
+        .select({
+          memberId: member.id,
+          userId: member.userId,
+          role: member.role,
+          name: user.name,
+          email: user.email,
+          policyEnabled: teamMemberUsagePolicy.maxModeEnabled,
+          policyLimitBasic: teamMemberUsagePolicy.maxModeLimitBasic,
+          policyLimitPremium: teamMemberUsagePolicy.maxModeLimitPremium,
+        })
+        .from(member)
+        .innerJoin(user, eq(member.userId, user.id))
+        .leftJoin(
+          teamMemberUsagePolicy,
+          and(
+            eq(teamMemberUsagePolicy.organizationId, member.organizationId),
+            eq(teamMemberUsagePolicy.userId, member.userId),
+          ),
+        )
+        .where(eq(member.organizationId, input.organizationId));
+
+      const memberIds = members.map((m) => m.userId);
+      const usageRows =
+        memberIds.length > 0
+          ? await ctx.db
+              .select({
+                userId: usageQuota.userId,
+                category: usageQuota.category,
+                used: usageQuota.used,
+              })
+              .from(usageQuota)
+              .where(inArray(usageQuota.userId, memberIds))
+          : [];
+      const auditLog = await ctx.db
+        .select({
+          id: teamUsageAuditLog.id,
+          actorUserId: teamUsageAuditLog.actorUserId,
+          targetUserId: teamUsageAuditLog.targetUserId,
+          action: teamUsageAuditLog.action,
+          metadata: teamUsageAuditLog.metadata,
+          createdAt: teamUsageAuditLog.createdAt,
+        })
+        .from(teamUsageAuditLog)
+        .where(eq(teamUsageAuditLog.organizationId, input.organizationId))
+        .orderBy(desc(teamUsageAuditLog.createdAt))
+        .limit(10);
+      const usageByMember = new Map<string, { basic: number; premium: number }>();
+      const basicIncluded = getUsageLimitConfig("basic", "pro").limit ?? 0;
+      const premiumIncluded = getUsageLimitConfig("premium", "pro").limit ?? 0;
+
+      for (const row of usageRows) {
+        const current = usageByMember.get(row.userId) ?? { basic: 0, premium: 0 };
+        if (row.category === "basic") {
+          current.basic = Math.max(row.used - basicIncluded, 0);
+        }
+        if (row.category === "premium") {
+          current.premium = Math.max(row.used - premiumIncluded, 0);
+        }
+        usageByMember.set(row.userId, current);
+      }
+
+      return {
+        enabled: Boolean(subscription.maxModeEnabled),
+        eligible: subscription.planId
+          ? isTeamPlan(subscription.planId) && subscription.status === "active"
+          : false,
+        usageBasic: subscription.maxModeUsageBasic,
+        usagePremium: subscription.maxModeUsagePremium,
+        periodStart: subscription.maxModePeriodStart,
+        defaultPolicy: {
+          maxModeEnabled: defaultPolicy.defaultMaxModeEnabled,
+          maxModeLimitBasic: defaultPolicy.defaultMaxModeLimitBasic,
+          maxModeLimitPremium: defaultPolicy.defaultMaxModeLimitPremium,
+        },
+        members: members.map((m) => {
+          const maxModeUsage = usageByMember.get(m.userId) ?? { basic: 0, premium: 0 };
+          return {
+            memberId: m.memberId,
+            userId: m.userId,
+            role: m.role,
+            name: m.name,
+            email: m.email,
+            maxModeEnabled: m.policyEnabled ?? defaultPolicy.defaultMaxModeEnabled,
+            maxModeLimitBasic: m.policyLimitBasic ?? defaultPolicy.defaultMaxModeLimitBasic ?? null,
+            maxModeLimitPremium:
+              m.policyLimitPremium ?? defaultPolicy.defaultMaxModeLimitPremium ?? null,
+            maxModeUsageBasic: maxModeUsage.basic,
+            maxModeUsagePremium: maxModeUsage.premium,
+          };
+        }),
+        auditLog,
+      };
+    }),
+
+  updateTeamMaxModeDefaultPolicy: billingEnabledProcedure
+    .input(
+      z.object({
+        organizationId: z.string().min(1),
+        maxModeEnabled: z.boolean(),
+        maxModeLimitBasic: maxModeLimitSchema,
+        maxModeLimitPremium: maxModeLimitSchema,
+      }),
+    )
+    .mutation(async ({ ctx, input }) => {
+      await verifyOrgOwner(ctx, input.organizationId);
+      await ctx.db
+        .insert(teamUsagePolicy)
+        .values({
+          organizationId: input.organizationId,
+          defaultMaxModeEnabled: input.maxModeEnabled,
+          defaultMaxModeLimitBasic: input.maxModeLimitBasic,
+          defaultMaxModeLimitPremium: input.maxModeLimitPremium,
+        })
+        .onConflictDoUpdate({
+          target: teamUsagePolicy.organizationId,
+          set: {
+            defaultMaxModeEnabled: input.maxModeEnabled,
+            defaultMaxModeLimitBasic: input.maxModeLimitBasic,
+            defaultMaxModeLimitPremium: input.maxModeLimitPremium,
+            updatedAt: new Date(),
+          },
+        });
+
+      await recordTeamUsageAuditLog({
+        ctx,
+        organizationId: input.organizationId,
+        action: "default_policy_updated",
+        metadata: {
+          maxModeEnabled: input.maxModeEnabled,
+          maxModeLimitBasic: input.maxModeLimitBasic,
+          maxModeLimitPremium: input.maxModeLimitPremium,
+        },
+      });
+
+      return { success: true };
+    }),
+
+  updateTeamMaxModeEnabled: billingEnabledProcedure
+    .input(z.object({ organizationId: z.string().min(1), enabled: z.boolean() }))
+    .mutation(async ({ ctx, input }) => {
+      const subscription = await getOwnedTeamBillingRecord(ctx, input.organizationId);
+      const updates = input.enabled
+        ? {
+            maxModeEnabled: true,
+            maxModePeriodStart: subscription.maxModeEnabled
+              ? subscription.maxModePeriodStart
+              : new Date(),
+            maxModeUsageBasic: subscription.maxModeEnabled ? subscription.maxModeUsageBasic : 0,
+            maxModeUsagePremium: subscription.maxModeEnabled ? subscription.maxModeUsagePremium : 0,
+            updatedAt: new Date(),
+          }
+        : {
+            maxModeEnabled: false,
+            updatedAt: new Date(),
+          };
+
+      await ctx.db.update(billing).set(updates).where(eq(billing.id, subscription.id));
+      await recordTeamUsageAuditLog({
+        ctx,
+        organizationId: input.organizationId,
+        action: input.enabled ? "max_mode_enabled" : "max_mode_disabled",
+        metadata: { enabled: input.enabled },
+      });
+      return { success: true };
+    }),
+
+  updateTeamMemberMaxModePolicy: billingEnabledProcedure
+    .input(
+      z.object({
+        organizationId: z.string().min(1),
+        userId: z.string().min(1),
+        maxModeEnabled: z.boolean(),
+        maxModeLimitBasic: maxModeLimitSchema,
+        maxModeLimitPremium: maxModeLimitSchema,
+      }),
+    )
+    .mutation(async ({ ctx, input }) => {
+      await verifyOrgOwner(ctx, input.organizationId);
+      const [targetMember] = await ctx.db
+        .select({ id: member.id })
+        .from(member)
+        .where(
+          and(eq(member.organizationId, input.organizationId), eq(member.userId, input.userId)),
+        )
+        .limit(1);
+
+      if (!targetMember) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Member does not belong to this organization.",
+        });
+      }
+
+      await ctx.db
+        .insert(teamMemberUsagePolicy)
+        .values({
+          organizationId: input.organizationId,
+          userId: input.userId,
+          maxModeEnabled: input.maxModeEnabled,
+          maxModeLimitBasic: input.maxModeLimitBasic,
+          maxModeLimitPremium: input.maxModeLimitPremium,
+        })
+        .onConflictDoUpdate({
+          target: [teamMemberUsagePolicy.organizationId, teamMemberUsagePolicy.userId],
+          set: {
+            maxModeEnabled: input.maxModeEnabled,
+            maxModeLimitBasic: input.maxModeLimitBasic,
+            maxModeLimitPremium: input.maxModeLimitPremium,
+            updatedAt: new Date(),
+          },
+        });
+      await recordTeamUsageAuditLog({
+        ctx,
+        organizationId: input.organizationId,
+        action: "member_policy_updated",
+        targetUserId: input.userId,
+        metadata: {
+          maxModeEnabled: input.maxModeEnabled,
+          maxModeLimitBasic: input.maxModeLimitBasic,
+          maxModeLimitPremium: input.maxModeLimitPremium,
+        },
+      });
+
+      return { success: true };
     }),
 
   createTeamCheckoutSession: billingEnabledProcedure
