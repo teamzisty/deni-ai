@@ -36,6 +36,7 @@ import {
 import { buildMemoryPrompt, getUserMemoryState, maybeAutoSaveMemories } from "@/lib/memory";
 import { buildProjectPrompt } from "@/lib/project-context";
 import { consumeUsage, refundUsage, UsageLimitError } from "@/lib/usage";
+import { computeWeightedUsageFromLanguageModelUsage } from "@/lib/token-weighting";
 import { checkRateLimit } from "@/lib/rate-limit";
 import { addOpenRouterCacheControl, ChatRouteError, resolveChatModelContext } from "./_lib/model";
 import { buildChatSystemPrompt } from "./_lib/prompt";
@@ -429,11 +430,8 @@ export async function POST(req: Request) {
           ? { type: "tool", toolName: "image" }
           : undefined,
       onFinish: ({ totalUsage }) => {
-        const rawTotal = Math.max(
-          totalUsage.totalTokens ?? (totalUsage.inputTokens ?? 0) + (totalUsage.outputTokens ?? 0),
-          0,
-        );
-        finalUsageAmount = Math.ceil(rawTotal * tokenMultiplier);
+        const { weighted } = computeWeightedUsageFromLanguageModelUsage(totalUsage);
+        finalUsageAmount = Math.ceil(weighted * tokenMultiplier);
       },
       providerOptions,
       system: requestSystem,
