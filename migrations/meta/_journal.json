@@ -232,6 +232,20 @@
       "when": 1779786714062,
       "tag": "0032_tiresome_tarantula",
       "breakpoints": true
+    },
+    {
+      "idx": 33,
+      "version": "7",
+      "when": 1779875720002,
+      "tag": "0033_boring_micromacro",
+      "breakpoints": true
+    },
+    {
+      "idx": 34,
+      "version": "7",
+      "when": 1779880975299,
+      "tag": "0034_organic_goliath",
+      "breakpoints": true
     }
   ]
 }

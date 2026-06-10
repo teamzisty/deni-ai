@@ -181,7 +181,6 @@ export function ChatInterface({
     selectedModel,
     usageTier,
     isByokActive,
-    isByokMissingConfig,
     isUsageLow,
     isUsageBlocked,
     canEnableMaxMode,
@@ -558,7 +557,6 @@ export function ChatInterface({
           status={{
             isAnonymous,
             isByokActive,
-            isByokMissingConfig,
             isUsageLow,
             isUsageBlocked,
             canEnableMaxMode,

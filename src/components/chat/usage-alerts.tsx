@@ -12,7 +12,6 @@ interface UsageAlertsProps {
   status: {
     isAnonymous: boolean;
     isByokActive: boolean;
-    isByokMissingConfig: boolean;
     isUsageLow: boolean;
     isUsageBlocked: boolean;
     canEnableMaxMode: boolean;
@@ -33,29 +32,7 @@ export function UsageAlerts({ status, usage, enableMaxMode, onRefreshUsage }: Us
 
   return (
     <>
-      {status.isByokMissingConfig && (
-        <Alert className="mt-3 border-destructive/40 bg-destructive/10 text-destructive-foreground dark:border-destructive/30">
-          <Ban className="mt-0.5 size-4" />
-          <AlertTitle>{t("Endpoint not configured")}</AlertTitle>
-          <AlertDescription className="flex flex-col gap-2">
-            <p>
-              {t("Configure an OpenAI-compatible base URL and API key before using this model.")}
-            </p>
-            {!status.isAnonymous && (
-              <div className="flex flex-wrap gap-2">
-                <Button size="sm" asChild>
-                  <Link href="/settings/providers">
-                    {t("Open settings")}
-                    <ArrowUpRight className="size-3.5" />
-                  </Link>
-                </Button>
-              </div>
-            )}
-          </AlertDescription>
-        </Alert>
-      )}
-
-      {status.isByokActive && !status.isByokMissingConfig && (
+      {status.isByokActive && (
         <Alert className="mt-3 border-emerald-500/40 bg-emerald-100/40 text-emerald-900 dark:border-emerald-500/30 dark:bg-emerald-500/10 dark:text-emerald-50">
           <Plug className="mt-0.5 size-4" />
           <AlertTitle>{t("BYOK active")}</AlertTitle>

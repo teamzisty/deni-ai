@@ -5,9 +5,9 @@ import { createXai, type XaiProviderOptions } from "@ai-sdk/xai";
 import { createOpenAI, type OpenAIResponsesProviderOptions } from "@ai-sdk/openai";
 import type { LanguageModel, ModelMessage, SystemModelMessage } from "ai";
 import { streamText } from "ai";
-import { and, eq } from "drizzle-orm";
+import { eq } from "drizzle-orm";
 import { db } from "@/db/drizzle";
-import { customModel, providerKey, providerSetting } from "@/db/schema";
+import { providerKey, providerSetting } from "@/db/schema";
 import { env } from "@/env";
 import { decryptFromB64 } from "@/lib/crypto";
 import { models, resolveReasoningEffort } from "@/lib/constants";
@@ -114,23 +114,13 @@ export async function resolveChatModelContext({
   baseModel,
   reasoningEffort,
 }: ResolveChatModelContextParams): Promise<ResolvedChatModelContext> {
-  const isCustomModel = baseModel.startsWith("custom:");
-  const customModelId = isCustomModel ? baseModel.slice("custom:".length) : null;
   const selectedModel = models.find((model) => model.value === baseModel);
-  const customEntry = customModelId
-    ? await db
-        .select()
-        .from(customModel)
-        .where(and(eq(customModel.userId, userId), eq(customModel.id, customModelId)))
-        .limit(1)
-        .then((rows) => rows[0] ?? null)
-    : null;
 
-  if (!selectedModel && !customEntry) {
+  if (!selectedModel) {
     throw new ChatRouteError(400, { error: "Unknown model" });
   }
 
-  const isPremiumModel = Boolean(customEntry?.premium ?? selectedModel?.premium ?? false);
+  const isPremiumModel = Boolean(selectedModel.premium);
 
   if (isAnonymous && isPremiumModel) {
     throw new ChatRouteError(403, {
@@ -147,9 +137,7 @@ export async function resolveChatModelContext({
 
   const providerKeyMap = new Map(providerKeys.map((entry) => [entry.provider, entry.keyEnc]));
   const providerSettingMap = new Map(providerSettings.map((entry) => [entry.provider, entry]));
-  const providerId = customEntry
-    ? "openai_compatible"
-    : (selectedModel?.provider ?? selectedModel?.author);
+  const providerId = selectedModel.provider ?? selectedModel.author;
 
   if (!providerId) {
     throw new ChatRouteError(400, { error: "Unknown provider" });
@@ -158,36 +146,15 @@ export async function resolveChatModelContext({
   let useByok = false;
   let byokApiKey: string | undefined;
   let byokBaseUrl: string | undefined;
-  let byokApiStyle: "chat" | "responses" = "responses";
 
-  if (providerId === "openai_compatible") {
-    const compatKey = providerKeyMap.get("openai_compatible");
-    const compatSetting = providerSettingMap.get("openai_compatible");
-    const compatBaseUrl = compatSetting?.baseUrl ?? null;
+  const keyEnc = providerKeyMap.get(providerId);
+  const setting = providerSettingMap.get(providerId);
+  const preferByok = setting?.preferByok ?? false;
 
-    if (!compatKey || !compatBaseUrl) {
-      throw new ChatRouteError(400, {
-        error: "OpenAI-compatible endpoint not configured.",
-        reason: "byok",
-      });
-    }
-
-    byokApiKey = await decryptFromB64(compatKey);
-    byokBaseUrl = compatBaseUrl;
-    byokApiStyle = compatSetting?.apiStyle === "chat" ? "chat" : "responses";
+  if (preferByok && keyEnc) {
+    byokApiKey = await decryptFromB64(keyEnc);
+    byokBaseUrl = setting?.baseUrl ?? undefined;
     useByok = true;
-  } else {
-    const keyEnc = providerKeyMap.get(providerId);
-    const setting = providerSettingMap.get(providerId);
-    const preferByok = setting?.preferByok ?? false;
-
-    if (preferByok && keyEnc) {
-      byokApiKey = await decryptFromB64(keyEnc);
-      byokBaseUrl = setting?.baseUrl ?? undefined;
-      byokApiStyle =
-        setting?.apiStyle === "chat" ? "chat" : providerId === "xai" ? "chat" : "responses";
-      useByok = true;
-    }
   }
 
   if (providerId === "xai" && useByok && !byokBaseUrl) {
@@ -233,10 +200,7 @@ export async function resolveChatModelContext({
     }
   }
 
-  const resolvedModelId = customEntry?.modelId ?? selectedModel?.value;
-  if (!resolvedModelId) {
-    throw new ChatRouteError(400, { error: "Unknown model" });
-  }
+  const resolvedModelId = selectedModel.value;
 
   const resolvedReasoningEffort = resolveReasoningEffort(
     selectedModel?.efforts ?? false,
@@ -316,10 +280,7 @@ export async function resolveChatModelContext({
           apiKey: byokApiKey,
           baseURL: byokBaseUrl,
         });
-        model =
-          byokApiStyle === "chat"
-            ? provider.chat(resolvedModelId)
-            : provider.responses(resolvedModelId);
+        model = provider.responses(resolvedModelId);
       } else {
         model = getOpenRouterModel();
       }
@@ -373,17 +334,6 @@ export async function resolveChatModelContext({
           apiKey: env.GROQ_API_KEY,
         })(resolvedModelId);
       }
-      break;
-    }
-    case "openai_compatible": {
-      const provider = createOpenAI({
-        apiKey: byokApiKey,
-        baseURL: byokBaseUrl,
-      });
-      model =
-        byokApiStyle === "chat"
-          ? provider.chat(resolvedModelId)
-          : provider.responses(resolvedModelId);
       break;
     }
     default:

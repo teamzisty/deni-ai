@@ -2,12 +2,7 @@ import { TRPCError } from "@trpc/server";
 import { and, eq } from "drizzle-orm";
 import { z } from "zod";
 
-import {
-  customModel,
-  type OpenAICompatibleApiStyle,
-  providerKey,
-  providerSetting,
-} from "@/db/schema";
+import { providerKey, providerSetting } from "@/db/schema";
 import { decryptFromB64, encryptToB64 } from "@/lib/crypto";
 import { normalizePublicBaseUrl } from "@/lib/network-security";
 
@@ -18,15 +13,13 @@ const ProviderIdSchema = z.union([
   z.literal("anthropic"),
   z.literal("google"),
   z.literal("xai"),
-  z.literal("openai_compatible"),
 ]);
 
 export const providersRouter = router({
   getConfig: protectedProcedure.query(async ({ ctx }) => {
-    const [keys, settings, models] = await Promise.all([
+    const [keys, settings] = await Promise.all([
       ctx.db.select().from(providerKey).where(eq(providerKey.userId, ctx.userId)),
       ctx.db.select().from(providerSetting).where(eq(providerSetting.userId, ctx.userId)),
-      ctx.db.select().from(customModel).where(eq(customModel.userId, ctx.userId)),
     ]);
 
     return {
@@ -35,18 +28,6 @@ export const providersRouter = router({
         provider: s.provider,
         preferByok: s.preferByok,
         baseUrl: s.baseUrl,
-        apiStyle: s.apiStyle as OpenAICompatibleApiStyle,
-      })),
-      customModels: models.map((m) => ({
-        id: m.id,
-        provider: m.provider,
-        name: m.name,
-        modelId: m.modelId,
-        description: m.description,
-        premium: m.premium,
-        inputPriceMicros: m.inputPriceMicros,
-        outputPriceMicros: m.outputPriceMicros,
-        reasoningPriceMicros: m.reasoningPriceMicros,
       })),
     };
   }),
@@ -85,7 +66,6 @@ export const providersRouter = router({
         provider: ProviderIdSchema,
         preferByok: z.boolean().optional(),
         baseUrl: z.string().nullable().optional(),
-        apiStyle: z.union([z.literal("chat"), z.literal("responses")]).optional(),
       }),
     )
     .mutation(async ({ ctx, input }) => {
@@ -114,7 +94,6 @@ export const providersRouter = router({
       const current = existing[0];
       const preferByok = input.preferByok ?? current?.preferByok ?? false;
       const resolvedBaseUrl = baseUrl === undefined ? (current?.baseUrl ?? null) : baseUrl;
-      const apiStyle = input.apiStyle ?? current?.apiStyle ?? "responses";
 
       await ctx.db
         .insert(providerSetting)
@@ -123,54 +102,12 @@ export const providersRouter = router({
           provider: input.provider,
           preferByok,
           baseUrl: resolvedBaseUrl,
-          apiStyle,
         })
         .onConflictDoUpdate({
           target: [providerSetting.userId, providerSetting.provider],
-          set: { preferByok, baseUrl: resolvedBaseUrl, apiStyle },
+          set: { preferByok, baseUrl: resolvedBaseUrl },
         });
 
-      return { ok: true };
-    }),
-
-  createCustomModel: protectedProcedure
-    .input(
-      z.object({
-        provider: z.literal("openai_compatible"),
-        name: z.string().min(1),
-        modelId: z.string().min(1),
-        description: z.string().nullable().optional(),
-        premium: z.boolean().optional(),
-        inputPriceMicros: z.number().int().nonnegative().nullable().optional(),
-        outputPriceMicros: z.number().int().nonnegative().nullable().optional(),
-        reasoningPriceMicros: z.number().int().nonnegative().nullable().optional(),
-      }),
-    )
-    .mutation(async ({ ctx, input }) => {
-      const created = await ctx.db
-        .insert(customModel)
-        .values({
-          userId: ctx.userId,
-          provider: input.provider,
-          name: input.name,
-          modelId: input.modelId,
-          description: input.description ?? null,
-          premium: input.premium ?? false,
-          inputPriceMicros: input.inputPriceMicros ?? null,
-          outputPriceMicros: input.outputPriceMicros ?? null,
-          reasoningPriceMicros: input.reasoningPriceMicros ?? null,
-        })
-        .returning({ id: customModel.id });
-
-      return { id: created[0]?.id };
-    }),
-
-  deleteCustomModel: protectedProcedure
-    .input(z.object({ id: z.string().min(1) }))
-    .mutation(async ({ ctx, input }) => {
-      await ctx.db
-        .delete(customModel)
-        .where(and(eq(customModel.userId, ctx.userId), eq(customModel.id, input.id)));
       return { ok: true };
     }),
 

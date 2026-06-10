@@ -1,36 +1,20 @@
 "use client";
 
-import { Plug, Plus, Trash2 } from "lucide-react";
+import { Plug, Trash2 } from "lucide-react";
 import { useExtracted } from "next-intl";
 import { useEffect, useMemo, useReducer } from "react";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { SettingsPageShell } from "@/components/settings-page-shell";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { CardDescription, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { Spinner } from "@/components/ui/spinner";
 import { Switch } from "@/components/ui/switch";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { Textarea } from "@/components/ui/textarea";
 import { trpc } from "@/lib/trpc/react";
 
-const PROVIDER_IDS = ["openai", "anthropic", "google", "xai", "openai_compatible"] as const;
+const PROVIDER_IDS = ["openai", "anthropic", "google", "xai"] as const;
 
 type ProviderId = (typeof PROVIDER_IDS)[number];
 type ProviderConfig = {
@@ -38,7 +22,6 @@ type ProviderConfig = {
   label: string;
   description: string;
 };
-type ApiStyle = "chat" | "responses";
 
 const defaultKeyState = PROVIDER_IDS.reduce(
   (acc, providerId) => {
@@ -50,61 +33,29 @@ const defaultKeyState = PROVIDER_IDS.reduce(
 
 const defaultPreferState = PROVIDER_IDS.reduce(
   (acc, providerId) => {
-    acc[providerId] = providerId === "openai_compatible";
+    acc[providerId] = false;
     return acc;
   },
   {} as Record<ProviderId, boolean>,
 );
 
-type CustomModelDraft = {
-  name: string;
-  modelId: string;
-  description: string;
-  premium: boolean;
-  inputPrice: string;
-  outputPrice: string;
-  reasoningPrice: string;
-};
-
 type ProvidersUiState = {
   keyInputs: Record<ProviderId, string>;
   preferByok: Record<ProviderId, boolean>;
-  openAiCompatBaseUrl: string;
-  openAiCompatApiStyle: ApiStyle;
-  customModelDraft: CustomModelDraft;
 };
 
 type ProvidersUiAction =
   | {
       type: "syncSettings";
       preferByok: Record<ProviderId, boolean>;
-      openAiCompatBaseUrl: string;
-      openAiCompatApiStyle: ApiStyle;
     }
   | { type: "setKeyInput"; providerId: ProviderId; value: string }
   | { type: "saveKeySuccess"; providerId: ProviderId }
-  | { type: "setPreferByok"; providerId: ProviderId; value: boolean }
-  | { type: "setOpenAiCompatBaseUrl"; value: string }
-  | { type: "setOpenAiCompatApiStyle"; value: ApiStyle }
-  | { type: "setCustomModelDraft"; values: Partial<CustomModelDraft> }
-  | { type: "resetCustomModelDraft" };
-
-const DEFAULT_CUSTOM_MODEL_DRAFT: CustomModelDraft = {
-  name: "",
-  modelId: "",
-  description: "",
-  premium: false,
-  inputPrice: "",
-  outputPrice: "",
-  reasoningPrice: "",
-};
+  | { type: "setPreferByok"; providerId: ProviderId; value: boolean };
 
 const DEFAULT_PROVIDERS_UI_STATE: ProvidersUiState = {
   keyInputs: defaultKeyState,
   preferByok: defaultPreferState,
-  openAiCompatBaseUrl: "",
-  openAiCompatApiStyle: "responses",
-  customModelDraft: DEFAULT_CUSTOM_MODEL_DRAFT,
 };
 
 function providersUiReducer(state: ProvidersUiState, action: ProvidersUiAction): ProvidersUiState {
@@ -113,8 +64,6 @@ function providersUiReducer(state: ProvidersUiState, action: ProvidersUiAction):
       return {
         ...state,
         preferByok: action.preferByok,
-        openAiCompatBaseUrl: action.openAiCompatBaseUrl,
-        openAiCompatApiStyle: action.openAiCompatApiStyle,
       };
     case "setKeyInput":
       return {
@@ -144,29 +93,6 @@ function providersUiReducer(state: ProvidersUiState, action: ProvidersUiAction):
           [action.providerId]: action.value,
         },
       };
-    case "setOpenAiCompatBaseUrl":
-      return {
-        ...state,
-        openAiCompatBaseUrl: action.value,
-      };
-    case "setOpenAiCompatApiStyle":
-      return {
-        ...state,
-        openAiCompatApiStyle: action.value,
-      };
-    case "setCustomModelDraft":
-      return {
-        ...state,
-        customModelDraft: {
-          ...state.customModelDraft,
-          ...action.values,
-        },
-      };
-    case "resetCustomModelDraft":
-      return {
-        ...state,
-        customModelDraft: DEFAULT_CUSTOM_MODEL_DRAFT,
-      };
   }
 }
 
@@ -177,15 +103,12 @@ export default function ProvidersPage() {
   const upsertKey = trpc.providers.upsertKey.useMutation();
   const deleteKey = trpc.providers.deleteKey.useMutation();
   const upsertSetting = trpc.providers.upsertSetting.useMutation();
-  const createCustomModel = trpc.providers.createCustomModel.useMutation();
-  const deleteCustomModel = trpc.providers.deleteCustomModel.useMutation();
 
   const [providersUi, dispatchProvidersUi] = useReducer(
     providersUiReducer,
     DEFAULT_PROVIDERS_UI_STATE,
   );
-  const { keyInputs, preferByok, openAiCompatBaseUrl, openAiCompatApiStyle, customModelDraft } =
-    providersUi;
+  const { keyInputs, preferByok } = providersUi;
   const providers = useMemo<ProviderConfig[]>(
     () => [
       {
@@ -208,25 +131,17 @@ export default function ProvidersPage() {
         label: t("xAI"),
         description: t("Use your own xAI API key."),
       },
-      {
-        id: "openai_compatible",
-        label: t("OpenAI-compatible"),
-        description: t("Use any OpenAI-compatible endpoint (proxy, gateway, local)."),
-      },
     ],
     [t],
   );
 
   const settingsByProvider = useMemo(() => {
-    const map = new Map<
-      ProviderId,
-      { preferByok: boolean; baseUrl?: string | null; apiStyle?: ApiStyle }
-    >();
+    const map = new Map<ProviderId, { preferByok: boolean; baseUrl?: string | null }>();
     for (const setting of configQuery.data?.settings ?? []) {
+      if (!(PROVIDER_IDS as readonly string[]).includes(setting.provider)) continue;
       map.set(setting.provider as ProviderId, {
         preferByok: setting.preferByok,
         baseUrl: setting.baseUrl ?? null,
-        apiStyle: setting.apiStyle,
       });
     }
     return map;
@@ -236,21 +151,16 @@ export default function ProvidersPage() {
     return new Set((configQuery.data?.keys ?? []).map((entry) => entry.provider));
   }, [configQuery.data?.keys]);
 
-  const customModels = configQuery.data?.customModels ?? [];
-
   useEffect(() => {
     if (!configQuery.data) return;
     const nextPrefer = { ...defaultPreferState };
     for (const providerId of PROVIDER_IDS) {
       const setting = settingsByProvider.get(providerId);
-      nextPrefer[providerId] = setting?.preferByok ?? providerId === "openai_compatible";
+      nextPrefer[providerId] = setting?.preferByok ?? false;
     }
-    const openAiSetting = settingsByProvider.get("openai_compatible");
     dispatchProvidersUi({
       type: "syncSettings",
       preferByok: nextPrefer,
-      openAiCompatBaseUrl: openAiSetting?.baseUrl ?? "",
-      openAiCompatApiStyle: openAiSetting?.apiStyle ?? "responses",
     });
   }, [configQuery.data, settingsByProvider]);
 
@@ -303,90 +213,6 @@ export default function ProvidersPage() {
     }
   };
 
-  const handleSaveOpenAiCompat = async () => {
-    const baseUrl = openAiCompatBaseUrl.trim();
-    if (!baseUrl) {
-      toast.error(t("Base URL is required for OpenAI-compatible endpoints."));
-      return;
-    }
-
-    try {
-      await upsertSetting.mutateAsync({
-        provider: "openai_compatible",
-        baseUrl,
-        apiStyle: openAiCompatApiStyle,
-        preferByok: true,
-      });
-      await utils.providers.getConfig.invalidate();
-      toast.success(t("Endpoint settings saved."));
-    } catch (error) {
-      toast.error(error instanceof Error ? error.message : t("Failed to save endpoint."));
-    }
-  };
-
-  const parsePrice = (value: string) => {
-    if (!value.trim()) return null;
-    const parsed = Number(value);
-    if (!Number.isFinite(parsed) || parsed < 0 || !Number.isInteger(parsed)) {
-      return null;
-    }
-    return parsed;
-  };
-
-  const handleCreateCustomModel = async () => {
-    const name = customModelDraft.name.trim();
-    const modelId = customModelDraft.modelId.trim();
-    if (!name || !modelId) {
-      toast.error(t("Name and model ID are required."));
-      return;
-    }
-
-    const inputPriceMicros = parsePrice(customModelDraft.inputPrice);
-    const outputPriceMicros = parsePrice(customModelDraft.outputPrice);
-    const reasoningPriceMicros = parsePrice(customModelDraft.reasoningPrice);
-
-    if (customModelDraft.inputPrice.trim() && inputPriceMicros === null) {
-      toast.error(t("Input price must be a non-negative integer."));
-      return;
-    }
-    if (customModelDraft.outputPrice.trim() && outputPriceMicros === null) {
-      toast.error(t("Output price must be a non-negative integer."));
-      return;
-    }
-    if (customModelDraft.reasoningPrice.trim() && reasoningPriceMicros === null) {
-      toast.error(t("Reasoning price must be a non-negative integer."));
-      return;
-    }
-
-    try {
-      await createCustomModel.mutateAsync({
-        provider: "openai_compatible",
-        name,
-        modelId,
-        description: customModelDraft.description.trim() || null,
-        premium: customModelDraft.premium,
-        inputPriceMicros,
-        outputPriceMicros,
-        reasoningPriceMicros,
-      });
-      dispatchProvidersUi({ type: "resetCustomModelDraft" });
-      await utils.providers.getConfig.invalidate();
-      toast.success(t("Custom model added."));
-    } catch (error) {
-      toast.error(error instanceof Error ? error.message : t("Failed to add custom model."));
-    }
-  };
-
-  const handleDeleteCustomModel = async (id: string) => {
-    try {
-      await deleteCustomModel.mutateAsync({ id });
-      await utils.providers.getConfig.invalidate();
-      toast.success(t("Custom model removed."));
-    } catch (error) {
-      toast.error(error instanceof Error ? error.message : t("Failed to remove custom model."));
-    }
-  };
-
   if (configQuery.isLoading) {
     return (
       <div className="flex items-center justify-center py-12">
@@ -394,11 +220,6 @@ export default function ProvidersPage() {
       </div>
     );
   }
-
-  const openAiCompatSetting = settingsByProvider.get("openai_compatible");
-  const effectiveApiStyle = openAiCompatSetting?.apiStyle ?? openAiCompatApiStyle;
-  const effectiveBaseUrl = openAiCompatSetting?.baseUrl ?? openAiCompatBaseUrl;
-  const apiStyleLabel = effectiveApiStyle === "chat" ? t("Chat Completions") : t("Responses API");
 
   return (
     <SettingsPageShell
@@ -419,7 +240,6 @@ export default function ProvidersPage() {
           {providers.map((provider) => {
             const configured = configuredProviders.has(provider.id);
             const prefer = preferByok[provider.id] ?? false;
-            const isOpenAiCompat = provider.id === "openai_compatible";
             const inputId = `provider-key-${provider.id}`;
             return (
               <div
@@ -440,23 +260,21 @@ export default function ProvidersPage() {
                         {t("Configured")}
                       </Badge>
                     )}
-                    {!isOpenAiCompat && (
-                      <div className="flex items-center gap-2">
-                        <Label
-                          htmlFor={`prefer-${provider.id}`}
-                          className="text-xs text-muted-foreground"
-                        >
-                          {t("Prefer BYOK")}
-                        </Label>
-                        <Switch
-                          id={`prefer-${provider.id}`}
-                          checked={prefer}
-                          onCheckedChange={(checked) =>
-                            handlePreferToggle(provider.id, Boolean(checked))
-                          }
-                        />
-                      </div>
-                    )}
+                    <div className="flex items-center gap-2">
+                      <Label
+                        htmlFor={`prefer-${provider.id}`}
+                        className="text-xs text-muted-foreground"
+                      >
+                        {t("Prefer BYOK")}
+                      </Label>
+                      <Switch
+                        id={`prefer-${provider.id}`}
+                        checked={prefer}
+                        onCheckedChange={(checked) =>
+                          handlePreferToggle(provider.id, Boolean(checked))
+                        }
+                      />
+                    </div>
                   </div>
                 </div>
                 <div className="flex flex-col gap-2 md:flex-row md:items-center">
@@ -506,240 +324,6 @@ export default function ProvidersPage() {
           })}
         </div>
       </div>
-
-      {/* OpenAI-compatible endpoint */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-sm font-medium">{t("OpenAI-compatible Endpoint")}</CardTitle>
-          <CardDescription>
-            {t("Configure a base URL and API style for OpenAI-compatible providers.")}
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="openai-compat-base-url">{t("Base URL")}</Label>
-            <Input
-              id="openai-compat-base-url"
-              placeholder={t("https://api.your-provider.com/v1")}
-              value={openAiCompatBaseUrl}
-              onChange={(event) =>
-                dispatchProvidersUi({
-                  type: "setOpenAiCompatBaseUrl",
-                  value: event.target.value,
-                })
-              }
-            />
-          </div>
-          <div className="space-y-2">
-            <Label>{t("API Style")}</Label>
-            <Select
-              value={openAiCompatApiStyle}
-              onValueChange={(value) => {
-                if (value === "chat" || value === "responses") {
-                  dispatchProvidersUi({ type: "setOpenAiCompatApiStyle", value });
-                }
-              }}
-            >
-              <SelectTrigger className="max-w-xs">
-                <SelectValue placeholder={t("Select API style")} />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="responses">{t("Responses API")}</SelectItem>
-                <SelectItem value="chat">{t("Chat Completions")}</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="flex flex-wrap items-center gap-3 pt-2">
-            <Button onClick={handleSaveOpenAiCompat} disabled={upsertSetting.isPending}>
-              {t("Save Endpoint")}
-            </Button>
-            <div className="flex items-center gap-2 text-xs text-muted-foreground">
-              <Badge variant="outline">
-                {effectiveBaseUrl ? t("Active") : t("Not configured")}
-              </Badge>
-              <span>{apiStyleLabel}</span>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Custom Models */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-sm font-medium">{t("Custom Models")}</CardTitle>
-          <CardDescription>
-            {t(
-              "Add OpenAI-compatible models for your endpoint. These are available in the chat model selector.",
-            )}
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-6">
-          <div className="grid gap-4 md:grid-cols-2">
-            <div className="space-y-2">
-              <Label htmlFor="custom-model-name">{t("Display Name")}</Label>
-              <Input
-                id="custom-model-name"
-                value={customModelDraft.name}
-                onChange={(event) =>
-                  dispatchProvidersUi({
-                    type: "setCustomModelDraft",
-                    values: { name: event.target.value },
-                  })
-                }
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="custom-model-id">{t("Model ID")}</Label>
-              <Input
-                id="custom-model-id"
-                value={customModelDraft.modelId}
-                onChange={(event) =>
-                  dispatchProvidersUi({
-                    type: "setCustomModelDraft",
-                    values: { modelId: event.target.value },
-                  })
-                }
-              />
-            </div>
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="custom-model-description">{t("Description")}</Label>
-            <Textarea
-              id="custom-model-description"
-              value={customModelDraft.description}
-              onChange={(event) =>
-                dispatchProvidersUi({
-                  type: "setCustomModelDraft",
-                  values: { description: event.target.value },
-                })
-              }
-            />
-          </div>
-          <div className="flex items-center gap-2">
-            <Switch
-              id="custom-model-premium"
-              checked={customModelDraft.premium}
-              onCheckedChange={(checked) =>
-                dispatchProvidersUi({
-                  type: "setCustomModelDraft",
-                  values: { premium: Boolean(checked) },
-                })
-              }
-            />
-            <Label htmlFor="custom-model-premium" className="text-sm">
-              {t("Mark as premium")}
-            </Label>
-          </div>
-          <div className="grid gap-4 md:grid-cols-3">
-            <div className="space-y-2">
-              <Label htmlFor="custom-input-price">{t("Input Price (micros)")}</Label>
-              <Input
-                id="custom-input-price"
-                type="number"
-                min={0}
-                value={customModelDraft.inputPrice}
-                onChange={(event) =>
-                  dispatchProvidersUi({
-                    type: "setCustomModelDraft",
-                    values: { inputPrice: event.target.value },
-                  })
-                }
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="custom-output-price">{t("Output Price (micros)")}</Label>
-              <Input
-                id="custom-output-price"
-                type="number"
-                min={0}
-                value={customModelDraft.outputPrice}
-                onChange={(event) =>
-                  dispatchProvidersUi({
-                    type: "setCustomModelDraft",
-                    values: { outputPrice: event.target.value },
-                  })
-                }
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="custom-reasoning-price">{t("Reasoning Price (micros)")}</Label>
-              <Input
-                id="custom-reasoning-price"
-                type="number"
-                min={0}
-                value={customModelDraft.reasoningPrice}
-                onChange={(event) =>
-                  dispatchProvidersUi({
-                    type: "setCustomModelDraft",
-                    values: { reasoningPrice: event.target.value },
-                  })
-                }
-              />
-            </div>
-          </div>
-          <div className="flex items-center gap-3 pt-2">
-            <Button
-              className="gap-2"
-              onClick={handleCreateCustomModel}
-              disabled={createCustomModel.isPending}
-            >
-              <Plus className="size-4" />
-              {t("Add Model")}
-            </Button>
-            <p className="text-xs text-muted-foreground">
-              {t("Pricing fields are optional metadata for cost estimates.")}
-            </p>
-          </div>
-
-          {customModels.length > 0 && (
-            <div className="rounded-lg border border-border overflow-hidden">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>{t("Name")}</TableHead>
-                    <TableHead>{t("Model ID")}</TableHead>
-                    <TableHead>{t("Tier")}</TableHead>
-                    <TableHead className="text-right">{t("Actions")}</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {customModels.map((model) => (
-                    <TableRow key={model.id}>
-                      <TableCell>
-                        <div className="flex flex-col">
-                          <span className="font-medium">{model.name}</span>
-                          {model.description && (
-                            <span className="text-xs text-muted-foreground">
-                              {model.description}
-                            </span>
-                          )}
-                        </div>
-                      </TableCell>
-                      <TableCell className="font-mono text-xs">{model.modelId}</TableCell>
-                      <TableCell>
-                        <Badge variant={model.premium ? "default" : "secondary"}>
-                          {model.premium ? t("Premium") : t("Basic")}
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          className="text-destructive hover:text-destructive"
-                          onClick={() => handleDeleteCustomModel(model.id)}
-                          disabled={deleteCustomModel.isPending}
-                        >
-                          <Trash2 className="size-4" />
-                        </Button>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
-          )}
-        </CardContent>
-      </Card>
     </SettingsPageShell>
   );
 }

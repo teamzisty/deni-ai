@@ -17,7 +17,6 @@ import {
   Gem,
   Globe,
   Image as ImageIcon,
-  Plug,
   SearchIcon,
   Sparkle,
   StarIcon,
@@ -53,19 +52,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/component
 
 export type { ComposerMessage };
 
-type BaseModelOption = ModelDefinition;
-type CustomModelOption = {
-  name: string;
-  value: string;
-  description: string;
-  author: "openai_compatible";
-  features: string[];
-  premium?: boolean;
-  default?: boolean;
-  efforts: false;
-  source: "custom";
-};
-export type ModelOption = BaseModelOption | CustomModelOption;
+export type ModelOption = ModelDefinition;
 
 type ToolChipProps = {
   icon: LucideIcon;
@@ -90,7 +77,6 @@ type FeatureLabels = {
 
 type ProviderLabels = {
   featured: string;
-  custom: string;
 };
 
 function ToolChip({ icon: Icon, label, onRemove }: ToolChipProps) {
@@ -163,8 +149,6 @@ function ModelIcon({
       return <SiGooglegemini className={cn("size-3.5", className)} aria-hidden="true" />;
     case "xai":
       return <SiX className={cn("size-3.5", className)} aria-hidden="true" />;
-    case "openai_compatible":
-      return <Plug className={cn("size-3.5", className)} aria-hidden="true" />;
     default:
       return <Bot className={cn("size-3.5", className)} aria-hidden="true" />;
   }
@@ -182,8 +166,6 @@ function ProviderIcon({ author }: { author: string }) {
       return <SiGooglegemini className="size-3.5" aria-hidden="true" />;
     case "xai":
       return <SiX className="size-3.5" aria-hidden="true" />;
-    case "openai_compatible":
-      return <Plug className="size-3.5" aria-hidden="true" />;
     default:
       return <Bot className="size-3.5" aria-hidden="true" />;
   }
@@ -201,8 +183,6 @@ function getProviderLabel(author: string, labels: ProviderLabels): string {
       return "Google";
     case "xai":
       return "xAI";
-    case "openai_compatible":
-      return labels.custom;
     default:
       return author;
   }
@@ -245,14 +225,6 @@ function ModelPickerItem({
           <ModelIcon model={model} />
         </span>
         <span>{model.name}</span>
-        {model.author === "openai_compatible" && (
-          <Badge
-            variant="secondary"
-            className="bg-primary/10 text-[10px] leading-none px-1 py-0.5 h-auto"
-          >
-            {t("BYOK")}
-          </Badge>
-        )}
         {"tokenMultiplier" in model &&
           typeof model.tokenMultiplier === "number" &&
           model.tokenMultiplier > 1 && (
@@ -391,7 +363,6 @@ export function ChatComposer({
   };
   const providerLabels: ProviderLabels = {
     featured: t("Featured"),
-    custom: t("Custom"),
   };
   const { availableModels } = useAvailableModels();
   const [modelPopoverOpen, setModelPopoverOpen] = useState(false);
