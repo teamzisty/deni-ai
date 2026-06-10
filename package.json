@@ -65,7 +65,7 @@
     "clsx": "^2.1.1",
     "cmdk": "^1.1.1",
     "date-fns": "^4.3.0",
-    "disposable-email-domains": "^1.0.62",
+    "disposable-email-domains-js": "^1.25.0",
     "drizzle-orm": "^0.45.2",
     "embla-carousel-react": "^8.6.0",
     "input-otp": "^1.4.2",
