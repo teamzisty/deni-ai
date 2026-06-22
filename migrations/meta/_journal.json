@@ -246,6 +246,13 @@
       "when": 1779880975299,
       "tag": "0034_organic_goliath",
       "breakpoints": true
+    },
+    {
+      "idx": 35,
+      "version": "7",
+      "when": 1782137864943,
+      "tag": "0035_fancy_raza",
+      "breakpoints": true
     }
   ]
 }

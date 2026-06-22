@@ -1,5 +1,3 @@
-import "server-only";
-
 import { eq, sql } from "drizzle-orm";
 import type Stripe from "stripe";
 import { db } from "@/db/drizzle";

@@ -1,5 +1,3 @@
-import "server-only";
-
 type ActiveGeneration = {
   generationId: string;
   abortController: AbortController;

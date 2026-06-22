@@ -1,5 +1,3 @@
-import "server-only";
-
 import { groq } from "@ai-sdk/groq";
 import { generateText, type UIMessage } from "ai";
 import { and, eq, sql } from "drizzle-orm";

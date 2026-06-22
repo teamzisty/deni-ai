@@ -1,5 +1,3 @@
-import "server-only";
-
 import { and, eq } from "drizzle-orm";
 import { db } from "@/db/drizzle";
 import { projectFiles, projects } from "@/db/schema";

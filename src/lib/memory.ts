@@ -1,5 +1,3 @@
-import "server-only";
-
 import { generateObject, type UIMessage } from "ai";
 import { and, eq } from "drizzle-orm";
 import { z } from "zod";
