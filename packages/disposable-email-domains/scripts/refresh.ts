@@ -6,7 +6,7 @@
  * Usage (from repo root):    bun run disposable:refresh
  */
 
-import { mkdir, writeFile } from "node:fs/promises";
+import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -44,6 +44,32 @@ async function fetchOptionalList(url: string): Promise<string[]> {
   return parseList(await res.text());
 }
 
+/**
+ * Reads the locally-maintained custom domain list. These are domains added by
+ * hand that aren't (yet) in the upstream blocklist. Missing file => empty list.
+ */
+async function readCustomList(path: string): Promise<string[]> {
+  let text: string;
+  try {
+    text = await readFile(path, "utf8");
+  } catch (error) {
+    if ((error as NodeJS.ErrnoException).code === "ENOENT") {
+      console.warn(`Custom domain list not found at ${path} — continuing with none.`);
+      return [];
+    }
+    throw error;
+  }
+  const trimmed = text.trim();
+  if (trimmed.length === 0) return [];
+  const parsed = JSON.parse(trimmed) as unknown;
+  if (!Array.isArray(parsed)) {
+    throw new Error(`Expected an array of domains in ${path}`);
+  }
+  return parsed
+    .map((entry) => String(entry).trim().toLowerCase())
+    .filter((entry) => entry.length > 0);
+}
+
 async function main(): Promise<void> {
   console.log("Fetching disposable email domain lists...");
   const [blocklist, allowlist] = await Promise.all([
@@ -51,15 +77,31 @@ async function main(): Promise<void> {
     fetchOptionalList(ALLOWLIST_URL),
   ]);
 
-  const allow = new Set(allowlist);
-  const domains = [...new Set(blocklist)].filter((domain) => !allow.has(domain)).sort();
-
   const dataDir = join(dirname(fileURLToPath(import.meta.url)), "..", "data");
+  const customPath = join(dataDir, "custom-domains.json");
+
+  const allow = new Set(allowlist);
+  const upstream = [...new Set(blocklist)].filter((domain) => !allow.has(domain));
+  const upstreamSet = new Set(upstream);
+
+  // Custom domains that upstream already covers are redundant — drop them from
+  // the custom list so it only ever holds domains upstream is still missing.
+  const customAll = await readCustomList(customPath);
+  const keptCustom = [...new Set(customAll)]
+    .filter((domain) => !allow.has(domain) && !upstreamSet.has(domain))
+    .sort();
+  const prunedCount = new Set(customAll).size - keptCustom.length;
+
   await mkdir(dataDir, { recursive: true });
+  await writeFile(customPath, `${JSON.stringify(keptCustom, null, 2)}\n`);
+
+  const domains = [...new Set([...upstream, ...keptCustom])].sort();
   await writeFile(join(dataDir, "domains.json"), `${JSON.stringify(domains)}\n`);
 
   console.log(
-    `Wrote ${domains.length} domains (blocklist ${blocklist.length}, allowlist ${allowlist.length}) to data/domains.json`,
+    `Wrote ${domains.length} domains (blocklist ${blocklist.length}, allowlist ${allowlist.length}, ` +
+      `custom ${keptCustom.length}${prunedCount > 0 ? `, pruned ${prunedCount} now-upstream custom` : ""}) ` +
+      `to data/domains.json`,
   );
 }
 

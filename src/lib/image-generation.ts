@@ -1,5 +1,3 @@
-import "server-only";
-
 import { createGoogleGenerativeAI } from "@ai-sdk/google";
 import { generateImage } from "ai";
 import { env } from "@/env";

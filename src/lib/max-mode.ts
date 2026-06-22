@@ -1,5 +1,3 @@
-import "server-only";
-
 import { and, eq, isNotNull, isNull, like, sql } from "drizzle-orm";
 
 import { db } from "@/db/drizzle";
