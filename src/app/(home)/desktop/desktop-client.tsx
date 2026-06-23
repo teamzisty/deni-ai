@@ -282,25 +282,12 @@ export function DesktopClient({ downloads }: { downloads: DesktopDownloads }) {
   const shouldUsePrereleaseFallback = latestOptions.length === 0 && hasPrerelease;
   const options =
     effectiveIncludePrerelease || shouldUsePrereleaseFallback ? prereleaseOptions : latestOptions;
+  // Only the user's explicit picks are stored. The effective os/arch/format are
+  // derived below with validation against the current options, so we never sync
+  // selection state through an effect when `options` changes.
   const [selectedOs, setSelectedOs] = React.useState<DownloadOption["os"] | null>(null);
   const [selectedArch, setSelectedArch] = React.useState<DownloadOption["arch"] | null>(null);
   const [selectedFormat, setSelectedFormat] = React.useState<string | null>(null);
-
-  React.useEffect(() => {
-    const preferred = detectPreferredPlatform();
-    const defaultOption = pickDefaultOption(options, preferred);
-
-    if (defaultOption) {
-      setSelectedOs(defaultOption.os);
-      setSelectedArch(defaultOption.arch);
-      setSelectedFormat(defaultOption.format);
-      return;
-    }
-
-    setSelectedOs(null);
-    setSelectedArch(null);
-    setSelectedFormat(null);
-  }, [options]);
 
   const osOptions = React.useMemo(
     () => ({
@@ -310,7 +297,10 @@ export function DesktopClient({ downloads }: { downloads: DesktopDownloads }) {
     }),
     [options],
   );
-  const currentOs = selectedOs ?? pickDefaultOption(options, detectPreferredPlatform())?.os ?? null;
+  const currentOs =
+    (selectedOs && options.some((option) => option.os === selectedOs) ? selectedOs : null) ??
+    pickDefaultOption(options, detectPreferredPlatform())?.os ??
+    null;
   const availableArchs = React.useMemo(() => {
     if (!currentOs) {
       return [];

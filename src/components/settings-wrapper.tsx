@@ -143,9 +143,9 @@ export default function SettingsWrapper({ children }: { children: React.ReactNod
               <span className="font-medium text-muted-foreground">{t("Usage")}</span>
               <span className="text-sm">
                 {t("Resets on {date}", {
-                  date: settingsDateFormatter.format(
-                    new Date(usages?.[0]?.periodEnd || Date.now()),
-                  ),
+                  date: usages?.[0]?.periodEnd
+                    ? settingsDateFormatter.format(new Date(usages[0].periodEnd))
+                    : "—",
                 })}
               </span>
               {usages?.map((usageItem) => {

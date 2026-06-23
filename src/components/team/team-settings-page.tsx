@@ -176,7 +176,10 @@ function TeamSettingsContent() {
   const searchParams = useSearchParams();
   const queryClient = useQueryClient();
 
-  const [activeOrg, setActiveOrg] = useState<Organization | null>(null);
+  // Store only the user's explicit org selection; the active org is derived
+  // from it (falling back to the session's active org or the first org) so we
+  // never sync it through an effect.
+  const [selectedOrgId, setSelectedOrgId] = useState<string | null>(null);
 
   // Create org dialog
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
@@ -202,6 +205,15 @@ function TeamSettingsContent() {
       return (result.data ?? []) as Organization[];
     },
   });
+  const activeOrganizationId = session.data?.session?.activeOrganizationId ?? null;
+  const organizations = organizationsData ?? [];
+  // Derived active org: explicit user selection wins, then the session's active
+  // org, then the first available org. Stale ids simply fall through.
+  const activeOrg =
+    (selectedOrgId ? organizations.find((org) => org.id === selectedOrgId) : undefined) ??
+    organizations.find((org) => org.id === activeOrganizationId) ??
+    organizations[0] ??
+    null;
   const { data: orgDetailsData } = useQuery({
     queryKey: ["team", "organization", currentUserId, activeOrg?.id],
     enabled: Boolean(activeOrg?.id),
@@ -224,8 +236,6 @@ function TeamSettingsContent() {
     trpc.organization.updateTeamMaxModeDefaultPolicy.useMutation();
   const updateMemberMaxModePolicy = trpc.organization.updateTeamMemberMaxModePolicy.useMutation();
   const utils = trpc.useUtils();
-  const activeOrganizationId = session.data?.session?.activeOrganizationId ?? null;
-  const organizations = organizationsData ?? [];
   const members = (orgDetailsData?.members ?? []).filter(isMember);
   const invitations = (orgDetailsData?.invitations ?? []).filter(isInvitation);
   const pendingInvitations = invitations.filter((inv) => inv.status === "pending");
@@ -245,12 +255,8 @@ function TeamSettingsContent() {
   const isOwner = currentUserRole === "owner";
   const isAdmin = currentUserRole === "admin" || isOwner;
 
-  useEffect(() => {
-    setActiveOrg(null);
-  }, [currentUserId]);
-
   async function selectOrg(org: Organization, options?: { persistActive?: boolean }) {
-    setActiveOrg(org);
+    setSelectedOrgId(org.id);
     if (options?.persistActive !== false && org.id !== activeOrganizationId) {
       await authClient.organization.setActive({ organizationId: org.id });
       await session.refetch();
@@ -283,16 +289,6 @@ function TeamSettingsContent() {
     }
     init();
   }, [currentUserId, searchParams, queryClient, session, t]);
-
-  useEffect(() => {
-    if (activeOrg || organizationsLoading) {
-      return;
-    }
-
-    const nextOrg =
-      organizations.find((org) => org.id === activeOrganizationId) ?? organizations[0] ?? null;
-    setActiveOrg(nextOrg);
-  }, [activeOrg, activeOrganizationId, organizations, organizationsLoading]);
 
   async function handleCreateOrg() {
     if (!newOrgName.trim()) return;
