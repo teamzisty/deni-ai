@@ -31,6 +31,12 @@ import { Spinner } from "@/components/ui/spinner";
 import { authClient } from "@/lib/auth-client";
 import { trpc } from "@/lib/trpc/react";
 
+const dateFormatter = new Intl.DateTimeFormat(undefined, {
+  month: "short",
+  day: "numeric",
+  year: "numeric",
+});
+
 export default function ApiKeysSettingsPage() {
   const t = useExtracted();
   const utils = trpc.useUtils();
@@ -141,21 +147,13 @@ export default function ApiKeysSettingsPage() {
                       <code className="font-mono">{k.keyPrefix}••••••••</code>
                       <span>
                         {t("Created {date}", {
-                          date: new Intl.DateTimeFormat(undefined, {
-                            month: "short",
-                            day: "numeric",
-                            year: "numeric",
-                          }).format(new Date(k.createdAt)),
+                          date: dateFormatter.format(new Date(k.createdAt)),
                         })}
                       </span>
                       <span>
                         {k.lastUsedAt
                           ? t("Last used {date}", {
-                              date: new Intl.DateTimeFormat(undefined, {
-                                month: "short",
-                                day: "numeric",
-                                year: "numeric",
-                              }).format(new Date(k.lastUsedAt)),
+                              date: dateFormatter.format(new Date(k.lastUsedAt)),
                             })
                           : t("Never used")}
                       </span>

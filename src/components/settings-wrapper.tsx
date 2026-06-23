@@ -15,6 +15,12 @@ import { settingsUsageQueryOptions } from "@/lib/usage-query-options";
 import { cn, formatCompactUsageValue } from "@/lib/utils";
 import { Progress } from "./ui/progress";
 
+const settingsDateFormatter = new Intl.DateTimeFormat(undefined, {
+  month: "short",
+  day: "numeric",
+  year: "numeric",
+});
+
 export default function SettingsWrapper({ children }: { children: React.ReactNode }) {
   const t = useExtracted();
   const pathname = usePathname();
@@ -112,11 +118,7 @@ export default function SettingsWrapper({ children }: { children: React.ReactNod
                   <span className="text-xs text-muted-foreground">
                     {t("Next update: {date}", {
                       date: status?.currentPeriodEnd
-                        ? new Intl.DateTimeFormat(undefined, {
-                            month: "short",
-                            day: "numeric",
-                            year: "numeric",
-                          }).format(new Date(status.currentPeriodEnd))
+                        ? settingsDateFormatter.format(new Date(status.currentPeriodEnd))
                         : "—",
                     })}
                   </span>
@@ -141,18 +143,15 @@ export default function SettingsWrapper({ children }: { children: React.ReactNod
               <span className="font-medium text-muted-foreground">{t("Usage")}</span>
               <span className="text-sm">
                 {t("Resets on {date}", {
-                  date: new Intl.DateTimeFormat(undefined, {
-                    month: "short",
-                    day: "numeric",
-                    year: "numeric",
-                  }).format(new Date(usages?.[0]?.periodEnd || Date.now())),
+                  date: usages?.[0]?.periodEnd
+                    ? settingsDateFormatter.format(new Date(usages[0].periodEnd))
+                    : "—",
                 })}
               </span>
               {usages?.map((usageItem) => {
                 const maxModeEnabled = usage?.maxModeEnabled ?? false;
                 const unitLabel = usageItem.unit === "tokens" ? t("tokens") : t("requests");
-                const hasLimit =
-                  !maxModeEnabled && usageItem.limit !== null && usageItem.limit > 0;
+                const hasLimit = !maxModeEnabled && usageItem.limit !== null && usageItem.limit > 0;
                 const usedPercent = hasLimit
                   ? Math.min((usageItem.used / (usageItem.limit ?? 1)) * 100, 100)
                   : 0;
@@ -169,11 +168,7 @@ export default function SettingsWrapper({ children }: { children: React.ReactNod
                     ? t("{percent}% remaining", { percent: remainingPercent.toFixed(1) })
                     : t("Unlimited");
                 const periodEndLabel = usageItem.periodEnd
-                  ? new Intl.DateTimeFormat(undefined, {
-                      month: "short",
-                      day: "numeric",
-                      year: "numeric",
-                    }).format(new Date(usageItem.periodEnd))
+                  ? settingsDateFormatter.format(new Date(usageItem.periodEnd))
                   : null;
                 return (
                   <div key={usageItem.category} className="space-y-2 text-sm py-1">

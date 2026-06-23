@@ -7,6 +7,7 @@ This guide covers prerequisites, environment configuration, database setup, and 
 - [Bun](https://bun.sh/) (recommended) or [Node.js 20+](https://nodejs.org/)
 - [PostgreSQL database](https://neon.tech/) (Neon serverless recommended)
 - API keys for AI providers (Google AI, Groq, OpenRouter)
+- Anthropic API key for Claude models
 - OAuth credentials for authentication providers
 
 ## Getting Started
@@ -46,6 +47,7 @@ GITHUB_CLIENT_SECRET=your-github-client-secret
 
 # AI Providers
 GOOGLE_GENERATIVE_AI_API_KEY=your-google-ai-key
+ANTHROPIC_API_KEY=your-anthropic-key
 GROQ_API_KEY=gsk_your-groq-key
 OPENROUTER_API_KEY=your-openrouter-key
 
@@ -70,7 +72,7 @@ NEXT_PUBLIC_BILLING_DISABLED=1
 
 When adding or updating supported AI providers/models, also update `src/lib/constants.ts`.
 
-Set `OPENROUTER_API_KEY` to your OpenRouter API key.
+Set `ANTHROPIC_API_KEY` to your Anthropic API key for Claude models. Set `OPENROUTER_API_KEY` to your OpenRouter API key for other routed models.
 
 #### Generate `BETTER_AUTH_SECRET`
 

@@ -288,7 +288,7 @@ export const models: readonly ModelDefinition[] = [
   },
   {
     name: "Gemini 3.5 Flash",
-    value: "gemini-3.5-flash-preview",
+    value: "gemini-3.5-flash",
     author: "google",
     description: "Best for everyday tasks",
     featured: true,

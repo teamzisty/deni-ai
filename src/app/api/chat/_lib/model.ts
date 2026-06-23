@@ -245,9 +245,6 @@ export async function resolveChatModelContext({
       ? resolvedReasoningEffort
       : undefined;
 
-  const openrouter = createDeniOpenRouter({
-    apiKey: env.OPENROUTER_API_KEY,
-  });
   const selectedOpenRouterModelId = selectedModel
     ? selectedModel.value.includes("/")
       ? selectedModel.value
@@ -258,7 +255,24 @@ export async function resolveChatModelContext({
       throw new Error("OpenRouter model is not available for the selected model.");
     }
 
-    return openrouter.chat(selectedOpenRouterModelId);
+    const openrouter = createDeniOpenRouter({
+      apiKey: env.OPENROUTER_API_KEY,
+    });
+
+    return openrouter.chat(selectedOpenRouterModelId, {
+      provider: {
+        allow_fallbacks: false,
+        only: ["openai", "anthropic", "google", "xai"],
+      },
+    });
+  };
+  const getAnthropicModel = (apiKey: string | undefined, baseURL?: string) => {
+    const provider = createAnthropic({
+      apiKey,
+      baseURL,
+    });
+
+    return provider(resolvedModelId.replace(".", "-"));
   };
 
   const anthropicOptions: AnthropicProviderOptions = {};
@@ -288,13 +302,9 @@ export async function resolveChatModelContext({
     }
     case "anthropic": {
       if (useByok) {
-        const provider = createAnthropic({
-          apiKey: byokApiKey,
-          baseURL: byokBaseUrl,
-        });
-        model = provider(resolvedModelId.replace(".", "-"));
+        model = getAnthropicModel(byokApiKey, byokBaseUrl);
       } else {
-        model = getOpenRouterModel();
+        model = getAnthropicModel(env.ANTHROPIC_API_KEY);
       }
       break;
     }
@@ -374,10 +384,10 @@ export async function resolveChatModelContext({
       : {}),
   };
 
-  // When routing through OpenRouter (non-BYOK), wrap provider-specific options
-  // under the openrouter key so they are forwarded in OpenRouter-compatible format.
+  // When routing through OpenRouter, wrap provider-specific options so they are
+  // forwarded in OpenRouter-compatible format.
   const providerOptions: ChatProviderOptions = (
-    useByok
+    useByok || providerId === "anthropic"
       ? directProviderOptions
       : Object.keys(directProviderOptions).length > 0
         ? { openrouter: { providerOptions: directProviderOptions } }
@@ -387,7 +397,7 @@ export async function resolveChatModelContext({
   return {
     model,
     useByok,
-    usesOpenRouter: !useByok && ["openai", "anthropic", "google", "xai"].includes(providerId),
+    usesOpenRouter: !useByok && ["openai", "google", "xai"].includes(providerId),
     usageCategory,
     usageUnit,
     providerOptions,
