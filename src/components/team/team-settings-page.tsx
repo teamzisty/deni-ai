@@ -129,9 +129,29 @@ function formatCurrency(amount: number | null, currency: string | null) {
   });
 }
 
+const numberFormatter = new Intl.NumberFormat(undefined);
+
+const monthDayFormatter = new Intl.DateTimeFormat(undefined, {
+  month: "short",
+  day: "numeric",
+});
+
+const monthDayYearFormatter = new Intl.DateTimeFormat(undefined, {
+  month: "short",
+  day: "numeric",
+  year: "numeric",
+});
+
+const dateTimeFormatter = new Intl.DateTimeFormat(undefined, {
+  month: "short",
+  day: "numeric",
+  hour: "2-digit",
+  minute: "2-digit",
+});
+
 function formatTokenLimit(value: number | null) {
   if (value === null) return "";
-  return new Intl.NumberFormat(undefined).format(value);
+  return numberFormatter.format(value);
 }
 
 function parseTokenLimit(value: string) {
@@ -174,7 +194,7 @@ function TeamSettingsContent() {
   const [isRemovingMember, setIsRemovingMember] = useState(false);
   const currentUserId = session.data?.user?.id ?? null;
 
-  const organizationsQuery = useQuery({
+  const { data: organizationsData, isLoading: organizationsLoading } = useQuery({
     queryKey: ["team", "organizations", currentUserId],
     enabled: !session.isPending,
     queryFn: async () => {
@@ -182,7 +202,7 @@ function TeamSettingsContent() {
       return (result.data ?? []) as Organization[];
     },
   });
-  const orgDetailsQuery = useQuery({
+  const { data: orgDetailsData } = useQuery({
     queryKey: ["team", "organization", currentUserId, activeOrg?.id],
     enabled: Boolean(activeOrg?.id),
     queryFn: async () => {
@@ -205,9 +225,9 @@ function TeamSettingsContent() {
   const updateMemberMaxModePolicy = trpc.organization.updateTeamMemberMaxModePolicy.useMutation();
   const utils = trpc.useUtils();
   const activeOrganizationId = session.data?.session?.activeOrganizationId ?? null;
-  const organizations = organizationsQuery.data ?? [];
-  const members = (orgDetailsQuery.data?.members ?? []).filter(isMember);
-  const invitations = (orgDetailsQuery.data?.invitations ?? []).filter(isInvitation);
+  const organizations = organizationsData ?? [];
+  const members = (orgDetailsData?.members ?? []).filter(isMember);
+  const invitations = (orgDetailsData?.invitations ?? []).filter(isInvitation);
   const pendingInvitations = invitations.filter((inv) => inv.status === "pending");
   const currentUserRole = members.find((member) => member.userId === currentUserId)?.role ?? null;
   const teamBillingQuery = trpc.organization.teamBillingStatus.useQuery(
@@ -265,14 +285,14 @@ function TeamSettingsContent() {
   }, [currentUserId, searchParams, queryClient, session, t]);
 
   useEffect(() => {
-    if (activeOrg || organizationsQuery.isLoading) {
+    if (activeOrg || organizationsLoading) {
       return;
     }
 
     const nextOrg =
       organizations.find((org) => org.id === activeOrganizationId) ?? organizations[0] ?? null;
     setActiveOrg(nextOrg);
-  }, [activeOrg, activeOrganizationId, organizations, organizationsQuery.isLoading]);
+  }, [activeOrg, activeOrganizationId, organizations, organizationsLoading]);
 
   async function handleCreateOrg() {
     if (!newOrgName.trim()) return;
@@ -577,8 +597,7 @@ function TeamSettingsContent() {
     URL.revokeObjectURL(url);
   }
 
-  const isLoading =
-    session.isPending || (organizationsQuery.isLoading && organizations.length === 0);
+  const isLoading = session.isPending || (organizationsLoading && organizations.length === 0);
 
   if (isLoading) {
     return (
@@ -738,10 +757,7 @@ function TeamSettingsContent() {
                         <Badge variant="secondary">
                           {t("Cancels")}{" "}
                           {billingStatus?.currentPeriodEnd
-                            ? new Intl.DateTimeFormat(undefined, {
-                                month: "short",
-                                day: "numeric",
-                              }).format(new Date(billingStatus.currentPeriodEnd))
+                            ? monthDayFormatter.format(new Date(billingStatus.currentPeriodEnd))
                             : ""}
                         </Badge>
                       )}
@@ -752,11 +768,7 @@ function TeamSettingsContent() {
                     <p className="text-xs text-muted-foreground">
                       {billingStatus?.memberCount ?? 0} {t("seats")}
                       {billingStatus?.currentPeriodEnd &&
-                        ` · ${t("Renews")} ${new Intl.DateTimeFormat(undefined, {
-                          month: "short",
-                          day: "numeric",
-                          year: "numeric",
-                        }).format(new Date(billingStatus.currentPeriodEnd))}`}
+                        ` · ${t("Renews")} ${monthDayYearFormatter.format(new Date(billingStatus.currentPeriodEnd))}`}
                     </p>
                   </div>
                   <div className="flex gap-2">
@@ -922,18 +934,13 @@ function TeamSettingsContent() {
                   <div className="rounded-lg border p-3">
                     <p className="text-xs text-muted-foreground">{t("Basic Max Mode usage")}</p>
                     <p className="mt-1 text-sm font-medium">
-                      {new Intl.NumberFormat(undefined).format(
-                        teamMaxModeQuery.data?.usageBasic ?? 0,
-                      )}{" "}
-                      {t("tokens")}
+                      {numberFormatter.format(teamMaxModeQuery.data?.usageBasic ?? 0)} {t("tokens")}
                     </p>
                   </div>
                   <div className="rounded-lg border p-3">
                     <p className="text-xs text-muted-foreground">{t("Premium Max Mode usage")}</p>
                     <p className="mt-1 text-sm font-medium">
-                      {new Intl.NumberFormat(undefined).format(
-                        teamMaxModeQuery.data?.usagePremium ?? 0,
-                      )}{" "}
+                      {numberFormatter.format(teamMaxModeQuery.data?.usagePremium ?? 0)}{" "}
                       {t("tokens")}
                     </p>
                   </div>
@@ -1082,9 +1089,7 @@ function TeamSettingsContent() {
                         />
                         <p className="text-[11px] text-muted-foreground">
                           {t("Used {count}", {
-                            count: new Intl.NumberFormat(undefined).format(
-                              memberPolicy.maxModeUsageBasic,
-                            ),
+                            count: numberFormatter.format(memberPolicy.maxModeUsageBasic),
                           })}
                         </p>
                       </div>
@@ -1113,9 +1118,7 @@ function TeamSettingsContent() {
                         />
                         <p className="text-[11px] text-muted-foreground">
                           {t("Used {count}", {
-                            count: new Intl.NumberFormat(undefined).format(
-                              memberPolicy.maxModeUsagePremium,
-                            ),
+                            count: numberFormatter.format(memberPolicy.maxModeUsagePremium),
                           })}
                         </p>
                       </div>
@@ -1154,12 +1157,7 @@ function TeamSettingsContent() {
                           >
                             <span className="text-muted-foreground">{actionLabel}</span>
                             <span className="shrink-0 text-muted-foreground">
-                              {new Intl.DateTimeFormat(undefined, {
-                                month: "short",
-                                day: "numeric",
-                                hour: "2-digit",
-                                minute: "2-digit",
-                              }).format(new Date(entry.createdAt))}
+                              {dateTimeFormatter.format(new Date(entry.createdAt))}
                             </span>
                           </div>
                         );
@@ -1259,10 +1257,7 @@ function TeamSettingsContent() {
                       <p className="text-sm font-medium">{inv.email}</p>
                       <p className="text-xs text-muted-foreground">
                         {inv.role ?? t("Member")} · {t("Expires")}{" "}
-                        {new Intl.DateTimeFormat(undefined, {
-                          month: "short",
-                          day: "numeric",
-                        }).format(new Date(inv.expiresAt))}
+                        {monthDayFormatter.format(new Date(inv.expiresAt))}
                       </p>
                     </div>
                   </div>

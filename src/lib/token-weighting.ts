@@ -46,14 +46,8 @@ function parseWeight(value: string | undefined, fallback: number): number {
 export function getTokenUsageWeights(): TokenUsageWeights {
   return {
     input: parseWeight(process.env.FLIXA_USAGE_WEIGHT_INPUT, DEFAULT_WEIGHTS.input),
-    cacheRead: parseWeight(
-      process.env.FLIXA_USAGE_WEIGHT_CACHE_READ,
-      DEFAULT_WEIGHTS.cacheRead,
-    ),
-    cacheWrite: parseWeight(
-      process.env.FLIXA_USAGE_WEIGHT_CACHE_WRITE,
-      DEFAULT_WEIGHTS.cacheWrite,
-    ),
+    cacheRead: parseWeight(process.env.FLIXA_USAGE_WEIGHT_CACHE_READ, DEFAULT_WEIGHTS.cacheRead),
+    cacheWrite: parseWeight(process.env.FLIXA_USAGE_WEIGHT_CACHE_WRITE, DEFAULT_WEIGHTS.cacheWrite),
     output: parseWeight(process.env.FLIXA_USAGE_WEIGHT_OUTPUT, DEFAULT_WEIGHTS.output),
   };
 }

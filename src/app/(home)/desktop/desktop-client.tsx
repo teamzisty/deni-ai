@@ -276,18 +276,15 @@ export function DesktopClient({ downloads }: { downloads: DesktopDownloads }) {
     [downloads.prerelease?.assets],
   );
   const hasPrerelease = prereleaseOptions.length > 0;
+  // Derive the effective toggle instead of resetting state in an effect: when no
+  // prerelease exists the user's opt-in is simply ignored, with no extra render.
+  const effectiveIncludePrerelease = includePrerelease && hasPrerelease;
   const shouldUsePrereleaseFallback = latestOptions.length === 0 && hasPrerelease;
   const options =
-    includePrerelease || shouldUsePrereleaseFallback ? prereleaseOptions : latestOptions;
+    effectiveIncludePrerelease || shouldUsePrereleaseFallback ? prereleaseOptions : latestOptions;
   const [selectedOs, setSelectedOs] = React.useState<DownloadOption["os"] | null>(null);
   const [selectedArch, setSelectedArch] = React.useState<DownloadOption["arch"] | null>(null);
   const [selectedFormat, setSelectedFormat] = React.useState<string | null>(null);
-
-  React.useEffect(() => {
-    if (!hasPrerelease) {
-      setIncludePrerelease(false);
-    }
-  }, [hasPrerelease]);
 
   React.useEffect(() => {
     const preferred = detectPreferredPlatform();
@@ -347,7 +344,7 @@ export function DesktopClient({ downloads }: { downloads: DesktopDownloads }) {
     pickDefaultOption(options, detectPreferredPlatform()) ??
     null;
   const activeChannelLabel =
-    includePrerelease || shouldUsePrereleaseFallback ? t("Pre-release") : t("Stable");
+    effectiveIncludePrerelease || shouldUsePrereleaseFallback ? t("Pre-release") : t("Stable");
 
   return (
     <main className="relative min-h-screen overflow-hidden" id="main-content">

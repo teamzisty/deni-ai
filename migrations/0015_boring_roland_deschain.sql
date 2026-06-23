@@ -1,4 +1,3 @@
-ALTER TABLE "device_code" DISABLE ROW LEVEL SECURITY;--> statement-breakpoint
 DROP TABLE "device_code" CASCADE;--> statement-breakpoint
 ALTER TABLE "invitation" ALTER COLUMN "status" SET DEFAULT 'pending';--> statement-breakpoint
 ALTER TABLE "member" ALTER COLUMN "role" SET DEFAULT 'member';--> statement-breakpoint
