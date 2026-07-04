@@ -25,7 +25,7 @@
     "doctor": "npx react-doctor@latest"
   },
   "dependencies": {
-    "@ai-sdk/anthropic": "^3.0.85",
+    "@ai-sdk/anthropic": "^4.0.0",
     "@ai-sdk/google": "^3.0.83",
     "@ai-sdk/groq": "^3.0.42",
     "@ai-sdk/openai": "^3.0.74",
