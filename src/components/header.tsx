@@ -113,6 +113,12 @@ export default function Header() {
           title: t("Use Cases"),
           description: t("Practical workflows."),
         },
+        {
+          href: "/guides",
+          icon: BookOpen,
+          title: t("AI Guides"),
+          description: t("Practical AI reading."),
+        },
       ],
     },
     {

@@ -1,4 +1,3 @@
-import { AdSenseScript } from "@/components/adsense-script";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { AppShell } from "@/components/app-shell";
@@ -12,7 +11,6 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   }
   return (
     <AppProviders>
-      <AdSenseScript />
       <AppShell>{children}</AppShell>
     </AppProviders>
   );

@@ -190,7 +190,7 @@ function FlixaAuthorizeContent() {
               </p>
               <RadioGroup
                 value={selectedKeyId}
-                onValueChange={setSelectedKeyId}
+                onValueChange={(value) => setSelectedKeyId(value as string)}
                 className="space-y-2"
               >
                 {apiKeys.map((apiKey) => (

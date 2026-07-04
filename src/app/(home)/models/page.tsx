@@ -1,4 +1,4 @@
-import { Coins } from "lucide-react";
+import { AlertTriangle, Coins } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { useExtracted, useLocale } from "next-intl";
@@ -128,6 +128,37 @@ export default function ModelsPage() {
     },
   ];
 
+  const taskGuide = [
+    {
+      task: t("Quick answers and short drafts"),
+      modelType: t("Fast general models"),
+      note: t(
+        "Use these when speed matters more than deep reasoning, such as brainstorming, rewriting a sentence, or getting a first explanation.",
+      ),
+    },
+    {
+      task: t("Planning and analysis"),
+      modelType: t("Reasoning-focused models"),
+      note: t(
+        "Use these for tradeoffs, debugging plans, product decisions, and tasks where you want the model to show more careful structure.",
+      ),
+    },
+    {
+      task: t("Implementation and refactoring"),
+      modelType: t("Coding-capable models"),
+      note: t(
+        "Use these when the output needs to fit real code, follow constraints, explain errors, or produce a change plan.",
+      ),
+    },
+    {
+      task: t("Translation and tone review"),
+      modelType: t("Strong writing models"),
+      note: t(
+        "Use these when wording, nuance, and readability matter more than raw speed or tool use.",
+      ),
+    },
+  ];
+
   return (
     <main className="relative min-h-screen" id="main-content">
       <script
@@ -160,6 +191,24 @@ export default function ModelsPage() {
               )}
             </p>
           </div>
+
+          <section className="rounded-[1.5rem] border border-border/70 bg-card p-6 md:p-8">
+            <div className="flex items-start gap-4">
+              <div className="flex size-10 shrink-0 items-center justify-center rounded-2xl bg-secondary">
+                <AlertTriangle className="size-5" />
+              </div>
+              <div>
+                <h2 className="text-xl font-semibold tracking-tight">
+                  {t("Model availability changes over time")}
+                </h2>
+                <p className="mt-3 text-sm leading-7 text-muted-foreground">
+                  {t(
+                    "AI providers update model names, capabilities, prices, and rate limits. This page describes the model families currently exposed by Deni AI and the practical role each category plays in the product.",
+                  )}
+                </p>
+              </div>
+            </div>
+          </section>
 
           <div className="grid gap-4 md:grid-cols-2">
             {providerGuides.map((guide) => (
@@ -231,6 +280,39 @@ export default function ModelsPage() {
               </div>
             </div>
           ))}
+        </div>
+      </section>
+
+      <section className="relative px-4 pb-16 md:pb-24">
+        <div className="mx-auto max-w-5xl">
+          <div className="max-w-3xl">
+            <h2 className="text-2xl md:text-3xl font-semibold tracking-tight">
+              {t("Choose by task type")}
+            </h2>
+            <p className="mt-4 text-sm leading-7 text-muted-foreground">
+              {t(
+                "The same model is rarely best for every job. A practical workflow is to decide what kind of output you need, pick the smallest reliable option, then compare another model when the answer affects real work.",
+              )}
+            </p>
+          </div>
+
+          <div className="mt-8 overflow-hidden rounded-[1.5rem] border border-border/70 bg-card">
+            <div className="grid grid-cols-1 border-b border-border/70 bg-secondary/40 px-5 py-3 text-sm font-semibold md:grid-cols-[1fr_1fr_1.4fr]">
+              <div>{t("Task")}</div>
+              <div>{t("Good starting point")}</div>
+              <div>{t("What to watch")}</div>
+            </div>
+            {taskGuide.map((item) => (
+              <article
+                key={item.task}
+                className="grid gap-3 border-b border-border/70 px-5 py-5 text-sm last:border-b-0 md:grid-cols-[1fr_1fr_1.4fr]"
+              >
+                <h3 className="font-semibold">{item.task}</h3>
+                <p className="text-muted-foreground">{item.modelType}</p>
+                <p className="leading-7 text-muted-foreground">{item.note}</p>
+              </article>
+            ))}
+          </div>
         </div>
       </section>
 

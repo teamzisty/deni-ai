@@ -1,21 +1,33 @@
 "use client";
 
-import { Collapsible as CollapsiblePrimitive } from "radix-ui";
+import type * as React from "react";
+import { Collapsible as CollapsiblePrimitive } from "@base-ui/react/collapsible";
 
-function Collapsible({ ...props }: React.ComponentProps<typeof CollapsiblePrimitive.Root>) {
-  return <CollapsiblePrimitive.Root data-slot="collapsible" {...props} />;
+import { resolveRenderProps } from "@/lib/base-ui-compat";
+
+function Collapsible({
+  ...props
+}: React.ComponentProps<typeof CollapsiblePrimitive.Root> & { asChild?: boolean }) {
+  return <CollapsiblePrimitive.Root data-slot="collapsible" {...resolveRenderProps(props)} />;
 }
 
 function CollapsibleTrigger({
   ...props
-}: React.ComponentProps<typeof CollapsiblePrimitive.CollapsibleTrigger>) {
-  return <CollapsiblePrimitive.CollapsibleTrigger data-slot="collapsible-trigger" {...props} />;
+}: React.ComponentProps<typeof CollapsiblePrimitive.Trigger> & { asChild?: boolean }) {
+  return (
+    <CollapsiblePrimitive.Trigger
+      data-slot="collapsible-trigger"
+      {...resolveRenderProps(props)}
+    />
+  );
 }
 
 function CollapsibleContent({
   ...props
-}: React.ComponentProps<typeof CollapsiblePrimitive.CollapsibleContent>) {
-  return <CollapsiblePrimitive.CollapsibleContent data-slot="collapsible-content" {...props} />;
+}: React.ComponentProps<typeof CollapsiblePrimitive.Panel> & { asChild?: boolean }) {
+  return (
+    <CollapsiblePrimitive.Panel data-slot="collapsible-content" {...resolveRenderProps(props)} />
+  );
 }
 
 export { Collapsible, CollapsibleTrigger, CollapsibleContent };

@@ -1,0 +1,82 @@
+"use client";
+
+import * as React from "react";
+import { mergeProps } from "@base-ui/react/merge-props";
+
+type AsChildProps = {
+  asChild?: boolean;
+  children?: React.ReactNode;
+  render?: unknown;
+};
+
+function resolveRenderProps<T extends AsChildProps>(props: T): Omit<T, "asChild"> {
+  const { asChild, children, render, ...rest } = props;
+
+  if (asChild && React.isValidElement(children) && render === undefined) {
+    return {
+      ...rest,
+      render: children,
+    } as unknown as Omit<T, "asChild">;
+  }
+
+  return {
+    ...rest,
+    render,
+    children,
+  } as unknown as Omit<T, "asChild">;
+}
+
+function Slot({
+  children,
+  ...props
+}: React.ComponentPropsWithoutRef<"span"> & {
+  children?: React.ReactNode;
+}) {
+  if (!React.isValidElement(children)) {
+    return null;
+  }
+
+  return React.cloneElement(
+    children,
+    mergeProps(
+      props,
+      children.props as React.ComponentPropsWithRef<React.ElementType>,
+    ) as Partial<unknown> & React.Attributes,
+  );
+}
+
+function useControllableState<T>({
+  prop,
+  defaultProp,
+  onChange,
+}: {
+  prop?: T | undefined;
+  defaultProp: T;
+  onChange?: (value: T, ...args: any[]) => void;
+}) {
+  const [uncontrolledValue, setUncontrolledValue] = React.useState(defaultProp as T);
+  const isControlled = prop !== undefined;
+  const value = isControlled ? prop : uncontrolledValue;
+
+  const setValue = React.useCallback(
+    (nextValue: React.SetStateAction<T>) => {
+      const resolvedValue =
+        typeof nextValue === "function"
+          ? (nextValue as (currentValue: T) => T)(value)
+          : nextValue;
+
+      if (!Object.is(value, resolvedValue)) {
+        if (!isControlled) {
+          setUncontrolledValue(resolvedValue);
+        }
+
+        onChange?.(resolvedValue);
+      }
+    },
+    [isControlled, onChange, value],
+  );
+
+  return [value, setValue] as const;
+}
+
+export { resolveRenderProps, Slot, useControllableState };

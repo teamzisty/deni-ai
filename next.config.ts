@@ -31,12 +31,18 @@ const nextConfig: NextConfig = {
     ];
 
     const marketingCacheHeaders = [
-      { key: "Cache-Control", value: "public, s-maxage=3600, stale-while-revalidate=86400" },
+      {
+        key: "Cache-Control",
+        value: "public, s-maxage=3600, stale-while-revalidate=86400",
+      },
       { key: "Vary", value: "x-locale" },
     ];
 
     const legalCacheHeaders = [
-      { key: "Cache-Control", value: "public, s-maxage=86400, stale-while-revalidate=604800" },
+      {
+        key: "Cache-Control",
+        value: "public, s-maxage=86400, stale-while-revalidate=604800",
+      },
       { key: "Vary", value: "x-locale" },
     ];
 
@@ -44,13 +50,18 @@ const nextConfig: NextConfig = {
       {
         source: "/sw.js",
         headers: [
-          { key: "Cache-Control", value: "no-cache, no-store, must-revalidate" },
+          {
+            key: "Cache-Control",
+            value: "no-cache, no-store, must-revalidate",
+          },
           { key: "Service-Worker-Allowed", value: "/" },
         ],
       },
       {
         source: "/manifest.webmanifest",
-        headers: [{ key: "Cache-Control", value: "public, max-age=0, must-revalidate" }],
+        headers: [
+          { key: "Cache-Control", value: "public, max-age=0, must-revalidate" },
+        ],
       },
       {
         source: "/(.*)",
@@ -66,6 +77,10 @@ const nextConfig: NextConfig = {
       },
       {
         source: "/use-cases",
+        headers: marketingCacheHeaders,
+      },
+      {
+        source: "/guides/:path*",
         headers: marketingCacheHeaders,
       },
       {
@@ -90,13 +105,15 @@ const nextConfig: NextConfig = {
       },
       {
         source: "/api/:path*",
-        headers: [{ key: "Cache-Control", value: "private, no-cache, no-store" }],
+        headers: [
+          { key: "Cache-Control", value: "private, no-cache, no-store" },
+        ],
       },
     ];
   },
   experimental: {
     turbopackFileSystemCacheForBuild: true,
-    turbopackFileSystemCacheForDev: true,
+    turbopackRustReactCompiler: true,
   },
 };
 
