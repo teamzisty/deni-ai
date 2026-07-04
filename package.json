@@ -60,7 +60,7 @@
     "@trpc/server": "^11.18.0",
     "@upstash/redis": "^1.38.0",
     "@xyflow/react": "^12.11.1",
-    "ai": "^6.0.208",
+    "ai": "^7.0.0",
     "ansi-to-react": "^6.2.6",
     "better-auth": "^1.6.20",
     "botid": "1.5.11",
