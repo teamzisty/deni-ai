@@ -623,8 +623,11 @@ function BillingPageContent() {
     },
   );
 
-  // Dialog is open once a plan change is pending and its estimate has loaded.
-  const isChangePlanOpen = pendingPlanId !== null && !estimateQuery.isLoading;
+  // Dialog opens only after the latest estimate fetch settles (not just cached data).
+  const isChangePlanOpen =
+    pendingPlanId !== null &&
+    !estimateQuery.isFetching &&
+    (estimateQuery.data !== undefined || estimateQuery.error !== null);
 
   // Reset state when dialog closes (declared above changePlan; reads pending via ref)
   const changePlanPendingRef = useRef(false);
@@ -1205,12 +1208,14 @@ function BillingPageContent() {
                 changePlan.isPending || !changeTarget || estimateQuery.error != null || !hasAgreed
               }
               loading={changePlan.isPending}
-              onClick={() =>
-                changeTarget &&
+              onClick={() => {
+                if (!changeTarget) return;
+                // Set before mutate so onOpenChange cannot clear state mid-click.
+                changePlanPendingRef.current = true;
                 changePlan.mutate({
                   planId: changeTarget.id as IndividualPlanId,
-                })
-              }
+                });
+              }}
             >
               {changePlan.isPending && <Spinner />}
               {t("Confirm")}

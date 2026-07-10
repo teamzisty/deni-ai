@@ -190,7 +190,16 @@ function CardSetupIntentLoader({
     [resolvedTheme],
   );
 
-  if (!(clientSecret && paymentIntentId && stripeJsPromise)) {
+  if (!stripeJsPromise) {
+    console.error("NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY is not configured.");
+    return (
+      <p className="py-10 text-center text-sm text-destructive">
+        {t("Card verification is unavailable right now.")}
+      </p>
+    );
+  }
+
+  if (!(clientSecret && paymentIntentId)) {
     return (
       <div className="flex items-center justify-center py-10">
         <Spinner />

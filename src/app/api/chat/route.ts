@@ -32,7 +32,8 @@ import {
   getEffectiveTokenMultiplier,
   getModelContextWindow,
   getModelDefinition,
-  getModelTokenMultiplier,
+  OPENAI_LONG_CONTEXT_INPUT_THRESHOLD,
+  supportsOpenAILongContextPricing,
 } from "@/lib/constants";
 import { buildMemoryPrompt, getUserMemoryState, maybeAutoSaveMemories } from "@/lib/memory";
 import { buildProjectPrompt } from "@/lib/project-context";
@@ -94,16 +95,43 @@ function formatChatStreamError(error: unknown, modelId: string): string {
   return `${modelName} exceeded its context window. Start a new chat or trim earlier messages/files.`;
 }
 
-function estimateTokenReservation({
+/** Uncapped prompt-size estimate (chars/4). Used for long-context preflight. */
+function estimatePromptInputTokens({
   modelMessages,
   systemPrompt,
 }: {
   modelMessages: unknown;
   systemPrompt: string;
-}) {
+}): number {
   const serializedMessages = JSON.stringify(modelMessages);
-  const estimatedPromptTokens = Math.ceil((serializedMessages.length + systemPrompt.length) / 4);
-  return Math.max(512, Math.min(8_192, estimatedPromptTokens + 1_024));
+  return Math.ceil((serializedMessages.length + systemPrompt.length) / 4);
+}
+
+/**
+ * Reserve a bounded token budget for short chats. Long-context sessions
+ * (>200K estimated input on OpenAI 1M models) reserve using the uncapped
+ * estimate so the 2× premium is held before streaming starts.
+ */
+function estimateTokenReservation({
+  modelMessages,
+  systemPrompt,
+  modelId,
+}: {
+  modelMessages: unknown;
+  systemPrompt: string;
+  modelId: string;
+}) {
+  const estimatedPromptTokens = estimatePromptInputTokens({ modelMessages, systemPrompt });
+  const effectiveMultiplier = getEffectiveTokenMultiplier(modelId, estimatedPromptTokens);
+  const isLongContext =
+    supportsOpenAILongContextPricing(modelId) &&
+    estimatedPromptTokens > OPENAI_LONG_CONTEXT_INPUT_THRESHOLD;
+
+  const baseUnits = isLongContext
+    ? Math.max(512, estimatedPromptTokens + 1_024)
+    : Math.max(512, Math.min(8_192, estimatedPromptTokens + 1_024));
+
+  return Math.ceil(baseUnits * effectiveMultiplier);
 }
 
 function getUsageInputTokens(
@@ -208,7 +236,6 @@ export async function POST(req: Request) {
 
   const { model, providerOptions, usageCategory, usageUnit, useByok, usesOpenRouter } =
     modelContext;
-  const tokenMultiplier = getModelTokenMultiplier(baseModel);
 
   const webSearchEnabled = webSearch || forceWebSearch || deepResearch;
   const tools = createChatTools({
@@ -420,12 +447,11 @@ export async function POST(req: Request) {
 
   try {
     if (!useByok && usageUnit === "tokens") {
-      consumedUsageAmount = Math.ceil(
-        estimateTokenReservation({
-          modelMessages,
-          systemPrompt,
-        }) * tokenMultiplier,
-      );
+      consumedUsageAmount = estimateTokenReservation({
+        modelMessages,
+        systemPrompt,
+        modelId: baseModel,
+      });
       await consumeUsage({
         userId,
         category: usageCategory,

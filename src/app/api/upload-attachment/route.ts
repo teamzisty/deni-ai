@@ -35,9 +35,19 @@ export async function POST(request: Request) {
   }
 
   // When UploadThing is not configured (or the upload failed), fall back to an
-  // inline base64 data URL so attachments still work. The file is already capped
-  // at maxBytes above, keeping the payload bounded.
+  // inline base64 data URL so attachments still work. Keep the fallback smaller
+  // than maxBytes so chat history / response payloads stay within limits.
+  const maxDataUrlBytes = 512 * 1024;
   if (!url) {
+    if (uploadedFile.size > maxDataUrlBytes) {
+      return NextResponse.json(
+        {
+          error:
+            "Attachment upload failed. Inline fallback is limited to 512KB when storage is unavailable.",
+        },
+        { status: 500 },
+      );
+    }
     try {
       const arrayBuffer = await uploadedFile.arrayBuffer();
       const base64 = Buffer.from(arrayBuffer).toString("base64");
