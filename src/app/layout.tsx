@@ -124,7 +124,11 @@ export default async function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const [locale, messages, t] = await Promise.all([getLocale(), getMessages(), getExtracted()]);
+  // Sequential: next-intl server helpers share request context and can break
+  // under concurrent Promise.all during static prerender (getExtracted).
+  const locale = await getLocale();
+  const messages = await getMessages();
+  const t = await getExtracted();
 
   return (
     <html lang={locale} suppressHydrationWarning>

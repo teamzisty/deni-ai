@@ -232,8 +232,31 @@ export function ChatInterface({
       return;
     }
 
-    setMessages(chat.messages as UIMessage[]);
-  }, [chatQuery.data, setMessages]);
+    const serverMessages = chat.messages as UIMessage[];
+
+    // Polling can race the first /api/chat persist. Never clobber optimistic
+    // local state with an empty/shorter server snapshot — that made the first
+    // user bubble vanish while the assistant reply still streamed.
+    setMessages((current) => {
+      if (status === "streaming" || status === "submitted") {
+        return current;
+      }
+      if (serverMessages.length === 0 && current.length > 0) {
+        return current;
+      }
+      if (serverMessages.length < current.length) {
+        return current;
+      }
+
+      const localUserCount = current.filter((message) => message.role === "user").length;
+      const serverUserCount = serverMessages.filter((message) => message.role === "user").length;
+      if (localUserCount > serverUserCount) {
+        return current;
+      }
+
+      return serverMessages;
+    });
+  }, [chatQuery.data, setMessages, status]);
 
   useEffect(() => {
     const previousStatus = previousStatusRef.current;

@@ -125,12 +125,10 @@ const nextConfig: NextConfig = {
 const withNextIntl = createNextIntlPlugin({
   experimental: {
     srcPath: "./src",
-    extract: {
-      sourceLocale: "en",
-    },
     messages: {
       path: "./messages",
       format: "json",
+      sourceLocale: "en",
       locales: ["en", "ja"],
     },
   },
