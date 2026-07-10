@@ -124,6 +124,9 @@ const nextConfig: NextConfig = {
 
 const withNextIntl = createNextIntlPlugin({
   experimental: {
+    // Required for useExtracted/getExtracted: enables the Turbo/Webpack loader
+    // that rewrites them to useTranslations/getTranslations at build time.
+    extract: true,
     srcPath: "./src",
     messages: {
       path: "./messages",
