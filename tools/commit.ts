@@ -159,18 +159,29 @@ function parseArgs(argv: string[]): Options {
   return options;
 }
 
+// Node's default spawnSync maxBuffer is 1 MiB; large staged diffs (icons,
+// lockfiles, bulk refactors) exceed that and surface as a bare command failure.
+const GIT_MAX_BUFFER_BYTES = Math.max(DEFAULT_MAX_DIFF_CHARS * 2, 50 * 1024 * 1024);
+
 function runGit(repoPath: string, args: string[]) {
   const result = spawnSync("git", args, {
     cwd: repoPath,
     encoding: "utf8",
     stdio: ["ignore", "pipe", "pipe"],
+    maxBuffer: GIT_MAX_BUFFER_BYTES,
   });
 
-  const stdout = result.stdout.trimEnd();
-  const stderr = result.stderr.trimEnd();
+  const stdout = (result.stdout ?? "").trimEnd();
+  const stderr = (result.stderr ?? "").trimEnd();
+
+  if (result.error) {
+    throw new Error(
+      `git ${args.join(" ")} failed: ${result.error.message}${stderr ? `\n${stderr}` : ""}`,
+    );
+  }
 
   if (result.status !== 0) {
-    throw new Error(stderr || `git ${args.join(" ")} failed`);
+    throw new Error(stderr || `git ${args.join(" ")} failed (exit ${String(result.status)})`);
   }
 
   return stdout;

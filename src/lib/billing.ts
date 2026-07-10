@@ -70,9 +70,6 @@ export const billingPlans: BillingPlan[] = [
   },
 ];
 
-export const lookupKeyToPlan = new Map<string, BillingPlanId>(
-  billingPlans.map((plan) => [plan.lookupKey, plan.id]),
-);
 const planIdToTier = new Map<BillingPlanId, "plus" | "pro" | "max" | "team">([
   ["plus_monthly", "plus"],
   ["plus_yearly", "plus"],
@@ -119,9 +116,4 @@ export function getPlanTier(
 export function isProOrHigherTier(planId: string | null | undefined): boolean {
   const tier = getPlanTier(planId);
   return tier === "pro" || tier === "max" || tier === "team";
-}
-
-/** @deprecated Use isProOrHigherTier instead. */
-export function isProTier(planId: string | null | undefined): boolean {
-  return getPlanTier(planId) === "pro";
 }

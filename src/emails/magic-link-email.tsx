@@ -25,17 +25,13 @@ export function MagicLinkEmail({ signInUrl }: MagicLinkEmailProps) {
       <Body style={main}>
         <Container style={container}>
           <Heading style={heading}>Sign in to Deni AI</Heading>
-          <Text style={text}>
-            Click the button below to sign in to your account.
-          </Text>
+          <Text style={text}>Click the button below to sign in to your account.</Text>
           <Section style={buttonSection}>
             <Button href={signInUrl} style={button}>
               Sign In
             </Button>
           </Section>
-          <Text style={text}>
-            If the button does not work, open this link directly:
-          </Text>
+          <Text style={text}>If the button does not work, open this link directly:</Text>
           <Link href={signInUrl} style={link}>
             {signInUrl}
           </Link>

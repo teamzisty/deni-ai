@@ -2,9 +2,10 @@
 
 import { Check, Copy, ExternalLink, Globe, Link2, Lock, Trash2, Users } from "lucide-react";
 import Link from "next/link";
-import { useExtracted } from "next-intl";
+import { useExtracted, useLocale } from "next-intl";
 import { useState } from "react";
 import { toast } from "sonner";
+import { formatAppDate } from "@/lib/format-date";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -43,6 +44,7 @@ function ShareItem({
   onUpdate: (chatId: string, visibility: "public" | "private", allowFork: boolean) => void;
 }) {
   const t = useExtracted();
+  const locale = useLocale();
   const [copied, setCopied] = useState(false);
   const shareUrl = `${typeof window !== "undefined" ? window.location.origin : ""}/shared/${share.id}`;
 
@@ -123,7 +125,11 @@ function ShareItem({
         <div className="flex items-center gap-4 mt-2 text-xs text-muted-foreground">
           <span className="flex items-center gap-1">
             <Link2 className="size-3" />
-            {new Date(share.createdAt).toLocaleDateString()}
+            {formatAppDate(share.createdAt, locale, {
+              year: "numeric",
+              month: "numeric",
+              day: "numeric",
+            })}
           </span>
           {share.visibility === "private" && recipients.length > 0 && (
             <span className="flex items-center gap-1">

@@ -38,11 +38,11 @@ type StreamdownCodeProps = ComponentProps<"code"> & {
   "data-block"?: boolean | "";
 };
 
-function Paragraph({ className, ...props }: ComponentProps<"p">) {
+export function StreamdownParagraph({ className, ...props }: ComponentProps<"p">) {
   return <p className={cn("whitespace-pre-wrap break-words", className)} {...props} />;
 }
 
-function InlineCode({ className, ...props }: ComponentProps<"code">) {
+export function StreamdownInlineCode({ className, ...props }: ComponentProps<"code">) {
   return (
     <code
       className={cn(
@@ -54,16 +54,16 @@ function InlineCode({ className, ...props }: ComponentProps<"code">) {
   );
 }
 
-function Code({ className, children, ...props }: StreamdownCodeProps) {
+export function StreamdownCode({ className, children, ...props }: StreamdownCodeProps) {
   const previewT = useTranslations("artifactPreview");
   const { open } = useArtifactPreview();
   const isBlock = "data-block" in props;
 
   if (!isBlock) {
     return (
-      <InlineCode className={className} {...props}>
+      <StreamdownInlineCode className={className} {...props}>
         {children}
-      </InlineCode>
+      </StreamdownInlineCode>
     );
   }
 
@@ -96,9 +96,3 @@ function Code({ className, children, ...props }: StreamdownCodeProps) {
     </CodeBlock>
   );
 }
-
-export const streamdownOverrideComponents = {
-  code: Code,
-  inlineCode: InlineCode,
-  p: Paragraph,
-};

@@ -2,7 +2,7 @@
 
 import { Plug, Trash2 } from "lucide-react";
 import { useExtracted } from "next-intl";
-import { useEffect, useMemo, useReducer } from "react";
+import { useEffect, useReducer } from "react";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -109,33 +109,30 @@ export default function ProvidersPage() {
     DEFAULT_PROVIDERS_UI_STATE,
   );
   const { keyInputs, preferByok } = providersUi;
-  const providers = useMemo<ProviderConfig[]>(
-    () => [
-      {
-        id: "openai",
-        label: t("OpenAI"),
-        description: t("Use your own OpenAI API key."),
-      },
-      {
-        id: "anthropic",
-        label: t("Anthropic"),
-        description: t("Use your own Anthropic API key."),
-      },
-      {
-        id: "google",
-        label: t("Google"),
-        description: t("Use your own Google Generative AI key."),
-      },
-      {
-        id: "xai",
-        label: t("xAI"),
-        description: t("Use your own xAI API key."),
-      },
-    ],
-    [t],
-  );
+  const providers: ProviderConfig[] = [
+    {
+      id: "openai",
+      label: t("OpenAI"),
+      description: t("Use your own OpenAI API key."),
+    },
+    {
+      id: "anthropic",
+      label: t("Anthropic"),
+      description: t("Use your own Anthropic API key."),
+    },
+    {
+      id: "google",
+      label: t("Google"),
+      description: t("Use your own Google Generative AI key."),
+    },
+    {
+      id: "xai",
+      label: t("xAI"),
+      description: t("Use your own xAI API key."),
+    },
+  ];
 
-  const settingsByProvider = useMemo(() => {
+  const settingsByProvider = (() => {
     const map = new Map<ProviderId, { preferByok: boolean; baseUrl?: string | null }>();
     for (const setting of configQuery.data?.settings ?? []) {
       if (!(PROVIDER_IDS as readonly string[]).includes(setting.provider)) continue;
@@ -145,11 +142,11 @@ export default function ProvidersPage() {
       });
     }
     return map;
-  }, [configQuery.data?.settings]);
+  })();
 
-  const configuredProviders = useMemo(() => {
-    return new Set((configQuery.data?.keys ?? []).map((entry) => entry.provider));
-  }, [configQuery.data?.keys]);
+  const configuredProviders = new Set(
+    (configQuery.data?.keys ?? []).map((entry) => entry.provider),
+  );
 
   useEffect(() => {
     if (!configQuery.data) return;

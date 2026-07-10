@@ -14,7 +14,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useExtracted, useLocale } from "next-intl";
 import { useTheme } from "next-themes";
-import { startTransition, useEffect, useMemo, useReducer, useState } from "react";
+import { startTransition, useEffect, useReducer, useState } from "react";
 import { toast } from "sonner";
 import type { BillingPlanId, ClientPlan, IndividualPlanId, TeamPlanId } from "@/lib/billing";
 import { findPlanById, getPlanTier } from "@/lib/billing";
@@ -40,6 +40,17 @@ type CheckoutSessionSummary = {
   mode: "subscription" | "payment" | "setup";
   planId: string | null;
 };
+
+const checkoutOfferDateFormatter = new Intl.DateTimeFormat(undefined, {
+  month: "short",
+  day: "numeric",
+  hour: "numeric",
+  minute: "2-digit",
+});
+
+function getCheckoutDateFormatter() {
+  return checkoutOfferDateFormatter;
+}
 
 type BillingCheckoutProps = {
   scope: "billing";
@@ -312,12 +323,7 @@ function CheckoutSummary({
   const offerEndsAt = plan?.limitedTimeOfferEndsAt ? new Date(plan.limitedTimeOfferEndsAt) : null;
   const offerEndsLabel =
     offerEndsAt && !Number.isNaN(offerEndsAt.getTime())
-      ? new Intl.DateTimeFormat(undefined, {
-          month: "short",
-          day: "numeric",
-          hour: "numeric",
-          minute: "2-digit",
-        }).format(offerEndsAt)
+      ? getCheckoutDateFormatter().format(offerEndsAt)
       : null;
   const priceParts = formatPriceParts(checkout.total.total.minorUnitsAmount, checkout.currency);
   const monthlyEquivalent =
@@ -826,7 +832,7 @@ export function StripeCheckoutPage(props: StripeCheckoutPageProps) {
   const t = useExtracted();
   const { replace } = useRouter();
   const { resolvedTheme } = useTheme();
-  const trpcClient = useMemo(() => makeTRPCClient(), []);
+  const trpcClient = makeTRPCClient();
   const { planId, scope, sessionId } = props;
   const organizationId = props.scope === "team" ? props.organizationId : null;
   const [bootstrapState, dispatchBootstrap] = useReducer(
@@ -835,40 +841,21 @@ export function StripeCheckoutPage(props: StripeCheckoutPageProps) {
   );
   const { session, availablePlans, stripeInstance, bootstrapError, isBootstrapping } =
     bootstrapState;
-  const resolvedPlanId = useMemo(() => {
+  const resolvedPlanId = (() => {
     const candidate = session?.planId ?? planId;
     return candidate ? (findPlanById(candidate)?.id ?? null) : null;
-  }, [planId, session?.planId]);
+  })();
   const planLabel = usePlanLabel()(resolvedPlanId ?? session?.planId ?? planId);
-  const selectedPlan = useMemo(
-    () => availablePlans.find((plan) => plan.id === resolvedPlanId) ?? null,
-    [availablePlans, resolvedPlanId],
-  );
-  const monthlyPlan = useMemo(() => {
+  const selectedPlan = availablePlans.find((plan) => plan.id === resolvedPlanId) ?? null;
+  const monthlyPlan = (() => {
     if (!resolvedPlanId || !resolvedPlanId.endsWith("_yearly")) {
       return null;
     }
 
     const monthlyPlanId = resolvedPlanId.replace("_yearly", "_monthly") as BillingPlanId;
     return availablePlans.find((plan) => plan.id === monthlyPlanId) ?? null;
-  }, [availablePlans, resolvedPlanId]);
-  useEffect(() => {
-    if (!resolvedPlanId || !resolvedPlanId.endsWith("_yearly")) {
-      return;
-    }
-
-    const monthlyPlanId = resolvedPlanId.replace("_yearly", "_monthly") as BillingPlanId;
-    if (!monthlyPlan) {
-      console.warn("[stripe-checkout] Missing monthly counterpart for yearly plan", {
-        resolvedPlanId,
-        monthlyPlanId,
-      });
-    }
-  }, [monthlyPlan, resolvedPlanId]);
-  const checkoutAppearance = useMemo(
-    () => getStripeCheckoutAppearance(resolvedTheme),
-    [resolvedTheme],
-  );
+  })();
+  const checkoutAppearance = getStripeCheckoutAppearance(resolvedTheme);
 
   const backHref = scope === "billing" ? "/settings/billing" : "/settings/team";
   const returnLabel = scope === "billing" ? t("Return to billing") : t("Return to team billing");
@@ -906,14 +893,14 @@ export function StripeCheckoutPage(props: StripeCheckoutPageProps) {
         );
       }
 
+      if (scope === "team" && !organizationId) {
+        throw new Error(t("An organization is required to start team checkout."));
+      }
+
       const planResult =
         scope === "billing"
           ? await trpcClient.billing.plans.query()
           : await trpcClient.organization.teamPlans.query();
-
-      if (scope === "team" && !organizationId) {
-        throw new Error(t("An organization is required to start team checkout."));
-      }
 
       if (sessionId) {
         const result =

@@ -57,45 +57,6 @@ function nonNegative(value: number | null | undefined): number {
 }
 
 /**
- * Anthropic shape: `input_tokens` excludes cache tokens; cache fields are
- * separate. All four components are weighted independently.
- */
-export function breakdownFromAnthropicUsage(usage: {
-  input_tokens?: number | null;
-  cache_read_input_tokens?: number | null;
-  cache_creation_input_tokens?: number | null;
-  output_tokens?: number | null;
-}): TokenUsageBreakdown {
-  return {
-    input: nonNegative(usage.input_tokens),
-    cacheRead: nonNegative(usage.cache_read_input_tokens),
-    cacheWrite: nonNegative(usage.cache_creation_input_tokens),
-    output: nonNegative(usage.output_tokens),
-  };
-}
-
-/**
- * OpenAI shape: `prompt_tokens` *includes* the cached subset. Subtract cached
- * out before weighting so we don't double-bill the same token at two rates.
- * `cached_tokens` is clamped to `prompt_tokens` to stay defensive against
- * upstream inconsistencies.
- */
-export function breakdownFromOpenAIUsage(usage: {
-  prompt_tokens?: number | null;
-  completion_tokens?: number | null;
-  prompt_tokens_details?: { cached_tokens?: number | null } | null;
-}): TokenUsageBreakdown {
-  const prompt = nonNegative(usage.prompt_tokens);
-  const cached = Math.min(nonNegative(usage.prompt_tokens_details?.cached_tokens), prompt);
-  return {
-    input: prompt - cached,
-    cacheRead: cached,
-    cacheWrite: 0,
-    output: nonNegative(usage.completion_tokens),
-  };
-}
-
-/**
  * AI SDK `LanguageModelUsage` shape: already normalized across providers. Uses
  * the broken-out `inputTokenDetails` when available; otherwise falls back to
  * `inputTokens` as raw input with no cache breakdown.

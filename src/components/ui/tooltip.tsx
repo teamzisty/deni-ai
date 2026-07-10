@@ -11,11 +11,7 @@ function TooltipProvider({
   ...props
 }: React.ComponentProps<typeof TooltipPrimitive.Provider> & { delayDuration?: number }) {
   return (
-    <TooltipPrimitive.Provider
-      data-slot="tooltip-provider"
-      delay={delayDuration}
-      {...props}
-    />
+    <TooltipPrimitive.Provider data-slot="tooltip-provider" delay={delayDuration} {...props} />
   );
 }
 
@@ -46,7 +42,12 @@ function TooltipContent({
   if (hidden) return null;
   return (
     <TooltipPrimitive.Portal>
-      <TooltipPrimitive.Positioner sideOffset={sideOffset} side={side} align={align}>
+      <TooltipPrimitive.Positioner
+        className="isolate z-50 outline-none"
+        sideOffset={sideOffset}
+        side={side}
+        align={align}
+      >
         <TooltipPrimitive.Popup
           data-slot="tooltip-content"
           className={cn(

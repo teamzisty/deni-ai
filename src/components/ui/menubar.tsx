@@ -32,9 +32,7 @@ function MenubarPortal({ ...props }: React.ComponentProps<typeof MenuPrimitive.P
   return <MenuPrimitive.Portal {...props} />;
 }
 
-function MenubarRadioGroup({
-  ...props
-}: React.ComponentProps<typeof MenuPrimitive.RadioGroup>) {
+function MenubarRadioGroup({ ...props }: React.ComponentProps<typeof MenuPrimitive.RadioGroup>) {
   return <MenuPrimitive.RadioGroup data-slot="menubar-radio-group" {...props} />;
 }
 
@@ -66,7 +64,11 @@ function MenubarContent({
 }) {
   return (
     <MenuPrimitive.Portal>
-      <MenuPrimitive.Positioner align={align} sideOffset={sideOffset}>
+      <MenuPrimitive.Positioner
+        className="isolate z-50 outline-none"
+        align={align}
+        sideOffset={sideOffset}
+      >
         <MenuPrimitive.Popup
           data-slot="menubar-content"
           className={cn(
@@ -227,7 +229,7 @@ function MenubarSubContent({
 }: React.ComponentProps<typeof MenuPrimitive.Popup>) {
   return (
     <MenuPrimitive.Portal>
-      <MenuPrimitive.Positioner>
+      <MenuPrimitive.Positioner className="isolate z-50 outline-none">
         <MenuPrimitive.Popup
           data-slot="menubar-sub-content"
           className={cn(

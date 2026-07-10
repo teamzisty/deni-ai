@@ -1,6 +1,6 @@
 "use client";
 
-import { motion } from "motion/react";
+import { LazyMotion, domAnimation, m } from "motion/react";
 import { cn } from "@/lib/utils";
 
 type From = "left" | "right" | "top" | "bottom";
@@ -44,27 +44,29 @@ export function HighlightedText({
   const variants = fromVariants[from];
 
   return (
-    <motion.span
-      className={cn("relative inline-flex overflow-hidden align-baseline", className)}
-      initial="hidden"
-      whileInView={inView ? "visible" : undefined}
-      animate={inView ? undefined : "visible"}
-      viewport={{ once }}
-    >
-      <motion.span
-        className="absolute inset-0 -left-[0.15em] -right-[0.18em] z-0 bg-zinc-950 dark:bg-white"
-        variants={variants}
-        transition={{
-          type: "spring",
-          damping: 30,
-          stiffness: 300,
-          delay,
-        }}
-      />
-      <span className="relative z-10 mix-blend-difference text-white pl-[0.15em] pr-[0.18em]">
-        {children}
-      </span>
-    </motion.span>
+    <LazyMotion features={domAnimation} strict>
+      <m.span
+        className={cn("relative inline-flex overflow-hidden align-baseline", className)}
+        initial="hidden"
+        whileInView={inView ? "visible" : undefined}
+        animate={inView ? undefined : "visible"}
+        viewport={{ once }}
+      >
+        <m.span
+          className="absolute inset-0 -left-[0.15em] -right-[0.18em] z-0 bg-zinc-950 dark:bg-white"
+          variants={variants}
+          transition={{
+            type: "spring",
+            damping: 30,
+            stiffness: 300,
+            delay,
+          }}
+        />
+        <span className="relative z-10 mix-blend-difference text-white pl-[0.15em] pr-[0.18em]">
+          {children}
+        </span>
+      </m.span>
+    </LazyMotion>
   );
 }
 

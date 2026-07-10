@@ -14,7 +14,7 @@ import { defaultModel, getPreferredReasoningEffort, type ReasoningEffort } from 
 import { trpc } from "@/lib/trpc/react";
 
 // Storage key for passing initial message data to chat page
-const INITIAL_MESSAGE_STORAGE_KEY = "deni_initial_message";
+const INITIAL_MESSAGE_STORAGE_KEY = "deni_initial_message:v1";
 
 export type InitialMessageData = {
   text: string;

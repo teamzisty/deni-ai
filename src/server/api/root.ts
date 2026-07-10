@@ -7,7 +7,7 @@ import { organizationRouter } from "./routers/organization";
 import { providersRouter } from "./routers/providers";
 import { projectsRouter } from "./routers/projects";
 import { shareRouter } from "./routers/share";
-import { router, t } from "./trpc";
+import { router } from "./trpc";
 
 export const appRouter = router({
   apiKeys: apiKeysRouter,
@@ -20,7 +20,5 @@ export const appRouter = router({
   projects: projectsRouter,
   share: shareRouter,
 });
-
-export const createCaller = t.createCallerFactory(appRouter);
 
 export type AppRouter = typeof appRouter;

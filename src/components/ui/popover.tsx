@@ -29,7 +29,12 @@ function PopoverContent({
 }) {
   return (
     <PopoverPrimitive.Portal>
-      <PopoverPrimitive.Positioner align={align} sideOffset={sideOffset} side={side}>
+      <PopoverPrimitive.Positioner
+        className="isolate z-50 outline-none"
+        align={align}
+        sideOffset={sideOffset}
+        side={side}
+      >
         <PopoverPrimitive.Popup
           data-slot="popover-content"
           className={cn(
@@ -43,8 +48,11 @@ function PopoverContent({
   );
 }
 
-function PopoverAnchor({ ...props }: React.ComponentProps<typeof PopoverPrimitive.Positioner>) {
-  return <PopoverPrimitive.Positioner data-slot="popover-anchor" {...props} />;
+/**
+ * Base UI has no Popover Anchor primitive. Inert passthrough for call-site compatibility.
+ */
+function PopoverAnchor({ className, ...props }: React.ComponentProps<"div">) {
+  return <div data-slot="popover-anchor" className={className} {...props} />;
 }
 
 function PopoverHeader({ className, ...props }: React.ComponentProps<"div">) {

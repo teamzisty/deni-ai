@@ -3,7 +3,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useRef } from "react";
 import { models, resolveReasoningEffort, type ReasoningEffort } from "@/lib/constants";
 
-const INITIAL_MESSAGE_STORAGE_KEY = "deni_initial_message";
+const INITIAL_MESSAGE_STORAGE_KEY = "deni_initial_message:v1";
 
 type SendMessage = ReturnType<typeof useChat>["sendMessage"];
 
@@ -39,6 +39,13 @@ export function useInitialMessage(params: {
   const router = useRouter();
   const searchParams = useSearchParams();
   const initialMessageSentRef = useRef(false);
+  // Keep latest callbacks/setters without re-firing the mount send effect.
+  const sendMessageRef = useRef(sendMessage);
+  const onMessageSentRef = useRef(onMessageSent);
+  const modelRef = useRef(model);
+  sendMessageRef.current = sendMessage;
+  onMessageSentRef.current = onMessageSent;
+  modelRef.current = model;
 
   useEffect(() => {
     if (initialMessageSentRef.current || initialMessagesLength > 0) {
@@ -90,7 +97,7 @@ export function useInitialMessage(params: {
         if (parsed.imageMode) {
           setImageMode(true);
         }
-        const effectiveModel = parsed.model ?? model;
+        const effectiveModel = parsed.model ?? modelRef.current;
         const selectedModel = models.find((entry) => entry.value === effectiveModel);
         const parsedReasoningEffort =
           resolveReasoningEffort(selectedModel?.efforts ?? false, parsed.reasoningEffort) ?? "high";
@@ -100,7 +107,7 @@ export function useInitialMessage(params: {
 
         // Send the message with files
         Promise.resolve(
-          sendMessage(
+          sendMessageRef.current(
             {
               text: parsed.text,
               files: files.length > 0 ? files : undefined,
@@ -118,7 +125,7 @@ export function useInitialMessage(params: {
             },
           ),
         ).finally(() => {
-          onMessageSent();
+          onMessageSentRef.current();
         });
 
         return;
@@ -146,11 +153,11 @@ export function useInitialMessage(params: {
 
       // Send the message with the webSearch setting from query params
       Promise.resolve(
-        sendMessage(
+        sendMessageRef.current(
           { text: decodedMessage },
           {
             body: {
-              model,
+              model: modelRef.current,
               webSearch: initialWebSearch,
               reasoningEffort: "high",
               video: false,
@@ -159,8 +166,10 @@ export function useInitialMessage(params: {
           },
         ),
       ).finally(() => {
-        onMessageSent();
+        onMessageSentRef.current();
       });
     }
-  }, [searchParams, initialMessagesLength, sendMessage, router, id, model, onMessageSent]);
+    // Intentionally only re-run when chat identity / empty-message gate changes.
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- setters are stable; send via refs
+  }, [searchParams, initialMessagesLength, router, id]);
 }

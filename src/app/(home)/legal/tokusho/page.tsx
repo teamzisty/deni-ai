@@ -45,8 +45,8 @@ export default function TokushoPage() {
 
         <table className="w-full border-collapse text-sm">
           <tbody>
-            {items.map((item, i) => (
-              <tr key={i} className="border-b border-border">
+            {items.map((item) => (
+              <tr key={item.label} className="border-b border-border">
                 <th className="w-1/3 bg-muted/50 px-4 py-3 text-left font-medium align-top">
                   {item.label}
                 </th>

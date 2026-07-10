@@ -112,11 +112,20 @@ export async function generateMetadata(): Promise<Metadata> {
   };
 }
 
+function safeJsonLd(data: unknown) {
+  return JSON.stringify(data)
+    .replace(/</g, "\\u003c")
+    .replace(/>/g, "\\u003e")
+    .replace(/&/g, "\\u0026");
+}
+
 export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  // Sequential: next-intl server helpers share request context and can break
+  // under concurrent Promise.all during static prerender (getExtracted).
   const locale = await getLocale();
   const messages = await getMessages();
   const t = await getExtracted();
@@ -129,7 +138,7 @@ export default async function RootLayout({
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{
-            __html: JSON.stringify([
+            __html: safeJsonLd([
               {
                 "@context": "https://schema.org",
                 "@type": "WebSite",
@@ -172,7 +181,12 @@ export default async function RootLayout({
           {t("Skip to content")}
         </a>
         <NextIntlClientProvider locale={locale} messages={messages}>
-          <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
+          <ThemeProvider
+            attribute="class"
+            defaultTheme="system"
+            enableSystem
+            disableTransitionOnChange
+          >
             <div className="min-h-screen">{children}</div>
             <Toaster position="top-center" />
           </ThemeProvider>

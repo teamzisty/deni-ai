@@ -4,7 +4,7 @@ import { ShieldCheck, X, ArrowRight } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useExtracted } from "next-intl";
-import { useEffect, useState } from "react";
+import { useSyncExternalStore } from "react";
 import { authClient } from "@/lib/auth-client";
 import { isCheckoutSettingsRoute } from "@/lib/settings-routes";
 import { Button } from "@/components/ui/button";
@@ -12,19 +12,42 @@ import { Separator } from "@/components/ui/separator";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 
 const DISMISSED_KEY = "flixa-2fa-dismissed";
+const DISMISSED_EVENT = "deni:2fa-dismissed";
+
+function subscribeDismissed(onStoreChange: () => void) {
+  const handleChange = () => onStoreChange();
+  window.addEventListener("storage", handleChange);
+  window.addEventListener(DISMISSED_EVENT, handleChange);
+  return () => {
+    window.removeEventListener("storage", handleChange);
+    window.removeEventListener(DISMISSED_EVENT, handleChange);
+  };
+}
+
+function getDismissedSnapshot() {
+  return window.localStorage.getItem(DISMISSED_KEY) !== null;
+}
+
+function getServerDismissedSnapshot() {
+  // Hide the promo banner until the client can read localStorage.
+  return true;
+}
+
+function dismissTwoFactorBanner() {
+  localStorage.setItem(DISMISSED_KEY, "1");
+  window.dispatchEvent(new Event(DISMISSED_EVENT));
+}
 
 export function TwoFactorBanner() {
   const t = useExtracted();
   const pathname = usePathname();
   const session = authClient.useSession();
-  const [visible, setVisible] = useState(false);
-
-  useEffect(() => {
-    const dismissed = localStorage.getItem(DISMISSED_KEY);
-    if (!dismissed) {
-      setVisible(true);
-    }
-  }, []);
+  const dismissed = useSyncExternalStore(
+    subscribeDismissed,
+    getDismissedSnapshot,
+    getServerDismissedSnapshot,
+  );
+  const visible = !dismissed;
 
   if (
     isCheckoutSettingsRoute(pathname) ||
@@ -38,11 +61,6 @@ export function TwoFactorBanner() {
       </header>
     );
   }
-
-  const dismiss = () => {
-    localStorage.setItem(DISMISSED_KEY, "1");
-    setVisible(false);
-  };
 
   if (!visible) {
     return (
@@ -75,7 +93,7 @@ export function TwoFactorBanner() {
           variant="ghost"
           size="icon"
           className="shrink-0 size-5"
-          onClick={dismiss}
+          onClick={dismissTwoFactorBanner}
           aria-label={t("Dismiss")}
         >
           <X className="size-3" />

@@ -3,26 +3,22 @@
 import { InfoIcon } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useExtracted } from "next-intl";
+import { useExtracted, useLocale } from "next-intl";
 import type React from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Spinner } from "@/components/ui/spinner";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { isBillingDisabled } from "@/lib/billing-config";
+import { formatAppDate } from "@/lib/format-date";
 import { isCheckoutSettingsRoute } from "@/lib/settings-routes";
 import { trpc } from "@/lib/trpc/react";
 import { settingsUsageQueryOptions } from "@/lib/usage-query-options";
 import { cn, formatCompactUsageValue } from "@/lib/utils";
 import { Progress } from "./ui/progress";
 
-const settingsDateFormatter = new Intl.DateTimeFormat(undefined, {
-  month: "short",
-  day: "numeric",
-  year: "numeric",
-});
-
 export default function SettingsWrapper({ children }: { children: React.ReactNode }) {
   const t = useExtracted();
+  const locale = useLocale();
   const pathname = usePathname();
   const isCheckoutRoute = isCheckoutSettingsRoute(pathname);
   const billingDisabled = isBillingDisabled;
@@ -118,7 +114,7 @@ export default function SettingsWrapper({ children }: { children: React.ReactNod
                   <span className="text-xs text-muted-foreground">
                     {t("Next update: {date}", {
                       date: status?.currentPeriodEnd
-                        ? settingsDateFormatter.format(new Date(status.currentPeriodEnd))
+                        ? formatAppDate(status.currentPeriodEnd, locale)
                         : "—",
                     })}
                   </span>
@@ -143,9 +139,7 @@ export default function SettingsWrapper({ children }: { children: React.ReactNod
               <span className="font-medium text-muted-foreground">{t("Usage")}</span>
               <span className="text-sm">
                 {t("Resets on {date}", {
-                  date: usages?.[0]?.periodEnd
-                    ? settingsDateFormatter.format(new Date(usages[0].periodEnd))
-                    : "—",
+                  date: usages?.[0]?.periodEnd ? formatAppDate(usages[0].periodEnd, locale) : "—",
                 })}
               </span>
               {usages?.map((usageItem) => {
@@ -168,7 +162,7 @@ export default function SettingsWrapper({ children }: { children: React.ReactNod
                     ? t("{percent}% remaining", { percent: remainingPercent.toFixed(1) })
                     : t("Unlimited");
                 const periodEndLabel = usageItem.periodEnd
-                  ? settingsDateFormatter.format(new Date(usageItem.periodEnd))
+                  ? formatAppDate(usageItem.periodEnd, locale)
                   : null;
                 return (
                   <div key={usageItem.category} className="space-y-2 text-sm py-1">

@@ -56,16 +56,22 @@ function SelectTrigger({
 function SelectContent({
   className,
   children,
-  position,
+  position = "item-aligned",
   align,
   ...props
 }: React.ComponentProps<typeof SelectPrimitive.Popup> & {
-  position?: string;
+  /** @deprecated Prefer Base UI `alignItemWithTrigger`. Kept for Radix call-site compat. */
+  position?: "popper" | "item-aligned";
   align?: "start" | "center" | "end";
 }) {
   return (
     <SelectPrimitive.Portal>
-      <SelectPrimitive.Positioner align={align} sideOffset={4}>
+      <SelectPrimitive.Positioner
+        className="isolate z-50 outline-none"
+        align={align}
+        sideOffset={4}
+        alignItemWithTrigger={position !== "popper"}
+      >
         <SelectPrimitive.Popup
           data-slot="select-content"
           className={cn(

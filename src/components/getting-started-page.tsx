@@ -12,7 +12,7 @@ import {
   Sparkles,
   Sun,
 } from "lucide-react";
-import { motion } from "motion/react";
+import { LazyMotion, domAnimation, m } from "motion/react";
 import { useRouter } from "next/navigation";
 import { useExtracted } from "next-intl";
 import { useTheme } from "next-themes";
@@ -52,35 +52,37 @@ export default function GettingStartedPage() {
   }, []);
 
   return (
-    <main
-      className="relative flex min-h-screen w-full items-center justify-center overflow-hidden"
-      id="main-content"
-    >
-      {/* Decorative background */}
-      <div className="pointer-events-none absolute inset-0 -z-10">
-        <div className="absolute inset-0 bg-[radial-gradient(1200px_600px_at_10%_-10%,hsl(220_70%_60%/.20),transparent),radial-gradient(1000px_500px_at_90%_10%,hsl(280_70%_60%/.16),transparent)]" />
-        <div
-          className="absolute inset-0 opacity-[0.06] mask-[radial-gradient(60%_60%_at_50%_40%,black,transparent)]"
-          style={{
-            backgroundImage:
-              "linear-gradient(to_right,rgba(255,255,255,.08)_1px,transparent_1px),linear-gradient(to_bottom,rgba(255,255,255,.08)_1px,transparent_1px)",
-            backgroundSize: "24px_24px",
-          }}
-        />
-      </div>
-
-      <div
-        className={`w-full px-4 ${
-          showSetup ? "mx-auto max-w-2xl space-y-8" : "mx-auto max-w-xl text-center"
-        }`}
+    <LazyMotion features={domAnimation} strict>
+      <main
+        className="relative flex min-h-screen w-full items-center justify-center overflow-hidden"
+        id="main-content"
       >
-        {showSetup ? (
-          <SetupScreen preloadName={preloadName} preloadImage={preloadImage} />
-        ) : (
-          <Intro />
-        )}
-      </div>
-    </main>
+        {/* Decorative background */}
+        <div className="pointer-events-none absolute inset-0 -z-10">
+          <div className="absolute inset-0 bg-[radial-gradient(1200px_600px_at_10%_-10%,hsl(220_70%_60%/.20),transparent),radial-gradient(1000px_500px_at_90%_10%,hsl(280_70%_60%/.16),transparent)]" />
+          <div
+            className="absolute inset-0 opacity-[0.06] mask-[radial-gradient(60%_60%_at_50%_40%,black,transparent)]"
+            style={{
+              backgroundImage:
+                "linear-gradient(to_right,rgba(255,255,255,.08)_1px,transparent_1px),linear-gradient(to_bottom,rgba(255,255,255,.08)_1px,transparent_1px)",
+              backgroundSize: "24px_24px",
+            }}
+          />
+        </div>
+
+        <div
+          className={`w-full px-4 ${
+            showSetup ? "mx-auto max-w-2xl space-y-8" : "mx-auto max-w-xl text-center"
+          }`}
+        >
+          {showSetup ? (
+            <SetupScreen preloadName={preloadName} preloadImage={preloadImage} />
+          ) : (
+            <Intro />
+          )}
+        </div>
+      </main>
+    </LazyMotion>
   );
 }
 
@@ -436,12 +438,12 @@ function ThemeStep() {
                 <div className="flex w-full items-start justify-between">
                   <h3 className="font-semibold">{copy.title}</h3>
                   {selected && (
-                    <motion.span
+                    <m.span
                       layoutId="tick"
                       className="mt-0.5 inline-flex items-center justify-center rounded-full border border-emerald-300/30 bg-emerald-400/10 p-1"
                     >
                       <Check className="size-3.5" />
-                    </motion.span>
+                    </m.span>
                   )}
                 </div>
                 <p className="text-sm text-muted-foreground">{copy.description}</p>

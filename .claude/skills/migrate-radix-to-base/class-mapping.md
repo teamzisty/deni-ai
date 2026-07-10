@@ -5,19 +5,19 @@ including app code. They are safe, mechanical rewrites.
 
 ## Data-attribute selectors
 
-| Radix pattern | Base UI pattern |
-|---|---|
-| `data-[state=open]:` | `data-open:` |
-| `data-[state=closed]:` | `data-closed:` |
-| `data-[state=checked]:` | `data-checked:` |
-| `data-[state=unchecked]:` | `data-unchecked:` |
-| `data-[state=active]:` (tabs) | `data-active:` |
-| `data-[state=on]:` (toggle) | `data-pressed:` |
-| `data-[highlighted]:` | `data-highlighted:` (unchanged) |
-| `data-[disabled]:` | `data-disabled:` (unchanged) |
-| `data-[side=...]:` | `data-[side=...]:` (unchanged, still parameterized) |
-| `group-data-[state=open]` / `peer-data-[state=open]` | `group-data-open` / `peer-data-open` |
-| submenu trigger open marker `data-[state=open]:` | `data-popup-open:` |
+| Radix pattern                                        | Base UI pattern                                     |
+| ---------------------------------------------------- | --------------------------------------------------- |
+| `data-[state=open]:`                                 | `data-open:`                                        |
+| `data-[state=closed]:`                               | `data-closed:`                                      |
+| `data-[state=checked]:`                              | `data-checked:`                                     |
+| `data-[state=unchecked]:`                            | `data-unchecked:`                                   |
+| `data-[state=active]:` (tabs)                        | `data-active:`                                      |
+| `data-[state=on]:` (toggle)                          | `data-pressed:`                                     |
+| `data-[highlighted]:`                                | `data-highlighted:` (unchanged)                     |
+| `data-[disabled]:`                                   | `data-disabled:` (unchanged)                        |
+| `data-[side=...]:`                                   | `data-[side=...]:` (unchanged, still parameterized) |
+| `group-data-[state=open]` / `peer-data-[state=open]` | `group-data-open` / `peer-data-open`                |
+| submenu trigger open marker `data-[state=open]:`     | `data-popup-open:`                                  |
 
 ## Animation idiom
 
@@ -34,15 +34,15 @@ uses per-side slide classes, keep the `data-[side=...]` or
 
 ## CSS variables
 
-| Radix var | Base UI var |
-|---|---|
-| `--radix-<comp>-content-transform-origin` | `--transform-origin` |
-| `--radix-<comp>-content-available-height` | `--available-height` |
-| `--radix-<comp>-content-available-width` | `--available-width` |
-| `--radix-<comp>-trigger-width` | `--anchor-width` |
-| `--radix-<comp>-trigger-height` | `--anchor-height` |
-| `--radix-accordion-content-height` | `--accordion-panel-height` |
-| `--radix-collapsible-content-height` | `--collapsible-panel-height` |
+| Radix var                                       | Base UI var                                  |
+| ----------------------------------------------- | -------------------------------------------- |
+| `--radix-<comp>-content-transform-origin`       | `--transform-origin`                         |
+| `--radix-<comp>-content-available-height`       | `--available-height`                         |
+| `--radix-<comp>-content-available-width`        | `--available-width`                          |
+| `--radix-<comp>-trigger-width`                  | `--anchor-width`                             |
+| `--radix-<comp>-trigger-height`                 | `--anchor-height`                            |
+| `--radix-accordion-content-height`              | `--accordion-panel-height`                   |
+| `--radix-collapsible-content-height`            | `--collapsible-panel-height`                 |
 | `--radix-navigation-menu-viewport-height/width` | `--positioner-height` / `--positioner-width` |
 
 ## Element changes kill pseudo-class variants

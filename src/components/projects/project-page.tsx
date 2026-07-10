@@ -127,9 +127,8 @@ export function ProjectPage({ projectId, initialProjectName }: ProjectPageProps)
       });
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Upload failed");
-    } finally {
-      setIsUploading(false);
     }
+    setIsUploading(false);
   };
 
   return (

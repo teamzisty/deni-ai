@@ -1,8 +1,6 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 
-@import "@daveyplate/better-auth-ui/css";
-
 @source "../../node_modules/streamdown/dist/*.js";
 
 @custom-variant dark (&:is(.dark *));

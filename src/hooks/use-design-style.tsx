@@ -1,9 +1,10 @@
 "use client";
 
 import type { ReactNode } from "react";
-import { createContext, use, useCallback, useEffect, useMemo, useState } from "react";
+import { createContext, use, useEffect, useSyncExternalStore } from "react";
 
 const STORAGE_KEY = "deni-design-style";
+const STYLE_EVENT = "deni:design-style";
 
 export type DesignStyle = "modern" | "classic";
 
@@ -25,33 +26,49 @@ function applyDesignStyleClass(value: DesignStyle) {
   body.classList.add(`design-${value}`);
 }
 
-export function DesignStyleProvider({ children }: { children: ReactNode }) {
-  const [style, setStyleState] = useState<DesignStyle>("modern");
+function subscribeDesignStyle(onStoreChange: () => void) {
+  const handleChange = () => onStoreChange();
+  window.addEventListener("storage", handleChange);
+  window.addEventListener(STYLE_EVENT, handleChange);
+  return () => {
+    window.removeEventListener("storage", handleChange);
+    window.removeEventListener(STYLE_EVENT, handleChange);
+  };
+}
 
-  const applyAndPersist = useCallback((value: DesignStyle) => {
-    setStyleState(value);
-    if (typeof window !== "undefined") {
-      localStorage.setItem(STORAGE_KEY, value);
-    }
-    applyDesignStyleClass(value);
-  }, []);
+function getDesignStyleSnapshot(): DesignStyle {
+  const stored = window.localStorage.getItem(STORAGE_KEY);
+  if (stored && isDesignStyle(stored)) {
+    return stored;
+  }
+  return "modern";
+}
+
+function getServerDesignStyleSnapshot(): DesignStyle {
+  return "modern";
+}
+
+function setDesignStyle(value: DesignStyle) {
+  window.localStorage.setItem(STORAGE_KEY, value);
+  applyDesignStyleClass(value);
+  window.dispatchEvent(new Event(STYLE_EVENT));
+}
+
+export function DesignStyleProvider({ children }: { children: ReactNode }) {
+  const style = useSyncExternalStore(
+    subscribeDesignStyle,
+    getDesignStyleSnapshot,
+    getServerDesignStyleSnapshot,
+  );
 
   useEffect(() => {
-    const stored = localStorage.getItem(STORAGE_KEY);
-    if (stored && isDesignStyle(stored)) {
-      applyAndPersist(stored);
-    } else {
-      applyDesignStyleClass("modern");
-    }
-  }, [applyAndPersist]);
+    applyDesignStyleClass(style);
+  }, [style]);
 
-  const value = useMemo(
-    () => ({
-      style,
-      setStyle: applyAndPersist,
-    }),
-    [applyAndPersist, style],
-  );
+  const value: DesignStyleContextValue = {
+    style,
+    setStyle: setDesignStyle,
+  };
 
   return <DesignStyleContext.Provider value={value}>{children}</DesignStyleContext.Provider>;
 }

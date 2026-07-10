@@ -1,4 +1,5 @@
 // Common types, type guards, and utility functions for chat interfaces
+import type { ToolUIPart, UIDataTypes, UIMessagePart, UITools } from "ai";
 import {
   imageModelValues,
   resolveImageModelLabel as resolveKnownImageModelLabel,
@@ -31,6 +32,20 @@ export type ImageToolOutput = {
   numberOfImages?: number | null;
 };
 
+export type VideoToolPart = ToolUIPart<{
+  video: {
+    input: unknown;
+    output: VideoToolOutput;
+  };
+}>;
+
+export type ImageToolPart = ToolUIPart<{
+  image: {
+    input: unknown;
+    output: ImageToolOutput;
+  };
+}>;
+
 export const isSearchResultArray = (value: unknown): value is SearchResult[] =>
   Array.isArray(value) &&
   value.every(
@@ -58,6 +73,12 @@ export const isImageToolOutput = (value: unknown): value is ImageToolOutput => {
     (value as { imageUrls?: unknown[] }).imageUrls?.every((url) => typeof url === "string") === true
   );
 };
+
+export const isVideoToolPart = (part: UIMessagePart<UIDataTypes, UITools>): part is VideoToolPart =>
+  part.type === "tool-video";
+
+export const isImageToolPart = (part: UIMessagePart<UIDataTypes, UITools>): part is ImageToolPart =>
+  part.type === "tool-image";
 
 export function resolveImageModelLabel(
   imageModel?: string | null,

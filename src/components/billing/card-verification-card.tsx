@@ -5,7 +5,7 @@ import type { Appearance } from "@stripe/stripe-js";
 import { CreditCard, ShieldCheck } from "lucide-react";
 import { useTheme } from "next-themes";
 import { useExtracted } from "next-intl";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
 import { stripeJsPromise } from "@/lib/stripe-js";
@@ -152,11 +152,7 @@ function CardSetupDialog({
   );
 }
 
-function CardSetupIntentLoader({
-  onOpenChange,
-}: {
-  onOpenChange: (open: boolean) => void;
-}) {
+function CardSetupIntentLoader({ onOpenChange }: { onOpenChange: (open: boolean) => void }) {
   const t = useExtracted();
   const { resolvedTheme } = useTheme();
   const createIntent = trpc.billing.createCardSetupIntent.useMutation();
@@ -185,10 +181,9 @@ function CardSetupIntentLoader({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const appearance = useMemo<Appearance>(
-    () => ({ theme: resolvedTheme === "dark" ? "night" : "stripe" }),
-    [resolvedTheme],
-  );
+  const appearance: Appearance = {
+    theme: resolvedTheme === "dark" ? "night" : "stripe",
+  };
 
   if (!stripeJsPromise) {
     console.error("NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY is not configured.");

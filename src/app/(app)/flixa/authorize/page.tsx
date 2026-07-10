@@ -3,13 +3,23 @@
 import { CheckCircle2, Code2, KeyRound, Loader2, ShieldCheck, XCircle } from "lucide-react";
 import { useSearchParams } from "next/navigation";
 import { useExtracted } from "next-intl";
-import { Suspense, useCallback, useState } from "react";
+import { Suspense, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { authClient } from "@/lib/auth-client";
 
 type Status = "idle" | "selectingKey" | "success" | "error";
+
+const flixaDateFormatter = new Intl.DateTimeFormat(undefined, {
+  month: "short",
+  day: "numeric",
+  year: "numeric",
+});
+
+function formatDate(value: string) {
+  return flixaDateFormatter.format(new Date(value));
+}
 
 type ApiKeyOption = {
   id: string;
@@ -72,38 +82,25 @@ function FlixaAuthorizeContent() {
   const [apiKeys, setApiKeys] = useState<ApiKeyOption[]>([]);
   const [selectedKeyId, setSelectedKeyId] = useState("");
 
-  const formatDate = useCallback(
-    (value: string) =>
-      new Intl.DateTimeFormat(undefined, {
-        month: "short",
-        day: "numeric",
-        year: "numeric",
-      }).format(new Date(value)),
-    [],
-  );
-
-  const handleApprove = useCallback(
-    async (revokeKeyId?: string) => {
-      if (!code) return;
-      setIsSubmitting(true);
-      setErrorMessage("");
-      const result = await approveDeviceAuth(code, revokeKeyId);
-      if (result.type === "selectingKey") {
-        setApiKeys(result.apiKeys);
-        setSelectedKeyId(result.apiKeys[0]?.id ?? "");
-        setStatus("selectingKey");
-      } else if (result.type === "error") {
-        setErrorMessage(result.message);
-        setStatus("error");
-      } else {
-        setApiKeys([]);
-        setSelectedKeyId("");
-        setStatus("success");
-      }
-      setIsSubmitting(false);
-    },
-    [code],
-  );
+  const handleApprove = async (revokeKeyId?: string) => {
+    if (!code) return;
+    setIsSubmitting(true);
+    setErrorMessage("");
+    const result = await approveDeviceAuth(code, revokeKeyId);
+    if (result.type === "selectingKey") {
+      setApiKeys(result.apiKeys);
+      setSelectedKeyId(result.apiKeys[0]?.id ?? "");
+      setStatus("selectingKey");
+    } else if (result.type === "error") {
+      setErrorMessage(result.message);
+      setStatus("error");
+    } else {
+      setApiKeys([]);
+      setSelectedKeyId("");
+      setStatus("success");
+    }
+    setIsSubmitting(false);
+  };
 
   if (isAnonymous) {
     return (

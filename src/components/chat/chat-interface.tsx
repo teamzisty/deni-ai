@@ -4,38 +4,14 @@ import { useChat } from "@ai-sdk/react";
 import { sendGAEvent } from "@next/third-parties/google";
 import type { FileUIPart, UIMessage } from "ai";
 import { DefaultChatTransport } from "ai";
-import { FolderKanban } from "lucide-react";
+import dynamic from "next/dynamic";
 import { useExtracted } from "next-intl";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import {
-  Attachment,
-  AttachmentInfo,
-  AttachmentPreview,
-  Attachments,
-} from "@/components/ai-elements/attachments";
-import {
-  Conversation,
-  ConversationContent,
-  ConversationScrollButton,
-} from "@/components/ai-elements/conversation";
-import { Loader } from "@/components/ai-elements/loader";
-import {
-  Message,
-  MessageBranch,
-  MessageBranchContent,
-  MessageBranchNext,
-  MessageBranchPage,
-  MessageBranchPrevious,
-  MessageBranchSelector,
-  MessageContent,
-  MessageResponse,
-} from "@/components/ai-elements/message";
+import { useEffect, useRef, useState } from "react";
 import { AdSenseSlot } from "@/components/adsense-slot";
-import { AssistantMessage } from "@/components/chat/assistant-message";
-import { ArtifactPreviewPanel } from "@/components/chat/artifact-preview-panel";
 import { ArtifactPreviewProvider } from "@/components/chat/artifact-preview-context";
 import { ChatComposer, type ComposerMessage } from "@/components/chat/chat-composer";
-import { ChatExportMenu } from "@/components/chat/chat-export-menu";
+import { ChatInterfaceHeader } from "@/components/chat/chat-interface-header";
+import { ChatInterfaceMessages } from "@/components/chat/chat-interface-messages";
 import { UsageAlerts } from "@/components/chat/usage-alerts";
 import { env } from "@/env";
 import { useAvailableModels } from "@/hooks/use-available-models";
@@ -53,8 +29,11 @@ import {
   type ReasoningEffort,
 } from "@/lib/constants";
 import { trpc } from "@/lib/trpc/react";
-import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+
+const ArtifactPreviewPanel = dynamic(
+  () => import("@/components/chat/artifact-preview-panel").then((mod) => mod.ArtifactPreviewPanel),
+  { ssr: false },
+);
 
 interface ChatInterfaceProps {
   id: string;
@@ -68,16 +47,6 @@ type PendingMessageMetadata = {
   pending?: boolean;
   [key: string]: unknown;
 };
-
-function isFilePart(part: UIMessage["parts"][number]): part is FileUIPart {
-  return part.type === "file";
-}
-
-function isTextPart(
-  part: UIMessage["parts"][number],
-): part is Extract<UIMessage["parts"][number], { type: "text"; text: string }> {
-  return part.type === "text";
-}
 
 async function uploadAttachment(file: UploadableFileUIPart): Promise<FileUIPart> {
   if (!file.url || !file.file) {
@@ -158,6 +127,10 @@ function isPendingMessage(message: UIMessage | undefined) {
   return Boolean((message.metadata as PendingMessageMetadata | undefined)?.pending);
 }
 
+function handleFocusComposer() {
+  window.dispatchEvent(new CustomEvent("deni:focus-composer"));
+}
+
 export function ChatInterface({
   id,
   initialMessages = [],
@@ -196,27 +169,20 @@ export function ChatInterface({
     enableMaxMode,
   } = useUsageStatus({ model, availableModels, providerKeys, providerSettings });
 
-  const requestBody = useMemo(
-    () => ({
-      model,
-      webSearch,
-      reasoningEffort,
-      deepResearch,
-      video: videoMode,
-      image: imageMode,
+  const requestBody = {
+    model,
+    webSearch,
+    reasoningEffort,
+    deepResearch,
+    video: videoMode,
+    image: imageMode,
+    id,
+  };
+  const transport = new DefaultChatTransport({
+    body: {
       id,
-    }),
-    [deepResearch, id, model, reasoningEffort, videoMode, imageMode, webSearch],
-  );
-  const transport = useMemo(
-    () =>
-      new DefaultChatTransport({
-        body: {
-          id,
-        },
-      }),
-    [id],
-  );
+    },
+  });
 
   const { messages, sendMessage, regenerate, setMessages, status, error, stop } = useChat({
     id,
@@ -266,8 +232,31 @@ export function ChatInterface({
       return;
     }
 
-    setMessages(chat.messages as UIMessage[]);
-  }, [chatQuery.data, setMessages]);
+    const serverMessages = chat.messages as UIMessage[];
+
+    // Polling can race the first /api/chat persist. Never clobber optimistic
+    // local state with an empty/shorter server snapshot — that made the first
+    // user bubble vanish while the assistant reply still streamed.
+    setMessages((current) => {
+      if (status === "streaming" || status === "submitted") {
+        return current;
+      }
+      if (serverMessages.length === 0 && current.length > 0) {
+        return current;
+      }
+      if (serverMessages.length < current.length) {
+        return current;
+      }
+
+      const localUserCount = current.filter((message) => message.role === "user").length;
+      const serverUserCount = serverMessages.filter((message) => message.role === "user").length;
+      if (localUserCount > serverUserCount) {
+        return current;
+      }
+
+      return serverMessages;
+    });
+  }, [chatQuery.data, setMessages, status]);
 
   useEffect(() => {
     const previousStatus = previousStatusRef.current;
@@ -343,11 +332,22 @@ export function ChatInterface({
     }
   };
 
-  useEffect(() => {
-    if (!selectedModel && availableModels.length > 0) {
-      setModel(availableModels[0].value);
+  // Adjust invalid model during render (avoids setState-in-effect cascade).
+  if (!selectedModel && availableModels.length > 0) {
+    setModel(availableModels[0].value);
+  }
+
+  const handleModelChange = (value: string) => {
+    setModel(value);
+    const nextModel = availableModels.find((entry) => entry.value === value);
+    const nextEfforts = nextModel?.efforts;
+    if (!nextEfforts) {
+      return;
     }
-  }, [availableModels, selectedModel]);
+    setReasoningEffort((current) =>
+      nextEfforts.includes(current) ? current : getPreferredReasoningEffort(nextEfforts),
+    );
+  };
 
   const handleStop = () => {
     stop();
@@ -361,201 +361,47 @@ export function ChatInterface({
     });
   };
 
-  const messageRenderKeys = useMemo(() => getMessageRenderKeys(messages), [messages]);
-  const messageIndexMap = useMemo(() => {
-    const map = new Map<UIMessage, number>();
-    for (let i = 0; i < messages.length; i++) {
-      map.set(messages[i], i);
-    }
-    return map;
-  }, [messages]);
+  const messageRenderKeys = getMessageRenderKeys(messages);
+  const messageIndexMap = new Map<UIMessage, number>();
+  for (let i = 0; i < messages.length; i++) {
+    messageIndexMap.set(messages[i], i);
+  }
 
   const startNewChat = useNewChat();
 
-  const handleFocusComposer = useCallback(() => {
-    window.dispatchEvent(new CustomEvent("deni:focus-composer"));
-  }, []);
-
-  const handleNewChat = useCallback(() => {
-    startNewChat();
-  }, [startNewChat]);
-
   useKeyboardShortcuts({
     onFocusComposer: handleFocusComposer,
-    onNewChat: handleNewChat,
+    onNewChat: () => startNewChat(),
   });
-
-  const chatTitleQuery = trpc.chat.getChat.useQuery(
-    { id },
-    { staleTime: Number.POSITIVE_INFINITY, refetchOnMount: false, refetchOnWindowFocus: false },
-  );
-  const chatTitle = chatTitleQuery.data?.[0]?.title ?? null;
 
   return (
     <ArtifactPreviewProvider>
       <ArtifactPreviewPanel />
       <div className="flex h-full flex-1 min-h-0 flex-col w-full max-w-3xl mx-auto p-4 overflow-hidden">
-        <div className="mb-3 flex items-center gap-2 min-h-7">
-          {initialProjectId && initialProjectName ? (
-            <Badge variant="outline" className="gap-1.5 rounded-full px-2.5 py-1 text-xs">
-              <FolderKanban className="size-3.5" />
-              <span className="text-muted-foreground">{t("Projects")}</span>
-              <span className="text-foreground">{initialProjectName}</span>
-            </Badge>
-          ) : null}
-          {messages.length > 0 ? (
-            <div className="ml-auto">
-              <ChatExportMenu messages={messages} chatTitle={chatTitle ?? null} />
-            </div>
-          ) : null}
-        </div>
-        <Conversation className="flex-1 min-h-0 h-full">
-          <ConversationContent>
-            {groupedMessages.map((group, groupIndex) => {
-              if (group.type === "single") {
-                const message = group.message;
-                const msgIndex = messageIndexMap.get(message) ?? -1;
-                const renderKey = messageRenderKeys[msgIndex] ?? `group-${groupIndex}`;
-                const fileParts = message.parts.filter(isFilePart);
-                const textParts = message.parts.filter(isTextPart);
-                return (
-                  <div key={renderKey}>
-                    {message.role === "user" && (
-                      <Message from="user">
-                        <MessageContent>
-                          {fileParts.length > 0 ? (
-                            <Attachments variant="list" className="w-full">
-                              {fileParts.map((part, partIndex) => (
-                                <Attachment
-                                  data={{ ...part, id: `${message.id}-file-${partIndex}` }}
-                                  key={`${message.id}-file-${partIndex}`}
-                                  className="w-full bg-background/50"
-                                >
-                                  <AttachmentPreview />
-                                  <AttachmentInfo showMediaType />
-                                </Attachment>
-                              ))}
-                            </Attachments>
-                          ) : null}
-                          {textParts.map((part, partIndex) => (
-                            <MessageResponse
-                              key={`${message.id}-text-${partIndex}`}
-                              shikiTheme={["github-light", "github-dark"]}
-                            >
-                              {part.text}
-                            </MessageResponse>
-                          ))}
-                        </MessageContent>
-                      </Message>
-                    )}
-                    {message.role === "assistant" && (
-                      <AssistantMessage
-                        message={message}
-                        state={{
-                          isLastMessage: msgIndex === messages.length - 1,
-                          isStreaming: status === "streaming",
-                          showActions: showMessageActions,
-                          isSubmitBlocked,
-                        }}
-                        projectId={initialProjectId}
-                        requestBody={requestBody}
-                        onRegenerate={handleRegenerate}
-                        availableModels={availableModels}
-                        onModelChange={setModel}
-                        onWebSearchChange={setWebSearch}
-                      />
-                    )}
-                  </div>
-                );
-              }
-
-              // Branch group: multiple assistant messages with navigation
-              const lastBranchIndex =
-                messageIndexMap.get(group.messages[group.messages.length - 1]) ?? -1;
-              return (
-                <MessageBranch
-                  key={`branch-${group.groupId}`}
-                  defaultBranch={group.messages.length - 1}
-                >
-                  <MessageBranchSelector>
-                    <MessageBranchPrevious />
-                    <MessageBranchPage />
-                    <MessageBranchNext />
-                  </MessageBranchSelector>
-                  <MessageBranchContent>
-                    {group.messages.map((message, branchIdx) => (
-                      <AssistantMessage
-                        key={message.id}
-                        message={message}
-                        state={{
-                          isLastMessage:
-                            branchIdx === group.messages.length - 1 &&
-                            lastBranchIndex === messages.length - 1,
-                          isStreaming: status === "streaming",
-                          showActions: showMessageActions,
-                          isSubmitBlocked,
-                        }}
-                        projectId={initialProjectId}
-                        requestBody={requestBody}
-                        onRegenerate={handleRegenerate}
-                        availableModels={availableModels}
-                        onModelChange={setModel}
-                        onWebSearchChange={setWebSearch}
-                      />
-                    ))}
-                  </MessageBranchContent>
-                </MessageBranch>
-              );
-            })}
-            {status === "submitted" && (
-              <div className="min-h-6">
-                <Loader />
-              </div>
-            )}
-
-            {isWaitingForResponse && (
-              <Card className="!gap-0 bg-muted/50">
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Loader />
-                    <span>{t("Waiting for response...")}</span>
-                  </CardTitle>
-                </CardHeader>
-              </Card>
-            )}
-
-            {error && (
-              <Card className="!gap-0 bg-destructive/10">
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <span>{t("Error")}</span>
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="text-sm break-words">
-                    {typeof error === "string"
-                      ? error
-                      : error?.message || t("An unexpected error occurred.")}
-                  </div>
-                </CardContent>
-              </Card>
-            )}
-
-            {attachmentError && (
-              <Card className="!gap-0 bg-destructive/10">
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <span>{t("Error")}</span>
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="text-sm break-words">{attachmentError}</div>
-                </CardContent>
-              </Card>
-            )}
-          </ConversationContent>
-          <ConversationScrollButton />
-        </Conversation>
+        <ChatInterfaceHeader
+          id={id}
+          messages={messages}
+          initialProjectId={initialProjectId}
+          initialProjectName={initialProjectName}
+        />
+        <ChatInterfaceMessages
+          messages={messages}
+          groupedMessages={groupedMessages}
+          messageRenderKeys={messageRenderKeys}
+          messageIndexMap={messageIndexMap}
+          status={status}
+          showMessageActions={showMessageActions}
+          isSubmitBlocked={isSubmitBlocked}
+          isWaitingForResponse={isWaitingForResponse}
+          error={error}
+          attachmentError={attachmentError}
+          initialProjectId={initialProjectId}
+          requestBody={requestBody}
+          onRegenerate={handleRegenerate}
+          availableModels={availableModels}
+          onModelChange={handleModelChange}
+          onWebSearchChange={setWebSearch}
+        />
 
         <UsageAlerts
           status={{
@@ -585,7 +431,7 @@ export function ChatInterface({
           status={status}
           isSubmitDisabled={isSubmitBlocked}
           model={model}
-          onModelChange={setModel}
+          onModelChange={handleModelChange}
           webSearch={webSearch}
           onWebSearchChange={setWebSearch}
           videoMode={videoMode}
