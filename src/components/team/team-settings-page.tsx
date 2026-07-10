@@ -319,11 +319,14 @@ function TeamSettingsContent() {
     } catch (error) {
       console.error("Failed to create org", error);
       toast.error(t("Failed to create organization"));
-    } finally {
       setIsCreatingOrg(false);
       setIsCreateDialogOpen(false);
       setNewOrgName("");
+      return;
     }
+    setIsCreatingOrg(false);
+    setIsCreateDialogOpen(false);
+    setNewOrgName("");
   }
 
   async function handleInvite() {

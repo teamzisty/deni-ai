@@ -94,6 +94,37 @@ export type ModelDefinition = {
 
 export const models: readonly ModelDefinition[] = [
   {
+    name: "GPT-5.6 Sol",
+    value: "gpt-5.6-sol",
+    author: "openai",
+    description: "OpenAI flagship for complex reasoning, coding, and agentic work.",
+    featured: true,
+    features: ["smartest", "reasoning", "coding", "fast"],
+    efforts: ["none", "low", "medium", "high", "xhigh", "max"],
+    tokenMultiplier: 1.5,
+    contextWindow: 1_050_000,
+  },
+  {
+    name: "GPT-5.6 Terra",
+    value: "gpt-5.6-terra",
+    author: "openai",
+    description: "Balanced GPT-5.6 model for everyday work at half the cost of Sol.",
+    featured: true,
+    features: ["reasoning", "smart", "coding", "fast"],
+    efforts: ["none", "low", "medium", "high", "xhigh", "max"],
+    contextWindow: 1_050_000,
+  },
+  {
+    name: "GPT-5.6 Luna",
+    value: "gpt-5.6-luna",
+    author: "openai",
+    description: "Fastest, most affordable GPT-5.6 model for high-volume tasks.",
+    featured: true,
+    features: ["reasoning", "fast", "fastest"],
+    efforts: ["none", "low", "medium", "high", "xhigh", "max"],
+    contextWindow: 1_050_000,
+  },
+  {
     name: "GPT-5.5",
     value: "gpt-5.5",
     author: "openai",
@@ -322,6 +353,18 @@ export const models: readonly ModelDefinition[] = [
     efforts: false,
   },
   {
+    name: "Claude Fable 5",
+    value: "claude-fable-5",
+    author: "anthropic",
+    description: "Anthropic's most capable model for long-horizon agentic work.",
+    premium: true,
+    featured: true,
+    features: ["smartest", "reasoning", "coding", "smart"],
+    efforts: ["low", "medium", "high", "max"],
+    contextWindow: 1_000_000,
+    tokenMultiplier: 3,
+  },
+  {
     name: "Claude Opus 4.7",
     value: "claude-opus-4.7",
     author: "anthropic",
@@ -495,6 +538,49 @@ export function getModelTokenMultiplier(modelId: string): number {
     return 1;
   }
   return multiplier;
+}
+
+/**
+ * OpenAI 1M-class models bill long-context sessions at a premium when the
+ * prompt exceeds this input-token threshold. Matches product policy:
+ * 2× usage for the full session once input > 200K tokens.
+ */
+export const OPENAI_LONG_CONTEXT_INPUT_THRESHOLD = 200_000;
+export const OPENAI_LONG_CONTEXT_MULTIPLIER = 2;
+const OPENAI_LONG_CONTEXT_MIN_WINDOW = 1_000_000;
+
+export function supportsOpenAILongContextPricing(modelId: string): boolean {
+  const model = getModelDefinition(modelId);
+  if (!model || model.author !== "openai") {
+    return false;
+  }
+  return (model.contextWindow ?? 0) >= OPENAI_LONG_CONTEXT_MIN_WINDOW;
+}
+
+/**
+ * Returns 2 when an OpenAI 1M-context model request exceeds the long-context
+ * input threshold; otherwise 1.
+ */
+export function getOpenAILongContextMultiplier(modelId: string, inputTokens: number): number {
+  if (!supportsOpenAILongContextPricing(modelId)) {
+    return 1;
+  }
+  if (!Number.isFinite(inputTokens) || inputTokens <= OPENAI_LONG_CONTEXT_INPUT_THRESHOLD) {
+    return 1;
+  }
+  return OPENAI_LONG_CONTEXT_MULTIPLIER;
+}
+
+/**
+ * Combines the static model token multiplier with OpenAI long-context 2×
+ * pricing when `inputTokens` is provided and exceeds the threshold.
+ */
+export function getEffectiveTokenMultiplier(modelId: string, inputTokens?: number): number {
+  const base = getModelTokenMultiplier(modelId);
+  if (typeof inputTokens !== "number") {
+    return base;
+  }
+  return base * getOpenAILongContextMultiplier(modelId, inputTokens);
 }
 
 // Transactional emails are rendered with react-email components under

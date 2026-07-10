@@ -231,17 +231,17 @@ function AccountStep({
   const t = useExtracted();
   const { isPending, refetch } = authClient.useSession();
 
-  const [name, setName] = useState(initialName ?? "");
-  const [avatarUrl, setAvatarUrl] = useState<string | null>(initialImage ?? null);
+  // `null` override = user hasn't edited yet, fall back to the preloaded value.
+  const [nameOverride, setNameOverride] = useState<string | null>(null);
+  const [avatarOverride, setAvatarOverride] = useState<string | null | undefined>(undefined);
   const [saving, setSaving] = useState(false);
   const [savedMsg, setSavedMsg] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
-  useEffect(() => {
-    if ((initialName ?? "") && !name) setName(initialName ?? "");
-  }, [initialName, name]);
-  useEffect(() => {
-    if (initialImage !== undefined && avatarUrl == null) setAvatarUrl(initialImage ?? null);
-  }, [initialImage, avatarUrl]);
+
+  const name = nameOverride ?? initialName ?? "";
+  const avatarUrl = avatarOverride !== undefined ? avatarOverride : (initialImage ?? null);
+  const setName = setNameOverride;
+  const setAvatarUrl = setAvatarOverride;
 
   async function handleSave() {
     setSaving(true);
@@ -257,10 +257,9 @@ function AccountStep({
     } catch (_e) {
       console.error(_e);
       setSavedMsg(t("Failed to save"));
-    } finally {
-      setSaving(false);
-      setTimeout(() => setSavedMsg(null), 2000);
     }
+    setSaving(false);
+    setTimeout(() => setSavedMsg(null), 2000);
   }
 
   return (
@@ -517,11 +516,7 @@ function FeatureCard({
 }
 
 function Dots({ api, index }: { api: CarouselApi | null; index: number }) {
-  const [snaps, setSnaps] = useState<number[]>([]);
-  useEffect(() => {
-    if (!api) return;
-    setSnaps(api.scrollSnapList());
-  }, [api]);
+  const snaps = api ? api.scrollSnapList() : [];
   return (
     <div className="flex items-center gap-1.5">
       {snaps.map((snap, i) => (

@@ -606,7 +606,6 @@ function BillingPageContent() {
   const getTierLabel = useTierLabel();
   const getPlanIntervalLabel = usePlanIntervalLabel();
   const formatCurrencyMinor = useFormatCurrencyMinor();
-  const [isChangePlanOpen, setIsChangePlanOpen] = useState(false);
   const [changeTarget, setChangeTarget] = useState<ClientPlan | null>(null);
   const [plusInterval, setPlusInterval] = useState<"monthly" | "yearly">("monthly");
   const [proInterval, setProInterval] = useState<"monthly" | "yearly">("monthly");
@@ -624,18 +623,13 @@ function BillingPageContent() {
     },
   );
 
-  // Open dialog when estimate is loaded
-  useEffect(() => {
-    if (pendingPlanId && !estimateQuery.isLoading) {
-      setIsChangePlanOpen(true);
-    }
-  }, [pendingPlanId, estimateQuery.isLoading]);
+  // Dialog is open once a plan change is pending and its estimate has loaded.
+  const isChangePlanOpen = pendingPlanId !== null && !estimateQuery.isLoading;
 
   // Reset state when dialog closes (declared above changePlan; reads pending via ref)
   const changePlanPendingRef = useRef(false);
   const handleDialogOpenChange = useCallback((open: boolean) => {
     if (changePlanPendingRef.current) return;
-    setIsChangePlanOpen(open);
     if (!open) {
       setHasAgreed(false);
       setPendingPlanId(null);
@@ -693,7 +687,6 @@ function BillingPageContent() {
     },
     onError: (error) => toast.error(error.message),
     onSettled: () => {
-      setIsChangePlanOpen(false);
       setChangeTarget(null);
       setPendingPlanId(null);
       setHasAgreed(false);

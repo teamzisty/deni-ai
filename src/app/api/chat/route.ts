@@ -29,6 +29,7 @@ import {
 } from "@/lib/chat-generation";
 import { createChatTools } from "@/lib/chat-tools";
 import {
+  getEffectiveTokenMultiplier,
   getModelContextWindow,
   getModelDefinition,
   getModelTokenMultiplier,
@@ -36,7 +37,10 @@ import {
 import { buildMemoryPrompt, getUserMemoryState, maybeAutoSaveMemories } from "@/lib/memory";
 import { buildProjectPrompt } from "@/lib/project-context";
 import { consumeUsage, refundUsage, UsageLimitError } from "@/lib/usage";
-import { computeWeightedUsageFromLanguageModelUsage } from "@/lib/token-weighting";
+import {
+  computeWeightedUsageFromLanguageModelUsage,
+  type TokenUsageBreakdown,
+} from "@/lib/token-weighting";
 import { checkRateLimit } from "@/lib/rate-limit";
 import { addOpenRouterCacheControl, ChatRouteError, resolveChatModelContext } from "./_lib/model";
 import { buildChatSystemPrompt } from "./_lib/prompt";
@@ -100,6 +104,20 @@ function estimateTokenReservation({
   const serializedMessages = JSON.stringify(modelMessages);
   const estimatedPromptTokens = Math.ceil((serializedMessages.length + systemPrompt.length) / 4);
   return Math.max(512, Math.min(8_192, estimatedPromptTokens + 1_024));
+}
+
+function getUsageInputTokens(
+  usage: {
+    inputTokens?: number | null;
+  },
+  breakdown: TokenUsageBreakdown | null,
+): number {
+  if (breakdown) {
+    return breakdown.input + breakdown.cacheRead + breakdown.cacheWrite;
+  }
+  return typeof usage.inputTokens === "number" && Number.isFinite(usage.inputTokens)
+    ? Math.max(0, usage.inputTokens)
+    : 0;
 }
 
 const TOKEN_RECONCILE_OVERFLOW_BUFFER = 256;
@@ -430,8 +448,11 @@ export async function POST(req: Request) {
           ? { type: "tool", toolName: "image" }
           : undefined,
       onFinish: ({ totalUsage }) => {
-        const { weighted } = computeWeightedUsageFromLanguageModelUsage(totalUsage);
-        finalUsageAmount = Math.ceil(weighted * tokenMultiplier);
+        const { weighted, breakdown } = computeWeightedUsageFromLanguageModelUsage(totalUsage);
+        const inputTokens = getUsageInputTokens(totalUsage, breakdown);
+        finalUsageAmount = Math.ceil(
+          weighted * getEffectiveTokenMultiplier(baseModel, inputTokens),
+        );
       },
       providerOptions,
       system: requestSystem,

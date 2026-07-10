@@ -4,7 +4,13 @@ import Link from "next/link";
 import { useExtracted, useLocale } from "next-intl";
 import { getExtracted } from "next-intl/server";
 import { LoginButton } from "@/components/login-button";
-import { models, type ModelDefinition } from "@/lib/constants";
+import {
+  OPENAI_LONG_CONTEXT_INPUT_THRESHOLD,
+  OPENAI_LONG_CONTEXT_MULTIPLIER,
+  models,
+  supportsOpenAILongContextPricing,
+  type ModelDefinition,
+} from "@/lib/constants";
 import { translateModelDescription, useModelDescriptionCopy } from "@/lib/model-description-copy";
 import { Button } from "@/components/ui/button";
 
@@ -261,6 +267,17 @@ export default function ModelsPage() {
                     {"contextWindow" in model && model.contextWindow ? (
                       <p className="mb-3 text-xs text-muted-foreground">
                         {t("Context window")}: {formatNumber.format(model.contextWindow)}
+                        {supportsOpenAILongContextPricing(model.value)
+                          ? ` · ${t(
+                              "Long context (>{threshold} input): {multiplier}× usage",
+                              {
+                                threshold: formatNumber.format(
+                                  OPENAI_LONG_CONTEXT_INPUT_THRESHOLD,
+                                ),
+                                multiplier: String(OPENAI_LONG_CONTEXT_MULTIPLIER),
+                              },
+                            )}`
+                          : ""}
                       </p>
                     ) : null}
                     {model.features && (

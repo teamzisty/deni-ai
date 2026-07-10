@@ -24,6 +24,27 @@ interface ProjectPageProps {
   initialProjectName: string;
 }
 
+async function uploadProjectFile(file: File) {
+  const formData = new FormData();
+  formData.set("file", file);
+
+  const res = await fetch("/api/upload-project-file", {
+    method: "POST",
+    body: formData,
+  });
+
+  if (!res.ok) {
+    const err = (await res.json()) as { error?: string };
+    throw new Error(err.error ?? "Upload failed");
+  }
+
+  return (await res.json()) as {
+    url: string;
+    size: number;
+    mimeType: string;
+  };
+}
+
 export function ProjectPage({ projectId, initialProjectName }: ProjectPageProps) {
   const utils = trpc.useUtils();
 
@@ -95,24 +116,7 @@ export function ProjectPage({ projectId, initialProjectName }: ProjectPageProps)
 
     setIsUploading(true);
     try {
-      const formData = new FormData();
-      formData.set("file", file);
-
-      const res = await fetch("/api/upload-project-file", {
-        method: "POST",
-        body: formData,
-      });
-
-      if (!res.ok) {
-        const err = (await res.json()) as { error?: string };
-        throw new Error(err.error ?? "Upload failed");
-      }
-
-      const { url, size, mimeType } = (await res.json()) as {
-        url: string;
-        size: number;
-        mimeType: string;
-      };
+      const { url, size, mimeType } = await uploadProjectFile(file);
 
       recordFile.mutate({
         projectId,

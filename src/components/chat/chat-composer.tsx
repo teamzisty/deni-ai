@@ -347,11 +347,14 @@ export function ChatComposer({
   showByokBadge = false,
 }: ChatComposerProps) {
   const t = useExtracted();
-  const modelDescriptionLabels: ModelDescriptionLabels = {
-    xaiMostIntelligentModel: t("xAI's most intelligent model"),
-    fastAndEfficientModel: t("Fast and efficient model"),
-    stealthModel: t("Stealth model"),
-  };
+  const modelDescriptionLabels: ModelDescriptionLabels = useMemo(
+    () => ({
+      xaiMostIntelligentModel: t("xAI's most intelligent model"),
+      fastAndEfficientModel: t("Fast and efficient model"),
+      stealthModel: t("Stealth model"),
+    }),
+    [t],
+  );
   const modelDescriptionCopy = useModelDescriptionCopy();
   const featureLabels: FeatureLabels = {
     reasoning: t("Reasoning"),

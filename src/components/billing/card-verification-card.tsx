@@ -131,17 +131,39 @@ function CardSetupDialog({
   onOpenChange: (open: boolean) => void;
 }) {
   const t = useExtracted();
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle>{t("Add card")}</DialogTitle>
+          <DialogDescription>
+            {t(
+              "We place a temporary $1 authorization and release it immediately. Your card is never actually charged.",
+            )}
+          </DialogDescription>
+        </DialogHeader>
+        {/* Mounted only while the dialog is open, so its SetupIntent fetch state
+            is naturally reset (via unmount/remount) instead of being cleared by
+            an effect that runs on every `open` change. */}
+        {open && <CardSetupIntentLoader onOpenChange={onOpenChange} />}
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+function CardSetupIntentLoader({
+  onOpenChange,
+}: {
+  onOpenChange: (open: boolean) => void;
+}) {
+  const t = useExtracted();
   const { resolvedTheme } = useTheme();
   const createIntent = trpc.billing.createCardSetupIntent.useMutation();
   const [clientSecret, setClientSecret] = useState<string | null>(null);
   const [paymentIntentId, setPaymentIntentId] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!open) {
-      setClientSecret(null);
-      setPaymentIntentId(null);
-      return;
-    }
     let cancelled = false;
     createIntent
       .mutateAsync()
@@ -157,42 +179,29 @@ function CardSetupDialog({
     return () => {
       cancelled = true;
     };
-    // We intentionally only react to `open` changes here; createIntent is stable
-    // for the dialog's lifetime and adding it would re-trigger the SetupIntent.
+    // This component is only mounted while the dialog is open, so a fresh
+    // SetupIntent is fetched once per mount; createIntent is stable for the
+    // component's lifetime and adding it would re-trigger the fetch.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open]);
+  }, []);
 
   const appearance = useMemo<Appearance>(
     () => ({ theme: resolvedTheme === "dark" ? "night" : "stripe" }),
     [resolvedTheme],
   );
 
+  if (!(clientSecret && paymentIntentId && stripeJsPromise)) {
+    return (
+      <div className="flex items-center justify-center py-10">
+        <Spinner />
+      </div>
+    );
+  }
+
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md">
-        <DialogHeader>
-          <DialogTitle>{t("Add card")}</DialogTitle>
-          <DialogDescription>
-            {t(
-              "We place a temporary $1 authorization and release it immediately. Your card is never actually charged.",
-            )}
-          </DialogDescription>
-        </DialogHeader>
-        {clientSecret && paymentIntentId && stripeJsPromise ? (
-          <Elements
-            stripe={stripeJsPromise}
-            options={{ clientSecret, appearance }}
-            key={clientSecret}
-          >
-            <CardSetupForm paymentIntentId={paymentIntentId} onDone={() => onOpenChange(false)} />
-          </Elements>
-        ) : (
-          <div className="flex items-center justify-center py-10">
-            <Spinner />
-          </div>
-        )}
-      </DialogContent>
-    </Dialog>
+    <Elements stripe={stripeJsPromise} options={{ clientSecret, appearance }} key={clientSecret}>
+      <CardSetupForm paymentIntentId={paymentIntentId} onDone={() => onOpenChange(false)} />
+    </Elements>
   );
 }
 
@@ -239,9 +248,9 @@ function CardSetupForm({
       await utils.billing.usage.invalidate();
       await utils.billing.status.invalidate();
       onDone();
+      setSubmitting(false);
     } catch (err) {
       setError(err instanceof Error ? err.message : t("Failed to confirm card."));
-    } finally {
       setSubmitting(false);
     }
   };
