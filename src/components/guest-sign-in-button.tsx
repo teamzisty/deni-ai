@@ -41,9 +41,10 @@ export function GuestSignInButton({
           ? error.message
           : t("Failed to sign in as guest. Please try again.");
       toast.error(message);
-    } finally {
       setIsSubmitting(false);
+      return;
     }
+    setIsSubmitting(false);
   };
 
   return (

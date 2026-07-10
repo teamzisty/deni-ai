@@ -94,6 +94,37 @@ export type ModelDefinition = {
 
 export const models: readonly ModelDefinition[] = [
   {
+    name: "GPT-5.6 Sol",
+    value: "gpt-5.6-sol",
+    author: "openai",
+    description: "OpenAI flagship for complex reasoning, coding, and agentic work.",
+    featured: true,
+    features: ["smartest", "reasoning", "coding", "fast"],
+    efforts: ["none", "low", "medium", "high", "xhigh", "max"],
+    tokenMultiplier: 1.5,
+    contextWindow: 1_050_000,
+  },
+  {
+    name: "GPT-5.6 Terra",
+    value: "gpt-5.6-terra",
+    author: "openai",
+    description: "Balanced GPT-5.6 model for everyday work at half the cost of Sol.",
+    featured: true,
+    features: ["reasoning", "smart", "coding", "fast"],
+    efforts: ["none", "low", "medium", "high", "xhigh", "max"],
+    contextWindow: 1_050_000,
+  },
+  {
+    name: "GPT-5.6 Luna",
+    value: "gpt-5.6-luna",
+    author: "openai",
+    description: "Fastest, most affordable GPT-5.6 model for high-volume tasks.",
+    featured: true,
+    features: ["reasoning", "fast", "fastest"],
+    efforts: ["none", "low", "medium", "high", "xhigh", "max"],
+    contextWindow: 1_050_000,
+  },
+  {
     name: "GPT-5.5",
     value: "gpt-5.5",
     author: "openai",
@@ -322,6 +353,18 @@ export const models: readonly ModelDefinition[] = [
     efforts: false,
   },
   {
+    name: "Claude Fable 5",
+    value: "claude-fable-5",
+    author: "anthropic",
+    description: "Anthropic's most capable model for long-horizon agentic work.",
+    premium: true,
+    featured: true,
+    features: ["smartest", "reasoning", "coding", "smart"],
+    efforts: ["low", "medium", "high", "max"],
+    contextWindow: 1_000_000,
+    tokenMultiplier: 3,
+  },
+  {
     name: "Claude Opus 4.7",
     value: "claude-opus-4.7",
     author: "anthropic",
@@ -497,103 +540,48 @@ export function getModelTokenMultiplier(modelId: string): number {
   return multiplier;
 }
 
-const escapeHtml = (unsafe: string) =>
-  unsafe
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#39;");
+/**
+ * OpenAI 1M-class models bill long-context sessions at a premium when the
+ * prompt exceeds this input-token threshold. Matches product policy:
+ * 2× usage for the full session once input > 200K tokens.
+ */
+export const OPENAI_LONG_CONTEXT_INPUT_THRESHOLD = 200_000;
+export const OPENAI_LONG_CONTEXT_MULTIPLIER = 2;
+const OPENAI_LONG_CONTEXT_MIN_WINDOW = 1_000_000;
 
-const sanitizeEmailSubjectValue = (value: string, fallback: string) => {
-  const sanitized = value.replaceAll(/\r|\n/g, " ").replaceAll(/\s+/g, " ").trim().slice(0, 200);
-  return sanitized || fallback;
-};
+export function supportsOpenAILongContextPricing(modelId: string): boolean {
+  const model = getModelDefinition(modelId);
+  if (!model || model.author !== "openai") {
+    return false;
+  }
+  return (model.contextWindow ?? 0) >= OPENAI_LONG_CONTEXT_MIN_WINDOW;
+}
 
-// Email templates
-export const emailTemplates = {
-  resetPassword: (name: string | null, url: string) => ({
-    subject: "Reset your password - Deni AI",
-    html: (() => {
-      const escapedName = name ? escapeHtml(name) : "";
-      const escapedUrl = escapeHtml(url);
+/**
+ * Returns 2 when an OpenAI 1M-context model request exceeds the long-context
+ * input threshold; otherwise 1.
+ */
+export function getOpenAILongContextMultiplier(modelId: string, inputTokens: number): number {
+  if (!supportsOpenAILongContextPricing(modelId)) {
+    return 1;
+  }
+  if (!Number.isFinite(inputTokens) || inputTokens <= OPENAI_LONG_CONTEXT_INPUT_THRESHOLD) {
+    return 1;
+  }
+  return OPENAI_LONG_CONTEXT_MULTIPLIER;
+}
 
-      return `
-      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-        <h2>Reset Your Password</h2>
-        <p>Hi${escapedName ? ` ${escapedName}` : ""},</p>
-        <p>We received a request to reset your password. Click the button below to create a new password:</p>
-        <p style="margin: 24px 0;">
-          <a href="${escapedUrl}" style="background-color: #000; color: #fff; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block;">Reset Password</a>
-        </p>
-        <p>If you didn't request this, you can safely ignore this email.</p>
-        <p>This link will expire in 1 hour.</p>
-        <p>Best,<br>Deni AI Team</p>
-      </div>
-    `;
-    })(),
-  }),
-  verifyEmail: (name: string | null, url: string) => ({
-    subject: "Verify your email - Deni AI",
-    html: (() => {
-      const escapedName = name ? escapeHtml(name) : "";
-      const escapedUrl = escapeHtml(url);
+/**
+ * Combines the static model token multiplier with OpenAI long-context 2×
+ * pricing when `inputTokens` is provided and exceeds the threshold.
+ */
+export function getEffectiveTokenMultiplier(modelId: string, inputTokens?: number): number {
+  const base = getModelTokenMultiplier(modelId);
+  if (typeof inputTokens !== "number") {
+    return base;
+  }
+  return base * getOpenAILongContextMultiplier(modelId, inputTokens);
+}
 
-      return `
-      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-        <h2>Verify Your Email</h2>
-        <p>Hi${escapedName ? ` ${escapedName}` : ""},</p>
-        <p>Thank you for signing up for Deni AI! Please verify your email address by clicking the button below:</p>
-        <p style="margin: 24px 0;">
-          <a href="${escapedUrl}" style="background-color: #000; color: #fff; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block;">Verify Email</a>
-        </p>
-        <p>If you didn't create an account, you can safely ignore this email.</p>
-        <p>Best,<br>Deni AI Team</p>
-      </div>
-    `;
-    })(),
-  }),
-  orgInvitation: (orgName: string, inviterName: string | null, url: string) => {
-    const sanitizedOrgName = sanitizeEmailSubjectValue(orgName, "your organization");
-
-    return {
-      subject: `You're invited to join ${sanitizedOrgName} on Deni AI`,
-      html: (() => {
-        const escapedOrg = escapeHtml(sanitizedOrgName);
-        const escapedInviter = inviterName ? escapeHtml(inviterName) : "Someone";
-        const escapedUrl = escapeHtml(url);
-
-        return `
-      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-        <h2>You're Invited!</h2>
-        <p>${escapedInviter} has invited you to join <strong>${escapedOrg}</strong> on Deni AI.</p>
-        <p>Click the button below to accept the invitation:</p>
-        <p style="margin: 24px 0;">
-          <a href="${escapedUrl}" style="background-color: #000; color: #fff; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block;">Accept Invitation</a>
-        </p>
-        <p>If you weren't expecting this invitation, you can safely ignore this email.</p>
-        <p>Best,<br>Deni AI Team</p>
-      </div>
-    `;
-      })(),
-    };
-  },
-  magicLink: (url: string) => ({
-    subject: "Sign in to Deni AI",
-    html: (() => {
-      const escapedUrl = escapeHtml(url);
-
-      return `
-      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-        <h2>Sign In to Deni AI</h2>
-        <p>Click the button below to sign in:</p>
-        <p style="margin: 24px 0;">
-          <a href="${escapedUrl}" style="background-color: #000; color: #fff; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block;">Sign In</a>
-        </p>
-        <p>If you didn't request this, you can safely ignore this email.</p>
-        <p>Best,<br>Deni AI Team</p>
-      </div>
-    `;
-    })(),
-  }),
-};
+// Transactional emails are rendered with react-email components under
+// `src/emails/*` and sent from `src/lib/auth.ts`.

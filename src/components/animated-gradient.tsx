@@ -234,7 +234,9 @@ export default function AnimatedGradient({
     gl.attachShader(program, vertexShader);
     gl.attachShader(program, fragmentShader);
     gl.linkProgram(program);
-    gl.useProgram(program);
+    // Bracket access avoids the react-hooks lint rule misidentifying
+    // WebGL's `useProgram` method as a React hook call by name pattern.
+    gl["useProgram"](program);
 
     const positionBuffer = gl.createBuffer();
     gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);

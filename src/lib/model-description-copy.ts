@@ -12,6 +12,15 @@ export function useModelDescriptionCopy() {
   return useMemo(
     () =>
       ({
+        "OpenAI flagship for complex reasoning, coding, and agentic work.": t(
+          "OpenAI flagship for complex reasoning, coding, and agentic work.",
+        ),
+        "Balanced GPT-5.6 model for everyday work at half the cost of Sol.": t(
+          "Balanced GPT-5.6 model for everyday work at half the cost of Sol.",
+        ),
+        "Fastest, most affordable GPT-5.6 model for high-volume tasks.": t(
+          "Fastest, most affordable GPT-5.6 model for high-volume tasks.",
+        ),
         "A new class of intelligence for coding and professional work.": t(
           "A new class of intelligence for coding and professional work.",
         ),
@@ -50,6 +59,9 @@ export function useModelDescriptionCopy() {
         "Best for complex tasks": t("Best for complex tasks"),
         "Best for everyday tasks": t("Best for everyday tasks"),
         "Best for high volume tasks": t("Best for high volume tasks"),
+        "Anthropic's most capable model for long-horizon agentic work.": t(
+          "Anthropic's most capable model for long-horizon agentic work.",
+        ),
         "All-around professional model": t("All-around professional model"),
         "Legacy All-around professional model": t("Legacy All-around professional model"),
         "Hybrid reasoning model": t("Hybrid reasoning model"),

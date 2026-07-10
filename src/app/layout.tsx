@@ -3,6 +3,7 @@ import type { Metadata, Viewport } from "next";
 import { JetBrains_Mono, Geist, Geist_Mono, Inter } from "next/font/google";
 import { NextIntlClientProvider } from "next-intl";
 import { getExtracted, getLocale, getMessages } from "next-intl/server";
+import { AdSenseScript } from "@/components/adsense-script";
 import { ThemeProvider } from "@/components/ui/theme-provider";
 import { Toaster } from "@/components/ui/sonner";
 import { GA_ID } from "@/lib/constants";
@@ -45,6 +46,7 @@ export async function generateMetadata(): Promise<Metadata> {
   const description = t(
     "Free multi-model AI chat with GPT, Claude, Gemini, and more in one place.",
   );
+  const adsenseAccount = process.env.NEXT_PUBLIC_ADSENSE_CLIENT_ID;
 
   return {
     metadataBase: new URL("https://deniai.app"),
@@ -102,6 +104,11 @@ export async function generateMetadata(): Promise<Metadata> {
       index: true,
       follow: true,
     },
+    other: adsenseAccount
+      ? {
+          "google-adsense-account": adsenseAccount,
+        }
+      : undefined,
   };
 }
 
@@ -171,6 +178,7 @@ export default async function RootLayout({
           </ThemeProvider>
         </NextIntlClientProvider>
       </body>
+      <AdSenseScript />
       {process.env.NODE_ENV === "production" ? <GoogleAnalytics gaId={GA_ID} /> : null}
     </html>
   );

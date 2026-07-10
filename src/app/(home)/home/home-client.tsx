@@ -3,7 +3,17 @@
 import React from "react";
 import { motion } from "motion/react";
 import Link from "next/link";
-import { ArrowRight, BookOpenText, BrainCircuit, Code, PencilLine, Zap } from "lucide-react";
+import {
+  ArrowRight,
+  BookOpenText,
+  BrainCircuit,
+  CheckCircle2,
+  Code,
+  KeyRound,
+  PencilLine,
+  ShieldCheck,
+  Zap,
+} from "lucide-react";
 import { useExtracted } from "next-intl";
 import { SiAnthropic, SiGoogle, SiX } from "@icons-pack/react-simple-icons";
 import { LoginButton } from "@/components/login-button";
@@ -91,6 +101,51 @@ export function ClientHome() {
     },
   ];
 
+  const workflowSteps = [
+    {
+      title: t("Start with a clear task"),
+      description: t(
+        "Write what you want to decide, create, summarize, translate, or debug. A specific prompt gives every model a fair starting point.",
+      ),
+    },
+    {
+      title: t("Compare when accuracy matters"),
+      description: t(
+        "For important answers, run a second model and look for agreement, missing details, or different assumptions before you rely on the result.",
+      ),
+    },
+    {
+      title: t("Keep the human review step"),
+      description: t(
+        "Deni AI is designed to speed up thinking and drafting, not to replace judgment. Review facts, code, numbers, and recommendations before using them.",
+      ),
+    },
+  ];
+
+  const trustSignals = [
+    {
+      icon: ShieldCheck,
+      title: t("Private by design"),
+      description: t(
+        "Your conversations are treated as your workspace content. We do not use chats to train our own models, and account controls are available inside the app.",
+      ),
+    },
+    {
+      icon: KeyRound,
+      title: t("Bring your own keys"),
+      description: t(
+        "People who already pay providers directly can connect their own API keys and keep usage separate from Deni AI limits.",
+      ),
+    },
+    {
+      icon: CheckCircle2,
+      title: t("Transparent limits"),
+      description: t(
+        "The product explains usage limits and model cost differences so visitors can understand what changes between free and paid access.",
+      ),
+    },
+  ];
+
   const aiLogos = [
     <Openai key="openai" className="size-8 opacity-40 hover:opacity-100 transition-opacity" />,
     <SiGoogle key="google" className="size-8 opacity-40 hover:opacity-100 transition-opacity" />,
@@ -117,10 +172,7 @@ export function ClientHome() {
         <div className="mx-auto max-w-5xl">
           <div className="flex flex-col items-center text-center">
             {/* Main headline */}
-            <h1
-              data-nosnippet
-              className="mb-8 text-4xl font-semibold leading-[1.02] tracking-tight sm:text-6xl md:text-8xl"
-            >
+            <h1 className="mb-8 text-4xl font-semibold leading-[1.02] tracking-tight sm:text-6xl md:text-8xl">
               <BlurReveal className="block" delay={0.2}>
                 {t("The AI Assistant")}
               </BlurReveal>
@@ -163,6 +215,10 @@ export function ClientHome() {
                 <span aria-hidden="true">/</span>
                 <Link href="/use-cases" className="transition-colors hover:text-foreground">
                   {t("See use cases")}
+                </Link>
+                <span aria-hidden="true">/</span>
+                <Link href="/guides" className="transition-colors hover:text-foreground">
+                  {t("Read AI guides")}
                 </Link>
               </div>
             </motion.div>
@@ -260,6 +316,47 @@ export function ClientHome() {
         </div>
       </section>
 
+      <section className="relative border-y border-border/40 bg-background/85 px-4 py-24 md:py-28">
+        <div className="mx-auto max-w-5xl">
+          <div className="grid gap-10 lg:grid-cols-[0.85fr_1.15fr] lg:items-start">
+            <div>
+              <p className="mb-3 text-sm font-semibold uppercase tracking-[0.18em] text-muted-foreground/70">
+                {t("Practical workflow")}
+              </p>
+              <h2 className="text-3xl font-semibold tracking-tight md:text-4xl">
+                {t("Use AI as a working draft, then verify what matters")}
+              </h2>
+              <p className="mt-5 text-sm leading-7 text-muted-foreground">
+                {t(
+                  "Deni AI is useful because it keeps model switching close to the task. You can start with a quick answer, compare a second model when the answer matters, and keep your final decision separate from the AI draft.",
+                )}
+              </p>
+            </div>
+
+            <div className="grid gap-4">
+              {workflowSteps.map((step, index) => (
+                <article
+                  key={step.title}
+                  className="rounded-[1.5rem] border border-border/70 bg-card p-6"
+                >
+                  <div className="flex items-start gap-4">
+                    <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-primary text-sm font-semibold text-primary-foreground">
+                      {index + 1}
+                    </span>
+                    <div>
+                      <h3 className="text-lg font-semibold">{step.title}</h3>
+                      <p className="mt-2 text-sm leading-7 text-muted-foreground">
+                        {step.description}
+                      </p>
+                    </div>
+                  </div>
+                </article>
+              ))}
+            </div>
+          </div>
+        </div>
+      </section>
+
       <section className="relative border-y border-border/40 bg-background/80 px-4 py-24 md:py-28">
         <div className="mx-auto max-w-5xl">
           <div className="max-w-3xl">
@@ -310,6 +407,45 @@ export function ClientHome() {
                 <ArrowRight className="size-4" />
               </Link>
             </Button>
+            <Button variant="outline" asChild>
+              <Link href="/guides">
+                {t("Read the AI guides")}
+                <ArrowRight className="size-4" />
+              </Link>
+            </Button>
+          </div>
+        </div>
+      </section>
+
+      <section className="relative px-4 py-24 md:py-28">
+        <div className="mx-auto max-w-6xl">
+          <div className="max-w-3xl">
+            <p className="mb-3 text-sm font-semibold uppercase tracking-[0.18em] text-muted-foreground/70">
+              {t("Trust and access")}
+            </p>
+            <h2 className="text-3xl font-semibold tracking-tight md:text-4xl">
+              {t("Useful AI should be understandable before you sign in")}
+            </h2>
+            <p className="mt-5 text-sm leading-7 text-muted-foreground">
+              {t(
+                "Visitors can read what the product does, review the available model families, check legal policies, and understand privacy expectations before opening the chat workspace.",
+              )}
+            </p>
+          </div>
+
+          <div className="mt-10 grid gap-4 md:grid-cols-3">
+            {trustSignals.map((signal) => (
+              <article
+                key={signal.title}
+                className="rounded-[1.5rem] border border-border/70 bg-card p-6"
+              >
+                <div className="mb-4 inline-flex size-10 items-center justify-center rounded-2xl bg-secondary">
+                  <signal.icon className="size-5" />
+                </div>
+                <h3 className="text-lg font-semibold">{signal.title}</h3>
+                <p className="mt-3 text-sm leading-7 text-muted-foreground">{signal.description}</p>
+              </article>
+            ))}
           </div>
         </div>
       </section>

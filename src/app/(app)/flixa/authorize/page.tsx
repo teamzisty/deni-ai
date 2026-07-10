@@ -25,6 +25,41 @@ type ApproveResponse = {
   apiKeys?: ApiKeyOption[];
 };
 
+type ApproveResult =
+  | { type: "success" }
+  | { type: "selectingKey"; apiKeys: ApiKeyOption[] }
+  | { type: "error"; message: string };
+
+// Extracted to a plain (non-component, non-hook) helper so the React Compiler
+// doesn't need to lower the try/catch/finally/throw control flow here.
+async function approveDeviceAuth(code: string, revokeKeyId?: string): Promise<ApproveResult> {
+  try {
+    const res = await fetch("/api/device-auth", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        action: "approve",
+        userCode: code,
+        ...(revokeKeyId ? { revokeKeyId } : {}),
+      }),
+    });
+    if (!res.ok) {
+      const data = (await res.json()) as ApproveResponse;
+      if (
+        res.status === 409 &&
+        data.code === "API_KEY_LIMIT_REACHED" &&
+        Array.isArray(data.apiKeys)
+      ) {
+        return { type: "selectingKey", apiKeys: data.apiKeys };
+      }
+      throw new Error(data.error || "Failed to approve");
+    }
+    return { type: "success" };
+  } catch (err) {
+    return { type: "error", message: err instanceof Error ? err.message : "Unknown error" };
+  }
+}
+
 function FlixaAuthorizeContent() {
   const t = useExtracted();
   const searchParams = useSearchParams();
@@ -52,39 +87,20 @@ function FlixaAuthorizeContent() {
       if (!code) return;
       setIsSubmitting(true);
       setErrorMessage("");
-      try {
-        const res = await fetch("/api/device-auth", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            action: "approve",
-            userCode: code,
-            ...(revokeKeyId ? { revokeKeyId } : {}),
-          }),
-        });
-        if (!res.ok) {
-          const data = (await res.json()) as ApproveResponse;
-          if (
-            res.status === 409 &&
-            data.code === "API_KEY_LIMIT_REACHED" &&
-            Array.isArray(data.apiKeys)
-          ) {
-            setApiKeys(data.apiKeys);
-            setSelectedKeyId(data.apiKeys[0]?.id ?? "");
-            setStatus("selectingKey");
-            return;
-          }
-          throw new Error(data.error || "Failed to approve");
-        }
+      const result = await approveDeviceAuth(code, revokeKeyId);
+      if (result.type === "selectingKey") {
+        setApiKeys(result.apiKeys);
+        setSelectedKeyId(result.apiKeys[0]?.id ?? "");
+        setStatus("selectingKey");
+      } else if (result.type === "error") {
+        setErrorMessage(result.message);
+        setStatus("error");
+      } else {
         setApiKeys([]);
         setSelectedKeyId("");
         setStatus("success");
-      } catch (err) {
-        setErrorMessage(err instanceof Error ? err.message : "Unknown error");
-        setStatus("error");
-      } finally {
-        setIsSubmitting(false);
       }
+      setIsSubmitting(false);
     },
     [code],
   );
@@ -190,7 +206,7 @@ function FlixaAuthorizeContent() {
               </p>
               <RadioGroup
                 value={selectedKeyId}
-                onValueChange={setSelectedKeyId}
+                onValueChange={(value) => setSelectedKeyId(value as string)}
                 className="space-y-2"
               >
                 {apiKeys.map((apiKey) => (

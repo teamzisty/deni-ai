@@ -606,7 +606,6 @@ function BillingPageContent() {
   const getTierLabel = useTierLabel();
   const getPlanIntervalLabel = usePlanIntervalLabel();
   const formatCurrencyMinor = useFormatCurrencyMinor();
-  const [isChangePlanOpen, setIsChangePlanOpen] = useState(false);
   const [changeTarget, setChangeTarget] = useState<ClientPlan | null>(null);
   const [plusInterval, setPlusInterval] = useState<"monthly" | "yearly">("monthly");
   const [proInterval, setProInterval] = useState<"monthly" | "yearly">("monthly");
@@ -624,18 +623,16 @@ function BillingPageContent() {
     },
   );
 
-  // Open dialog when estimate is loaded
-  useEffect(() => {
-    if (pendingPlanId && !estimateQuery.isLoading) {
-      setIsChangePlanOpen(true);
-    }
-  }, [pendingPlanId, estimateQuery.isLoading]);
+  // Dialog opens only after the latest estimate fetch settles (not just cached data).
+  const isChangePlanOpen =
+    pendingPlanId !== null &&
+    !estimateQuery.isFetching &&
+    (estimateQuery.data !== undefined || estimateQuery.error !== null);
 
   // Reset state when dialog closes (declared above changePlan; reads pending via ref)
   const changePlanPendingRef = useRef(false);
   const handleDialogOpenChange = useCallback((open: boolean) => {
     if (changePlanPendingRef.current) return;
-    setIsChangePlanOpen(open);
     if (!open) {
       setHasAgreed(false);
       setPendingPlanId(null);
@@ -693,7 +690,6 @@ function BillingPageContent() {
     },
     onError: (error) => toast.error(error.message),
     onSettled: () => {
-      setIsChangePlanOpen(false);
       setChangeTarget(null);
       setPendingPlanId(null);
       setHasAgreed(false);
@@ -1212,12 +1208,14 @@ function BillingPageContent() {
                 changePlan.isPending || !changeTarget || estimateQuery.error != null || !hasAgreed
               }
               loading={changePlan.isPending}
-              onClick={() =>
-                changeTarget &&
+              onClick={() => {
+                if (!changeTarget) return;
+                // Set before mutate so onOpenChange cannot clear state mid-click.
+                changePlanPendingRef.current = true;
                 changePlan.mutate({
                   planId: changeTarget.id as IndividualPlanId,
-                })
-              }
+                });
+              }}
             >
               {changePlan.isPending && <Spinner />}
               {t("Confirm")}

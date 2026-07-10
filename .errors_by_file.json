@@ -1,0 +1,512 @@
+{
+  "src/app/(app)/flixa/authorize/page.tsx": [
+    {
+      "filePath": "src/app/(app)/flixa/authorize/page.tsx",
+      "plugin": "react-hooks-js",
+      "rule": "todo",
+      "severity": "error",
+      "title": "React Compiler doesn't support this syntax",
+      "message": "This component misses React Compiler's automatic memoization & re-renders more than it should. Rewrite the flagged code so the compiler can optimize it.",
+      "help": "Todo: (BuildHIR::lowerStatement) Handle TryStatement with a finalizer ('finally') clause",
+      "line": 55,
+      "column": 7,
+      "offset": 1742,
+      "length": 1065,
+      "category": "Performance"
+    },
+    {
+      "filePath": "src/app/(app)/flixa/authorize/page.tsx",
+      "plugin": "react-hooks-js",
+      "rule": "todo",
+      "severity": "error",
+      "title": "React Compiler doesn't support this syntax",
+      "message": "This component misses React Compiler's automatic memoization & re-renders more than it should. Rewrite the flagged code so the compiler can optimize it.",
+      "help": "Todo: (BuildHIR::lowerStatement) Support ThrowStatement inside of try/catch",
+      "line": 77,
+      "column": 11,
+      "offset": 2475,
+      "length": 51,
+      "category": "Performance"
+    }
+  ],
+  "src/app/(home)/use-cases/page.tsx": [
+    {
+      "filePath": "src/app/(home)/use-cases/page.tsx",
+      "plugin": "react-doctor",
+      "rule": "jsx-key",
+      "severity": "error",
+      "title": "Missing key in list",
+      "message": "The `{...spread}` can overwrite this `key` & break React's tracking.",
+      "help": "Add a stable `key` prop so React can keep list items matched to the right data when the list changes.",
+      "line": 179,
+      "column": 26,
+      "offset": 6402,
+      "length": 13,
+      "category": "Bugs"
+    }
+  ],
+  "src/components/animated-gradient.tsx": [
+    {
+      "filePath": "src/components/animated-gradient.tsx",
+      "plugin": "react-hooks-js",
+      "rule": "hooks",
+      "severity": "error",
+      "title": "React Compiler can't optimize this",
+      "message": "This component misses React Compiler's automatic memoization & re-renders more than it should: Hooks must be called at the top level in the body of a function component or custom hook, and may not be called within function expressions. See the Rules of Hooks (https://react.dev/warnings/invalid-hook-call-warning). Rewrite the flagged code so the compiler can optimize it.",
+      "help": "Cannot call hook within a function expression.",
+      "line": 237,
+      "column": 5,
+      "offset": 5158,
+      "length": 13,
+      "category": "Performance"
+    }
+  ],
+  "src/components/app-sidebar.tsx": [
+    {
+      "filePath": "src/components/app-sidebar.tsx",
+      "plugin": "react-hooks-js",
+      "rule": "set-state-in-effect",
+      "severity": "error",
+      "title": "React Compiler can't optimize this",
+      "message": "This component misses React Compiler's automatic memoization & re-renders more than it should: Calling setState synchronously within an effect can trigger cascading renders. Rewrite the flagged code so the compiler can optimize it.",
+      "help": "Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:\n* Update external systems with the latest state from React.\n* Subscribe for updates from some external system, calling setState in a callback function when external state changes.\n\nCalling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).",
+      "line": 326,
+      "column": 7,
+      "offset": 7326,
+      "length": 8,
+      "category": "Performance"
+    },
+    {
+      "filePath": "src/components/app-sidebar.tsx",
+      "plugin": "react-hooks-js",
+      "rule": "set-state-in-effect",
+      "severity": "error",
+      "title": "React Compiler can't optimize this",
+      "message": "This component misses React Compiler's automatic memoization & re-renders more than it should: Calling setState synchronously within an effect can trigger cascading renders. Rewrite the flagged code so the compiler can optimize it.",
+      "help": "Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:\n* Update external systems with the latest state from React.\n* Subscribe for updates from some external system, calling setState in a callback function when external state changes.\n\nCalling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).",
+      "line": 752,
+      "column": 7,
+      "offset": 20862,
+      "length": 16,
+      "category": "Performance"
+    },
+    {
+      "filePath": "src/components/app-sidebar.tsx",
+      "plugin": "react-hooks-js",
+      "rule": "immutability",
+      "severity": "error",
+      "title": "React Compiler can't optimize this",
+      "message": "This component misses React Compiler's automatic memoization & re-renders more than it should: This value cannot be modified. Rewrite the flagged code so the compiler can optimize it.",
+      "help": "Modifying component props or hook arguments is not allowed. Consider using a local variable instead.",
+      "line": 828,
+      "column": 6,
+      "offset": 22962,
+      "length": 59,
+      "category": "Performance"
+    }
+  ],
+  "src/components/billing/billing-page.tsx": [
+    {
+      "filePath": "src/components/billing/billing-page.tsx",
+      "plugin": "react-hooks-js",
+      "rule": "set-state-in-effect",
+      "severity": "error",
+      "title": "React Compiler can't optimize this",
+      "message": "This component misses React Compiler's automatic memoization & re-renders more than it should: Calling setState synchronously within an effect can trigger cascading renders. Rewrite the flagged code so the compiler can optimize it.",
+      "help": "Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:\n* Update external systems with the latest state from React.\n* Subscribe for updates from some external system, calling setState in a callback function when external state changes.\n\nCalling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).",
+      "line": 630,
+      "column": 7,
+      "offset": 21688,
+      "length": 19,
+      "category": "Performance"
+    }
+  ],
+  "src/components/billing/card-verification-card.tsx": [
+    {
+      "filePath": "src/components/billing/card-verification-card.tsx",
+      "plugin": "react-hooks-js",
+      "rule": "set-state-in-effect",
+      "severity": "error",
+      "title": "React Compiler can't optimize this",
+      "message": "This component misses React Compiler's automatic memoization & re-renders more than it should: Calling setState synchronously within an effect can trigger cascading renders. Rewrite the flagged code so the compiler can optimize it.",
+      "help": "Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:\n* Update external systems with the latest state from React.\n* Subscribe for updates from some external system, calling setState in a callback function when external state changes.\n\nCalling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).",
+      "line": 141,
+      "column": 7,
+      "offset": 4336,
+      "length": 15,
+      "category": "Performance"
+    },
+    {
+      "filePath": "src/components/billing/card-verification-card.tsx",
+      "plugin": "react-hooks-js",
+      "rule": "todo",
+      "severity": "error",
+      "title": "React Compiler doesn't support this syntax",
+      "message": "This component misses React Compiler's automatic memoization & re-renders more than it should. Rewrite the flagged code so the compiler can optimize it.",
+      "help": "Todo: (BuildHIR::lowerStatement) Handle TryStatement with a finalizer ('finally') clause",
+      "line": 232,
+      "column": 5,
+      "offset": 7035,
+      "length": 498,
+      "category": "Performance"
+    }
+  ],
+  "src/components/billing/stripe-checkout-page.tsx": [
+    {
+      "filePath": "src/components/billing/stripe-checkout-page.tsx",
+      "plugin": "react-hooks-js",
+      "rule": "set-state-in-effect",
+      "severity": "error",
+      "title": "React Compiler can't optimize this",
+      "message": "This component misses React Compiler's automatic memoization & re-renders more than it should: Calling setState synchronously within an effect can trigger cascading renders. Rewrite the flagged code so the compiler can optimize it.",
+      "help": "Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:\n* Update external systems with the latest state from React.\n* Subscribe for updates from some external system, calling setState in a callback function when external state changes.\n\nCalling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).",
+      "line": 443,
+      "column": 7,
+      "offset": 14304,
+      "length": 16,
+      "category": "Performance"
+    },
+    {
+      "filePath": "src/components/billing/stripe-checkout-page.tsx",
+      "plugin": "react-doctor",
+      "rule": "no-adjust-state-on-prop-change",
+      "severity": "error",
+      "title": "State synced to a prop inside an effect",
+      "message": "This effect adjusts state after a prop changes, so users briefly see the stale value.",
+      "help": "Adjust the state inline during render with a `prev`-prop comparison (`if (prop !== prevProp) { setPrevProp(prop); setX(...); }`), or refactor to remove the duplicated state. Routing the adjustment through a useEffect forces an extra render with a stale UI between the two commits. See https://react.dev/learn/you-might-not-need-an-effect#adjusting-some-state-when-a-prop-changes",
+      "line": 447,
+      "column": 5,
+      "offset": 14378,
+      "length": 20,
+      "category": "Bugs"
+    },
+    {
+      "filePath": "src/components/billing/stripe-checkout-page.tsx",
+      "plugin": "react-hooks-js",
+      "rule": "todo",
+      "severity": "error",
+      "title": "React Compiler doesn't support this syntax",
+      "message": "This component misses React Compiler's automatic memoization & re-renders more than it should. Rewrite the flagged code so the compiler can optimize it.",
+      "help": "Todo: (BuildHIR::lowerStatement) Handle TryStatement with a finalizer ('finally') clause",
+      "line": 459,
+      "column": 5,
+      "offset": 14678,
+      "length": 605,
+      "category": "Performance"
+    },
+    {
+      "filePath": "src/components/billing/stripe-checkout-page.tsx",
+      "plugin": "react-hooks-js",
+      "rule": "todo",
+      "severity": "error",
+      "title": "React Compiler doesn't support this syntax",
+      "message": "This component misses React Compiler's automatic memoization & re-renders more than it should. Rewrite the flagged code so the compiler can optimize it.",
+      "help": "Todo: (BuildHIR::lowerStatement) Handle TryStatement with a finalizer ('finally') clause",
+      "line": 488,
+      "column": 5,
+      "offset": 15499,
+      "length": 444,
+      "category": "Performance"
+    },
+    {
+      "filePath": "src/components/billing/stripe-checkout-page.tsx",
+      "plugin": "react-hooks-js",
+      "rule": "todo",
+      "severity": "error",
+      "title": "React Compiler doesn't support this syntax",
+      "message": "This component misses React Compiler's automatic memoization & re-renders more than it should. Rewrite the flagged code so the compiler can optimize it.",
+      "help": "Todo: (BuildHIR::lowerStatement) Handle TryStatement with a finalizer ('finally') clause",
+      "line": 670,
+      "column": 5,
+      "offset": 21286,
+      "length": 555,
+      "category": "Performance"
+    }
+  ],
+  "src/components/chat/chat-composer.tsx": [
+    {
+      "filePath": "src/components/chat/chat-composer.tsx",
+      "plugin": "react-doctor",
+      "rule": "no-effect-with-fresh-deps",
+      "severity": "error",
+      "title": "Effect dependency recreated every render",
+      "message": "Your useMemo runs every render because dep `modelDescriptionLabels` is a new object built fresh each time, so `===` always fails.",
+      "help": "Move the value inside the hook body and depend on its simple inputs instead, or wrap it in useMemo / useCallback so it stays the same between renders.",
+      "line": 447,
+      "column": 29,
+      "offset": 13452,
+      "length": 22,
+      "category": "Bugs"
+    },
+    {
+      "filePath": "src/components/chat/chat-composer.tsx",
+      "plugin": "react-hooks-js",
+      "rule": "set-state-in-effect",
+      "severity": "error",
+      "title": "React Compiler can't optimize this",
+      "message": "This component misses React Compiler's automatic memoization & re-renders more than it should: Calling setState synchronously within an effect can trigger cascading renders. Rewrite the flagged code so the compiler can optimize it.",
+      "help": "Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:\n* Update external systems with the latest state from React.\n* Subscribe for updates from some external system, calling setState in a callback function when external state changes.\n\nCalling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).",
+      "line": 476,
+      "column": 7,
+      "offset": 14487,
+      "length": 19,
+      "category": "Performance"
+    }
+  ],
+  "src/components/chat/chat-interface.tsx": [
+    {
+      "filePath": "src/components/chat/chat-interface.tsx",
+      "plugin": "react-hooks-js",
+      "rule": "set-state-in-effect",
+      "severity": "error",
+      "title": "React Compiler can't optimize this",
+      "message": "This component misses React Compiler's automatic memoization & re-renders more than it should: Calling setState synchronously within an effect can trigger cascading renders. Rewrite the flagged code so the compiler can optimize it.",
+      "help": "Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:\n* Update external systems with the latest state from React.\n* Subscribe for updates from some external system, calling setState in a callback function when external state changes.\n\nCalling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).",
+      "line": 348,
+      "column": 7,
+      "offset": 9660,
+      "length": 8,
+      "category": "Performance"
+    }
+  ],
+  "src/components/getting-started-page.tsx": [
+    {
+      "filePath": "src/components/getting-started-page.tsx",
+      "plugin": "react-hooks-js",
+      "rule": "set-state-in-effect",
+      "severity": "error",
+      "title": "React Compiler can't optimize this",
+      "message": "This component misses React Compiler's automatic memoization & re-renders more than it should: Calling setState synchronously within an effect can trigger cascading renders. Rewrite the flagged code so the compiler can optimize it.",
+      "help": "Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:\n* Update external systems with the latest state from React.\n* Subscribe for updates from some external system, calling setState in a callback function when external state changes.\n\nCalling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).",
+      "line": 240,
+      "column": 39,
+      "offset": 7935,
+      "length": 7,
+      "category": "Performance"
+    },
+    {
+      "filePath": "src/components/getting-started-page.tsx",
+      "plugin": "react-hooks-js",
+      "rule": "set-state-in-effect",
+      "severity": "error",
+      "title": "React Compiler can't optimize this",
+      "message": "This component misses React Compiler's automatic memoization & re-renders more than it should: Calling setState synchronously within an effect can trigger cascading renders. Rewrite the flagged code so the compiler can optimize it.",
+      "help": "Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:\n* Update external systems with the latest state from React.\n* Subscribe for updates from some external system, calling setState in a callback function when external state changes.\n\nCalling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).",
+      "line": 243,
+      "column": 58,
+      "offset": 8067,
+      "length": 12,
+      "category": "Performance"
+    },
+    {
+      "filePath": "src/components/getting-started-page.tsx",
+      "plugin": "react-hooks-js",
+      "rule": "todo",
+      "severity": "error",
+      "title": "React Compiler doesn't support this syntax",
+      "message": "This component misses React Compiler's automatic memoization & re-renders more than it should. Rewrite the flagged code so the compiler can optimize it.",
+      "help": "Todo: (BuildHIR::lowerStatement) Handle TryStatement with a finalizer ('finally') clause",
+      "line": 249,
+      "column": 5,
+      "offset": 8217,
+      "length": 455,
+      "category": "Performance"
+    },
+    {
+      "filePath": "src/components/getting-started-page.tsx",
+      "plugin": "react-hooks-js",
+      "rule": "set-state-in-effect",
+      "severity": "error",
+      "title": "React Compiler can't optimize this",
+      "message": "This component misses React Compiler's automatic memoization & re-renders more than it should: Calling setState synchronously within an effect can trigger cascading renders. Rewrite the flagged code so the compiler can optimize it.",
+      "help": "Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:\n* Update external systems with the latest state from React.\n* Subscribe for updates from some external system, calling setState in a callback function when external state changes.\n\nCalling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).",
+      "line": 523,
+      "column": 5,
+      "offset": 16953,
+      "length": 8,
+      "category": "Performance"
+    }
+  ],
+  "src/components/guest-sign-in-button.tsx": [
+    {
+      "filePath": "src/components/guest-sign-in-button.tsx",
+      "plugin": "react-hooks-js",
+      "rule": "todo",
+      "severity": "error",
+      "title": "React Compiler doesn't support this syntax",
+      "message": "This component misses React Compiler's automatic memoization & re-renders more than it should. Rewrite the flagged code so the compiler can optimize it.",
+      "help": "Todo: (BuildHIR::lowerStatement) Handle TryStatement with a finalizer ('finally') clause",
+      "line": 34,
+      "column": 5,
+      "offset": 991,
+      "length": 348,
+      "category": "Performance"
+    }
+  ],
+  "src/components/projects/project-page.tsx": [
+    {
+      "filePath": "src/components/projects/project-page.tsx",
+      "plugin": "react-hooks-js",
+      "rule": "todo",
+      "severity": "error",
+      "title": "React Compiler doesn't support this syntax",
+      "message": "This component misses React Compiler's automatic memoization & re-renders more than it should. Rewrite the flagged code so the compiler can optimize it.",
+      "help": "Todo: (BuildHIR::lowerStatement) Handle TryStatement with a finalizer ('finally') clause",
+      "line": 97,
+      "column": 5,
+      "offset": 2947,
+      "length": 759,
+      "category": "Performance"
+    },
+    {
+      "filePath": "src/components/projects/project-page.tsx",
+      "plugin": "react-hooks-js",
+      "rule": "todo",
+      "severity": "error",
+      "title": "React Compiler doesn't support this syntax",
+      "message": "This component misses React Compiler's automatic memoization & re-renders more than it should. Rewrite the flagged code so the compiler can optimize it.",
+      "help": "Todo: (BuildHIR::lowerStatement) Support ThrowStatement inside of try/catch",
+      "line": 108,
+      "column": 9,
+      "offset": 3237,
+      "length": 46,
+      "category": "Performance"
+    }
+  ],
+  "src/components/team/team-settings-page.tsx": [
+    {
+      "filePath": "src/components/team/team-settings-page.tsx",
+      "plugin": "react-hooks-js",
+      "rule": "todo",
+      "severity": "error",
+      "title": "React Compiler doesn't support this syntax",
+      "message": "This component misses React Compiler's automatic memoization & re-renders more than it should. Rewrite the flagged code so the compiler can optimize it.",
+      "help": "Todo: (BuildHIR::lowerStatement) Handle TryStatement with a finalizer ('finally') clause",
+      "line": 296,
+      "column": 5,
+      "offset": 9732,
+      "length": 1009,
+      "category": "Performance"
+    },
+    {
+      "filePath": "src/components/team/team-settings-page.tsx",
+      "plugin": "react-hooks-js",
+      "rule": "todo",
+      "severity": "error",
+      "title": "React Compiler doesn't support this syntax",
+      "message": "This component misses React Compiler's automatic memoization & re-renders more than it should. Rewrite the flagged code so the compiler can optimize it.",
+      "help": "Todo: (BuildHIR::lowerStatement) Handle TryStatement with a finalizer ('finally') clause",
+      "line": 332,
+      "column": 5,
+      "offset": 10861,
+      "length": 621,
+      "category": "Performance"
+    },
+    {
+      "filePath": "src/components/team/team-settings-page.tsx",
+      "plugin": "react-hooks-js",
+      "rule": "todo",
+      "severity": "error",
+      "title": "React Compiler doesn't support this syntax",
+      "message": "This component misses React Compiler's automatic memoization & re-renders more than it should. Rewrite the flagged code so the compiler can optimize it.",
+      "help": "Todo: (BuildHIR::lowerStatement) Handle TryStatement with a finalizer ('finally') clause",
+      "line": 356,
+      "column": 5,
+      "offset": 11607,
+      "length": 521,
+      "category": "Performance"
+    }
+  ],
+  "src/components/two-factor-banner.tsx": [
+    {
+      "filePath": "src/components/two-factor-banner.tsx",
+      "plugin": "react-hooks-js",
+      "rule": "set-state-in-effect",
+      "severity": "error",
+      "title": "React Compiler can't optimize this",
+      "message": "This component misses React Compiler's automatic memoization & re-renders more than it should: Calling setState synchronously within an effect can trigger cascading renders. Rewrite the flagged code so the compiler can optimize it.",
+      "help": "Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:\n* Update external systems with the latest state from React.\n* Subscribe for updates from some external system, calling setState in a callback function when external state changes.\n\nCalling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).",
+      "line": 25,
+      "column": 7,
+      "offset": 858,
+      "length": 10,
+      "category": "Performance"
+    }
+  ],
+  "src/components/veo/veo-generator.tsx": [
+    {
+      "filePath": "src/components/veo/veo-generator.tsx",
+      "plugin": "react-hooks-js",
+      "rule": "set-state-in-effect",
+      "severity": "error",
+      "title": "React Compiler can't optimize this",
+      "message": "This component misses React Compiler's automatic memoization & re-renders more than it should: Calling setState synchronously within an effect can trigger cascading renders. Rewrite the flagged code so the compiler can optimize it.",
+      "help": "Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:\n* Update external systems with the latest state from React.\n* Subscribe for updates from some external system, calling setState in a callback function when external state changes.\n\nCalling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).",
+      "line": 103,
+      "column": 7,
+      "offset": 3502,
+      "length": 18,
+      "category": "Performance"
+    },
+    {
+      "filePath": "src/components/veo/veo-generator.tsx",
+      "plugin": "react-hooks-js",
+      "rule": "todo",
+      "severity": "error",
+      "title": "React Compiler doesn't support this syntax",
+      "message": "This component misses React Compiler's automatic memoization & re-renders more than it should. Rewrite the flagged code so the compiler can optimize it.",
+      "help": "Todo: (BuildHIR::lowerStatement) Support ThrowStatement inside of try/catch",
+      "line": 278,
+      "column": 9,
+      "offset": 8018,
+      "length": 62,
+      "category": "Performance"
+    },
+    {
+      "filePath": "src/components/veo/veo-generator.tsx",
+      "plugin": "react-hooks-js",
+      "rule": "todo",
+      "severity": "error",
+      "title": "React Compiler doesn't support this syntax",
+      "message": "This component misses React Compiler's automatic memoization & re-renders more than it should. Rewrite the flagged code so the compiler can optimize it.",
+      "help": "Todo: (BuildHIR::lowerStatement) Support ThrowStatement inside of try/catch",
+      "line": 282,
+      "column": 9,
+      "offset": 8155,
+      "length": 59,
+      "category": "Performance"
+    }
+  ],
+  "src/hooks/use-design-style.tsx": [
+    {
+      "filePath": "src/hooks/use-design-style.tsx",
+      "plugin": "react-hooks-js",
+      "rule": "set-state-in-effect",
+      "severity": "error",
+      "title": "React Compiler can't optimize this",
+      "message": "This component misses React Compiler's automatic memoization & re-renders more than it should: Calling setState synchronously within an effect can trigger cascading renders. Rewrite the flagged code so the compiler can optimize it.",
+      "help": "Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:\n* Update external systems with the latest state from React.\n* Subscribe for updates from some external system, calling setState in a callback function when external state changes.\n\nCalling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).",
+      "line": 42,
+      "column": 7,
+      "offset": 1264,
+      "length": 15,
+      "category": "Performance"
+    }
+  ],
+  "src/hooks/use-theme-preset.tsx": [
+    {
+      "filePath": "src/hooks/use-theme-preset.tsx",
+      "plugin": "react-hooks-js",
+      "rule": "set-state-in-effect",
+      "severity": "error",
+      "title": "React Compiler can't optimize this",
+      "message": "This component misses React Compiler's automatic memoization & re-renders more than it should: Calling setState synchronously within an effect can trigger cascading renders. Rewrite the flagged code so the compiler can optimize it.",
+      "help": "Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:\n* Update external systems with the latest state from React.\n* Subscribe for updates from some external system, calling setState in a callback function when external state changes.\n\nCalling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).",
+      "line": 77,
+      "column": 9,
+      "offset": 2120,
+      "length": 19,
+      "category": "Performance"
+    }
+  ]
+}

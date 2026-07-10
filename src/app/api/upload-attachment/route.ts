@@ -27,16 +27,35 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Attachment is too large." }, { status: 413 });
   }
 
-  let url: string | null;
+  let url: string | null = null;
   try {
     url = await uploadFile(uploadedFile);
   } catch (error) {
     console.error("Attachment upload failed", error);
-    return NextResponse.json({ error: "Attachment upload failed." }, { status: 500 });
   }
 
+  // When UploadThing is not configured (or the upload failed), fall back to an
+  // inline base64 data URL so attachments still work. Keep the fallback smaller
+  // than maxBytes so chat history / response payloads stay within limits.
+  const maxDataUrlBytes = 512 * 1024;
   if (!url) {
-    return NextResponse.json({ error: "Attachment upload failed." }, { status: 500 });
+    if (uploadedFile.size > maxDataUrlBytes) {
+      return NextResponse.json(
+        {
+          error:
+            "Attachment upload failed. Inline fallback is limited to 512KB when storage is unavailable.",
+        },
+        { status: 500 },
+      );
+    }
+    try {
+      const arrayBuffer = await uploadedFile.arrayBuffer();
+      const base64 = Buffer.from(arrayBuffer).toString("base64");
+      url = `data:${uploadedFile.type};base64,${base64}`;
+    } catch (error) {
+      console.error("Attachment base64 fallback failed", error);
+      return NextResponse.json({ error: "Attachment upload failed." }, { status: 500 });
+    }
   }
 
   return NextResponse.json({ url });

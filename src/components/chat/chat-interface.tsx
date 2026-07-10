@@ -84,7 +84,11 @@ async function uploadAttachment(file: UploadableFileUIPart): Promise<FileUIPart>
     return file;
   }
 
-  if (file.url.startsWith("https://") || file.url.startsWith("http://")) {
+  if (
+    file.url.startsWith("https://") ||
+    file.url.startsWith("http://") ||
+    file.url.startsWith("data:")
+  ) {
     return file;
   }
 

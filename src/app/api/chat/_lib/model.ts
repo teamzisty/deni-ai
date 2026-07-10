@@ -20,7 +20,7 @@ const voids = createOpenAI({
   baseURL: "https://capi.voids.top/v2",
 });
 
-const openaiEffortOptions = ["none", "minimal", "low", "medium", "high", "xhigh"] as const;
+const openaiEffortOptions = ["none", "minimal", "low", "medium", "high", "xhigh", "max"] as const;
 const anthropicEffortOptions = ["low", "medium", "high", "max"] as const;
 const googleThinkingLevels = ["minimal", "low", "medium", "high"] as const;
 const anthropicBudgetModelIds = new Set(["claude-opus-4.1", "claude-opus-4", "claude-sonnet-4"]);

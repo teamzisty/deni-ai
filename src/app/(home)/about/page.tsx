@@ -1,5 +1,15 @@
 import type { Metadata } from "next";
-import { BrainCircuit, Globe, Lock, Zap, Users, Code2 } from "lucide-react";
+import {
+  BrainCircuit,
+  ClipboardCheck,
+  Code2,
+  FileText,
+  Globe,
+  Lock,
+  MessagesSquare,
+  Users,
+  Zap,
+} from "lucide-react";
 import { useExtracted } from "next-intl";
 import { getExtracted } from "next-intl/server";
 import { LoginButton } from "@/components/login-button";
@@ -58,6 +68,50 @@ export default function AboutPage() {
     url: "https://deniai.app",
     description: "A free, fast, and private multi-model AI chat platform.",
   };
+  const designPrinciples = [
+    {
+      title: t("Model choice should be practical"),
+      description: t(
+        "The interface is organized around real tasks instead of model hype. Visitors can read when to use fast models, reasoning models, coding models, and provider comparisons.",
+      ),
+    },
+    {
+      title: t("AI output should stay reviewable"),
+      description: t(
+        "Deni AI encourages users to treat answers as drafts. Important facts, code, calculations, and recommendations should be checked before they are used.",
+      ),
+    },
+    {
+      title: t("The product should explain itself publicly"),
+      description: t(
+        "Public pages describe use cases, supported model families, privacy expectations, legal terms, and migration guidance before a visitor creates an account.",
+      ),
+    },
+  ];
+
+  const audienceGroups = [
+    {
+      icon: MessagesSquare,
+      title: t("Everyday AI users"),
+      description: t(
+        "People who want help writing, summarizing, translating, planning, and learning without comparing separate provider dashboards.",
+      ),
+    },
+    {
+      icon: Code2,
+      title: t("Developers and builders"),
+      description: t(
+        "People who switch between explanation, architecture, debugging, and implementation work and want coding-focused models nearby.",
+      ),
+    },
+    {
+      icon: Users,
+      title: t("Small teams"),
+      description: t(
+        "Teams that need shared access, usage visibility, provider flexibility, and a consistent place to discuss AI-assisted work.",
+      ),
+    },
+  ];
 
   return (
     <main className="relative min-h-screen" id="main-content">
@@ -99,6 +153,68 @@ export default function AboutPage() {
                 )}
               </p>
             </div>
+          </div>
+        </div>
+      </section>
+
+      <section className="relative border-y border-border/50 bg-secondary/20 px-4 py-16 md:py-24">
+        <div className="mx-auto max-w-5xl">
+          <div className="max-w-3xl">
+            <div className="mb-4 inline-flex size-10 items-center justify-center rounded-lg bg-secondary">
+              <ClipboardCheck className="size-5" />
+            </div>
+            <h2 className="text-2xl md:text-3xl font-semibold tracking-tight">
+              {t("How we decide what belongs in Deni AI")}
+            </h2>
+            <p className="mt-4 text-sm leading-7 text-muted-foreground">
+              {t(
+                "A multi-model product can become confusing if it only adds more choices. Our design goal is to make those choices easier to understand: start simple, compare when needed, and keep the user in control of the final answer.",
+              )}
+            </p>
+          </div>
+
+          <div className="mt-8 grid gap-4 md:grid-cols-3">
+            {designPrinciples.map((principle) => (
+              <article
+                key={principle.title}
+                className="rounded-[1.5rem] border border-border/70 bg-card p-6"
+              >
+                <h3 className="text-lg font-semibold">{principle.title}</h3>
+                <p className="mt-3 text-sm leading-7 text-muted-foreground">
+                  {principle.description}
+                </p>
+              </article>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <section className="relative px-4 py-16 md:py-24">
+        <div className="mx-auto max-w-5xl">
+          <div className="max-w-3xl">
+            <h2 className="text-2xl md:text-3xl font-semibold tracking-tight">
+              {t("Who Deni AI is built for")}
+            </h2>
+            <p className="mt-4 text-sm leading-7 text-muted-foreground">
+              {t(
+                "Deni AI is most useful for people who already know AI can help, but want a calmer way to choose the right model and keep their work organized.",
+              )}
+            </p>
+          </div>
+
+          <div className="mt-8 grid gap-4 md:grid-cols-3">
+            {audienceGroups.map((group) => (
+              <article
+                key={group.title}
+                className="rounded-[1.5rem] border border-border bg-card p-6"
+              >
+                <div className="mb-4 inline-flex size-10 items-center justify-center rounded-2xl bg-secondary">
+                  <group.icon className="size-5" />
+                </div>
+                <h3 className="text-lg font-semibold">{group.title}</h3>
+                <p className="mt-3 text-sm leading-7 text-muted-foreground">{group.description}</p>
+              </article>
+            ))}
           </div>
         </div>
       </section>
@@ -155,6 +271,33 @@ export default function AboutPage() {
               )}
             />
           </div>
+        </div>
+      </section>
+
+      <section className="relative border-y border-border/50 bg-background/80 px-4 py-16 md:py-24">
+        <div className="mx-auto grid max-w-5xl gap-5 md:grid-cols-2">
+          <article className="rounded-[1.5rem] border border-border/70 bg-card p-6">
+            <FileText className="size-5 text-primary" />
+            <h2 className="mt-5 text-xl font-semibold tracking-tight">
+              {t("Public information before account creation")}
+            </h2>
+            <p className="mt-3 text-sm leading-7 text-muted-foreground">
+              {t(
+                "The public site includes product pages, use cases, model information, terms, privacy policy, and commercial disclosure so visitors can understand the service before signing in.",
+              )}
+            </p>
+          </article>
+          <article className="rounded-[1.5rem] border border-border/70 bg-card p-6">
+            <Lock className="size-5 text-primary" />
+            <h2 className="mt-5 text-xl font-semibold tracking-tight">
+              {t("Data handling expectations")}
+            </h2>
+            <p className="mt-3 text-sm leading-7 text-muted-foreground">
+              {t(
+                "The privacy policy explains what account, usage, billing, and submitted content data may be processed to operate the service, secure accounts, and prevent abuse.",
+              )}
+            </p>
+          </article>
         </div>
       </section>
 

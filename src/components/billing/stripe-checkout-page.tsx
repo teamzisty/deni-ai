@@ -438,15 +438,6 @@ function PromotionCodeSection({ checkout }: { checkout: StripeCheckoutValue }) {
   const appliedDiscount =
     checkout.discountAmounts?.find((discount) => discount.promotionCode) ?? null;
 
-  useEffect(() => {
-    if (appliedDiscount?.promotionCode) {
-      setPromotionCode(appliedDiscount.promotionCode);
-      return;
-    }
-
-    setPromotionCode("");
-  }, [appliedDiscount?.promotionCode]);
-
   async function handleApplyPromotionCode() {
     const code = promotionCode.trim();
     if (!code || isApplyingPromotion || isRemovingPromotion) {
@@ -466,13 +457,16 @@ function PromotionCodeSection({ checkout }: { checkout: StripeCheckoutValue }) {
             : result.error.message;
         setPromotionError(message);
         toast.error(message);
+        setIsApplyingPromotion(false);
         return;
       }
+
+      setPromotionCode("");
+      setIsApplyingPromotion(false);
     } catch (error) {
       const message = error instanceof Error ? error.message : t("Unable to apply coupon code.");
       setPromotionError(message);
       toast.error(message);
-    } finally {
       setIsApplyingPromotion(false);
     }
   }
@@ -491,12 +485,14 @@ function PromotionCodeSection({ checkout }: { checkout: StripeCheckoutValue }) {
       if (result.type === "error") {
         setPromotionError(result.error.message);
         toast.error(result.error.message);
+      } else {
+        setPromotionCode("");
       }
+      setIsRemovingPromotion(false);
     } catch (error) {
       const message = error instanceof Error ? error.message : t("Unable to remove coupon code.");
       setPromotionError(message);
       toast.error(message);
-    } finally {
       setIsRemovingPromotion(false);
     }
   }
@@ -673,9 +669,11 @@ function CheckoutForm({
       if (result.type === "error") {
         setSubmitError(result.error.message);
         toast.error(result.error.message);
+        setIsSubmitting(false);
         return;
       }
 
+      setIsSubmitting(false);
       startTransition(() => {
         replace(returnUrl);
       });
@@ -686,7 +684,6 @@ function CheckoutForm({
           : t("Unable to complete checkout. Please try again.");
       setSubmitError(message);
       toast.error(message);
-    } finally {
       setIsSubmitting(false);
     }
   }

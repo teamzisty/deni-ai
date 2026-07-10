@@ -16,9 +16,12 @@ import { createElement } from "react";
 import { Resend } from "resend";
 import { db } from "@/db/drizzle";
 import * as schema from "@/db/schema";
+import { MagicLinkEmail, magicLinkEmailSubject } from "@/emails/magic-link-email";
+import { OrgInvitationEmail, orgInvitationEmailSubject } from "@/emails/org-invitation-email";
+import { PasswordResetEmail, passwordResetEmailSubject } from "@/emails/password-reset-email";
 import { VerificationEmail, verificationEmailSubject } from "@/emails/verification-email";
 import { env } from "@/env";
-import { EMAIL_FROM, emailTemplates } from "@/lib/constants";
+import { EMAIL_FROM } from "@/lib/constants";
 import { isDisposableEmail } from "@/lib/disposable-email";
 import { cancelPersonalSubscription, updateTeamSeatCount } from "@/lib/team-billing";
 
@@ -35,12 +38,14 @@ export const auth = betterAuth({
     requireEmailVerification: !!resend,
     sendResetPassword: resend
       ? async ({ user, url }) => {
-          const template = emailTemplates.resetPassword(user.name, url);
           await resend.emails.send({
             from: EMAIL_FROM,
             to: user.email,
-            subject: template.subject,
-            html: template.html,
+            subject: passwordResetEmailSubject,
+            react: createElement(PasswordResetEmail, {
+              name: user.name,
+              resetUrl: url,
+            }),
           });
         }
       : undefined,
@@ -83,16 +88,15 @@ export const auth = betterAuth({
       sendInvitationEmail: resend
         ? async (data) => {
             const url = `${env.NEXT_PUBLIC_BETTER_AUTH_URL}/settings/team?invitationId=${data.id}`;
-            const template = emailTemplates.orgInvitation(
-              data.organization.name,
-              data.inviter.user.name,
-              url,
-            );
             await resend.emails.send({
               from: EMAIL_FROM,
               to: data.email,
-              subject: template.subject,
-              html: template.html,
+              subject: orgInvitationEmailSubject(data.organization.name),
+              react: createElement(OrgInvitationEmail, {
+                orgName: data.organization.name,
+                inviterName: data.inviter.user.name,
+                acceptUrl: url,
+              }),
             });
           }
         : undefined,
@@ -106,12 +110,13 @@ export const auth = betterAuth({
       ? [
           magicLink({
             sendMagicLink: async ({ email, url }) => {
-              const template = emailTemplates.magicLink(url);
               await resend.emails.send({
                 from: EMAIL_FROM,
                 to: email,
-                subject: template.subject,
-                html: template.html,
+                subject: magicLinkEmailSubject,
+                react: createElement(MagicLinkEmail, {
+                  signInUrl: url,
+                }),
               });
             },
           }),
