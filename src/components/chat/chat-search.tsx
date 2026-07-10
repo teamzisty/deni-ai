@@ -1,9 +1,8 @@
 "use client";
 
 import { MessageSquare, Plus, Search } from "lucide-react";
-import { usePathname, useRouter } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { useExtracted } from "next-intl";
-import { useEffect } from "react";
 import {
   CommandDialog,
   CommandEmpty,
@@ -33,17 +32,13 @@ export function ChatSearch({
 }) {
   const t = useExtracted();
   const { push } = useRouter();
-  const pathname = usePathname();
   const { data } = trpc.chat.getChats.useQuery(undefined, {
     enabled: open,
     staleTime: 60_000,
     refetchOnWindowFocus: false,
   });
 
-  useEffect(() => {
-    onOpenChange(false);
-  }, [onOpenChange, pathname]);
-
+  // Parent AppShell closes this dialog on pathname changes.
   const handleSelect = (href: string) => {
     onOpenChange(false);
     push(href);

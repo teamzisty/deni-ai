@@ -41,7 +41,12 @@ function DropdownMenuContent({
 }) {
   return (
     <DropdownMenuPrimitive.Portal>
-      <DropdownMenuPrimitive.Positioner sideOffset={sideOffset} side={side} align={align}>
+      <DropdownMenuPrimitive.Positioner
+        className="isolate z-50 outline-none"
+        sideOffset={sideOffset}
+        side={side}
+        align={align}
+      >
         <DropdownMenuPrimitive.Popup
           data-slot="dropdown-menu-content"
           className={cn(
@@ -179,7 +184,9 @@ function DropdownMenuShortcut({ className, ...props }: React.ComponentProps<"spa
   );
 }
 
-function DropdownMenuSub({ ...props }: React.ComponentProps<typeof DropdownMenuPrimitive.SubmenuRoot>) {
+function DropdownMenuSub({
+  ...props
+}: React.ComponentProps<typeof DropdownMenuPrimitive.SubmenuRoot>) {
   return <DropdownMenuPrimitive.SubmenuRoot data-slot="dropdown-menu-sub" {...props} />;
 }
 
@@ -213,7 +220,7 @@ function DropdownMenuSubContent({
 }: React.ComponentProps<typeof DropdownMenuPrimitive.Popup>) {
   return (
     <DropdownMenuPrimitive.Portal>
-      <DropdownMenuPrimitive.Positioner>
+      <DropdownMenuPrimitive.Positioner className="isolate z-50 outline-none">
         <DropdownMenuPrimitive.Popup
           data-slot="dropdown-menu-sub-content"
           className={cn(

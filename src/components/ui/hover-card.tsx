@@ -48,7 +48,11 @@ function HoverCardContent({
 }) {
   return (
     <HoverCardPrimitive.Portal>
-      <HoverCardPrimitive.Positioner align={align} sideOffset={sideOffset}>
+      <HoverCardPrimitive.Positioner
+        className="isolate z-50 outline-none"
+        align={align}
+        sideOffset={sideOffset}
+      >
         <HoverCardPrimitive.Popup
           data-slot="hover-card-content"
           className={cn(

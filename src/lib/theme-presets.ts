@@ -40,7 +40,3 @@ export const themePresets: ThemePreset[] = [
     preview: ["bg-[#000000]", "bg-[#525252]", "bg-[#ffffff]"],
   },
 ];
-
-export function getPreset(key: ThemeName) {
-  return themePresets.find((preset) => preset.key === key);
-}

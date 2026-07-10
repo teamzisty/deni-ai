@@ -42,7 +42,7 @@ transforming, and record gaps in the report.
      fetch base variants directly by URL instead
      (`https://ui.shadcn.com/r/styles/base-<style>/<component>.json`).
   3. PRISTINE wrappers, whole-project mode: `shadcn add <component>
-     --overwrite` delivers the base variant with the project's exact
+--overwrite` delivers the base variant with the project's exact
      icon/font/preset resolution. Never bulk `--all --overwrite`; go
      component by component, or you drown in unrelated registry version
      drift. PROGRESSIVE mode: never use `--overwrite` (it destroys the
@@ -59,9 +59,9 @@ transforming, and record gaps in the report.
      file. The registry sometimes reorders functions between variants, which
      makes three-way merges report zero conflicts while leaving stale radix
      hunks in place. A clean merge is NOT proof of a clean file.
-  This is more reliable than reconstructing transforms; use it whenever the
-  pair exists. Consumer/app code has no CLI mechanism: always hand-migrate it
-  against `consumer-props.md`.
+     This is more reliable than reconstructing transforms; use it whenever the
+     pair exists. Consumer/app code has no CLI mechanism: always hand-migrate it
+     against `consumer-props.md`.
 - **Legacy styles (new-york, new-york-v4, default): classification only, no
   replay.** These have no base counterpart (there is no base-new-york), and
   retargeting onto a base-<style> variant would restyle the user's app. Use
@@ -83,6 +83,7 @@ transforming, and record gaps in the report.
 ## Modes
 
 **Progressive (default).** "Migrate accordion" = one component, strangler-fig:
+
 1. Detect in-progress state first: an existing `<component>-base.tsx`,
    consumers split between old/new imports. The files ARE the state; resume,
    never restart.
@@ -126,6 +127,7 @@ Typecheck per file, build per batch, full build at the end vs the baseline.
 Reports live in a `.migration/` directory at the project root, ONE FILE PER
 COMPONENT: `.migration/<component>.md` (e.g. `.migration/accordion.md`).
 Rules:
+
 - Each run writes (or fully overwrites) the file for each component it
   migrated. Re-running a component replaces its report; never touch other
   components' files.

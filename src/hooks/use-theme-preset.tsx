@@ -1,10 +1,11 @@
 "use client";
 
 import type { ReactNode } from "react";
-import { createContext, use, useCallback, useEffect, useMemo, useState } from "react";
+import { createContext, use, useEffect, useSyncExternalStore } from "react";
 import type { ThemeName } from "@/lib/theme-presets";
 
 const STORAGE_KEY = "deni-theme-preset";
+const PRESET_EVENT = "deni:theme-preset";
 const CUSTOM_CLASSES: ThemeName[] = [
   "t3-chat",
   "tangerine",
@@ -50,45 +51,53 @@ function applyPresetClass(value: ThemeName) {
   }
 }
 
+function subscribeThemePreset(onStoreChange: () => void) {
+  const handleChange = () => onStoreChange();
+  window.addEventListener("storage", handleChange);
+  window.addEventListener(PRESET_EVENT, handleChange);
+  return () => {
+    window.removeEventListener("storage", handleChange);
+    window.removeEventListener(PRESET_EVENT, handleChange);
+  };
+}
+
+function getThemePresetSnapshot(): ThemeName {
+  const stored = window.localStorage.getItem(STORAGE_KEY);
+  if (stored && isThemeName(stored)) {
+    return normalizePreset(stored);
+  }
+  if (stored) {
+    window.localStorage.removeItem(STORAGE_KEY);
+  }
+  return "default";
+}
+
+function getServerThemePresetSnapshot(): ThemeName {
+  return "default";
+}
+
+function setThemePreset(value: ThemeName) {
+  const normalizedValue = normalizePreset(value);
+  window.localStorage.setItem(STORAGE_KEY, normalizedValue);
+  applyPresetClass(normalizedValue);
+  window.dispatchEvent(new Event(PRESET_EVENT));
+}
+
 export function ThemePresetProvider({ children }: { children: ReactNode }) {
-  const [preset, setPresetState] = useState<ThemeName>("default");
-
-  const applyWithoutPersist = useCallback((value: ThemeName) => {
-    const normalizedValue = normalizePreset(value);
-    setPresetState(normalizedValue);
-    applyPresetClass(normalizedValue);
-  }, []);
-
-  const applyAndPersist = useCallback(
-    (value: ThemeName) => {
-      const normalizedValue = normalizePreset(value);
-      applyWithoutPersist(normalizedValue);
-      if (typeof window !== "undefined") {
-        localStorage.setItem(STORAGE_KEY, normalizedValue);
-      }
-    },
-    [applyWithoutPersist],
+  const preset = useSyncExternalStore(
+    subscribeThemePreset,
+    getThemePresetSnapshot,
+    getServerThemePresetSnapshot,
   );
 
   useEffect(() => {
-    const stored = localStorage.getItem(STORAGE_KEY);
-    if (stored) {
-      if (isThemeName(stored)) {
-        applyWithoutPersist(stored);
-        return;
-      }
-      localStorage.removeItem(STORAGE_KEY);
-    }
-    applyWithoutPersist("default");
-  }, [applyWithoutPersist]);
+    applyPresetClass(preset);
+  }, [preset]);
 
-  const value = useMemo(
-    () => ({
-      preset,
-      setPreset: applyAndPersist,
-    }),
-    [applyAndPersist, preset],
-  );
+  const value: ThemePresetContextValue = {
+    preset,
+    setPreset: setThemePreset,
+  };
 
   return <ThemePresetContext.Provider value={value}>{children}</ThemePresetContext.Provider>;
 }

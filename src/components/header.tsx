@@ -1,4 +1,3 @@
-import { UserButton } from "@daveyplate/better-auth-ui";
 import {
   Bot,
   BookOpen,
@@ -13,11 +12,13 @@ import {
 import { cookies } from "next/headers";
 import Link from "next/link";
 import { useExtracted } from "next-intl";
+import { UserButton } from "@/components/auth/user/user-button";
 import type { AppLocale } from "@/i18n/locales";
 import DeniAIIcon from "./deni-ai-icon";
 import { HeaderMegaMenu } from "./header-mega-menu";
 import { LocaleSwitcher } from "./locale-switcher";
-import { Button, buttonVariants } from "./ui/button";
+import { buttonVariants } from "./ui/button-variants";
+import { Button } from "./ui/button";
 import {
   Sheet,
   SheetClose,
@@ -27,7 +28,6 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "./ui/sheet";
-
 type MegaMenuLink = {
   href: string;
   icon: React.ComponentType<{ className?: string }>;
@@ -40,14 +40,38 @@ type MegaMenuSection = {
   links: MegaMenuLink[];
 };
 
+async function changeLocaleAction(nextLocale: AppLocale) {
+  "use server";
+  const store = await cookies();
+  store.set("locale", nextLocale);
+}
+
+function MobileNavLink({ link }: { link: MegaMenuLink }) {
+  const Icon = link.icon;
+
+  return (
+    <SheetClose asChild>
+      <Button
+        variant="ghost"
+        className="h-auto w-full justify-start rounded-2xl border border-border bg-card/70 p-3 text-left text-card-foreground hover:bg-accent hover:text-accent-foreground"
+        asChild
+      >
+        <Link href={link.href}>
+          <span className="flex size-10 shrink-0 items-center justify-center rounded-xl border border-border bg-muted">
+            <Icon className="size-5 text-muted-foreground" />
+          </span>
+          <span className="flex min-w-0 flex-col">
+            <span className="text-sm font-medium leading-tight">{link.title}</span>
+            <span className="text-xs text-muted-foreground">{link.description}</span>
+          </span>
+        </Link>
+      </Button>
+    </SheetClose>
+  );
+}
+
 export default function Header() {
   const t = useExtracted();
-
-  async function changeLocaleAction(nextLocale: AppLocale) {
-    "use server";
-    const store = await cookies();
-    store.set("locale", nextLocale);
-  }
 
   const productSections: MegaMenuSection[] = [
     {
@@ -279,33 +303,9 @@ export default function Header() {
                             {section.title}
                           </p>
                           <div className="space-y-2">
-                            {section.links.map((link) => {
-                              const Icon = link.icon;
-
-                              return (
-                                <SheetClose asChild key={`${section.title}-${link.href}`}>
-                                  <Button
-                                    variant="ghost"
-                                    className="h-auto w-full justify-start rounded-2xl border border-border bg-card/70 p-3 text-left text-card-foreground hover:bg-accent hover:text-accent-foreground"
-                                    asChild
-                                  >
-                                    <Link href={link.href}>
-                                      <span className="flex size-10 shrink-0 items-center justify-center rounded-xl border border-border bg-muted">
-                                        <Icon className="size-5 text-muted-foreground" />
-                                      </span>
-                                      <span className="flex min-w-0 flex-col">
-                                        <span className="text-sm font-medium leading-tight">
-                                          {link.title}
-                                        </span>
-                                        <span className="text-xs text-muted-foreground">
-                                          {link.description}
-                                        </span>
-                                      </span>
-                                    </Link>
-                                  </Button>
-                                </SheetClose>
-                              );
-                            })}
+                            {section.links.map((link) => (
+                              <MobileNavLink key={`${section.title}-${link.href}`} link={link} />
+                            ))}
                           </div>
                         </div>
                       ))}

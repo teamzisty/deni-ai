@@ -7,6 +7,19 @@ const nextConfig: NextConfig = {
   transpilePackages: ["shiki"],
   reactCompiler: true,
   poweredByHeader: false,
+  // Tree-shake large icon/date packages more aggressively
+  experimental: {
+    optimizePackageImports: [
+      "lucide-react",
+      "date-fns",
+      "@icons-pack/react-simple-icons",
+      "motion",
+      "@dnd-kit/core",
+      "@dnd-kit/utilities",
+    ],
+    turbopackFileSystemCacheForBuild: true,
+    turbopackRustReactCompiler: true,
+  },
   typescript: {
     ignoreBuildErrors: true,
   },
@@ -59,9 +72,7 @@ const nextConfig: NextConfig = {
       },
       {
         source: "/manifest.webmanifest",
-        headers: [
-          { key: "Cache-Control", value: "public, max-age=0, must-revalidate" },
-        ],
+        headers: [{ key: "Cache-Control", value: "public, max-age=0, must-revalidate" }],
       },
       {
         source: "/(.*)",
@@ -105,15 +116,9 @@ const nextConfig: NextConfig = {
       },
       {
         source: "/api/:path*",
-        headers: [
-          { key: "Cache-Control", value: "private, no-cache, no-store" },
-        ],
+        headers: [{ key: "Cache-Control", value: "private, no-cache, no-store" }],
       },
     ];
-  },
-  experimental: {
-    turbopackFileSystemCacheForBuild: true,
-    turbopackRustReactCompiler: true,
   },
 };
 

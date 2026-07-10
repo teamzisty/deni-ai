@@ -1,7 +1,5 @@
 # `react-doctor/jsx-key`
 
-
-
 - **Category:** Correctness
 - **Severity:** error
 - **Source:** oxlint-builtin:react

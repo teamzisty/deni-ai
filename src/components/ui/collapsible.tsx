@@ -15,10 +15,7 @@ function CollapsibleTrigger({
   ...props
 }: React.ComponentProps<typeof CollapsiblePrimitive.Trigger> & { asChild?: boolean }) {
   return (
-    <CollapsiblePrimitive.Trigger
-      data-slot="collapsible-trigger"
-      {...resolveRenderProps(props)}
-    />
+    <CollapsiblePrimitive.Trigger data-slot="collapsible-trigger" {...resolveRenderProps(props)} />
   );
 }
 

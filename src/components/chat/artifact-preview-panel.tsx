@@ -1,7 +1,7 @@
 "use client";
 
 import { CopyIcon, ExternalLinkIcon, XIcon } from "lucide-react";
-import { useCallback, useState } from "react";
+import { useState } from "react";
 import { useExtracted } from "next-intl";
 import { ArtifactLivePreview } from "@/components/chat/artifact-live-preview";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
@@ -20,20 +20,20 @@ export function ArtifactPreviewPanel() {
   const isHtml = HTML_PREVIEWABLE_LANGUAGES.has(normalizedLanguage);
   const isLivePreviewable = LIVE_PREVIEWABLE_LANGUAGES.has(normalizedLanguage);
 
-  const handleCopy = useCallback(() => {
+  const handleCopy = () => {
     void navigator.clipboard.writeText(code).then(() => {
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     });
-  }, [code]);
+  };
 
-  const handleOpenInTab = useCallback(() => {
+  const handleOpenInTab = () => {
     const blob = new Blob([code], { type: "text/html" });
     const url = URL.createObjectURL(blob);
     window.open(url, "_blank", "noopener,noreferrer");
     // Revoke after a short delay to allow the tab to load
     setTimeout(() => URL.revokeObjectURL(url), 10000);
-  }, [code]);
+  };
 
   return (
     <Sheet

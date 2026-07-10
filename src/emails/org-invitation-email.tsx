@@ -11,20 +11,13 @@ import {
   Text,
 } from "@react-email/components";
 
+import { sanitizeSubjectValue } from "@/emails/org-invitation-email-subject";
+
 type OrgInvitationEmailProps = {
   orgName: string;
   inviterName?: string | null;
   acceptUrl: string;
 };
-
-const sanitizeSubjectValue = (value: string, fallback: string) => {
-  const sanitized = value.replaceAll(/\r|\n/g, " ").replaceAll(/\s+/g, " ").trim().slice(0, 200);
-  return sanitized || fallback;
-};
-
-export function orgInvitationEmailSubject(orgName: string) {
-  return `You're invited to join ${sanitizeSubjectValue(orgName, "your organization")} on Deni AI`;
-}
 
 export function OrgInvitationEmail({ orgName, inviterName, acceptUrl }: OrgInvitationEmailProps) {
   const displayOrg = sanitizeSubjectValue(orgName, "your organization");

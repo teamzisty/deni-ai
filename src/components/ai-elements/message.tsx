@@ -15,7 +15,7 @@ import { ChevronLeftIcon, ChevronRightIcon } from "lucide-react";
 import { createContext, memo, useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { Streamdown } from "streamdown";
 import { htmlCodeBlockRemarkPlugin } from "@/components/chat/streamdown-remark-plugins";
-import { streamdownOverrideComponents } from "@/components/chat/streamdown-components";
+import { streamdownOverrideComponents } from "@/components/chat/streamdown-overrides";
 
 export type MessageProps = HTMLAttributes<HTMLDivElement> & {
   from: UIMessage["role"];

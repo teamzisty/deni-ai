@@ -66,7 +66,7 @@ function ContextMenuSubContent({
 }: React.ComponentProps<typeof ContextMenuPrimitive.Popup>) {
   return (
     <ContextMenuPrimitive.Portal>
-      <ContextMenuPrimitive.Positioner>
+      <ContextMenuPrimitive.Positioner className="isolate z-50 outline-none">
         <ContextMenuPrimitive.Popup
           data-slot="context-menu-sub-content"
           className={cn(
@@ -86,7 +86,7 @@ function ContextMenuContent({
 }: React.ComponentProps<typeof ContextMenuPrimitive.Popup>) {
   return (
     <ContextMenuPrimitive.Portal>
-      <ContextMenuPrimitive.Positioner>
+      <ContextMenuPrimitive.Positioner className="isolate z-50 outline-none">
         <ContextMenuPrimitive.Popup
           data-slot="context-menu-content"
           className={cn(

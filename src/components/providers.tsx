@@ -1,38 +1,59 @@
 "use client";
 
-import { AuthQueryProvider } from "@daveyplate/better-auth-tanstack";
-import { AuthUIProviderTanstack } from "@daveyplate/better-auth-ui/tanstack";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { QueryClientProvider } from "@tanstack/react-query";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useExtracted } from "next-intl";
-import { type ReactNode, useState } from "react";
-import { env } from "@/env";
+import type { ReactNode } from "react";
+import { AuthProvider } from "@/components/auth/auth-provider";
 import { DesignStyleProvider } from "@/hooks/use-design-style";
+import { useAuthLocalization } from "@/hooks/use-auth-localization";
 import { ThemePresetProvider } from "@/hooks/use-theme-preset";
+import { captchaPlugin } from "@/lib/auth/captcha-plugin";
+import { deleteUserPlugin } from "@/lib/auth/delete-user-plugin";
+import { magicLinkPlugin } from "@/lib/auth/magic-link-plugin";
+import { passkeyPlugin } from "@/lib/auth/passkey-plugin";
 import { authClient } from "@/lib/auth-client";
+import { getQueryClient } from "@/lib/query-client";
 import { makeTRPCClient } from "@/lib/trpc/client";
 import { trpc } from "@/lib/trpc/react";
 import { ServiceWorkerRegistration } from "./pwa/service-worker-registration";
 import { TooltipProvider } from "./ui/tooltip";
 
 const trpcClient = makeTRPCClient();
+// Stable captcha plugin instance (no localization) — avoids recreating on every locale pass
+const captchaPluginInstance = captchaPlugin();
 
 export function AppProviders({ children }: { children: ReactNode }) {
   const t = useExtracted();
-  const { push, refresh, replace } = useRouter();
-  const [queryClient] = useState(
-    () =>
-      new QueryClient({
-        defaultOptions: {
-          queries: {
-            staleTime: 60_000,
-            gcTime: 5 * 60_000,
-            refetchOnWindowFocus: false,
-          },
-        },
-      }),
-  );
+  const router = useRouter();
+  const queryClient = getQueryClient();
+  const localization = useAuthLocalization();
+
+  const navigate = ({ to, replace }: { to: string; replace?: boolean }) => {
+    if (replace) router.replace(to);
+    else router.push(to);
+  };
+
+  const avatarUpload = async (file: File) => {
+    return await new Promise<string>((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onerror = () => reject(new Error(t("Failed to read file")));
+      reader.onload = () => {
+        const result = reader.result;
+        if (typeof result === "string") resolve(result);
+        else reject(new Error(t("Unexpected result from FileReader")));
+      };
+      reader.readAsDataURL(file);
+    });
+  };
+
+  const plugins = [
+    captchaPluginInstance,
+    passkeyPlugin({ localization: localization.plugins.passkey }),
+    deleteUserPlugin({ localization: localization.plugins.deleteUser }),
+    magicLinkPlugin({ localization: localization.plugins.magicLink }),
+  ];
 
   return (
     <ThemePresetProvider>
@@ -40,45 +61,43 @@ export function AppProviders({ children }: { children: ReactNode }) {
         <TooltipProvider>
           <QueryClientProvider client={queryClient}>
             <trpc.Provider client={trpcClient} queryClient={queryClient}>
-              <AuthQueryProvider>
-                <AuthUIProviderTanstack
-                  authClient={authClient}
-                  avatar={{
-                    upload: async (file: File) => {
-                      return await new Promise<string>((resolve, reject) => {
-                        const reader = new FileReader();
-                        reader.onerror = () => reject(new Error(t("Failed to read file")));
-                        reader.onload = () => {
-                          const result = reader.result;
-                          if (typeof result === "string") resolve(result);
-                          else reject(new Error(t("Unexpected result from FileReader")));
-                        };
-                        reader.readAsDataURL(file);
-                      });
-                    },
-                  }}
-                  navigate={push}
-                  replace={replace}
-                  onSessionChange={() => {
-                    // Clear router cache (protected routes)
-                    refresh();
-                  }}
-                  social={{ providers: ["google", "github"] }}
-                  twoFactor={["totp"]}
-                  captcha={{
-                    provider: "cloudflare-turnstile",
-                    siteKey: env.NEXT_PUBLIC_TURNSTILE_SITE_KEY,
-                  }}
-                  credentials={{ forgotPassword: true }}
-                  emailVerification
-                  deleteUser
-                  passkey
-                  Link={Link}
-                >
-                  {children}
-                  <ServiceWorkerRegistration />
-                </AuthUIProviderTanstack>
-              </AuthQueryProvider>
+              <AuthProvider
+                authClient={authClient}
+                queryClient={queryClient}
+                redirectTo="/chat"
+                socialProviders={["google", "github"]}
+                localization={{
+                  auth: localization.auth,
+                  settings: localization.settings,
+                }}
+                basePaths={{
+                  auth: "/auth",
+                  // Preserve legacy /account/* URLs (app settings use /settings/*)
+                  settings: "/account",
+                }}
+                viewPaths={{
+                  settings: {
+                    account: "settings",
+                    security: "security",
+                  },
+                }}
+                emailAndPassword={{
+                  enabled: true,
+                  forgotPassword: true,
+                  // Match server: after sign-up, show verify-email instead of redirecting to app
+                  requireEmailVerification: true,
+                }}
+                avatar={{
+                  enabled: true,
+                  upload: avatarUpload,
+                }}
+                navigate={navigate}
+                plugins={plugins}
+                Link={Link}
+              >
+                {children}
+                <ServiceWorkerRegistration />
+              </AuthProvider>
             </trpc.Provider>
           </QueryClientProvider>
         </TooltipProvider>

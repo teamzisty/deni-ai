@@ -1,5 +1,5 @@
 import { generateObject, type UIMessage } from "ai";
-import { and, eq } from "drizzle-orm";
+import { eq } from "drizzle-orm";
 import { z } from "zod";
 import { db } from "@/db/drizzle";
 import { memoryItem, userMemory } from "@/db/schema";
@@ -148,7 +148,7 @@ function tokenizeMemory(value: string) {
     .filter(Boolean);
 }
 
-function getLabeledMemorySignature(value: string) {
+function getLabeledMemoryFingerprint(value: string) {
   const normalized = normalizeMemoryText(value);
 
   const nameMatch = normalized.match(/^(?:user s name is|name)\s+(.+)$/);
@@ -166,11 +166,20 @@ function getLabeledMemorySignature(value: string) {
   return null;
 }
 
-function isNearDuplicateMemory(candidate: string, existing: string) {
-  const candidateSignature = getLabeledMemorySignature(candidate);
-  const existingSignature = getLabeledMemorySignature(existing);
+function labeledMemoryFingerprintsMatch(left: string, right: string) {
+  // Content equality for dedupe labels — not a security comparison.
+  return left === right;
+}
 
-  if (candidateSignature && existingSignature && candidateSignature === existingSignature) {
+function isNearDuplicateMemory(candidate: string, existing: string) {
+  const candidateFingerprint = getLabeledMemoryFingerprint(candidate);
+  const existingFingerprint = getLabeledMemoryFingerprint(existing);
+
+  if (
+    candidateFingerprint &&
+    existingFingerprint &&
+    labeledMemoryFingerprintsMatch(candidateFingerprint, existingFingerprint)
+  ) {
     return true;
   }
 
@@ -265,13 +274,4 @@ export async function maybeAutoSaveMemories({
       source: "auto",
     })),
   );
-}
-
-export async function deleteMemoryItemForUser(userId: string, id: string) {
-  const [deleted] = await db
-    .delete(memoryItem)
-    .where(and(eq(memoryItem.userId, userId), eq(memoryItem.id, id)))
-    .returning();
-
-  return deleted ?? null;
 }

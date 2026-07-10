@@ -17,7 +17,8 @@ import { Resend } from "resend";
 import { db } from "@/db/drizzle";
 import * as schema from "@/db/schema";
 import { MagicLinkEmail, magicLinkEmailSubject } from "@/emails/magic-link-email";
-import { OrgInvitationEmail, orgInvitationEmailSubject } from "@/emails/org-invitation-email";
+import { OrgInvitationEmail } from "@/emails/org-invitation-email";
+import { orgInvitationEmailSubject } from "@/emails/org-invitation-email-subject";
 import { PasswordResetEmail, passwordResetEmailSubject } from "@/emails/password-reset-email";
 import { VerificationEmail, verificationEmailSubject } from "@/emails/verification-email";
 import { env } from "@/env";
@@ -63,7 +64,10 @@ export const auth = betterAuth({
             }),
           });
         },
+        // Send on sign-up and when an unverified user tries to sign in
+        // (better-auth only auto-sends on sign-in when this flag is set).
         sendOnSignUp: true,
+        sendOnSignIn: true,
         autoSignInAfterVerification: true,
       }
     : undefined,

@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, use, useCallback, useMemo, useState } from "react";
+import { createContext, use, useState } from "react";
 
 interface ArtifactPreviewContextType {
   isOpen: boolean;
@@ -23,18 +23,15 @@ export function ArtifactPreviewProvider({ children }: { children: React.ReactNod
   const [code, setCode] = useState("");
   const [language, setLanguage] = useState("");
 
-  const open = useCallback((nextCode: string, nextLanguage: string) => {
+  const open = (nextCode: string, nextLanguage: string) => {
     setCode(nextCode);
     setLanguage(nextLanguage);
     setIsOpen(true);
-  }, []);
+  };
 
-  const close = useCallback(() => setIsOpen(false), []);
+  const close = () => setIsOpen(false);
 
-  const value = useMemo(
-    () => ({ isOpen, code, language, open, close }),
-    [isOpen, code, language, open, close],
-  );
+  const value = { isOpen, code, language, open, close };
 
   return (
     <ArtifactPreviewContext.Provider value={value}>{children}</ArtifactPreviewContext.Provider>

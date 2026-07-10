@@ -130,10 +130,7 @@ function NavigationMenuLink({
   );
 }
 
-function NavigationMenuIndicator({
-  className,
-  ...props
-}: React.ComponentProps<"div">) {
+function NavigationMenuIndicator({ className, ...props }: React.ComponentProps<"div">) {
   return (
     <div
       data-slot="navigation-menu-indicator"

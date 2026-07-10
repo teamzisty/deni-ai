@@ -9,9 +9,6 @@ export const MAX_USES_PER_CARD = 2;
 // Prepaid cards are more abuse-prone (gift cards, virtual numbers).
 export const MAX_USES_PER_PREPAID_CARD = 1;
 
-// Back-compat alias — old code referenced this name.
-export const MAX_TRIALS_PER_CARD = MAX_USES_PER_CARD;
-
 export type CardFunding = "credit" | "debit" | "prepaid" | "unknown";
 
 function normalizeFunding(value: string | null | undefined): CardFunding {
@@ -219,14 +216,6 @@ export async function checkCardEligibility({
     };
   }
   return { eligible: true };
-}
-
-// Legacy callers — trial eligibility now flows through checkCardEligibility.
-// We don't know the funding here, so assume non-prepaid (the caller path for
-// trials always goes through Stripe subscription creation, which can detect
-// funding before charging).
-export async function countTrialUsesByFingerprint(fingerprint: string) {
-  return countCardUsesByFingerprint(fingerprint);
 }
 
 export async function isTrialFingerprintEligible(

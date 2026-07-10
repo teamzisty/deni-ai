@@ -55,13 +55,6 @@ export function resolveReasoningEffort(
   return getPreferredReasoningEffort(efforts);
 }
 
-export enum AuthorEnum {
-  openai = "OpenAI",
-  anthropic = "Anthropic",
-  google = "Google",
-  xai = "xAI",
-}
-
 export type Models = {
   [key: string]: {
     author: Author;

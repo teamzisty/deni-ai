@@ -312,7 +312,8 @@ const evaluatePreview = async (rawCode: string, t: PreviewTranslator) => {
   });
 
   const diagnostics = transpiled.diagnostics?.filter(
-    (diagnostic) => diagnostic.category === typescript.DiagnosticCategory.Error,
+    (diagnostic: { category: number }) =>
+      diagnostic.category === typescript.DiagnosticCategory.Error,
   );
 
   if (diagnostics && diagnostics.length > 0) {

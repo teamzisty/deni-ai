@@ -1,9 +1,10 @@
 "use client";
 
 import { Check, Copy, Key, Plus, Trash2 } from "lucide-react";
-import { useExtracted } from "next-intl";
+import { useExtracted, useLocale } from "next-intl";
 import { useState } from "react";
 import { toast } from "sonner";
+import { formatAppDate } from "@/lib/format-date";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -31,13 +32,8 @@ import { Spinner } from "@/components/ui/spinner";
 import { authClient } from "@/lib/auth-client";
 import { trpc } from "@/lib/trpc/react";
 
-const dateFormatter = new Intl.DateTimeFormat(undefined, {
-  month: "short",
-  day: "numeric",
-  year: "numeric",
-});
-
 export default function ApiKeysSettingsPage() {
+  const locale = useLocale();
   const t = useExtracted();
   const utils = trpc.useUtils();
   const { data: session } = authClient.useSession();
@@ -147,13 +143,13 @@ export default function ApiKeysSettingsPage() {
                       <code className="font-mono">{k.keyPrefix}••••••••</code>
                       <span>
                         {t("Created {date}", {
-                          date: dateFormatter.format(new Date(k.createdAt)),
+                          date: formatAppDate(k.createdAt, locale),
                         })}
                       </span>
                       <span>
                         {k.lastUsedAt
                           ? t("Last used {date}", {
-                              date: dateFormatter.format(new Date(k.lastUsedAt)),
+                              date: formatAppDate(k.lastUsedAt, locale),
                             })
                           : t("Never used")}
                       </span>

@@ -1,9 +1,11 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import { useEffect, useRef, useState } from "react";
+import { usePathname } from "next/navigation";
+import { useEffect, useState } from "react";
 import { TwoFactorBanner } from "@/components/two-factor-banner";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
+import { useNewChat } from "@/hooks/use-new-chat";
 
 const AppSidebar = dynamic(() => import("@/components/app-sidebar").then((mod) => mod.AppSidebar));
 const ChatSearch = dynamic(
@@ -12,8 +14,16 @@ const ChatSearch = dynamic(
 );
 
 export function AppShell({ children }: { children: React.ReactNode }) {
-  const [isChatSearchOpen, setIsChatSearchOpen] = useState(false);
-  const newChatRef = useRef<(() => void) | null>(null);
+  // Track which pathname the dialog was opened for so navigation closes it
+  // without a setState-in-effect (React Compiler / cascading render rule).
+  const pathname = usePathname();
+  const [chatSearchPath, setChatSearchPath] = useState<string | null>(null);
+  const isChatSearchOpen = chatSearchPath === pathname;
+  const startNewChat = useNewChat();
+
+  const setIsChatSearchOpen = (open: boolean) => {
+    setChatSearchPath(open ? pathname : null);
+  };
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -34,21 +44,21 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       const key = e.key.toLowerCase();
       if (mod && key === "k") {
         e.preventDefault();
-        setIsChatSearchOpen(true);
+        setChatSearchPath(pathname);
       }
       if (mod && key === "n") {
         e.preventDefault();
-        newChatRef.current?.();
+        startNewChat();
       }
     };
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, []);
+  }, [pathname, startNewChat]);
 
   return (
     <SidebarProvider>
       <ChatSearch open={isChatSearchOpen} onOpenChange={setIsChatSearchOpen} />
-      <AppSidebar onOpenChatSearch={() => setIsChatSearchOpen(true)} onNewChatRef={newChatRef} />
+      <AppSidebar onOpenChatSearch={() => setIsChatSearchOpen(true)} />
       <SidebarInset>
         <TwoFactorBanner />
         <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-auto p-4">{children}</div>

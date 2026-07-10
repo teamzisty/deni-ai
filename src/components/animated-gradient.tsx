@@ -1,6 +1,6 @@
 "use client";
 
-import { type CSSProperties, useEffect, useMemo, useRef } from "react";
+import { type CSSProperties, useEffect, useRef } from "react";
 
 type PatternShape = "Checks" | "Stripes" | "Edge";
 
@@ -178,36 +178,37 @@ export default function AnimatedGradient({
   const frameIdRef = useRef<number | undefined>(undefined);
   const startTimeRef = useRef<number>(0);
 
-  const params = useMemo((): PresetParams => {
-    if (config.preset === "custom") {
-      return {
-        color1: config.color1,
-        color2: config.color2,
-        color3: config.color3,
-        rotation: config.rotation ?? 0,
-        proportion: config.proportion ?? 35,
-        scale: config.scale ?? 1,
-        speed: config.speed ?? 25,
-        distortion: config.distortion ?? 12,
-        swirl: config.swirl ?? 80,
-        swirlIterations: config.swirlIterations ?? 10,
-        softness: config.softness ?? 100,
-        offset: config.offset ?? 0,
-        shape: config.shape ?? "Checks",
-        shapeSize: config.shapeSize ?? 10,
-      };
-    }
-    const preset = presets[config.preset] || presets.Prism;
-    return {
-      ...preset,
-      speed: config.speed ?? preset.speed,
-    };
-  }, [config]);
+  // Serialize config so effect deps stay stable even when callers pass a new object.
+  const configKey = JSON.stringify(config);
 
   useEffect(() => {
     const canvas = canvasRef.current;
     const container = containerRef.current;
     if (!canvas || !container) return;
+
+    const resolvedConfig = JSON.parse(configKey) as GradientConfig;
+    const params: PresetParams =
+      resolvedConfig.preset === "custom"
+        ? {
+            color1: resolvedConfig.color1,
+            color2: resolvedConfig.color2,
+            color3: resolvedConfig.color3,
+            rotation: resolvedConfig.rotation ?? 0,
+            proportion: resolvedConfig.proportion ?? 35,
+            scale: resolvedConfig.scale ?? 1,
+            speed: resolvedConfig.speed ?? 25,
+            distortion: resolvedConfig.distortion ?? 12,
+            swirl: resolvedConfig.swirl ?? 80,
+            swirlIterations: resolvedConfig.swirlIterations ?? 10,
+            softness: resolvedConfig.softness ?? 100,
+            offset: resolvedConfig.offset ?? 0,
+            shape: resolvedConfig.shape ?? "Checks",
+            shapeSize: resolvedConfig.shapeSize ?? 10,
+          }
+        : {
+            ...(presets[resolvedConfig.preset] || presets.Prism),
+            speed: resolvedConfig.speed ?? (presets[resolvedConfig.preset] || presets.Prism).speed,
+          };
 
     const gl = canvas.getContext("webgl2", {
       premultipliedAlpha: true,
@@ -234,9 +235,10 @@ export default function AnimatedGradient({
     gl.attachShader(program, vertexShader);
     gl.attachShader(program, fragmentShader);
     gl.linkProgram(program);
-    // Bracket access avoids the react-hooks lint rule misidentifying
-    // WebGL's `useProgram` method as a React hook call by name pattern.
-    gl["useProgram"](program);
+    // Bind under a non-hook-like name so React Compiler / hooks lint
+    // does not treat WebGL's useProgram as a React hook call.
+    const activateProgram = gl.useProgram.bind(gl);
+    activateProgram(program);
 
     const positionBuffer = gl.createBuffer();
     gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
@@ -326,7 +328,7 @@ export default function AnimatedGradient({
       gl.deleteShader(fragmentShader);
       gl.deleteBuffer(positionBuffer);
     };
-  }, [params]);
+  }, [configKey]);
 
   return (
     <div

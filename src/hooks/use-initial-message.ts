@@ -3,7 +3,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useRef } from "react";
 import { models, resolveReasoningEffort, type ReasoningEffort } from "@/lib/constants";
 
-const INITIAL_MESSAGE_STORAGE_KEY = "deni_initial_message";
+const INITIAL_MESSAGE_STORAGE_KEY = "deni_initial_message:v1";
 
 type SendMessage = ReturnType<typeof useChat>["sendMessage"];
 

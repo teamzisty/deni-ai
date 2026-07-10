@@ -112,14 +112,19 @@ export async function generateMetadata(): Promise<Metadata> {
   };
 }
 
+function safeJsonLd(data: unknown) {
+  return JSON.stringify(data)
+    .replace(/</g, "\\u003c")
+    .replace(/>/g, "\\u003e")
+    .replace(/&/g, "\\u0026");
+}
+
 export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const locale = await getLocale();
-  const messages = await getMessages();
-  const t = await getExtracted();
+  const [locale, messages, t] = await Promise.all([getLocale(), getMessages(), getExtracted()]);
 
   return (
     <html lang={locale} suppressHydrationWarning>
@@ -129,7 +134,7 @@ export default async function RootLayout({
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{
-            __html: JSON.stringify([
+            __html: safeJsonLd([
               {
                 "@context": "https://schema.org",
                 "@type": "WebSite",
@@ -172,7 +177,12 @@ export default async function RootLayout({
           {t("Skip to content")}
         </a>
         <NextIntlClientProvider locale={locale} messages={messages}>
-          <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
+          <ThemeProvider
+            attribute="class"
+            defaultTheme="system"
+            enableSystem
+            disableTransitionOnChange
+          >
             <div className="min-h-screen">{children}</div>
             <Toaster position="top-center" />
           </ThemeProvider>
