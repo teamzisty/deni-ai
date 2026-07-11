@@ -83,6 +83,12 @@ export type ModelDefinition = {
    * monthly quota and are surfaced to users in the UI.
    */
   tokenMultiplier?: number;
+  /**
+   * When true, the model supports OpenAI GPT-5.6 Pro reasoning mode
+   * (`reasoning.mode: "pro"`). Enabling Pro multiplies usage by
+   * {@link OPENAI_PRO_MODE_MULTIPLIER} on top of the base token multiplier.
+   */
+  supportsProMode?: boolean;
 };
 
 export const models: readonly ModelDefinition[] = [
@@ -95,6 +101,7 @@ export const models: readonly ModelDefinition[] = [
     features: ["smartest", "reasoning", "coding", "fast"],
     efforts: ["none", "low", "medium", "high", "xhigh", "max"],
     tokenMultiplier: 1.5,
+    supportsProMode: true,
     contextWindow: 1_050_000,
   },
   {
@@ -105,6 +112,7 @@ export const models: readonly ModelDefinition[] = [
     featured: true,
     features: ["reasoning", "smart", "coding", "fast"],
     efforts: ["none", "low", "medium", "high", "xhigh", "max"],
+    supportsProMode: true,
     contextWindow: 1_050_000,
   },
   {
@@ -115,6 +123,7 @@ export const models: readonly ModelDefinition[] = [
     featured: true,
     features: ["reasoning", "fast", "fastest"],
     efforts: ["none", "low", "medium", "high", "xhigh", "max"],
+    supportsProMode: true,
     contextWindow: 1_050_000,
   },
   {
@@ -542,12 +551,22 @@ export const OPENAI_LONG_CONTEXT_INPUT_THRESHOLD = 200_000;
 export const OPENAI_LONG_CONTEXT_MULTIPLIER = 2;
 const OPENAI_LONG_CONTEXT_MIN_WINDOW = 1_000_000;
 
+/**
+ * GPT-5.6 Pro reasoning mode multiplies billed usage by this factor on top of
+ * the model's base token multiplier (product policy: base × 3).
+ */
+export const OPENAI_PRO_MODE_MULTIPLIER = 3;
+
 export function supportsOpenAILongContextPricing(modelId: string): boolean {
   const model = getModelDefinition(modelId);
   if (!model || model.author !== "openai") {
     return false;
   }
   return (model.contextWindow ?? 0) >= OPENAI_LONG_CONTEXT_MIN_WINDOW;
+}
+
+export function supportsModelProMode(modelId: string): boolean {
+  return Boolean(getModelDefinition(modelId)?.supportsProMode);
 }
 
 /**
@@ -564,16 +583,28 @@ export function getOpenAILongContextMultiplier(modelId: string, inputTokens: num
   return OPENAI_LONG_CONTEXT_MULTIPLIER;
 }
 
+export type EffectiveTokenMultiplierOptions = {
+  proMode?: boolean;
+};
+
 /**
- * Combines the static model token multiplier with OpenAI long-context 2×
- * pricing when `inputTokens` is provided and exceeds the threshold.
+ * Combines the static model token multiplier with optional Pro-mode 3× and
+ * OpenAI long-context 2× pricing when `inputTokens` is provided and exceeds
+ * the threshold.
  */
-export function getEffectiveTokenMultiplier(modelId: string, inputTokens?: number): number {
+export function getEffectiveTokenMultiplier(
+  modelId: string,
+  inputTokens?: number,
+  options?: EffectiveTokenMultiplierOptions,
+): number {
   const base = getModelTokenMultiplier(modelId);
+  const proMultiplier =
+    options?.proMode && supportsModelProMode(modelId) ? OPENAI_PRO_MODE_MULTIPLIER : 1;
+  const withPro = base * proMultiplier;
   if (typeof inputTokens !== "number") {
-    return base;
+    return withPro;
   }
-  return base * getOpenAILongContextMultiplier(modelId, inputTokens);
+  return withPro * getOpenAILongContextMultiplier(modelId, inputTokens);
 }
 
 // Transactional emails are rendered with react-email components under

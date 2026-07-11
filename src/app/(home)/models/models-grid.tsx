@@ -3,6 +3,7 @@ import { useExtracted } from "next-intl";
 import {
   OPENAI_LONG_CONTEXT_INPUT_THRESHOLD,
   OPENAI_LONG_CONTEXT_MULTIPLIER,
+  OPENAI_PRO_MODE_MULTIPLIER,
   supportsOpenAILongContextPricing,
   type ModelDefinition,
 } from "@/lib/constants";
@@ -116,6 +117,11 @@ export function ModelsGrid({
                         ? ` · ${t("Long context (>{threshold} input): {multiplier}× usage", {
                             threshold: formatNumber.format(OPENAI_LONG_CONTEXT_INPUT_THRESHOLD),
                             multiplier: String(OPENAI_LONG_CONTEXT_MULTIPLIER),
+                          })}`
+                        : ""}
+                      {"supportsProMode" in model && model.supportsProMode
+                        ? ` · ${t("Pro mode: {multiplier}× premium usage", {
+                            multiplier: String(OPENAI_PRO_MODE_MULTIPLIER),
                           })}`
                         : ""}
                     </p>

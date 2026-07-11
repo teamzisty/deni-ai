@@ -15,16 +15,20 @@ export function useUsageStatus(params: {
   availableModels: ModelOption[];
   providerKeys: Set<string>;
   providerSettings: Map<string, ProviderSetting>;
+  /** When true on a Pro-capable model, usage is billed as premium. */
+  proMode?: boolean;
 }) {
   const t = useExtracted();
-  const { model, availableModels, providerKeys, providerSettings } = params;
+  const { model, availableModels, providerKeys, providerSettings, proMode = false } = params;
 
   const usageQuery = trpc.billing.usage.useQuery(undefined, {
     ...liveUsageQueryOptions,
   });
 
   const selectedModel = availableModels.find((m) => m.value === model);
-  const usageCategory = selectedModel?.premium ? "premium" : "basic";
+  const usesProMode = Boolean(proMode && selectedModel?.supportsProMode);
+  const usageCategory =
+    selectedModel?.premium || usesProMode ? ("premium" as const) : ("basic" as const);
   const categoryUsage = usageQuery.data?.usage.find((usage) => usage.category === usageCategory);
   const remainingUsage = categoryUsage?.remaining;
   const usageLimit = categoryUsage?.limit;

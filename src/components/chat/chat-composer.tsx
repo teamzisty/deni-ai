@@ -2,7 +2,7 @@
 
 import type { ChatStatus } from "ai";
 import type { LucideIcon } from "lucide-react";
-import { BrainIcon, Film, Globe, Image as ImageIcon, Mic, Sparkle, XIcon } from "lucide-react";
+import { BrainIcon, Film, Globe, Image as ImageIcon, Mic, Sparkle, Zap, XIcon } from "lucide-react";
 import { useExtracted } from "next-intl";
 import { useEffect, useRef } from "react";
 import {
@@ -16,10 +16,16 @@ import { SpeechInput } from "@/components/ai-elements/speech-input";
 import { Composer, type ComposerMessage } from "@/components/chat/composer";
 import { ChatComposerModelPicker } from "@/components/chat/chat-composer-model-picker";
 import { useAvailableModels } from "@/hooks/use-available-models";
-import { isReasoningEffort, type ModelDefinition, type ReasoningEffort } from "@/lib/constants";
+import {
+  isReasoningEffort,
+  OPENAI_PRO_MODE_MULTIPLIER,
+  type ModelDefinition,
+  type ReasoningEffort,
+} from "@/lib/constants";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { DropdownMenuCheckboxItem, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 export type { ComposerMessage };
 
@@ -59,6 +65,7 @@ export interface ChatComposerProps {
       videoMode: boolean;
       imageMode: boolean;
       reasoningEffort: ReasoningEffort;
+      proMode: boolean;
       deepResearch: boolean;
     },
   ) => void;
@@ -77,6 +84,8 @@ export interface ChatComposerProps {
   onImageModeChange: (enabled: boolean) => void;
   reasoningEffort: ReasoningEffort;
   onReasoningEffortChange: (effort: ReasoningEffort) => void;
+  proMode: boolean;
+  onProModeChange: (enabled: boolean) => void;
   deepResearch: boolean;
   onDeepResearchChange: (enabled: boolean) => void;
   showByokBadge?: boolean;
@@ -101,6 +110,8 @@ export function ChatComposer({
   onImageModeChange,
   reasoningEffort,
   onReasoningEffortChange,
+  proMode,
+  onProModeChange,
   deepResearch,
   onDeepResearchChange,
   showByokBadge = false,
@@ -110,6 +121,7 @@ export function ChatComposer({
   const selectedModel = availableModels.find((m) => m.value === model);
   const supportedEfforts = selectedModel?.efforts ?? false;
   const supportsReasoningEffort = supportedEfforts !== false;
+  const supportsProMode = Boolean(selectedModel?.supportsProMode);
   const getReasoningEffortLabel = (effort: ReasoningEffort) => {
     switch (effort) {
       case "none":
@@ -189,9 +201,17 @@ export function ChatComposer({
       videoMode,
       imageMode,
       reasoningEffort,
+      proMode: supportsProMode && proMode,
       deepResearch,
     });
   };
+
+  const proModeTitle = t(
+    "Pro mode uses deeper multi-pass reasoning ({multiplier}× premium usage)",
+    {
+      multiplier: String(OPENAI_PRO_MODE_MULTIPLIER),
+    },
+  );
 
   const renderReasoningEffortSelector = (triggerClassName?: string) => (
     <PromptInputSelect
@@ -273,6 +293,15 @@ export function ChatComposer({
               <Sparkle className="size-4" aria-hidden="true" />
               {t("Deep Research")}
             </DropdownMenuCheckboxItem>
+            {supportsProMode && (
+              <DropdownMenuCheckboxItem
+                checked={proMode}
+                onCheckedChange={(checked) => onProModeChange(Boolean(checked))}
+              >
+                <Zap className="size-4" aria-hidden="true" />
+                {t("Pro")}
+              </DropdownMenuCheckboxItem>
+            )}
             <div className="px-2 py-1.5 md:hidden">
               {renderReasoningEffortSelector("w-full justify-between")}
             </div>
@@ -304,6 +333,9 @@ export function ChatComposer({
                 onRemove={() => handleResearchToggle(false)}
               />
             )}
+            {supportsProMode && proMode && (
+              <ToolChip icon={Zap} label={t("Pro")} onRemove={() => onProModeChange(false)} />
+            )}
             <SpeechInput
               size="icon-sm"
               variant="ghost"
@@ -326,7 +358,37 @@ export function ChatComposer({
               showByokBadge={showByokBadge}
             />
 
-            <div className="hidden md:block">{renderReasoningEffortSelector()}</div>
+            <div className="hidden md:flex md:items-center md:gap-1">
+              {renderReasoningEffortSelector()}
+              {supportsProMode && (
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        type="button"
+                        variant={proMode ? "secondary" : "ghost"}
+                        size="sm"
+                        className={cn(
+                          "h-8 gap-1.5 px-2 font-medium",
+                          proMode
+                            ? "bg-amber-500/15 text-amber-700 hover:bg-amber-500/20 dark:text-amber-400"
+                            : "text-muted-foreground",
+                        )}
+                        aria-pressed={proMode}
+                        aria-label={t("Pro")}
+                        onClick={() => onProModeChange(!proMode)}
+                      >
+                        <Zap className="size-3.5" aria-hidden="true" />
+                        {t("Pro")}
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>{proModeTitle}</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              )}
+            </div>
           </>
         }
       />

@@ -149,6 +149,7 @@ export function ChatInterface({
   const [reasoningEffort, setReasoningEffort] = useState<ReasoningEffort>(() =>
     getPreferredReasoningEffort(defaultModel.efforts),
   );
+  const [proMode, setProMode] = useState(false);
   const [deepResearch, setDeepResearch] = useState(false);
   const [attachmentError, setAttachmentError] = useState<string | null>(null);
   const utils = trpc.useUtils();
@@ -167,12 +168,13 @@ export function ChatInterface({
     remainingUsage,
     usageUnitLabel,
     enableMaxMode,
-  } = useUsageStatus({ model, availableModels, providerKeys, providerSettings });
+  } = useUsageStatus({ model, availableModels, providerKeys, providerSettings, proMode });
 
   const requestBody = {
     model,
     webSearch,
     reasoningEffort,
+    proMode,
     deepResearch,
     video: videoMode,
     image: imageMode,
@@ -222,6 +224,7 @@ export function ChatInterface({
     setVideoMode,
     setImageMode,
     setReasoningEffort,
+    setProMode,
     setDeepResearch,
     onMessageSent: () => utils.chat.getChats.invalidate(),
   });
@@ -280,6 +283,7 @@ export function ChatInterface({
       videoMode: boolean;
       imageMode: boolean;
       reasoningEffort: ReasoningEffort;
+      proMode: boolean;
       deepResearch: boolean;
     },
   ) => {
@@ -318,6 +322,7 @@ export function ChatInterface({
               model: options.model,
               webSearch: options.webSearch,
               reasoningEffort: options.reasoningEffort,
+              proMode: options.proMode,
               deepResearch: options.deepResearch,
               video: options.videoMode,
               image: options.imageMode,
@@ -341,6 +346,9 @@ export function ChatInterface({
     setModel(value);
     const nextModel = availableModels.find((entry) => entry.value === value);
     const nextEfforts = nextModel?.efforts;
+    if (!nextModel?.supportsProMode) {
+      setProMode(false);
+    }
     if (!nextEfforts) {
       return;
     }
@@ -440,6 +448,8 @@ export function ChatInterface({
           onImageModeChange={setImageMode}
           reasoningEffort={reasoningEffort}
           onReasoningEffortChange={setReasoningEffort}
+          proMode={proMode}
+          onProModeChange={setProMode}
           deepResearch={deepResearch}
           onDeepResearchChange={setDeepResearch}
           showByokBadge={isByokActive}
