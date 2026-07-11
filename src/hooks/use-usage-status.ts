@@ -1,5 +1,6 @@
 import { useExtracted } from "next-intl";
 import { useMemo } from "react";
+import { toast } from "sonner";
 import type { ModelOption } from "@/components/chat/chat-composer";
 import { trpc } from "@/lib/trpc/react";
 import { liveUsageQueryOptions } from "@/lib/usage-query-options";
@@ -87,10 +88,17 @@ export function useUsageStatus(params: {
   const canEnableMaxMode = maxModeEligible && !maxModeEnabled && isUsageBlocked;
   const isSubmitBlocked = isUsageBlocked && !maxModeEnabled;
 
+  const utils = trpc.useUtils();
   const enableMaxMode = trpc.billing.enableMaxMode.useMutation({
-    onSuccess: () => {
-      usageQuery.refetch();
+    onSuccess: async () => {
+      toast.success(t("Max Mode enabled."));
+      await Promise.all([
+        usageQuery.refetch(),
+        utils.billing.maxModeStatus.invalidate(),
+        utils.billing.usage.invalidate(),
+      ]);
     },
+    onError: (error) => toast.error(error.message),
   });
 
   return {
