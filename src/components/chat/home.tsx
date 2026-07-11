@@ -10,7 +10,12 @@ import { ChatComposer, type ComposerMessage } from "@/components/chat/chat-compo
 import { ProjectSelect } from "@/components/projects/project-select";
 import { env } from "@/env";
 import { useNewChat } from "@/hooks/use-new-chat";
-import { defaultModel, getPreferredReasoningEffort, type ReasoningEffort } from "@/lib/constants";
+import {
+  defaultModel,
+  getPreferredReasoningEffort,
+  models,
+  type ReasoningEffort,
+} from "@/lib/constants";
 import { trpc } from "@/lib/trpc/react";
 
 // Storage key for passing initial message data to chat page
@@ -29,6 +34,7 @@ export type InitialMessageData = {
   videoMode: boolean;
   imageMode: boolean;
   reasoningEffort: ReasoningEffort;
+  proMode: boolean;
   deepResearch: boolean;
   projectId: string | null;
 };
@@ -68,6 +74,7 @@ export default function ChatHome() {
   const [reasoningEffort, setReasoningEffort] = useState<ReasoningEffort>(() =>
     getPreferredReasoningEffort(defaultModel.efforts),
   );
+  const [proMode, setProMode] = useState(false);
   const [deepResearch, setDeepResearch] = useState(false);
   const [projectId, setProjectId] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -82,6 +89,7 @@ export default function ChatHome() {
       videoMode: boolean;
       imageMode: boolean;
       reasoningEffort: ReasoningEffort;
+      proMode: boolean;
       deepResearch: boolean;
     },
   ) => {
@@ -105,6 +113,7 @@ export default function ChatHome() {
         videoMode: options.videoMode,
         imageMode: options.imageMode,
         reasoningEffort: options.reasoningEffort,
+        proMode: options.proMode,
         deepResearch: options.deepResearch,
         projectId,
       };
@@ -117,6 +126,21 @@ export default function ChatHome() {
       toast.error(t("An error occurred while starting the chat."));
       setIsSubmitting(false);
     }
+  };
+
+  const handleModelChange = (value: string) => {
+    setModel(value);
+    const nextModel = models.find((entry) => entry.value === value);
+    if (!nextModel?.supportsProMode) {
+      setProMode(false);
+    }
+    const nextEfforts = nextModel?.efforts;
+    if (!nextEfforts) {
+      return;
+    }
+    setReasoningEffort((current) =>
+      nextEfforts.includes(current) ? current : getPreferredReasoningEffort(nextEfforts),
+    );
   };
 
   const handleSuggestionClick = (prompt: string) => {
@@ -197,7 +221,7 @@ export default function ChatHome() {
             placeholder={t("Ask me anything...")}
             isSubmitDisabled={isSubmitting}
             model={model}
-            onModelChange={setModel}
+            onModelChange={handleModelChange}
             webSearch={webSearch}
             onWebSearchChange={setWebSearch}
             videoMode={videoMode}
@@ -206,6 +230,8 @@ export default function ChatHome() {
             onImageModeChange={setImageMode}
             reasoningEffort={reasoningEffort}
             onReasoningEffortChange={setReasoningEffort}
+            proMode={proMode}
+            onProModeChange={setProMode}
             deepResearch={deepResearch}
             onDeepResearchChange={setDeepResearch}
           />

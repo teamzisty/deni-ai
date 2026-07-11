@@ -104,11 +104,28 @@ This file applies to the entire repository tree rooted here. Follow these rules,
   - For schema changes: run `db:generate` → `db:migrate|db:push` (requires `DATABASE_URL`).
 - Tests are not set up. For riskier areas, note manual verification steps or TODOs where appropriate.
 
-■ PR/Commit Policy (Agents)
+■ Branch / PR / Merge Policy (Agents)
+
+Default branch for day-to-day work is **`canary`**. **`master`** is the promotion/release target.
+
+When the user asks to commit / push / PR / merge (including phrasing like 「全commit & push & pr & instant merge」):
+
+1. **Work branch → `canary`**
+   - Create a feature/fix branch from up-to-date `canary`.
+   - Commit scoped changes (conventional commits).
+   - Push the branch and open a PR with **base = `canary`**.
+   - If the user asked to merge (or "instant merge"), merge that PR into `canary` (delete the head branch when appropriate) and pull `canary` locally.
+2. **`canary` → `master` (required promotion step)**
+   - After landing work on `canary`, **always open a PR with base = `master` and head = `canary`** to promote.
+   - If the user asked to merge / instant merge, merge that PR into `master` as well (do not leave promotion only on `canary`).
+   - Reuse an open canary→master PR if one already exists; otherwise create one. Title/body should summarize what is being promoted.
+
+Other rules:
 
 - Keep changes scoped to the task. Separate incidental refactors.
 - Document purpose, context, and verification steps concisely.
-- In this environment, do not perform git commits/branching unless explicitly instructed (patches only).
+- Do not force-push shared branches (`canary`, `master`) unless the user explicitly requests it.
+- In this environment, do not perform git commits/branching unless explicitly instructed (patches only)—except when the user asked for commit/push/PR/merge as above.
 
 ■ Communication
 

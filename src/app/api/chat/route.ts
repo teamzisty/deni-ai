@@ -116,13 +116,17 @@ function estimateTokenReservation({
   modelMessages,
   systemPrompt,
   modelId,
+  proMode = false,
 }: {
   modelMessages: unknown;
   systemPrompt: string;
   modelId: string;
+  proMode?: boolean;
 }) {
   const estimatedPromptTokens = estimatePromptInputTokens({ modelMessages, systemPrompt });
-  const effectiveMultiplier = getEffectiveTokenMultiplier(modelId, estimatedPromptTokens);
+  const effectiveMultiplier = getEffectiveTokenMultiplier(modelId, estimatedPromptTokens, {
+    proMode,
+  });
   const isLongContext =
     supportsOpenAILongContextPricing(modelId) &&
     estimatedPromptTokens > OPENAI_LONG_CONTEXT_INPUT_THRESHOLD;
@@ -191,6 +195,7 @@ export async function POST(req: Request) {
     model: baseModel,
     webSearch = true,
     reasoningEffort = "high",
+    proMode: requestedProMode = false,
     video: videoMode = false,
     image: imageMode = false,
     deepResearch = false,
@@ -198,6 +203,8 @@ export async function POST(req: Request) {
     forceWebSearch = false,
     additionalInstruction,
   } = parsedBody.data;
+
+  const proMode = Boolean(requestedProMode && getModelDefinition(baseModel)?.supportsProMode);
 
   const chat = await getChatById(id, userId);
   if (!chat) {
@@ -225,6 +232,7 @@ export async function POST(req: Request) {
         isAnonymous,
         baseModel,
         reasoningEffort,
+        proMode,
       }),
     ]);
   } catch (error) {
@@ -451,6 +459,7 @@ export async function POST(req: Request) {
         modelMessages,
         systemPrompt,
         modelId: baseModel,
+        proMode,
       });
       await consumeUsage({
         userId,
@@ -477,7 +486,7 @@ export async function POST(req: Request) {
         const { weighted, breakdown } = computeWeightedUsageFromLanguageModelUsage(totalUsage);
         const inputTokens = getUsageInputTokens(totalUsage, breakdown);
         finalUsageAmount = Math.ceil(
-          weighted * getEffectiveTokenMultiplier(baseModel, inputTokens),
+          weighted * getEffectiveTokenMultiplier(baseModel, inputTokens, { proMode }),
         );
       },
       providerOptions,

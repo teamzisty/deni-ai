@@ -46,6 +46,8 @@ type ResolveChatModelContextParams = {
   isAnonymous: boolean;
   baseModel: string;
   reasoningEffort: "none" | "minimal" | "low" | "medium" | "high" | "xhigh" | "max";
+  /** GPT-5.6 Pro reasoning mode (`reasoning.mode: "pro"`). */
+  proMode?: boolean;
 };
 
 type ChatProviderOptions = NonNullable<Parameters<typeof streamText>[0]["providerOptions"]>;
@@ -113,6 +115,7 @@ export async function resolveChatModelContext({
   isAnonymous,
   baseModel,
   reasoningEffort,
+  proMode = false,
 }: ResolveChatModelContextParams): Promise<ResolvedChatModelContext> {
   const selectedModel = models.find((model) => model.value === baseModel);
 
@@ -120,15 +123,18 @@ export async function resolveChatModelContext({
     throw new ChatRouteError(400, { error: "Unknown model" });
   }
 
+  const useProMode = Boolean(proMode && selectedModel.supportsProMode);
   const isPremiumModel = Boolean(selectedModel.premium);
+  // Pro mode always bills against premium quota (even when the base model is basic).
+  const usageCategory: UsageCategory = isPremiumModel || useProMode ? "premium" : "basic";
 
-  if (isAnonymous && isPremiumModel) {
+  if (isAnonymous && usageCategory === "premium") {
     throw new ChatRouteError(403, {
-      error: "Premium models are not available for guest sessions.",
+      error: useProMode
+        ? "Pro mode is not available for guest sessions."
+        : "Premium models are not available for guest sessions.",
     });
   }
-
-  const usageCategory: UsageCategory = isPremiumModel ? "premium" : "basic";
   let usageUnit: "requests" | "tokens" = "requests";
   const [providerKeys, providerSettings] = await Promise.all([
     db.select().from(providerKey).where(eq(providerKey.userId, userId)),
@@ -200,7 +206,10 @@ export async function resolveChatModelContext({
     }
   }
 
-  const resolvedModelId = selectedModel.value;
+  // OpenRouter exposes GPT-5.6 Pro as a `*-pro` model slug. BYOK OpenAI uses
+  // the base model id with `reasoning.mode: "pro"` instead.
+  const resolvedModelId =
+    useProMode && !useByok ? `${selectedModel.value}-pro` : selectedModel.value;
 
   const resolvedReasoningEffort = resolveReasoningEffort(
     selectedModel?.efforts ?? false,
@@ -212,6 +221,8 @@ export async function resolveChatModelContext({
     openaiEffortOptions.includes(resolvedReasoningEffort as (typeof openaiEffortOptions)[number])
       ? (resolvedReasoningEffort as (typeof openaiEffortOptions)[number])
       : undefined;
+  const openaiReasoningMode =
+    providerId === "openai" && useProMode && useByok ? ("pro" as const) : undefined;
   const anthropicReasoningEffort =
     providerId === "anthropic" &&
     !anthropicBudgetModelIds.has(selectedModel?.value ?? "") &&
@@ -246,9 +257,9 @@ export async function resolveChatModelContext({
       : undefined;
 
   const selectedOpenRouterModelId = selectedModel
-    ? selectedModel.value.includes("/")
-      ? selectedModel.value
-      : `${selectedModel.author}/${selectedModel.value}`
+    ? resolvedModelId.includes("/")
+      ? resolvedModelId
+      : `${selectedModel.author}/${resolvedModelId}`
     : null;
   const getOpenRouterModel = () => {
     if (!selectedOpenRouterModelId) {
@@ -351,13 +362,23 @@ export async function resolveChatModelContext({
       break;
   }
 
-  const directProviderOptions = {
-    ...(openaiReasoningEffort
+  const openaiProviderOptions: OpenAIResponsesProviderOptions | undefined =
+    openaiReasoningEffort || openaiReasoningMode
       ? {
-          openai: {
-            reasoningEffort: openaiReasoningEffort,
-            reasoningSummary: "detailed",
-          } satisfies OpenAIResponsesProviderOptions,
+          ...(openaiReasoningEffort
+            ? {
+                reasoningEffort: openaiReasoningEffort,
+                reasoningSummary: "detailed" as const,
+              }
+            : {}),
+          ...(openaiReasoningMode ? { reasoningMode: openaiReasoningMode } : {}),
+        }
+      : undefined;
+
+  const directProviderOptions = {
+    ...(openaiProviderOptions
+      ? {
+          openai: openaiProviderOptions,
         }
       : {}),
     ...(Object.keys(anthropicOptions).length > 0

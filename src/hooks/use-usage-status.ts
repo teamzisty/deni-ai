@@ -1,5 +1,6 @@
 import { useExtracted } from "next-intl";
 import { useMemo } from "react";
+import { toast } from "sonner";
 import type { ModelOption } from "@/components/chat/chat-composer";
 import { trpc } from "@/lib/trpc/react";
 import { liveUsageQueryOptions } from "@/lib/usage-query-options";
@@ -15,16 +16,20 @@ export function useUsageStatus(params: {
   availableModels: ModelOption[];
   providerKeys: Set<string>;
   providerSettings: Map<string, ProviderSetting>;
+  /** When true on a Pro-capable model, usage is billed as premium. */
+  proMode?: boolean;
 }) {
   const t = useExtracted();
-  const { model, availableModels, providerKeys, providerSettings } = params;
+  const { model, availableModels, providerKeys, providerSettings, proMode = false } = params;
 
   const usageQuery = trpc.billing.usage.useQuery(undefined, {
     ...liveUsageQueryOptions,
   });
 
   const selectedModel = availableModels.find((m) => m.value === model);
-  const usageCategory = selectedModel?.premium ? "premium" : "basic";
+  const usesProMode = Boolean(proMode && selectedModel?.supportsProMode);
+  const usageCategory =
+    selectedModel?.premium || usesProMode ? ("premium" as const) : ("basic" as const);
   const categoryUsage = usageQuery.data?.usage.find((usage) => usage.category === usageCategory);
   const remainingUsage = categoryUsage?.remaining;
   const usageLimit = categoryUsage?.limit;
@@ -83,10 +88,17 @@ export function useUsageStatus(params: {
   const canEnableMaxMode = maxModeEligible && !maxModeEnabled && isUsageBlocked;
   const isSubmitBlocked = isUsageBlocked && !maxModeEnabled;
 
+  const utils = trpc.useUtils();
   const enableMaxMode = trpc.billing.enableMaxMode.useMutation({
-    onSuccess: () => {
-      usageQuery.refetch();
+    onSuccess: async () => {
+      toast.success(t("Max Mode enabled."));
+      await Promise.all([
+        usageQuery.refetch(),
+        utils.billing.maxModeStatus.invalidate(),
+        utils.billing.usage.invalidate(),
+      ]);
     },
+    onError: (error) => toast.error(error.message),
   });
 
   return {
