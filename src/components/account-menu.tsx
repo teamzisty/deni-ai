@@ -5,6 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useExtracted } from "next-intl";
+import { toast } from "sonner";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -12,27 +13,126 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Progress } from "@/components/ui/progress";
 import { SidebarMenuButton } from "@/components/ui/sidebar";
 import { authClient } from "@/lib/auth-client";
 import { isBillingDisabled } from "@/lib/billing-config";
 import { trpc } from "@/lib/trpc/react";
+import { liveUsageQueryOptions } from "@/lib/usage-query-options";
+import { cn } from "@/lib/utils";
 import { versions } from "@/lib/version";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "./ui/tooltip";
+
+type UsageCategoryItem = {
+  category: "basic" | "premium";
+  unit: "requests" | "tokens";
+  limit: number | null;
+  used: number;
+  remaining: number | null;
+};
+
+function AccountUsageRow({
+  label,
+  item,
+  maxModeEnabled,
+}: {
+  label: string;
+  item: UsageCategoryItem | undefined;
+  maxModeEnabled: boolean;
+}) {
+  const t = useExtracted();
+  if (!item) return null;
+
+  const hasLimit = item.limit !== null && item.limit > 0;
+  const usedPercent = hasLimit ? Math.min((item.used / (item.limit ?? 1)) * 100, 100) : 0;
+  const remainingPercent = Math.max(100 - usedPercent, 0);
+  const valueLabel = maxModeEnabled
+    ? t("Max Mode")
+    : hasLimit
+      ? t("{percent}% left", { percent: remainingPercent.toFixed(0) })
+      : t("Unlimited");
+
+  return (
+    <div className="space-y-1">
+      <div className="flex items-center justify-between gap-2 text-xs">
+        <span className="text-muted-foreground">{label}</span>
+        <span
+          className={cn(
+            "tabular-nums text-foreground/80",
+            maxModeEnabled && "text-amber-600 dark:text-amber-400",
+          )}
+        >
+          {valueLabel}
+        </span>
+      </div>
+      {hasLimit && !maxModeEnabled ? (
+        <Progress value={usedPercent} className="h-1" />
+      ) : (
+        <div className="h-1 rounded-full bg-muted" />
+      )}
+    </div>
+  );
+}
 
 export function AccountMenu() {
   const t = useExtracted();
   const { push } = useRouter();
+  const utils = trpc.useUtils();
   const session = authClient.useSession();
   const isAnonymous = Boolean(session.data?.user?.isAnonymous);
   const billingDisabled = isBillingDisabled;
+  const hasSession = Boolean(session.data?.user);
+
+  const usageQuery = trpc.billing.usage.useQuery(undefined, {
+    enabled: hasSession,
+    ...liveUsageQueryOptions,
+  });
 
   const maxModeQuery = trpc.billing.maxModeStatus.useQuery(undefined, {
     enabled: !billingDisabled && !isAnonymous,
     staleTime: 60_000,
   });
 
-  const maxModeEnabled = maxModeQuery.data?.enabled ?? false;
-  const maxModeEligible = maxModeQuery.data?.eligible ?? false;
+  const invalidateMaxMode = async () => {
+    await Promise.all([
+      utils.billing.maxModeStatus.invalidate(),
+      utils.billing.usage.invalidate(),
+    ]);
+  };
+
+  const enableMaxMode = trpc.billing.enableMaxMode.useMutation({
+    onSuccess: async () => {
+      toast.success(t("Max Mode enabled."));
+      await invalidateMaxMode();
+    },
+    onError: (error) => toast.error(error.message),
+  });
+
+  const disableMaxMode = trpc.billing.disableMaxMode.useMutation({
+    onSuccess: async () => {
+      toast.success(t("Max Mode disabled."));
+      await invalidateMaxMode();
+    },
+    onError: (error) => toast.error(error.message),
+  });
+
+  const maxModePending = enableMaxMode.isPending || disableMaxMode.isPending;
+  const maxModeEnabled =
+    maxModeQuery.data?.enabled ?? usageQuery.data?.maxModeEnabled ?? false;
+  const maxModeEligible =
+    maxModeQuery.data?.eligible ?? usageQuery.data?.maxModeEligible ?? false;
+
+  const basicUsage = usageQuery.data?.usage.find((entry) => entry.category === "basic");
+  const premiumUsage = usageQuery.data?.usage.find((entry) => entry.category === "premium");
+  const usageTier = usageQuery.data?.tier ?? "free";
+  const usageTierLabel =
+    usageTier === "free"
+      ? t("Free")
+      : usageTier === "plus"
+        ? t("Plus")
+        : usageTier === "max"
+          ? t("Max")
+          : t("Pro");
 
   return (
     <DropdownMenu>
@@ -64,7 +164,7 @@ export function AccountMenu() {
           </div>
         </SidebarMenuButton>
       </DropdownMenuTrigger>
-      <DropdownMenuContent side="right" align="start" className="w-56">
+      <DropdownMenuContent side="right" align="start" className="w-64">
         <div className="flex items-center gap-2 px-2 py-1.5">
           <div className="flex size-6 items-center justify-center rounded-full bg-primary text-primary-foreground overflow-hidden text-xs">
             {session.data?.user?.image ? (
@@ -90,20 +190,85 @@ export function AccountMenu() {
             </span>
           </div>
         </div>
-        {maxModeEnabled && (
-          <div className="px-2 py-1.5 text-xs text-muted-foreground flex items-center gap-1">
-            <Zap className="size-3 text-amber-500" />
-            <span>{t("Max Mode active")}</span>
-          </div>
+
+        {hasSession && (
+          <>
+            <DropdownMenuSeparator />
+            <div className="space-y-2.5 px-2 py-1.5">
+              <div className="flex items-center justify-between gap-2">
+                <span className="text-xs font-medium text-foreground">{t("Usage")}</span>
+                <span className="rounded-md bg-muted px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground">
+                  {usageTierLabel}
+                </span>
+              </div>
+              {usageQuery.isLoading ? (
+                <p className="text-xs text-muted-foreground">{t("Loading usage…")}</p>
+              ) : usageQuery.isError ? (
+                <p className="text-xs text-destructive">{t("Failed to load usage.")}</p>
+              ) : (
+                <div className="space-y-2.5">
+                  <AccountUsageRow
+                    label={t("Basic")}
+                    item={basicUsage}
+                    maxModeEnabled={maxModeEnabled}
+                  />
+                  <AccountUsageRow
+                    label={t("Premium")}
+                    item={premiumUsage}
+                    maxModeEnabled={maxModeEnabled}
+                  />
+                </div>
+              )}
+              {!isAnonymous && !billingDisabled && (
+                <Link
+                  href="/settings/billing"
+                  className="block text-[11px] text-muted-foreground underline-offset-2 hover:text-foreground hover:underline"
+                >
+                  {t("View billing")}
+                </Link>
+              )}
+            </div>
+          </>
         )}
-        {!maxModeEnabled && maxModeEligible && (
-          <DropdownMenuItem className="gap-2 text-sm text-amber-600" asChild>
-            <Link href="/settings/billing" className="flex w-full">
-              <Zap className="size-4" />
-              <span className="flex-1">{t("Enable Max Mode")}</span>
-            </Link>
-          </DropdownMenuItem>
+
+        {(maxModeEnabled || maxModeEligible) && (
+          <>
+            <DropdownMenuSeparator />
+            {maxModeEnabled && (
+              <DropdownMenuItem
+                className="gap-2 text-sm text-muted-foreground"
+                closeOnClick={false}
+                disabled={maxModePending}
+                onClick={() => {
+                  if (maxModePending) return;
+                  disableMaxMode.mutate();
+                }}
+              >
+                <Zap className="size-4 text-amber-500" />
+                <span className="flex-1">
+                  {disableMaxMode.isPending ? t("Disabling…") : t("Disable Max Mode")}
+                </span>
+              </DropdownMenuItem>
+            )}
+            {!maxModeEnabled && maxModeEligible && (
+              <DropdownMenuItem
+                className="gap-2 text-sm text-amber-600"
+                closeOnClick={false}
+                disabled={maxModePending}
+                onClick={() => {
+                  if (maxModePending) return;
+                  enableMaxMode.mutate();
+                }}
+              >
+                <Zap className="size-4" />
+                <span className="flex-1">
+                  {enableMaxMode.isPending ? t("Enabling…") : t("Enable Max Mode")}
+                </span>
+              </DropdownMenuItem>
+            )}
+          </>
         )}
+
         {
           <TooltipProvider>
             <Tooltip>

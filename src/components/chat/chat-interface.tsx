@@ -303,7 +303,7 @@ export function ChatInterface({
     }
 
     if (GA_ID) {
-      sendGAEvent("chat_message_sent", {
+      sendGAEvent("event", "chat_message_sent", {
         event_category: "chat",
         event_label: usageTier,
         value: 1,
