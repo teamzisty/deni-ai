@@ -204,8 +204,6 @@ export async function POST(req: Request) {
     additionalInstruction,
   } = parsedBody.data;
 
-  const proMode = Boolean(requestedProMode && getModelDefinition(baseModel)?.supportsProMode);
-
   const chat = await getChatById(id, userId);
   if (!chat) {
     return NextResponse.json({ error: "Chat not found" }, { status: 404 });
@@ -232,7 +230,7 @@ export async function POST(req: Request) {
         isAnonymous,
         baseModel,
         reasoningEffort,
-        proMode,
+        proMode: requestedProMode,
       }),
     ]);
   } catch (error) {
@@ -244,6 +242,12 @@ export async function POST(req: Request) {
 
   const { model, providerOptions, usageCategory, usageUnit, useByok, usesOpenRouter } =
     modelContext;
+
+  // Pro mode only applies on BYOK OpenAI (voids.top platform path has no pro slug).
+  const modelDef = getModelDefinition(baseModel);
+  const proMode = Boolean(
+    requestedProMode && modelDef?.supportsProMode && useByok && modelDef.author === "openai",
+  );
 
   const webSearchEnabled = webSearch || forceWebSearch || deepResearch;
   const tools = createChatTools({
