@@ -1,14 +1,26 @@
+import { and, eq } from "drizzle-orm";
 import { notFound } from "next/navigation";
-import { headers } from "next/headers";
-import { auth } from "@/lib/auth";
+import { Suspense } from "react";
+import { ProjectPage } from "@/components/projects/project-page";
+import { Spinner } from "@/components/ui/spinner";
 import { db } from "@/db/drizzle";
 import { projects } from "@/db/schema";
-import { and, eq } from "drizzle-orm";
-import { ProjectPage } from "@/components/projects/project-page";
+import { getSession } from "@/lib/get-session";
 
-export default async function ProjectDetailPage({ params }: { params: Promise<{ id: string }> }) {
-  const [{ id }, headersList] = await Promise.all([params, headers()]);
-  const session = await auth.api.getSession({ headers: headersList });
+type ProjectDetailPageProps = {
+  params: Promise<{ id: string }>;
+};
+
+function ProjectPageFallback() {
+  return (
+    <div className="flex min-h-[50vh] items-center justify-center">
+      <Spinner className="size-5" />
+    </div>
+  );
+}
+
+async function ProjectDetailContent({ params }: ProjectDetailPageProps) {
+  const [{ id }, session] = await Promise.all([params, getSession()]);
   if (!session?.user) {
     notFound();
   }
@@ -24,4 +36,12 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
   }
 
   return <ProjectPage projectId={id} initialProjectName={project.name} />;
+}
+
+export default function ProjectDetailPage(props: ProjectDetailPageProps) {
+  return (
+    <Suspense fallback={<ProjectPageFallback />}>
+      <ProjectDetailContent {...props} />
+    </Suspense>
+  );
 }

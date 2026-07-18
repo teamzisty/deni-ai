@@ -1,6 +1,16 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { ArrowRight, BookOpenText, ClipboardCheck, GitBranch, Sparkles } from "lucide-react";
+import {
+  ArrowRight,
+  BookOpenText,
+  ClipboardCheck,
+  Coins,
+  GitBranch,
+  GraduationCap,
+  MessageSquareQuote,
+  Shield,
+  Sparkles,
+} from "lucide-react";
 import { useExtracted } from "next-intl";
 import { getExtracted } from "next-intl/server";
 
@@ -8,7 +18,7 @@ export async function generateMetadata(): Promise<Metadata> {
   const t = await getExtracted();
   const title = t("AI Guides");
   const description = t(
-    "Practical guides for choosing AI models, verifying AI answers, and using multi-model workflows responsibly.",
+    "Practical guides for choosing AI models, verifying AI answers, multi-model workflows, prompt patterns, study habits, and privacy.",
   );
 
   return {
@@ -59,6 +69,38 @@ export default function GuidesPage() {
         "Concrete workflows for comparing models, reducing hallucination risk, improving drafts, and deciding when one answer is enough.",
       ),
     },
+    {
+      href: "/guides/prompt-patterns",
+      icon: MessageSquareQuote,
+      title: t("Prompt patterns that work across AI models"),
+      description: t(
+        "Reusable prompt skeletons for goals, constraints, structured output, and repair loops that transfer between providers.",
+      ),
+    },
+    {
+      href: "/guides/study-with-ai",
+      icon: GraduationCap,
+      title: t("How to study with AI without outsourcing your thinking"),
+      description: t(
+        "Study methods that use AI for explanation and practice while keeping retrieval, writing, and judgment with the learner.",
+      ),
+    },
+    {
+      href: "/guides/privacy-when-using-ai",
+      icon: Shield,
+      title: t("Privacy habits for everyday AI chat"),
+      description: t(
+        "What not to paste, how to redact sensitive material, and how to match tools to the real risk of the task.",
+      ),
+    },
+    {
+      href: "/guides/free-ai-chat",
+      icon: Coins,
+      title: t("How to choose a free AI chat workspace"),
+      description: t(
+        "A buyer-style checklist for free AI chat tools: limits, model flexibility, privacy pages, and when paid plans make sense.",
+      ),
+    },
   ];
 
   const jsonLd = {
@@ -94,12 +136,17 @@ export default function GuidesPage() {
               {headline}
             </h1>
             <p className="mt-6 text-base leading-8 text-muted-foreground">{description}</p>
+            <p className="mt-4 text-sm leading-7 text-muted-foreground">
+              {t(
+                "Each guide is original public writing from the Deni AI team. The goal is to help visitors make better decisions with any AI tool, then optionally use Deni AI when multi-model chat fits the work.",
+              )}
+            </p>
           </div>
         </div>
       </section>
 
       <section className="px-4 pb-20 md:pb-28">
-        <div className="mx-auto grid max-w-6xl gap-4 md:grid-cols-3">
+        <div className="mx-auto grid max-w-6xl gap-4 md:grid-cols-2 xl:grid-cols-3">
           {guides.map((guide) => {
             const Icon = guide.icon;
 
@@ -138,6 +185,27 @@ export default function GuidesPage() {
                 "The goal of this section is to make Deni AI useful as a public resource, not only as an app. Each guide gives concrete review steps, examples, and decision rules that visitors can apply in any AI workspace.",
               )}
             </p>
+            <p>
+              {t(
+                "If you still have product questions after reading, visit the FAQ or contact page. If you are ready to try multi-model chat, open the workspace and start with a low-risk task.",
+              )}
+            </p>
+          </div>
+          <div className="mt-8 flex flex-wrap gap-3">
+            <Link
+              href="/faq"
+              className="inline-flex items-center gap-2 rounded-full border border-border bg-background px-4 py-2 text-sm font-medium hover:bg-secondary"
+            >
+              {t("FAQ")}
+              <ArrowRight className="size-4" />
+            </Link>
+            <Link
+              href="/contact"
+              className="inline-flex items-center gap-2 rounded-full border border-border bg-background px-4 py-2 text-sm font-medium hover:bg-secondary"
+            >
+              {t("Contact")}
+              <ArrowRight className="size-4" />
+            </Link>
           </div>
         </div>
       </section>

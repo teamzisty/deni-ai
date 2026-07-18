@@ -94,10 +94,7 @@ export function AccountMenu() {
   });
 
   const invalidateMaxMode = async () => {
-    await Promise.all([
-      utils.billing.maxModeStatus.invalidate(),
-      utils.billing.usage.invalidate(),
-    ]);
+    await Promise.all([utils.billing.maxModeStatus.invalidate(), utils.billing.usage.invalidate()]);
   };
 
   const enableMaxMode = trpc.billing.enableMaxMode.useMutation({
@@ -117,10 +114,8 @@ export function AccountMenu() {
   });
 
   const maxModePending = enableMaxMode.isPending || disableMaxMode.isPending;
-  const maxModeEnabled =
-    maxModeQuery.data?.enabled ?? usageQuery.data?.maxModeEnabled ?? false;
-  const maxModeEligible =
-    maxModeQuery.data?.eligible ?? usageQuery.data?.maxModeEligible ?? false;
+  const maxModeEnabled = maxModeQuery.data?.enabled ?? usageQuery.data?.maxModeEnabled ?? false;
+  const maxModeEligible = maxModeQuery.data?.eligible ?? usageQuery.data?.maxModeEligible ?? false;
 
   const basicUsage = usageQuery.data?.usage.find((entry) => entry.category === "basic");
   const premiumUsage = usageQuery.data?.usage.find((entry) => entry.category === "premium");

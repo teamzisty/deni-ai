@@ -16,6 +16,14 @@ See `CONTRIBUTING.md` for contributor workflow, standards, and project customiza
 
 MIT License
 
+## Sponsors
+
+If Deni AI is useful to you, consider supporting development on GitHub Sponsors:
+
+[https://github.com/sponsors/raicdev](https://github.com/sponsors/raicdev)
+
+Sponsorships help cover hosting, infrastructure, and ongoing maintenance so we can keep improving free and accessible AI chat.
+
 ## Support
 
 For issues, questions, or suggestions, please open an issue on GitHub.

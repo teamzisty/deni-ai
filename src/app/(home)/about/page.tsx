@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import {
   BrainCircuit,
   ClipboardCheck,
@@ -301,6 +302,24 @@ export default function AboutPage() {
         </div>
       </section>
 
+      <section className="relative px-4 pb-8 md:pb-12">
+        <div className="mx-auto max-w-3xl space-y-4 text-sm leading-8 text-muted-foreground">
+          <h2 className="text-2xl font-semibold tracking-tight text-foreground">
+            {t("Public resources we maintain")}
+          </h2>
+          <p>
+            {t(
+              "Beyond the chat product, Deni AI publishes original guides on model selection, answer verification, multi-model workflows, study practice, prompt patterns, and privacy habits. These pages are written for visitors who want useful methods, not only a signup funnel.",
+            )}
+          </p>
+          <p>
+            {t(
+              "We also maintain FAQ, contact, terms, privacy, and commercial disclosure pages so people can understand the service, reach a human, and review policies before creating an account.",
+            )}
+          </p>
+        </div>
+      </section>
+
       {/* CTA */}
       <section className="relative px-4 py-16 md:py-24">
         <div className="mx-auto max-w-2xl">
@@ -314,6 +333,22 @@ export default function AboutPage() {
               )}
             </p>
             <LoginButton />
+            <p className="mt-6 text-sm text-muted-foreground">
+              {t("Questions first?")}{" "}
+              <Link
+                href="/contact"
+                className="font-medium text-foreground underline-offset-4 hover:underline"
+              >
+                {t("Contact us")}
+              </Link>
+              {" · "}
+              <Link
+                href="/faq"
+                className="font-medium text-foreground underline-offset-4 hover:underline"
+              >
+                {t("FAQ")}
+              </Link>
+            </p>
           </div>
         </div>
       </section>

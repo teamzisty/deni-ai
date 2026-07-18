@@ -1,7 +1,16 @@
 "use client";
 
 import Link from "next/link";
-import { BookOpenText, BrainCircuit, CheckCircle2, KeyRound, ShieldCheck } from "lucide-react";
+import {
+  BookOpenText,
+  BrainCircuit,
+  CheckCircle2,
+  CircleHelp,
+  ClipboardCheck,
+  KeyRound,
+  ShieldCheck,
+  Sparkles,
+} from "lucide-react";
 import { useExtracted } from "next-intl";
 
 export function HomeTrustSection() {
@@ -27,6 +36,33 @@ export function HomeTrustSection() {
       title: t("Transparent limits"),
       description: t(
         "The product explains usage limits and model cost differences so visitors can understand what changes between free and paid access.",
+      ),
+    },
+  ];
+
+  const resources = [
+    {
+      href: "/guides/model-selection",
+      icon: Sparkles,
+      title: t("How to choose an AI model for real work"),
+      description: t(
+        "A practical selection workflow based on task type, risk, and failure modes instead of brand hype.",
+      ),
+    },
+    {
+      href: "/guides/verify-ai-answers",
+      icon: ClipboardCheck,
+      title: t("How to verify AI answers before you rely on them"),
+      description: t(
+        "A short review routine for facts, numbers, code, citations, and recommendations.",
+      ),
+    },
+    {
+      href: "/faq",
+      icon: CircleHelp,
+      title: t("Frequently asked questions"),
+      description: t(
+        "Clear answers about free access, models, privacy, billing, teams, and responsible use.",
       ),
     },
   ];
@@ -62,6 +98,49 @@ export function HomeTrustSection() {
                 <p className="mt-3 text-sm leading-7 text-muted-foreground">{signal.description}</p>
               </article>
             ))}
+          </div>
+        </div>
+      </section>
+
+      <section className="relative border-y border-border/50 bg-secondary/20 px-4 py-24 md:py-28">
+        <div className="mx-auto max-w-6xl">
+          <div className="max-w-3xl">
+            <p className="mb-3 text-sm font-semibold uppercase tracking-[0.18em] text-muted-foreground/70">
+              {t("Public resources")}
+            </p>
+            <h2 className="text-3xl font-semibold tracking-tight md:text-4xl">
+              {t("Learn useful AI habits before you open the chat")}
+            </h2>
+            <p className="mt-5 text-sm leading-7 text-muted-foreground">
+              {t(
+                "Deni AI publishes original guides for model selection, answer verification, multi-model workflows, study practice, and privacy. These pages are meant to help even if you use another tool.",
+              )}
+            </p>
+          </div>
+
+          <div className="mt-10 grid gap-4 md:grid-cols-3">
+            {resources.map((resource) => {
+              const Icon = resource.icon;
+              return (
+                <Link
+                  key={resource.href}
+                  href={resource.href}
+                  className="rounded-[1.5rem] border border-border/70 bg-card p-6 transition-transform hover:-translate-y-1"
+                >
+                  <Icon className="size-5 text-primary" />
+                  <h3 className="mt-5 text-lg font-semibold">{resource.title}</h3>
+                  <p className="mt-3 text-sm leading-7 text-muted-foreground">
+                    {resource.description}
+                  </p>
+                </Link>
+              );
+            })}
+          </div>
+
+          <div className="mt-8">
+            <Link href="/guides" className="text-sm font-medium underline-offset-4 hover:underline">
+              {t("Browse all AI guides")}
+            </Link>
           </div>
         </div>
       </section>
