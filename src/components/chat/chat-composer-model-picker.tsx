@@ -47,12 +47,12 @@ type ProviderLabels = {
 
 function getModelDescription(value: string, labels: ModelDescriptionLabels): string {
   switch (value) {
-    case "grok-4-0709":
-    case "grok-4.20-reasoning-beta":
+    case "grok-4.5":
+    case "grok-4.3":
       return labels.xaiMostIntelligentModel;
-    case "grok-4.20-non-reasoning-beta":
-    case "grok-4-1-fast-reasoning":
-    case "grok-4-1-fast-non-reasoning":
+    case "grok-4.20":
+    case "grok-4.20-multi-agent":
+    case "grok-build-0.1":
       return labels.fastAndEfficientModel;
     case "healer-alpha":
     case "hunter-alpha":

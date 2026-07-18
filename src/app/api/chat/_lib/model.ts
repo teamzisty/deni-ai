@@ -15,10 +15,8 @@ import { assertSafePublicHttpUrl } from "@/lib/network-security";
 import { createDeniOpenRouter } from "@/lib/openrouter-provider";
 import { getUsageSummary, type UsageCategory, UsageLimitError } from "@/lib/usage";
 
-const voids = createOpenAI({
-  apiKey: "no_api_key_needed",
-  baseURL: "https://capi.voids.top/v2",
-});
+/** OpenAI-compatible free gateway used for platform OpenAI + Anthropic traffic. */
+const VOIDS_BASE_URL = "https://capi.voids.top/v2";
 
 const openaiEffortOptions = ["none", "minimal", "low", "medium", "high", "xhigh", "max"] as const;
 const anthropicEffortOptions = ["low", "medium", "high", "max"] as const;
@@ -123,18 +121,6 @@ export async function resolveChatModelContext({
     throw new ChatRouteError(400, { error: "Unknown model" });
   }
 
-  const useProMode = Boolean(proMode && selectedModel.supportsProMode);
-  const isPremiumModel = Boolean(selectedModel.premium);
-  // Pro mode always bills against premium quota (even when the base model is basic).
-  const usageCategory: UsageCategory = isPremiumModel || useProMode ? "premium" : "basic";
-
-  if (isAnonymous && usageCategory === "premium") {
-    throw new ChatRouteError(403, {
-      error: useProMode
-        ? "Pro mode is not available for guest sessions."
-        : "Premium models are not available for guest sessions.",
-    });
-  }
   let usageUnit: "requests" | "tokens" = "requests";
   const [providerKeys, providerSettings] = await Promise.all([
     db.select().from(providerKey).where(eq(providerKey.userId, userId)),
@@ -177,6 +163,26 @@ export async function resolveChatModelContext({
     }
   }
 
+  // Platform OpenAI/Anthropic traffic goes through voids.top (OpenAI-compatible).
+  // BYOK keeps native provider SDKs. Google/xAI platform traffic stays on OpenRouter.
+  // Pro mode requires BYOK OpenAI (voids.top has no `*-pro` slugs / reasoning.mode).
+  const usesVoids = !useByok && (providerId === "openai" || providerId === "anthropic");
+  const usesOpenRouter = !useByok && (providerId === "google" || providerId === "xai");
+  const useProMode = Boolean(
+    proMode && selectedModel.supportsProMode && useByok && providerId === "openai",
+  );
+  const isPremiumModel = Boolean(selectedModel.premium);
+  // Pro mode always bills against premium quota (even when the base model is basic).
+  const usageCategory: UsageCategory = isPremiumModel || useProMode ? "premium" : "basic";
+
+  if (isAnonymous && usageCategory === "premium") {
+    throw new ChatRouteError(403, {
+      error: useProMode
+        ? "Pro mode is not available for guest sessions."
+        : "Premium models are not available for guest sessions.",
+    });
+  }
+
   if (!useByok) {
     try {
       const usageSummary = await getUsageSummary({ userId, isAnonymous });
@@ -206,10 +212,8 @@ export async function resolveChatModelContext({
     }
   }
 
-  // OpenRouter exposes GPT-5.6 Pro as a `*-pro` model slug. BYOK OpenAI uses
-  // the base model id with `reasoning.mode: "pro"` instead.
-  const resolvedModelId =
-    useProMode && !useByok ? `${selectedModel.value}-pro` : selectedModel.value;
+  // voids.top model ids match constants values (gpt-5.6-sol, claude-fable-5, …).
+  const resolvedModelId = selectedModel.value;
 
   const resolvedReasoningEffort = resolveReasoningEffort(
     selectedModel?.efforts ?? false,
@@ -223,8 +227,11 @@ export async function resolveChatModelContext({
       : undefined;
   const openaiReasoningMode =
     providerId === "openai" && useProMode && useByok ? ("pro" as const) : undefined;
+  // Anthropic-native options only apply on BYOK Anthropic (or direct Anthropic SDK).
+  // voids.top is OpenAI-compatible and does not accept Anthropic providerOptions.
   const anthropicReasoningEffort =
     providerId === "anthropic" &&
+    !usesVoids &&
     !anthropicBudgetModelIds.has(selectedModel?.value ?? "") &&
     resolvedReasoningEffort &&
     anthropicEffortOptions.includes(
@@ -234,6 +241,7 @@ export async function resolveChatModelContext({
       : undefined;
   const anthropicThinkingBudget =
     providerId === "anthropic" &&
+    !usesVoids &&
     anthropicBudgetModelIds.has(selectedModel?.value ?? "") &&
     resolvedReasoningEffort
       ? resolvedReasoningEffort === "low"
@@ -256,10 +264,13 @@ export async function resolveChatModelContext({
       ? resolvedReasoningEffort
       : undefined;
 
+  // OpenRouter uses `x-ai/...` for xAI models (not `xai/...`).
+  const openRouterAuthor =
+    selectedModel.author === "xai" ? "x-ai" : selectedModel.author;
   const selectedOpenRouterModelId = selectedModel
     ? resolvedModelId.includes("/")
       ? resolvedModelId
-      : `${selectedModel.author}/${resolvedModelId}`
+      : `${openRouterAuthor}/${resolvedModelId}`
     : null;
   const getOpenRouterModel = () => {
     if (!selectedOpenRouterModelId) {
@@ -286,6 +297,17 @@ export async function resolveChatModelContext({
     return provider(resolvedModelId.replace(".", "-"));
   };
 
+  const getVoidsModel = () => {
+    const provider = createOpenAI({
+      apiKey: "voids",
+      baseURL: VOIDS_BASE_URL,
+      name: "voids",
+    });
+    // voids.top speaks the Chat Completions API with OpenAI-style model ids
+    // (e.g. gpt-5.6-sol, claude-fable-5). Keep the id as declared in constants.
+    return provider.chat(resolvedModelId);
+  };
+
   const anthropicOptions: AnthropicProviderOptions = {};
   if (anthropicReasoningEffort) {
     anthropicOptions.effort = anthropicReasoningEffort;
@@ -307,7 +329,7 @@ export async function resolveChatModelContext({
         });
         model = provider.responses(resolvedModelId);
       } else {
-        model = getOpenRouterModel();
+        model = getVoidsModel();
       }
       break;
     }
@@ -315,7 +337,7 @@ export async function resolveChatModelContext({
       if (useByok) {
         model = getAnthropicModel(byokApiKey, byokBaseUrl);
       } else {
-        model = getAnthropicModel(env.ANTHROPIC_API_KEY);
+        model = getVoidsModel();
       }
       break;
     }
@@ -358,8 +380,7 @@ export async function resolveChatModelContext({
       break;
     }
     default:
-      model = voids.chat(resolvedModelId);
-      break;
+      throw new ChatRouteError(400, { error: "Unknown provider" });
   }
 
   const openaiProviderOptions: OpenAIResponsesProviderOptions | undefined =
@@ -406,19 +427,24 @@ export async function resolveChatModelContext({
   };
 
   // When routing through OpenRouter, wrap provider-specific options so they are
-  // forwarded in OpenRouter-compatible format.
+  // forwarded in OpenRouter-compatible format. voids.top only understands OpenAI
+  // chat-style options (and only for OpenAI-authored models).
   const providerOptions: ChatProviderOptions = (
-    useByok || providerId === "anthropic"
-      ? directProviderOptions
-      : Object.keys(directProviderOptions).length > 0
-        ? { openrouter: { providerOptions: directProviderOptions } }
+    usesVoids
+      ? providerId === "openai" && openaiProviderOptions
+        ? { openai: openaiProviderOptions }
         : {}
+      : useByok || providerId === "anthropic"
+        ? directProviderOptions
+        : usesOpenRouter && Object.keys(directProviderOptions).length > 0
+          ? { openrouter: { providerOptions: directProviderOptions } }
+          : {}
   ) as ChatProviderOptions;
 
   return {
     model,
     useByok,
-    usesOpenRouter: !useByok && ["openai", "google", "xai"].includes(providerId),
+    usesOpenRouter,
     usageCategory,
     usageUnit,
     providerOptions,
