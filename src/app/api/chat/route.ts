@@ -243,10 +243,13 @@ export async function POST(req: Request) {
   const { model, providerOptions, usageCategory, usageUnit, useByok, usesOpenRouter } =
     modelContext;
 
-  // Pro mode only applies on BYOK OpenAI (voids.top platform path has no pro slug).
+  // Pro mode: BYOK OpenAI or OpenRouter platform OpenAI (not voids.top).
   const modelDef = getModelDefinition(baseModel);
   const proMode = Boolean(
-    requestedProMode && modelDef?.supportsProMode && useByok && modelDef.author === "openai",
+    requestedProMode &&
+    modelDef?.supportsProMode &&
+    modelDef.author === "openai" &&
+    (useByok || usesOpenRouter),
   );
 
   const webSearchEnabled = webSearch || forceWebSearch || deepResearch;
