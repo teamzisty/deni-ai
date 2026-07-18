@@ -2,9 +2,11 @@ import {
   Bot,
   BookOpen,
   BriefcaseBusiness,
+  CircleHelp,
   FileText,
   Globe,
   Laptop,
+  Mail,
   Menu,
   Shield,
   Sparkles,
@@ -123,6 +125,29 @@ export default function Header() {
 
   const resourceSections: MegaMenuSection[] = [
     {
+      title: t("Learn"),
+      links: [
+        {
+          href: "/guides",
+          icon: BookOpen,
+          title: t("AI Guides"),
+          description: t("Practical AI reading."),
+        },
+        {
+          href: "/use-cases",
+          icon: BriefcaseBusiness,
+          title: t("Use Cases"),
+          description: t("Practical workflows."),
+        },
+        {
+          href: "/faq",
+          icon: CircleHelp,
+          title: t("FAQ"),
+          description: t("Common product questions."),
+        },
+      ],
+    },
+    {
       title: t("Company"),
       links: [
         {
@@ -132,33 +157,22 @@ export default function Header() {
           description: t("Vision and background."),
         },
         {
-          href: "/use-cases",
-          icon: BriefcaseBusiness,
-          title: t("Use Cases"),
-          description: t("Practical workflows."),
-        },
-        {
-          href: "/guides",
-          icon: BookOpen,
-          title: t("AI Guides"),
-          description: t("Practical AI reading."),
-        },
-      ],
-    },
-    {
-      title: t("Legal"),
-      links: [
-        {
-          href: "/legal/terms",
-          icon: FileText,
-          title: t("Terms"),
-          description: t("Terms of service."),
+          href: "/contact",
+          icon: Mail,
+          title: t("Contact"),
+          description: t("Email support and requests."),
         },
         {
           href: "/legal/privacy-policy",
           icon: Shield,
           title: t("Privacy"),
           description: t("Data handling policy."),
+        },
+        {
+          href: "/legal/terms",
+          icon: FileText,
+          title: t("Terms"),
+          description: t("Terms of service."),
         },
       ],
     },
@@ -219,7 +233,7 @@ export default function Header() {
                 </div>
               </HeaderMegaMenu>
               <HeaderMegaMenu label={t("Resources")} menuLabel={t("Resources")}>
-                <div className="grid gap-8 md:grid-cols-3">
+                <div className="grid gap-8 md:grid-cols-2">
                   {resourceSections.map((section) => (
                     <div key={section.title}>
                       <p className="mb-2 text-sm text-muted-foreground font-medium">

@@ -5,6 +5,7 @@ import createNextIntlPlugin from "next-intl/plugin";
 const nextConfig: NextConfig = {
   /* config options here */
   transpilePackages: ["shiki"],
+  cacheComponents: true,
   reactCompiler: true,
   poweredByHeader: false,
   // Tree-shake large icon/date packages more aggressively

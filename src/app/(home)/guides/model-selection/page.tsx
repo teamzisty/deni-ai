@@ -1,8 +1,14 @@
 import type { Metadata } from "next";
-import Link from "next/link";
-import { ArrowRight, CheckCircle2, Gauge, GitCompare, ShieldAlert } from "lucide-react";
+import { CheckCircle2, Gauge, GitCompare, ShieldAlert } from "lucide-react";
 import { useExtracted } from "next-intl";
 import { getExtracted } from "next-intl/server";
+import {
+  GuideArticle,
+  GuideCallout,
+  GuideCardGrid,
+  GuideList,
+  GuideSection,
+} from "@/components/content/guide-article";
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getExtracted();
@@ -67,104 +73,125 @@ export default function ModelSelectionGuidePage() {
     "@type": "Article",
     headline,
     description,
-    author: {
-      "@type": "Organization",
-      name: "Deni AI",
-    },
-    publisher: {
-      "@type": "Organization",
-      name: "Deni AI",
-    },
+    author: { "@type": "Organization", name: "Deni AI" },
+    publisher: { "@type": "Organization", name: "Deni AI" },
     mainEntityOfPage: "https://deniai.app/guides/model-selection",
   };
 
   return (
-    <main className="min-h-screen bg-background" id="main-content">
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd).replace(/</g, "\\u003c") }}
-      />
+    <GuideArticle
+      breadcrumbLabel={t("AI Guides")}
+      headline={headline}
+      description={description}
+      jsonLd={jsonLd}
+      nextLinks={[
+        { href: "/guides/verify-ai-answers", label: t("Next: verify AI answers") },
+        { href: "/models", label: t("See available models") },
+      ]}
+    >
+      <GuideCardGrid items={decisionRules} />
 
-      <article className="px-4 pb-20 pt-32 md:pt-40">
-        <div className="mx-auto max-w-4xl">
-          <Link href="/guides" className="text-sm text-muted-foreground hover:text-foreground">
-            {t("AI Guides")}
-          </Link>
-          <h1 className="mt-5 text-3xl font-semibold tracking-tight sm:text-4xl md:text-5xl">
-            {headline}
-          </h1>
-          <p className="mt-6 text-base leading-8 text-muted-foreground">{description}</p>
+      <GuideSection title={t("Why model names are a weak starting point")}>
+        <p>
+          {t(
+            "Brand names change faster than work does. A model that was best at coding last quarter may not be the best for your current repository, language, or review standard. The stable part of the decision is the task profile: drafting, analysis, coding, translation, research, or decision support.",
+          )}
+        </p>
+        <p>
+          {t(
+            "Starting from the brand also encourages overkill. People often choose the most expensive model by default, then spend more time reading a long answer than the task required. A smaller model with a clear prompt and a short verification step is often faster end to end.",
+          )}
+        </p>
+      </GuideSection>
 
-          <div className="mt-10 grid gap-4 md:grid-cols-2">
-            {decisionRules.map((rule) => (
-              <section
-                key={rule.title}
-                className="rounded-[1.5rem] border border-border bg-card p-6"
-              >
-                <div className="inline-flex size-10 items-center justify-center rounded-2xl bg-secondary">
-                  <rule.icon className="size-5" />
-                </div>
-                <h2 className="mt-5 text-xl font-semibold tracking-tight">{rule.title}</h2>
-                <p className="mt-3 text-sm leading-7 text-muted-foreground">{rule.body}</p>
-              </section>
-            ))}
-          </div>
+      <GuideSection title={t("A simple selection workflow")}>
+        <p>
+          {t(
+            "First, classify the task. Is it drafting, analysis, coding, translation, research, or decision support? The category matters more than the model name because it defines what a good answer looks like.",
+          )}
+        </p>
+        <p>
+          {t(
+            "Second, classify the risk. Low-risk work can start with a fast model. Medium-risk work should be reviewed against requirements. High-risk work should use stronger reasoning and a separate verification pass.",
+          )}
+        </p>
+        <p>
+          {t(
+            "Third, look at the failure mode. If the model might invent facts, ask for sources and verify them. If it might write invalid code, run tests. If it might flatten nuance, ask another model to critique the tone.",
+          )}
+        </p>
+        <p>
+          {t(
+            "Finally, stop when the answer is good enough for the next human step. The goal is not to find a perfect model. The goal is to reduce uncertainty enough to keep moving responsibly.",
+          )}
+        </p>
+      </GuideSection>
 
-          <section className="mt-12 space-y-5 text-sm leading-8 text-muted-foreground">
-            <h2 className="text-2xl font-semibold tracking-tight text-foreground">
-              {t("A simple selection workflow")}
-            </h2>
-            <p>
-              {t(
-                "First, classify the task. Is it drafting, analysis, coding, translation, research, or decision support? The category matters more than the model name because it defines what a good answer looks like.",
-              )}
-            </p>
-            <p>
-              {t(
-                "Second, classify the risk. Low-risk work can start with a fast model. Medium-risk work should be reviewed against requirements. High-risk work should use stronger reasoning and a separate verification pass.",
-              )}
-            </p>
-            <p>
-              {t(
-                "Third, look at the failure mode. If the model might invent facts, ask for sources and verify them. If it might write invalid code, run tests. If it might flatten nuance, ask another model to critique the tone.",
-              )}
-            </p>
-            <p>
-              {t(
-                "Finally, stop when the answer is good enough for the next human step. The goal is not to find a perfect model. The goal is to reduce uncertainty enough to keep moving responsibly.",
-              )}
-            </p>
-          </section>
+      <GuideSection title={t("Task profiles that show up in real work")}>
+        <p>
+          {t(
+            "Drafting work rewards speed and iteration. Emails, outlines, meeting notes, and first-pass blog structures benefit from a model that responds quickly so you can reshape the result many times.",
+          )}
+        </p>
+        <p>
+          {t(
+            "Analysis work rewards careful structure. Competitive notes, incident reviews, and product tradeoffs need assumptions listed, alternatives compared, and weak claims marked. This is where stronger reasoning usually pays for itself.",
+          )}
+        </p>
+        <p>
+          {t(
+            "Coding work rewards local correctness. A good answer names files, respects existing APIs, and leaves you with something you can run. If the model cannot state constraints, treat the output as a sketch rather than a patch.",
+          )}
+        </p>
+        <p>
+          {t(
+            "Translation and localization reward audience fit. Literal accuracy is only the first pass. The final text has to sound natural for the reader, which often needs a second edit focused on tone rather than dictionary correctness.",
+          )}
+        </p>
+      </GuideSection>
 
-          <section className="mt-12 rounded-[1.5rem] border border-border/70 bg-secondary/20 p-6">
-            <h2 className="text-xl font-semibold tracking-tight">{t("Model choice checklist")}</h2>
-            <ul className="mt-5 space-y-3 text-sm leading-7 text-muted-foreground">
-              <li>{t("What kind of output do I need: draft, answer, plan, code, or critique?")}</li>
-              <li>{t("What happens if the answer is wrong or incomplete?")}</li>
-              <li>{t("Can a faster model produce a usable first pass?")}</li>
-              <li>{t("Do I need a second model to challenge the assumptions?")}</li>
-              <li>{t("What human verification step will happen before this is used?")}</li>
-            </ul>
-          </section>
+      <GuideCallout title={t("Model choice checklist")}>
+        <GuideList
+          items={[
+            t("What kind of output do I need: draft, answer, plan, code, or critique?"),
+            t("What happens if the answer is wrong or incomplete?"),
+            t("Can a faster model produce a usable first pass?"),
+            t("Do I need a second model to challenge the assumptions?"),
+            t("What human verification step will happen before this is used?"),
+          ]}
+        />
+      </GuideCallout>
 
-          <div className="mt-10 flex flex-wrap gap-3">
-            <Link
-              href="/guides/verify-ai-answers"
-              className="inline-flex items-center gap-2 rounded-full border border-border px-4 py-2 text-sm font-medium hover:bg-secondary"
-            >
-              {t("Next: verify AI answers")}
-              <ArrowRight className="size-4" />
-            </Link>
-            <Link
-              href="/models"
-              className="inline-flex items-center gap-2 rounded-full border border-border px-4 py-2 text-sm font-medium hover:bg-secondary"
-            >
-              {t("See available models")}
-              <ArrowRight className="size-4" />
-            </Link>
-          </div>
-        </div>
-      </article>
-    </main>
+      <GuideSection title={t("Common mistakes when switching models")}>
+        <p>
+          {t(
+            "Copying the same vague prompt into every model and ranking the answers by style. Fluent prose is not evidence. Ask for structured output, assumptions, and unknowns so answers can be compared on substance.",
+          )}
+        </p>
+        <p>
+          {t(
+            "Treating disagreement as a reason to average answers. When models disagree, isolate the disputed claim and verify it outside the chat. Disagreement is useful because it points to the exact place review is needed.",
+          )}
+        </p>
+        <p>
+          {t(
+            "Escalating to the strongest model for every small task. That habit raises cost, slows iteration, and trains you to outsource judgment. Keep a default fast path for low-risk work.",
+          )}
+        </p>
+      </GuideSection>
+
+      <GuideSection title={t("How Deni AI supports this workflow")}>
+        <p>
+          {t(
+            "Deni AI is built for practical model switching in one workspace. You can start with a fast answer, move to a stronger model when the stakes rise, and keep related work in the same conversation history instead of juggling separate provider apps.",
+          )}
+        </p>
+        <p>
+          {t(
+            "If you already pay providers directly, bring-your-own-key options can keep usage separate from platform limits. That is useful when a team wants control over provider spend while still using a shared interface.",
+          )}
+        </p>
+      </GuideSection>
+    </GuideArticle>
   );
 }

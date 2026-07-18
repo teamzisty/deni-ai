@@ -11,9 +11,6 @@ import { stripe } from "@/lib/stripe";
 import { getSubscriptionPeriodEnd } from "@/lib/stripe-subscriptions";
 import { cancelOrgMembersPersonalSubscriptions } from "@/lib/team-billing";
 
-export const runtime = "nodejs";
-export const dynamic = "force-dynamic";
-
 type SubscriptionPayload = {
   userId: string;
   customerId: string;

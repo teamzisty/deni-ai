@@ -1,28 +1,38 @@
 import type { UIMessage } from "ai";
 import { safeValidateUIMessages } from "ai";
 import { and, eq } from "drizzle-orm";
-import { headers } from "next/headers";
 import { redirect } from "next/navigation";
+import { Suspense } from "react";
 import { ChatInterface } from "@/components/chat/chat-interface";
+import { Spinner } from "@/components/ui/spinner";
 import { db } from "@/db/drizzle";
 import { chats, projects } from "@/db/schema";
-import { auth } from "@/lib/auth";
+import { getSession } from "@/lib/get-session";
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
-export default async function ChatPage({
-  params,
-  searchParams,
-}: {
+type ChatPageProps = {
   params: Promise<{ id: string }>;
   searchParams: Promise<{ projectId?: string }>;
-}) {
-  const headersPromise = headers();
-  const sessionPromise = headersPromise.then((headersList) =>
-    auth.api.getSession({ headers: headersList }),
+};
+
+function ChatPageFallback() {
+  return (
+    <div className="-m-4 flex min-h-0 flex-1 items-center justify-center overflow-hidden">
+      <Spinner className="size-5" />
+    </div>
   );
+}
+
+/**
+ * Session + DB work is request-bound and uncached. Keep it out of the page's
+ * static shell so /chat/[id] can prerender and navigate instantly under
+ * cacheComponents; the content streams in once the query resolves.
+ * getSession() is React.cache'd and deduped with (app)/layout.
+ */
+async function ChatPageContent({ params, searchParams }: ChatPageProps) {
   const [session, resolvedParams, resolvedSearch] = await Promise.all([
-    sessionPromise,
+    getSession(),
     params,
     searchParams,
   ]);
@@ -109,5 +119,13 @@ export default async function ChatPage({
         initialProjectName={projectName ?? null}
       />
     </div>
+  );
+}
+
+export default function ChatPage(props: ChatPageProps) {
+  return (
+    <Suspense fallback={<ChatPageFallback />}>
+      <ChatPageContent {...props} />
+    </Suspense>
   );
 }

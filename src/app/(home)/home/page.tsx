@@ -71,6 +71,26 @@ export default async function Home() {
             ),
           },
         },
+        {
+          "@type": "Question",
+          name: t("Is Deni AI free to try?"),
+          acceptedAnswer: {
+            "@type": "Answer",
+            text: t(
+              "Yes. Free access is available with usage limits, and the public site explains features, guides, privacy, and policies before signup.",
+            ),
+          },
+        },
+        {
+          "@type": "Question",
+          name: t("Where can I learn good multi-model habits?"),
+          acceptedAnswer: {
+            "@type": "Answer",
+            text: t(
+              "The AI Guides section covers model selection, answer verification, multi-model workflows, prompt patterns, study practice, and privacy habits.",
+            ),
+          },
+        },
       ],
     },
   ];

@@ -209,6 +209,34 @@ export default function UseCasesPage() {
       </section>
 
       <section className="relative px-4 py-16 md:py-24">
+        <div className="mx-auto max-w-4xl space-y-6 text-sm leading-8 text-muted-foreground">
+          <h2 className="text-2xl font-semibold tracking-tight text-foreground">
+            {t("What a good first week with Deni AI looks like")}
+          </h2>
+          <p>
+            {t(
+              "Day one: pick one low-risk recurring task such as rewriting notes or summarizing an article you already understand. Learn the model switcher without high stakes.",
+            )}
+          </p>
+          <p>
+            {t(
+              "Day two to three: try a second-opinion pass on something more important, such as a plan or support draft. Keep the first answer, ask another model to critique assumptions, and verify the disputed points yourself.",
+            )}
+          </p>
+          <p>
+            {t(
+              "End of week: write down which model roles worked for your work. Fast drafter, careful reviewer, coding helper, and translator are enough labels for most people. The habit matters more than chasing every new release.",
+            )}
+          </p>
+          <p>
+            {t(
+              "If you want deeper methods, read the public AI Guides on model selection, verification, prompt patterns, and multi-model workflows. Those pages are written as standalone educational resources.",
+            )}
+          </p>
+        </div>
+      </section>
+
+      <section className="relative px-4 py-16 md:py-24">
         <div className="mx-auto max-w-4xl rounded-[1.75rem] border border-border/70 bg-card p-8 text-center md:p-10">
           <h2 className="text-2xl font-semibold tracking-tight">
             {t("Want to try these workflows yourself?")}
@@ -220,6 +248,20 @@ export default function UseCasesPage() {
           </p>
           <div className="mt-6 flex flex-col items-center gap-4">
             <LoginButton />
+            <div className="flex flex-wrap justify-center gap-3">
+              <Button variant="outline" asChild>
+                <Link href="/guides">
+                  {t("AI Guides")}
+                  <ArrowRight className="size-4" />
+                </Link>
+              </Button>
+              <Button variant="outline" asChild>
+                <Link href="/faq">
+                  {t("FAQ")}
+                  <ArrowRight className="size-4" />
+                </Link>
+              </Button>
+            </div>
           </div>
         </div>
       </section>

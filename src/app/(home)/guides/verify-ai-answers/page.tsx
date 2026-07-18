@@ -1,8 +1,14 @@
 import type { Metadata } from "next";
-import Link from "next/link";
-import { ArrowRight, Binary, Code2, FileSearch, Languages, ListChecks } from "lucide-react";
+import { Binary, Code2, FileSearch, Languages, ListChecks } from "lucide-react";
 import { useExtracted } from "next-intl";
 import { getExtracted } from "next-intl/server";
+import {
+  GuideArticle,
+  GuideCallout,
+  GuideCardGrid,
+  GuideList,
+  GuideSection,
+} from "@/components/content/guide-article";
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getExtracted();
@@ -67,120 +73,116 @@ export default function VerifyAiAnswersGuidePage() {
     "@type": "Article",
     headline,
     description,
-    author: {
-      "@type": "Organization",
-      name: "Deni AI",
-    },
-    publisher: {
-      "@type": "Organization",
-      name: "Deni AI",
-    },
+    author: { "@type": "Organization", name: "Deni AI" },
+    publisher: { "@type": "Organization", name: "Deni AI" },
     mainEntityOfPage: "https://deniai.app/guides/verify-ai-answers",
   };
 
   return (
-    <main className="min-h-screen bg-background" id="main-content">
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd).replace(/</g, "\\u003c") }}
-      />
-
-      <article className="px-4 pb-20 pt-32 md:pt-40">
-        <div className="mx-auto max-w-4xl">
-          <Link href="/guides" className="text-sm text-muted-foreground hover:text-foreground">
-            {t("AI Guides")}
-          </Link>
-          <h1 className="mt-5 text-3xl font-semibold tracking-tight sm:text-4xl md:text-5xl">
-            {headline}
-          </h1>
-          <p className="mt-6 text-base leading-8 text-muted-foreground">{description}</p>
-
-          <section className="mt-10 rounded-[1.5rem] border border-border/70 bg-card p-6 md:p-8">
-            <div className="inline-flex size-11 items-center justify-center rounded-2xl bg-secondary">
-              <ListChecks className="size-5" />
-            </div>
-            <h2 className="mt-5 text-2xl font-semibold tracking-tight">
-              {t("The verification pass")}
-            </h2>
-            <p className="mt-4 text-sm leading-8 text-muted-foreground">
-              {t(
-                "Before using an AI answer, separate it into claims, instructions, and judgments. Claims need evidence. Instructions need testing. Judgments need context. This simple split catches many mistakes that are hidden by confident wording.",
-              )}
-            </p>
-          </section>
-
-          <div className="mt-8 grid gap-4 md:grid-cols-2">
-            {reviewAreas.map((area) => (
-              <section
-                key={area.title}
-                className="rounded-[1.5rem] border border-border bg-card p-6"
-              >
-                <div className="inline-flex size-10 items-center justify-center rounded-2xl bg-secondary">
-                  <area.icon className="size-5" />
-                </div>
-                <h2 className="mt-5 text-xl font-semibold tracking-tight">{area.title}</h2>
-                <p className="mt-3 text-sm leading-7 text-muted-foreground">{area.body}</p>
-              </section>
-            ))}
-          </div>
-
-          <section className="mt-12 space-y-5 text-sm leading-8 text-muted-foreground">
-            <h2 className="text-2xl font-semibold tracking-tight text-foreground">
-              {t("A five-minute review routine")}
-            </h2>
-            <p>
-              {t(
-                "Start by highlighting every sentence that would matter if it were wrong. Dates, prices, names, legal obligations, medical details, and technical commands deserve extra attention.",
-              )}
-            </p>
-            <p>
-              {t(
-                "Then ask the model to list its assumptions. This is not because the model knows itself perfectly, but because forcing assumptions into the open gives you a checklist for review.",
-              )}
-            </p>
-            <p>
-              {t(
-                "Next, verify outside the conversation. Use documentation, source records, tests, calculators, or a second expert review. Do not let the AI answer be the only evidence for itself.",
-              )}
-            </p>
-            <p>
-              {t(
-                "Finally, rewrite the answer in your own words before publishing or sending it. If you cannot explain the result without copying the model, you probably have not reviewed it enough.",
-              )}
-            </p>
-          </section>
-
-          <section className="mt-12 rounded-[1.5rem] border border-border/70 bg-secondary/20 p-6">
-            <h2 className="text-xl font-semibold tracking-tight">
-              {t("Questions to ask before trusting an answer")}
-            </h2>
-            <ul className="mt-5 space-y-3 text-sm leading-7 text-muted-foreground">
-              <li>{t("Which claims would cause harm or rework if they were wrong?")}</li>
-              <li>{t("Can I confirm the important facts outside the AI conversation?")}</li>
-              <li>{t("Did the answer skip assumptions, constraints, or edge cases?")}</li>
-              <li>{t("Have I tested code, commands, or calculations in a real environment?")}</li>
-              <li>{t("Would a reader understand what is known, uncertain, and recommended?")}</li>
-            </ul>
-          </section>
-
-          <div className="mt-10 flex flex-wrap gap-3">
-            <Link
-              href="/guides/multi-model-workflows"
-              className="inline-flex items-center gap-2 rounded-full border border-border px-4 py-2 text-sm font-medium hover:bg-secondary"
-            >
-              {t("Next: multi-model workflows")}
-              <ArrowRight className="size-4" />
-            </Link>
-            <Link
-              href="/use-cases"
-              className="inline-flex items-center gap-2 rounded-full border border-border px-4 py-2 text-sm font-medium hover:bg-secondary"
-            >
-              {t("See use cases")}
-              <ArrowRight className="size-4" />
-            </Link>
-          </div>
+    <GuideArticle
+      breadcrumbLabel={t("AI Guides")}
+      headline={headline}
+      description={description}
+      jsonLd={jsonLd}
+      nextLinks={[
+        { href: "/guides/multi-model-workflows", label: t("Next: multi-model workflows") },
+        { href: "/use-cases", label: t("See use cases") },
+      ]}
+    >
+      <section className="rounded-[1.5rem] border border-border/70 bg-card p-6 md:p-8">
+        <div className="inline-flex size-11 items-center justify-center rounded-2xl bg-secondary">
+          <ListChecks className="size-5" />
         </div>
-      </article>
-    </main>
+        <h2 className="mt-5 text-2xl font-semibold tracking-tight text-foreground">
+          {t("The verification pass")}
+        </h2>
+        <p className="mt-4 text-sm leading-8 text-muted-foreground">
+          {t(
+            "Before using an AI answer, separate it into claims, instructions, and judgments. Claims need evidence. Instructions need testing. Judgments need context. This simple split catches many mistakes that are hidden by confident wording.",
+          )}
+        </p>
+      </section>
+
+      <GuideCardGrid items={reviewAreas} />
+
+      <GuideSection title={t("A five-minute review routine")}>
+        <p>
+          {t(
+            "Start by highlighting every sentence that would matter if it were wrong. Dates, prices, names, legal obligations, medical details, and technical commands deserve extra attention.",
+          )}
+        </p>
+        <p>
+          {t(
+            "Then ask the model to list its assumptions. This is not because the model knows itself perfectly, but because forcing assumptions into the open gives you a checklist for review.",
+          )}
+        </p>
+        <p>
+          {t(
+            "Next, verify outside the conversation. Use documentation, source records, tests, calculators, or a second expert review. Do not let the AI answer be the only evidence for itself.",
+          )}
+        </p>
+        <p>
+          {t(
+            "Finally, rewrite the answer in your own words before publishing or sending it. If you cannot explain the result without copying the model, you probably have not reviewed it enough.",
+          )}
+        </p>
+      </GuideSection>
+
+      <GuideSection title={t("What fluent mistakes look like")}>
+        <p>
+          {t(
+            "Invented citations are a common failure mode. The format looks academic, the title sounds real, and the year is plausible. Always open the source or search for the exact title before relying on it.",
+          )}
+        </p>
+        <p>
+          {t(
+            "Hidden scope changes are another trap. You ask for a summary of one document and the model quietly imports general knowledge. Force the answer to mark what came from the provided material and what did not.",
+          )}
+        </p>
+        <p>
+          {t(
+            "Code that almost runs is especially costly. The snippet may compile in isolation while ignoring your framework version, auth middleware, or test harness. Treat untested code as a proposal, not a solution.",
+          )}
+        </p>
+      </GuideSection>
+
+      <GuideCallout title={t("Questions to ask before trusting an answer")}>
+        <GuideList
+          items={[
+            t("Which claims would cause harm or rework if they were wrong?"),
+            t("Can I confirm the important facts outside the AI conversation?"),
+            t("Did the answer skip assumptions, constraints, or edge cases?"),
+            t("Have I tested code, commands, or calculations in a real environment?"),
+            t("Would a reader understand what is known, uncertain, and recommended?"),
+          ]}
+        />
+      </GuideCallout>
+
+      <GuideSection title={t("When verification can stay light")}>
+        <p>
+          {t(
+            "Not every task needs a full audit. Low-risk drafting, brainstorming, and private learning notes can use a lighter pass: skim for nonsense, keep the useful parts, and move on.",
+          )}
+        </p>
+        <p>
+          {t(
+            "The key is matching review depth to consequence. A social media caption and a customer refund policy do not deserve the same process. Build a habit of asking what fails if this is wrong.",
+          )}
+        </p>
+      </GuideSection>
+
+      <GuideSection title={t("Using a second model as a reviewer")}>
+        <p>
+          {t(
+            "A second model is useful when you ask it to critique, not when you ask it to regenerate the same answer. Request weak claims, missing evidence, and the single highest-impact fix. Then verify those points yourself.",
+          )}
+        </p>
+        <p>
+          {t(
+            "This pattern works well inside a multi-model workspace because the review stays next to the original draft. You can keep the first answer, apply only the corrections that survive human judgment, and avoid starting from zero.",
+          )}
+        </p>
+      </GuideSection>
+    </GuideArticle>
   );
 }
