@@ -51,6 +51,12 @@ ANTHROPIC_API_KEY=your-anthropic-key
 GROQ_API_KEY=gsk_your-groq-key
 OPENROUTER_API_KEY=your-openrouter-key
 
+# voids.top gateway (optional)
+# VOIDS_MODE=true routes platform OpenAI + Anthropic through voids.top
+VOIDS_MODE=
+VOIDS_BASE_URL=https://capi.voids.top/v2
+VOIDS_API_KEY=
+
 # Search
 BRAVE_SEARCH_API_KEY=your-brave-search-key
 
@@ -73,6 +79,8 @@ NEXT_PUBLIC_BILLING_DISABLED=1
 When adding or updating supported AI providers/models, also update `src/lib/constants.ts`.
 
 Set `ANTHROPIC_API_KEY` to your Anthropic API key for Claude models. Set `OPENROUTER_API_KEY` to your OpenRouter API key for other routed models.
+
+Optional voids.top mode: set `VOIDS_MODE=true` (or `1`) to send **platform** (non-BYOK) OpenAI and Anthropic traffic through the OpenAI-compatible voids.top gateway. When enabled, **`VOIDS_API_KEY` is required** (voids returns `401 invalid apikey` without it). Optional `VOIDS_BASE_URL` (default `https://capi.voids.top/v2`). When `VOIDS_MODE` is off, OpenAI uses OpenRouter and Anthropic uses `ANTHROPIC_API_KEY`.
 
 #### Generate `BETTER_AUTH_SECRET`
 

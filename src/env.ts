@@ -16,6 +16,18 @@ export const env = createEnv({
     ANTHROPIC_API_KEY: z.string(),
     GROQ_API_KEY: z.string(),
     OPENROUTER_API_KEY: z.string(),
+    /**
+     * When "true" or "1", platform (non-BYOK) OpenAI + Anthropic traffic is
+     * routed through the voids.top OpenAI-compatible gateway.
+     */
+    VOIDS_MODE: z
+      .string()
+      .optional()
+      .transform((value) => value === "true" || value === "1"),
+    /** voids.top Chat Completions base URL (default: https://capi.voids.top/v2). */
+    VOIDS_BASE_URL: z.url().optional(),
+    /** Optional API key for voids.top (default placeholder when omitted). */
+    VOIDS_API_KEY: z.string().optional(),
     BRAVE_SEARCH_API_KEY: z.string(),
     TURNSTILE_SECRET_KEY: z.string(),
     RESEND_API_KEY: z.string().optional(),
@@ -51,6 +63,9 @@ export const env = createEnv({
     ANTHROPIC_API_KEY: process.env.ANTHROPIC_API_KEY,
     GROQ_API_KEY: process.env.GROQ_API_KEY,
     OPENROUTER_API_KEY: process.env.OPENROUTER_API_KEY,
+    VOIDS_MODE: process.env.VOIDS_MODE,
+    VOIDS_BASE_URL: process.env.VOIDS_BASE_URL,
+    VOIDS_API_KEY: process.env.VOIDS_API_KEY,
     BRAVE_SEARCH_API_KEY: process.env.BRAVE_SEARCH_API_KEY,
     TURNSTILE_SECRET_KEY: process.env.TURNSTILE_SECRET_KEY,
     NEXT_PUBLIC_TURNSTILE_SITE_KEY: process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY,
