@@ -22,6 +22,7 @@ This file applies to the entire repository tree rooted here. Follow these rules,
 - `GITHUB_CLIENT_ID`, `GITHUB_CLIENT_SECRET`
   Note: These are validated strictly via Zod. Missing/invalid values will cause runtime or startup failures.
 - For Stripe billing/custom checkout, also set `STRIPE_SECRET_KEY` and `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY` (`STRIPE_WEBHOOK_SECRET` is optional for local development).
+- Optional voids.top gateway: `VOIDS_MODE=true|1` routes platform OpenAI + Anthropic via voids; when enabled `VOIDS_API_KEY` is required; optional `VOIDS_BASE_URL`.
 
 ■ Common Scripts (Bun preferred)
 

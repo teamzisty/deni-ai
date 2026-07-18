@@ -2,9 +2,12 @@ import type { UIMessage } from "ai";
 import { safeValidateUIMessages } from "ai";
 import { and, eq } from "drizzle-orm";
 import type { Metadata } from "next";
+import { connection } from "next/server";
 import { headers } from "next/headers";
 import { notFound, redirect } from "next/navigation";
 import dynamic from "next/dynamic";
+import { Suspense } from "react";
+import { Spinner } from "@/components/ui/spinner";
 
 const SharedChatInterface = dynamic(
   () => import("@/components/chat/shared-chat-interface").then((mod) => mod.SharedChatInterface),
@@ -25,7 +28,16 @@ export const metadata: Metadata = {
   description: "View a shared Deni AI conversation.",
 };
 
-export default async function SharedChatPage({ params }: { params: Promise<{ shareId: string }> }) {
+function SharedChatFallback() {
+  return (
+    <div className="flex min-h-[60vh] w-full items-center justify-center">
+      <Spinner className="size-5" />
+    </div>
+  );
+}
+
+async function SharedChatContent({ params }: { params: Promise<{ shareId: string }> }) {
+  await connection();
   const { shareId } = await params;
   const headersPromise = headers();
   const sharePromise = db.select().from(chatShares).where(eq(chatShares.id, shareId));
@@ -95,5 +107,13 @@ export default async function SharedChatPage({ params }: { params: Promise<{ sha
       isOwner={userId === share.ownerId}
       isLoggedIn={!!userId}
     />
+  );
+}
+
+export default function SharedChatPage({ params }: { params: Promise<{ shareId: string }> }) {
+  return (
+    <Suspense fallback={<SharedChatFallback />}>
+      <SharedChatContent params={params} />
+    </Suspense>
   );
 }

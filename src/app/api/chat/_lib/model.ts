@@ -15,8 +15,7 @@ import { assertSafePublicHttpUrl } from "@/lib/network-security";
 import { createDeniOpenRouter } from "@/lib/openrouter-provider";
 import { getUsageSummary, type UsageCategory, UsageLimitError } from "@/lib/usage";
 
-/** OpenAI-compatible free gateway used for platform OpenAI + Anthropic traffic. */
-const VOIDS_BASE_URL = "https://capi.voids.top/v2";
+const DEFAULT_VOIDS_BASE_URL = "https://capi.voids.top/v2";
 
 const openaiEffortOptions = ["none", "minimal", "low", "medium", "high", "xhigh", "max"] as const;
 const anthropicEffortOptions = ["low", "medium", "high", "max"] as const;
@@ -163,13 +162,24 @@ export async function resolveChatModelContext({
     }
   }
 
-  // Platform OpenAI/Anthropic traffic goes through voids.top (OpenAI-compatible).
-  // BYOK keeps native provider SDKs. Google/xAI platform traffic stays on OpenRouter.
-  // Pro mode requires BYOK OpenAI (voids.top has no `*-pro` slugs / reasoning.mode).
-  const usesVoids = !useByok && (providerId === "openai" || providerId === "anthropic");
-  const usesOpenRouter = !useByok && (providerId === "google" || providerId === "xai");
+  // voids.top is opt-in via VOIDS_MODE. When enabled, platform (non-BYOK)
+  // OpenAI + Anthropic traffic uses the OpenAI-compatible voids gateway.
+  // Otherwise OpenAI/Google/xAI use OpenRouter and Anthropic uses ANTHROPIC_API_KEY.
+  // BYOK always keeps native provider SDKs.
+  const voidsModeEnabled = Boolean(env.VOIDS_MODE);
+  const usesVoids =
+    voidsModeEnabled && !useByok && (providerId === "openai" || providerId === "anthropic");
+  const usesOpenRouter =
+    !useByok &&
+    !usesVoids &&
+    (providerId === "openai" || providerId === "google" || providerId === "xai");
+  // Pro: BYOK OpenAI uses reasoning.mode; OpenRouter uses `*-pro` slug.
+  // voids.top has neither, so Pro is disabled on the voids path.
   const useProMode = Boolean(
-    proMode && selectedModel.supportsProMode && useByok && providerId === "openai",
+    proMode &&
+    selectedModel.supportsProMode &&
+    providerId === "openai" &&
+    (useByok || usesOpenRouter),
   );
   const isPremiumModel = Boolean(selectedModel.premium);
   // Pro mode always bills against premium quota (even when the base model is basic).
@@ -212,8 +222,9 @@ export async function resolveChatModelContext({
     }
   }
 
-  // voids.top model ids match constants values (gpt-5.6-sol, claude-fable-5, …).
-  const resolvedModelId = selectedModel.value;
+  // OpenRouter exposes GPT-5.6 Pro as `*-pro`. voids.top does not — keep base id there.
+  const resolvedModelId =
+    useProMode && usesOpenRouter ? `${selectedModel.value}-pro` : selectedModel.value;
 
   const resolvedReasoningEffort = resolveReasoningEffort(
     selectedModel?.efforts ?? false,
@@ -265,8 +276,7 @@ export async function resolveChatModelContext({
       : undefined;
 
   // OpenRouter uses `x-ai/...` for xAI models (not `xai/...`).
-  const openRouterAuthor =
-    selectedModel.author === "xai" ? "x-ai" : selectedModel.author;
+  const openRouterAuthor = selectedModel.author === "xai" ? "x-ai" : selectedModel.author;
   const selectedOpenRouterModelId = selectedModel
     ? resolvedModelId.includes("/")
       ? resolvedModelId
@@ -298,9 +308,17 @@ export async function resolveChatModelContext({
   };
 
   const getVoidsModel = () => {
+    const apiKey = env.VOIDS_API_KEY?.trim();
+    if (!apiKey) {
+      throw new ChatRouteError(500, {
+        error:
+          "VOIDS_API_KEY is required when VOIDS_MODE is enabled. Set a valid voids.top API key in the environment.",
+      });
+    }
+
     const provider = createOpenAI({
-      apiKey: "voids",
-      baseURL: VOIDS_BASE_URL,
+      apiKey,
+      baseURL: env.VOIDS_BASE_URL || DEFAULT_VOIDS_BASE_URL,
       name: "voids",
     });
     // voids.top speaks the Chat Completions API with OpenAI-style model ids
@@ -328,16 +346,20 @@ export async function resolveChatModelContext({
           baseURL: byokBaseUrl,
         });
         model = provider.responses(resolvedModelId);
-      } else {
+      } else if (usesVoids) {
         model = getVoidsModel();
+      } else {
+        model = getOpenRouterModel();
       }
       break;
     }
     case "anthropic": {
       if (useByok) {
         model = getAnthropicModel(byokApiKey, byokBaseUrl);
-      } else {
+      } else if (usesVoids) {
         model = getVoidsModel();
+      } else {
+        model = getAnthropicModel(env.ANTHROPIC_API_KEY);
       }
       break;
     }
