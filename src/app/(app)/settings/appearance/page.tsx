@@ -3,6 +3,7 @@
 import { Check, Moon, Sun, Monitor, Palette, Layers } from "lucide-react";
 import { useExtracted } from "next-intl";
 import { useTheme } from "next-themes";
+import { useSyncExternalStore } from "react";
 import { LocaleSwitcher } from "@/components/locale-switcher";
 import { SettingsPageShell } from "@/components/settings-page-shell";
 import { Button } from "@/components/ui/button";
@@ -13,12 +14,24 @@ import { changeLocaleAction } from "@/lib/locale-actions";
 import { type ThemeName, themePresets } from "@/lib/theme-presets";
 import { cn } from "@/lib/utils";
 
+/** true only after client hydration — next-themes has no value during SSR. */
+function useHasMounted() {
+  return useSyncExternalStore(
+    () => () => {},
+    () => true,
+    () => false,
+  );
+}
+
 export default function AppearancePage() {
   const t = useExtracted();
+  const hasMounted = useHasMounted();
   const { theme, setTheme } = useTheme();
   const { preset, setPreset } = useThemePreset();
   const { style, setStyle } = useDesignStyle();
   const activeTheme = preset;
+  // Avoid hydration mismatch: server always sees theme as undefined.
+  const activeMode = hasMounted ? theme : undefined;
 
   const handleSelect = (value: ThemeName) => {
     setPreset(value);
@@ -149,7 +162,7 @@ export default function AppearancePage() {
             {themeModes.map(({ value, label, icon: Icon }) => (
               <Button
                 key={value}
-                variant={theme === value ? "default" : "outline"}
+                variant={activeMode === value ? "default" : "outline"}
                 size="sm"
                 onClick={() => setTheme(value)}
                 className="flex-1 gap-2 h-9"

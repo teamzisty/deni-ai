@@ -3,9 +3,11 @@ import type { Metadata, Viewport } from "next";
 import { JetBrains_Mono, Geist, Geist_Mono, Inter } from "next/font/google";
 import { NextIntlClientProvider } from "next-intl";
 import { getExtracted, getLocale, getMessages } from "next-intl/server";
+import { Suspense } from "react";
 import { AdSenseScript } from "@/components/adsense-script";
 import { ThemeProvider } from "@/components/ui/theme-provider";
 import { Toaster } from "@/components/ui/sonner";
+import { defaultLocale } from "@/i18n/locales";
 import { GA_ID } from "@/lib/constants";
 import "./globals.css";
 import "./themes.css";
@@ -41,11 +43,10 @@ export const viewport: Viewport = {
   ],
 };
 
+// Keep metadata free of cookies()/headers() so the document shell can prerender.
+// Per-request locale for page content is resolved in LocalizedRoot via next-intl.
 export async function generateMetadata(): Promise<Metadata> {
-  const t = await getExtracted();
-  const description = t(
-    "Free multi-model AI chat with GPT, Claude, Gemini, and more in one place.",
-  );
+  const description = "Free multi-model AI chat with GPT, Claude, Gemini, and more in one place.";
   const adsenseAccount = process.env.NEXT_PUBLIC_ADSENSE_CLIENT_ID;
 
   return {
@@ -119,11 +120,36 @@ function safeJsonLd(data: unknown) {
     .replace(/&/g, "\\u0026");
 }
 
-export default async function RootLayout({
-  children,
-}: Readonly<{
-  children: React.ReactNode;
-}>) {
+/** Sync html[lang] from the locale cookie before first paint (avoids FOUC). */
+const LOCALE_LANG_SCRIPT = `(function(){try{var m=document.cookie.match(/(?:^|; )locale=([^;]*)/);var l=m&&decodeURIComponent(m[1]);if(l==="en"||l==="ja")document.documentElement.lang=l;}catch(e){}})();`;
+
+/**
+ * Executable only during SSR HTML parse. On the client, React would not re-run
+ * <script> tags, so switch type to text/plain to silence the React 19 warning.
+ * @see https://nextjs.org/docs/app/guides/preventing-flash-before-hydration
+ */
+function InlineBootScript({ html }: { html: string }) {
+  return (
+    <script
+      type={typeof window === "undefined" ? "text/javascript" : "text/plain"}
+      suppressHydrationWarning
+      dangerouslySetInnerHTML={{ __html: html }}
+    />
+  );
+}
+
+/** Locale resolve is usually fast — avoid an extra full-screen spinner flash. */
+function RootLayoutFallback() {
+  return <div className="min-h-screen bg-background" />;
+}
+
+/**
+ * Resolves cookie/header-based locale and wraps the app in next-intl.
+ * Must sit inside <Suspense> so the root shell can prerender under cacheComponents.
+ * ThemeProvider stays outside this boundary so next-themes' blocking script is in
+ * the static shell (not streamed client-side where <script> would not execute).
+ */
+async function LocalizedRoot({ children }: { children: React.ReactNode }) {
   // Sequential: next-intl server helpers share request context and can break
   // under concurrent Promise.all during static prerender (getExtracted).
   const locale = await getLocale();
@@ -131,10 +157,31 @@ export default async function RootLayout({
   const t = await getExtracted();
 
   return (
-    <html lang={locale} suppressHydrationWarning>
+    <>
+      <a
+        href="#main-content"
+        className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus:rounded-md focus:bg-background focus:px-3 focus:py-2 focus:text-sm focus:font-medium focus:text-foreground focus:shadow-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+      >
+        {t("Skip to content")}
+      </a>
+      <NextIntlClientProvider locale={locale} messages={messages}>
+        <div className="min-h-screen">{children}</div>
+      </NextIntlClientProvider>
+    </>
+  );
+}
+
+export default function RootLayout({
+  children,
+}: Readonly<{
+  children: React.ReactNode;
+}>) {
+  return (
+    <html lang={defaultLocale} suppressHydrationWarning>
       <body
         className={`${geistSans.variable} ${geistMono.variable} ${jetbrainsMono.variable} ${inter.variable} font-sans antialiased min-w-screen min-h-screen overflow-x-hidden transition-colors duration-500`}
       >
+        <InlineBootScript html={LOCALE_LANG_SCRIPT} />
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{
@@ -174,26 +221,22 @@ export default async function RootLayout({
             ]),
           }}
         />
-        <a
-          href="#main-content"
-          className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus:rounded-md focus:bg-background focus:px-3 focus:py-2 focus:text-sm focus:font-medium focus:text-foreground focus:shadow-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+        {/* ThemeProvider must be outside Suspense: next-themes injects a FOUC
+            script that only runs when present in the initial HTML parse. */}
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="system"
+          enableSystem
+          disableTransitionOnChange
         >
-          {t("Skip to content")}
-        </a>
-        <NextIntlClientProvider locale={locale} messages={messages}>
-          <ThemeProvider
-            attribute="class"
-            defaultTheme="system"
-            enableSystem
-            disableTransitionOnChange
-          >
-            <div className="min-h-screen">{children}</div>
-            <Toaster position="top-center" />
-          </ThemeProvider>
-        </NextIntlClientProvider>
+          <Suspense fallback={<RootLayoutFallback />}>
+            <LocalizedRoot>{children}</LocalizedRoot>
+          </Suspense>
+          <Toaster position="top-center" />
+        </ThemeProvider>
+        <AdSenseScript />
+        {process.env.NODE_ENV === "production" ? <GoogleAnalytics gaId={GA_ID} /> : null}
       </body>
-      <AdSenseScript />
-      {process.env.NODE_ENV === "production" ? <GoogleAnalytics gaId={GA_ID} /> : null}
     </html>
   );
 }

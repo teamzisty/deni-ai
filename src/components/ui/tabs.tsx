@@ -55,12 +55,22 @@ function TabsList({
 
 function TabsTrigger({
   className,
+  asChild,
+  render: renderProp,
+  children,
+  nativeButton,
   ...props
 }: React.ComponentProps<typeof TabsPrimitive.Tab> & { asChild?: boolean }) {
+  const resolved = resolveRenderProps({ asChild, render: renderProp, children, ...props });
+  // Base UI defaults to native <button>. When asChild/render swaps in a Link (etc.),
+  // mark non-native so a11y checks don't throw and break instant validation.
+  const hasCustomRender = resolved.render !== undefined;
+
   return (
     <TabsPrimitive.Tab
       data-slot="tabs-trigger"
-      {...resolveRenderProps(props)}
+      {...resolved}
+      nativeButton={nativeButton ?? !hasCustomRender}
       className={cn(
         "relative inline-flex h-[calc(100%-1px)] flex-1 items-center justify-center gap-1.5 rounded-md border border-transparent px-2 py-1 text-sm font-medium whitespace-nowrap text-foreground/60 transition-all group-data-[orientation=vertical]/tabs:w-full group-data-[orientation=vertical]/tabs:justify-start hover:text-foreground focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 focus-visible:outline-1 focus-visible:outline-ring data-disabled:pointer-events-none data-disabled:opacity-50 group-data-[variant=default]/tabs-list:data-active:shadow-sm group-data-[variant=line]/tabs-list:data-active:shadow-none dark:text-muted-foreground dark:hover:text-foreground [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
         "group-data-[variant=line]/tabs-list:bg-transparent group-data-[variant=line]/tabs-list:data-active:bg-transparent dark:group-data-[variant=line]/tabs-list:data-active:border-transparent dark:group-data-[variant=line]/tabs-list:data-active:bg-transparent",
