@@ -1,3 +1,5 @@
+"use client";
+
 import Link from "next/link";
 import { useExtracted } from "next-intl";
 import DeniAIIcon from "./deni-ai-icon";

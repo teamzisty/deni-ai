@@ -1,3 +1,5 @@
+"use client";
+
 import {
   Bot,
   BookOpen,
@@ -11,11 +13,10 @@ import {
   Shield,
   Sparkles,
 } from "lucide-react";
-import { cookies } from "next/headers";
 import Link from "next/link";
 import { useExtracted } from "next-intl";
 import { UserButton } from "@/components/auth/user/user-button";
-import type { AppLocale } from "@/i18n/locales";
+import { changeLocaleAction } from "@/lib/locale-actions";
 import DeniAIIcon from "./deni-ai-icon";
 import { HeaderMegaMenu } from "./header-mega-menu";
 import { LocaleSwitcher } from "./locale-switcher";
@@ -30,6 +31,7 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "./ui/sheet";
+
 type MegaMenuLink = {
   href: string;
   icon: React.ComponentType<{ className?: string }>;
@@ -41,12 +43,6 @@ type MegaMenuSection = {
   title: string;
   links: MegaMenuLink[];
 };
-
-async function changeLocaleAction(nextLocale: AppLocale) {
-  "use server";
-  const store = await cookies();
-  store.set("locale", nextLocale);
-}
 
 function MobileNavLink({ link }: { link: MegaMenuLink }) {
   const Icon = link.icon;
