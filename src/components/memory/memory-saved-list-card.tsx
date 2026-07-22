@@ -6,7 +6,6 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { Spinner } from "@/components/ui/spinner";
 
 type MemoryItem = {
@@ -92,31 +91,29 @@ export function MemorySavedListCard({
             {t("Unable to load saved memories right now.")}
           </div>
         ) : items.length ? (
-          <ScrollArea className="max-h-[22rem]">
-            <div className="space-y-2 pr-4">
-              {items.map((item) => (
-                <div
-                  key={item.id}
-                  className="flex items-center justify-between gap-3 rounded-lg border p-3"
-                >
-                  <div className="min-w-0 space-y-1">
-                    <div className="break-words text-sm">{item.content}</div>
-                    <Badge variant="outline">
-                      {item.source === "auto" ? t("AI added") : t("You added")}
-                    </Badge>
-                  </div>
-                  <Button
-                    size="icon"
-                    variant="ghost"
-                    onClick={() => onDeleteItem(item.id)}
-                    disabled={isDeleting || isClearing}
-                  >
-                    <Trash2 className="size-4" />
-                  </Button>
+          <div className="max-h-[22rem] space-y-2 overflow-y-auto overscroll-y-contain pr-1">
+            {items.map((item) => (
+              <div
+                key={item.id}
+                className="flex items-center justify-between gap-3 rounded-lg border p-3"
+              >
+                <div className="min-w-0 space-y-1">
+                  <div className="break-words text-sm">{item.content}</div>
+                  <Badge variant="outline">
+                    {item.source === "auto" ? t("AI added") : t("You added")}
+                  </Badge>
                 </div>
-              ))}
-            </div>
-          </ScrollArea>
+                <Button
+                  size="icon"
+                  variant="ghost"
+                  onClick={() => onDeleteItem(item.id)}
+                  disabled={isDeleting || isClearing}
+                >
+                  <Trash2 className="size-4" />
+                </Button>
+              </div>
+            ))}
+          </div>
         ) : (
           <div className="rounded-lg border border-dashed p-6 text-sm text-muted-foreground">
             {t("No saved memories yet. Add one manually or let AI learn from your chats.")}

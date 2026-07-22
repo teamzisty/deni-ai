@@ -13,7 +13,7 @@ import {
   type UIMessage,
 } from "ai";
 import { headers } from "next/headers";
-import { NextResponse } from "next/server";
+import { after, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import {
   clearChatGenerationState,
@@ -660,14 +660,19 @@ export async function POST(req: Request) {
           await reconcileConsumedUsage(finalUsageAmount);
         }
 
-        try {
-          await maybeAutoSaveMemories({
-            userId,
-            messages: updatedMessages,
-            enabled: memoryState.profile.autoMemory,
-          });
-        } catch (error) {
-          console.error("Failed to auto-save memories", error);
+        // Memory extraction can take seconds and must not keep the chat SSE
+        // open. Schedule it after the response finishes so the client can end
+        // the request immediately while work continues on the backend.
+        if (memoryState.profile.autoMemory) {
+          after(() =>
+            maybeAutoSaveMemories({
+              userId,
+              messages: updatedMessages,
+              enabled: true,
+            }).catch((error) => {
+              console.error("Failed to auto-save memories", error);
+            }),
+          );
         }
       } catch (error) {
         await rollbackPendingAssistantState();

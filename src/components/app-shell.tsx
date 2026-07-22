@@ -1,17 +1,12 @@
 "use client";
 
-import dynamic from "next/dynamic";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
+import { AppSidebar } from "@/components/app-sidebar";
+import { ChatSearch } from "@/components/chat/chat-search";
 import { TwoFactorBanner } from "@/components/two-factor-banner";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import { useNewChat } from "@/hooks/use-new-chat";
-
-const AppSidebar = dynamic(() => import("@/components/app-sidebar").then((mod) => mod.AppSidebar));
-const ChatSearch = dynamic(
-  () => import("@/components/chat/chat-search").then((mod) => mod.ChatSearch),
-  { ssr: false },
-);
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   // Track which pathname the dialog was opened for so navigation closes it
