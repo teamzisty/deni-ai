@@ -1,14 +1,27 @@
 import { viewPaths } from "@better-auth-ui/core";
 import { magicLinkPlugin } from "@better-auth-ui/core/plugins";
 import { notFound } from "next/navigation";
+import { Suspense } from "react";
 import { Auth } from "@/components/auth/auth";
 import { GuestSignInButton } from "@/components/guest-sign-in-button";
+import { Spinner } from "@/components/ui/spinner";
 
 const magicLinkPaths = Object.values(magicLinkPlugin().viewPaths?.auth ?? {});
 
 const validAuthPaths = new Set([...Object.values(viewPaths.auth), ...magicLinkPaths]);
 
-export default async function AuthPage({ params }: { params: Promise<{ path: string }> }) {
+function AuthPageFallback() {
+  return (
+    <main
+      className="flex min-h-screen w-full grow flex-col items-center justify-center gap-4 p-4 md:p-6"
+      id="main-content"
+    >
+      <Spinner className="size-5" />
+    </main>
+  );
+}
+
+async function AuthPageContent({ params }: { params: Promise<{ path: string }> }) {
   const { path } = await params;
 
   if (!validAuthPaths.has(path)) {
@@ -25,5 +38,13 @@ export default async function AuthPage({ params }: { params: Promise<{ path: str
       <Auth path={path} />
       {showGuest ? <GuestSignInButton className="w-full max-w-sm" size="sm" /> : null}
     </main>
+  );
+}
+
+export default function AuthPage({ params }: { params: Promise<{ path: string }> }) {
+  return (
+    <Suspense fallback={<AuthPageFallback />}>
+      <AuthPageContent params={params} />
+    </Suspense>
   );
 }

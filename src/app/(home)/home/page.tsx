@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { getExtracted } from "next-intl/server";
+import { Suspense } from "react";
 import { ClientHome } from "./home-client";
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -27,7 +28,11 @@ export async function generateMetadata(): Promise<Metadata> {
   };
 }
 
-export default async function Home() {
+/**
+ * JSON-LD needs next-intl (cookies/headers for locale). Keep it behind Suspense
+ * so the page shell stays instant under cacheComponents.
+ */
+async function HomeJsonLd() {
   const t = await getExtracted();
   const webApplicationDescription = t(
     "Access the latest AI models without breaking the bank. Deni AI brings premium intelligence to everyone, completely free.",
@@ -96,11 +101,19 @@ export default async function Home() {
   ];
 
   return (
+    <script
+      type="application/ld+json"
+      dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd).replace(/</g, "\\u003c") }}
+    />
+  );
+}
+
+export default function Home() {
+  return (
     <>
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd).replace(/</g, "\\u003c") }}
-      />
+      <Suspense fallback={null}>
+        <HomeJsonLd />
+      </Suspense>
       <ClientHome />
     </>
   );
