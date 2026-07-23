@@ -253,6 +253,13 @@
       "when": 1782137864943,
       "tag": "0035_fancy_raza",
       "breakpoints": true
+    },
+    {
+      "idx": 36,
+      "version": "7",
+      "when": 1784730469778,
+      "tag": "0036_curious_silvermane",
+      "breakpoints": true
     }
   ]
 }

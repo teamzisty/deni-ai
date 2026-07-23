@@ -2,13 +2,17 @@ import { viewPaths } from "@better-auth-ui/core";
 import { magicLinkPlugin } from "@better-auth-ui/core/plugins";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
-import { Auth } from "@/components/auth/auth";
+import { Auth, TWO_FACTOR_VIEW_PATH } from "@/components/auth/auth";
 import { GuestSignInButton } from "@/components/guest-sign-in-button";
 import { Spinner } from "@/components/ui/spinner";
 
 const magicLinkPaths = Object.values(magicLinkPlugin().viewPaths?.auth ?? {});
 
-const validAuthPaths = new Set([...Object.values(viewPaths.auth), ...magicLinkPaths]);
+const validAuthPaths = new Set([
+  ...Object.values(viewPaths.auth),
+  ...magicLinkPaths,
+  TWO_FACTOR_VIEW_PATH,
+]);
 
 function AuthPageFallback() {
   return (

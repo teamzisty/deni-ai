@@ -94,6 +94,9 @@ export const twoFactor = pgTable(
       .notNull()
       .references(() => user.id, { onDelete: "cascade" }),
     verified: boolean("verified").default(true),
+    // Account lockout after repeated failed second-factor attempts (better-auth 2FA plugin)
+    failedVerificationCount: integer("failed_verification_count").default(0),
+    lockedUntil: timestamp("locked_until"),
   },
   (table) => [
     index("twoFactor_secret_idx").on(table.secret),
