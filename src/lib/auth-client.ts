@@ -12,11 +12,21 @@ if (!baseURL) {
   throw new Error("NEXT_PUBLIC_BETTER_AUTH_URL is required");
 }
 
+/** Path for second-factor verification after credential sign-in. */
+export const TWO_FACTOR_PATH = "/auth/two-factor";
+
 export const authClient = createAuthClient({
   baseURL,
   plugins: [
     anonymousClient(),
-    twoFactorClient(),
+    twoFactorClient({
+      // Prefer SPA navigation when possible; fall back is still a hard assign so
+      // users never land on /chat without a completed second factor.
+      onTwoFactorRedirect() {
+        if (typeof window === "undefined") return;
+        window.location.assign(TWO_FACTOR_PATH);
+      },
+    }),
     lastLoginMethodClient(),
     passkeyClient(),
     organizationClient(),

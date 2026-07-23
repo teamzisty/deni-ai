@@ -18,6 +18,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Spinner } from "@/components/ui/spinner";
+import { TWO_FACTOR_PATH } from "@/lib/auth-client";
 import { cn } from "@/lib/utils";
 import { ProviderButtons, type SocialLayout } from "./provider-buttons";
 
@@ -66,7 +67,20 @@ export function SignIn({ className, socialLayout, socialPosition = "bottom" }: S
 
       resetFetchOptions();
     },
-    onSuccess: () => navigate({ to: redirectTo }),
+    onSuccess: (data) => {
+      // When 2FA is enabled, better-auth returns twoFactorRedirect instead of a
+      // session. Send users to the verify page (twoFactorClient also redirects).
+      if (
+        data &&
+        typeof data === "object" &&
+        "twoFactorRedirect" in data &&
+        (data as { twoFactorRedirect?: boolean }).twoFactorRedirect
+      ) {
+        navigate({ to: TWO_FACTOR_PATH });
+        return;
+      }
+      navigate({ to: redirectTo });
+    },
   });
 
   const signInMutating = useIsMutating({

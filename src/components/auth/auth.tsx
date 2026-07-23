@@ -10,6 +10,7 @@ import { ResetPassword } from "./reset-password";
 import { SignIn } from "./sign-in";
 import { SignOut } from "./sign-out";
 import { SignUp } from "./sign-up";
+import { TwoFactor } from "./two-factor";
 import { VerifyEmail } from "./verify-email";
 
 export type AuthProps = {
@@ -18,7 +19,7 @@ export type AuthProps = {
   socialLayout?: SocialLayout;
   socialPosition?: "top" | "bottom";
   /** @remarks `AuthView` */
-  view?: AuthView;
+  view?: AuthView | "twoFactor";
 };
 
 /**
@@ -28,13 +29,17 @@ export type AuthProps = {
  */
 const PASSWORD_ONLY_VIEWS = ["signUp", "forgotPassword", "resetPassword"];
 
-const AUTH_VIEWS: Partial<Record<AuthView, ComponentType<AuthProps>>> = {
+/** Path segment for the second-factor challenge (not in better-auth-ui viewPaths). */
+export const TWO_FACTOR_VIEW_PATH = "two-factor";
+
+const AUTH_VIEWS: Partial<Record<AuthView | "twoFactor", ComponentType<AuthProps>>> = {
   signIn: SignIn,
   signOut: SignOut,
   signUp: SignUp,
   forgotPassword: ForgotPassword,
   resetPassword: ResetPassword,
   verifyEmail: VerifyEmail,
+  twoFactor: TwoFactor,
 };
 
 /**
@@ -59,14 +64,20 @@ export function Auth({ className, path, socialLayout, socialPosition, view }: Au
   }
 
   const authView =
-    view || (Object.keys(viewPaths.auth) as AuthView[]).find((key) => viewPaths.auth[key] === path);
+    view ||
+    (path === TWO_FACTOR_VIEW_PATH
+      ? "twoFactor"
+      : (Object.keys(viewPaths.auth) as AuthView[]).find((key) => viewPaths.auth[key] === path));
 
   // When email + password auth is disabled, password-only views (signUp,
   // forgotPassword, resetPassword) have no meaning. Redirect them to signIn,
   // where a plugin's `fallbackViews.auth.signIn` (e.g. magic link) takes
   // over as the primary entry point.
   const shouldRedirectToSignIn =
-    !emailAndPassword?.enabled && authView && PASSWORD_ONLY_VIEWS.includes(authView);
+    !emailAndPassword?.enabled &&
+    authView &&
+    authView !== "twoFactor" &&
+    PASSWORD_ONLY_VIEWS.includes(authView);
 
   useEffect(() => {
     if (shouldRedirectToSignIn) {
