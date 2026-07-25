@@ -367,6 +367,18 @@ export const models: readonly ModelDefinition[] = [
     tokenMultiplier: 3,
   },
   {
+    name: "Claude Opus 5",
+    value: "claude-opus-5",
+    author: "anthropic",
+    description: "For complex agentic coding and enterprise work.",
+    premium: true,
+    featured: true,
+    features: ["reasoning", "smart", "coding"],
+    efforts: ["low", "medium", "high", "max"],
+    contextWindow: 1_000_000,
+    tokenMultiplier: 3,
+  },
+  {
     name: "Claude Sonnet 5",
     value: "claude-sonnet-5",
     author: "anthropic",

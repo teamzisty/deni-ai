@@ -62,6 +62,12 @@ export function useModelDescriptionCopy() {
         "Anthropic's most capable model for long-horizon agentic work.": t(
           "Anthropic's most capable model for long-horizon agentic work.",
         ),
+        "For complex agentic coding and enterprise work.": t(
+          "For complex agentic coding and enterprise work.",
+        ),
+        "Balanced Claude 5 model for coding, writing, and everyday agentic work.": t(
+          "Balanced Claude 5 model for coding, writing, and everyday agentic work.",
+        ),
         "All-around professional model": t("All-around professional model"),
         "Legacy All-around professional model": t("Legacy All-around professional model"),
         "Hybrid reasoning model": t("Hybrid reasoning model"),
