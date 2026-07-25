@@ -7,13 +7,14 @@ import {
 } from "better-auth/client/plugins";
 import { createAuthClient } from "better-auth/react";
 
+import { TWO_FACTOR_PATH } from "@/lib/auth-paths";
+
+export { TWO_FACTOR_PATH, TWO_FACTOR_VIEW_PATH } from "@/lib/auth-paths";
+
 const baseURL = process.env.NEXT_PUBLIC_BETTER_AUTH_URL;
 if (!baseURL) {
   throw new Error("NEXT_PUBLIC_BETTER_AUTH_URL is required");
 }
-
-/** Path for second-factor verification after credential sign-in. */
-export const TWO_FACTOR_PATH = "/auth/two-factor";
 
 export const authClient = createAuthClient({
   baseURL,

@@ -4,6 +4,7 @@ import type { AuthView } from "@better-auth-ui/core";
 import { useAuth } from "@better-auth-ui/react";
 import { type ComponentType, useEffect } from "react";
 
+import { TWO_FACTOR_VIEW_PATH } from "@/lib/auth-paths";
 import { ForgotPassword } from "./forgot-password";
 import type { SocialLayout } from "./provider-buttons";
 import { ResetPassword } from "./reset-password";
@@ -12,6 +13,8 @@ import { SignOut } from "./sign-out";
 import { SignUp } from "./sign-up";
 import { TwoFactor } from "./two-factor";
 import { VerifyEmail } from "./verify-email";
+
+export { TWO_FACTOR_VIEW_PATH };
 
 export type AuthProps = {
   className?: string;
@@ -28,9 +31,6 @@ export type AuthProps = {
  * plugin's `fallbackViews.auth.signIn` (e.g. magic link) takes over.
  */
 const PASSWORD_ONLY_VIEWS = ["signUp", "forgotPassword", "resetPassword"];
-
-/** Path segment for the second-factor challenge (not in better-auth-ui viewPaths). */
-export const TWO_FACTOR_VIEW_PATH = "two-factor";
 
 const AUTH_VIEWS: Partial<Record<AuthView | "twoFactor", ComponentType<AuthProps>>> = {
   signIn: SignIn,

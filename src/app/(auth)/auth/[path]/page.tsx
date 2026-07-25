@@ -2,12 +2,15 @@ import { viewPaths } from "@better-auth-ui/core";
 import { magicLinkPlugin } from "@better-auth-ui/core/plugins";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
-import { Auth, TWO_FACTOR_VIEW_PATH } from "@/components/auth/auth";
+import { Auth } from "@/components/auth/auth";
 import { GuestSignInButton } from "@/components/guest-sign-in-button";
 import { Spinner } from "@/components/ui/spinner";
+import { TWO_FACTOR_VIEW_PATH } from "@/lib/auth-paths";
 
 const magicLinkPaths = Object.values(magicLinkPlugin().viewPaths?.auth ?? {});
 
+// Must not import path constants from "use client" modules — Server Components can
+// receive client references instead of plain strings, which makes has() fail → 404.
 const validAuthPaths = new Set([
   ...Object.values(viewPaths.auth),
   ...magicLinkPaths,
