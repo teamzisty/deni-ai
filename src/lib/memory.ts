@@ -155,6 +155,12 @@ function normalizeMemoryText(value: string) {
   );
 }
 
+const CJK_PATTERN = /[\u3040-\u30ff\u3400-\u9fff]/;
+
+function escapeRegExp(value: string) {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
 function tokenizeMemory(value: string) {
   const normalized = normalizeMemoryText(value);
   // Prefer space-split for Latin; fall back to CJK bigrams when unspaced.
@@ -163,7 +169,7 @@ function tokenizeMemory(value: string) {
     .map((token) => token.trim())
     .filter((token) => token.length > 0);
 
-  if (spaceTokens.length >= 2 || !/[\u3040-\u30ff\u3400-\u9fff]/.test(normalized)) {
+  if (spaceTokens.length >= 2 || !CJK_PATTERN.test(normalized)) {
     return spaceTokens.filter((token) => token.length > 1 || /^[a-z0-9]+$/i.test(token));
   }
 
@@ -283,9 +289,21 @@ function isNearDuplicateMemory(candidate: string, existing: string) {
     candidateNormalized.includes(existingNormalized) ||
     existingNormalized.includes(candidateNormalized)
   ) {
-    const shorterLength = Math.min(candidateNormalized.length, existingNormalized.length);
-    // CJK can be short but still meaningful (e.g. "日本語").
-    if (shorterLength >= 2) {
+    const [shorter, longer] =
+      candidateNormalized.length <= existingNormalized.length
+        ? [candidateNormalized, existingNormalized]
+        : [existingNormalized, candidateNormalized];
+
+    // Latin fragments must line up with whole words. "Name: rai" normalizes to
+    // "rai", which as a raw substring would swallow every later memory
+    // containing "training", "constraint", "straightforward", …
+    // CJK has no word boundaries, so keep a length floor there instead
+    // (short but meaningful, e.g. "日本語").
+    const isMeaningfulContainment = CJK_PATTERN.test(shorter)
+      ? shorter.length >= 3
+      : new RegExp(`(?:^|\\s)${escapeRegExp(shorter)}(?:\\s|$)`).test(longer);
+
+    if (isMeaningfulContainment) {
       return true;
     }
   }
