@@ -18,6 +18,7 @@ import { useAvailableModels } from "@/hooks/use-available-models";
 import { useInitialMessage } from "@/hooks/use-initial-message";
 import { useKeyboardShortcuts } from "@/hooks/use-keyboard-shortcuts";
 import { useChatBranches } from "@/hooks/use-chat-branches";
+import { useMemorySaveNotice } from "@/hooks/use-memory-save-notice";
 import { useNewChat } from "@/hooks/use-new-chat";
 import { useUsageStatus } from "@/hooks/use-usage-status";
 import { authClient } from "@/lib/auth-client";
@@ -274,6 +275,8 @@ export function ChatInterface({
 
     void utils.billing.usage.invalidate();
   }, [status, utils]);
+
+  useMemorySaveNotice({ status });
 
   const handleSubmit = async (
     message: ComposerMessage,
