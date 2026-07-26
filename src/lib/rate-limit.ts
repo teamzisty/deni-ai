@@ -63,7 +63,25 @@ function checkRateLimitInMemory({
 // ---------- Public API ----------
 
 /**
- * Sliding-window rate limiter.
+ * Atomically increments the counter and returns its value plus the remaining TTL.
+ *
+ * A plain INCR followed by a separate EXPIRE is not safe: if the process dies or
+ * the EXPIRE call fails in between, the key survives with no TTL and the caller is
+ * locked out permanently. Doing both in one server-side script removes that window
+ * and also repairs any pre-existing key that was left without a TTL.
+ */
+const INCR_WITH_TTL = `
+local current = redis.call('INCR', KEYS[1])
+local ttl = redis.call('TTL', KEYS[1])
+if ttl < 0 then
+  redis.call('EXPIRE', KEYS[1], ARGV[1])
+  ttl = tonumber(ARGV[1])
+end
+return { current, ttl }
+`;
+
+/**
+ * Fixed-window rate limiter.
  * Uses Upstash Redis when UPSTASH_REDIS_REST_URL/TOKEN are set,
  * otherwise falls back to an in-memory Map (per-instance).
  */
@@ -83,14 +101,12 @@ export async function checkRateLimit({
   const windowSec = Math.ceil(windowMs / 1000);
 
   try {
-    const current = await redis.incr(key);
-
-    if (current === 1) {
-      await redis.expire(key, windowSec);
-    }
+    const [current, ttl] = (await redis.eval(INCR_WITH_TTL, [key], [windowSec])) as [
+      number,
+      number,
+    ];
 
     if (current > maxRequests) {
-      const ttl = await redis.ttl(key);
       return { allowed: false, retryAfter: ttl > 0 ? ttl : windowSec };
     }
 

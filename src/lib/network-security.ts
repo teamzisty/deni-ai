@@ -5,47 +5,63 @@ function normalizeIpAddress(address: string) {
   return address.toLowerCase().startsWith("::ffff:") ? address.slice(7) : address;
 }
 
+/**
+ * Non-public IPv4 ranges, as CIDR pairs of [network, prefix length].
+ *
+ * Matching on numeric ranges rather than string prefixes matters: a
+ * `startsWith("127.0.0.1")`-style check only covers a single loopback address and
+ * leaves the rest of 127.0.0.0/8 (127.0.0.2, 127.1.1.1, …) reachable.
+ */
+const PRIVATE_IPV4_CIDRS: ReadonlyArray<readonly [string, number]> = [
+  ["0.0.0.0", 8], // "this network"
+  ["10.0.0.0", 8], // RFC 1918
+  ["100.64.0.0", 10], // RFC 6598 carrier-grade NAT
+  ["127.0.0.0", 8], // loopback
+  ["169.254.0.0", 16], // link-local, incl. cloud metadata 169.254.169.254
+  ["172.16.0.0", 12], // RFC 1918
+  ["192.0.0.0", 24], // IETF protocol assignments
+  ["192.0.2.0", 24], // TEST-NET-1
+  ["192.168.0.0", 16], // RFC 1918
+  ["198.18.0.0", 15], // benchmarking
+  ["198.51.100.0", 24], // TEST-NET-2
+  ["203.0.113.0", 24], // TEST-NET-3
+  ["224.0.0.0", 4], // multicast
+  ["240.0.0.0", 4], // reserved, incl. 255.255.255.255 broadcast
+];
+
+function ipv4ToInt(address: string) {
+  const parts = address.split(".");
+  if (parts.length !== 4) {
+    return null;
+  }
+
+  let value = 0;
+  for (const part of parts) {
+    const octet = Number(part);
+    if (!Number.isInteger(octet) || octet < 0 || octet > 255) {
+      return null;
+    }
+    value = value * 256 + octet;
+  }
+  return value;
+}
+
 function isPrivateIpv4(address: string) {
-  if (address === "127.0.0.1" || address === "0.0.0.0") {
-    return true;
-  }
-  if (
-    address.startsWith("10.") ||
-    address.startsWith("192.168.") ||
-    address.startsWith("169.254.")
-  ) {
-    return true;
+  const value = ipv4ToInt(address);
+  if (value === null) {
+    return true; // Unparseable: fail closed.
   }
 
-  if (address.startsWith("100.")) {
-    const match100 = address.match(/^100\.(\d+)\./);
-    if (match100) {
-      const second = Number.parseInt(match100[1], 10);
-      if (second >= 64 && second <= 127) {
-        return true;
-      }
+  return PRIVATE_IPV4_CIDRS.some(([network, prefix]) => {
+    const networkValue = ipv4ToInt(network);
+    if (networkValue === null) {
+      return false;
     }
-  }
-
-  if (address.startsWith("198.")) {
-    const match198 = address.match(/^198\.(\d+)\./);
-    if (match198) {
-      const second = Number.parseInt(match198[1], 10);
-      if (second === 18 || second === 19) {
-        return true;
-      }
-    }
-  }
-
-  const match172 = address.match(/^172\.(\d+)\./);
-  if (match172) {
-    const second = Number.parseInt(match172[1], 10);
-    if (second >= 16 && second <= 31) {
-      return true;
-    }
-  }
-
-  return address.startsWith("0.") || address.startsWith("224.") || address.startsWith("255.");
+    // Avoid <<: a /0 shift is undefined-ish in JS bitwise ops and 32-bit signed
+    // arithmetic would break for addresses above 127.x.
+    const blockSize = 2 ** (32 - prefix);
+    return Math.floor(value / blockSize) === Math.floor(networkValue / blockSize);
+  });
 }
 
 function isPrivateIpv6(address: string) {

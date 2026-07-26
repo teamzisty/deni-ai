@@ -212,10 +212,12 @@ export async function disableMaxMode(
   return { success: true };
 }
 
-export async function recordMaxModeUsage(
+async function applyMaxModeUsageDelta(
   userId: string,
   category: UsageCategory,
-  amount = 1,
+  expression: (
+    column: typeof billing.maxModeUsageBasic | typeof billing.maxModeUsagePremium,
+  ) => ReturnType<typeof sql>,
 ): Promise<{ success: boolean; newUsage: number }> {
   const record = await getEffectiveBillingRecord(userId);
 
@@ -229,7 +231,7 @@ export async function recordMaxModeUsage(
   const [updated] = await db
     .update(billing)
     .set({
-      [field]: sql`${column} + ${amount}`,
+      [field]: expression(column),
     })
     .where(eq(billing.id, record.id))
     .returning({
@@ -237,9 +239,70 @@ export async function recordMaxModeUsage(
       maxModeUsagePremium: billing.maxModeUsagePremium,
     });
 
-  const newUsage = category === "basic" ? updated.maxModeUsageBasic : updated.maxModeUsagePremium;
+  if (!updated) {
+    // The billing row can disappear between the lookup and the update.
+    return { success: false, newUsage: 0 };
+  }
 
-  // Report the overage quantity to Stripe for metered billing.
+  return {
+    success: true,
+    newUsage: category === "basic" ? updated.maxModeUsageBasic : updated.maxModeUsagePremium,
+  };
+}
+
+/**
+ * Records Max Mode overage in the local ledger only.
+ *
+ * Deliberately does *not* report to Stripe: callers reserve an estimate up front
+ * and reconcile down to actual usage afterwards, and a meter event cannot be
+ * partially reduced (Stripe only cancels a whole event by identifier, within 24h).
+ * Reporting here would bill the estimate permanently. Use
+ * {@link reportMaxModeUsageToStripe} once, after reconciliation.
+ */
+export async function recordMaxModeUsage(userId: string, category: UsageCategory, amount = 1) {
+  if (amount <= 0) {
+    return { success: false, newUsage: 0 };
+  }
+  return applyMaxModeUsageDelta(userId, category, (column) => sql`${column} + ${amount}`);
+}
+
+/** Reverses a local Max Mode ledger entry, e.g. when an over-reserved estimate is refunded. */
+export async function refundMaxModeUsage(userId: string, category: UsageCategory, amount = 1) {
+  if (amount <= 0) {
+    return { success: false, newUsage: 0 };
+  }
+  return applyMaxModeUsageDelta(
+    userId,
+    category,
+    (column) => sql`GREATEST(${column} - ${amount}, 0)`,
+  );
+}
+
+/**
+ * Reports metered Max Mode overage to Stripe. Call once per request with the
+ * final reconciled amount — meter events are append-only.
+ */
+export async function reportMaxModeUsageToStripe(
+  userId: string,
+  category: UsageCategory,
+  amount: number,
+) {
+  if (amount <= 0) {
+    return;
+  }
+
+  const record = await getEffectiveBillingRecord(userId);
+
+  if (!record?.stripeCustomerId) {
+    // Local ledger already has the overage; without a customer we cannot bill it.
+    console.error("Max Mode usage not reported to Stripe: no customer", {
+      userId,
+      category,
+      amount,
+    });
+    return;
+  }
+
   try {
     await stripe.billing.meterEvents.create({
       event_name: `max_mode_${category}`,
@@ -252,8 +315,6 @@ export async function recordMaxModeUsage(
     // Log but don't fail - we've already recorded locally
     console.error("Failed to report usage to Stripe:", error);
   }
-
-  return { success: true, newUsage };
 }
 
 export async function resetMaxModeUsage(userId: string): Promise<void> {

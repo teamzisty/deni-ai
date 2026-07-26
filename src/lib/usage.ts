@@ -4,7 +4,7 @@ import { db } from "@/db/drizzle";
 import { billing, member, teamMemberUsagePolicy, teamUsagePolicy, usageQuota } from "@/db/schema";
 import { getPlanTier } from "@/lib/billing";
 
-import { isMaxModeEligible, recordMaxModeUsage } from "./max-mode";
+import { isMaxModeEligible, recordMaxModeUsage, refundMaxModeUsage } from "./max-mode";
 
 const ACTIVE_BILLING_STATUSES = new Set(["active", "trialing", "past_due", "paid"]);
 
@@ -445,6 +445,7 @@ export async function consumeUsage({
       limit: null,
       remaining: null,
       usedMaxMode: false,
+      maxModeAmount: 0,
     };
   }
 
@@ -465,7 +466,11 @@ export async function consumeUsage({
         throw new UsageLimitError("Usage limit reached for your plan.", tierInfo.maxModeEligible);
       }
 
-      await recordMaxModeUsage(userId, category, amount);
+      // Only the slice above the plan limit is billable overage. Recording the
+      // whole `amount` would overcharge the request that first crosses the limit.
+      const maxModeAmount = Math.min(amount, state.used + amount - limit);
+
+      await recordMaxModeUsage(userId, category, maxModeAmount);
 
       await upsertUsageRecord({
         userId,
@@ -486,6 +491,7 @@ export async function consumeUsage({
         limit,
         remaining: 0,
         usedMaxMode: true,
+        maxModeAmount,
       };
     }
 
@@ -513,6 +519,7 @@ export async function consumeUsage({
         limit,
         remaining: Math.max(limit - saved.used, 0),
         usedMaxMode: false,
+        maxModeAmount: 0,
       };
     }
 
@@ -543,6 +550,7 @@ export async function consumeUsage({
     limit,
     remaining: Math.max(limit - saved.used, 0),
     usedMaxMode: false,
+    maxModeAmount: 0,
   };
 }
 
@@ -550,14 +558,24 @@ export async function refundUsage({
   userId,
   category,
   amount = 1,
+  now = new Date(),
 }: {
   userId: string;
   category: UsageCategory;
   amount?: number;
+  now?: Date;
 }) {
   if (!Number.isInteger(amount) || amount <= 0) {
     throw new Error("Refund amount must be a positive integer.");
   }
+
+  const state = await calculateUsageState({ userId, category, now });
+
+  // Anything currently above the plan limit was billed as Max Mode overage, so
+  // the refund has to walk that ledger back too — otherwise an over-reserved
+  // estimate stays charged even though the quota was returned.
+  const maxModeRefund =
+    state.limit === null ? 0 : Math.min(amount, Math.max(state.used - state.limit, 0));
 
   const [saved] = await db
     .update(usageQuota)
@@ -565,10 +583,26 @@ export async function refundUsage({
       used: sql`GREATEST(${usageQuota.used} - ${amount}, 0)`,
       updatedAt: new Date(),
     })
-    .where(and(eq(usageQuota.userId, userId), eq(usageQuota.category, category)))
+    .where(
+      and(
+        eq(usageQuota.userId, userId),
+        eq(usageQuota.category, category),
+        // Never refund into a period that already rolled over: the consumption
+        // being reversed belongs to the previous window.
+        sql`(${usageQuota.periodEnd} IS NULL OR ${usageQuota.periodEnd} > ${now})`,
+      ),
+    )
     .returning({ used: usageQuota.used });
 
-  return saved ?? null;
+  if (!saved) {
+    return { used: null, maxModeRefunded: 0 };
+  }
+
+  if (maxModeRefund > 0) {
+    await refundMaxModeUsage(userId, category, maxModeRefund);
+  }
+
+  return { used: saved.used, maxModeRefunded: maxModeRefund };
 }
 
 export type UsageSnapshot = {

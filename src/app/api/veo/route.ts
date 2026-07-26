@@ -4,6 +4,7 @@ import { z } from "zod";
 import { env } from "@/env";
 import { auth } from "@/lib/auth";
 import { checkRateLimit } from "@/lib/rate-limit";
+import { reportMaxModeUsageToStripe } from "@/lib/max-mode";
 import { consumeUsage, refundUsage, UsageLimitError } from "@/lib/usage";
 import { createVeoAccessToken, verifyVeoAccessToken } from "@/lib/veo-access";
 import { veoAspectRatios, veoDurations, veoModelValues, veoResolutions } from "@/lib/veo";
@@ -81,8 +82,13 @@ export async function POST(req: Request) {
     );
   }
 
+  // Billed to Stripe only once the request actually succeeds: every failure path
+  // below refunds the reservation, and a meter event cannot be taken back.
+  let pendingMaxModeAmount = 0;
+
   try {
-    await consumeUsage({ userId, category: "premium", isAnonymous });
+    const consumed = await consumeUsage({ userId, category: "premium", isAnonymous });
+    pendingMaxModeAmount = consumed.maxModeAmount;
   } catch (error) {
     if (error instanceof UsageLimitError) {
       return NextResponse.json({ error: error.message, reason: "usage_limit" }, { status: 402 });
@@ -148,6 +154,8 @@ export async function POST(req: Request) {
       await refundUsage({ userId, category: "premium" });
       return NextResponse.json({ error: "Missing operation name." }, { status: 500 });
     }
+
+    await reportMaxModeUsageToStripe(userId, "premium", pendingMaxModeAmount);
 
     return NextResponse.json({
       operationName,

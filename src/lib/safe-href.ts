@@ -1,12 +1,24 @@
 const ALLOWED_EXTERNAL_PROTOCOLS = new Set(["http:", "https:", "mailto:", "tel:"]);
 const ALLOWED_DOWNLOAD_PROTOCOLS = new Set(["http:", "https:", "data:", "blob:"]);
 
+/**
+ * True for same-origin paths only.
+ *
+ * A bare `startsWith("/")` also accepts protocol-relative URLs — browsers resolve
+ * `//evil.com` against the current scheme and navigate off-site, so those must go
+ * through protocol validation instead. Backslashes are rejected because several
+ * browsers normalise `/\` to `//`.
+ */
+function isSameOriginPath(value: string) {
+  return value.startsWith("/") && !value.startsWith("//") && !value.startsWith("/\\");
+}
+
 export function toSafeHref(value: string | null | undefined, fallback = "#") {
   if (!value) {
     return fallback;
   }
 
-  if (value.startsWith("/")) {
+  if (isSameOriginPath(value)) {
     return value;
   }
 
@@ -23,7 +35,7 @@ export function toSafeDownloadHref(value: string | null | undefined, fallback = 
     return fallback;
   }
 
-  if (value.startsWith("/")) {
+  if (isSameOriginPath(value)) {
     return value;
   }
 
