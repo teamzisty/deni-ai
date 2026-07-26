@@ -44,6 +44,10 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
+# react-doctor scan output (regenerate with `bun run doctor`; stale copies mislead)
+.diagnostics.json
+.errors_by_file.json
+
 # claude
 .claude-images/
 # next-agents-md

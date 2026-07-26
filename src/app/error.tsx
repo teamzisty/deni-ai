@@ -3,13 +3,14 @@
 import { TriangleAlert } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState, useSyncExternalStore } from "react";
 import { Button } from "@/components/ui/button";
 import { versions } from "@/lib/version";
 
 type ErrorPageProps = {
   error: Error & { digest?: string };
-  reset: () => void;
+  /** Re-fetches and re-renders the boundary's children. Preferred over `reset` since Next 16.3. */
+  retry: () => void;
 };
 
 /**
@@ -36,42 +37,43 @@ const COPY = {
   },
 } as const;
 
-function resolveLocale(): keyof typeof COPY {
-  if (typeof document !== "undefined") {
-    const lang = document.documentElement.lang || navigator.language || "en";
-    if (lang.toLowerCase().startsWith("ja")) {
-      return "ja";
-    }
-  }
+/** The locale cannot change while this boundary is mounted, so never notify. */
+function subscribeNever() {
+  return () => {};
+}
+
+function getLocaleSnapshot(): keyof typeof COPY {
+  const lang = document.documentElement.lang || navigator.language || "en";
+  return lang.toLowerCase().startsWith("ja") ? "ja" : "en";
+}
+
+function getServerLocaleSnapshot(): keyof typeof COPY {
   return "en";
 }
 
-export default function ErrorPage({ error, reset }: ErrorPageProps) {
+export default function ErrorPage({ error, retry }: ErrorPageProps) {
   const pathname = usePathname();
-  const [locale, setLocale] = useState<keyof typeof COPY>("en");
+  // Read during render rather than in an effect: setState-in-effect costs an extra
+  // render pass and flashes English first. html[lang] is already set by the root
+  // layout's pre-hydration script, so the client snapshot is correct immediately.
+  const locale = useSyncExternalStore(subscribeNever, getLocaleSnapshot, getServerLocaleSnapshot);
   const [timestamp] = useState(() => new Date().toISOString());
   const t = COPY[locale];
-
-  useEffect(() => {
-    setLocale(resolveLocale());
-  }, []);
 
   useEffect(() => {
     console.error(error);
   }, [error]);
 
-  const reportItems = useMemo(
-    () => [
-      { label: "Version", value: versions.version },
-      { label: "Version Hash", value: versions.hash },
-      { label: "Path", value: pathname ?? "Unknown" },
-      { label: "Time", value: timestamp },
-      { label: "Digest", value: error.digest ?? "n/a" },
-      { label: "Name", value: error.name ?? "Error" },
-      { label: "Message", value: error.message || "Unexpected error" },
-    ],
-    [error.digest, error.message, error.name, pathname, timestamp],
-  );
+  // No useMemo: the React Compiler memoizes this automatically.
+  const reportItems = [
+    { label: "Version", value: versions.version },
+    { label: "Version Hash", value: versions.hash },
+    { label: "Path", value: pathname ?? "Unknown" },
+    { label: "Time", value: timestamp },
+    { label: "Digest", value: error.digest ?? "n/a" },
+    { label: "Name", value: error.name ?? "Error" },
+    { label: "Message", value: error.message || "Unexpected error" },
+  ];
 
   const reportText = reportItems.map((item) => `${item.label}: ${item.value}`).join("\n");
 
@@ -88,7 +90,7 @@ export default function ErrorPage({ error, reset }: ErrorPageProps) {
           </h1>
           <p className="max-w-xl text-muted-foreground">{t.description}</p>
           <div className="flex flex-wrap items-center justify-center gap-3">
-            <Button onClick={reset}>{t.tryAgain}</Button>
+            <Button onClick={retry}>{t.tryAgain}</Button>
             <Button variant="secondary" asChild>
               <Link href="/">{t.backHome}</Link>
             </Button>
