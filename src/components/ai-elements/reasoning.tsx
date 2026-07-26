@@ -8,7 +8,6 @@ import { cn } from "@/lib/utils";
 import { cjk } from "@streamdown/cjk";
 import { code } from "@streamdown/code";
 import { math } from "@streamdown/math";
-import { mermaid } from "@streamdown/mermaid";
 import { BrainIcon, ChevronDownIcon } from "lucide-react";
 import {
   createContext,
@@ -21,7 +20,8 @@ import {
   useState,
 } from "react";
 import { Streamdown } from "streamdown";
-import { htmlCodeBlockRemarkPlugin } from "@/components/chat/streamdown-remark-plugins";
+import { lazyMermaid } from "@/components/chat/streamdown-mermaid-plugin";
+import { streamdownRemarkPlugins } from "@/components/chat/streamdown-remark-plugins";
 
 import { Shimmer } from "./shimmer";
 
@@ -190,8 +190,7 @@ export type ReasoningContentProps = ComponentProps<typeof CollapsibleContent> & 
   children: string;
 };
 
-const streamdownPlugins = { cjk, code, math, mermaid };
-const streamdownRemarkPlugins = [htmlCodeBlockRemarkPlugin];
+const streamdownPlugins = { cjk, code, math, mermaid: lazyMermaid };
 
 export const ReasoningContent = memo(({ className, children, ...props }: ReasoningContentProps) => (
   <CollapsibleContent
