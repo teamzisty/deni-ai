@@ -1,5 +1,7 @@
 "use client";
 
+import { defaultRemarkPlugins } from "streamdown";
+
 type MarkdownNode = {
   children?: MarkdownNode[];
   lang?: string;
@@ -36,3 +38,16 @@ const transformHtmlNodes = (nodes?: MarkdownNode[]) => {
 export const htmlCodeBlockRemarkPlugin = () => (tree: MarkdownNode) => {
   transformHtmlNodes(tree.children);
 };
+
+/**
+ * Streamdown's `remarkPlugins` prop *replaces* its defaults instead of extending
+ * them, so passing a custom plugin on its own silently disables GFM (tables,
+ * strikethrough, task lists, autolinks) and the code-fence metastring parser.
+ *
+ * Always render with this list rather than a bare `[htmlCodeBlockRemarkPlugin]`.
+ * The custom transform runs last so GFM has already produced its nodes.
+ */
+export const streamdownRemarkPlugins = [
+  ...Object.values(defaultRemarkPlugins),
+  htmlCodeBlockRemarkPlugin,
+];

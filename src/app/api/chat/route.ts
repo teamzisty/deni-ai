@@ -37,6 +37,7 @@ import {
 } from "@/lib/constants";
 import { buildMemoryPrompt, getUserMemoryState, maybeAutoSaveMemories } from "@/lib/memory";
 import { buildProjectPrompt } from "@/lib/project-context";
+import { reportMaxModeUsageToStripe } from "@/lib/max-mode";
 import { consumeUsage, refundUsage, UsageLimitError } from "@/lib/usage";
 import {
   computeWeightedUsageFromLanguageModelUsage,
@@ -285,6 +286,9 @@ export async function POST(req: Request) {
   let hasAssistantOutput = false;
   let consumedUsageAmount = 0;
   let finalUsageAmount = 0;
+  // Net Max Mode overage for this request. Reported to Stripe once, after
+  // reconciliation, because meter events cannot be reduced after the fact.
+  let pendingMaxModeAmount = 0;
 
   const ownsCurrentGeneration = async () => {
     return (
@@ -301,11 +305,12 @@ export async function POST(req: Request) {
     usageRefunded = true;
 
     try {
-      await refundUsage({
+      const refunded = await refundUsage({
         userId,
         category: usageCategory,
         amount: consumedUsageAmount,
       });
+      pendingMaxModeAmount = Math.max(pendingMaxModeAmount - refunded.maxModeRefunded, 0);
     } catch (error) {
       console.error("Failed to refund chat usage", error);
     }
@@ -326,13 +331,14 @@ export async function POST(req: Request) {
         return;
       }
 
-      await consumeUsage({
+      const consumed = await consumeUsage({
         userId,
         category: usageCategory,
         isAnonymous,
         amount: normalizedTargetAmount,
         allowLimitOverflow: normalizedTargetAmount <= TOKEN_RECONCILE_OVERFLOW_BUFFER,
       });
+      pendingMaxModeAmount += consumed.maxModeAmount;
       consumedUsageAmount = normalizedTargetAmount;
       usageConsumed = true;
       usageRefunded = false;
@@ -341,24 +347,49 @@ export async function POST(req: Request) {
 
     const delta = normalizedTargetAmount - consumedUsageAmount;
     if (delta > 0) {
-      await consumeUsage({
+      const consumed = await consumeUsage({
         userId,
         category: usageCategory,
         isAnonymous,
         amount: delta,
         allowLimitOverflow: delta <= TOKEN_RECONCILE_OVERFLOW_BUFFER,
       });
+      pendingMaxModeAmount += consumed.maxModeAmount;
     } else if (delta < 0) {
-      await refundUsage({
+      const refunded = await refundUsage({
         userId,
         category: usageCategory,
         amount: Math.abs(delta),
       });
+      pendingMaxModeAmount = Math.max(pendingMaxModeAmount - refunded.maxModeRefunded, 0);
     }
 
     consumedUsageAmount = normalizedTargetAmount;
     usageConsumed = normalizedTargetAmount > 0;
     usageRefunded = normalizedTargetAmount === 0;
+  };
+
+  /**
+   * Sends the reconciled Max Mode overage to Stripe. Runs exactly once at the end
+   * of the request: meter events are append-only, so reporting the up-front
+   * estimate and reconciling down afterwards would leave the customer overbilled.
+   */
+  let maxModeReported = false;
+  const flushMaxModeUsage = async () => {
+    if (maxModeReported) {
+      return;
+    }
+    maxModeReported = true;
+
+    if (pendingMaxModeAmount <= 0) {
+      return;
+    }
+
+    try {
+      await reportMaxModeUsageToStripe(userId, usageCategory, pendingMaxModeAmount);
+    } catch (error) {
+      console.error("Failed to report Max Mode usage", error);
+    }
   };
 
   const rollbackPendingAssistantState = async () => {
@@ -410,12 +441,13 @@ export async function POST(req: Request) {
     if (!useByok) {
       if (usageUnit === "requests") {
         consumedUsageAmount = 1;
-        await consumeUsage({
+        const consumed = await consumeUsage({
           userId,
           category: usageCategory,
           isAnonymous,
           amount: consumedUsageAmount,
         });
+        pendingMaxModeAmount += consumed.maxModeAmount;
         usageConsumed = true;
       }
     }
@@ -468,12 +500,13 @@ export async function POST(req: Request) {
         modelId: baseModel,
         proMode,
       });
-      await consumeUsage({
+      const consumed = await consumeUsage({
         userId,
         category: usageCategory,
         isAnonymous,
         amount: consumedUsageAmount,
       });
+      pendingMaxModeAmount += consumed.maxModeAmount;
       usageConsumed = true;
       usageRefunded = false;
     }
@@ -502,6 +535,8 @@ export async function POST(req: Request) {
   } catch (error) {
     await rollbackPendingAssistantState();
     await refundConsumedUsage();
+    // Nothing streamed, so there is no reconciliation left to wait for.
+    await flushMaxModeUsage();
     clearGenerationLock();
     throw new Error(formatChatStreamError(error, baseModel));
   }
@@ -679,6 +714,7 @@ export async function POST(req: Request) {
         await refundConsumedUsage();
         throw error;
       } finally {
+        await flushMaxModeUsage();
         clearGenerationLock();
       }
     },

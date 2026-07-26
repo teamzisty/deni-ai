@@ -126,14 +126,17 @@ const LOCALE_LANG_SCRIPT = `(function(){try{var m=document.cookie.match(/(?:^|; 
 /**
  * Executable only during SSR HTML parse. On the client, React would not re-run
  * <script> tags, so switch type to text/plain to silence the React 19 warning.
+ *
+ * The script body is the module constant above rather than a prop, so this sink
+ * has no dynamic input path and cannot become an injection point.
  * @see https://nextjs.org/docs/app/guides/preventing-flash-before-hydration
  */
-function InlineBootScript({ html }: { html: string }) {
+function InlineBootScript() {
   return (
     <script
       type={typeof window === "undefined" ? "text/javascript" : "text/plain"}
       suppressHydrationWarning
-      dangerouslySetInnerHTML={{ __html: html }}
+      dangerouslySetInnerHTML={{ __html: LOCALE_LANG_SCRIPT }}
     />
   );
 }
@@ -181,7 +184,7 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} ${jetbrainsMono.variable} ${inter.variable} font-sans antialiased min-w-screen min-h-screen overflow-x-hidden transition-colors duration-500`}
       >
-        <InlineBootScript html={LOCALE_LANG_SCRIPT} />
+        <InlineBootScript />
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{

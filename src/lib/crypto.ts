@@ -10,7 +10,25 @@ function getSubtle() {
   return subtle;
 }
 
-async function deriveKey() {
+/**
+ * PBKDF2 at 310k iterations costs ~40 ms per call and the inputs (secret + salt)
+ * are fixed for the process, so derive once and reuse. The promise is cached
+ * rather than the key so concurrent callers share a single derivation.
+ */
+let cachedKey: Promise<CryptoKey> | null = null;
+
+function deriveKey() {
+  if (!cachedKey) {
+    // Drop a rejected promise so a transient failure is not cached forever.
+    cachedKey = deriveKeyUncached().catch((error) => {
+      cachedKey = null;
+      throw error;
+    });
+  }
+  return cachedKey;
+}
+
+async function deriveKeyUncached() {
   const secret = env.BETTER_AUTH_SECRET;
   const enc = new TextEncoder();
   const salt = enc.encode("deni-ai:v1");

@@ -10,11 +10,11 @@ import { cn } from "@/lib/utils";
 import { cjk } from "@streamdown/cjk";
 import { code } from "@streamdown/code";
 import { math } from "@streamdown/math";
-import { mermaid } from "@streamdown/mermaid";
 import { ChevronLeftIcon, ChevronRightIcon } from "lucide-react";
 import { createContext, memo, useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { Streamdown } from "streamdown";
-import { htmlCodeBlockRemarkPlugin } from "@/components/chat/streamdown-remark-plugins";
+import { lazyMermaid } from "@/components/chat/streamdown-mermaid-plugin";
+import { streamdownRemarkPlugins } from "@/components/chat/streamdown-remark-plugins";
 import { streamdownOverrideComponents } from "@/components/chat/streamdown-overrides";
 
 export type MessageProps = HTMLAttributes<HTMLDivElement> & {
@@ -273,8 +273,7 @@ export const MessageBranchPage = ({ className, ...props }: MessageBranchPageProp
 
 export type MessageResponseProps = ComponentProps<typeof Streamdown>;
 
-const streamdownPlugins = { cjk, code, math, mermaid };
-const streamdownRemarkPlugins = [htmlCodeBlockRemarkPlugin];
+const streamdownPlugins = { cjk, code, math, mermaid: lazyMermaid };
 
 export const MessageResponse = memo(
   ({ className, ...props }: MessageResponseProps) => (

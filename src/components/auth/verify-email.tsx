@@ -18,23 +18,36 @@ export type VerifyEmailProps = {
 /** Seconds the resend button stays disabled to prevent spamming the endpoint. */
 const RESEND_COOLDOWN_SECONDS = 60;
 
-/**
- * Returns `true` once the component is mounted on the client (hydrated) and
- * `false` while rendering on the server, so client-only reads (e.g.
- * `sessionStorage`) stay safe during SSR.
- *
- * @returns Whether the component has hydrated on the client.
- */
+/** Written by better-auth-ui when sign-up or sign-in redirects here. */
+const VERIFY_EMAIL_STORAGE_KEY = "better-auth-ui.verify-email";
+
+/** The key is written before this route loads and never changes, so never notify. */
 function subscribeNever() {
   return () => {};
 }
 
-function useIsHydrated() {
-  return useSyncExternalStore(
-    subscribeNever,
-    () => true,
-    () => false,
-  );
+function getStoredEmail() {
+  try {
+    return sessionStorage.getItem(VERIFY_EMAIL_STORAGE_KEY) ?? "";
+  } catch {
+    // Blocked storage (private mode, third-party cookie policies).
+    return "";
+  }
+}
+
+function getServerStoredEmail() {
+  return "";
+}
+
+/**
+ * Reads the pending verification email from `sessionStorage` without touching a
+ * browser global during render: the server snapshot is empty and the client
+ * snapshot is applied on hydration.
+ *
+ * @returns The stored email, or an empty string when none is available.
+ */
+function useStoredVerifyEmail() {
+  return useSyncExternalStore(subscribeNever, getStoredEmail, getServerStoredEmail);
 }
 
 /**
@@ -52,9 +65,7 @@ function useIsHydrated() {
 export function VerifyEmail({ className }: VerifyEmailProps) {
   const { authClient, basePaths, baseURL, localization, redirectTo, viewPaths, Link } = useAuth();
 
-  const isHydrated = useIsHydrated();
-  // Read once after client mount path; server/pre-hydration stays empty.
-  const email = (isHydrated && sessionStorage.getItem("better-auth-ui.verify-email")) || "";
+  const email = useStoredVerifyEmail();
   const [cooldown, setCooldown] = useState(RESEND_COOLDOWN_SECONDS);
 
   useEffect(() => {
