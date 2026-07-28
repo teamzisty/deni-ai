@@ -64,7 +64,7 @@
     "cheerio": "^1.2.0",
     "class-variance-authority": "^0.7.1",
     "cmdk": "^1.1.1",
-    "cnfast": "^0.0.8",
+    "cnfast": "^0.1.0",
     "date-fns": "^4.4.0",
     "drizzle-orm": "^0.45.2",
     "embla-carousel-react": "^8.6.0",
