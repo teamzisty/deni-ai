@@ -1,14 +1,14 @@
 import { groq } from "@ai-sdk/groq";
 import { generateText, tool } from "ai";
-import { load } from "cheerio";
 import { z } from "zod";
 import { env } from "@/env";
-import { assertSafePublicHttpUrl } from "@/lib/network-security";
+import { fetchPageText } from "./fetch-page";
 import type { SearchResult } from "./types";
 
 export function createSearchTool() {
   return tool({
-    description: "Surf web and get page summary",
+    description:
+      "Search the web and get short page summaries. Prefer the browse tool when you need the full content of a specific URL.",
     inputSchema: z.object({
       query: z.string().min(1).describe("Search query"),
       amount: z
@@ -19,7 +19,7 @@ export function createSearchTool() {
         .optional()
         .describe("Number of search pages (min 5, max 15)"),
     }),
-    execute: async ({ query, amount }) => {
+    execute: async ({ query, amount }, { abortSignal }) => {
       const maxResults = Math.min(Math.max(amount ?? 10, 5), 15);
       try {
         const BRAVE_API_KEY = env.BRAVE_SEARCH_API_KEY;
@@ -40,6 +40,7 @@ export function createSearchTool() {
               "Accept-Encoding": "gzip",
               "X-Subscription-Token": BRAVE_API_KEY,
             },
+            signal: abortSignal,
           },
         );
 
@@ -61,44 +62,20 @@ export function createSearchTool() {
         const summarizedResults = await Promise.all(
           results.map(async (result) => {
             try {
-              try {
-                await assertSafePublicHttpUrl(result.url);
-              } catch {
-                return { ...result, summary: result.description };
-              }
-
-              const controller = new AbortController();
-              const timeoutId = setTimeout(() => controller.abort(), 10000);
-              const pageResponse = await fetch(result.url, {
-                headers: {
-                  "User-Agent": "Mozilla/5.0 (compatible; DeniAI/1.0)",
-                },
-                signal: controller.signal,
-                redirect: "error",
+              const page = await fetchPageText(result.url, {
+                maxChars: 8000,
+                signal: abortSignal,
               });
 
-              clearTimeout(timeoutId);
-
-              if (!pageResponse.ok) {
+              if (!page.content) {
                 return { ...result, summary: result.description };
               }
 
-              const html = await pageResponse.text();
-              const $ = load(html);
-
-              // Extract text content
-              $("script, style, nav, footer, header").remove();
-              const textContent = $("body").text().replace(/\s+/g, " ").trim().slice(0, 8000); // Limit to 8000 chars
-
-              if (!textContent) {
-                return { ...result, summary: result.description };
-              }
-
-              // Generate summary with AI
               const { text: summary } = await generateText({
                 model: summarizer,
-                prompt: `Summarize the following webpage content detailed:\n\n${textContent}`,
+                prompt: `Summarize the following webpage content detailed:\n\n${page.content}`,
                 maxOutputTokens: 2000,
+                abortSignal,
               });
 
               return { ...result, summary: summary.trim() };

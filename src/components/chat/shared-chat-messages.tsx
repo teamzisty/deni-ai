@@ -29,6 +29,8 @@ import { Button } from "@/components/ui/button";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Spinner } from "@/components/ui/spinner";
 import {
+  isBrowseToolInput,
+  isBrowseToolOutput,
   isSearchResultArray,
   isVideoToolOutput,
   resolveVeoModelLabel,
@@ -164,6 +166,62 @@ function SharedAssistantParts({ message }: { message: UIMessage }) {
                     </div>
                   </CollapsibleContent>
                 </Collapsible>
+              </div>
+            );
+          }
+          case "tool-browse": {
+            if (part.state !== "output-available" && part.state !== "output-error") {
+              return (
+                <div
+                  key={part.toolCallId}
+                  className="flex items-center gap-2 text-muted-foreground text-sm transition-colors hover:text-foreground"
+                >
+                  <Globe className="size-4" />
+                  <Shimmer>{t("Opening page...")}</Shimmer>
+                </div>
+              );
+            }
+
+            const browseOutput = isBrowseToolOutput(part.output) ? part.output : null;
+            const browseInput = isBrowseToolInput(part.input) ? part.input : null;
+            const browseUrl = browseOutput?.url ?? browseInput?.url ?? "";
+            const displayUrl = getSafeDisplayUrl(browseUrl);
+            const failed =
+              part.state === "output-error" ||
+              Boolean(browseOutput?.error && !browseOutput.content);
+
+            if (failed) {
+              return (
+                <div
+                  key={part.toolCallId}
+                  className="flex items-center gap-2 text-muted-foreground text-sm"
+                >
+                  <Globe className="size-4" />
+                  {t("Failed to open page")}
+                </div>
+              );
+            }
+
+            return (
+              <div
+                key={part.toolCallId ?? `${message.id}-${i}`}
+                className="flex items-center gap-2 text-muted-foreground text-sm"
+              >
+                <Globe className="size-4" />
+                {displayUrl ? (
+                  <Link
+                    href={displayUrl.href}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="hover:text-foreground transition-colors"
+                  >
+                    {t("Opened {host}", {
+                      host: browseOutput?.title?.trim() || displayUrl.hostname,
+                    })}
+                  </Link>
+                ) : (
+                  t("Opened page")
+                )}
               </div>
             );
           }

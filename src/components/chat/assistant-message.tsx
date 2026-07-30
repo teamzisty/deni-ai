@@ -109,7 +109,10 @@ export function AssistantMessage({
     setRetryMenuOpen(false);
   };
   const reasoningParts =
-    message.parts?.filter((part) => part.type === "reasoning" || part.type === "tool-search") ?? [];
+    message.parts?.filter(
+      (part) =>
+        part.type === "reasoning" || part.type === "tool-search" || part.type === "tool-browse",
+    ) ?? [];
   const textParts = message.parts?.filter((part) => part.type === "text") ?? [];
   const videoToolParts = message.parts?.filter(isVideoToolPart) ?? [];
   const imageToolParts = message.parts?.filter(isImageToolPart) ?? [];

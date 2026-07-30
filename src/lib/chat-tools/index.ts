@@ -1,3 +1,4 @@
+import { createBrowseTool } from "./browse";
 import { createImageTool } from "./image";
 import { createSearchTool } from "./search";
 import { createVideoTool } from "./video";
@@ -10,7 +11,12 @@ export function createChatTools({
   webSearch = true,
 }: CreateChatToolsOptions) {
   return {
-    ...(webSearch ? { search: createSearchTool() } : {}),
+    ...(webSearch
+      ? {
+          search: createSearchTool(),
+          browse: createBrowseTool(),
+        }
+      : {}),
     ...(videoMode ? { video: createVideoTool(userId) } : {}),
     ...(imageMode ? { image: createImageTool() } : {}),
   };
