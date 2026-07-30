@@ -2,20 +2,25 @@ import { createEnv } from "@t3-oss/env-nextjs";
 import { z } from "zod";
 
 export const env = createEnv({
+  /**
+   * Docker/Dokploy often inject unset optionals as "" rather than omitting them.
+   * Treat empty strings as undefined so `.optional()` / `.url().optional()` work.
+   */
+  emptyStringAsUndefined: true,
   server: {
     DATABASE_URL: z.url(),
     BETTER_AUTH_SECRET: z.string().length(32),
-    GOOGLE_CLIENT_ID: z.string(),
-    GOOGLE_CLIENT_SECRET: z.string(),
-    GITHUB_CLIENT_ID: z.string(),
-    GITHUB_CLIENT_SECRET: z.string(),
-    STRIPE_SECRET_KEY: z.string(),
-    STRIPE_WEBHOOK_SECRET: z.string().optional(),
-    STRIPE_FLASH_OFFER_COUPON_ID: z.string().optional(),
-    GOOGLE_GENERATIVE_AI_API_KEY: z.string(),
-    ANTHROPIC_API_KEY: z.string(),
-    GROQ_API_KEY: z.string(),
-    OPENROUTER_API_KEY: z.string(),
+    GOOGLE_CLIENT_ID: z.string().min(1),
+    GOOGLE_CLIENT_SECRET: z.string().min(1),
+    GITHUB_CLIENT_ID: z.string().min(1),
+    GITHUB_CLIENT_SECRET: z.string().min(1),
+    STRIPE_SECRET_KEY: z.string().min(1),
+    STRIPE_WEBHOOK_SECRET: z.string().min(1).optional(),
+    STRIPE_FLASH_OFFER_COUPON_ID: z.string().min(1).optional(),
+    GOOGLE_GENERATIVE_AI_API_KEY: z.string().min(1),
+    ANTHROPIC_API_KEY: z.string().min(1),
+    GROQ_API_KEY: z.string().min(1),
+    OPENROUTER_API_KEY: z.string().min(1),
     /**
      * When "true" or "1", platform (non-BYOK) OpenAI + Anthropic traffic is
      * routed through the voids.top OpenAI-compatible gateway.
@@ -27,24 +32,24 @@ export const env = createEnv({
     /** voids.top Chat Completions base URL (default: https://capi.voids.top/v2). */
     VOIDS_BASE_URL: z.url().optional(),
     /** Optional API key for voids.top (default placeholder when omitted). */
-    VOIDS_API_KEY: z.string().optional(),
-    BRAVE_SEARCH_API_KEY: z.string(),
-    TURNSTILE_SECRET_KEY: z.string(),
-    RESEND_API_KEY: z.string().optional(),
-    UPSTASH_REDIS_REST_URL: z.string().optional(),
-    UPSTASH_REDIS_REST_TOKEN: z.string().optional(),
-    KV_REST_API_URL: z.string().optional(),
-    KV_REST_API_TOKEN: z.string().optional(),
-    UPLOADTHING_TOKEN: z.string().optional(),
+    VOIDS_API_KEY: z.string().min(1).optional(),
+    BRAVE_SEARCH_API_KEY: z.string().min(1),
+    TURNSTILE_SECRET_KEY: z.string().min(1),
+    RESEND_API_KEY: z.string().min(1).optional(),
+    UPSTASH_REDIS_REST_URL: z.url().optional(),
+    UPSTASH_REDIS_REST_TOKEN: z.string().min(1).optional(),
+    KV_REST_API_URL: z.url().optional(),
+    KV_REST_API_TOKEN: z.string().min(1).optional(),
+    UPLOADTHING_TOKEN: z.string().min(1).optional(),
   },
   client: {
     NEXT_PUBLIC_BETTER_AUTH_URL: z.url(),
-    NEXT_PUBLIC_BILLING_DISABLED: z.string().optional(),
-    NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: z.string().optional(),
-    NEXT_PUBLIC_TURNSTILE_SITE_KEY: z.string(),
-    NEXT_PUBLIC_ADSENSE_CLIENT_ID: z.string().optional(),
-    NEXT_PUBLIC_ADSENSE_HOME_SLOT_ID: z.string().optional(),
-    NEXT_PUBLIC_ADSENSE_CHAT_SLOT_ID: z.string().optional(),
+    NEXT_PUBLIC_BILLING_DISABLED: z.string().min(1).optional(),
+    NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: z.string().min(1).optional(),
+    NEXT_PUBLIC_TURNSTILE_SITE_KEY: z.string().min(1),
+    NEXT_PUBLIC_ADSENSE_CLIENT_ID: z.string().min(1).optional(),
+    NEXT_PUBLIC_ADSENSE_HOME_SLOT_ID: z.string().min(1).optional(),
+    NEXT_PUBLIC_ADSENSE_CHAT_SLOT_ID: z.string().min(1).optional(),
   },
   // If you're using Next.js < 13.4.4, you'll need to specify the runtimeEnv manually
   runtimeEnv: {
