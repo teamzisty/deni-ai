@@ -1,0 +1,58 @@
+# Dependencies & build output
+node_modules
+**/node_modules
+.next
+out
+build
+dist
+*.tsbuildinfo
+
+# Git / IDE / local tooling
+.git
+.gitignore
+.gitattributes
+.github
+.vscode
+.idea
+.claude
+.claude-images
+.agents
+.next-docs
+.diagnostics.json
+.errors_by_file.json
+.vercel
+.vx
+
+# Env & secrets (inject at runtime)
+.env
+.env.*
+!.env.example
+
+# Docs & non-runtime paths
+*.md
+!packages/**/README.md
+LICENSE
+CODE_OF_CONDUCT.md
+CONTRIBUTING.md
+SECURITY.md
+AGENTS.md
+CLAUDE.md
+doctor.config.ts
+renovate.json
+skills-lock.json
+components.json
+
+# Local-only / heavy paths
+internal
+tools
+scripts
+coverage
+public/sw.js.map
+
+# OS junk
+.DS_Store
+Thumbs.db
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
