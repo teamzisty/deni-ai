@@ -65,6 +65,8 @@ export function createSearchTool() {
               const page = await fetchPageText(result.url, {
                 maxChars: 8000,
                 signal: abortSignal,
+                // Keep search latency down; browse tool owns reader fallback.
+                allowReaderFallback: false,
               });
 
               if (!page.content) {

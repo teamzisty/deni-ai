@@ -17,6 +17,7 @@ export type BrowseToolOutput = {
   content: string;
   truncated?: boolean;
   contentLength?: number;
+  source?: "direct" | "archive" | "reader" | "search-snippet" | null;
   error?: string | null;
 };
 
