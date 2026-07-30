@@ -10,7 +10,7 @@ import {
 export function createBrowseTool() {
   return tool({
     description:
-      "Open a specific URL and read its page content as cleaned text. Use this when the user provides a link, when search snippets are insufficient, or when you need details from a known page.",
+      "Open a specific URL and read its page content as cleaned text. Use when the user provides a link, search snippets are insufficient, or you need details from a known page. If a site blocks bots, falls back to archive/reader/snippet sources.",
     inputSchema: z.object({
       url: z.string().url().describe("The HTTP or HTTPS URL of the page to open and read"),
       maxChars: z
@@ -37,6 +37,7 @@ export function createBrowseTool() {
             content: "",
             truncated: false,
             contentLength: 0,
+            source: page.source,
             error: "No readable text content found on this page.",
           };
         }
@@ -47,6 +48,7 @@ export function createBrowseTool() {
           content: page.content,
           truncated: page.truncated,
           contentLength: page.contentLength,
+          source: page.source,
         };
       } catch (error) {
         const message = error instanceof Error ? error.message : "Failed to open page";
