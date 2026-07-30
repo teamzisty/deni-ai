@@ -10,42 +10,40 @@
 #
 # Environment (service Environment tab):
 #   - Put ALL required secrets/public vars there (same as .env.production).
-#   - Mark NEXT_PUBLIC_* as build-time (or enable build-time env) so they
-#     are embedded into the Next.js client bundle.
+#   - Mark NEXT_PUBLIC_* as build-time so they are embedded into the client bundle.
 #   - Server secrets (DATABASE_URL, API keys, …) are read at runtime.
+#
+# Notes:
+#   - Dependencies install with Bun (bun.lock).
+#   - Next.js build + runtime use Node.js (Bun has crashed mid-build on some VPS CPUs).
 #
 # Local:
 #   docker build -t deni-ai .
 #   docker run --rm -p 3000:3000 --env-file .env.production deni-ai
 
 # ---------------------------------------------------------------------------
-# Base
+# Install dependencies (Bun workspaces + bun.lock)
 # ---------------------------------------------------------------------------
-FROM oven/bun:1 AS base
+FROM oven/bun:1 AS deps
 WORKDIR /app
-ENV NEXT_TELEMETRY_DISABLED=1 \
-  NODE_ENV=production
-
-# ---------------------------------------------------------------------------
-# Install dependencies (Bun workspaces)
-# ---------------------------------------------------------------------------
-FROM base AS deps
 COPY package.json bun.lock ./
 COPY packages/disposable-email-domains ./packages/disposable-email-domains
 RUN bun install --frozen-lockfile
 
 # ---------------------------------------------------------------------------
-# Build
+# Build with Node (stable Next.js production build)
 # ---------------------------------------------------------------------------
-FROM base AS builder
+FROM node:22-bookworm-slim AS builder
+WORKDIR /app
+ENV NEXT_TELEMETRY_DISABLED=1 \
+  NODE_ENV=production
+
 COPY --from=deps /app/node_modules ./node_modules
 COPY --from=deps /app/packages ./packages
 COPY . .
 
 # Dokploy injects service env during `docker build` (as build-args / env).
-# ARG + ENV lets both `docker build --build-arg` and Dokploy env work.
-# Defaults are placeholders so CI/local can compile without real secrets;
-# production builds should override them from Dokploy Environment.
+# Defaults are placeholders so the image can compile without real secrets.
 ARG DATABASE_URL=postgresql://build:build@127.0.0.1:5432/build
 ARG BETTER_AUTH_SECRET=01234567890123456789012345678901
 ARG GOOGLE_CLIENT_ID=build
@@ -61,8 +59,8 @@ ARG BRAVE_SEARCH_API_KEY=build
 ARG TURNSTILE_SECRET_KEY=build
 ARG NEXT_PUBLIC_BETTER_AUTH_URL=http://localhost:3000
 ARG NEXT_PUBLIC_TURNSTILE_SITE_KEY=build
-# Optional vars (VOIDS_*, RESEND_*, Redis, AdSense, …) are NOT defaulted to "".
-# Dokploy/runtime can set them; emptyStringAsUndefined in src/env.ts treats "" as unset.
+# Optional vars are NOT defaulted to "". emptyStringAsUndefined in src/env.ts
+# treats "" from Dokploy as unset.
 
 ENV DATABASE_URL=$DATABASE_URL \
   BETTER_AUTH_SECRET=$BETTER_AUTH_SECRET \
@@ -80,13 +78,14 @@ ENV DATABASE_URL=$DATABASE_URL \
   NEXT_PUBLIC_BETTER_AUTH_URL=$NEXT_PUBLIC_BETTER_AUTH_URL \
   NEXT_PUBLIC_TURNSTILE_SITE_KEY=$NEXT_PUBLIC_TURNSTILE_SITE_KEY
 
-# package.json build runs typecheck; Docker only needs the Next production build.
-RUN bunx next build
+# Use Node for `next build` — Bun has segfaulted during "Finalizing page optimization"
+# on some hosts (SIGILL / exit 132).
+RUN node ./node_modules/next/dist/bin/next build
 
 # ---------------------------------------------------------------------------
-# Runtime (Next.js standalone)
+# Runtime (Next.js standalone + Node)
 # ---------------------------------------------------------------------------
-FROM base AS runner
+FROM node:22-bookworm-slim AS runner
 WORKDIR /app
 
 # Dokploy / Traefik reach the container on this port.
@@ -107,6 +106,6 @@ USER nextjs
 EXPOSE 3000
 
 HEALTHCHECK --interval=30s --timeout=5s --start-period=40s --retries=3 \
-  CMD bun -e "fetch('http://127.0.0.1:'+(process.env.PORT||3000)).then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"
+  CMD node -e "fetch('http://127.0.0.1:'+(process.env.PORT||3000)).then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"
 
-CMD ["bun", "server.js"]
+CMD ["node", "server.js"]
