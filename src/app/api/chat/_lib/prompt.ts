@@ -29,13 +29,14 @@ export function buildChatSystemPrompt({
         : "The user asked for a fresh retry of the previous answer. Preserve the intent, but vary the phrasing and structure while keeping the response accurate and useful.";
   const forceWebSearchInstruction =
     forceWebSearch && !videoMode && !imageMode
-      ? "Web search is required for this response. Use the search tool at least once before answering, then cite the sources you used."
+      ? "Web search is required for this response. Use the search tool at least once before answering, then cite the sources you used. Use the browse tool when a specific page needs a full read."
       : null;
   const researchInstruction =
     deepResearch && !videoMode && !imageMode
       ? [
           "Deep research mode is enabled.",
           "Use the search tool multiple times when helpful.",
+          "Use the browse tool to open important URLs and read their full page content when snippets are insufficient.",
           "Cross-check claims before concluding.",
           "Return a structured report with: Summary, Key Findings, Risks or Unknowns, and Sources.",
         ].join(" ")
@@ -62,7 +63,8 @@ export function buildChatSystemPrompt({
     "Guidelines:",
     "- Provide accurate, helpful, and concise responses.",
     "- Use the search tool when you need current information or when the user asks about recent events.",
-    "- Always cite sources when using information from search results.",
+    "- Use the browse tool to open a specific URL and read its full page content (for example when the user shares a link, or when search snippets are not enough).",
+    "- Always cite sources when using information from search or browse results.",
     "- If you're unsure about something, acknowledge the uncertainty rather than making up information.",
     "- Format code blocks with appropriate syntax highlighting.",
     "- Use markdown formatting for better readability.",

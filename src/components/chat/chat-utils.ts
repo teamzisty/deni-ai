@@ -11,6 +11,20 @@ export type SearchResult = {
   description: string;
 };
 
+export type BrowseToolOutput = {
+  url: string;
+  title?: string | null;
+  content: string;
+  truncated?: boolean;
+  contentLength?: number;
+  error?: string | null;
+};
+
+export type BrowseToolInput = {
+  url?: string;
+  maxChars?: number;
+};
+
 export type VideoToolOutput = {
   videoUrl: string;
   operationName?: string | null;
@@ -56,6 +70,22 @@ export const isSearchResultArray = (value: unknown): value is SearchResult[] =>
       "url" in item &&
       "description" in item,
   );
+
+export const isBrowseToolOutput = (value: unknown): value is BrowseToolOutput => {
+  if (!value || typeof value !== "object") {
+    return false;
+  }
+  const candidate = value as { url?: unknown; content?: unknown };
+  return typeof candidate.url === "string" && typeof candidate.content === "string";
+};
+
+export const isBrowseToolInput = (value: unknown): value is BrowseToolInput => {
+  if (!value || typeof value !== "object") {
+    return false;
+  }
+  const candidate = value as { url?: unknown };
+  return candidate.url === undefined || typeof candidate.url === "string";
+};
 
 export const isVideoToolOutput = (value: unknown): value is VideoToolOutput => {
   if (!value || typeof value !== "object") {

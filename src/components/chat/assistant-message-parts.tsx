@@ -17,6 +17,8 @@ import { Message, MessageContent } from "@/components/ai-elements/message";
 import { Shimmer } from "@/components/ai-elements/shimmer";
 import { Source, Sources, SourcesContent, SourcesTrigger } from "@/components/ai-elements/sources";
 import {
+  isBrowseToolInput,
+  isBrowseToolOutput,
   isImageToolOutput,
   isSearchResultArray,
   isVideoToolOutput,
@@ -173,6 +175,47 @@ export function AssistantMessageChainOfThought({
                         </Link>
                       );
                     })}
+                  </ChainOfThoughtSearchResults>
+                )}
+              </ChainOfThoughtStep>
+            );
+          }
+
+          if (part.type === "tool-browse") {
+            const isBrowsing = part.state !== "output-available" && part.state !== "output-error";
+            const browseOutput = isBrowseToolOutput(part.output) ? part.output : null;
+            const browseInput = isBrowseToolInput(part.input) ? part.input : null;
+            const browseUrl = browseOutput?.url ?? browseInput?.url ?? "";
+            const displayUrl = getSafeDisplayUrl(browseUrl);
+            const browseKey =
+              part.toolCallId ?? `${messageId}-browse-${part.state}-${browseUrl || "empty"}`;
+            const failed =
+              part.state === "output-error" ||
+              Boolean(browseOutput?.error && !browseOutput.content);
+
+            return (
+              <ChainOfThoughtStep
+                key={browseKey}
+                icon={Globe}
+                label={
+                  isBrowsing ? (
+                    <Shimmer duration={2}>{t("Opening page...")}</Shimmer>
+                  ) : failed ? (
+                    t("Failed to open page")
+                  ) : (
+                    t("Opened page")
+                  )
+                }
+                status={isBrowsing ? "active" : "complete"}
+              >
+                {displayUrl && (
+                  <ChainOfThoughtSearchResults>
+                    <Link href={displayUrl.href} target="_blank" rel="noreferrer">
+                      <ChainOfThoughtSearchResult>
+                        <Globe className="size-3" />
+                        {browseOutput?.title?.trim() || displayUrl.hostname}
+                      </ChainOfThoughtSearchResult>
+                    </Link>
                   </ChainOfThoughtSearchResults>
                 )}
               </ChainOfThoughtStep>
