@@ -4,6 +4,8 @@ import createNextIntlPlugin from "next-intl/plugin";
 
 const nextConfig: NextConfig = {
   /* config options here */
+  // Smaller runtime image for Docker / self-hosting (Vercel ignores this).
+  output: "standalone",
   transpilePackages: ["shiki"],
   cacheComponents: true,
   reactCompiler: true,

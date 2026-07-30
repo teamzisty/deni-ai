@@ -1,0 +1,140 @@
+# syntax=docker/dockerfile:1
+#
+# Dokploy (Dockerfile build)
+# -------------------------
+# Application settings:
+#   Build Type:        Dockerfile
+#   Dockerfile path:   Dockerfile
+#   Docker context:    .
+#   Port:              3000
+#
+# Environment (service Environment tab):
+#   - Put ALL required secrets/public vars there (same as .env.production).
+#   - Mark NEXT_PUBLIC_* as build-time (or enable build-time env) so they
+#     are embedded into the Next.js client bundle.
+#   - Server secrets (DATABASE_URL, API keys, …) are read at runtime.
+#
+# Local:
+#   docker build -t deni-ai .
+#   docker run --rm -p 3000:3000 --env-file .env.production deni-ai
+
+# ---------------------------------------------------------------------------
+# Base
+# ---------------------------------------------------------------------------
+FROM oven/bun:1 AS base
+WORKDIR /app
+ENV NEXT_TELEMETRY_DISABLED=1 \
+  NODE_ENV=production
+
+# ---------------------------------------------------------------------------
+# Install dependencies (Bun workspaces)
+# ---------------------------------------------------------------------------
+FROM base AS deps
+COPY package.json bun.lock ./
+COPY packages/disposable-email-domains ./packages/disposable-email-domains
+RUN bun install --frozen-lockfile
+
+# ---------------------------------------------------------------------------
+# Build
+# ---------------------------------------------------------------------------
+FROM base AS builder
+COPY --from=deps /app/node_modules ./node_modules
+COPY --from=deps /app/packages ./packages
+COPY . .
+
+# Dokploy injects service env during `docker build` (as build-args / env).
+# ARG + ENV lets both `docker build --build-arg` and Dokploy env work.
+# Defaults are placeholders so CI/local can compile without real secrets;
+# production builds should override them from Dokploy Environment.
+ARG DATABASE_URL=postgresql://build:build@127.0.0.1:5432/build
+ARG BETTER_AUTH_SECRET=01234567890123456789012345678901
+ARG GOOGLE_CLIENT_ID=build
+ARG GOOGLE_CLIENT_SECRET=build
+ARG GITHUB_CLIENT_ID=build
+ARG GITHUB_CLIENT_SECRET=build
+ARG STRIPE_SECRET_KEY=sk_test_build
+ARG STRIPE_WEBHOOK_SECRET=
+ARG GOOGLE_GENERATIVE_AI_API_KEY=build
+ARG ANTHROPIC_API_KEY=build
+ARG GROQ_API_KEY=build
+ARG OPENROUTER_API_KEY=build
+ARG BRAVE_SEARCH_API_KEY=build
+ARG TURNSTILE_SECRET_KEY=build
+ARG RESEND_API_KEY=
+ARG UPSTASH_REDIS_REST_URL=
+ARG UPSTASH_REDIS_REST_TOKEN=
+ARG KV_REST_API_URL=
+ARG KV_REST_API_TOKEN=
+ARG UPLOADTHING_TOKEN=
+ARG VOIDS_MODE=
+ARG VOIDS_BASE_URL=
+ARG VOIDS_API_KEY=
+ARG NEXT_PUBLIC_BETTER_AUTH_URL=http://localhost:3000
+ARG NEXT_PUBLIC_TURNSTILE_SITE_KEY=build
+ARG NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=
+ARG NEXT_PUBLIC_BILLING_DISABLED=
+ARG NEXT_PUBLIC_ADSENSE_CLIENT_ID=
+ARG NEXT_PUBLIC_ADSENSE_HOME_SLOT_ID=
+ARG NEXT_PUBLIC_ADSENSE_CHAT_SLOT_ID=
+
+ENV DATABASE_URL=$DATABASE_URL \
+  BETTER_AUTH_SECRET=$BETTER_AUTH_SECRET \
+  GOOGLE_CLIENT_ID=$GOOGLE_CLIENT_ID \
+  GOOGLE_CLIENT_SECRET=$GOOGLE_CLIENT_SECRET \
+  GITHUB_CLIENT_ID=$GITHUB_CLIENT_ID \
+  GITHUB_CLIENT_SECRET=$GITHUB_CLIENT_SECRET \
+  STRIPE_SECRET_KEY=$STRIPE_SECRET_KEY \
+  STRIPE_WEBHOOK_SECRET=$STRIPE_WEBHOOK_SECRET \
+  GOOGLE_GENERATIVE_AI_API_KEY=$GOOGLE_GENERATIVE_AI_API_KEY \
+  ANTHROPIC_API_KEY=$ANTHROPIC_API_KEY \
+  GROQ_API_KEY=$GROQ_API_KEY \
+  OPENROUTER_API_KEY=$OPENROUTER_API_KEY \
+  BRAVE_SEARCH_API_KEY=$BRAVE_SEARCH_API_KEY \
+  TURNSTILE_SECRET_KEY=$TURNSTILE_SECRET_KEY \
+  RESEND_API_KEY=$RESEND_API_KEY \
+  UPSTASH_REDIS_REST_URL=$UPSTASH_REDIS_REST_URL \
+  UPSTASH_REDIS_REST_TOKEN=$UPSTASH_REDIS_REST_TOKEN \
+  KV_REST_API_URL=$KV_REST_API_URL \
+  KV_REST_API_TOKEN=$KV_REST_API_TOKEN \
+  UPLOADTHING_TOKEN=$UPLOADTHING_TOKEN \
+  VOIDS_MODE=$VOIDS_MODE \
+  VOIDS_BASE_URL=$VOIDS_BASE_URL \
+  VOIDS_API_KEY=$VOIDS_API_KEY \
+  NEXT_PUBLIC_BETTER_AUTH_URL=$NEXT_PUBLIC_BETTER_AUTH_URL \
+  NEXT_PUBLIC_TURNSTILE_SITE_KEY=$NEXT_PUBLIC_TURNSTILE_SITE_KEY \
+  NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=$NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY \
+  NEXT_PUBLIC_BILLING_DISABLED=$NEXT_PUBLIC_BILLING_DISABLED \
+  NEXT_PUBLIC_ADSENSE_CLIENT_ID=$NEXT_PUBLIC_ADSENSE_CLIENT_ID \
+  NEXT_PUBLIC_ADSENSE_HOME_SLOT_ID=$NEXT_PUBLIC_ADSENSE_HOME_SLOT_ID \
+  NEXT_PUBLIC_ADSENSE_CHAT_SLOT_ID=$NEXT_PUBLIC_ADSENSE_CHAT_SLOT_ID
+
+# package.json build runs typecheck; Docker only needs the Next production build.
+RUN bunx next build
+
+# ---------------------------------------------------------------------------
+# Runtime (Next.js standalone)
+# ---------------------------------------------------------------------------
+FROM base AS runner
+WORKDIR /app
+
+# Dokploy / Traefik reach the container on this port.
+# HOSTNAME=0.0.0.0 is required so the proxy can connect.
+ENV PORT=3000 \
+  HOSTNAME=0.0.0.0 \
+  NEXT_TELEMETRY_DISABLED=1 \
+  NODE_ENV=production
+
+RUN groupadd --system --gid 1001 nodejs \
+  && useradd --system --uid 1001 --gid nodejs nextjs
+
+COPY --from=builder /app/public ./public
+COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
+COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
+
+USER nextjs
+EXPOSE 3000
+
+HEALTHCHECK --interval=30s --timeout=5s --start-period=40s --retries=3 \
+  CMD bun -e "fetch('http://127.0.0.1:'+(process.env.PORT||3000)).then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"
+
+CMD ["bun", "server.js"]
