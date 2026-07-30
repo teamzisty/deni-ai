@@ -1,5 +1,4 @@
 import { load } from "cheerio";
-import { env } from "@/env";
 import { assertSafePublicHttpUrl } from "@/lib/network-security";
 import { createAbortError } from "./helpers";
 
@@ -10,12 +9,12 @@ export const MAX_BROWSE_MAX_CHARS = 50_000;
 /** Cap raw HTML before parsing to avoid pathological pages. */
 const MAX_RAW_HTML_CHARS = 2_000_000;
 const MAX_REDIRECTS = 5;
-const FALLBACK_TIMEOUT_MS = 20_000;
+const READER_TIMEOUT_MS = 20_000;
 
 const BROWSER_USER_AGENT =
   "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36";
 
-/** Browser-like headers improve success against bot filters vs a custom bot UA. */
+/** Browser-like headers for direct site fetches. */
 const BROWSER_HEADERS: HeadersInit = {
   Accept: "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8",
   "Accept-Language": "en-US,en;q=0.9,ja;q=0.8",
@@ -26,7 +25,7 @@ const BROWSER_HEADERS: HeadersInit = {
 
 const REDIRECT_STATUSES = new Set([301, 302, 303, 307, 308]);
 
-export type PageFetchSource = "direct" | "archive" | "reader" | "search-snippet";
+export type PageFetchSource = "direct" | "reader";
 
 export type FetchedPageText = {
   url: string;
@@ -102,8 +101,6 @@ function looksLikeBlockedOrEmptyPage(title: string, content: string) {
 function extractReadableText(html: string, maxChars: number, fallbackTitle: string) {
   const $ = load(html.slice(0, MAX_RAW_HTML_CHARS));
   $("script, style, noscript, iframe, svg, canvas, template").remove();
-  // Wayback UI chrome
-  $("#wm-ipp-base, #wm-ipp, #donato, #wm-capinfo").remove();
   $("nav, footer, header, aside").remove();
 
   const title =
@@ -195,29 +192,12 @@ async function withTimeoutSignal<T>(
   }
 }
 
-function isAllowedArchiveHost(hostname: string) {
-  const normalized = hostname.toLowerCase();
-  return (
-    normalized === "archive.org" ||
-    normalized.endsWith(".archive.org") ||
-    normalized === "web.archive.org"
-  );
-}
-
-/**
- * Follow redirects manually and re-validate each hop.
- * When `hostAllowlist` is set, only those hosts (plus already-validated start host) are allowed.
- */
+/** Follow redirects manually and re-validate each hop against private networks. */
 async function fetchWithSafeRedirects(
   url: string,
   signal: AbortSignal,
-  options?: {
-    /** Extra hosts allowed for redirect hops (e.g. web.archive.org). */
-    allowArchiveHosts?: boolean;
-  },
 ): Promise<{ response: Response; finalUrl: string; finalHostname: string }> {
   let current = await assertSafePublicHttpUrl(url);
-  const startHost = current.hostname.toLowerCase();
 
   for (let hop = 0; hop <= MAX_REDIRECTS; hop++) {
     const response = await fetch(current.toString(), {
@@ -241,19 +221,7 @@ async function fetchWithSafeRedirects(
         throw new Error("Invalid redirect Location header.");
       }
 
-      const nextHost = next.hostname.toLowerCase();
-      const allowedArchiveHop = options?.allowArchiveHosts && isAllowedArchiveHost(nextHost);
-      if (nextHost !== startHost && !allowedArchiveHop) {
-        // Re-validate arbitrary public redirects.
-        current = await assertSafePublicHttpUrl(next.toString());
-      } else if (allowedArchiveHop) {
-        if (next.protocol !== "https:" && next.protocol !== "http:") {
-          throw new Error("Invalid archive redirect protocol.");
-        }
-        current = next;
-      } else {
-        current = await assertSafePublicHttpUrl(next.toString());
-      }
+      current = await assertSafePublicHttpUrl(next.toString());
       continue;
     }
 
@@ -299,7 +267,6 @@ async function parseSuccessfulResponse(
     contentType.includes("json") ||
     contentType.includes("markdown")
   ) {
-    // Reader markdown keeps newlines useful; plain text can collapse lightly.
     const normalized = contentType.includes("markdown")
       ? raw.replace(/\n{3,}/g, "\n\n").trim()
       : raw.replace(/\s+/g, " ").trim();
@@ -342,78 +309,6 @@ async function fetchDirect(
   return parseSuccessfulResponse(response, finalUrl, finalHostname, maxChars, "direct");
 }
 
-async function fetchViaArchive(
-  url: string,
-  maxChars: number,
-  signal: AbortSignal,
-): Promise<FetchedPageText> {
-  const target = await assertSafePublicHttpUrl(url);
-  const availabilityUrl = `https://archive.org/wayback/available?url=${encodeURIComponent(target.toString())}`;
-
-  const availabilityResponse = await fetch(availabilityUrl, {
-    headers: {
-      Accept: "application/json",
-      "User-Agent": BROWSER_USER_AGENT,
-    },
-    signal,
-    redirect: "error",
-  });
-
-  if (!availabilityResponse.ok) {
-    throw new Error(`Archive lookup failed (${availabilityResponse.status}).`);
-  }
-
-  const availability = (await availabilityResponse.json()) as {
-    archived_snapshots?: {
-      closest?: {
-        available?: boolean;
-        url?: string;
-        status?: string;
-      };
-    };
-  };
-
-  const snapshot = availability.archived_snapshots?.closest;
-  if (!snapshot?.available || !snapshot.url) {
-    throw new Error("No archived snapshot available for this URL.");
-  }
-
-  let snapshotUrl: URL;
-  try {
-    snapshotUrl = new URL(snapshot.url);
-  } catch {
-    throw new Error("Invalid archive snapshot URL.");
-  }
-
-  if (!isAllowedArchiveHost(snapshotUrl.hostname)) {
-    throw new Error("Archive snapshot host is not allowed.");
-  }
-
-  // Prefer HTTPS for archive fetches.
-  if (snapshotUrl.protocol === "http:") {
-    snapshotUrl.protocol = "https:";
-  }
-
-  const { response, finalHostname } = await fetchWithSafeRedirects(snapshotUrl.toString(), signal, {
-    allowArchiveHosts: true,
-  });
-
-  const page = await parseSuccessfulResponse(
-    response,
-    target.toString(),
-    target.hostname,
-    maxChars,
-    "archive",
-  );
-
-  // Prefer original hostname for title fallback when archive title is noisy.
-  if (!page.title || page.title === finalHostname || /wayback machine/i.test(page.title)) {
-    return { ...page, title: target.hostname };
-  }
-
-  return page;
-}
-
 async function fetchViaReader(
   url: string,
   maxChars: number,
@@ -423,10 +318,13 @@ async function fetchViaReader(
   const requestUrl = parsed.toString();
   const readerUrl = `https://r.jina.ai/${requestUrl}`;
 
+  // Do NOT send a browser Chrome UA here. Cloudflare in front of r.jina.ai
+  // challenges spoofed browser clients (403 "Just a moment..."), while plain
+  // non-browser clients succeed.
   const response = await fetch(readerUrl, {
     headers: {
       Accept: "text/plain,text/markdown,*/*;q=0.8",
-      "User-Agent": BROWSER_USER_AGENT,
+      "User-Agent": "DeniAI-Reader/1.0",
       "X-Return-Format": "markdown",
     },
     signal,
@@ -457,88 +355,10 @@ async function fetchViaReader(
   };
 }
 
-async function fetchViaBraveSnippet(
-  url: string,
-  maxChars: number,
-  signal: AbortSignal,
-): Promise<FetchedPageText> {
-  const target = await assertSafePublicHttpUrl(url);
-  const apiKey = env.BRAVE_SEARCH_API_KEY;
-  if (!apiKey) {
-    throw new Error("Brave Search API key not configured.");
-  }
-
-  const params = new URLSearchParams({
-    q: target.toString(),
-    count: "8",
-  });
-
-  const response = await fetch(`https://api.search.brave.com/res/v1/web/search?${params}`, {
-    headers: {
-      Accept: "application/json",
-      "Accept-Encoding": "gzip",
-      "X-Subscription-Token": apiKey,
-    },
-    signal,
-  });
-
-  if (!response.ok) {
-    throw new Error(`Search snippet fallback failed (${response.status}).`);
-  }
-
-  const data = (await response.json()) as {
-    web?: {
-      results?: Array<{ title?: string; url?: string; description?: string }>;
-    };
-  };
-
-  const results = data.web?.results ?? [];
-  const targetHref = target.toString().replace(/\/$/, "");
-  const targetHost = target.hostname.toLowerCase();
-
-  const exact =
-    results.find((item) => {
-      if (!item.url) return false;
-      try {
-        return new URL(item.url).toString().replace(/\/$/, "") === targetHref;
-      } catch {
-        return false;
-      }
-    }) ??
-    results.find((item) => {
-      if (!item.url) return false;
-      try {
-        return new URL(item.url).hostname.toLowerCase() === targetHost;
-      } catch {
-        return false;
-      }
-    });
-
-  if (!exact?.description) {
-    throw new Error("No search snippet available for this URL.");
-  }
-
-  const title = exact.title?.trim() || target.hostname;
-  const content =
-    `Title: ${title}\nURL: ${exact.url ?? target.toString()}\n\n${exact.description.trim()}`.slice(
-      0,
-      maxChars,
-    );
-
-  return {
-    url: target.toString(),
-    title,
-    content,
-    truncated: false,
-    contentLength: content.length,
-    source: "search-snippet",
-  };
-}
-
 /**
  * Fetch a public HTTP(S) page and return cleaned text content for agent tools.
+ * Order: direct fetch, then r.jina.ai reader fallback.
  * Blocks private/local network targets and re-validates every redirect hop.
- * Falls back through archive / reader / search snippet when sites block direct access.
  */
 export async function fetchPageText(
   url: string,
@@ -548,17 +368,17 @@ export async function fetchPageText(
     signal?: AbortSignal;
     /**
      * When false, only attempt a direct fetch (used by search summarization for speed).
-     * Browse uses full fallbacks by default.
+     * Browse enables reader fallback by default.
      */
     allowReaderFallback?: boolean;
   },
 ): Promise<FetchedPageText> {
   const maxChars = clampMaxChars(options?.maxChars);
   const timeoutMs = options?.timeoutMs ?? DEFAULT_PAGE_FETCH_TIMEOUT_MS;
-  const allowFallbacks = options?.allowReaderFallback !== false;
+  const allowReaderFallback = options?.allowReaderFallback !== false;
   const requestUrl = (await assertSafePublicHttpUrl(url)).toString();
 
-  const errors: string[] = [];
+  let directError: Error | null = null;
 
   try {
     return await withTimeoutSignal(timeoutMs, options?.signal, (signal) =>
@@ -568,42 +388,24 @@ export async function fetchPageText(
     if (isAbortError(error)) {
       throw error;
     }
-    errors.push(error instanceof Error ? error.message : "Direct fetch failed");
-    if (!allowFallbacks) {
-      throw error instanceof Error ? error : new Error("Failed to fetch page");
+    directError = error instanceof Error ? error : new Error("Direct fetch failed");
+    if (!allowReaderFallback) {
+      throw directError;
     }
   }
 
-  const fallbackTimeout = Math.max(timeoutMs, FALLBACK_TIMEOUT_MS);
-
-  const fallbacks: Array<{
-    name: string;
-    run: (signal: AbortSignal) => Promise<FetchedPageText>;
-  }> = [
-    {
-      name: "archive",
-      run: (signal) => fetchViaArchive(requestUrl, maxChars, signal),
-    },
-    {
-      name: "reader",
-      run: (signal) => fetchViaReader(requestUrl, maxChars, signal),
-    },
-    {
-      name: "search-snippet",
-      run: (signal) => fetchViaBraveSnippet(requestUrl, maxChars, signal),
-    },
-  ];
-
-  for (const fallback of fallbacks) {
-    try {
-      return await withTimeoutSignal(fallbackTimeout, options?.signal, fallback.run);
-    } catch (error) {
-      if (isAbortError(error)) {
-        throw error;
-      }
-      errors.push(`${fallback.name}: ${error instanceof Error ? error.message : "failed"}`);
+  try {
+    return await withTimeoutSignal(
+      Math.max(timeoutMs, READER_TIMEOUT_MS),
+      options?.signal,
+      (signal) => fetchViaReader(requestUrl, maxChars, signal),
+    );
+  } catch (readerError) {
+    if (isAbortError(readerError)) {
+      throw readerError;
     }
+    const readerMessage =
+      readerError instanceof Error ? readerError.message : "Reader fallback failed";
+    throw new Error(directError ? `${directError.message} ${readerMessage}` : readerMessage);
   }
-
-  throw new Error(errors.join(" | "));
 }
