@@ -290,11 +290,13 @@ export async function POST(req: Request) {
   // reconciliation, because meter events cannot be reduced after the fact.
   let pendingMaxModeAmount = 0;
 
+  // Sync check only — safe for the stream hot path (no DB).
+  const ownsCurrentGenerationSync = () => isCurrentChatGeneration(id, generationId);
+
+  // Includes a DB check for stop/replace races. Use only off the hot path
+  // (throttled persist / finish), never per stream chunk.
   const ownsCurrentGeneration = async () => {
-    return (
-      isCurrentChatGeneration(id, generationId) &&
-      (await isChatGenerationActive(id, userId, generationId))
-    );
+    return ownsCurrentGenerationSync() && (await isChatGenerationActive(id, userId, generationId));
   };
 
   const refundConsumedUsage = async () => {
@@ -619,6 +621,9 @@ export async function POST(req: Request) {
           sendStart: false,
           onError: (error) => formatChatStreamError(error, baseModel),
         });
+        // Tee feeds the client and DB persistence. Both branches must stay
+        // fast — if persistence awaits DB per chunk, tee backpressure stalls
+        // the client branch too and the UI only paints when the stream ends.
         const [clientStream, persistenceStream] = uiStream.tee();
 
         writer.merge(clientStream);
@@ -626,7 +631,8 @@ export async function POST(req: Request) {
         for await (const message of readUIMessageStream<UIMessage>({
           stream: persistenceStream,
         })) {
-          if (!(await ownsCurrentGeneration())) {
+          // Sync in-memory generation check only. Never await DB here.
+          if (!ownsCurrentGenerationSync()) {
             break;
           }
           queuePartialPersist(message);
