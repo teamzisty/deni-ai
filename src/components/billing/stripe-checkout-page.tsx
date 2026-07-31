@@ -41,6 +41,45 @@ type CheckoutSessionSummary = {
   planId: string | null;
 };
 
+type CheckoutSessionApiResult = {
+  sessionId: string;
+  clientSecret: string | null;
+  status?: string | null;
+  paymentStatus?: string | null;
+  amountTotal: number | null;
+  currency: string | null;
+  mode?: string | null;
+  planId: string | null;
+};
+
+function toCheckoutSessionSummary(result: CheckoutSessionApiResult): CheckoutSessionSummary {
+  const status =
+    result.status === "open" || result.status === "complete" || result.status === "expired"
+      ? result.status
+      : "open";
+  const paymentStatus =
+    result.paymentStatus === "paid" ||
+    result.paymentStatus === "unpaid" ||
+    result.paymentStatus === "no_payment_required"
+      ? result.paymentStatus
+      : null;
+  const mode =
+    result.mode === "subscription" || result.mode === "payment" || result.mode === "setup"
+      ? result.mode
+      : "subscription";
+
+  return {
+    sessionId: result.sessionId,
+    clientSecret: result.clientSecret,
+    status,
+    paymentStatus,
+    amountTotal: result.amountTotal,
+    currency: result.currency,
+    mode,
+    planId: result.planId,
+  };
+}
+
 const checkoutOfferDateFormatter = new Intl.DateTimeFormat(undefined, {
   month: "short",
   day: "numeric",
@@ -914,10 +953,7 @@ export function StripeCheckoutPage(props: StripeCheckoutPageProps) {
         if (!cancelled) {
           dispatchBootstrap({
             type: "success",
-            session: {
-              ...result,
-              status: result.status ?? "open",
-            },
+            session: toCheckoutSessionSummary(result),
             availablePlans: planResult.plans,
             stripeInstance: loadedStripe,
           });

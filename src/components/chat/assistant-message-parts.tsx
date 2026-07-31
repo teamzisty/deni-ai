@@ -1,7 +1,7 @@
 "use client";
 
 import type { UIDataTypes, UIMessagePart, UITools } from "ai";
-import { BrainIcon, Globe } from "lucide-react";
+import { Globe } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { useExtracted } from "next-intl";
@@ -14,6 +14,11 @@ import {
   ChainOfThoughtStep,
 } from "@/components/ai-elements/chain-of-thought";
 import { Message, MessageContent } from "@/components/ai-elements/message";
+import {
+  Reasoning,
+  ReasoningContent,
+  ReasoningTrigger,
+} from "@/components/ai-elements/reasoning";
 import { Shimmer } from "@/components/ai-elements/shimmer";
 import { Source, Sources, SourcesContent, SourcesTrigger } from "@/components/ai-elements/sources";
 import {
@@ -58,199 +63,157 @@ export function AssistantMessageChainOfThought({
 }: AssistantMessageChainOfThoughtProps) {
   const t = useExtracted();
 
-  // OpenAI (via OpenRouter) often streams only encrypted reasoning first and
-  // delivers a visible summary with/just before the final answer. Show a
-  // Thinking placeholder for the whole pre-answer phase so the UI looks like
-  // thought-in-progress, not a blank wait.
+  // OpenAI often streams encrypted tokens first, then visible summary deltas.
+  // Show Thinking only while the chat is still streaming AND the answer text
+  // has not started. Do not key off part.state === "streaming": finish-step can
+  // clear active reasoning without setting state to "done", which left the UI
+  // stuck on Thinking after finish.
   const isThinking = isStreamingThis && !hasTextParts;
+  const textReasoningParts = reasoningParts.filter(
+    (part): part is Extract<UIMessagePart<UIDataTypes, UITools>, { type: "reasoning" }> =>
+      part.type === "reasoning",
+  );
+  const toolParts = reasoningParts.filter(
+    (part) => part.type === "tool-search" || part.type === "tool-browse",
+  );
 
-  if (reasoningParts.length === 0 && !isThinking) {
+  if (textReasoningParts.length === 0 && toolParts.length === 0 && !isThinking) {
     return null;
   }
 
+  const thinkingLabel = (streaming: boolean) =>
+    streaming ? <Shimmer duration={1}>{t("Thinking...")}</Shimmer> : <p>{t("Thought process")}</p>;
+
   return (
-    <ChainOfThought defaultOpen={isThinking || isStreamingThis}>
-      <ChainOfThoughtHeader>
-        {isThinking ? (
-          <Shimmer duration={2}>{t("Thinking...")}</Shimmer>
-        ) : (
-          t("Thought process")
-        )}
-      </ChainOfThoughtHeader>
-      <ChainOfThoughtContent>
-        {reasoningParts.length === 0 && isThinking ? (
-          <ChainOfThoughtStep
-            key={`${messageId}-cot-thinking`}
-            icon={BrainIcon}
-            label={<Shimmer duration={2}>{t("Thinking...")}</Shimmer>}
-            status="active"
-          />
-        ) : null}
-        {reasoningParts.map((part) => {
-          if (part.type === "reasoning") {
-            const reasoningText = part.text ?? "";
-            const isPartStreaming =
-              isThinking || (isStreamingThis && part.state === "streaming");
-            const lines = reasoningText.replace(/\r\n?/g, "\n").split("\n");
-            const titleRegex = /^\*\*(.+?)\*\*\s*$/;
+    <div className="w-full space-y-2">
+      {textReasoningParts.length === 0 && isThinking ? (
+        <Reasoning className="w-full" isStreaming defaultOpen>
+          <ReasoningTrigger getThinkingMessage={thinkingLabel} />
+          <ReasoningContent>{""}</ReasoningContent>
+        </Reasoning>
+      ) : null}
 
-            type Section = {
-              title: string;
-              content: string[];
-            };
-            const sections: Section[] = [];
+      {textReasoningParts.map((part, index) => (
+        <Reasoning
+          key={`${messageId}-reasoning-${index}`}
+          className="w-full"
+          isStreaming={isThinking}
+          // Force open only while still thinking so finish/answer end the spinner.
+          open={isThinking ? true : undefined}
+          defaultOpen
+        >
+          <ReasoningTrigger getThinkingMessage={thinkingLabel} />
+          <ReasoningContent>{part.text ?? ""}</ReasoningContent>
+        </Reasoning>
+      ))}
 
-            let currentTitle: string | null = null;
-            let currentContent: string[] = [];
-
-            const flush = () => {
-              if (currentTitle === null && currentContent.length === 0) return;
-
-              sections.push({
-                title: (currentTitle ?? t("Reasoning")).trim() || t("Reasoning"),
-                content: currentContent,
-              });
-
-              currentTitle = null;
-              currentContent = [];
-            };
-
-            for (const rawLine of lines) {
-              const line = rawLine;
-              const trimmed = line.trim();
-              const m = trimmed.match(titleRegex);
-
-              if (m) {
-                flush();
-                currentTitle = m[1];
-              } else {
-                currentContent.push(line);
+      {toolParts.length > 0 ? (
+        <ChainOfThought defaultOpen={isThinking} open={isThinking ? true : undefined}>
+          <ChainOfThoughtHeader>
+            {isThinking ? (
+              <Shimmer duration={2}>{t("Thinking...")}</Shimmer>
+            ) : (
+              t("Thought process")
+            )}
+          </ChainOfThoughtHeader>
+          <ChainOfThoughtContent>
+            {toolParts.map((part) => {
+              if (part.type === "tool-search") {
+                const isSearching =
+                  part.state !== "output-available" && part.state !== "output-error";
+                const searchResults = isSearchResultArray(part.output) ? part.output : [];
+                const searchKey =
+                  part.toolCallId ??
+                  `${messageId}-search-${part.state}-${searchResults[0]?.url ?? "empty"}`;
+                return (
+                  <ChainOfThoughtStep
+                    key={searchKey}
+                    icon={Globe}
+                    label={
+                      isSearching ? (
+                        <Shimmer duration={2}>{t("Searching...")}</Shimmer>
+                      ) : part.state === "output-error" ? (
+                        t("Search failed")
+                      ) : (
+                        t("Found {count} results", {
+                          count: searchResults.length.toString(),
+                        })
+                      )
+                    }
+                    status={isSearching ? "active" : "complete"}
+                  >
+                    {searchResults.length > 0 && (
+                      <ChainOfThoughtSearchResults>
+                        {searchResults.map((result) => {
+                          const displayUrl = getSafeDisplayUrl(result.url);
+                          return (
+                            <Link
+                              key={result.url}
+                              href={displayUrl?.href ?? "#"}
+                              target="_blank"
+                              rel="noreferrer"
+                            >
+                              <ChainOfThoughtSearchResult>
+                                <Globe className="size-3" />
+                                {displayUrl?.hostname ?? t("Unknown")}
+                              </ChainOfThoughtSearchResult>
+                            </Link>
+                          );
+                        })}
+                      </ChainOfThoughtSearchResults>
+                    )}
+                  </ChainOfThoughtStep>
+                );
               }
-            }
-            flush();
 
-            if (sections.length === 0) {
-              sections.push({
-                title: t("Reasoning"),
-                content: [],
-              });
-            }
+              if (part.type === "tool-browse") {
+                const isBrowsing =
+                  part.state !== "output-available" && part.state !== "output-error";
+                const browseOutput = isBrowseToolOutput(part.output) ? part.output : null;
+                const browseInput = isBrowseToolInput(part.input) ? part.input : null;
+                const browseUrl = browseOutput?.url ?? browseInput?.url ?? "";
+                const displayUrl = getSafeDisplayUrl(browseUrl);
+                const browseKey =
+                  part.toolCallId ?? `${messageId}-browse-${part.state}-${browseUrl || "empty"}`;
+                const failed =
+                  part.state === "output-error" ||
+                  Boolean(browseOutput?.error && !browseOutput.content);
 
-            return sections.map((s, sectionIndex) => {
-              const content = s.content.join("\n").trim();
-              const isLastSection = sectionIndex === sections.length - 1;
-              return (
-                <ChainOfThoughtStep
-                  key={`${messageId}-cot-${sectionIndex}-${s.title}`}
-                  icon={BrainIcon}
-                  label={
-                    isPartStreaming && isLastSection && !content ? (
-                      <Shimmer duration={2}>{s.title || t("Reasoning")}</Shimmer>
-                    ) : (
-                      s.title || t("Reasoning")
-                    )
-                  }
-                  description={
-                    content || (isPartStreaming ? undefined : t("No details"))
-                  }
-                  className="whitespace-pre-wrap"
-                  status={isPartStreaming && isLastSection ? "active" : "complete"}
-                />
-              );
-            });
-          }
-
-          if (part.type === "tool-search") {
-            const isSearching = part.state !== "output-available" && part.state !== "output-error";
-            const searchResults = isSearchResultArray(part.output) ? part.output : [];
-            const searchKey =
-              part.toolCallId ??
-              `${messageId}-search-${part.state}-${searchResults[0]?.url ?? "empty"}`;
-            return (
-              <ChainOfThoughtStep
-                key={searchKey}
-                icon={Globe}
-                label={
-                  isSearching ? (
-                    <Shimmer duration={2}>{t("Searching...")}</Shimmer>
-                  ) : part.state === "output-error" ? (
-                    t("Search failed")
-                  ) : (
-                    t("Found {count} results", {
-                      count: searchResults.length.toString(),
-                    })
-                  )
-                }
-                status={isSearching ? "active" : "complete"}
-              >
-                {searchResults.length > 0 && (
-                  <ChainOfThoughtSearchResults>
-                    {searchResults.map((result) => {
-                      const displayUrl = getSafeDisplayUrl(result.url);
-                      return (
-                        <Link
-                          key={result.url}
-                          href={displayUrl?.href ?? "#"}
-                          target="_blank"
-                          rel="noreferrer"
-                        >
+                return (
+                  <ChainOfThoughtStep
+                    key={browseKey}
+                    icon={Globe}
+                    label={
+                      isBrowsing ? (
+                        <Shimmer duration={2}>{t("Opening page...")}</Shimmer>
+                      ) : failed ? (
+                        t("Failed to open page")
+                      ) : (
+                        t("Opened page")
+                      )
+                    }
+                    status={isBrowsing ? "active" : "complete"}
+                  >
+                    {displayUrl && (
+                      <ChainOfThoughtSearchResults>
+                        <Link href={displayUrl.href} target="_blank" rel="noreferrer">
                           <ChainOfThoughtSearchResult>
                             <Globe className="size-3" />
-                            {displayUrl?.hostname ?? t("Unknown")}
+                            {browseOutput?.title?.trim() || displayUrl.hostname}
                           </ChainOfThoughtSearchResult>
                         </Link>
-                      );
-                    })}
-                  </ChainOfThoughtSearchResults>
-                )}
-              </ChainOfThoughtStep>
-            );
-          }
+                      </ChainOfThoughtSearchResults>
+                    )}
+                  </ChainOfThoughtStep>
+                );
+              }
 
-          if (part.type === "tool-browse") {
-            const isBrowsing = part.state !== "output-available" && part.state !== "output-error";
-            const browseOutput = isBrowseToolOutput(part.output) ? part.output : null;
-            const browseInput = isBrowseToolInput(part.input) ? part.input : null;
-            const browseUrl = browseOutput?.url ?? browseInput?.url ?? "";
-            const displayUrl = getSafeDisplayUrl(browseUrl);
-            const browseKey =
-              part.toolCallId ?? `${messageId}-browse-${part.state}-${browseUrl || "empty"}`;
-            const failed =
-              part.state === "output-error" ||
-              Boolean(browseOutput?.error && !browseOutput.content);
-
-            return (
-              <ChainOfThoughtStep
-                key={browseKey}
-                icon={Globe}
-                label={
-                  isBrowsing ? (
-                    <Shimmer duration={2}>{t("Opening page...")}</Shimmer>
-                  ) : failed ? (
-                    t("Failed to open page")
-                  ) : (
-                    t("Opened page")
-                  )
-                }
-                status={isBrowsing ? "active" : "complete"}
-              >
-                {displayUrl && (
-                  <ChainOfThoughtSearchResults>
-                    <Link href={displayUrl.href} target="_blank" rel="noreferrer">
-                      <ChainOfThoughtSearchResult>
-                        <Globe className="size-3" />
-                        {browseOutput?.title?.trim() || displayUrl.hostname}
-                      </ChainOfThoughtSearchResult>
-                    </Link>
-                  </ChainOfThoughtSearchResults>
-                )}
-              </ChainOfThoughtStep>
-            );
-          }
-          return null;
-        })}
-      </ChainOfThoughtContent>
-    </ChainOfThought>
+              return null;
+            })}
+          </ChainOfThoughtContent>
+        </ChainOfThought>
+      ) : null}
+    </div>
   );
 }
 

@@ -5,9 +5,6 @@ import type { ComponentProps, ReactNode } from "react";
 import { useControllableState } from "@/lib/base-ui-compat";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { cn } from "@/lib/utils";
-import { cjk } from "@streamdown/cjk";
-import { code } from "@streamdown/code";
-import { math } from "@streamdown/math";
 import { BrainIcon, ChevronDownIcon } from "lucide-react";
 import {
   createContext,
@@ -20,7 +17,7 @@ import {
   useState,
 } from "react";
 import { Streamdown } from "streamdown";
-import { lazyMermaid } from "@/components/chat/streamdown-mermaid-plugin";
+import { streamdownPlugins } from "@/components/chat/streamdown-plugins";
 import { streamdownRemarkPlugins } from "@/components/chat/streamdown-remark-plugins";
 
 import { Shimmer } from "./shimmer";
@@ -146,10 +143,15 @@ export type ReasoningTriggerProps = ComponentProps<typeof CollapsibleTrigger> & 
 };
 
 const defaultGetThinkingMessage = (isStreaming: boolean, duration?: number) => {
-  if (isStreaming || duration === 0) {
+  // Only show the live Thinking spinner while the stream is active.
+  // duration === 0 is a completed (very short) run, not still thinking.
+  if (isStreaming) {
     return <Shimmer duration={1}>Thinking...</Shimmer>;
   }
   if (duration === undefined) {
+    return <p>Thought for a few seconds</p>;
+  }
+  if (duration === 0) {
     return <p>Thought for a few seconds</p>;
   }
   return <p>Thought for {duration} seconds</p>;
@@ -189,8 +191,6 @@ export const ReasoningTrigger = memo(
 export type ReasoningContentProps = ComponentProps<typeof CollapsibleContent> & {
   children: string;
 };
-
-const streamdownPlugins = { cjk, code, math, mermaid: lazyMermaid };
 
 export const ReasoningContent = memo(({ className, children, ...props }: ReasoningContentProps) => (
   <CollapsibleContent

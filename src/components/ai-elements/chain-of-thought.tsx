@@ -48,10 +48,14 @@ export const ChainOfThought = memo(
 
     const chainOfThoughtContext = useMemo(() => ({ isOpen, setIsOpen }), [isOpen, setIsOpen]);
 
+    // Single Collapsible root: Base UI Panel must live under the same Root as
+    // Trigger. Splitting them into two Roots left content stuck closed.
     return (
       <ChainOfThoughtContext.Provider value={chainOfThoughtContext}>
-        <div className={cn("not-prose w-full space-y-4", className)} {...props}>
-          {children}
+        <div className={cn("not-prose w-full", className)} {...props}>
+          <Collapsible className="w-full space-y-4" onOpenChange={setIsOpen} open={isOpen}>
+            {children}
+          </Collapsible>
         </div>
       </ChainOfThoughtContext.Provider>
     );
@@ -62,24 +66,22 @@ export type ChainOfThoughtHeaderProps = ComponentProps<typeof CollapsibleTrigger
 
 export const ChainOfThoughtHeader = memo(
   ({ className, children, ...props }: ChainOfThoughtHeaderProps) => {
-    const { isOpen, setIsOpen } = useChainOfThought();
+    const { isOpen } = useChainOfThought();
 
     return (
-      <Collapsible onOpenChange={setIsOpen} open={isOpen}>
-        <CollapsibleTrigger
-          className={cn(
-            "flex w-full items-center gap-2 text-muted-foreground text-sm transition-colors hover:text-foreground",
-            className,
-          )}
-          {...props}
-        >
-          <BrainIcon className="size-4" />
-          <span className="flex-1 text-left">{children ?? "Chain of Thought"}</span>
-          <ChevronDownIcon
-            className={cn("size-4 transition-transform", isOpen ? "rotate-180" : "rotate-0")}
-          />
-        </CollapsibleTrigger>
-      </Collapsible>
+      <CollapsibleTrigger
+        className={cn(
+          "flex w-full items-center gap-2 text-muted-foreground text-sm transition-colors hover:text-foreground",
+          className,
+        )}
+        {...props}
+      >
+        <BrainIcon className="size-4" />
+        <span className="flex-1 text-left">{children ?? "Chain of Thought"}</span>
+        <ChevronDownIcon
+          className={cn("size-4 transition-transform", isOpen ? "rotate-180" : "rotate-0")}
+        />
+      </CollapsibleTrigger>
     );
   },
 );
@@ -154,24 +156,18 @@ export const ChainOfThoughtSearchResult = memo(
 export type ChainOfThoughtContentProps = ComponentProps<typeof CollapsibleContent>;
 
 export const ChainOfThoughtContent = memo(
-  ({ className, children, ...props }: ChainOfThoughtContentProps) => {
-    const { isOpen } = useChainOfThought();
-
-    return (
-      <Collapsible open={isOpen}>
-        <CollapsibleContent
-          className={cn(
-            "mt-2 space-y-3",
-            "data-closed:fade-out-0 data-closed:slide-out-to-top-2 data-open:slide-in-from-top-2 text-popover-foreground outline-none data-closed:animate-out data-open:animate-in",
-            className,
-          )}
-          {...props}
-        >
-          {children}
-        </CollapsibleContent>
-      </Collapsible>
-    );
-  },
+  ({ className, children, ...props }: ChainOfThoughtContentProps) => (
+    <CollapsibleContent
+      className={cn(
+        "mt-2 space-y-3",
+        "data-closed:fade-out-0 data-closed:slide-out-to-top-2 data-open:slide-in-from-top-2 text-popover-foreground outline-none data-closed:animate-out data-open:animate-in",
+        className,
+      )}
+      {...props}
+    >
+      {children}
+    </CollapsibleContent>
+  ),
 );
 
 export type ChainOfThoughtImageProps = ComponentProps<"div"> & {
