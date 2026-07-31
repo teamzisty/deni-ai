@@ -448,9 +448,32 @@ export async function resolveChatModelContext({
       : {}),
   };
 
-  // When routing through OpenRouter, wrap provider-specific options so they are
-  // forwarded in OpenRouter-compatible format. voids.top only understands OpenAI
-  // chat-style options (and only for OpenAI-authored models).
+  // OpenRouter uses a unified top-level `reasoning` body field
+  // (`providerOptions.openrouter.reasoning`), not nested AI SDK
+  // openai/google/xai option shapes. Nesting those under
+  // `openrouter.providerOptions` was a no-op — the OR provider spreads
+  // `providerOptions.openrouter` into the request body as-is.
+  // https://openrouter.ai/docs/use-cases/reasoning-tokens
+  // https://github.com/OpenRouterTeam/ai-sdk-provider#passing-extra-body-to-openrouter
+  const openRouterReasoningEffort =
+    openaiReasoningEffort ?? googleThinkingLevel ?? xaiReasoningEffort ?? undefined;
+  const openRouterReasoning =
+    openRouterReasoningEffort !== undefined
+      ? {
+          // OpenRouter accepts max/xhigh/high/medium/low/minimal/none.
+          effort: openRouterReasoningEffort as
+            | "max"
+            | "xhigh"
+            | "high"
+            | "medium"
+            | "low"
+            | "minimal"
+            | "none",
+        }
+      : undefined;
+
+  // voids.top only understands OpenAI chat-style options (and only for
+  // OpenAI-authored models). Native BYOK / Anthropic keep provider SDK options.
   const providerOptions: ChatProviderOptions = (
     usesVoids
       ? providerId === "openai" && openaiProviderOptions
@@ -458,8 +481,8 @@ export async function resolveChatModelContext({
         : {}
       : useByok || providerId === "anthropic"
         ? directProviderOptions
-        : usesOpenRouter && Object.keys(directProviderOptions).length > 0
-          ? { openrouter: { providerOptions: directProviderOptions } }
+        : usesOpenRouter && openRouterReasoning
+          ? { openrouter: { reasoning: openRouterReasoning } }
           : {}
   ) as ChatProviderOptions;
 

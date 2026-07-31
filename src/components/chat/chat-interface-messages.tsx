@@ -25,6 +25,7 @@ import {
   MessageContent,
   MessageResponse,
 } from "@/components/ai-elements/message";
+import { Shimmer } from "@/components/ai-elements/shimmer";
 import { AssistantMessage } from "@/components/chat/assistant-message";
 import type { ModelOption } from "@/components/chat/chat-composer";
 import type { GroupedMessage } from "@/hooks/use-chat-branches";
@@ -193,8 +194,16 @@ export function ChatInterfaceMessages({
           );
         })}
         {status === "submitted" && (
-          <div className="min-h-6">
+          <div className="flex min-h-6 items-center gap-2 text-sm text-muted-foreground">
             <Loader />
+            <Shimmer duration={2}>{t("Thinking...")}</Shimmer>
+          </div>
+        )}
+
+        {status === "streaming" && messages.at(-1)?.role === "user" && (
+          <div className="flex min-h-6 items-center gap-2 text-sm text-muted-foreground">
+            <Loader />
+            <Shimmer duration={2}>{t("Thinking...")}</Shimmer>
           </div>
         )}
 
