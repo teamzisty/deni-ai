@@ -4,13 +4,13 @@ import {
   createUIMessageStream,
   createUIMessageStreamResponse,
   generateId,
-  readUIMessageStream,
   safeValidateUIMessages,
   stepCountIs,
   streamText,
   type ModelMessage,
   type SystemModelMessage,
   type UIMessage,
+  type UIMessageChunk,
 } from "ai";
 import { headers } from "next/headers";
 import { after, NextResponse } from "next/server";
@@ -282,7 +282,6 @@ export async function POST(req: Request) {
   let usageConsumed = false;
   let usageRefunded = false;
   let generationWatch: ReturnType<typeof setInterval> | undefined;
-  let trailingPersistTimer: ReturnType<typeof setTimeout> | undefined;
   let hasAssistantOutput = false;
   let consumedUsageAmount = 0;
   let finalUsageAmount = 0;
@@ -419,11 +418,6 @@ export async function POST(req: Request) {
       generationWatch = undefined;
     }
 
-    if (trailingPersistTimer) {
-      clearTimeout(trailingPersistTimer);
-      trailingPersistTimer = undefined;
-    }
-
     if (!generationAbortController) {
       return;
     }
@@ -543,69 +537,9 @@ export async function POST(req: Request) {
     throw new Error(formatChatStreamError(error, baseModel));
   }
 
-  // Throttle JSONB writes during streaming. Each write serializes the full
-  // messages array, so high-frequency persistence is expensive on long chats.
-  // We persist at most every PERSIST_INTERVAL_MS, and a trailing-edge timer
-  // ensures the most recent chunk eventually lands even if nothing new arrives.
-  const PERSIST_INTERVAL_MS = 1500;
-  let lastPersistedSignature = "";
-  let latestPersistedMessage: UIMessage = pendingAssistantMessage;
-  let partialPersistPromise: Promise<void> = Promise.resolve();
-  let lastPersistAt = 0;
-  let pendingDirty = false;
-
-  const runPersist = () => {
-    pendingDirty = false;
-    lastPersistAt = Date.now();
-    if (trailingPersistTimer) {
-      clearTimeout(trailingPersistTimer);
-      trailingPersistTimer = undefined;
-    }
-    partialPersistPromise = partialPersistPromise
-      .catch(() => undefined)
-      .then(async () => {
-        try {
-          if (!(await ownsCurrentGeneration())) {
-            return;
-          }
-          await updateChat(id, userId, [...messages, latestPersistedMessage], undefined, {
-            expectedGenerationId: generationId,
-          });
-        } catch (error) {
-          console.error("Failed to persist partial chat response", error);
-        }
-      });
-  };
-
-  const queuePartialPersist = (message: UIMessage, force: boolean = false) => {
-    const pendingMessage = setPendingState(message, true);
-    if (pendingMessage.parts.length > 0) {
-      hasAssistantOutput = true;
-    }
-    const signature = JSON.stringify(pendingMessage.parts);
-
-    if (!force && signature === lastPersistedSignature) {
-      return;
-    }
-
-    latestPersistedMessage = pendingMessage;
-    lastPersistedSignature = signature;
-    pendingDirty = true;
-
-    const elapsed = Date.now() - lastPersistAt;
-    if (force || elapsed >= PERSIST_INTERVAL_MS) {
-      runPersist();
-      return;
-    }
-
-    if (!trailingPersistTimer) {
-      trailingPersistTimer = setTimeout(() => {
-        trailingPersistTimer = undefined;
-        if (pendingDirty) runPersist();
-      }, PERSIST_INTERVAL_MS - elapsed);
-    }
-  };
-
+  // Client path is a single unblocked merge (no tee). A second persistence
+  // branch used to backpressure the SSE via tee() so the UI only painted
+  // after the model finished. Final DB write happens in onFinish via after().
   const stream = createUIMessageStream<UIMessage>({
     originalMessages: messages,
     execute: async ({ writer }) => {
@@ -621,30 +555,31 @@ export async function POST(req: Request) {
           sendStart: false,
           onError: (error) => formatChatStreamError(error, baseModel),
         });
-        // Tee feeds the client and DB persistence. Both branches must stay
-        // fast — if persistence awaits DB per chunk, tee backpressure stalls
-        // the client branch too and the UI only paints when the stream ends.
-        const [clientStream, persistenceStream] = uiStream.tee();
+
+        const clientStream = uiStream.pipeThrough(
+          new TransformStream<UIMessageChunk, UIMessageChunk>({
+            transform(chunk, controller) {
+              // Enqueue first; never await before this.
+              controller.enqueue(chunk);
+
+              if (
+                chunk.type === "text-start" ||
+                chunk.type === "text-delta" ||
+                chunk.type === "reasoning-start" ||
+                chunk.type === "reasoning-delta" ||
+                chunk.type === "tool-input-start" ||
+                chunk.type === "tool-input-available" ||
+                chunk.type === "tool-output-available" ||
+                chunk.type === "file" ||
+                chunk.type === "source-url"
+              ) {
+                hasAssistantOutput = true;
+              }
+            },
+          }),
+        );
 
         writer.merge(clientStream);
-
-        for await (const message of readUIMessageStream<UIMessage>({
-          stream: persistenceStream,
-        })) {
-          // Sync in-memory generation check only. Never await DB here.
-          if (!ownsCurrentGenerationSync()) {
-            break;
-          }
-          queuePartialPersist(message);
-        }
-
-        if (trailingPersistTimer) {
-          clearTimeout(trailingPersistTimer);
-          trailingPersistTimer = undefined;
-        }
-        queuePartialPersist(latestPersistedMessage, true);
-
-        await partialPersistPromise;
       } catch (error) {
         await rollbackPendingAssistantState();
         await refundConsumedUsage();
@@ -653,76 +588,76 @@ export async function POST(req: Request) {
       }
     },
     onFinish: async ({ messages: updatedMessages, isAborted }) => {
-      try {
-        await partialPersistPromise;
-
-        if (!(await ownsCurrentGeneration())) {
-          pendingStateRolledBack = true;
-          return;
-        }
-
-        let newTitle: string | undefined;
-
+      // Return immediately so the SSE can close. Heavy DB/title/usage work
+      // must not sit on the stream flush path.
+      after(async () => {
         try {
-          if (shouldGenerateTitle) {
-            newTitle = await generateTitle(updatedMessages);
+          if (!(await ownsCurrentGeneration())) {
+            pendingStateRolledBack = true;
+            return;
           }
-        } catch (error) {
-          console.error("Failed to generate title", error);
-        }
 
-        const cleared = await clearChatGenerationState(
-          id,
-          userId,
-          generationId,
-          updatedMessages.map((message) =>
+          const finalizedMessages = updatedMessages.map((message) =>
             message.id === responseMessageId ? setPendingState(message, false) : message,
-          ),
-          newTitle,
-        );
+          );
 
-        if (!cleared) {
+          const cleared = await clearChatGenerationState(
+            id,
+            userId,
+            generationId,
+            finalizedMessages,
+            undefined,
+          );
+
+          if (!cleared) {
+            pendingStateRolledBack = true;
+            return;
+          }
+
           pendingStateRolledBack = true;
-          return;
-        }
 
-        pendingStateRolledBack = true;
+          if (shouldGenerateTitle) {
+            try {
+              const newTitle = await generateTitle(finalizedMessages);
+              if (newTitle) {
+                await updateChat(id, userId, finalizedMessages, newTitle);
+              }
+            } catch (error) {
+              console.error("Failed to generate title", error);
+            }
+          }
 
-        if (isAborted) {
-          if (!hasAssistantOutput) {
-            await refundConsumedUsage();
-          } else if (!useByok && usageUnit === "tokens") {
+          if (isAborted) {
+            if (!hasAssistantOutput) {
+              await refundConsumedUsage();
+            } else if (!useByok && usageUnit === "tokens") {
+              await reconcileConsumedUsage(finalUsageAmount);
+            }
+            return;
+          }
+
+          if (!useByok && usageUnit === "tokens") {
             await reconcileConsumedUsage(finalUsageAmount);
           }
-          return;
-        }
 
-        if (!useByok && usageUnit === "tokens") {
-          await reconcileConsumedUsage(finalUsageAmount);
-        }
-
-        // Memory extraction can take seconds and must not keep the chat SSE
-        // open. Schedule it after the response finishes so the client can end
-        // the request immediately while work continues on the backend.
-        if (memoryState.profile.autoMemory) {
-          after(() =>
-            maybeAutoSaveMemories({
+          if (memoryState.profile.autoMemory) {
+            await maybeAutoSaveMemories({
               userId,
-              messages: updatedMessages,
+              messages: finalizedMessages,
               enabled: true,
             }).catch((error) => {
               console.error("Failed to auto-save memories", error);
-            }),
-          );
+            });
+          }
+        } catch (error) {
+          await rollbackPendingAssistantState();
+          await refundConsumedUsage();
+          console.error("Failed to finalize chat generation", error);
+        } finally {
+          await flushMaxModeUsage();
+          clearGenerationLock();
         }
-      } catch (error) {
-        await rollbackPendingAssistantState();
-        await refundConsumedUsage();
-        throw error;
-      } finally {
-        await flushMaxModeUsage();
-        clearGenerationLock();
-      }
+      });
     },
   });
 
