@@ -58,23 +58,40 @@ export function AssistantMessageChainOfThought({
 }: AssistantMessageChainOfThoughtProps) {
   const t = useExtracted();
 
-  if (reasoningParts.length === 0) {
+  // OpenAI (via OpenRouter) often streams only encrypted reasoning first and
+  // delivers a visible summary with/just before the final answer. Show a
+  // Thinking placeholder for the whole pre-answer phase so the UI looks like
+  // thought-in-progress, not a blank wait.
+  const isThinking = isStreamingThis && !hasTextParts;
+
+  if (reasoningParts.length === 0 && !isThinking) {
     return null;
   }
 
   return (
-    <ChainOfThought defaultOpen={isStreamingThis}>
+    <ChainOfThought defaultOpen={isThinking || isStreamingThis}>
       <ChainOfThoughtHeader>
-        {isStreamingThis && !hasTextParts ? (
+        {isThinking ? (
           <Shimmer duration={2}>{t("Thinking...")}</Shimmer>
         ) : (
           t("Thought process")
         )}
       </ChainOfThoughtHeader>
       <ChainOfThoughtContent>
+        {reasoningParts.length === 0 && isThinking ? (
+          <ChainOfThoughtStep
+            key={`${messageId}-cot-thinking`}
+            icon={BrainIcon}
+            label={<Shimmer duration={2}>{t("Thinking...")}</Shimmer>}
+            status="active"
+          />
+        ) : null}
         {reasoningParts.map((part) => {
           if (part.type === "reasoning") {
-            const lines = (part.text ?? "").replace(/\r\n?/g, "\n").split("\n");
+            const reasoningText = part.text ?? "";
+            const isPartStreaming =
+              isThinking || (isStreamingThis && part.state === "streaming");
+            const lines = reasoningText.replace(/\r\n?/g, "\n").split("\n");
             const titleRegex = /^\*\*(.+?)\*\*\s*$/;
 
             type Section = {
@@ -119,16 +136,25 @@ export function AssistantMessageChainOfThought({
               });
             }
 
-            return sections.map((s) => {
+            return sections.map((s, sectionIndex) => {
               const content = s.content.join("\n").trim();
+              const isLastSection = sectionIndex === sections.length - 1;
               return (
                 <ChainOfThoughtStep
-                  key={`${messageId}-cot-${s.title}-${content.slice(0, 32)}`}
+                  key={`${messageId}-cot-${sectionIndex}-${s.title}`}
                   icon={BrainIcon}
-                  label={s.title || t("Reasoning")}
-                  description={content || t("No details")}
+                  label={
+                    isPartStreaming && isLastSection && !content ? (
+                      <Shimmer duration={2}>{s.title || t("Reasoning")}</Shimmer>
+                    ) : (
+                      s.title || t("Reasoning")
+                    )
+                  }
+                  description={
+                    content || (isPartStreaming ? undefined : t("No details"))
+                  }
                   className="whitespace-pre-wrap"
-                  status="complete"
+                  status={isPartStreaming && isLastSection ? "active" : "complete"}
                 />
               );
             });
