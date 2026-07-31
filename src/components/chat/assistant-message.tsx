@@ -130,7 +130,9 @@ export function AssistantMessage({
       {textParts.map((part, i) => (
         <Message key={`${message.id}-text-${i}`} from={message.role}>
           <MessageContent>
-            <MessageResponse>{part.text}</MessageResponse>
+            <MessageResponse mode={isStreamingThis ? "streaming" : "static"}>
+              {part.text}
+            </MessageResponse>
           </MessageContent>
           {i === textParts.length - 1 && state.showActions && (
             <MessageActions>

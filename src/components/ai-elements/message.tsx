@@ -270,6 +270,8 @@ export const MessageBranchPage = ({ className, ...props }: MessageBranchPageProp
 
 export type MessageResponseProps = ComponentProps<typeof Streamdown>;
 
+// Do not use a custom memo comparator: React Compiler + streaming text updates
+// need default prop comparison so growing `children` always re-renders.
 export const MessageResponse = memo(
   ({ className, mode = "streaming", ...props }: MessageResponseProps) => (
     <Streamdown
@@ -281,8 +283,6 @@ export const MessageResponse = memo(
       {...props}
     />
   ),
-  (prevProps, nextProps) =>
-    prevProps.children === nextProps.children && prevProps.mode === nextProps.mode,
 );
 
 MessageResponse.displayName = "MessageResponse";

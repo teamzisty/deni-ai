@@ -10,6 +10,9 @@ const nextConfig: NextConfig = {
   cacheComponents: true,
   reactCompiler: true,
   poweredByHeader: false,
+  // Gzip/brotli compression buffers response bodies and breaks SSE token
+  // streaming (UI only paints after the full model response). Keep raw chunks.
+  compress: false,
   // Tree-shake large icon/date packages more aggressively
   experimental: {
     optimizePackageImports: [
@@ -120,6 +123,14 @@ const nextConfig: NextConfig = {
       {
         source: "/api/:path*",
         headers: [{ key: "Cache-Control", value: "private, no-cache, no-store" }],
+      },
+      {
+        source: "/api/chat",
+        headers: [
+          { key: "Cache-Control", value: "no-cache, no-transform" },
+          { key: "X-Accel-Buffering", value: "no" },
+          { key: "Connection", value: "keep-alive" },
+        ],
       },
     ];
   },

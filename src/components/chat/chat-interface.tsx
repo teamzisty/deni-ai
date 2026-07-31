@@ -6,7 +6,7 @@ import type { FileUIPart, UIMessage } from "ai";
 import { DefaultChatTransport } from "ai";
 import dynamic from "next/dynamic";
 import { useExtracted } from "next-intl";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { AdSenseSlot } from "@/components/adsense-slot";
 import { ArtifactPreviewProvider } from "@/components/chat/artifact-preview-context";
 import { ChatComposer, type ComposerMessage } from "@/components/chat/chat-composer";
@@ -181,16 +181,24 @@ export function ChatInterface({
     image: imageMode,
     id,
   };
-  const transport = new DefaultChatTransport({
-    body: {
-      id,
-    },
-  });
+  // Stable transport instance — recreating DefaultChatTransport every render
+  // is unnecessary and has caused stale request plumbing in the past.
+  const transport = useMemo(
+    () =>
+      new DefaultChatTransport({
+        api: "/api/chat",
+        body: { id },
+      }),
+    [id],
+  );
 
   const { messages, sendMessage, regenerate, setMessages, status, error, stop } = useChat({
     id,
     messages: initialMessages,
     transport,
+    // Do not throttle UI message updates — throttling makes tokens appear in bursts
+    // or only after the stream settles.
+    experimental_throttle: undefined,
   });
 
   const { handleRegenerate, groupedMessages } = useChatBranches({
