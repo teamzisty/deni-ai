@@ -45,8 +45,7 @@ import { addOpenRouterCacheControl, ChatRouteError, resolveChatModelContext } fr
 import { buildChatSystemPrompt } from "./_lib/prompt";
 import { ChatRequestSchema, setPendingState } from "./_lib/schema";
 
-// Ensure this route is never statically optimized / buffered by the framework.
-export const dynamic = "force-dynamic";
+// Note: `export const dynamic` is incompatible with nextConfig.cacheComponents.
 export const runtime = "nodejs";
 export const maxDuration = 300;
 
