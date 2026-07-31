@@ -1,8 +1,6 @@
 import {
   consumeStream,
   convertToModelMessages,
-  createUIMessageStream,
-  createUIMessageStreamResponse,
   generateId,
   safeValidateUIMessages,
   stepCountIs,
@@ -10,7 +8,6 @@ import {
   type ModelMessage,
   type SystemModelMessage,
   type UIMessage,
-  type UIMessageChunk,
 } from "ai";
 import { headers } from "next/headers";
 import { after, NextResponse } from "next/server";
@@ -47,6 +44,11 @@ import { checkRateLimit } from "@/lib/rate-limit";
 import { addOpenRouterCacheControl, ChatRouteError, resolveChatModelContext } from "./_lib/model";
 import { buildChatSystemPrompt } from "./_lib/prompt";
 import { ChatRequestSchema, setPendingState } from "./_lib/schema";
+
+// Ensure this route is never statically optimized / buffered by the framework.
+export const dynamic = "force-dynamic";
+export const runtime = "nodejs";
+export const maxDuration = 300;
 
 function getErrorMessage(error: unknown): string | undefined {
   if (typeof error === "string") {
@@ -537,59 +539,39 @@ export async function POST(req: Request) {
     throw new Error(formatChatStreamError(error, baseModel));
   }
 
-  // Client path is a single unblocked merge (no tee). A second persistence
-  // branch used to backpressure the SSE via tee() so the UI only painted
-  // after the model finished. Final DB write happens in onFinish via after().
-  const stream = createUIMessageStream<UIMessage>({
+  // Use the SDK's direct UI stream response path (no createUIMessageStream
+  // push-buffer / custom tee). This is the well-tested progressive SSE path.
+  return result.toUIMessageStreamResponse({
     originalMessages: messages,
-    execute: async ({ writer }) => {
-      try {
-        writer.write({
-          type: "start",
-          messageId: responseMessageId,
-        });
-
-        const uiStream = result.toUIMessageStream<UIMessage>({
-          sendReasoning: true,
-          sendSources: true,
-          sendStart: false,
-          onError: (error) => formatChatStreamError(error, baseModel),
-        });
-
-        const clientStream = uiStream.pipeThrough(
-          new TransformStream<UIMessageChunk, UIMessageChunk>({
-            transform(chunk, controller) {
-              // Enqueue first; never await before this.
-              controller.enqueue(chunk);
-
-              if (
-                chunk.type === "text-start" ||
-                chunk.type === "text-delta" ||
-                chunk.type === "reasoning-start" ||
-                chunk.type === "reasoning-delta" ||
-                chunk.type === "tool-input-start" ||
-                chunk.type === "tool-input-available" ||
-                chunk.type === "tool-output-available" ||
-                chunk.type === "file" ||
-                chunk.type === "source-url"
-              ) {
-                hasAssistantOutput = true;
-              }
-            },
-          }),
-        );
-
-        writer.merge(clientStream);
-      } catch (error) {
-        await rollbackPendingAssistantState();
-        await refundConsumedUsage();
-        clearGenerationLock();
-        throw new Error(formatChatStreamError(error, baseModel));
-      }
+    generateMessageId: () => responseMessageId,
+    sendReasoning: true,
+    sendSources: true,
+    sendStart: true,
+    sendFinish: true,
+    onError: (error) => formatChatStreamError(error, baseModel),
+    // Keep the Node process alive until the stream is fully consumed without
+    // blocking the client-facing branch of the SSE tee more than necessary.
+    consumeSseStream: consumeStream,
+    headers: {
+      // Prevent proxies / gzip layers from buffering the full body.
+      "Cache-Control": "no-cache, no-transform",
+      "X-Accel-Buffering": "no",
+      Connection: "keep-alive",
     },
-    onFinish: async ({ messages: updatedMessages, isAborted }) => {
-      // Return immediately so the SSE can close. Heavy DB/title/usage work
-      // must not sit on the stream flush path.
+    onFinish: ({ messages: updatedMessages, isAborted, responseMessage }) => {
+      const assistantParts = responseMessage?.parts ?? [];
+      hasAssistantOutput = assistantParts.some((part) => {
+        if (part.type === "text" || part.type === "reasoning") {
+          return Boolean(part.text?.trim());
+        }
+        return (
+          part.type === "file" ||
+          part.type === "source-url" ||
+          part.type.startsWith("tool-")
+        );
+      });
+
+      // Heavy work off the stream flush path so the HTTP response can end ASAP.
       after(async () => {
         try {
           if (!(await ownsCurrentGeneration())) {
@@ -659,10 +641,5 @@ export async function POST(req: Request) {
         }
       });
     },
-  });
-
-  return createUIMessageStreamResponse({
-    stream,
-    consumeSseStream: consumeStream,
   });
 }
