@@ -8,6 +8,8 @@ Deni AI is a modern AI chat application designed to make advanced AI accessible 
 
 See `SETUP.md` for prerequisites, environment variables, database setup, scripts, and deployment guidance.
 
+**If you need a database when self-hosting, we recommend [Neon](https://neon.tech). This project is already configured for Neon, allowing you to perform self-hosting smoothly.**
+
 ## Contributing
 
 See `CONTRIBUTING.md` for contributor workflow, standards, and project customization notes.
