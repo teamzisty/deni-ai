@@ -10,15 +10,17 @@
 #
 # Environment (service Environment tab):
 #   - Put ALL required secrets/public vars there (same as .env.production).
-#   - Mark NEXT_PUBLIC_* as build-time so they are embedded into the client bundle.
-#   - Server secrets (DATABASE_URL, API keys, …) are read at runtime.
-#
-# Notes:
-#   - Dependencies install with Bun (bun.lock).
-#   - Next.js build + runtime use Node.js (Bun has crashed mid-build on some VPS CPUs).
+#   - Add the same keys under Build Time Arguments (or mark them build-time)
+#     so Dokploy passes them as `docker build --build-arg`. The builder stage
+#     declares matching ARG/ENV so `next build` sees real prod values.
+#   - NEXT_PUBLIC_* MUST be build-time (embedded into the client bundle).
+#   - Server secrets are also injected at build for `@t3-oss/env-nextjs`
+#     validation / prerender; runtime still uses service Environment.
 #
 # Local:
 #   docker build -t deni-ai .
+#   # With prod public/client values (repeat --build-arg per key, or use Dokploy):
+#   docker build -t deni-ai --build-arg NEXT_PUBLIC_BETTER_AUTH_URL=https://example.com .
 #   docker run --rm -p 3000:3000 --env-file .env.production deni-ai
 
 # ---------------------------------------------------------------------------
@@ -42,8 +44,10 @@ COPY --from=deps /app/node_modules ./node_modules
 COPY --from=deps /app/packages ./packages
 COPY . .
 
-# Dokploy injects service env during `docker build` (as build-args / env).
-# Defaults are placeholders so the image can compile without real secrets.
+# Dokploy / `docker build --build-arg` inject service env here.
+# Required keys keep placeholder defaults so a bare `docker build` still compiles.
+# Optional keys have no default (empty if unset); emptyStringAsUndefined in
+# src/env.ts treats "" as undefined so Zod optional/url checks pass.
 ARG DATABASE_URL=postgresql://build:build@127.0.0.1:5432/build
 ARG BETTER_AUTH_SECRET=01234567890123456789012345678901
 ARG GOOGLE_CLIENT_ID=build
@@ -51,17 +55,33 @@ ARG GOOGLE_CLIENT_SECRET=build
 ARG GITHUB_CLIENT_ID=build
 ARG GITHUB_CLIENT_SECRET=build
 ARG STRIPE_SECRET_KEY=sk_test_build
+ARG STRIPE_WEBHOOK_SECRET
+ARG STRIPE_FLASH_OFFER_COUPON_ID
 ARG GOOGLE_GENERATIVE_AI_API_KEY=build
 ARG ANTHROPIC_API_KEY=build
 ARG GROQ_API_KEY=build
 ARG OPENROUTER_API_KEY=build
+ARG VOIDS_MODE
+ARG VOIDS_BASE_URL
+ARG VOIDS_API_KEY
 ARG BRAVE_SEARCH_API_KEY=build
 ARG TURNSTILE_SECRET_KEY=build
+ARG RESEND_API_KEY
+ARG UPSTASH_REDIS_REST_URL
+ARG UPSTASH_REDIS_REST_TOKEN
+ARG KV_REST_API_URL
+ARG KV_REST_API_TOKEN
+ARG UPLOADTHING_TOKEN
 ARG NEXT_PUBLIC_BETTER_AUTH_URL=http://localhost:3000
 ARG NEXT_PUBLIC_TURNSTILE_SITE_KEY=build
-# Optional vars are NOT defaulted to "". emptyStringAsUndefined in src/env.ts
-# treats "" from Dokploy as unset.
+ARG NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY
+ARG NEXT_PUBLIC_BILLING_DISABLED
+ARG NEXT_PUBLIC_ADSENSE_CLIENT_ID
+ARG NEXT_PUBLIC_ADSENSE_HOME_SLOT_ID
+ARG NEXT_PUBLIC_ADSENSE_CHAT_SLOT_ID
 
+# Promote ARG → ENV so `next build` / env.ts validation / NEXT_PUBLIC inlining
+# all see production values when Dokploy (or --build-arg) supplies them.
 ENV DATABASE_URL=$DATABASE_URL \
   BETTER_AUTH_SECRET=$BETTER_AUTH_SECRET \
   GOOGLE_CLIENT_ID=$GOOGLE_CLIENT_ID \
@@ -69,14 +89,30 @@ ENV DATABASE_URL=$DATABASE_URL \
   GITHUB_CLIENT_ID=$GITHUB_CLIENT_ID \
   GITHUB_CLIENT_SECRET=$GITHUB_CLIENT_SECRET \
   STRIPE_SECRET_KEY=$STRIPE_SECRET_KEY \
+  STRIPE_WEBHOOK_SECRET=$STRIPE_WEBHOOK_SECRET \
+  STRIPE_FLASH_OFFER_COUPON_ID=$STRIPE_FLASH_OFFER_COUPON_ID \
   GOOGLE_GENERATIVE_AI_API_KEY=$GOOGLE_GENERATIVE_AI_API_KEY \
   ANTHROPIC_API_KEY=$ANTHROPIC_API_KEY \
   GROQ_API_KEY=$GROQ_API_KEY \
   OPENROUTER_API_KEY=$OPENROUTER_API_KEY \
+  VOIDS_MODE=$VOIDS_MODE \
+  VOIDS_BASE_URL=$VOIDS_BASE_URL \
+  VOIDS_API_KEY=$VOIDS_API_KEY \
   BRAVE_SEARCH_API_KEY=$BRAVE_SEARCH_API_KEY \
   TURNSTILE_SECRET_KEY=$TURNSTILE_SECRET_KEY \
+  RESEND_API_KEY=$RESEND_API_KEY \
+  UPSTASH_REDIS_REST_URL=$UPSTASH_REDIS_REST_URL \
+  UPSTASH_REDIS_REST_TOKEN=$UPSTASH_REDIS_REST_TOKEN \
+  KV_REST_API_URL=$KV_REST_API_URL \
+  KV_REST_API_TOKEN=$KV_REST_API_TOKEN \
+  UPLOADTHING_TOKEN=$UPLOADTHING_TOKEN \
   NEXT_PUBLIC_BETTER_AUTH_URL=$NEXT_PUBLIC_BETTER_AUTH_URL \
-  NEXT_PUBLIC_TURNSTILE_SITE_KEY=$NEXT_PUBLIC_TURNSTILE_SITE_KEY
+  NEXT_PUBLIC_TURNSTILE_SITE_KEY=$NEXT_PUBLIC_TURNSTILE_SITE_KEY \
+  NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=$NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY \
+  NEXT_PUBLIC_BILLING_DISABLED=$NEXT_PUBLIC_BILLING_DISABLED \
+  NEXT_PUBLIC_ADSENSE_CLIENT_ID=$NEXT_PUBLIC_ADSENSE_CLIENT_ID \
+  NEXT_PUBLIC_ADSENSE_HOME_SLOT_ID=$NEXT_PUBLIC_ADSENSE_HOME_SLOT_ID \
+  NEXT_PUBLIC_ADSENSE_CHAT_SLOT_ID=$NEXT_PUBLIC_ADSENSE_CHAT_SLOT_ID
 
 # Use Node for `next build` — Bun has segfaulted during "Finalizing page optimization"
 # on some hosts (SIGILL / exit 132).
