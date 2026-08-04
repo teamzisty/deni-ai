@@ -1,10 +1,12 @@
 "use client";
 
-import { ShieldCheck, X, ArrowRight } from "lucide-react";
+import { ArrowRight, Code2, KeyRound, ShieldCheck, X } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
+import { AnimatePresence, LazyMotion, domAnimation, m, useReducedMotion } from "motion/react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useExtracted } from "next-intl";
-import { useSyncExternalStore } from "react";
+import { startTransition, useEffect, useState, useSyncExternalStore } from "react";
 import { authClient } from "@/lib/auth-client";
 import { isCheckoutSettingsRoute } from "@/lib/settings-routes";
 import { Button } from "@/components/ui/button";
@@ -13,6 +15,18 @@ import { SidebarTrigger } from "@/components/ui/sidebar";
 
 const DISMISSED_KEY = "flixa-2fa-dismissed";
 const DISMISSED_EVENT = "deni:2fa-dismissed";
+const ANNOUNCEMENT_COUNT = 3;
+const ANNOUNCEMENT_INTERVAL_MS = 8000;
+
+type Announcement = {
+  id: string;
+  message: string;
+  linkLabel: string;
+  href: string;
+  external: boolean;
+  icon: LucideIcon;
+  iconClassName: string;
+};
 
 function subscribeDismissed(onStoreChange: () => void) {
   const handleChange = () => onStoreChange();
@@ -48,6 +62,60 @@ export function TwoFactorBanner() {
     getServerDismissedSnapshot,
   );
   const visible = !dismissed;
+  const shouldReduceMotion = useReducedMotion();
+  const [announcementIndex, setAnnouncementIndex] = useState(0);
+  const announcements: Announcement[] = [
+    {
+      id: "two-factor",
+      message: t("2FA - Enhance your security with two-factor authentication"),
+      linkLabel: t("Setup"),
+      href: "/account/settings",
+      external: false,
+      icon: ShieldCheck,
+      iconClassName: "text-emerald-500",
+    },
+    {
+      id: "flixa",
+      message: t("Flixa - A low-cost, high-performance coding agent"),
+      linkLabel: t("Download"),
+      href: "/flixa",
+      external: false,
+      icon: Code2,
+      iconClassName: "text-sky-500",
+    },
+    {
+      id: "api-credits",
+      message: t("API - API now available at 2/3 the price. Get $10 credit for just $1 now."),
+      linkLabel: t("Get it now"),
+      href: "https://platform.deniai.app/free-credits",
+      external: true,
+      icon: KeyRound,
+      iconClassName: "text-amber-500",
+    },
+  ];
+
+  useEffect(() => {
+    if (!visible) return;
+
+    const shuffleAnnouncement = () => {
+      startTransition(() => {
+        setAnnouncementIndex((currentIndex) => {
+          let nextIndex = Math.floor(Math.random() * ANNOUNCEMENT_COUNT);
+          if (nextIndex === currentIndex) {
+            nextIndex = (nextIndex + 1) % ANNOUNCEMENT_COUNT;
+          }
+          return nextIndex;
+        });
+      });
+    };
+
+    shuffleAnnouncement();
+    const intervalId = window.setInterval(shuffleAnnouncement, ANNOUNCEMENT_INTERVAL_MS);
+    return () => window.clearInterval(intervalId);
+  }, [visible]);
+
+  const announcement = announcements[announcementIndex] ?? announcements[0];
+  const AnnouncementIcon = announcement.icon;
 
   if (
     isCheckoutSettingsRoute(pathname) ||
@@ -72,27 +140,45 @@ export function TwoFactorBanner() {
   }
 
   return (
-    <header className="w-full flex h-10 shrink-0 items-center gap-2 border-b bg-secondary/50 px-4 text-sm">
+    <header className="flex h-10 w-full shrink-0 items-center gap-2 border-b bg-secondary/50 px-4 text-sm">
       <SidebarTrigger className="-ml-1" />
       <Separator orientation="vertical" className="h-4" />
-      <div className="flex flex-1 items-center justify-between gap-2 min-w-0">
-        <div className="flex items-center gap-2 min-w-0">
-          <ShieldCheck className="size-3.5 shrink-0 text-muted-foreground" />
-          <span className="truncate text-muted-foreground">
-            {t("2FA - Enhance your security with two-factor authentication")}
-          </span>
-          <Link
-            href="/account/settings"
-            className="shrink-0 inline-flex items-center gap-1 font-medium text-foreground hover:underline"
-          >
-            {t("Setup")}
-            <ArrowRight className="size-3" />
-          </Link>
+      <div className="flex min-w-0 flex-1 items-center justify-between gap-2">
+        <div className="relative h-full min-w-0 flex-1" aria-live="polite" aria-atomic="true">
+          <LazyMotion features={domAnimation} strict>
+            <AnimatePresence initial={false} mode="wait">
+              <m.div
+                key={announcement.id}
+                initial={shouldReduceMotion ? false : { opacity: 0, y: 4 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={shouldReduceMotion ? { opacity: 1 } : { opacity: 0, y: -4 }}
+                transition={{ duration: shouldReduceMotion ? 0 : 0.3, ease: "easeOut" }}
+                className="absolute inset-0 flex min-w-0 items-center gap-2"
+              >
+                <AnnouncementIcon
+                  aria-hidden="true"
+                  className={`size-3.5 shrink-0 ${announcement.iconClassName}`}
+                />
+                <span className="min-w-0 truncate text-muted-foreground">
+                  {announcement.message}
+                </span>
+                <Link
+                  href={announcement.href}
+                  target={announcement.external ? "_blank" : undefined}
+                  rel={announcement.external ? "noreferrer" : undefined}
+                  className="group inline-flex shrink-0 items-center gap-1 font-medium text-foreground transition-colors hover:text-primary hover:underline"
+                >
+                  {announcement.linkLabel}
+                  <ArrowRight className="size-3 transition-transform duration-200 group-hover:translate-x-0.5" />
+                </Link>
+              </m.div>
+            </AnimatePresence>
+          </LazyMotion>
         </div>
         <Button
           variant="ghost"
           size="icon"
-          className="shrink-0 size-5"
+          className="my-auto size-5 shrink-0"
           onClick={dismissTwoFactorBanner}
           aria-label={t("Dismiss")}
         >

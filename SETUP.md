@@ -1,14 +1,18 @@
 # Setup
 
-This guide covers prerequisites, environment configuration, database setup, and deployment.
+This guide covers prerequisites, environment configuration, database setup, Docker / Dokploy, and deployment.
+
+Source of truth for validated env vars: [`src/env.ts`](src/env.ts). Starter template: [`.env.example`](.env.example).
 
 ## Prerequisites
 
 - [Bun](https://bun.sh/) (recommended) or [Node.js 20+](https://nodejs.org/)
-- [PostgreSQL database](https://neon.tech/) (Neon serverless recommended)
-- API keys for AI providers (Google AI, Groq, OpenRouter)
-- Anthropic API key for Claude models
-- OAuth credentials for authentication providers
+- [PostgreSQL](https://neon.tech/) (Neon serverless recommended for self-hosting)
+- API keys for AI providers (Google AI, Anthropic, Groq, OpenRouter)
+- OAuth credentials (Google + GitHub)
+- Cloudflare Turnstile site + secret keys
+- Brave Search API key (web search / browse tools)
+- Stripe secret key (required by env validation; publishable key needed for checkout UI)
 
 ## Getting Started
 
@@ -29,16 +33,24 @@ npm install
 
 ### 3. Set up environment variables
 
-Create a `.env` file in the root directory with the following variables:
+Copy the example file and fill in values:
+
+```bash
+cp .env.example .env
+# For local overrides used by some scripts:
+# cp .env.example .env.local
+```
+
+Minimum template (see `.env.example` for the full list):
 
 ```env
 # Database
 DATABASE_URL=postgresql://user:password@host:5432/database
 
-# App URL
+# App URL (must match the origin users open in the browser)
 NEXT_PUBLIC_BETTER_AUTH_URL=http://localhost:3000
 
-# Authentication
+# Authentication (BETTER_AUTH_SECRET must be exactly 32 characters)
 BETTER_AUTH_SECRET=your-32-character-secret-here
 GOOGLE_CLIENT_ID=your-google-client-id
 GOOGLE_CLIENT_SECRET=your-google-client-secret
@@ -64,62 +76,89 @@ BRAVE_SEARCH_API_KEY=your-brave-search-key
 TURNSTILE_SECRET_KEY=your-turnstile-secret
 NEXT_PUBLIC_TURNSTILE_SITE_KEY=your-turnstile-site-key
 
-# Stripe Billing
+# Stripe (STRIPE_SECRET_KEY is required by env validation)
 STRIPE_SECRET_KEY=sk_test_your-stripe-key
 NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=pk_test_your-stripe-publishable-key
-STRIPE_WEBHOOK_SECRET=whsec_your-webhook-secret  # optional for local dev
+STRIPE_WEBHOOK_SECRET=whsec_your-webhook-secret
+# STRIPE_FLASH_OFFER_COUPON_ID=  # optional promo coupon
 
-# Email (optional)
+# Email (optional — magic link / org invites)
 RESEND_API_KEY=re_your-resend-key
 
-# Optional: Disable billing
-NEXT_PUBLIC_BILLING_DISABLED=1
+# Rate limiting (optional — falls back to in-memory)
+UPSTASH_REDIS_REST_URL=
+UPSTASH_REDIS_REST_TOKEN=
+# Vercel KV-compatible aliases (also optional)
+KV_REST_API_URL=
+KV_REST_API_TOKEN=
+
+# File uploads (optional — falls back to base64 data URLs)
+UPLOADTHING_TOKEN=
+
+# Optional: hide billing UI / disable paid flows in the client
+NEXT_PUBLIC_BILLING_DISABLED=
+
+# AdSense (optional)
+NEXT_PUBLIC_ADSENSE_CLIENT_ID=
+NEXT_PUBLIC_ADSENSE_HOME_SLOT_ID=
+NEXT_PUBLIC_ADSENSE_CHAT_SLOT_ID=
 ```
 
-When adding or updating supported AI providers/models, also update `src/lib/constants.ts`.
+Notes:
 
-Set `ANTHROPIC_API_KEY` to your Anthropic API key for Claude models. Set `OPENROUTER_API_KEY` to your OpenRouter API key for other routed models.
-
-Optional voids.top mode: set `VOIDS_MODE=true` (or `1`) to send **platform** (non-BYOK) OpenAI and Anthropic traffic through the OpenAI-compatible voids.top gateway. When enabled, **`VOIDS_API_KEY` is required** (voids returns `401 invalid apikey` without it). Optional `VOIDS_BASE_URL` (default `https://capi.voids.top/v2`). When `VOIDS_MODE` is off, OpenAI uses OpenRouter and Anthropic uses `ANTHROPIC_API_KEY`.
+- Empty optional vars are treated as unset (`emptyStringAsUndefined` in `src/env.ts`), which helps Docker / Dokploy builds that inject `""` for missing keys.
+- When adding or changing supported models, update `src/lib/constants.ts`.
+- `OPENROUTER_API_KEY` routes OpenAI-family and other OpenRouter models when voids mode is off.
+- Optional voids.top mode: set `VOIDS_MODE=true` (or `1`) to send **platform** (non-BYOK) OpenAI and Anthropic traffic through the OpenAI-compatible voids.top gateway. When enabled, **`VOIDS_API_KEY` is required** (voids returns `401 invalid apikey` without it). Optional `VOIDS_BASE_URL` (default `https://capi.voids.top/v2`). When `VOIDS_MODE` is off, OpenAI uses OpenRouter and Anthropic uses `ANTHROPIC_API_KEY`.
 
 #### Generate `BETTER_AUTH_SECRET`
 
+The secret must be **exactly 32 characters** (Zod `length(32)`):
+
 ```bash
-openssl rand -base64 32
+# 32 hex chars
+openssl rand -hex 16
+
+# or base64 truncated to 32
+openssl rand -base64 24 | cut -c1-32
 ```
 
-#### Setting up OAuth Providers
+#### Setting up OAuth providers
 
-**Google OAuth:**
+**Google OAuth**
 
 1. Go to [Google Cloud Console](https://console.cloud.google.com/)
-2. Create a new project or select existing
-3. Enable Google+ API
-4. Create OAuth 2.0 credentials
-5. Add authorized redirect URI: `http://localhost:3000/api/auth/callback/google`
+2. Create a project (or select an existing one)
+3. Configure the OAuth consent screen
+4. Create OAuth 2.0 Client ID (Web application)
+5. Authorized redirect URI: `{NEXT_PUBLIC_BETTER_AUTH_URL}/api/auth/callback/google`  
+   Local example: `http://localhost:3000/api/auth/callback/google`
 
-**GitHub OAuth:**
+**GitHub OAuth**
 
 1. Go to [GitHub Developer Settings](https://github.com/settings/developers)
 2. Create a new OAuth App
-3. Set Authorization callback URL: `http://localhost:3000/api/auth/callback/github`
+3. Authorization callback URL: `{NEXT_PUBLIC_BETTER_AUTH_URL}/api/auth/callback/github`  
+   Local example: `http://localhost:3000/api/auth/callback/github`
 
 ### 4. Set up the database
 
-Generate and run database migrations:
-
 ```bash
-# Generate migration files
+# Generate migration files after schema edits
 bun run db:generate
 
 # Apply migrations
+# Production-style (.env.production):
 bun run db:migrate
 
-# Or push schema directly (development)
+# Local development (.env.local):
+bun run db:migrate:dev
+
+# Or push schema directly (dev only)
 bun run db:push
 ```
 
-Generate better-auth schema:
+Regenerate better-auth tables into `src/db/schema/auth-schema.ts` (overwrites that file):
 
 ```bash
 bun run auth:generate
@@ -133,98 +172,135 @@ bun dev
 npm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) in your browser.
+Open [http://localhost:3000](http://localhost:3000).
 
-## Available Scripts
+## Available scripts
 
-| Command                 | Description                   |
-| ----------------------- | ----------------------------- |
-| `bun dev`               | Start development server      |
-| `bun run build`         | Build for production          |
-| `bun start`             | Start production server       |
-| `bun run lint`          | Run oxlint linter             |
-| `bun run format`        | Format code with oxfmt        |
-| `bun run db:generate`   | Generate Drizzle migrations   |
-| `bun run db:migrate`    | Run database migrations       |
-| `bun run db:push`       | Push schema to database       |
-| `bun run auth:generate` | Regenerate better-auth schema |
+| Command                      | Description                          |
+| ---------------------------- | ------------------------------------ |
+| `bun dev`                    | Start Next.js dev server             |
+| `bun run build`              | Typecheck + production build         |
+| `bun start`                  | Start production server              |
+| `bun run lint`               | oxlint                               |
+| `bun run lint:fix`           | oxlint with auto-fix                 |
+| `bun run format`             | Format with oxfmt                    |
+| `bun run typecheck`          | TypeScript check (`tsgo --noEmit`)   |
+| `bun run db:generate`        | Generate Drizzle migrations          |
+| `bun run db:migrate`         | Migrate using `.env.production`      |
+| `bun run db:migrate:dev`     | Migrate using `.env.local`           |
+| `bun run db:push`            | Push schema (dev)                    |
+| `bun run auth:generate`      | Regenerate better-auth schema        |
+| `bun run disposable:refresh` | Refresh disposable-email domain list |
+| `bun run tools:codename`     | Generate version codenames           |
+| `bun run tools:commit`       | AI-assisted conventional commits     |
+| `bun run doctor`             | Run react-doctor diagnostics         |
 
-## Stripe Billing Setup (Optional)
+## Stripe billing
 
-If you want to enable Stripe billing:
+Env validation always requires `STRIPE_SECRET_KEY`. Checkout UI needs `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY`. Webhooks need `STRIPE_WEBHOOK_SECRET` in production.
 
-1. Create a [Stripe account](https://stripe.com/)
-2. Get your API keys from the Stripe Dashboard
-3. Add to `.env`:
-
-```env
-STRIPE_SECRET_KEY=sk_test_your-stripe-key
-NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=pk_test_your-stripe-publishable-key
-STRIPE_WEBHOOK_SECRET=whsec_your-webhook-secret
-```
-
-`NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY` is required for the custom Stripe checkout UI.
-
-4. Set up webhook endpoint:
-   - Endpoint URL: `{NEXT_PUBLIC_BETTER_AUTH_URL}/api/stripe/webhook`
-   - Events to listen to:
-     - `checkout.session.completed`
-     - `customer.subscription.created`
-     - `customer.subscription.updated`
-     - `customer.subscription.deleted`
-
-5. For local testing:
+1. Create a [Stripe account](https://stripe.com/) and copy API keys
+2. Add keys to `.env` (see template above)
+3. Webhook endpoint: `{NEXT_PUBLIC_BETTER_AUTH_URL}/api/stripe/webhook`
+4. Suggested events:
+   - `checkout.session.completed`
+   - `customer.subscription.created`
+   - `customer.subscription.updated`
+   - `customer.subscription.deleted`
+5. Local forwarding:
 
 ```bash
 stripe listen --forward-to localhost:3000/api/stripe/webhook
 ```
 
-To disable billing entirely:
+To hide billing in the client:
 
 ```env
 NEXT_PUBLIC_BILLING_DISABLED=true
 ```
 
-## Database Schema
+Optional flash offer coupon: `STRIPE_FLASH_OFFER_COUPON_ID`.
 
-The application uses the following main tables:
+## Database schema
 
-- **Authentication** - Users, sessions, accounts (better-auth schema)
-- **Chats** - Chat conversations and messages
-- **Provider Keys** - User-specific API keys for AI providers
-- **Provider Settings** - User preferences for AI providers
-- **Custom Models** - User-defined custom AI models
-- **Billing** - Subscription and payment data (Stripe)
-- **Usage** - Track API usage and limits
-- **Share** - Share chat conversations
+Schemas live under `src/db/schema/`. Main domains:
 
-To modify the schema:
+| Area                                  | Purpose                                       |
+| ------------------------------------- | --------------------------------------------- |
+| **auth-schema**                       | Users, sessions, accounts, orgs (better-auth) |
+| **chat**                              | Conversations and messages                    |
+| **provider-keys / provider-settings** | BYOK keys and provider preferences            |
+| **api-keys**                          | User API key records                          |
+| **memory**                            | Personalization memories                      |
+| **project**                           | Project-scoped chat context                   |
+| **billing**                           | Stripe subscriptions / payment data           |
+| **usage**                             | Platform usage and limits                     |
+| **share**                             | Shared chat links                             |
+| **team-usage-policy**                 | Team usage policies                           |
+| **device-auth**                       | Device / desktop auth                         |
+
+Schema change workflow:
 
 1. Edit files in `src/db/schema/`
-2. Run `bun run db:generate` to create migrations
-3. Run `bun run db:migrate` to apply migrations
+2. `bun run db:generate`
+3. `bun run db:migrate` or `bun run db:migrate:dev` (or `db:push` in dev)
 
 ## Deployment
 
-### Vercel (Recommended)
+### Vercel (common for this stack)
 
-1. Push your code to GitHub
-2. Import the repository in [Vercel](https://vercel.com)
-3. Add environment variables in Vercel dashboard
-4. Deploy
+1. Push the repo to GitHub
+2. Import the project in [Vercel](https://vercel.com)
+3. Set all required environment variables
+4. Deploy (build uses `bun run build` / `next build` per project settings)
 
-### Other Platforms
+### Docker / Dokploy
 
-The application can be deployed to any platform that supports Next.js:
+A multi-stage `Dockerfile` is included for self-hosting (e.g. Dokploy):
 
-- Railway
-- Render
-- Fly.io
-- AWS/GCP/Azure
+- **Build:** Bun installs deps; **Node 22** runs `next build` (standalone output)
+- **Run:** Node serves `.next/standalone` on port **3000**
+- `NEXT_PUBLIC_*` values must be present at **build time** (inlined into the client bundle)
+- Server secrets should also be available at build time for `@t3-oss/env-nextjs` validation / prerender; runtime still uses container env
 
-Make sure to:
+Dokploy application settings (typical):
+
+| Setting         | Value        |
+| --------------- | ------------ |
+| Build type      | Dockerfile   |
+| Dockerfile path | `Dockerfile` |
+| Context         | `.`          |
+| Port            | `3000`       |
+
+Put the same keys as production `.env` in the service **Environment** tab, and pass them as **build-time** args/env for `NEXT_PUBLIC_*` (and other keys required during `next build`). See comments at the top of `Dockerfile`.
+
+Local example:
+
+```bash
+docker build -t deni-ai \
+  --build-arg NEXT_PUBLIC_BETTER_AUTH_URL=https://example.com \
+  --build-arg NEXT_PUBLIC_TURNSTILE_SITE_KEY=... \
+  .
+
+docker run --rm -p 3000:3000 --env-file .env.production deni-ai
+```
+
+### Other platforms
+
+Any host that can run a Next.js standalone Node server (Railway, Render, Fly.io, AWS/GCP/Azure, etc.):
 
 - Set all required environment variables
-- Use PostgreSQL database
-- Configure proper build commands: `bun run build`
-- Start command: `bun start`
+- Use PostgreSQL (Neon recommended)
+- Build: `bun run build` (or the Docker image)
+- Start: `bun start` / `node server.js` (standalone) / container CMD
+
+## Troubleshooting
+
+| Issue                         | What to check                                                 |
+| ----------------------------- | ------------------------------------------------------------- |
+| Env validation errors on boot | Missing keys in `src/env.ts`; empty optional strings are OK   |
+| OAuth redirect mismatch       | Callback URLs must match `NEXT_PUBLIC_BETTER_AUTH_URL`        |
+| DB migrate fails              | Correct `DATABASE_URL`; use `db:migrate:dev` for local        |
+| Stripe checkout broken        | Publishable key + webhook secret; Stripe CLI for local        |
+| Search / browse tools fail    | Valid `BRAVE_SEARCH_API_KEY`                                  |
+| Docker build env issues       | Pass `NEXT_PUBLIC_*` as build args; see `Dockerfile` comments |
