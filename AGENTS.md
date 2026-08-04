@@ -15,26 +15,45 @@ This file applies to the entire repository tree rooted here. Follow these rules,
 
 ■ Required Environment Variables (as enforced by `src/env.ts`)
 
-- `DATABASE_URL` (Postgres connection URL / required)
-- `NEXT_PUBLIC_BETTER_AUTH_URL` (public app URL, e.g., http://localhost:3000)
-- `BETTER_AUTH_SECRET` (32-character secret)
+Source of truth: `src/env.ts`. Starter: `.env.example`. Human setup guide: `SETUP.md`.
+Empty optional strings are treated as unset (`emptyStringAsUndefined`) for Docker/Dokploy.
+
+Required (Zod will fail startup/build without them):
+
+- `DATABASE_URL` (Postgres / Neon)
+- `NEXT_PUBLIC_BETTER_AUTH_URL` (public app URL, e.g. http://localhost:3000)
+- `BETTER_AUTH_SECRET` (exactly 32 characters)
 - `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`
 - `GITHUB_CLIENT_ID`, `GITHUB_CLIENT_SECRET`
-  Note: These are validated strictly via Zod. Missing/invalid values will cause runtime or startup failures.
-- For Stripe billing/custom checkout, also set `STRIPE_SECRET_KEY` and `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY` (`STRIPE_WEBHOOK_SECRET` is optional for local development).
-- Optional voids.top gateway: `VOIDS_MODE=true|1` routes platform OpenAI + Anthropic via voids; when enabled `VOIDS_API_KEY` is required; optional `VOIDS_BASE_URL`.
+- `STRIPE_SECRET_KEY` (always required by validation; use `NEXT_PUBLIC_BILLING_DISABLED` to hide billing UI)
+- `GOOGLE_GENERATIVE_AI_API_KEY`, `ANTHROPIC_API_KEY`, `GROQ_API_KEY`, `OPENROUTER_API_KEY`
+- `BRAVE_SEARCH_API_KEY`
+- `TURNSTILE_SECRET_KEY`, `NEXT_PUBLIC_TURNSTILE_SITE_KEY`
+
+Optional:
+
+- Stripe: `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY`, `STRIPE_WEBHOOK_SECRET`, `STRIPE_FLASH_OFFER_COUPON_ID`
+- voids.top: `VOIDS_MODE=true|1` routes platform OpenAI + Anthropic via voids; when enabled `VOIDS_API_KEY` is required; optional `VOIDS_BASE_URL`
+- Email: `RESEND_API_KEY`
+- Rate limit: `UPSTASH_REDIS_REST_URL` / `UPSTASH_REDIS_REST_TOKEN` or `KV_REST_API_URL` / `KV_REST_API_TOKEN`
+- Uploads: `UPLOADTHING_TOKEN`
+- Client: `NEXT_PUBLIC_BILLING_DISABLED`, AdSense (`NEXT_PUBLIC_ADSENSE_*`)
 
 ■ Common Scripts (Bun preferred)
 
-- Dev server: `bun dev` (or `bun run dev` / fallback: `bun run dev`)
-- Build: `bun run build` (fallback: `bun run build`)
-- Start: `bun run start` (fallback: `bun run start`)
-- Lint: `bun run lint` (oxlint)
+- Dev server: `bun dev`
+- Build: `bun run build` (runs `typecheck` then `next build`)
+- Start: `bun start` / `bun run start`
+- Lint: `bun run lint` (oxlint); fix: `bun run lint:fix`
 - Format: `bun run format` (oxfmt)
-- Drizzle generate: `bun run db:generate` (create migrations snapshot)
-- Drizzle migrate: `bun run db:migrate`
+- Typecheck: `bun run typecheck`
+- Drizzle generate: `bun run db:generate`
+- Drizzle migrate: `bun run db:migrate` (`.env.production`); local: `bun run db:migrate:dev` (`.env.local`)
 - Drizzle push: `bun run db:push`
-- Regenerate better-auth schema: `bun run auth:generate` (uses `bunx` under the hood; overwrites `src/db/schema/auth-schema.ts`)
+- Regenerate better-auth schema: `bun run auth:generate` (overwrites `src/db/schema/auth-schema.ts`)
+- Disposable email list: `bun run disposable:refresh`
+- Tools: `bun run tools:commit`, `bun run tools:codename`
+- React doctor: `bun run doctor`
 
 ■ Coding Conventions
 
@@ -57,9 +76,9 @@ This file applies to the entire repository tree rooted here. Follow these rules,
 
 ■ Authentication (better-auth)
 
-- Server config: `src/lib/auth.ts` (Drizzle adapter + providers).
+- Server config: `src/lib/auth.ts` (Drizzle adapter + Google/GitHub OAuth, magic link, anonymous, passkey, 2FA).
 - Route: `src/app/api/auth/[...all]/route.ts` exports the better-auth handler.
-- Client: `src/lib/auth-client.ts` has `baseURL` pinned to `http://localhost:3000`; change only if requested.
+- Client: `src/lib/auth-client.ts` — do not change baseURL unless explicitly requested.
 - Regenerate schema with `bun run auth:generate` (may overwrite `auth-schema.ts`).
 
 ■ Frontend & Styles
@@ -100,10 +119,11 @@ This file applies to the entire repository tree rooted here. Follow these rules,
 ■ Validating Changes
 
 - At minimum locally:
-  - Run `bun run lint` and `bun run format`.
-  - Start dev: `bun run dev` and open http://localhost:3000.
-  - For schema changes: run `db:generate` → `db:migrate|db:push` (requires `DATABASE_URL`).
+  - Run `bun run lint`, `bun run format`, and `bun run typecheck`.
+  - Start dev: `bun dev` and open http://localhost:3000.
+  - For schema changes: run `db:generate` → `db:migrate:dev` / `db:migrate` / `db:push` (requires `DATABASE_URL`).
 - Tests are not set up. For riskier areas, note manual verification steps or TODOs where appropriate.
+- When changing user-facing behavior, env surface, deploy, or architecture, update `README.md` / `SETUP.md` / related docs in the same change.
 
 ■ Branch / PR / Merge Policy (Agents)
 

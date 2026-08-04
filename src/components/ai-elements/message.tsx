@@ -12,7 +12,7 @@ import { code } from "@streamdown/code";
 import { math } from "@streamdown/math";
 import { ChevronLeftIcon, ChevronRightIcon } from "lucide-react";
 import { createContext, memo, useCallback, useContext, useEffect, useMemo, useState } from "react";
-import { Streamdown } from "streamdown";
+import { Streamdown, type PluginConfig } from "streamdown";
 import { lazyMermaid } from "@/components/chat/streamdown-mermaid-plugin";
 import { streamdownRemarkPlugins } from "@/components/chat/streamdown-remark-plugins";
 import { streamdownOverrideComponents } from "@/components/chat/streamdown-overrides";
@@ -273,7 +273,13 @@ export const MessageBranchPage = ({ className, ...props }: MessageBranchPageProp
 
 export type MessageResponseProps = ComponentProps<typeof Streamdown>;
 
-const streamdownPlugins = { cjk, code, math, mermaid: lazyMermaid };
+const streamdownPlugins: PluginConfig = {
+  cjk,
+  // @streamdown/code currently ships Shiki 3 types while Streamdown uses Shiki 4.
+  code: code as unknown as NonNullable<PluginConfig["code"]>,
+  math,
+  mermaid: lazyMermaid,
+};
 
 export const MessageResponse = memo(
   ({ className, ...props }: MessageResponseProps) => (

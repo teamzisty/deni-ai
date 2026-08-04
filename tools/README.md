@@ -1,13 +1,16 @@
 # tools
 
-**Scripts**:
+Internal scripts for maintainers. Run from the **repository root** so Bun loads root env files.
 
-- codename-generator.ts: generates deni ai version codenames
-- commit.ts: generates conventional commit messages with OpenRouter and can create the commit
+| Script                  | npm script                      | Purpose                                        |
+| ----------------------- | ------------------------------- | ---------------------------------------------- |
+| `codename-generator.ts` | `bun run tools:codename`        | Generate Deni AI version codenames             |
+| `commit.ts`             | `bun run tools:commit`          | Conventional commit messages via OpenRouter    |
+| `purge-anonymous.ts`    | `bun run tools:purge-anonymous` | Purge anonymous users (uses `.env.production`) |
 
-## AI Gateway commit tool
+## Commit helper
 
-Run from the repository root so Bun loads the root `.env` files:
+Requires `OPENROUTER_API_KEY`. Generates a conventional commit message from the staged (or selected) diff. Creates a commit only when `--commit` is passed.
 
 ```sh
 bun run tools:commit --it
@@ -18,4 +21,20 @@ bun run tools:commit --all --generate-description --commit
 bun run tools:commit --all --description "Explain the checkout flow changes" --commit
 ```
 
-The tool reads `OPENROUTER_API_KEY` from the environment, generates a conventional commit message from the staged diff via OpenRouter, and only creates the commit when `--commit` is provided. `--it` is a shortcut for `--all --generate-description --commit`, and `--check` is a shortcut for `--all --generate-description`. Use `--description` to supply the body yourself.
+- `--it` → `--all --generate-description --commit`
+- `--check` → `--all --generate-description`
+- `--description` supplies the commit body yourself
+
+## Codename generator
+
+```sh
+bun run tools:codename
+```
+
+## Purge anonymous users
+
+Production maintenance. Loads `.env.production` via the package script. Prefer reviewing the script before running against live data.
+
+```sh
+bun run tools:purge-anonymous
+```

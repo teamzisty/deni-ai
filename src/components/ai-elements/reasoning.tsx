@@ -19,7 +19,7 @@ import {
   useRef,
   useState,
 } from "react";
-import { Streamdown } from "streamdown";
+import { Streamdown, type PluginConfig } from "streamdown";
 import { lazyMermaid } from "@/components/chat/streamdown-mermaid-plugin";
 import { streamdownRemarkPlugins } from "@/components/chat/streamdown-remark-plugins";
 
@@ -190,7 +190,13 @@ export type ReasoningContentProps = ComponentProps<typeof CollapsibleContent> & 
   children: string;
 };
 
-const streamdownPlugins = { cjk, code, math, mermaid: lazyMermaid };
+const streamdownPlugins: PluginConfig = {
+  cjk,
+  // @streamdown/code currently ships Shiki 3 types while Streamdown uses Shiki 4.
+  code: code as unknown as NonNullable<PluginConfig["code"]>,
+  math,
+  mermaid: lazyMermaid,
+};
 
 export const ReasoningContent = memo(({ className, children, ...props }: ReasoningContentProps) => (
   <CollapsibleContent
