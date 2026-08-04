@@ -79,6 +79,12 @@ export default function Header() {
           href: "/home",
           icon: Bot,
           title: "Deni AI",
+          description: t("Infomation."),
+        },
+        {
+          href: "/chat",
+          icon: Bot,
+          title: "Chat",
           description: t("Chat with multiple AI models."),
         },
         {

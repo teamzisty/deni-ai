@@ -34,10 +34,10 @@ type CheckoutSessionSummary = {
   sessionId: string;
   clientSecret: string | null;
   status: "open" | "complete" | "expired";
-  paymentStatus: "paid" | "unpaid" | "no_payment_required" | null;
+  paymentStatus: string | null;
   amountTotal: number | null;
   currency: string | null;
-  mode: "subscription" | "payment" | "setup";
+  mode: string;
   planId: string | null;
 };
 

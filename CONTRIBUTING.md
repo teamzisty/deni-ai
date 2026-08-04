@@ -23,197 +23,223 @@ Please read and follow our [Code of Conduct](CODE_OF_CONDUCT.md). We expect all 
 1. Fork the repository
 2. Clone your fork locally
 3. Set up the development environment (see below)
-4. Create a new branch for your feature or fix
+4. Create a new branch from **`canary`** (not `master`) for your feature or fix
+
+Day-to-day development targets **`canary`**. **`master`** is the promotion/release branch.
 
 ## Development Setup
 
 ### Prerequisites
 
 - [Bun](https://bun.sh/) (preferred) or Node.js 20+
-- PostgreSQL database (we recommend [Neon](https://neon.tech/) for serverless PostgreSQL)
-- Stripe account (for billing features)
+- PostgreSQL (we recommend [Neon](https://neon.tech/) for serverless PostgreSQL)
+- API keys and OAuth credentials as described in [SETUP.md](SETUP.md)
 
 ### Installation
 
 ```bash
 # Clone your fork
-git clone https://github.com/teamzisty/deni-ai.git
+git clone https://github.com/YOUR_USER/deni-ai.git
 cd deni-ai
+
+# Use canary as the base
+git checkout canary
+git pull origin canary
 
 # Install dependencies
 bun install
 
-# Copy environment variables
+# Environment
 cp .env.example .env
-# Edit .env with your configuration
+# Edit .env with your configuration (see SETUP.md / src/env.ts)
 
-# Set up the database
-bun run db:migrate
+# Database (local)
+bun run db:migrate:dev
+# or: bun run db:push
 
-# Start the development server
+# Dev server → http://localhost:3000
 bun dev
 ```
 
-### Environment Variables
+### Environment variables
 
-Refer to `src/env.ts` for the complete list of required environment variables. Key variables include:
+Required and optional variables are validated in `src/env.ts`. A starter list is in `.env.example`. Key groups:
 
-- `DATABASE_URL` - PostgreSQL connection URL
-- `BETTER_AUTH_SECRET` - 32-character authentication secret
-- AI provider keys (Google AI, Groq, Vercel AI Gateway)
-- Stripe keys for billing: `STRIPE_SECRET_KEY`, `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY`
+- **Core:** `DATABASE_URL`, `NEXT_PUBLIC_BETTER_AUTH_URL`, `BETTER_AUTH_SECRET` (32 chars)
+- **OAuth:** Google + GitHub client ID/secret
+- **AI:** `GOOGLE_GENERATIVE_AI_API_KEY`, `ANTHROPIC_API_KEY`, `GROQ_API_KEY`, `OPENROUTER_API_KEY`
+- **Search / CAPTCHA:** `BRAVE_SEARCH_API_KEY`, Turnstile keys
+- **Stripe:** `STRIPE_SECRET_KEY` (required by validation); publishable + webhook for full billing
+- **Optional:** Resend, Upstash/KV Redis, UploadThing, AdSense, voids.top gateway
+
+Details: [SETUP.md](SETUP.md).
 
 ## How to Contribute
 
-### Quick Contribution Flow
+### Quick contribution flow
 
 1. Fork the repository
-2. Create a feature branch: `git checkout -b feature/amazing-feature`
-3. Make your changes following the coding conventions in `CLAUDE.md`
-4. Run linting: `bun run lint`
-5. Format code: `bun run format`
-6. Commit your changes: `git commit -m 'Add amazing feature'`
-7. Push to the branch: `git push origin feature/amazing-feature`
-8. Open a Pull Request
+2. Branch from `canary`: `git checkout -b feature/amazing-feature`
+3. Follow coding conventions in [AGENTS.md](AGENTS.md)
+4. Run checks:
 
-### Types of Contributions
+   ```bash
+   bun run lint
+   bun run format
+   bun run typecheck
+   ```
 
-- **Bug fixes**: Help us squash bugs and improve stability
-- **Features**: Propose and implement new features
-- **Documentation**: Improve docs, fix typos, add examples
-- **Tests**: Add or improve test coverage
-- **Performance**: Optimize code and improve performance
+5. Commit with [Conventional Commits](https://www.conventionalcommits.org/)
+6. Push and open a Pull Request with **base = `canary`**
 
-### Before You Start
+### Types of contributions
+
+- **Bug fixes** — stability and correctness
+- **Features** — new capabilities aligned with the product
+- **Documentation** — guides, fixes, examples
+- **Performance** — load time, streaming, React Compiler–friendly patterns
+- **i18n** — keep `messages/en.json` and `messages/ja.json` in sync
+
+### Before you start
 
 1. Check existing [issues](https://github.com/teamzisty/deni-ai/issues) and [pull requests](https://github.com/teamzisty/deni-ai/pulls)
-2. For major changes, open an issue first to discuss your proposal
-3. Ensure your contribution aligns with the project's goals
+2. For major changes, open an issue first
+3. Keep PRs focused; avoid unrelated refactors
 
 ## Pull Request Process
 
-1. **Create a branch**: Use a descriptive name like `feature/add-new-provider` or `fix/chat-loading-issue`
+1. **Branch name** — e.g. `feature/add-new-provider`, `fix/chat-loading-issue`
 
-2. **Make your changes**: Follow the coding standards below
-
-3. **Test your changes**:
+2. **Validate**
 
    ```bash
-   bun run lint      # Check for linting errors
-   bun run format    # Format code
-   bun run build     # Ensure build passes
+   bun run lint
+   bun run format
+   bun run typecheck
+   bun run build
    ```
 
-4. **Commit your changes**: Write clear, concise commit messages
+3. **Commit messages**
 
    ```
    feat: add support for new AI provider
    fix: resolve chat message ordering issue
-   docs: update API documentation
+   docs: update setup guide for Docker
    ```
 
-5. **Push and create a Pull Request**:
-   - Provide a clear description of your changes
-   - Reference any related issues
-   - Include screenshots for UI changes
+4. **Open a PR against `canary`**
+   - Clear description and linked issues
+   - Screenshots for UI changes
+   - Note manual test steps when automated tests are missing
 
-6. **Code review**: Address feedback from maintainers
+5. **Review** — address maintainer feedback promptly
 
 ## Coding Standards
 
 ### TypeScript
 
-- Use strict TypeScript (enabled by default)
-- Avoid `any` - use `unknown` and type guards when needed
-- Leverage type inference from tRPC and Drizzle
+- Strict TypeScript (project default)
+- Avoid `any`; prefer `unknown` and narrow with guards
+- Prefer types from tRPC, Drizzle, and Zod schemas
 
-### Code Style
+### Code style
 
-- We use [oxlint](https://oxc-project.github.io/docs/linter) for linting and [oxfmt](https://oxc-project.github.io/docs/formatter) for formatting
+- [oxlint](https://oxc.rs/docs/guide/usage/linter) + [oxfmt](https://oxc.rs/docs/guide/usage/formatter)
 - Run `bun run lint` and `bun run format` before committing
-- Follow existing patterns in the codebase
+- Match existing patterns; prefer named exports where the codebase does
 
-### File Naming
+### File naming
 
-- Use kebab-case for files: `auth-client.ts`, `chat-interface.tsx`
-- Use the `@/*` import alias for clean imports
+- kebab-case files: `auth-client.ts`, `chat-interface.tsx`
+- Import with the `@/*` alias from `tsconfig.json`
 
-### React Patterns
+### React / Next.js
 
-- Server Components by default (Next.js App Router)
-- Use `"use client"` only when necessary
-- Follow React Compiler constraints
+- App Router: Server Components by default
+- `"use client"` only when needed
+- Respect React Compiler constraints (avoid problematic mutable closures)
+- This project uses Next.js canary APIs — check `node_modules/next/dist/docs/` when unsure
 
-### Commit Messages
+### Commit messages
 
-We follow [Conventional Commits](https://www.conventionalcommits.org/):
+Conventional Commits:
 
-- `feat:` - New feature
-- `fix:` - Bug fix
-- `docs:` - Documentation changes
-- `style:` - Code style changes (formatting, etc.)
-- `refactor:` - Code refactoring
-- `test:` - Adding or updating tests
-- `chore:` - Maintenance tasks
+| Prefix      | Use                              |
+| ----------- | -------------------------------- |
+| `feat:`     | New feature                      |
+| `fix:`      | Bug fix                          |
+| `docs:`     | Documentation                    |
+| `style:`    | Formatting only                  |
+| `refactor:` | Refactor without behavior change |
+| `test:`     | Tests                            |
+| `chore:`    | Maintenance                      |
 
 ## Internationalization
 
-The app supports multiple languages via `next-intl`. Translation files are located in the `messages/` directory.
+Translations live in `messages/` (`en.json`, `ja.json`).
 
-To add a new language:
+When adding user-facing strings:
 
-1. Create a new JSON file in `messages/`
-2. Add translations following the existing structure
-3. Update locale configuration in `src/i18n/`
+1. Add the English key/value (or use `next-intl` extracted messages as the project does)
+2. Keep Japanese (`ja.json`) in sync
+3. Prefer `useExtracted()` over locale conditionals like `locale === "ja"`
+
+See [AGENTS.md](AGENTS.md) for the full i18n rules.
 
 ## Customization
 
-### Adding UI Components
+### UI components
 
-This project uses shadcn/ui. To add new components:
+shadcn/ui (Base UI). Add components with:
 
 ```bash
 bunx shadcn@latest add [component-name]
 ```
 
-### Modifying Themes
+Prefer not to hand-edit generated files under `src/components/ui/` unless necessary.
 
-- Edit `src/app/themes.css` for theme colors
-- Tailwind configuration in `tailwind.config.ts`
+### Themes
 
-### Adding AI Providers
+- Theme tokens / presets: `src/app/themes.css`, `src/lib/theme-presets.ts`
+- Global styles: `src/app/globals.css`
 
-1. Install the provider SDK (if not already included)
-2. Add API key to `src/env.ts` and `.env`
-3. Configure the provider in your AI service logic
+### AI providers / models
+
+1. Add env keys in `src/env.ts` and `.env.example` if needed
+2. Wire the provider in chat / generation libs under `src/lib/`
+3. Register models in `src/lib/constants.ts`
+
+### Chat tools
+
+Tools (search, browse, image, video) live under `src/lib/chat-tools/`.
 
 ## Reporting Issues
 
-### Bug Reports
+### Bug reports
 
-When reporting bugs, please include:
+Include:
 
-- A clear, descriptive title
-- Steps to reproduce the issue
+- Clear title and steps to reproduce
 - Expected vs actual behavior
-- Environment details (OS, browser, Node/Bun version)
-- Screenshots or logs if applicable
+- Environment (OS, browser, Bun/Node version)
+- Logs or screenshots when useful
 
-### Feature Requests
+### Feature requests
 
-When requesting features, please include:
+Include:
 
-- A clear description of the feature
-- The problem it solves
-- Potential implementation approaches (optional)
-- Examples from other projects (if applicable)
+- Problem statement and proposed UX
+- Why it fits Deni AI
+- Optional implementation notes
+
+### Security
+
+Do **not** file public issues for vulnerabilities. Follow [SECURITY.md](SECURITY.md).
 
 ## Questions?
 
-If you have questions, feel free to:
-
-- Open a [Discussion](https://github.com/teamzisty/deni-ai/discussions)
-- Check existing documentation
-- Reach out to maintainers
+- [Discussions](https://github.com/teamzisty/deni-ai/discussions)
+- [SETUP.md](SETUP.md) and [README.md](README.md)
+- Maintainers via issues/PRs
 
 Thank you for contributing to Deni AI!
