@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { getExtracted } from "next-intl/server";
 import { DesktopClient } from "./desktop-client";
 import type { DesktopDownloads, DesktopRelease, DesktopReleaseAsset } from "./types";
+import { publicAlternates } from "@/lib/seo";
 
 type GitHubRelease = {
   assets: DesktopReleaseAsset[];
@@ -66,17 +67,15 @@ async function getDesktopDownloads(): Promise<DesktopDownloads> {
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getExtracted();
-  const title = t("Desktop App");
+  const title = t("Deni Chat desktop app for Windows and macOS");
   const description = t(
-    "Download the Deni AI desktop app for tray access, notifications, and quick reopen during daily work.",
+    "Download the official Deni Chat desktop app for Windows and macOS. Tray access, notifications, and quick reopen. Use the web app on mobile — no Android APK.",
   );
 
   return {
     title,
     description,
-    alternates: {
-      canonical: "https://deniai.app/desktop",
-    },
+    alternates: await publicAlternates("/desktop"),
     openGraph: {
       title: `${title} — Deni AI`,
       description,
@@ -90,6 +89,31 @@ export async function generateMetadata(): Promise<Metadata> {
 
 export default async function DesktopPage() {
   const downloads = await getDesktopDownloads();
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@type": "SoftwareApplication",
+    name: "Deni AI Desktop",
+    alternateName: ["Deni Chat desktop", "Deni Chat app"],
+    applicationCategory: "UtilitiesApplication",
+    operatingSystem: "Windows, macOS",
+    url: "https://deniai.app/desktop",
+    downloadUrl: "https://deniai.app/desktop",
+    offers: {
+      "@type": "Offer",
+      price: "0",
+      priceCurrency: "USD",
+    },
+    description:
+      "Official Deni Chat desktop app for Windows and macOS. Tray access, notifications, and quick reopen. Not an Android APK.",
+  };
 
-  return <DesktopClient downloads={downloads} />;
+  return (
+    <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd).replace(/</g, "\\u003c") }}
+      />
+      <DesktopClient downloads={downloads} />
+    </>
+  );
 }

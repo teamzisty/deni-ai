@@ -1,11 +1,14 @@
 "use client";
 
 import Link from "next/link";
-import { useExtracted } from "next-intl";
+import { useExtracted, useLocale } from "next-intl";
+import { localizedPath } from "@/lib/locale-path";
 import DeniAIIcon from "./deni-ai-icon";
 
 const Footer = () => {
   const t = useExtracted();
+  const locale = useLocale();
+  const hrefFor = (path: string) => localizedPath(path, locale);
 
   const productLinks = [
     { href: "/home", label: "Deni AI" },
@@ -63,7 +66,7 @@ const Footer = () => {
               {productLinks.map((link) => (
                 <li key={link.href}>
                   <Link
-                    href={link.href}
+                    href={hrefFor(link.href)}
                     className="text-muted-foreground transition-colors hover:text-foreground"
                   >
                     {link.label}
@@ -79,7 +82,7 @@ const Footer = () => {
               {resourceLinks.map((link) => (
                 <li key={link.href}>
                   <Link
-                    href={link.href}
+                    href={hrefFor(link.href)}
                     className="text-muted-foreground transition-colors hover:text-foreground"
                   >
                     {link.label}
@@ -95,7 +98,7 @@ const Footer = () => {
               {legalLinks.map((link) => (
                 <li key={link.href}>
                   <Link
-                    href={link.href}
+                    href={hrefFor(link.href)}
                     className="text-muted-foreground transition-colors hover:text-foreground"
                   >
                     {link.label}

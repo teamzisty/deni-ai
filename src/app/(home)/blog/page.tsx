@@ -6,6 +6,7 @@ import { getExtracted, getLocale } from "next-intl/server";
 import { blogPosts, getBlogPostPath } from "@/lib/blog/posts";
 import { listPublishedManagedPosts, pickManagedPostCopy, toIsoDate } from "@/lib/blog/queries";
 import { formatAppDate } from "@/lib/format-date";
+import { publicAlternates } from "@/lib/seo";
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getExtracted();
@@ -18,7 +19,7 @@ export async function generateMetadata(): Promise<Metadata> {
     title,
     description,
     alternates: {
-      canonical: "https://deniai.app/blog",
+      ...(await publicAlternates("/blog")),
       types: {
         "application/rss+xml": "https://deniai.app/blog/rss.xml",
       },

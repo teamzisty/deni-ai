@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Coins, Layers3, Scale, Sparkles } from "lucide-react";
 import { useExtracted } from "next-intl";
 import { getExtracted } from "next-intl/server";
+import { publicAlternates } from "@/lib/seo";
 import {
   GuideArticle,
   GuideCallout,
@@ -12,17 +13,15 @@ import {
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getExtracted();
-  const title = t("How to choose a free AI chat workspace");
+  const title = t("Free AI chat with GPT, Claude, and Gemini");
   const description = t(
-    "A buyer-style guide to free AI chat tools: model access, limits, privacy, multi-model switching, and when paid plans are actually worth it.",
+    "How to choose a free AI chat workspace with GPT, Claude, and Gemini: model access, limits, privacy, multi-model switching, and when paid plans are worth it.",
   );
 
   return {
     title,
     description,
-    alternates: {
-      canonical: "https://deniai.app/guides/free-ai-chat",
-    },
+    alternates: await publicAlternates("/guides/free-ai-chat"),
     openGraph: {
       title: `${title} — Deni AI Guides`,
       description,
@@ -32,7 +31,7 @@ export async function generateMetadata(): Promise<Metadata> {
 
 export default function FreeAiChatGuidePage() {
   const t = useExtracted();
-  const headline = t("How to choose a free AI chat workspace");
+  const headline = t("Free AI chat with GPT, Claude, and Gemini");
   const description = t(
     "Free AI chat is no longer rare. The hard part is choosing a workspace that stays useful after the first week: enough models, clear limits, sane privacy defaults, and a workflow that matches real tasks.",
   );

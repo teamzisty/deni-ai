@@ -6,6 +6,7 @@ import { BlogMarkdown } from "@/components/blog/blog-markdown";
 import { createBlogPostingJsonLd, RESERVED_BLOG_SLUGS } from "@/lib/blog/posts";
 import { getPublishedManagedPost, pickManagedPostCopy, toIsoDate } from "@/lib/blog/queries";
 import { formatAppDate } from "@/lib/format-date";
+import { publicAlternates } from "@/lib/seo";
 
 type BlogSlugPageProps = {
   params: Promise<{ slug: string }>;
@@ -28,9 +29,7 @@ export async function generateMetadata({ params }: BlogSlugPageProps): Promise<M
   return {
     title: copy.title,
     description: copy.description,
-    alternates: {
-      canonical: `https://deniai.app/blog/${post.slug}`,
-    },
+    alternates: await publicAlternates(`/blog/${post.slug}`),
     openGraph: {
       title: `${copy.title} — Deni AI Blog`,
       description: copy.description,

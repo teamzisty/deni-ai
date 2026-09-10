@@ -16,9 +16,10 @@ import {
   Sparkles,
 } from "lucide-react";
 import Link from "next/link";
-import { useExtracted } from "next-intl";
+import { useExtracted, useLocale } from "next-intl";
 import { UserButton } from "@/components/auth/user/user-button";
 import { changeLocaleAction } from "@/lib/locale-actions";
+import { localizedPath } from "@/lib/locale-path";
 import DeniAIIcon from "./deni-ai-icon";
 import { HeaderMegaMenu } from "./header-mega-menu";
 import { LocaleSwitcher } from "./locale-switcher";
@@ -72,13 +73,15 @@ function MobileNavLink({ link }: { link: MegaMenuLink }) {
 
 export default function Header() {
   const t = useExtracted();
+  const locale = useLocale();
+  const hrefFor = (path: string) => localizedPath(path, locale);
 
   const productSections: MegaMenuSection[] = [
     {
       title: t("Chat Platform"),
       links: [
         {
-          href: "/home",
+          href: hrefFor("/home"),
           icon: Bot,
           title: "Deni AI",
           description: t("Infomation."),
@@ -90,7 +93,7 @@ export default function Header() {
           description: t("Chat with multiple AI models."),
         },
         {
-          href: "/models",
+          href: hrefFor("/models"),
           icon: Sparkles,
           title: t("AI Models"),
           description: t("Supported models."),
@@ -101,13 +104,13 @@ export default function Header() {
       title: t("Creative Tools"),
       links: [
         {
-          href: "/desktop",
+          href: hrefFor("/desktop"),
           icon: Laptop,
           title: t("Desktop"),
           description: t("Desktop app."),
         },
         {
-          href: "/migration",
+          href: hrefFor("/migration"),
           icon: FileText,
           title: t("Migration"),
           description: t("Move your chats."),
@@ -118,7 +121,7 @@ export default function Header() {
       title: t("Extensions"),
       links: [
         {
-          href: "/flixa",
+          href: hrefFor("/flixa"),
           icon: Globe,
           title: "Flixa",
           description: t("AI coding agent."),
@@ -132,31 +135,31 @@ export default function Header() {
       title: t("Learn"),
       links: [
         {
-          href: "/blog",
+          href: hrefFor("/blog"),
           icon: Newspaper,
           title: t("Blog"),
           description: t("Dated notes from the team."),
         },
         {
-          href: "/guides",
+          href: hrefFor("/guides"),
           icon: BookOpen,
           title: t("AI Guides"),
           description: t("Practical AI reading."),
         },
         {
-          href: "/use-cases",
+          href: hrefFor("/use-cases"),
           icon: BriefcaseBusiness,
           title: t("Use Cases"),
           description: t("Practical workflows."),
         },
         {
-          href: "/faq",
+          href: hrefFor("/faq"),
           icon: CircleHelp,
           title: t("FAQ"),
           description: t("Common product questions."),
         },
         {
-          href: "/changelog",
+          href: hrefFor("/changelog"),
           icon: History,
           title: t("Changelog"),
           description: t("What shipped recently."),
@@ -167,25 +170,25 @@ export default function Header() {
       title: t("Company"),
       links: [
         {
-          href: "/about",
+          href: hrefFor("/about"),
           icon: BookOpen,
           title: t("About"),
           description: t("Vision and background."),
         },
         {
-          href: "/contact",
+          href: hrefFor("/contact"),
           icon: Mail,
           title: t("Contact"),
           description: t("Email support and requests."),
         },
         {
-          href: "/legal/privacy-policy",
+          href: hrefFor("/legal/privacy-policy"),
           icon: Shield,
           title: t("Privacy"),
           description: t("Data handling policy."),
         },
         {
-          href: "/legal/terms",
+          href: hrefFor("/legal/terms"),
           icon: FileText,
           title: t("Terms"),
           description: t("Terms of service."),
@@ -201,7 +204,12 @@ export default function Header() {
       <nav className="mx-auto max-w-6xl">
         <div className="rounded-[1.35rem] border border-border/70 bg-background/80 px-4 py-3 text-foreground shadow-xl backdrop-blur-xl">
           <div className="flex items-center justify-between gap-4">
-            <Link href="/" aria-label="Deni AI" title="Deni AI" className="flex items-center gap-3">
+            <Link
+              href={hrefFor("/home")}
+              aria-label="Deni AI"
+              title="Deni AI"
+              className="flex items-center gap-3"
+            >
               <DeniAIIcon className="size-7 text-foreground" />
               <span className="sr-only text-base font-semibold tracking-tight text-foreground sm:not-sr-only sm:inline-block">
                 Deni AI
@@ -288,7 +296,7 @@ export default function Header() {
                 </div>
               </HeaderMegaMenu>
               <Link
-                href="/about"
+                href={hrefFor("/about")}
                 className="rounded-full px-4 py-2 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
               >
                 {t("About")}

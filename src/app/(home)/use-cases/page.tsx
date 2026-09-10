@@ -12,6 +12,7 @@ import { useExtracted } from "next-intl";
 import { getExtracted } from "next-intl/server";
 import { LoginButton } from "@/components/login-button";
 import { Button } from "@/components/ui/button";
+import { publicAlternates } from "@/lib/seo";
 
 type UseCaseCardProps = {
   icon: React.ElementType;
@@ -43,9 +44,7 @@ export async function generateMetadata(): Promise<Metadata> {
   return {
     title,
     description,
-    alternates: {
-      canonical: "https://deniai.app/use-cases",
-    },
+    alternates: await publicAlternates("/use-cases"),
     openGraph: {
       title: `${title} — Deni AI`,
       description,

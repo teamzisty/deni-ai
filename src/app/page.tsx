@@ -1,11 +1,12 @@
 import type { Metadata } from "next";
 import { permanentRedirect } from "next/navigation";
+import { HOME_DESCRIPTION, HOME_TITLE } from "@/lib/seo";
 
 export const metadata: Metadata = {
   title: {
-    absolute: "Deni AI — Free AI Chat with GPT, Claude & Gemini",
+    absolute: HOME_TITLE,
   },
-  description: "Free multi-model AI chat with GPT, Claude, Gemini, and more in one place.",
+  description: HOME_DESCRIPTION,
 };
 
 export default function RootPage() {

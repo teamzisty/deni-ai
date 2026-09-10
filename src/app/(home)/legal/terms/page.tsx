@@ -1,12 +1,14 @@
 import type { Metadata } from "next";
 import { useExtracted } from "next-intl";
 import { getExtracted } from "next-intl/server";
+import { publicAlternates } from "@/lib/seo";
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getExtracted();
   return {
     title: t("Terms of Service"),
     description: t("The terms and conditions for using Deni AI."),
+    alternates: await publicAlternates("/legal/terms"),
   };
 }
 

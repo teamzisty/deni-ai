@@ -103,6 +103,14 @@ const nextConfig: NextConfig = {
         headers: marketingCacheHeaders,
       },
       {
+        source: "/ja",
+        headers: marketingCacheHeaders,
+      },
+      {
+        source: "/ja/:path*",
+        headers: marketingCacheHeaders,
+      },
+      {
         source: "/about",
         headers: marketingCacheHeaders,
       },
