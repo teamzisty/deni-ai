@@ -3,20 +3,19 @@ import Link from "next/link";
 import { ArrowRight, CircleHelp } from "lucide-react";
 import { useExtracted } from "next-intl";
 import { getExtracted } from "next-intl/server";
+import { publicAlternates } from "@/lib/seo";
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getExtracted();
   const title = t("FAQ");
   const description = t(
-    "Answers to common questions about Deni AI: free access, models, privacy, billing, teams, and responsible multi-model chat.",
+    "Answers about Deni AI and Deni Chat: how to open the site, desktop app vs APK, free access, models, privacy, billing, and teams.",
   );
 
   return {
     title,
     description,
-    alternates: {
-      canonical: "https://deniai.app/faq",
-    },
+    alternates: await publicAlternates("/faq"),
     openGraph: {
       title: `${title} — Deni AI`,
       description,
@@ -43,6 +42,18 @@ export default function FaqPage() {
           question: t("What is Deni AI?"),
           answer: t(
             "Deni AI is a multi-model AI chat workspace. Instead of opening separate apps for different providers, you can switch between model families in one interface for writing, research, coding, translation, and planning.",
+          ),
+        },
+        {
+          question: t("Is Deni Chat the same as Deni AI?"),
+          answer: t(
+            "Yes. Deni Chat is the chat workspace of Deni AI. Both names refer to the same free multi-model AI chat site at deniai.app, with GPT, Claude, Gemini, and other models in one place.",
+          ),
+        },
+        {
+          question: t("Is there a Deni Chat APK or Android app?"),
+          answer: t(
+            "Deni Chat runs in the browser on any phone, so you do not need an APK. The official installable app is the Deni AI desktop app for Windows and macOS at deniai.app/desktop. Avoid third-party APK sites that claim to offer Deni Chat for Android.",
           ),
         },
         {
@@ -211,6 +222,13 @@ export default function FaqPage() {
                 className="inline-flex items-center gap-2 rounded-full border border-border bg-background px-4 py-2 text-sm font-medium hover:bg-secondary"
               >
                 {t("Contact")}
+                <ArrowRight className="size-4" />
+              </Link>
+              <Link
+                href="/desktop"
+                className="inline-flex items-center gap-2 rounded-full border border-border bg-background px-4 py-2 text-sm font-medium hover:bg-secondary"
+              >
+                {t("Download desktop app")}
                 <ArrowRight className="size-4" />
               </Link>
               <Link

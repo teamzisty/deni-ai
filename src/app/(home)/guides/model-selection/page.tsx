@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { CheckCircle2, Gauge, GitCompare, ShieldAlert } from "lucide-react";
 import { useExtracted } from "next-intl";
 import { getExtracted } from "next-intl/server";
+import { publicAlternates } from "@/lib/seo";
 import {
   GuideArticle,
   GuideCallout,
@@ -12,17 +13,15 @@ import {
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getExtracted();
-  const title = t("How to choose an AI model for real work");
+  const title = t("How to choose ChatGPT, Claude, Gemini, or Grok");
   const description = t(
-    "A practical model selection guide for choosing fast, reasoning, coding, and writing-focused AI models based on the task.",
+    "Pick ChatGPT, Claude, Gemini, or Grok by task: fast drafts, reasoning, coding, and writing. A practical model selection guide for real work.",
   );
 
   return {
     title,
     description,
-    alternates: {
-      canonical: "https://deniai.app/guides/model-selection",
-    },
+    alternates: await publicAlternates("/guides/model-selection"),
     openGraph: {
       title: `${title} — Deni AI Guides`,
       description,
@@ -32,7 +31,7 @@ export async function generateMetadata(): Promise<Metadata> {
 
 export default function ModelSelectionGuidePage() {
   const t = useExtracted();
-  const headline = t("How to choose an AI model for real work");
+  const headline = t("How to choose ChatGPT, Claude, Gemini, or Grok");
   const description = t(
     "Most people choose AI models by reputation. A better method is to start from the task, decide the risk level, then pick the smallest model that can produce a trustworthy result.",
   );

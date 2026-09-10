@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { useExtracted } from "next-intl";
 import { getExtracted } from "next-intl/server";
+import { publicAlternates } from "@/lib/seo";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -11,6 +12,7 @@ export async function generateMetadata(): Promise<Metadata> {
   return {
     title: t("Message Migration"),
     description: t("Move your chats from the old version into this site."),
+    alternates: await publicAlternates("/migration"),
   };
 }
 

@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Binary, Code2, FileSearch, Languages, ListChecks } from "lucide-react";
 import { useExtracted } from "next-intl";
 import { getExtracted } from "next-intl/server";
+import { publicAlternates } from "@/lib/seo";
 import {
   GuideArticle,
   GuideCallout,
@@ -20,9 +21,7 @@ export async function generateMetadata(): Promise<Metadata> {
   return {
     title,
     description,
-    alternates: {
-      canonical: "https://deniai.app/guides/verify-ai-answers",
-    },
+    alternates: await publicAlternates("/guides/verify-ai-answers"),
     openGraph: {
       title: `${title} — Deni AI Guides`,
       description,

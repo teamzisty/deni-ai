@@ -1,29 +1,35 @@
 import type { Metadata } from "next";
-import { getExtracted } from "next-intl/server";
+import { getExtracted, getLocale } from "next-intl/server";
 import { Suspense } from "react";
+import {
+  HOME_ALTERNATE_NAMES,
+  HOME_DESCRIPTION,
+  HOME_DESCRIPTION_JA,
+  HOME_TITLE,
+  HOME_TITLE_JA,
+  publicAlternates,
+} from "@/lib/seo";
 import { HomeFeaturedBadge } from "./home-featured-badge";
 import { ClientHome } from "./home-client";
 
 export async function generateMetadata(): Promise<Metadata> {
-  const t = await getExtracted();
-  const description = t(
-    "Free multi-model AI chat with GPT, Claude, Gemini, and more in one place.",
-  );
+  const locale = await getLocale();
+  const title = locale === "ja" ? HOME_TITLE_JA : HOME_TITLE;
+  const description = locale === "ja" ? HOME_DESCRIPTION_JA : HOME_DESCRIPTION;
 
   return {
     title: {
-      absolute: "Deni AI — Free AI Chat with GPT, Claude & Gemini",
+      absolute: title,
     },
     description,
-    alternates: {
-      canonical: "https://deniai.app/home",
-    },
+    alternates: await publicAlternates("/home"),
     openGraph: {
-      title: "Deni AI — Free AI Chat with GPT, Claude & Gemini",
+      title,
       description,
+      locale: locale === "ja" ? "ja_JP" : "en_US",
     },
     twitter: {
-      title: "Deni AI — Free AI Chat with GPT, Claude & Gemini",
+      title,
       description,
     },
   };
@@ -36,17 +42,18 @@ export async function generateMetadata(): Promise<Metadata> {
 async function HomeJsonLd() {
   const t = await getExtracted();
   const webApplicationDescription = t(
-    "Access the latest AI models without breaking the bank. Deni AI brings premium intelligence to everyone, completely free.",
+    "Open Deni Chat in your browser. Deni AI gives you GPT, Claude, Gemini and more in one free workspace.",
   );
   const jsonLd = [
     {
       "@context": "https://schema.org",
       "@type": "WebApplication",
       name: "Deni AI",
+      alternateName: [...HOME_ALTERNATE_NAMES],
       url: "https://deniai.app",
       description: webApplicationDescription,
       applicationCategory: "UtilitiesApplication",
-      operatingSystem: "Web",
+      operatingSystem: "Web, Windows, macOS",
       offers: {
         "@type": "Offer",
         price: "0",
@@ -57,6 +64,26 @@ async function HomeJsonLd() {
       "@context": "https://schema.org",
       "@type": "FAQPage",
       mainEntity: [
+        {
+          "@type": "Question",
+          name: t("Is Deni Chat the same as Deni AI?"),
+          acceptedAnswer: {
+            "@type": "Answer",
+            text: t(
+              "Yes. Deni Chat is the chat workspace of Deni AI. Both names refer to the same free multi-model AI chat site at deniai.app, with GPT, Claude, Gemini, and other models in one place.",
+            ),
+          },
+        },
+        {
+          "@type": "Question",
+          name: t("Is there a Deni Chat APK or Android app?"),
+          acceptedAnswer: {
+            "@type": "Answer",
+            text: t(
+              "Deni Chat runs in the browser on any phone, so you do not need an APK. The official installable app is the Deni AI desktop app for Windows and macOS at deniai.app/desktop. Avoid third-party APK sites that claim to offer Deni Chat for Android.",
+            ),
+          },
+        },
         {
           "@type": "Question",
           name: t("What makes Deni AI different from a single-model chat app?"),

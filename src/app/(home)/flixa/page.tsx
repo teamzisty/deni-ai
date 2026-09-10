@@ -6,20 +6,19 @@ import { getExtracted } from "next-intl/server";
 import { Button } from "@/components/ui/button";
 import SiGoogle from "@icons-pack/react-simple-icons/icons/SiGoogle";
 import SiWindsurf from "@icons-pack/react-simple-icons/icons/SiWindsurf";
+import { publicAlternates } from "@/lib/seo";
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getExtracted();
-  const title = t("Flixa — AI Coding Agent");
+  const title = t("Flixa — AI coding agent for VS Code and Cursor");
   const description = t(
-    "Supercharge your development workflow with AI-powered coding assistance. Available for VS Code, Cursor, Windsurf, and more.",
+    "Flixa is Deni AI's coding agent for VS Code, Cursor, and Windsurf. Official page at deniai.app/flixa — install the extension from the marketplace.",
   );
 
   return {
     title,
     description,
-    alternates: {
-      canonical: "https://deniai.app/flixa",
-    },
+    alternates: await publicAlternates("/flixa"),
     openGraph: {
       title: `${title} by Deni AI`,
       description,
@@ -81,6 +80,7 @@ const flixaJsonLd = [
     "@context": "https://schema.org",
     "@type": "SoftwareApplication",
     name: "Flixa",
+    alternateName: ["Flixa by Deni AI", "flixa.com"],
     applicationCategory: "DeveloperApplication",
     operatingSystem: "Windows, macOS, Linux",
     url: "https://deniai.app/flixa",
@@ -102,6 +102,14 @@ const flixaJsonLd = [
         acceptedAnswer: {
           "@type": "Answer",
           text: "Flixa is an AI coding agent extension by Deni AI. It provides intelligent code completion, instant refactoring, and natural language commands directly inside your IDE.",
+        },
+      },
+      {
+        "@type": "Question",
+        name: "Where is the official Flixa website?",
+        acceptedAnswer: {
+          "@type": "Answer",
+          text: "The official Flixa page is https://deniai.app/flixa. Flixa is a Deni AI product for VS Code, Cursor, and Windsurf — there is no separate flixa.com download site.",
         },
       },
       {

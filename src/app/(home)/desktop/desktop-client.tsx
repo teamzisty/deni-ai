@@ -56,7 +56,7 @@ export function DesktopClient({ downloads }: { downloads: DesktopDownloads }) {
                 className="mb-12 max-w-2xl text-xl font-medium leading-relaxed text-muted-foreground md:text-2xl"
               >
                 {t(
-                  "A focused desktop app for quick access, timely alerts, and everyday AI usage without living in a browser tab all day.",
+                  "The official Deni Chat desktop app for Windows and macOS: tray access, notifications, and everyday AI use without living in a browser tab.",
                 )}
               </m.p>
 

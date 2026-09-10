@@ -4,7 +4,8 @@ import React, { type ReactNode } from "react";
 import dynamic from "next/dynamic";
 import { m } from "motion/react";
 import Link from "next/link";
-import { useExtracted } from "next-intl";
+import { useExtracted, useLocale } from "next-intl";
+import { localizedPath } from "@/lib/locale-path";
 import SiAnthropic from "@icons-pack/react-simple-icons/icons/SiAnthropic";
 import SiGoogle from "@icons-pack/react-simple-icons/icons/SiGoogle";
 import SiX from "@icons-pack/react-simple-icons/icons/SiX";
@@ -22,6 +23,8 @@ const AnimatedGradient = dynamic(() => import("@/components/animated-gradient"),
 
 export function HomeHeroSection({ featuredBadge }: { featuredBadge?: ReactNode }) {
   const t = useExtracted();
+  const locale = useLocale();
+  const hrefFor = (path: string) => localizedPath(path, locale);
 
   const aiLogos = [
     <Openai key="openai" className="size-8 opacity-40 hover:opacity-100 transition-opacity" />,
@@ -70,7 +73,7 @@ export function HomeHeroSection({ featuredBadge }: { featuredBadge?: ReactNode }
               className="max-w-2xl text-xl md:text-2xl text-muted-foreground leading-relaxed mb-12 font-medium"
             >
               {t(
-                "Access the latest AI models without breaking the bank. Deni AI brings premium intelligence to everyone, completely free.",
+                "Open Deni Chat in your browser. Deni AI gives you GPT, Claude, Gemini and more in one free workspace.",
               )}
             </m.p>
 
@@ -82,16 +85,26 @@ export function HomeHeroSection({ featuredBadge }: { featuredBadge?: ReactNode }
             >
               <LoginButton />
               <div className="flex flex-wrap items-center justify-center gap-3 text-sm text-muted-foreground">
-                <Link href="/models" className="transition-colors hover:text-foreground">
+                <Link href={hrefFor("/models")} className="transition-colors hover:text-foreground">
                   {t("Browse models")}
                 </Link>
                 <span aria-hidden="true">/</span>
-                <Link href="/use-cases" className="transition-colors hover:text-foreground">
+                <Link
+                  href={hrefFor("/use-cases")}
+                  className="transition-colors hover:text-foreground"
+                >
                   {t("See use cases")}
                 </Link>
                 <span aria-hidden="true">/</span>
-                <Link href="/guides" className="transition-colors hover:text-foreground">
+                <Link href={hrefFor("/guides")} className="transition-colors hover:text-foreground">
                   {t("Read AI guides")}
+                </Link>
+                <span aria-hidden="true">/</span>
+                <Link
+                  href={hrefFor("/desktop")}
+                  className="transition-colors hover:text-foreground"
+                >
+                  {t("Download desktop app")}
                 </Link>
               </div>
             </m.div>

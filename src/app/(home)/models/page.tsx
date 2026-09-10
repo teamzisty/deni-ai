@@ -10,20 +10,19 @@ import { platformCapabilities } from "@/lib/platform-capabilities.server";
 import { Button } from "@/components/ui/button";
 import { authorLabels } from "./models-author-labels";
 import { ModelsGrid } from "./models-grid";
+import { publicAlternates } from "@/lib/seo";
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getExtracted();
-  const title = t("AI Models");
+  const title = t("GPT, Claude, Gemini and Grok models");
   const description = t(
-    "Access GPT, Claude, Gemini, Grok and more top AI models in one place. Compare and use the latest models from OpenAI, Anthropic, Google and xAI.",
+    "Compare and use GPT, Claude, Gemini, Grok and more in one Deni Chat workspace. Switch models without opening separate apps.",
   );
 
   return {
     title,
     description,
-    alternates: {
-      canonical: "https://deniai.app/models",
-    },
+    alternates: await publicAlternates("/models"),
     openGraph: {
       title: `${title} — Deni AI`,
       description,

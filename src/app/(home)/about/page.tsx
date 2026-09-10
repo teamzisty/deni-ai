@@ -14,20 +14,19 @@ import {
 import { useExtracted } from "next-intl";
 import { getExtracted } from "next-intl/server";
 import { LoginButton } from "@/components/login-button";
+import { publicAlternates } from "@/lib/seo";
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getExtracted();
   const title = t("About");
   const description = t(
-    "Learn about Deni AI, our product mission, and how the multi-model chat platform is designed.",
+    "What Deni AI (Deni Chat) is, why the multi-model chat workspace exists, and how the product is designed.",
   );
 
   return {
     title,
     description,
-    alternates: {
-      canonical: "https://deniai.app/about",
-    },
+    alternates: await publicAlternates("/about"),
     openGraph: {
       title: `${title} — Deni AI`,
       description,

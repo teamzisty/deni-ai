@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import { useExtracted } from "next-intl";
 import { getExtracted } from "next-intl/server";
+import { publicAlternates } from "@/lib/seo";
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getExtracted();
@@ -24,9 +25,7 @@ export async function generateMetadata(): Promise<Metadata> {
   return {
     title,
     description,
-    alternates: {
-      canonical: "https://deniai.app/guides",
-    },
+    alternates: await publicAlternates("/guides"),
     openGraph: {
       title: `${title} — Deni AI`,
       description,
@@ -48,7 +47,7 @@ export default function GuidesPage() {
     {
       href: "/guides/model-selection",
       icon: Sparkles,
-      title: t("How to choose an AI model for real work"),
+      title: t("How to choose ChatGPT, Claude, Gemini, or Grok"),
       description: t(
         "A practical guide to choosing between fast, reasoning, coding, and writing-focused models without treating brand names as the decision.",
       ),
@@ -96,7 +95,7 @@ export default function GuidesPage() {
     {
       href: "/guides/free-ai-chat",
       icon: Coins,
-      title: t("How to choose a free AI chat workspace"),
+      title: t("Free AI chat with GPT, Claude, and Gemini"),
       description: t(
         "A buyer-style checklist for free AI chat tools: limits, model flexibility, privacy pages, and when paid plans make sense.",
       ),

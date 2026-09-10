@@ -9,6 +9,7 @@ import { ThemeProvider } from "@/components/ui/theme-provider";
 import { Toaster } from "@/components/ui/sonner";
 import { defaultLocale } from "@/i18n/locales";
 import { GA_ID } from "@/lib/constants";
+import { HOME_ALTERNATE_NAMES, HOME_DESCRIPTION, HOME_TITLE } from "@/lib/seo";
 import "./globals.css";
 import "./themes.css";
 
@@ -46,26 +47,26 @@ export const viewport: Viewport = {
 // Keep metadata free of cookies()/headers() so the document shell can prerender.
 // Per-request locale for page content is resolved in LocalizedRoot via next-intl.
 export async function generateMetadata(): Promise<Metadata> {
-  const title = "Deni AI — Free AI Chat with GPT, Claude & Gemini";
-  const description = "Free multi-model AI chat with GPT, Claude, Gemini, and more in one place.";
   const adsenseAccount = process.env.NEXT_PUBLIC_ADSENSE_CLIENT_ID;
 
   return {
     metadataBase: new URL("https://deniai.app"),
     applicationName: "Deni AI",
     title: {
-      default: title,
+      default: HOME_TITLE,
       template: "%s | Deni AI",
     },
-    description,
+    description: HOME_DESCRIPTION,
     manifest: "/manifest.webmanifest",
     keywords: [
+      "Deni AI",
+      "Deni Chat",
+      "denichat",
       "AI chat",
       "ChatGPT alternative",
       "Claude",
       "Gemini",
-      "AI assistant",
-      "free AI",
+      "free AI chat",
       "multi-model AI",
     ],
     authors: [{ name: "Deni AI" }],
@@ -84,8 +85,8 @@ export async function generateMetadata(): Promise<Metadata> {
     openGraph: {
       type: "website",
       siteName: "Deni AI",
-      title,
-      description,
+      title: HOME_TITLE,
+      description: HOME_DESCRIPTION,
       locale: "en_US",
       images: [
         {
@@ -98,8 +99,8 @@ export async function generateMetadata(): Promise<Metadata> {
     },
     twitter: {
       card: "summary_large_image",
-      title,
-      description,
+      title: HOME_TITLE,
+      description: HOME_DESCRIPTION,
       images: ["/og.png"],
     },
     robots: {
@@ -122,7 +123,7 @@ function safeJsonLd(data: unknown) {
 }
 
 /** Sync html[lang] from the locale cookie before first paint (avoids FOUC). */
-const LOCALE_LANG_SCRIPT = `(function(){try{var m=document.cookie.match(/(?:^|; )locale=([^;]*)/);var l=m&&decodeURIComponent(m[1]);if(l==="en"||l==="ja")document.documentElement.lang=l;}catch(e){}})();`;
+const LOCALE_LANG_SCRIPT = `(function(){try{var p=location.pathname;if(p==="/ja"||p.indexOf("/ja/")===0){document.documentElement.lang="ja";return;}var m=document.cookie.match(/(?:^|; )locale=([^;]*)/);var l=m&&decodeURIComponent(m[1]);if(l==="en"||l==="ja")document.documentElement.lang=l;}catch(e){}})();`;
 
 /**
  * Executable only during SSR HTML parse. On the client, React would not re-run
@@ -208,7 +209,7 @@ export default function RootLayout({
                 "@context": "https://schema.org",
                 "@type": "WebSite",
                 name: "Deni AI",
-                alternateName: "deniai.app",
+                alternateName: [...HOME_ALTERNATE_NAMES],
                 url: "https://deniai.app",
                 potentialAction: {
                   "@type": "SearchAction",
@@ -223,7 +224,9 @@ export default function RootLayout({
                   "About",
                   "Use Cases",
                   "AI Models",
+                  "Desktop App",
                   "Flixa",
+                  "FAQ",
                   "Terms of Service",
                   "Privacy Policy",
                 ],
@@ -231,7 +234,9 @@ export default function RootLayout({
                   "https://deniai.app/about",
                   "https://deniai.app/use-cases",
                   "https://deniai.app/models",
+                  "https://deniai.app/desktop",
                   "https://deniai.app/flixa",
+                  "https://deniai.app/faq",
                   "https://deniai.app/legal/terms",
                   "https://deniai.app/legal/privacy-policy",
                 ],

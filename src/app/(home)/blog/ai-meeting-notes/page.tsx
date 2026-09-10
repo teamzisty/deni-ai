@@ -10,6 +10,7 @@ import {
 } from "@/components/content/guide-article";
 import { createBlogPostingJsonLd } from "@/lib/blog/posts";
 import { formatAppDate } from "@/lib/format-date";
+import { publicAlternates } from "@/lib/seo";
 
 const SLUG = "ai-meeting-notes";
 const DATE = "2026-07-24";
@@ -24,9 +25,7 @@ export async function generateMetadata(): Promise<Metadata> {
   return {
     title,
     description,
-    alternates: {
-      canonical: `https://deniai.app/blog/${SLUG}`,
-    },
+    alternates: await publicAlternates(`/blog/${SLUG}`),
     openGraph: {
       title: `${title} — Deni AI Blog`,
       description,

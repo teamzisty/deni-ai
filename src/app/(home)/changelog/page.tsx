@@ -6,6 +6,7 @@ import { getExtracted } from "next-intl/server";
 import { changelogEntries } from "@/lib/changelog";
 import { formatAppDate } from "@/lib/format-date";
 import { LoginButton } from "@/components/login-button";
+import { publicAlternates } from "@/lib/seo";
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getExtracted();
@@ -17,9 +18,7 @@ export async function generateMetadata(): Promise<Metadata> {
   return {
     title,
     description,
-    alternates: {
-      canonical: "https://deniai.app/changelog",
-    },
+    alternates: await publicAlternates("/changelog"),
     openGraph: {
       title: `${title} — Deni AI`,
       description,
