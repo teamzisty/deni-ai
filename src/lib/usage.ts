@@ -324,6 +324,10 @@ async function calculateUsageState({
   };
 }
 
+function asTimestamptz(value: Date) {
+  return sql`${value.toISOString()}::timestamptz`;
+}
+
 function buildResetWindowCondition({
   now,
   targetPeriodEnd,
@@ -339,7 +343,7 @@ function buildResetWindowCondition({
     return unitMismatchCondition;
   }
 
-  return sql`(${usageQuota.periodEnd} IS NULL OR ${usageQuota.periodEnd} <= ${now}) OR ${unitMismatchCondition}`;
+  return sql`(${usageQuota.periodEnd} IS NULL OR ${usageQuota.periodEnd} <= ${asTimestamptz(now)}) OR ${unitMismatchCondition}`;
 }
 
 async function upsertUsageRecord({
@@ -374,14 +378,14 @@ async function upsertUsageRecord({
 
   const periodStartExpression = resetWindowCondition
     ? sql`CASE
-        WHEN ${resetWindowCondition} THEN ${periodStart}
+        WHEN ${resetWindowCondition} THEN ${asTimestamptz(periodStart)}
         ELSE ${usageQuota.periodStart}
       END`
     : usageQuota.periodStart;
 
   const periodEndExpression = resetWindowCondition
     ? sql`CASE
-        WHEN ${resetWindowCondition} THEN ${targetPeriodEnd}
+        WHEN ${resetWindowCondition} THEN ${targetPeriodEnd ? asTimestamptz(targetPeriodEnd) : sql`null`}
         ELSE ${usageQuota.periodEnd}
       END`
     : usageQuota.periodEnd;
@@ -601,7 +605,7 @@ export async function refundUsage({
         eq(usageQuota.category, category),
         // Never refund into a period that already rolled over: the consumption
         // being reversed belongs to the previous window.
-        sql`(${usageQuota.periodEnd} IS NULL OR ${usageQuota.periodEnd} > ${now})`,
+        sql`(${usageQuota.periodEnd} IS NULL OR ${usageQuota.periodEnd} > ${asTimestamptz(now)})`,
       ),
     )
     .returning({ used: usageQuota.used });

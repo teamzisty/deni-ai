@@ -5,9 +5,9 @@ import * as schema from "@/db/schema";
 
 /**
  * Long-lived Docker / Dokploy process: TCP pool via postgres.js.
- * Neon WebSocket (`neon-serverless`) idle-closes after ~30m and Bun surfaces
- * that as unhandled AbortError. HTTP (`neon-http`) is per-query and slower
- * here. `prepare: false` stays compatible with Neon's PgBouncer pooler URL.
+ * Date values in raw `sql` fragments must be ISO strings (`::timestamptz`);
+ * postgres.js cannot serialize a Date instance (unlike neon-http).
+ * `prepare: false` stays compatible with Neon's PgBouncer pooler URL.
  */
 export const db = drizzle({
   connection: {

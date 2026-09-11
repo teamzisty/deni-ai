@@ -4,6 +4,7 @@ import { z } from "zod";
 import { env } from "@/env";
 import { consumeUsage, getSearchToolUsageAmount, refundUsage, UsageLimitError } from "@/lib/usage";
 import { fetchPageText } from "./fetch-page";
+import { withDeadline } from "./helpers";
 import type { ChatToolUsageContext, SearchResult } from "./types";
 
 const SEARCH_TOTAL_TIMEOUT_MS = 20_000;
@@ -30,20 +31,6 @@ function isAbortError(error: unknown) {
       error instanceof DOMException &&
       error.name === "AbortError")
   );
-}
-
-function combineSignals(...signals: (AbortSignal | undefined)[]): AbortSignal {
-  const active = signals.filter((signal): signal is AbortSignal => Boolean(signal));
-  if (active.length === 0) {
-    return AbortSignal.timeout(SEARCH_TOTAL_TIMEOUT_MS);
-  }
-  if (active.length === 1) {
-    return active[0];
-  }
-  if (typeof AbortSignal.any === "function") {
-    return AbortSignal.any(active);
-  }
-  return active[0];
 }
 
 async function chargeSearchUsage(usage: ChatToolUsageContext): Promise<number> {
@@ -93,13 +80,15 @@ async function summarizeResult(
       return { ...result, summary: result.description };
     }
 
-    const { text: summary } = await generateText({
-      model: summarizer,
-      prompt: `Summarize the following webpage content in a short paragraph:\n\n${page.content}`,
-      maxOutputTokens: 400,
-      maxRetries: 0,
-      abortSignal: combineSignals(signal, AbortSignal.timeout(SUMMARIZE_TIMEOUT_MS)),
-    });
+    const { text: summary } = await withDeadline(SUMMARIZE_TIMEOUT_MS, signal, (summarySignal) =>
+      generateText({
+        model: summarizer,
+        prompt: `Summarize the following webpage content in a short paragraph:\n\n${page.content}`,
+        maxOutputTokens: 400,
+        maxRetries: 0,
+        abortSignal: summarySignal,
+      }),
+    );
 
     return { ...result, summary: summary.trim() || result.description };
   } catch {
@@ -123,68 +112,71 @@ export function createSearchTool(usage?: ChatToolUsageContext) {
     }),
     execute: async ({ query, amount }, { abortSignal }) => {
       const maxResults = Math.min(Math.max(amount ?? 10, 5), 15);
-      const signal = combineSignals(abortSignal, AbortSignal.timeout(SEARCH_TOTAL_TIMEOUT_MS));
       let chargedAmount = 0;
       let results: SearchHit[] = [];
 
       try {
-        if (usage) {
-          chargedAmount = await chargeSearchUsage(usage);
-        }
+        return await withDeadline(SEARCH_TOTAL_TIMEOUT_MS, abortSignal, async (signal) => {
+          if (usage) {
+            chargedAmount = await chargeSearchUsage(usage);
+          }
 
-        const EXA_API_KEY = env.EXA_API_KEY;
-        if (!EXA_API_KEY) {
-          throw new Error("Exa API key not configured");
-        }
+          const EXA_API_KEY = env.EXA_API_KEY;
+          if (!EXA_API_KEY) {
+            throw new Error("Exa API key not configured");
+          }
 
-        const response = await fetch("https://api.exa.ai/search", {
-          method: "POST",
-          headers: {
-            Accept: "application/json",
-            "Content-Type": "application/json",
-            "x-api-key": EXA_API_KEY,
-          },
-          body: JSON.stringify({
-            query,
-            numResults: maxResults,
-            type: "fast",
-            contents: {
-              highlights: {
-                query,
-                maxCharacters: 2000,
+          const response = await withDeadline(EXA_TIMEOUT_MS, signal, (exaSignal) =>
+            fetch("https://api.exa.ai/search", {
+              method: "POST",
+              headers: {
+                Accept: "application/json",
+                "Content-Type": "application/json",
+                "x-api-key": EXA_API_KEY,
               },
-            },
-          }),
-          signal: combineSignals(signal, AbortSignal.timeout(EXA_TIMEOUT_MS)),
+              body: JSON.stringify({
+                query,
+                numResults: maxResults,
+                type: "fast",
+                contents: {
+                  highlights: {
+                    query,
+                    maxCharacters: 2000,
+                  },
+                },
+              }),
+              signal: exaSignal,
+            }),
+          );
+
+          if (!response.ok) {
+            throw new Error(`Exa Search API error: ${response.status}`);
+          }
+
+          const data = (await response.json()) as ExaSearchResponse;
+          results = (data.results ?? []).map((item) => ({
+            title: item.title,
+            url: item.url,
+            description: item.highlights?.join("\n\n") || item.text?.slice(0, 500) || "",
+          }));
+
+          const groqApiKey = env.GROQ_API_KEY?.trim();
+          if (!groqApiKey || results.length === 0 || signal.aborted) {
+            return results.map((result) => ({ ...result, summary: result.description }));
+          }
+
+          const summarizer = createGroq({ apiKey: groqApiKey })("openai/gpt-oss-20b");
+          const toSummarize = results.slice(0, SUMMARIZE_MAX_PAGES);
+          const remainder = results.slice(SUMMARIZE_MAX_PAGES);
+          const summarizedHead = await Promise.all(
+            toSummarize.map((result) => summarizeResult(result, summarizer, signal)),
+          );
+
+          return [
+            ...summarizedHead,
+            ...remainder.map((result) => ({ ...result, summary: result.description })),
+          ];
         });
-
-        if (!response.ok) {
-          throw new Error(`Exa Search API error: ${response.status}`);
-        }
-
-        const data = (await response.json()) as ExaSearchResponse;
-        results = (data.results ?? []).map((item) => ({
-          title: item.title,
-          url: item.url,
-          description: item.highlights?.join("\n\n") || item.text?.slice(0, 500) || "",
-        }));
-
-        const groqApiKey = env.GROQ_API_KEY?.trim();
-        if (!groqApiKey || results.length === 0 || signal.aborted) {
-          return results.map((result) => ({ ...result, summary: result.description }));
-        }
-
-        const summarizer = createGroq({ apiKey: groqApiKey })("openai/gpt-oss-20b");
-        const toSummarize = results.slice(0, SUMMARIZE_MAX_PAGES);
-        const remainder = results.slice(SUMMARIZE_MAX_PAGES);
-        const summarizedHead = await Promise.all(
-          toSummarize.map((result) => summarizeResult(result, summarizer, signal)),
-        );
-
-        return [
-          ...summarizedHead,
-          ...remainder.map((result) => ({ ...result, summary: result.description })),
-        ];
       } catch (error) {
         if (results.length > 0) {
           return results.map((result) => ({ ...result, summary: result.description }));
