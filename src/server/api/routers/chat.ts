@@ -3,6 +3,11 @@ import { safeValidateUIMessages } from "ai";
 import { TRPCError } from "@trpc/server";
 import { and, desc, eq } from "drizzle-orm";
 import { getAccessibleProject } from "@/lib/project-access";
+import {
+  CHAT_OLDER_MESSAGE_COUNT,
+  sliceLatestMessages,
+  sliceOlderMessages,
+} from "@/lib/chat-messages";
 import { z } from "zod";
 import type { db as Db } from "@/db/drizzle";
 import { chats, projects } from "@/db/schema";
@@ -17,7 +22,34 @@ export type ChatPagePayload = {
   projectName: string | null;
   projectDefaultModel: string | null;
   messages: UIMessage[];
+  oldestIndex: number;
+  hasMore: boolean;
 };
+
+async function loadValidatedMessages(raw: unknown): Promise<UIMessage[]> {
+  const validated = await safeValidateUIMessages<UIMessage>({
+    messages: (raw as UIMessage[]) ?? [],
+  });
+  return validated.success ? validated.data : [];
+}
+
+async function loadChatMessages(
+  database: typeof Db,
+  userId: string,
+  id: string,
+): Promise<UIMessage[] | null> {
+  const [row] = await database
+    .select({ messages: chats.messages })
+    .from(chats)
+    .where(and(eq(chats.id, id), eq(chats.uid, userId)))
+    .limit(1);
+
+  if (!row) {
+    return null;
+  }
+
+  return loadValidatedMessages(row.messages);
+}
 
 async function loadChatPage(
   database: typeof Db,
@@ -52,9 +84,7 @@ async function loadChatPage(
     }
   }
 
-  const validated = await safeValidateUIMessages<UIMessage>({
-    messages: (row.messages as UIMessage[]) ?? [],
-  });
+  const window = sliceLatestMessages(await loadValidatedMessages(row.messages));
 
   return {
     id: row.id,
@@ -62,7 +92,9 @@ async function loadChatPage(
     projectId: row.projectId,
     projectName,
     projectDefaultModel,
-    messages: validated.success ? validated.data : [],
+    messages: window.messages,
+    oldestIndex: window.oldestIndex,
+    hasMore: window.hasMore,
   };
 }
 
@@ -112,6 +144,30 @@ export const chatRouter = router({
     .input(z.object({ id: z.string().min(1) }))
     .query(async ({ ctx, input }) => {
       return loadChatPage(ctx.db, ctx.userId, input.id);
+    }),
+  getOlderMessages: protectedProcedure
+    .input(
+      z.object({
+        id: z.string().min(1),
+        beforeIndex: z.number().int().min(0),
+        limit: z.number().int().min(1).max(10_000).optional(),
+      }),
+    )
+    .query(async ({ ctx, input }) => {
+      const all = await loadChatMessages(ctx.db, ctx.userId, input.id);
+      if (!all) {
+        throw new TRPCError({ code: "NOT_FOUND", message: "Chat not found" });
+      }
+      return sliceOlderMessages(all, input.beforeIndex, input.limit ?? CHAT_OLDER_MESSAGE_COUNT);
+    }),
+  getChatTranscript: protectedProcedure
+    .input(z.object({ id: z.string().min(1) }))
+    .query(async ({ ctx, input }) => {
+      const all = await loadChatMessages(ctx.db, ctx.userId, input.id);
+      if (!all) {
+        throw new TRPCError({ code: "NOT_FOUND", message: "Chat not found" });
+      }
+      return all;
     }),
   /**
    * Lightweight generation status for recovering a pending assistant message.

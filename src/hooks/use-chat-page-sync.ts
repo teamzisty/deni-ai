@@ -1,5 +1,6 @@
 import type { ChatStatus, UIMessage } from "ai";
 import { useEffect, useRef } from "react";
+import { mergeServerWindow } from "@/lib/chat-messages";
 import { trpc } from "@/lib/trpc/react";
 
 export function useChatPageSync(params: {
@@ -53,9 +54,6 @@ export function useChatPageSync(params: {
           if (serverMessages.length === 0 && current.length > 0) {
             return current;
           }
-          if (serverMessages.length < current.length) {
-            return current;
-          }
 
           const localUserCount = current.filter((message) => message.role === "user").length;
           const serverUserCount = serverMessages.filter(
@@ -65,7 +63,7 @@ export function useChatPageSync(params: {
             return current;
           }
 
-          return serverMessages;
+          return mergeServerWindow(current, serverMessages);
         });
       })
       .catch(() => {

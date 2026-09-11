@@ -6,7 +6,7 @@ import type { FileUIPart, UIMessage } from "ai";
 import { DefaultChatTransport } from "ai";
 import dynamic from "next/dynamic";
 import { useExtracted } from "next-intl";
-import { useState } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 import { AdSenseSlot } from "@/components/adsense-slot";
 import { ArtifactPreviewProvider } from "@/components/chat/artifact-preview-context";
 import { ChatComposer, type ComposerMessage } from "@/components/chat/chat-composer";
@@ -23,6 +23,7 @@ import { useMemorySaveNotice } from "@/hooks/use-memory-save-notice";
 import { useNewChat } from "@/hooks/use-new-chat";
 import { useUsageStatus } from "@/hooks/use-usage-status";
 import { authClient } from "@/lib/auth-client";
+import { CHAT_OLDER_MESSAGE_COUNT, mergeMessageWindow } from "@/lib/chat-messages";
 import {
   defaultModel,
   GA_ID,
@@ -39,6 +40,8 @@ const ArtifactPreviewPanel = dynamic(
 interface ChatInterfaceProps {
   id: string;
   initialMessages?: UIMessage[];
+  initialHasMore?: boolean;
+  initialOldestIndex?: number;
   initialTitle?: string | null;
   initialProjectId?: string | null;
   initialProjectName?: string | null;
@@ -207,6 +210,8 @@ async function submitComposerMessage(params: {
 export function ChatInterface({
   id,
   initialMessages = [],
+  initialHasMore = false,
+  initialOldestIndex = 0,
   initialTitle = null,
   initialProjectId = null,
   initialProjectName = null,
@@ -230,17 +235,50 @@ export function ChatInterface({
     useAvailableModels();
   const { features } = platformCapabilities;
   const billingDisabled = !features.billing;
-  const transport = new DefaultChatTransport({
-    body: {
-      id,
-    },
-  });
+  const transport = useMemo(
+    () =>
+      new DefaultChatTransport({
+        body: {
+          id,
+        },
+      }),
+    [id],
+  );
 
   const { messages, sendMessage, regenerate, setMessages, status, error, stop } = useChat({
     id,
     messages: initialMessages,
     transport,
   });
+
+  const oldestIndexRef = useRef(initialOldestIndex);
+  const hasMoreRef = useRef(initialHasMore);
+  const isLoadingOlderRef = useRef(false);
+  const [hasMore, setHasMore] = useState(initialHasMore);
+  const [isLoadingOlder, setIsLoadingOlder] = useState(false);
+
+  const loadOlderMessages = useCallback(async () => {
+    if (!hasMoreRef.current || isLoadingOlderRef.current || oldestIndexRef.current <= 0) {
+      return;
+    }
+
+    isLoadingOlderRef.current = true;
+    setIsLoadingOlder(true);
+    try {
+      const page = await utils.chat.getOlderMessages.fetch({
+        id,
+        beforeIndex: oldestIndexRef.current,
+        limit: CHAT_OLDER_MESSAGE_COUNT,
+      });
+      oldestIndexRef.current = page.oldestIndex;
+      hasMoreRef.current = page.hasMore;
+      setHasMore(page.hasMore);
+      setMessages((current) => mergeMessageWindow(page.messages as UIMessage[], current));
+    } finally {
+      isLoadingOlderRef.current = false;
+      setIsLoadingOlder(false);
+    }
+  }, [id, setMessages, utils.chat.getOlderMessages]);
 
   const projectDefaultModel =
     initialProjectDefaultModel &&
@@ -416,6 +454,7 @@ export function ChatInterface({
       <ArtifactPreviewPanel />
       <div className="flex h-full flex-1 min-h-0 flex-col w-full max-w-3xl mx-auto p-4 overflow-hidden">
         <ChatInterfaceHeader
+          chatId={id}
           messages={messages}
           initialTitle={initialTitle}
           initialProjectId={initialProjectId}
@@ -439,6 +478,11 @@ export function ChatInterface({
           onModelChange={handleModelChange}
           onWebSearchChange={(enabled) => setWebSearch(enabled && features.webSearch)}
           webSearchAvailable={features.webSearch}
+          hasMore={hasMore}
+          isLoadingOlder={isLoadingOlder}
+          onLoadOlder={
+            status === "streaming" || status === "submitted" ? undefined : loadOlderMessages
+          }
         />
 
         <UsageAlerts

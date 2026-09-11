@@ -2,6 +2,8 @@
 
 import type { ChatStatus, FileUIPart, UIMessage } from "ai";
 import { useExtracted } from "next-intl";
+import { useEffect, useLayoutEffect, useRef } from "react";
+import { useStickToBottomContext } from "use-stick-to-bottom";
 import {
   Attachment,
   AttachmentInfo,
@@ -31,6 +33,7 @@ import type { GroupedMessage } from "@/hooks/use-chat-branches";
 import type { ReasoningEffort } from "@/lib/constants";
 import { toDisplayChatRequestError } from "@/lib/chat-request-error";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Spinner } from "@/components/ui/spinner";
 
 interface RequestBody {
   model: string;
@@ -75,6 +78,74 @@ export interface ChatInterfaceMessagesProps {
   onModelChange: (value: string) => void;
   onWebSearchChange: (value: boolean) => void;
   webSearchAvailable?: boolean;
+  hasMore?: boolean;
+  isLoadingOlder?: boolean;
+  onLoadOlder?: () => void | Promise<void>;
+}
+
+function ChatHistoryLoader({
+  hasMore,
+  isLoadingOlder,
+  onLoadOlder,
+  messageCount,
+}: {
+  hasMore: boolean;
+  isLoadingOlder: boolean;
+  onLoadOlder?: () => void | Promise<void>;
+  messageCount: number;
+}) {
+  const { escapedFromLock, scrollRef } = useStickToBottomContext();
+  const sentinelRef = useRef<HTMLDivElement>(null);
+  const restoreRef = useRef<{ height: number; top: number } | null>(null);
+  const previousCountRef = useRef(messageCount);
+
+  useLayoutEffect(() => {
+    const pending = restoreRef.current;
+    if (!pending || messageCount <= previousCountRef.current) {
+      previousCountRef.current = messageCount;
+      return;
+    }
+    previousCountRef.current = messageCount;
+    restoreRef.current = null;
+    const root = scrollRef.current;
+    if (root) {
+      root.scrollTop = pending.top + (root.scrollHeight - pending.height);
+    }
+  }, [messageCount, scrollRef]);
+
+  useEffect(() => {
+    const root = scrollRef.current;
+    const sentinel = sentinelRef.current;
+    // Wait until the user has scrolled away from the latest message. On
+    // mount the list starts at scrollTop 0, so an immediate observer fire
+    // would pull older history and then animate back down.
+    if (!root || !sentinel || !hasMore || !onLoadOlder || isLoadingOlder || !escapedFromLock) {
+      return;
+    }
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (!entries[0]?.isIntersecting) {
+          return;
+        }
+        restoreRef.current = { height: root.scrollHeight, top: root.scrollTop };
+        void onLoadOlder();
+      },
+      { root, rootMargin: "160px 0px 0px 0px" },
+    );
+    observer.observe(sentinel);
+    return () => observer.disconnect();
+  }, [escapedFromLock, hasMore, isLoadingOlder, onLoadOlder, scrollRef]);
+
+  if (!hasMore && !isLoadingOlder) {
+    return null;
+  }
+
+  return (
+    <div ref={sentinelRef} className="flex justify-center py-2">
+      {isLoadingOlder ? <Spinner className="size-4" /> : null}
+    </div>
+  );
 }
 
 export function ChatInterfaceMessages({
@@ -95,12 +166,21 @@ export function ChatInterfaceMessages({
   onModelChange,
   onWebSearchChange,
   webSearchAvailable = true,
+  hasMore = false,
+  isLoadingOlder = false,
+  onLoadOlder,
 }: ChatInterfaceMessagesProps) {
   const t = useExtracted();
 
   return (
     <Conversation className="flex-1 min-h-0 h-full">
       <ConversationContent>
+        <ChatHistoryLoader
+          hasMore={hasMore}
+          isLoadingOlder={isLoadingOlder}
+          onLoadOlder={onLoadOlder}
+          messageCount={messages.length}
+        />
         {groupedMessages.map((group, groupIndex) => {
           if (group.type === "single") {
             const message = group.message;
@@ -128,10 +208,7 @@ export function ChatInterfaceMessages({
                         </Attachments>
                       ) : null}
                       {textParts.map((part, partIndex) => (
-                        <MessageResponse
-                          key={`${message.id}-text-${partIndex}`}
-                          shikiTheme={["github-light", "github-dark"]}
-                        >
+                        <MessageResponse key={`${message.id}-text-${partIndex}`}>
                           {part.text}
                         </MessageResponse>
                       ))}

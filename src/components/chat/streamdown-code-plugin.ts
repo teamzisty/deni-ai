@@ -1,28 +1,25 @@
 import type { PluginConfig } from "streamdown";
-import { highlightCode } from "@/lib/shiki-highlighter-client";
-import { supportedHighlightLanguages } from "@/lib/shiki-language-list";
+import { isHighlightLanguage, supportedHighlightLanguages } from "@/lib/sugar-high-highlighter";
 
-const supported = new Set(supportedHighlightLanguages);
+function tokensFromCode(code: string) {
+  return code.split("\n").map((line) => (line === "" ? [] : [{ content: line }]));
+}
 
 export const streamdownCodePlugin = {
   getSupportedLanguages: () => supportedHighlightLanguages,
   getThemes: () => ["github-light", "github-dark"],
-  highlight(
-    { code, language }: { code: string; language: string },
-    callback?: (result: NonNullable<ReturnType<typeof highlightCode>>) => void,
-  ) {
-    return highlightCode(code, language, callback);
+  highlight({ code }: { code: string; language: string }, callback) {
+    // Visual highlighting happens in CodeBlock via Sugar High HTML.
+    // Streamdown still expects a token payload for its built-in body.
+    const result = {
+      bg: "transparent",
+      fg: "inherit",
+      tokens: tokensFromCode(code),
+    };
+    callback?.(result);
+    return result;
   },
   name: "shiki",
-  supportsLanguage: (language: string) => {
-    const key = language.trim().toLowerCase();
-    return (
-      key === "text" ||
-      key === "plaintext" ||
-      key === "txt" ||
-      key === "plain" ||
-      supported.has(key)
-    );
-  },
+  supportsLanguage: (language: string) => isHighlightLanguage(language),
   type: "code-highlighter",
 } as NonNullable<PluginConfig["code"]>;

@@ -10,15 +10,27 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { exportAsJson, exportAsMarkdown, exportAsPdf, triggerDownload } from "@/lib/chat-export";
+import { trpc } from "@/lib/trpc/react";
 
 interface ChatExportMenuProps {
+  chatId: string;
   messages: UIMessage[];
   chatTitle?: string | null;
 }
 
-export function ChatExportMenu({ messages, chatTitle }: ChatExportMenuProps) {
+export function ChatExportMenu({ chatId, messages, chatTitle }: ChatExportMenuProps) {
+  const utils = trpc.useUtils();
   const filename = chatTitle ?? "chat";
   const safeFilename = filename.replace(/[^a-z0-9\u3040-\u9fff\s-]/gi, "").trim() || "chat";
+
+  const resolveMessages = async () => {
+    try {
+      const transcript = await utils.chat.getChatTranscript.fetch({ id: chatId });
+      return transcript.length > 0 ? transcript : messages;
+    } catch {
+      return messages;
+    }
+  };
 
   return (
     <DropdownMenu>
@@ -30,8 +42,10 @@ export function ChatExportMenu({ messages, chatTitle }: ChatExportMenuProps) {
       <DropdownMenuContent align="end">
         <DropdownMenuItem
           onSelect={() => {
-            const content = exportAsMarkdown(messages, chatTitle ?? undefined);
-            triggerDownload(content, `${safeFilename}.md`, "text/markdown");
+            void resolveMessages().then((fullMessages) => {
+              const content = exportAsMarkdown(fullMessages, chatTitle ?? undefined);
+              triggerDownload(content, `${safeFilename}.md`, "text/markdown");
+            });
           }}
         >
           <FileTextIcon className="size-4" />
@@ -39,8 +53,10 @@ export function ChatExportMenu({ messages, chatTitle }: ChatExportMenuProps) {
         </DropdownMenuItem>
         <DropdownMenuItem
           onSelect={() => {
-            const content = exportAsJson(messages);
-            triggerDownload(content, `${safeFilename}.json`, "application/json");
+            void resolveMessages().then((fullMessages) => {
+              const content = exportAsJson(fullMessages);
+              triggerDownload(content, `${safeFilename}.json`, "application/json");
+            });
           }}
         >
           <FileJsonIcon className="size-4" />
