@@ -27,6 +27,35 @@ const ChatInterface = dynamic(
 );
 
 const MAX_MOUNTED_CHATS = 5;
+const DOCUMENT_TITLE_SUFFIX = " | Deni AI";
+
+function ChatDocumentTitle({
+  chatId,
+  fallbackTitle,
+}: {
+  chatId: string;
+  fallbackTitle?: string | null;
+}) {
+  const { data } = trpc.chat.getChats.useQuery(undefined, {
+    staleTime: 60_000,
+    refetchOnWindowFocus: false,
+  });
+  const listTitle = data?.find((chat) => chat.id === chatId)?.title;
+  const title = (listTitle ?? fallbackTitle)?.trim() || "New Chat";
+
+  useEffect(() => {
+    const next = `${title}${DOCUMENT_TITLE_SUFFIX}`;
+    const previous = document.title;
+    document.title = next;
+    return () => {
+      if (document.title === next) {
+        document.title = previous;
+      }
+    };
+  }, [title]);
+
+  return null;
+}
 
 function parseChatRoute(pathname: string): { kind: "home" } | { kind: "chat"; id: string } | null {
   if (pathname === "/chat") {
@@ -117,22 +146,23 @@ function ChatPane({ id, isActive }: { id: string; isActive: boolean }) {
   const projectIdFromQuery = searchParams.get("projectId");
   const page = useChatPanePage(id, isActive, projectIdFromQuery);
 
-  if (!page) {
-    return <ChatInterfaceSkeleton />;
-  }
-
   return (
     <div className="-m-4 flex min-h-0 flex-1 overflow-hidden">
-      <ChatInterface
-        id={id}
-        initialMessages={page.messages as UIMessage[]}
-        initialHasMore={page.hasMore}
-        initialOldestIndex={page.oldestIndex}
-        initialTitle={page.title}
-        initialProjectId={page.projectId}
-        initialProjectName={page.projectName ?? null}
-        initialProjectDefaultModel={page.projectDefaultModel ?? null}
-      />
+      {isActive ? <ChatDocumentTitle chatId={id} fallbackTitle={page?.title} /> : null}
+      {page ? (
+        <ChatInterface
+          id={id}
+          initialMessages={page.messages as UIMessage[]}
+          initialHasMore={page.hasMore}
+          initialOldestIndex={page.oldestIndex}
+          initialTitle={page.title}
+          initialProjectId={page.projectId}
+          initialProjectName={page.projectName ?? null}
+          initialProjectDefaultModel={page.projectDefaultModel ?? null}
+        />
+      ) : (
+        <ChatInterfaceSkeleton />
+      )}
     </div>
   );
 }

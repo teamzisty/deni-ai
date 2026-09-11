@@ -69,7 +69,7 @@ Optional:
 
 - Schema files live in `src/db/schema/*`; aggregated exports in `src/db/schema/index.ts`.
 - Migrations are output to `migrations/` (see `drizzle.config.ts`).
-- Driver: Neon (`drizzle-orm/neon-http`). `DATABASE_URL` must be set.
+- Driver: Neon over TCP (`postgres.js` + `drizzle-orm/postgres-js`). `DATABASE_URL` must be set. Use the pooled (`-pooler`) URL at runtime.
 - Typical flow:
   1. Edit schema → 2) `bun run db:generate` → 3) `bun run db:migrate` or `bun run db:push`
 - Caution: For destructive changes (dropping columns, type changes), plan safe migrations and backups.

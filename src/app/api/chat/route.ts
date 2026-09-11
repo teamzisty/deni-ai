@@ -20,6 +20,7 @@ import {
   generateTitle,
   getChatById,
   isChatGenerationActive,
+  replaceLastChatMessage,
   updateChat,
 } from "@/lib/chat";
 import { mergeStoredAndClientMessages } from "@/lib/chat-messages";
@@ -562,10 +563,10 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: formatChatStreamError(error, baseModel) }, { status: 500 });
   }
 
-  // Throttle JSONB writes during streaming. Each write serializes the full
-  // messages array, so high-frequency persistence is expensive on long chats.
-  // We persist at most every PERSIST_INTERVAL_MS, and a trailing-edge timer
-  // ensures the most recent chunk eventually lands even if nothing new arrives.
+  // Throttle JSONB writes during streaming. Only the last assistant message is
+  // rewritten (jsonb_set on the final array index). We persist at most every
+  // PERSIST_INTERVAL_MS, and a trailing-edge timer ensures the most recent
+  // chunk eventually lands even if nothing new arrives.
   const PERSIST_INTERVAL_MS = 1500;
   let lastPersistedSignature = "";
   let latestPersistedMessage: UIMessage = pendingAssistantMessage;
@@ -587,7 +588,7 @@ export async function POST(req: Request) {
           if (!(await ownsCurrentGeneration())) {
             return;
           }
-          await updateChat(id, userId, [...messages, latestPersistedMessage], undefined, {
+          await replaceLastChatMessage(id, userId, latestPersistedMessage, {
             expectedGenerationId: generationId,
           });
         } catch (error) {
@@ -686,13 +687,14 @@ export async function POST(req: Request) {
           console.error("Failed to generate title", error);
         }
 
+        const finalizedMessages = updatedMessages.map((message) =>
+          message.id === responseMessageId ? setPendingState(message, false) : message,
+        );
         const cleared = await clearChatGenerationState(
           id,
           userId,
           generationId,
-          updatedMessages.map((message) =>
-            message.id === responseMessageId ? setPendingState(message, false) : message,
-          ),
+          finalizedMessages.at(-1),
           newTitle,
         );
 
