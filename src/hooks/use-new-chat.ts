@@ -44,6 +44,8 @@ export function useNewChat() {
         projectName: null,
         projectDefaultModel: null,
         messages: [],
+        oldestIndex: 0,
+        hasMore: false,
       },
     );
 

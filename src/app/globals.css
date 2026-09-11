@@ -320,6 +320,40 @@
   }
 }
 
+/* Sugar High token colors (github-light / github-dark-ish) */
+:root {
+  --sh-identifier: var(--foreground);
+  --sh-keyword: #cf222e;
+  --sh-string: #0a3069;
+  --sh-comment: #6e7781;
+  --sh-property: #0550ae;
+  --sh-entity: #0550ae;
+  --sh-class: #953800;
+  --sh-jsxliterals: #8250df;
+  --sh-sign: #656d76;
+  --sh-break: var(--foreground);
+  --sh-space: var(--foreground);
+}
+
+.dark {
+  --sh-identifier: #e6edf3;
+  --sh-keyword: #ff7b72;
+  --sh-string: #a5d6ff;
+  --sh-comment: #8b949e;
+  --sh-property: #79c0ff;
+  --sh-entity: #79c0ff;
+  --sh-class: #ffa657;
+  --sh-jsxliterals: #d2a8ff;
+  --sh-sign: #8b949e;
+  --sh-break: #e6edf3;
+  --sh-space: #e6edf3;
+}
+
+.sh__line {
+  display: block;
+  min-height: 1.25em;
+}
+
 /* ========================================
    ANIMATIONS - Minimal, functional only
    ======================================== */

@@ -13,6 +13,22 @@ export type ChangelogEntry = {
 
 export const changelogEntries: ChangelogEntry[] = [
   {
+    version: "7.8.1",
+    codename: "Golden Arrow",
+    date: "2026-09-11",
+    summary: "Faster code highlighting in chat and quicker loading of long conversations.",
+    highlights: [
+      {
+        title: "Faster code highlighting",
+        body: "Chat code blocks now highlight as they stream, without waiting on a heavy syntax engine.",
+      },
+      {
+        title: "Faster long chats",
+        body: "Opening a chat loads the latest messages first. Older messages load when you scroll up.",
+      },
+    ],
+  },
+  {
     version: "7.8.0",
     codename: "Golden Arrow",
     date: "2026-08-27",

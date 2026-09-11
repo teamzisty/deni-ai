@@ -12,6 +12,7 @@ const ChatExportMenu = dynamic(
 );
 
 export interface ChatInterfaceHeaderProps {
+  chatId: string;
   messages: UIMessage[];
   initialTitle?: string | null;
   initialProjectId?: string | null;
@@ -19,6 +20,7 @@ export interface ChatInterfaceHeaderProps {
 }
 
 export function ChatInterfaceHeader({
+  chatId,
   messages,
   initialTitle,
   initialProjectId,
@@ -37,7 +39,7 @@ export function ChatInterfaceHeader({
       ) : null}
       {messages.length > 0 ? (
         <div className="ml-auto">
-          <ChatExportMenu messages={messages} chatTitle={initialTitle ?? null} />
+          <ChatExportMenu chatId={chatId} messages={messages} chatTitle={initialTitle ?? null} />
         </div>
       ) : null}
     </div>

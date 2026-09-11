@@ -1,10 +1,9 @@
 "use client";
 
-import type { ComponentProps, CSSProperties, HTMLAttributes } from "react";
-import type { ThemedToken } from "shiki/core";
+import type { ComponentProps, HTMLAttributes } from "react";
 
 import { Button } from "@/components/ui/button";
-import { highlightCode, type TokenizedCode } from "@/lib/shiki-highlighter-client";
+import { highlightCode } from "@/lib/sugar-high-highlighter";
 import {
   Select,
   SelectContent,
@@ -25,73 +24,6 @@ import {
   useState,
 } from "react";
 
-// Shiki uses bitflags for font styles: 1=italic, 2=bold, 4=underline
-// biome-ignore lint/suspicious/noBitwiseOperators: shiki bitflag check
-// eslint-disable-next-line no-bitwise -- shiki bitflag check
-const isItalic = (fontStyle: number | undefined) => fontStyle && fontStyle & 1;
-// biome-ignore lint/suspicious/noBitwiseOperators: shiki bitflag check
-// eslint-disable-next-line no-bitwise -- shiki bitflag check
-// oxlint-disable-next-line eslint(no-bitwise)
-const isBold = (fontStyle: number | undefined) => fontStyle && fontStyle & 2;
-const isUnderline = (fontStyle: number | undefined) =>
-  // biome-ignore lint/suspicious/noBitwiseOperators: shiki bitflag check
-  // oxlint-disable-next-line eslint(no-bitwise)
-  fontStyle && fontStyle & 4;
-
-// Transform tokens to include pre-computed keys to avoid noArrayIndexKey lint
-interface KeyedToken {
-  token: ThemedToken;
-  key: string;
-}
-interface KeyedLine {
-  tokens: KeyedToken[];
-  key: string;
-}
-
-const addKeysToTokens = (lines: ThemedToken[][]): KeyedLine[] =>
-  lines.map((line, lineIdx) => ({
-    key: `line-${lineIdx}`,
-    tokens: line.map((token, tokenIdx) => ({
-      key: `line-${lineIdx}-${tokenIdx}`,
-      token,
-    })),
-  }));
-
-// Token rendering component
-const TokenSpan = ({ token }: { token: ThemedToken }) => (
-  <span
-    className="dark:!bg-[var(--shiki-dark-bg)] dark:!text-[var(--shiki-dark)]"
-    style={
-      {
-        backgroundColor: token.bgColor,
-        color: token.color,
-        fontStyle: isItalic(token.fontStyle) ? "italic" : undefined,
-        fontWeight: isBold(token.fontStyle) ? "bold" : undefined,
-        textDecoration: isUnderline(token.fontStyle) ? "underline" : undefined,
-        ...token.htmlStyle,
-      } as CSSProperties
-    }
-  >
-    {token.content}
-  </span>
-);
-
-// Line rendering component
-const LineSpan = ({
-  keyedLine,
-  showLineNumbers,
-}: {
-  keyedLine: KeyedLine;
-  showLineNumbers: boolean;
-}) => (
-  <span className={showLineNumbers ? LINE_NUMBER_CLASSES : "block"}>
-    {keyedLine.tokens.length === 0
-      ? "\n"
-      : keyedLine.tokens.map(({ token, key }) => <TokenSpan key={key} token={token} />)}
-  </span>
-);
-
-// Types
 type CodeBlockProps = HTMLAttributes<HTMLDivElement> & {
   code: string;
   language: string;
@@ -102,86 +34,44 @@ interface CodeBlockContextType {
   code: string;
 }
 
-// Context
 const CodeBlockContext = createContext<CodeBlockContextType>({
   code: "",
 });
 
-// Create raw tokens for immediate display while highlighting loads
-const createRawTokens = (code: string): TokenizedCode => ({
-  bg: "transparent",
-  fg: "inherit",
-  tokens: code.split("\n").map((line) =>
-    line === ""
-      ? []
-      : [
-          {
-            color: "inherit",
-            content: line,
-          } as ThemedToken,
-        ],
-  ),
-});
-
-// Line number styles using CSS counters
 const LINE_NUMBER_CLASSES = cn(
   "block",
-  "before:content-[counter(line)]",
-  "before:inline-block",
-  "before:[counter-increment:line]",
-  "before:w-8",
-  "before:mr-4",
-  "before:text-right",
-  "before:text-muted-foreground/50",
-  "before:font-mono",
-  "before:select-none",
+  "[&_.sh__line]:before:content-[counter(line)]",
+  "[&_.sh__line]:before:inline-block",
+  "[&_.sh__line]:before:[counter-increment:line]",
+  "[&_.sh__line]:before:w-8",
+  "[&_.sh__line]:before:mr-4",
+  "[&_.sh__line]:before:text-right",
+  "[&_.sh__line]:before:text-muted-foreground/50",
+  "[&_.sh__line]:before:font-mono",
+  "[&_.sh__line]:before:select-none",
 );
 
 const CodeBlockBody = memo(
   ({
-    tokenized,
+    html,
     showLineNumbers,
     className,
   }: {
-    tokenized: TokenizedCode;
+    html: string;
     showLineNumbers: boolean;
     className?: string;
-  }) => {
-    const preStyle = useMemo(
-      () => ({
-        backgroundColor: tokenized.bg,
-        color: tokenized.fg,
-      }),
-      [tokenized.bg, tokenized.fg],
-    );
-
-    const keyedLines = useMemo(() => addKeysToTokens(tokenized.tokens), [tokenized.tokens]);
-
-    return (
-      <pre
+  }) => (
+    <pre className={cn("m-0 p-4 text-sm", className)}>
+      <code
         className={cn(
-          "dark:!bg-[var(--shiki-dark-bg)] dark:!text-[var(--shiki-dark)] m-0 p-4 text-sm",
-          className,
+          "font-mono text-sm",
+          showLineNumbers && "[counter-increment:line_0] [counter-reset:line]",
+          showLineNumbers && LINE_NUMBER_CLASSES,
         )}
-        style={preStyle}
-      >
-        <code
-          className={cn(
-            "font-mono text-sm",
-            showLineNumbers && "[counter-increment:line_0] [counter-reset:line]",
-          )}
-        >
-          {keyedLines.map((keyedLine) => (
-            <LineSpan key={keyedLine.key} keyedLine={keyedLine} showLineNumbers={showLineNumbers} />
-          ))}
-        </code>
-      </pre>
-    );
-  },
-  (prevProps, nextProps) =>
-    prevProps.tokenized === nextProps.tokenized &&
-    prevProps.showLineNumbers === nextProps.showLineNumbers &&
-    prevProps.className === nextProps.className,
+        dangerouslySetInnerHTML={{ __html: html }}
+      />
+    </pre>
+  ),
 );
 
 CodeBlockBody.displayName = "CodeBlockBody";
@@ -262,35 +152,11 @@ export const CodeBlockContent = ({
   language: string;
   showLineNumbers?: boolean;
 }) => {
-  // Memoized raw tokens for immediate display
-  const rawTokens = useMemo(() => createRawTokens(code), [code]);
-
-  // Try to get cached result synchronously, otherwise use raw tokens
-  const [tokenized, setTokenized] = useState<TokenizedCode>(
-    () => highlightCode(code, language) ?? rawTokens,
-  );
-
-  useEffect(() => {
-    let cancelled = false;
-
-    // Reset to raw tokens when code changes (shows current code, not stale tokens)
-    setTokenized(highlightCode(code, language) ?? rawTokens);
-
-    // Subscribe to async highlighting result
-    highlightCode(code, language, (result) => {
-      if (!cancelled) {
-        setTokenized(result);
-      }
-    });
-
-    return () => {
-      cancelled = true;
-    };
-  }, [code, language, rawTokens]);
+  const html = useMemo(() => highlightCode(code, language), [code, language]);
 
   return (
     <div className="relative overflow-auto">
-      <CodeBlockBody showLineNumbers={showLineNumbers} tokenized={tokenized} />
+      <CodeBlockBody html={html} showLineNumbers={showLineNumbers} />
     </div>
   );
 };

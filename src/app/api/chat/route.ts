@@ -18,10 +18,11 @@ import { auth } from "@/lib/auth";
 import {
   clearChatGenerationState,
   generateTitle,
-  getChatGenerationContextById,
+  getChatById,
   isChatGenerationActive,
   updateChat,
 } from "@/lib/chat";
+import { mergeStoredAndClientMessages } from "@/lib/chat-messages";
 import {
   clearChatGeneration,
   isCurrentChatGeneration,
@@ -197,7 +198,7 @@ export async function POST(req: Request) {
   });
 
   const [chat, validatedMessages] = await Promise.all([
-    getChatGenerationContextById(id, userId),
+    getChatById(id, userId),
     validatedMessagesPromise,
   ]);
 
@@ -209,7 +210,8 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Invalid messages payload" }, { status: 400 });
   }
 
-  const messages = validatedMessages.data;
+  const storedMessages = Array.isArray(chat.messages) ? (chat.messages as UIMessage[]) : [];
+  const messages = mergeStoredAndClientMessages(storedMessages, validatedMessages.data);
 
   let memoryState: Awaited<ReturnType<typeof getUserMemoryState>>;
   let modelContext: Awaited<ReturnType<typeof resolveChatModelContext>>;

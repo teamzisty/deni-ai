@@ -377,10 +377,7 @@ export function SharedChatMessages({ messages, messageRenderKeys }: SharedChatMe
                       </Attachments>
                     ) : null}
                     {textParts.map((part, partIndex) => (
-                      <MessageResponse
-                        key={`${message.id}-text-${partIndex}`}
-                        shikiTheme={["github-light", "github-dark"]}
-                      >
+                      <MessageResponse key={`${message.id}-text-${partIndex}`}>
                         {part.text}
                       </MessageResponse>
                     ))}

@@ -126,6 +126,8 @@ function ChatPane({ id, isActive }: { id: string; isActive: boolean }) {
       <ChatInterface
         id={id}
         initialMessages={page.messages as UIMessage[]}
+        initialHasMore={page.hasMore}
+        initialOldestIndex={page.oldestIndex}
         initialTitle={page.title}
         initialProjectId={page.projectId}
         initialProjectName={page.projectName ?? null}
