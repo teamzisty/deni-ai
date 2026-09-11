@@ -237,19 +237,6 @@ export const chatRouter = router({
       }
       return row;
     }),
-  getChat: protectedProcedure
-    .input(
-      z.object({
-        id: z.string(),
-      }),
-    )
-    .query(async ({ ctx, input }) => {
-      const chat = await ctx.db
-        .select()
-        .from(chats)
-        .where(and(eq(chats.id, input.id), eq(chats.uid, ctx.userId)));
-      return chat;
-    }),
   updateChat: protectedProcedure
     .input(
       z

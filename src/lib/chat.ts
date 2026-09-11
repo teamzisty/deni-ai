@@ -65,6 +65,21 @@ type ChatUpdateOptions = {
   nextGenerationId?: string | null;
 };
 
+function chatRowWhere(id: string, userId: string, expectedGenerationId?: string | null) {
+  return expectedGenerationId !== undefined
+    ? sql`${chats.id} = ${id} AND ${chats.uid} = ${userId} AND ${chats.activeGenerationId} = ${expectedGenerationId}`
+    : and(eq(chats.id, id), eq(chats.uid, userId));
+}
+
+function jsonbSetLastMessage(message: UIMessage) {
+  const payload = JSON.stringify(structuredClone(message));
+  return sql`jsonb_set(
+    ${chats.messages},
+    ARRAY[(jsonb_array_length(${chats.messages}) - 1)::text],
+    ${payload}::jsonb
+  )`;
+}
+
 export async function updateChat(
   id: string,
   userId: string,
@@ -89,11 +104,30 @@ export async function updateChat(
   const [updatedChat] = await db
     .update(chats)
     .set(updates)
-    .where(
-      options?.expectedGenerationId !== undefined
-        ? sql`${chats.id} = ${id} AND ${chats.uid} = ${userId} AND ${chats.activeGenerationId} = ${options.expectedGenerationId}`
-        : and(eq(chats.id, id), eq(chats.uid, userId)),
-    )
+    .where(chatRowWhere(id, userId, options?.expectedGenerationId))
+    .returning({ id: chats.id });
+
+  if (!updatedChat) {
+    throw new Error("Chat not found");
+  }
+
+  return updatedChat.id;
+}
+
+/** Rewrite only the last JSONB element so streaming does not reserialize the transcript. */
+export async function replaceLastChatMessage(
+  id: string,
+  userId: string,
+  message: UIMessage,
+  options?: { expectedGenerationId?: string | null },
+) {
+  const [updatedChat] = await db
+    .update(chats)
+    .set({
+      messages: jsonbSetLastMessage(message),
+      updated_at: new Date(),
+    })
+    .where(chatRowWhere(id, userId, options?.expectedGenerationId))
     .returning({ id: chats.id });
 
   if (!updatedChat) {
@@ -122,11 +156,7 @@ export async function removePendingAssistantMessage(id: string, userId: string) 
     return false;
   }
 
-  const finalizedMessages = messages.map((message, index) =>
-    index === messages.length - 1 ? setPendingState(message, false) : message,
-  );
-
-  await updateChat(id, userId, finalizedMessages);
+  await replaceLastChatMessage(id, userId, setPendingState(lastMessage, false));
   return true;
 }
 
@@ -134,16 +164,21 @@ export async function clearChatGenerationState(
   id: string,
   userId: string,
   generationId: string,
-  messages?: UIMessage[],
+  lastMessage?: UIMessage,
   title?: string,
 ) {
-  const updates: ChatUpdateFields = {
+  const updates: {
+    updated_at: Date;
+    activeGenerationId: null;
+    title?: string;
+    messages?: ReturnType<typeof jsonbSetLastMessage>;
+  } = {
     updated_at: new Date(),
     activeGenerationId: null,
   };
 
-  if (messages) {
-    updates.messages = structuredClone(messages);
+  if (lastMessage) {
+    updates.messages = jsonbSetLastMessage(lastMessage);
   }
 
   if (title) {

@@ -6,6 +6,14 @@ import { consumeUsage, getSearchToolUsageAmount, refundUsage, UsageLimitError } 
 import { fetchPageText } from "./fetch-page";
 import type { ChatToolUsageContext, SearchResult } from "./types";
 
+const SEARCH_TOTAL_TIMEOUT_MS = 20_000;
+const EXA_TIMEOUT_MS = 8_000;
+const PAGE_FETCH_TIMEOUT_MS = 6_000;
+const SUMMARIZE_TIMEOUT_MS = 8_000;
+const SUMMARIZE_MAX_PAGES = 3;
+
+type SearchHit = SearchResult & { summary?: string };
+
 type ExaSearchResponse = {
   results?: Array<{
     title: string;
@@ -14,6 +22,29 @@ type ExaSearchResponse = {
     highlights?: string[];
   }>;
 };
+
+function isAbortError(error: unknown) {
+  return (
+    (error instanceof Error && error.name === "AbortError") ||
+    (typeof DOMException !== "undefined" &&
+      error instanceof DOMException &&
+      error.name === "AbortError")
+  );
+}
+
+function combineSignals(...signals: (AbortSignal | undefined)[]): AbortSignal {
+  const active = signals.filter((signal): signal is AbortSignal => Boolean(signal));
+  if (active.length === 0) {
+    return AbortSignal.timeout(SEARCH_TOTAL_TIMEOUT_MS);
+  }
+  if (active.length === 1) {
+    return active[0];
+  }
+  if (typeof AbortSignal.any === "function") {
+    return AbortSignal.any(active);
+  }
+  return active[0];
+}
 
 async function chargeSearchUsage(usage: ChatToolUsageContext): Promise<number> {
   const amount = getSearchToolUsageAmount(usage.isAnonymous);
@@ -45,6 +76,37 @@ async function refundSearchUsage(usage: ChatToolUsageContext, amount: number): P
   }
 }
 
+async function summarizeResult(
+  result: SearchHit,
+  summarizer: ReturnType<ReturnType<typeof createGroq>>,
+  signal: AbortSignal,
+): Promise<SearchHit> {
+  try {
+    const page = await fetchPageText(result.url, {
+      maxChars: 4_000,
+      timeoutMs: PAGE_FETCH_TIMEOUT_MS,
+      signal,
+      allowReaderFallback: false,
+    });
+
+    if (!page.content) {
+      return { ...result, summary: result.description };
+    }
+
+    const { text: summary } = await generateText({
+      model: summarizer,
+      prompt: `Summarize the following webpage content in a short paragraph:\n\n${page.content}`,
+      maxOutputTokens: 400,
+      maxRetries: 0,
+      abortSignal: combineSignals(signal, AbortSignal.timeout(SUMMARIZE_TIMEOUT_MS)),
+    });
+
+    return { ...result, summary: summary.trim() || result.description };
+  } catch {
+    return { ...result, summary: result.description };
+  }
+}
+
 export function createSearchTool(usage?: ChatToolUsageContext) {
   return tool({
     description:
@@ -61,7 +123,10 @@ export function createSearchTool(usage?: ChatToolUsageContext) {
     }),
     execute: async ({ query, amount }, { abortSignal }) => {
       const maxResults = Math.min(Math.max(amount ?? 10, 5), 15);
+      const signal = combineSignals(abortSignal, AbortSignal.timeout(SEARCH_TOTAL_TIMEOUT_MS));
       let chargedAmount = 0;
+      let results: SearchHit[] = [];
+
       try {
         if (usage) {
           chargedAmount = await chargeSearchUsage(usage);
@@ -90,7 +155,7 @@ export function createSearchTool(usage?: ChatToolUsageContext) {
               },
             },
           }),
-          signal: abortSignal,
+          signal: combineSignals(signal, AbortSignal.timeout(EXA_TIMEOUT_MS)),
         });
 
         if (!response.ok) {
@@ -98,55 +163,40 @@ export function createSearchTool(usage?: ChatToolUsageContext) {
         }
 
         const data = (await response.json()) as ExaSearchResponse;
-        const results: SearchResult[] = (data.results ?? []).map((item) => ({
+        results = (data.results ?? []).map((item) => ({
           title: item.title,
           url: item.url,
           description: item.highlights?.join("\n\n") || item.text?.slice(0, 500) || "",
         }));
 
         const groqApiKey = env.GROQ_API_KEY?.trim();
-        if (!groqApiKey) {
+        if (!groqApiKey || results.length === 0 || signal.aborted) {
           return results.map((result) => ({ ...result, summary: result.description }));
         }
 
-        // Fetch and summarize each page
         const summarizer = createGroq({ apiKey: groqApiKey })("openai/gpt-oss-20b");
-        const summarizedResults = await Promise.all(
-          results.map(async (result) => {
-            try {
-              const page = await fetchPageText(result.url, {
-                maxChars: 8000,
-                signal: abortSignal,
-                // Keep search latency down; browse tool owns reader fallback.
-                allowReaderFallback: false,
-              });
-
-              if (!page.content) {
-                return { ...result, summary: result.description };
-              }
-
-              const { text: summary } = await generateText({
-                model: summarizer,
-                prompt: `Summarize the following webpage content detailed:\n\n${page.content}`,
-                maxOutputTokens: 2000,
-                abortSignal,
-              });
-
-              return { ...result, summary: summary.trim() };
-            } catch (error) {
-              console.error(`Failed to summarize ${result.url}:`, error);
-              return { ...result, summary: result.description };
-            }
-          }),
+        const toSummarize = results.slice(0, SUMMARIZE_MAX_PAGES);
+        const remainder = results.slice(SUMMARIZE_MAX_PAGES);
+        const summarizedHead = await Promise.all(
+          toSummarize.map((result) => summarizeResult(result, summarizer, signal)),
         );
 
-        return summarizedResults;
+        return [
+          ...summarizedHead,
+          ...remainder.map((result) => ({ ...result, summary: result.description })),
+        ];
       } catch (error) {
+        if (results.length > 0) {
+          return results.map((result) => ({ ...result, summary: result.description }));
+        }
         if (chargedAmount > 0 && usage) {
           await refundSearchUsage(usage, chargedAmount);
         }
         if (error instanceof UsageLimitError) {
           throw new Error("Web search is unavailable because the usage limit was reached.");
+        }
+        if (isAbortError(error)) {
+          throw new Error("Web search timed out. Please try again.");
         }
         console.error("Search tool error:", error);
         throw new Error("Web search failed. Please try again later.");

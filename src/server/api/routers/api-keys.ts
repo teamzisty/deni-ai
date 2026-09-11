@@ -36,16 +36,18 @@ export const apiKeysRouter = router({
       const keyHash = await hashApiKey(raw);
       const keyPrefix = getKeyPrefix(raw);
 
-      // Neon HTTP has no interactive transactions. A single INSERT ... SELECT
-      // with a count predicate is the quota authority, so concurrent creates
-      // cannot both pass a separate check-then-insert window.
+      // A single INSERT ... SELECT with a count predicate is the quota
+      // authority, so concurrent creates cannot both pass a check-then-insert
+      // window.
       const inserted = await ctx.db.execute<{ id: string }>(sql`
         INSERT INTO api_key (user_id, name, key_hash, key_prefix)
         SELECT ${ctx.userId}, ${input.name}, ${keyHash}, ${keyPrefix}
         WHERE (SELECT count(*) FROM api_key WHERE user_id = ${ctx.userId}) < 5
         RETURNING id
       `);
-      const insertedId = Array.isArray(inserted) ? inserted[0]?.id : inserted.rows[0]?.id;
+      const insertedId = Array.isArray(inserted)
+        ? inserted[0]?.id
+        : (inserted as { rows?: { id: string }[] }).rows?.[0]?.id;
 
       if (!insertedId) {
         throw new TRPCError({

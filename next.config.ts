@@ -21,7 +21,14 @@ const nextConfig: NextConfig = {
   // Keep server dependencies inside the standalone bundle. Bun's isolated
   // virtual store can otherwise leave Turbopack external aliases unresolved
   // after the standalone output is copied into the runtime image.
-  transpilePackages: ["stripe", "drizzle-orm", "@neondatabase/serverless", "cheerio", "prettier"],
+  transpilePackages: [
+    "stripe",
+    "drizzle-orm",
+    "@neondatabase/serverless",
+    "postgres",
+    "cheerio",
+    "prettier",
+  ],
   // Tree-shake large icon/date packages more aggressively
   experimental: {
     optimizePackageImports: [
