@@ -3,4 +3,6 @@ export const authorLabels: Record<string, string> = {
   anthropic: "Anthropic",
   google: "Google",
   xai: "xAI",
+  deepseek: "DeepSeek",
+  minimax: "MiniMax",
 };

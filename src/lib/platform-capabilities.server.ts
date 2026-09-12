@@ -8,6 +8,7 @@ function hasValue(value: string | undefined): boolean {
 const hasAnthropic = hasValue(env.ANTHROPIC_API_KEY);
 const hasGoogle = hasValue(env.GOOGLE_GENERATIVE_AI_API_KEY);
 const hasGroq = hasValue(env.GROQ_API_KEY);
+const hasDeniApi = hasValue(env.DENI_API_KEY) && hasValue(env.DENI_API_BASE_URL);
 const hasOpenRouter = hasValue(env.OPENROUTER_API_KEY);
 const hasVoids = Boolean(env.VOIDS_MODE && hasValue(env.VOIDS_API_KEY));
 const hasStripeSecret = hasValue(env.STRIPE_SECRET_KEY);
@@ -33,6 +34,7 @@ export const platformCapabilities = {
     google: hasOpenRouter,
     xai: hasOpenRouter,
     groq: hasGroq,
+    deni: hasDeniApi,
   },
   features: {
     webSearch: hasValue(env.EXA_API_KEY),

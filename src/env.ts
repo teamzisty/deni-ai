@@ -35,6 +35,12 @@ export const env = createEnv({
     VOIDS_BASE_URL: z.url().optional(),
     /** Optional API key for voids.top (default placeholder when omitted). */
     VOIDS_API_KEY: z.string().min(1).optional(),
+    /**
+     * OpenAI-compatible Deni AI API. Both key and base URL are required to
+     * expose DeepSeek / MiniMax models routed through this provider.
+     */
+    DENI_API_KEY: z.string().min(1).optional(),
+    DENI_API_BASE_URL: z.url().optional(),
     EXA_API_KEY: z.string().min(1).optional(),
     TURNSTILE_SECRET_KEY: z.string().min(1).optional(),
     /**
@@ -91,6 +97,8 @@ export const env = createEnv({
     VOIDS_MODE: process.env.VOIDS_MODE,
     VOIDS_BASE_URL: process.env.VOIDS_BASE_URL,
     VOIDS_API_KEY: process.env.VOIDS_API_KEY,
+    DENI_API_KEY: process.env.DENI_API_KEY,
+    DENI_API_BASE_URL: process.env.DENI_API_BASE_URL,
     EXA_API_KEY: process.env.EXA_API_KEY,
     TURNSTILE_SECRET_KEY: process.env.TURNSTILE_SECRET_KEY,
     NEXT_PUBLIC_TURNSTILE_SITE_KEY: process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY,

@@ -29,6 +29,7 @@ Optional:
 - OAuth: `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `GITHUB_CLIENT_ID`, `GITHUB_CLIENT_SECRET` (missing pairs hide that sign-in provider)
 - Stripe: `STRIPE_SECRET_KEY`, `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY`, `STRIPE_WEBHOOK_SECRET`, `STRIPE_FLASH_OFFER_COUPON_ID` (missing Stripe keys disable billing)
 - AI providers: `GOOGLE_GENERATIVE_AI_API_KEY`, `ANTHROPIC_API_KEY`, `GROQ_API_KEY`, `OPENROUTER_API_KEY` (missing keys hide the dependent models/features)
+- Deni AI API (OpenAI-compatible): `DENI_API_KEY` + `DENI_API_BASE_URL` (missing pair hides DeepSeek / MiniMax models)
 - Search: `EXA_API_KEY` (missing key hides web search)
 - CAPTCHA: `TURNSTILE_SECRET_KEY`, `NEXT_PUBLIC_TURNSTILE_SITE_KEY` (missing pair disables Turnstile)
 - voids.top: `VOIDS_MODE=true|1` routes platform OpenAI + Anthropic via voids when `VOIDS_API_KEY` is present; without it, normal provider routing is used; optional `VOIDS_BASE_URL`

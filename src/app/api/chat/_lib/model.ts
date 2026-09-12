@@ -142,6 +142,8 @@ export async function resolveChatModelContext({
   const providerId = selectedModel.provider ?? selectedModel.author;
   const anthropicApiKey = env.ANTHROPIC_API_KEY?.trim();
   const groqApiKey = env.GROQ_API_KEY?.trim();
+  const deniApiKey = env.DENI_API_KEY?.trim();
+  const deniApiBaseUrl = env.DENI_API_BASE_URL;
 
   if (!providerId) {
     throw new ChatRouteError(400, { error: "Unknown provider" });
@@ -291,7 +293,7 @@ export async function resolveChatModelContext({
     reasoningEffort,
   );
   const openaiReasoningEffort =
-    providerId === "openai" &&
+    (providerId === "openai" || providerId === "deni") &&
     resolvedReasoningEffort &&
     openaiEffortOptions.includes(resolvedReasoningEffort as (typeof openaiEffortOptions)[number])
       ? (resolvedReasoningEffort as (typeof openaiEffortOptions)[number])
@@ -400,6 +402,19 @@ export async function resolveChatModelContext({
     // (e.g. gpt-5.6-sol, claude-fable-5). Keep the id as declared in constants.
     return provider.chat(resolvedModelId);
   };
+  const getDeniModel = () => {
+    if (!deniApiKey || !deniApiBaseUrl) {
+      throw new ChatRouteError(503, {
+        error: "Deni AI API is not configured in the current environment.",
+      });
+    }
+
+    const provider = createOpenAI({
+      apiKey: deniApiKey,
+      baseURL: deniApiBaseUrl,
+    });
+    return provider.chat(resolvedModelId);
+  };
 
   const anthropicOptions: AnthropicProviderOptions = {};
   if (anthropicReasoningEffort) {
@@ -479,6 +494,23 @@ export async function resolveChatModelContext({
         model = createGroq({
           apiKey: groqApiKey,
         })(resolvedModelId);
+      }
+      break;
+    }
+    case "deni": {
+      if (useByok) {
+        if (!byokApiKey) {
+          throw new ChatRouteError(503, {
+            error: "Deni AI API is not configured in the current environment.",
+          });
+        }
+        const provider = createOpenAI({
+          apiKey: byokApiKey,
+          baseURL: byokBaseUrl ?? deniApiBaseUrl,
+        });
+        model = provider.chat(resolvedModelId);
+      } else {
+        model = getDeniModel();
       }
       break;
     }

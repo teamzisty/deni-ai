@@ -1,7 +1,9 @@
 "use client";
 
 import SiAnthropic from "@icons-pack/react-simple-icons/icons/SiAnthropic";
+import SiDeepseek from "@icons-pack/react-simple-icons/icons/SiDeepseek";
 import SiGooglegemini from "@icons-pack/react-simple-icons/icons/SiGooglegemini";
+import SiMinimax from "@icons-pack/react-simple-icons/icons/SiMinimax";
 import SiX from "@icons-pack/react-simple-icons/icons/SiX";
 import {
   ArchiveIcon,
@@ -102,6 +104,10 @@ function ModelIcon({
       return <SiGooglegemini className={cn("size-3.5", className)} aria-hidden="true" />;
     case "xai":
       return <SiX className={cn("size-3.5", className)} aria-hidden="true" />;
+    case "deepseek":
+      return <SiDeepseek className={cn("size-3.5", className)} aria-hidden="true" />;
+    case "minimax":
+      return <SiMinimax className={cn("size-3.5", className)} aria-hidden="true" />;
     default:
       return <Bot className={cn("size-3.5", className)} aria-hidden="true" />;
   }
@@ -119,6 +125,10 @@ function ProviderIcon({ author }: { author: string }) {
       return <SiGooglegemini className="size-3.5" aria-hidden="true" />;
     case "xai":
       return <SiX className="size-3.5" aria-hidden="true" />;
+    case "deepseek":
+      return <SiDeepseek className="size-3.5" aria-hidden="true" />;
+    case "minimax":
+      return <SiMinimax className="size-3.5" aria-hidden="true" />;
     default:
       return <Bot className="size-3.5" aria-hidden="true" />;
   }
@@ -136,6 +146,10 @@ function getProviderLabel(author: string, labels: ProviderLabels): string {
       return "Google";
     case "xai":
       return "xAI";
+    case "deepseek":
+      return "DeepSeek";
+    case "minimax":
+      return "MiniMax";
     default:
       return author;
   }

@@ -10,6 +10,7 @@ const defaultCapabilities: PlatformCapabilities = {
     google: true,
     xai: true,
     groq: true,
+    deni: true,
   },
   features: {
     webSearch: true,
