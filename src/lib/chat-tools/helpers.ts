@@ -13,6 +13,32 @@ export function createAbortError() {
   return new Error("operation aborted");
 }
 
+export function isAbortError(error: unknown) {
+  if (!error || typeof error !== "object") {
+    return false;
+  }
+  const name = (error as { name?: string }).name;
+  const code = (error as { code?: unknown }).code;
+  return (
+    name === "AbortError" ||
+    code === 20 ||
+    (typeof DOMException !== "undefined" &&
+      error instanceof DOMException &&
+      error.name === "AbortError")
+  );
+}
+
+/** Attach a no-op catch so Bun's extra abort rejection is not unhandled. */
+export function fetchWithAbortHandling(input: string, init?: RequestInit) {
+  const request = fetch(input, init);
+  void request.catch((error) => {
+    if (!isAbortError(error)) {
+      return;
+    }
+  });
+  return request;
+}
+
 export function throwIfAborted(signal?: AbortSignal) {
   if (signal?.aborted) {
     throw createAbortError();
