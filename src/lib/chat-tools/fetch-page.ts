@@ -1,6 +1,6 @@
 import { load } from "cheerio";
 import { assertSafePublicHttpUrl } from "@/lib/network-security";
-import { createAbortError } from "./helpers";
+import { createAbortError, fetchWithAbortHandling } from "./helpers";
 
 export const DEFAULT_PAGE_FETCH_TIMEOUT_MS = 12_000;
 export const DEFAULT_BROWSE_MAX_CHARS = 20_000;
@@ -200,7 +200,7 @@ async function fetchWithSafeRedirects(
   let current = await assertSafePublicHttpUrl(url);
 
   for (let hop = 0; hop <= MAX_REDIRECTS; hop++) {
-    const response = await fetch(current.toString(), {
+    const response = await fetchWithAbortHandling(current.toString(), {
       headers: BROWSER_HEADERS,
       signal,
       redirect: "manual",
@@ -322,7 +322,7 @@ async function fetchViaReader(
   // Do NOT send a browser Chrome UA here. Cloudflare in front of r.jina.ai
   // challenges spoofed browser clients (403 "Just a moment..."), while plain
   // non-browser clients succeed.
-  const response = await fetch(readerUrl, {
+  const response = await fetchWithAbortHandling(readerUrl, {
     headers: {
       Accept: "text/plain,text/markdown,*/*;q=0.8",
       "User-Agent": "DeniAI-Reader/1.0",

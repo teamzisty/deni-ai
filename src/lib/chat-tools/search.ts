@@ -4,7 +4,7 @@ import { z } from "zod";
 import { env } from "@/env";
 import { consumeUsage, getSearchToolUsageAmount, refundUsage, UsageLimitError } from "@/lib/usage";
 import { fetchPageText } from "./fetch-page";
-import { withDeadline } from "./helpers";
+import { fetchWithAbortHandling, isAbortError, withDeadline } from "./helpers";
 import type { ChatToolUsageContext, SearchResult } from "./types";
 
 const SEARCH_TOTAL_TIMEOUT_MS = 20_000;
@@ -23,15 +23,6 @@ type ExaSearchResponse = {
     highlights?: string[];
   }>;
 };
-
-function isAbortError(error: unknown) {
-  return (
-    (error instanceof Error && error.name === "AbortError") ||
-    (typeof DOMException !== "undefined" &&
-      error instanceof DOMException &&
-      error.name === "AbortError")
-  );
-}
 
 async function chargeSearchUsage(usage: ChatToolUsageContext): Promise<number> {
   const amount = getSearchToolUsageAmount(usage.isAnonymous);
@@ -127,7 +118,7 @@ export function createSearchTool(usage?: ChatToolUsageContext) {
           }
 
           const response = await withDeadline(EXA_TIMEOUT_MS, signal, (exaSignal) =>
-            fetch("https://api.exa.ai/search", {
+            fetchWithAbortHandling("https://api.exa.ai/search", {
               method: "POST",
               headers: {
                 Accept: "application/json",
@@ -148,6 +139,14 @@ export function createSearchTool(usage?: ChatToolUsageContext) {
               signal: exaSignal,
             }),
           );
+
+          if (response.status === 429) {
+            if (chargedAmount > 0 && usage) {
+              await refundSearchUsage(usage, chargedAmount);
+              chargedAmount = 0;
+            }
+            return [];
+          }
 
           if (!response.ok) {
             throw new Error(`Exa Search API error: ${response.status}`);
