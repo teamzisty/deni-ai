@@ -18,13 +18,4 @@ export const db = drizzle({
     prepare: false,
   },
   schema,
-  logger: {
-    logQuery(query, params) {
-      (
-        globalThis as typeof globalThis & {
-          __deniNoteDbQuery?: (sql: string, params?: unknown) => void;
-        }
-      ).__deniNoteDbQuery?.(query, params);
-    },
-  },
 });
