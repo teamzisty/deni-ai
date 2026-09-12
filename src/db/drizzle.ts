@@ -2,9 +2,6 @@ import { drizzle } from "drizzle-orm/postgres-js";
 import { env } from "@/env";
 
 import * as schema from "@/db/schema";
-import { installAbortDiagnostics, noteDbQuery } from "@/lib/abort-diagnostics";
-
-installAbortDiagnostics();
 
 /**
  * Long-lived Docker / Dokploy process: TCP pool via postgres.js.
@@ -23,7 +20,11 @@ export const db = drizzle({
   schema,
   logger: {
     logQuery(query, params) {
-      noteDbQuery(query, params);
+      (
+        globalThis as typeof globalThis & {
+          __deniNoteDbQuery?: (sql: string, params?: unknown) => void;
+        }
+      ).__deniNoteDbQuery?.(query, params);
     },
   },
 });
