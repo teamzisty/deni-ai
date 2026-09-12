@@ -1,4 +1,4 @@
-export type PlatformModelProvider = "openai" | "anthropic" | "google" | "xai" | "groq";
+export type PlatformModelProvider = "openai" | "anthropic" | "google" | "xai" | "groq" | "deni";
 export type SocialProviderId = "google" | "github";
 
 export type PlatformCapabilities = {

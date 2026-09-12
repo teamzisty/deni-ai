@@ -1,4 +1,4 @@
-export type Author = "openai" | "anthropic" | "google" | "xai";
+export type Author = "openai" | "anthropic" | "google" | "xai" | "deepseek" | "minimax";
 
 export const reasoningEffortValues = [
   "none",
@@ -522,6 +522,34 @@ export const models: readonly ModelDefinition[] = [
   //   efforts: false,
   //   contextWindow: 256_000,
   // },
+  {
+    name: "DeepSeek V4",
+    value: "deepseek/deepseek-v4",
+    author: "deepseek",
+    provider: "deni",
+    description: "DeepSeek V4 for reasoning, coding, and general agentic work.",
+    features: ["reasoning", "coding", "smart"],
+    efforts: ["low", "medium", "high"],
+  },
+  {
+    name: "DeepSeek V4 Pro",
+    value: "deepseek/deepseek-v4-pro",
+    author: "deepseek",
+    provider: "deni",
+    description: "Higher-capacity DeepSeek V4 for harder reasoning and coding tasks.",
+    featured: true,
+    features: ["reasoning", "coding", "smart", "smartest"],
+    efforts: ["low", "medium", "high"],
+  },
+  {
+    name: "MiniMax M3",
+    value: "minimax/minimax-m3",
+    author: "minimax",
+    provider: "deni",
+    description: "MiniMax M3 for fast reasoning and everyday agentic tasks.",
+    features: ["reasoning", "fast"],
+    efforts: ["low", "medium", "high"],
+  },
 ];
 
 export const defaultModel = models.find((model) => model.value === "gpt-5.6-luna") ?? models[0];

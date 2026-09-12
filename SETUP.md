@@ -71,6 +71,10 @@ VOIDS_MODE=
 VOIDS_BASE_URL=https://capi.voids.top/v2
 VOIDS_API_KEY=
 
+# Deni AI API (OpenAI-compatible). Both required to show DeepSeek / MiniMax models.
+DENI_API_KEY=
+DENI_API_BASE_URL=
+
 # Search (optional; missing key disables web search)
 EXA_API_KEY=your-exa-api-key
 
@@ -121,6 +125,7 @@ Notes:
 - When adding or changing supported models, update `src/lib/constants.ts`.
 - `OPENROUTER_API_KEY` routes OpenAI-family and other OpenRouter models when voids mode is off. It also serves as the Anthropic fallback when `ANTHROPIC_API_KEY` is absent.
 - Optional voids.top mode: set `VOIDS_MODE=true` (or `1`) and provide **`VOIDS_API_KEY`** to send **platform** (non-BYOK) OpenAI and Anthropic traffic through the OpenAI-compatible voids.top gateway. Without the key, normal provider routing is used. Optional `VOIDS_BASE_URL` (default `https://capi.voids.top/v2`). When `VOIDS_MODE` is off, OpenAI uses OpenRouter and Anthropic uses its native key when present, otherwise OpenRouter.
+- Optional Deni AI API: set **`DENI_API_KEY`** and **`DENI_API_BASE_URL`** (OpenAI-compatible Chat Completions endpoint) to expose DeepSeek V4, DeepSeek V4 Pro, and MiniMax M3. Missing either value hides those models.
 - Affiliate administration: set `AFFILIATE_ADMIN_EMAILS` to a comma-separated list of account emails that can approve reset rewards and send manual affiliate coupon emails. The address is read only on the server.
 - Blog administration: set `BLOG_ADMIN_EMAILS` to a comma-separated list of account emails that can write and publish posts at `/settings/blog`. If omitted, `AFFILIATE_ADMIN_EMAILS` is used.
 - New 30% OFF affiliate coupon rewards remain pending until an admin enters a Stripe coupon or promotion code and sends the email from the affiliate settings page.
