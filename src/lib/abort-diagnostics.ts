@@ -18,6 +18,10 @@ const RING = 8;
 
 let installed = false;
 
+function nowStamp() {
+  return performance.now().toFixed(0);
+}
+
 function pushRing<T>(list: T[], item: T) {
   list.push(item);
   if (list.length > RING) {
@@ -47,7 +51,7 @@ function summarizeParams(params: unknown) {
 
 export function noteDbQuery(sql: string, params?: unknown) {
   pushRing(recentQueries, {
-    at: new Date().toISOString(),
+    at: nowStamp(),
     sql: sql.replace(/\s+/g, " ").trim().slice(0, 500),
     params: summarizeParams(params),
   });
@@ -55,7 +59,7 @@ export function noteDbQuery(sql: string, params?: unknown) {
 
 function noteAbortCall(reason: unknown) {
   pushRing(recentAborts, {
-    at: new Date().toISOString(),
+    at: nowStamp(),
     reason: reason === undefined ? "" : String(reason),
     stack: trimStack(new Error("AbortController.abort()").stack),
   });
@@ -69,12 +73,14 @@ function logAbortDiagnostic(reason: unknown) {
       `name=${error?.name ?? "AbortError"} code=${String(error?.code ?? "")} message=${error?.message ?? ""}`,
       recentAborts.length > 0
         ? `recent abort() calls:\n${recentAborts
-            .map((item) => `  - ${item.at} reason=${JSON.stringify(item.reason)}\n${item.stack}`)
+            .map(
+              (item) => `  - t=${item.at}ms reason=${JSON.stringify(item.reason)}\n${item.stack}`,
+            )
             .join("\n")}`
         : "recent abort() calls: (none captured in JS)",
       recentQueries.length > 0
         ? `recent db queries:\n${recentQueries
-            .map((item) => `  - ${item.at} ${item.sql} params=${item.params}`)
+            .map((item) => `  - t=${item.at}ms ${item.sql} params=${item.params}`)
             .join("\n")}`
         : "recent db queries: (none)",
     ].join("\n"),
@@ -118,14 +124,23 @@ export function installAbortDiagnostics() {
   if (process.env.NEXT_RUNTIME === "edge") {
     return;
   }
+  if (process.env.NEXT_PHASE === "phase-production-build") {
+    return;
+  }
   if (installed) {
     installRejectionFilter();
     return;
   }
   installed = true;
+  globalThis.__deniNoteDbQuery = noteDbQuery;
   installAbortCallProbe();
   installRejectionFilter();
   for (const delay of [0, 50, 200, 1000]) {
     setTimeout(installRejectionFilter, delay);
   }
+}
+
+declare global {
+  // Optional hook used by the Drizzle logger without a static import.
+  var __deniNoteDbQuery: ((sql: string, params?: unknown) => void) | undefined;
 }
